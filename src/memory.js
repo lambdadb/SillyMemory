@@ -96,10 +96,13 @@ export class Journal {
     }
     write(scope, ids) { this.storage.setItem(this.key(scope), JSON.stringify([...new Set(ids)])); }
     clear() {
+        const keys = [];
         for (let i = this.storage.length - 1; i >= 0; i--) {
             const key = this.storage.key(i);
-            if (key.startsWith(`sillymemory:journal:${this.namespace}:`)) this.storage.removeItem(key);
+            if (key?.startsWith(`sillymemory:journal:${this.namespace}:`)) keys.push(key);
         }
+        // Storage enumeration can reorder after removal; snapshot keys first.
+        for (const key of keys) this.storage.removeItem(key);
     }
 }
 
@@ -114,37 +117,53 @@ export class MemoryEngine {
         const task = this.queue.catch(() => {}).then(() => this.lock(job));
         this.queue = task; return task;
     }
-    async sync(snapshot, config, valid = () => true) {
+    async sync(snapshot, config, valid = () => true, progress = () => {}) {
+        const generation = this.generation;
+        const current = () => generation === this.generation && valid();
+        const report = value => { if (current()) progress(value); };
+        if (!current()) return null;
+        report({ phase: 'preparing' });
         const prepared = await documents(snapshot, this.owner, config);
+        if (!current()) return null;
+        report({ phase: 'queued' });
         return this.serial(async () => {
-            if (!valid()) return null;
+            if (!current()) return null;
+            report({ phase: 'checking' });
             await this.client.assertOwned(this.collection, this.owner);
-            if (!valid()) return null;
+            if (!current()) return null;
             const { scope, docs } = prepared;
             const ids = docs.map(d => d.id); const desired = new Set(ids);
             const previous = this.journal.read(scope);
             // Persist intent BEFORE requests; include uncertain writes after a timeout/reload.
             this.journal.write(scope, [...previous, ...ids]);
             const removed = previous.filter(id => !desired.has(id));
+            if (removed.length) report({ phase: 'deleting', completed: 0, total: removed.length });
             for (let i = 0; i < removed.length; i += 100) {
-                await this.client.deleteIds(this.collection, removed.slice(i, i + 100));
-                removed.slice(i, i + 100).forEach(id => this.acknowledged.delete(id));
+                if (!current()) return null;
+                const batch = removed.slice(i, i + 100);
+                await this.client.deleteIds(this.collection, batch);
+                batch.forEach(id => this.acknowledged.delete(id));
+                report({ phase: 'deleting', completed: i + batch.length, total: removed.length });
             }
             const pending = docs.filter(d => !this.acknowledged.has(d.id));
+            const confirmed = docs.length - pending.length;
+            report({ phase: 'uploading', completed: confirmed, total: docs.length });
             for (let i = 0; i < pending.length; i += 50) {
-                if (!valid()) return null;
+                if (!current()) return null;
                 const batch = pending.slice(i, i + 50);
                 await this.client.upsert(this.collection, batch);
                 batch.forEach(d => this.acknowledged.add(d.id));
+                report({ phase: 'uploading', completed: confirmed + i + batch.length, total: docs.length });
             }
+            if (!current()) return null;
             this.journal.write(scope, ids);
             return prepared;
         });
     }
-    async retrieve(snapshot, config, countTokens, valid = () => true) {
+    async retrieve(snapshot, config, countTokens, valid = () => true, progress = () => {}) {
         const generation = this.generation;
         const current = () => generation === this.generation && valid();
-        const prepared = await this.sync(snapshot, config, current);
+        const prepared = await this.sync(snapshot, config, current, progress);
         if (!prepared || !current()) return null;
         if (!prepared.docs.length) return { text: '', tokens: 0, passages: [] };
         const queries = retrievalQueries(snapshot);
@@ -153,9 +172,16 @@ export class MemoryEngine {
         const signal = AbortSignal.any([this.pendingReads.signal, reads.signal]);
         let results;
         try {
-            results = await Promise.all(queries.map(query => this.client.search(this.collection, this.owner, prepared.scope, query, signal)));
+            let completed = 0;
+            progress({ phase: 'searching', completed, total: queries.length });
+            results = await Promise.all(queries.map(async query => {
+                const hits = await this.client.search(this.collection, this.owner, prepared.scope, query, signal);
+                if (current() && !signal.aborted) progress({ phase: 'searching', completed: ++completed, total: queries.length });
+                return hits;
+            }));
         } finally { reads.abort(); }
         if (!current()) return null;
+        progress({ phase: 'budgeting' });
         const result = await selectMemory(interleaveHits(results), prepared.docs, config.budget, countTokens);
         return current() ? result : null;
     }
