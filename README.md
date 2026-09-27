@@ -29,7 +29,7 @@ The development baseline is **SillyTavern 1.19.0**, pinned to commit [`06bde939f
 7. If a test fails, use **Clean up test collection**. Pending test identity is preserved across reloads so cleanup can be retried after reconnecting. A failed cleanup is not reported as successful.
 8. Click **Create memory collection**, select a character chat, then enable memory. Default settings retain 12 recent messages and allow 800 memory tokens, including passage labels and the wrapper. Configure the bounds in the panel. Disable built-in Vector Storage chat vectorization and other prompt-rewriting memory extensions for this prototype.
 
-The planned GitHub repository is `lambdadb/sillymemory`. It has not been created/published by this implementation; there is no public installation URL yet.
+Source repository: [lambdadb/sillymemory](https://github.com/lambdadb/sillymemory). Clone it with `git clone https://github.com/lambdadb/sillymemory.git` and follow the setup above. The default branch contains the experimental MVP; no stable release is tagged.
 
 ## Use and behavior
 
@@ -115,6 +115,19 @@ See [architecture](docs/architecture.md), [pinned contracts](docs/contracts.md),
 
 ## Deferred
 
-Direct browser CORS, persistent keys, versioned savepoints/rollback, Data Bank, World Info, multi-user administration, and external result downloads are outside this MVP. The synthetic built-in-memory comparison is documented separately; no general recall-quality, latency, or total operating-cost improvement is claimed. License selection and public release are still pending review.
+Direct browser CORS, persistent keys, versioned savepoints/rollback, Data Bank, World Info, multi-user administration, and external result downloads are outside this MVP. The synthetic built-in-memory comparison is documented separately; no general recall-quality, latency, or total operating-cost improvement is claimed. Stable release readiness remains under evaluation.
 
 The [latest-user/context query policy](docs/query-policy.md) documents the retrieval change, its regression and held-out checks, and commands for reproducing them. The original comparison and vector diagnostic remain historical evidence from their recorded source hashes.
+
+## License
+
+Copyright (C) 2026 SillyMemory contributors.
+
+SillyMemory is free software, licensed under the **GNU Affero General Public
+License, version 3 only** (`AGPL-3.0-only`). You may redistribute and modify it
+under that license. It is provided without warranty; see [LICENSE](LICENSE) for
+the complete terms. SillyMemory uses the same license family as its
+[SillyTavern host](https://github.com/SillyTavern/SillyTavern/blob/06bde939fb1e9c4c8d8641d810f0a916b5bce127/LICENSE).
+
+This repository contains the extension's source and development tools; the
+SillyTavern host and development dependencies retain their own licenses.

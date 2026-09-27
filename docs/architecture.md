@@ -4,7 +4,7 @@
 
 `index.js` adapts the pinned SillyTavern context, events, prompt interceptor, and settings panel. `src/client.js` sends same-origin proxy requests; it has a private in-memory key and sanitizes errors without logging response bodies. `src/gate.js` validates a synthetic lifecycle before memory collection creation. `src/memory.js` is independent synchronization and selection logic.
 
-There is no server plugin. Runtime modules have no external dependencies. Playwright is development-only. The planned GitHub publication remains outside local implementation authorization.
+There is no server plugin. Runtime modules have no external dependencies. Playwright is development-only. The extension source and development tools are distributed under AGPL-3.0-only; see the root LICENSE.
 
 ## Identity and source authority
 
