@@ -507,10 +507,27 @@ final review, while all product runtime hashes are identical. See the
 [final live report](../artifacts/generation-live-model-final-review.json).
 Raw reports remain Git-ignored local evidence. No public release or push occurred.
 
+## Public source preparation — 2026-09-28
+
+The user authorized a public repository and an open-source license. The project
+now declares AGPL-3.0-only in its root LICENSE, package metadata, README and
+settings notice, with links to the public source. The browser notice was opened
+and visually checked in the pinned SillyTavern host. The license text matches the
+standard AGPLv3 text shipped with that host; host and development dependency
+licenses remain separate.
+
+All 34 unit tests and runtime syntax checks passed. The real-host browser test
+with the local LambdaDB emulator passed 22 checks, with no remaining emulator
+collections. Review the local [browser report](../artifacts/browser-smoke-public-license.json).
+This rerun used synthetic credentials and no live provider calls. The JavaScript
+runtime is unchanged from the previous live evaluation; the settings change is a
+source/license notice. This is source publication, not a stable release or a
+hosted deployment.
+
 ## Remaining validation
 
 1. Expand evaluation of the latest-user/context policy to strongly ambiguous references and assistant-only continuation. The retrieval-only diagnostic identifies query construction as a sufficient cause of the original misses; the new implementation preserves a separate primary search. The small held-out retrieval fixture does not establish the incremental benefit of the second query; committed-index ANN recall remains a separate unverified boundary. Realistic personal-chat use and histories exceeding the full-context baseline remain unverified. The historical Gemini comparison still lacks one quota-blocked baseline sample; provider-specific streaming usage/accounting also needs broader coverage.
 2. Expand the controlled fault coverage above to realistic sustained load, host/server interruption, and additional ambiguous commit orderings. Injected HTTP statuses and response delays do not establish actual service availability or outage behavior.
 3. Expand the completed synthetic three-mode comparison to more repetitions, held-out realistic conversations and constrained-context cases. Measure user usefulness and total costs (including embeddings and LambdaDB), while controlling or explicitly reporting cache effects. The current 54-sample result is a bounded experiment, not a general performance benchmark.
 
-Known limits: no cross-device concurrent editing; local bookkeeping loss can leave orphaned remote data; chat/character rename or complete chat deletion retains old remote scopes until full collection cleanup; external `docsUrl` query responses fail safely; third-party prompt-rewriting extensions are unverified; provider backup erasure is not proven. License choice and GitHub publication require review before public release.
+Known limits: no cross-device concurrent editing; local bookkeeping loss can leave orphaned remote data; chat/character rename or complete chat deletion retains old remote scopes until full collection cleanup; external `docsUrl` query responses fail safely; third-party prompt-rewriting extensions are unverified; provider backup erasure is not proven. The public source is licensed under AGPL-3.0-only; a stable release and deployment remain separate from these prototype checks.
