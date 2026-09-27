@@ -51,8 +51,9 @@ Ordinary document deletion removes current retrievable records; snapshot retenti
 ## Development and verification
 
 The GitHub Actions workflow runs unit regressions and syntax checks for the
-runtime, scripts, and tests on pull requests and pushes to `main`, using Node.js
-24 and the npm lockfile. This workflow does not use LambdaDB or model credentials.
+runtime, scripts, and tests on pull requests and pushes to `main`, using the
+declared minimum Node.js 20.12.0 and Node.js 24 with the npm lockfile. This workflow
+does not use LambdaDB or model credentials.
 Browser/emulator checks and paid live integration runs remain separate commands
 below; a green CI result alone does not establish live integration success.
 
