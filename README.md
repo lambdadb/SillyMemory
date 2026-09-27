@@ -50,8 +50,12 @@ Ordinary document deletion removes current retrievable records; snapshot retenti
 
 ## Development and verification
 
+Start ongoing work from `develop` and open feature/fix PRs against `develop`.
+Promote validated changes to the public `main` branch through a separate PR.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the branch and verification workflow.
+
 The GitHub Actions workflow runs unit regressions and syntax checks for the
-runtime, scripts, and tests on pull requests and pushes to `main`, using the
+runtime, scripts, and tests on pull requests and pushes to `main` or `develop`, using the
 declared minimum Node.js 20.12.0 and Node.js 24 with the npm lockfile. This workflow
 does not use LambdaDB or model credentials.
 Browser/emulator checks and paid live integration runs remain separate commands
