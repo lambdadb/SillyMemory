@@ -2,7 +2,7 @@
 
 ## Boundaries
 
-`index.js` adapts the pinned SillyTavern context, events, prompt interceptor, and settings panel. `src/client.js` sends same-origin proxy requests; it has a private in-memory key and sanitizes errors without logging response bodies. `src/gate.js` validates a synthetic lifecycle before memory collection creation. `src/memory.js` is independent synchronization and selection logic.
+`index.js` adapts the pinned SillyTavern context, events, prompt interceptor, and settings panel. `src/client.js` sends same-origin proxy requests; it has a private in-memory key and sanitizes errors without logging response bodies. `src/gate.js` validates a synthetic lifecycle before memory collection creation. `src/status.js` formats progress and recovery guidance and ensures only the current operation owns the status display. `src/memory.js` is independent synchronization and selection logic.
 
 There is no server plugin. Runtime modules have no external dependencies. Playwright is development-only. The extension source and development tools are distributed under AGPL-3.0-only; see the root LICENSE.
 
@@ -34,4 +34,32 @@ Injection is an `IN_CHAT` system extension prompt at the recent-message depth, w
 
 Production and synthetic test collections have `application=sillymemory` and the random owner metadata tag. Sync and deletion check these tags. Deletion never adopts a mismatched collection. Full deletion first disables further work, invalidates reads, drains writes, deletes only the owned collection, and verifies API disappearance. Tags are ownership safeguards against accidental selection, not an authorization boundary against another holder of the project API key.
 
+After confirmed collection deletion, local cleanup snapshots all matching journal
+keys before removing them. It preserves other namespaces and host settings;
+[Web Storage enumeration order](https://html.spec.whatwg.org/multipage/webstorage.html)
+may change during removal, so deleting while enumerating can skip entries.
+
 The extension retains target identity before creation so timeout cleanup is retryable. Collection deletion is an API visibility check; physical backup erasure is not established. Browser storage loss, multiple devices, deleted/renamed chats, and account resets can leave orphaned remote scopes requiring project-side cleanup. Cross-device concurrent editing is not supported.
+
+## Progress and failure display
+
+Sync/retrieval callbacks report only phase names and numeric counts, never chat
+text, scope identities, or keys. Delete/upload counts advance after acknowledgement;
+upload totals include current chunks already acknowledged during this session.
+A lost response is not counted even if the service accepted it. Existing durable
+intent drives reconciliation on retry/reload. No timeout, batch-size, query-policy,
+or automatic retry changes accompany the UI.
+
+Each sync captures the engine epoch and checks validity before queued work and
+between mutation batches. Invalidation stops further work and progress callbacks;
+already-started writes may still complete and their IDs remain recoverable. A
+display revision additionally prevents a superseded manual sync from replacing
+a newer operation's progress, success, or failure. This display ownership does
+not invalidate an otherwise current generation prompt. Generation takes over a
+pending debounce timer because its retrieval already synchronizes the source.
+
+Terminal states hide the progress bar. Failure retains the last confirmed stage
+and count, with separate key/permission, rate-limit, network, and timeout guidance.
+Timeout classification covers both fetching headers and consuming a response body.
+No raw exception or upstream response body is used in the generic UI failure path.
+The live status is not persisted; reload still disables memory and clears the key.

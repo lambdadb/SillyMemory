@@ -6,7 +6,7 @@ import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { createServer } from 'node:https';
 import { spawn, execFileSync } from 'node:child_process';
-import { mkdtemp, readFile, writeFile, mkdir, symlink, lstat, rm } from 'node:fs/promises';
+import { mkdtemp, readFile, writeFile, mkdir, symlink, lstat, rm, realpath } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -23,7 +23,8 @@ assert.equal(execFileSync('git', ['-C', source, 'rev-parse', 'HEAD'], { encoding
 const work = await mkdtemp(path.join(tmpdir(), 'sillymemory-smoke-'));
 const artifacts = path.join(root, 'artifacts'); await mkdir(artifacts, { recursive: true });
 const extension = path.join(source, 'public/scripts/extensions/third-party/sillymemory');
-try { await lstat(extension); } catch { await symlink(root, extension); }
+try { await lstat(extension); } catch (error) { if (error.code !== 'ENOENT') throw error; await symlink(root, extension); }
+assert.equal(await realpath(extension), root, 'Host extension must point to the checkout under test.');
 const cert = path.join(work, 'cert.pem'), key = path.join(work, 'key.pem');
 execFileSync('openssl', ['req', '-x509', '-newkey', 'rsa:2048', '-nodes', '-keyout', key, '-out', cert, '-days', '1', '-subj', '/CN=localhost', '-addext', 'subjectAltName=DNS:localhost,IP:127.0.0.1'], { stdio: 'ignore' });
 const collections = new Map(); const calls = []; let delayedQuery = 0; let staleHits = []; let failQuery = false;
@@ -100,7 +101,7 @@ try {
     await field('endpoint').fill(endpoint); await field('project').fill('synthetic');
     await field('key').fill('wrong-synthetic-key'); await field('connect').click();
     await field('gate').click(); await waitStatus('Authentication failed');
-    check('auth failure is visible', (await status()).includes('Authentication failed'));
+    check('auth failure is visible with reconnect guidance', (await status()).includes('Authentication failed') && (await status()).includes('Use key for this session'));
     await field('key').fill('synthetic-session-key'); await field('connect').click();
     await field('cleanup').click(); await waitStatus('No pending');
     if (faultMode) faults.arm('upsert', 'http', 503);
@@ -185,14 +186,14 @@ try {
     await page.locator('#sillymemory details').evaluate(e => { e.open = true; });
     await field('inspection').scrollIntoViewIfNeeded();
     if (!faultMode) await page.screenshot({ path: path.join(artifacts, 'settings.png') });
-    if (faultMode) { staleHits = []; faultResults = await runFaultScenarios({ page, field, waitStatus, prompt, check, faults, collections, calls }); }
+    if (faultMode) { staleHits = []; faultResults = await runFaultScenarios({ page, field, waitStatus, prompt, check, faults, collections, calls, screenshot: name => page.screenshot({ path: path.join(artifacts, `${name}${artifactTag ? `-${artifactTag}` : ''}.png`) }) }); }
     else { page.once('dialog', dialog => dialog.accept()); await field('delete').click(); await waitStatus('no longer accessible'); }
     check('owned remote deletion leaves no collections', collections.size === 0);
     await page.reload(); await page.locator('#sillymemory').waitFor({ state: 'attached', timeout: 45000 });
     check('final reload again requires key entry', await field('key').inputValue() === '' && !await field('enabled').isChecked());
     if (faultMode) check('fault run has no uncaught browser page errors', errors.length === 0);
     const sourceSha256 = {};
-    for (const file of ['index.js', 'manifest.json', 'settings.html', 'style.css', 'src/client.js', 'src/gate.js', 'src/memory.js', 'scripts/browser-smoke.mjs', 'scripts/fault-scenarios.mjs']) {
+    for (const file of ['index.js', 'manifest.json', 'settings.html', 'style.css', 'src/client.js', 'src/gate.js', 'src/memory.js', 'src/status.js', 'scripts/browser-smoke.mjs', 'scripts/fault-scenarios.mjs']) {
         sourceSha256[file] = createHash('sha256').update(await readFile(path.join(root, file))).digest('hex');
     }
     await writeFile(path.join(artifacts, artifactName), JSON.stringify({ passed: true, faultResults, sourceSha256, time: new Date().toISOString(), sillyTavern: revision, node: process.version, browser: browser.version(), upstream: 'Local HTTPS LambdaDB emulator; no live managed embeddings', checks, pageErrors: errors, requestCount: calls.length, remainingCollections: collections.size }, null, 2));

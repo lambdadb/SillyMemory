@@ -524,6 +524,64 @@ runtime is unchanged from the previous live evaluation; the settings change is a
 source/license notice. This is source publication, not a stable release or a
 hosted deployment.
 
+## Synchronization progress and recovery UI — 2026-09-28
+
+The status panel now distinguishes preparation, waiting for serialized writes,
+ownership checking, outdated-chunk deletion, upload, search, and token budgeting.
+Upload counts include earlier acknowledged chunks from the current session and
+advance only after a response. A failed second batch in a 120-chunk history shows
+50/120; manual Sync retries only the remaining 50+20 chunks. A lost response may
+require re-upserting an accepted batch, and reload intentionally loses session
+acknowledgements while retaining durable ID intent. Counts do not establish
+embedding/index visibility or sustained throughput.
+
+The implementation separates display ownership from prompt validity. Older
+operations cannot overwrite a newer sync or a changed/disabled chat. Invalidation
+also stops queued work and further deletion/upload batches after an already-started
+request settles; uncertain IDs remain in the recovery journal. The client now
+classifies network failures, request timeouts (including response-body timeouts),
+and cancellation separately. HTTP auth/rate-limit/server errors get appropriate
+reconnect or retry guidance. No batch sizes, request deadline, retrieval policy,
+token budget, key persistence, or automatic retry policy changed.
+
+Validation uses Node.js 20.12.0 and 24.15.0, pinned SillyTavern 1.19.0, and Chromium.
+The 44 unit tests pass on both Node versions. Runtime, script and test syntax
+checks pass. The local real-host fault harness exercises 63 checks, including:
+
+- 0/120 before acknowledgement, 50/120 after partial failure, retry without
+  resending the acknowledged first batch, and 119/120 during a subsequent edit;
+- overlapping manual sync without duplicate uploads;
+- authentication guidance, HTTP 429/503, and actual 15-second request timeout;
+- held-query cancellation across edit/deletion/branch/disable;
+- accepted-write response loss, persisted-source reload, key re-entry and recovery;
+- drain-before-delete and complete emulator collection cleanup.
+
+An intermediate rerun failed local journal cleanup after remote deletion had
+already left zero collections. The preserved [failed report](../artifacts/fault-smoke-sync-status-final.json)
+is not a successful validation result. A deterministic regression test reproduced
+keys being skipped when Storage enumeration reordered after removal. Cleanup now
+snapshots the owned namespace keys before removing them, preserving other
+namespaces and host settings. The regression failed before the fix and passes
+afterward; the final browser rerun also checks complete journal cleanup.
+
+The host checkout is isolated from other worktrees. The harness now verifies
+that the extension symlink points to the exact checkout under test. New generation
+reports hash the status module, and summaries reject mixing its versions. Earlier
+live comparison/generation reports remain historical evidence of their recorded
+source hashes; they were not rerun or rewritten for this UI update. No live
+LambdaDB or generation-provider calls were made in this validation.
+
+Review the ignored local [final fault report](../artifacts/fault-smoke-sync-status-verified.json),
+[Node 24 unit log](../artifacts/unit-sync-status-verified.log), and
+[Node 20.12 unit log](../artifacts/unit-node20-sync-status-verified.log).
+The [in-progress panel](../artifacts/sync-progress-sync-status-verified.png) and
+[failed-batch panel](../artifacts/sync-failure-sync-status-verified.png) show synthetic
+content only. Raw artifacts are local evidence and are not included in Git.
+
+```sh
+ST_SOURCE=/absolute/path/to/isolated/pinned/SillyTavern SM_ARTIFACT_TAG=sync-status-verified npm run test:faults
+```
+
 ## Remaining validation
 
 1. Expand evaluation of the latest-user/context policy to strongly ambiguous references and assistant-only continuation. The retrieval-only diagnostic identifies query construction as a sufficient cause of the original misses; the new implementation preserves a separate primary search. The small held-out retrieval fixture does not establish the incremental benefit of the second query; committed-index ANN recall remains a separate unverified boundary. Realistic personal-chat use and histories exceeding the full-context baseline remain unverified. The historical Gemini comparison still lacks one quota-blocked baseline sample; provider-specific streaming usage/accounting also needs broader coverage.

@@ -151,3 +151,79 @@ test('a query failure cancels the sibling and rejects partial memory', async () 
     await assert.rejects(s.engine.retrieve(snapshot(), config, text => text.length), /query failed/);
     assert.equal(count, 2); assert.equal(siblingAborted, true);
 });
+
+test('progress counts only acknowledged batches and retry skips earlier successful uploads', async () => {
+    const s = setup(), snap = snapshot();
+    snap.messages = Array.from({ length: 122 }, (_, index) => ({ ...snap.messages[0], index, text: `Synthetic chunk ${index}` }));
+    const original = s.client.upsert, events = [];
+    let calls = 0;
+    s.client.upsert = async (...args) => { await original(...args); if (++calls === 2) throw new Error('response lost'); };
+    await assert.rejects(s.engine.sync(snap, config, () => true, e => events.push(e)), /response lost/);
+    assert.deepEqual(events.filter(e => e.phase === 'uploading'), [
+        { phase: 'uploading', completed: 0, total: 120 }, { phase: 'uploading', completed: 50, total: 120 },
+    ]);
+    const firstBatch = new Set(s.writes[0].map(d => d.id));
+    const retried = [];
+    await s.engine.sync(snap, config, () => true, e => retried.push(e));
+    assert.deepEqual(retried.filter(e => e.phase === 'uploading').map(e => e.completed), [50, 100, 120]);
+    assert(s.writes.slice(2).every(batch => batch.every(d => !firstBatch.has(d.id))));
+    assert.equal(s.remote.size, 120);
+    assert.deepEqual(new Set(s.engine.journal.read((await documents(snap, owner, config)).scope)), new Set(s.remote.keys()));
+    assert(!JSON.stringify(events).includes('Synthetic chunk'));
+});
+
+test('invalidation during an accepted write suppresses late progress and keeps recovery intent', async () => {
+    const s = setup(), events = []; let release, entered;
+    const started = new Promise(r => { entered = r; });
+    const write = s.client.upsert;
+    s.client.upsert = async (...args) => { await write(...args); entered(); await new Promise(r => { release = r; }); };
+    const pending = s.engine.sync(snapshot(), config, () => true, e => events.push(e));
+    await started; const count = events.length;
+    s.engine.invalidate(); release();
+    assert.equal(await pending, null); assert.equal(events.length, count);
+    assert.equal(s.engine.journal.read((await documents(snapshot(), owner, config)).scope).length, 4);
+    s.client.upsert = write;
+    const retried = []; await s.engine.sync(snapshot(), config, () => true, e => retried.push(e));
+    assert.equal(s.writes.length, 1);
+    assert.deepEqual(retried.at(-1), { phase: 'uploading', completed: 4, total: 4 });
+});
+
+test('deletion progress stops at invalidation and a fresh pass reconciles the remaining IDs', async () => {
+    const s = setup(), snap = snapshot();
+    snap.messages = Array.from({ length: 122 }, (_, index) => ({ ...snap.messages[0], index, text: `Delete fixture ${index}` }));
+    await s.engine.sync(snap, config);
+    snap.messages = snap.messages.slice(-2);
+    const events = [], remove = s.client.deleteIds;
+    s.client.deleteIds = async (...args) => { await remove(...args); s.engine.invalidate(); };
+    assert.equal(await s.engine.sync(snap, config, () => true, e => events.push(e)), null);
+    assert.equal(s.deletes.length, 1); assert.equal(s.remote.size, 20);
+    assert.deepEqual(events.filter(e => e.phase === 'deleting').map(e => e.completed), [0]);
+    s.client.deleteIds = remove;
+    await s.engine.sync(snap, config);
+    assert.equal(s.remote.size, 0);
+    assert.deepEqual(s.engine.journal.read((await documents(snap, owner, config)).scope), []);
+});
+
+test('retrieval reports query completion and budgeting without source text', async () => {
+    const s = setup(), events = [];
+    await s.engine.retrieve(snapshot(), config, t => t.length / 4, () => true, e => events.push(e));
+    assert.deepEqual(events.filter(e => e.phase === 'searching').map(e => [e.completed, e.total]), [[0, 2], [1, 2], [2, 2]]);
+    assert.equal(events.at(-1).phase, 'budgeting');
+    assert(!JSON.stringify(events).includes('compass'));
+});
+
+test('journal cleanup tolerates storage key reordering during removal and preserves other namespaces', () => {
+    class ReorderingStorage extends Storage {
+        removeItem(key) {
+            super.removeItem(key);
+            // Storage enumeration order may change when the number of keys changes.
+            this.values = new Map([...this.values].reverse());
+        }
+    }
+    const storage = new ReorderingStorage(), journal = new Journal(storage, 'owned');
+    journal.write('a', ['id-a']); journal.write('b', ['id-b']); journal.write('c', ['id-c']);
+    storage.setItem('sillymemory:journal:other:a', '["keep"]');
+    storage.setItem('host-setting', 'keep');
+    journal.clear();
+    assert.deepEqual([...storage.values.keys()].sort(), ['host-setting', 'sillymemory:journal:other:a']);
+});
