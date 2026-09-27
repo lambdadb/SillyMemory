@@ -1,0 +1,25 @@
+{
+  "name": "sillymemory",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Long-term memory for SillyTavern.",
+  "type": "module",
+  "scripts": {
+    "test": "node --test tests/*.test.js",
+    "check": "node --check index.js && node --check src/client.js && node --check src/memory.js && node --check src/gate.js",
+    "test:browser": "node scripts/browser-smoke.mjs",
+    "test:faults": "node scripts/browser-smoke.mjs --faults",
+    "test:live": "node scripts/live-smoke.mjs",
+    "test:live:faults": "node scripts/live-smoke.mjs --faults",
+    "test:generation": "node scripts/generation-smoke.mjs",
+    "test:generation:live": "node scripts/generation-smoke.mjs --live-model",
+    "test:korean:live": "node scripts/generation-smoke.mjs --korean-eval",
+    "test:comparison:live": "node scripts/generation-smoke.mjs --comparison"
+  },
+  "engines": {
+    "node": ">=20.12"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.63.0"
+  }
+}

@@ -1,0 +1,37 @@
+# Architecture
+
+## Boundaries
+
+`index.js` adapts the pinned SillyTavern context, events, prompt interceptor, and settings panel. `src/client.js` sends same-origin proxy requests; it has a private in-memory key and sanitizes errors without logging response bodies. `src/gate.js` validates a synthetic lifecycle before memory collection creation. `src/memory.js` is independent synchronization and selection logic.
+
+There is no server plugin. Runtime modules have no external dependencies. Playwright is development-only. The planned GitHub publication remains outside local implementation authorization.
+
+## Identity and source authority
+
+The current SillyTavern chat is authoritative. The owner is a random per-account identity kept in extension settings; its initial save is awaited and read back before the UI permits remote operations. Browser-local configuration and journals are keyed by that owner. Scope is SHA-256 of owner, character avatar filename, and chat filename. Branches have distinct chat filenames. The source revision hashes message position, speaker, role, selected swipe, and full text. A chunk ID contains scope, revision, and chunk ordinal. Insertion/deletion can renumber subsequent messages and require reindexing; content is never deduplicated across scopes.
+
+Only older eligible text is indexed. Chunks are up to 800 Unicode code points by default. They retain message and chunk provenance. The current implementation selects whole chunks and does not perform neighbor expansion. Renaming a chat/character creates a new scope; old remote scopes remain for full collection cleanup.
+
+## Write ordering and recovery
+
+A per-engine promise queue serializes mutations. A session-long Web Lock prevents a second active tab for that account/browser. The local journal writes the union of prior and desired IDs **before** remote requests. Obsolete IDs are deleted; missing current IDs use normal upsert batches of 50. A successful pass replaces the journal with the desired IDs. In-memory acknowledgements skip duplicate writes during the session. Reload conservatively re-upserts current records and deletes obsolete recorded IDs, including writes whose response was lost.
+
+No chat text or API key is persisted in the journal. If local storage fails, remote writes do not begin. An interrupted mutation may still reach the service; the durable intent and next reconciliation repair it. There is no background retry loop against a failing service. A new event, explicit Sync, or next generation retries. The synthetic gate polls readiness with a bounded attempt count; ordinary queries use a 15-second per-request timeout. Full initial indexing can require multiple requests and take longer.
+
+## Retrieval and prompt application
+
+Queries use the default `main` Branch with `consistentRead: true`, not versioning Tags/Aliases. Managed embedding `knn.queryText` uses an owner/scope prefilter. Remote hits are ranking signals: only exact current IDs, ownership, scope, revision, and source text are accepted; injection uses the locally reconstructed text. This prevents eventual-index lag, deleted records, malicious remote text changes, and sibling-chat results from resurrecting stale content.
+
+The `latest-user-plus-context-v1` query policy anchors on the last non-empty user message (or the last non-empty message if no user message exists). It submits that message alone and a separate contextual query containing the anchor followed by the preceding two non-empty messages in reverse order. Each query is capped at 6,000 UTF-16 code units; identical query strings collapse to one request. Assistant answers after the anchor are excluded, including a retained answer during regenerate/swipe. Continuation currently uses the same user anchor; long assistant-only continuations need separate evaluation.
+
+The distinct queries run concurrently, each requesting 30 candidates with the same scope filter. Candidate ranks are interleaved, question first, then context. Scores from separate queries are not added or compared. Current-source validation precedes deduplication; whole passages are accepted while the complete wrapper stays inside the same token budget. This reserves early selection opportunities for the question and the contextual reference without guaranteeing equal token shares. One query failure cancels the sibling and rejects the entire retrieval; the existing full-prompt fallback applies. Two requests can increase managed embedding/query usage and latency compared with the original single query.
+
+An epoch and a full snapshot comparison invalidate work across events, chat switches, disabling, and connection replacement. Pending queries are canceled when possible; canceled server writes are never assumed rolled back. Token counting and the final validity check precede mutation. Failed sync/query/counting or empty selection preserves the full ephemeral prompt. A valid selection replaces older eligible messages while preserving recent full messages and special messages. Only the generated `coreChat` array is spliced; persisted chat objects are untouched.
+
+Injection is an `IN_CHAT` system extension prompt at the recent-message depth, with World Info scanning disabled. Macro braces and legacy `<USER>`/`<CHAR>`-style markers are rendered with fullwidth delimiters before budgeting; recalled macros cannot execute or expand during the host's later substitution pass. Its full wrapper/labels and host newline separators are counted in the configured token budget, additionally capped at a quarter of the host context limit. This does not reserve the model's complete system/persona/response overhead or guarantee the host can fit oversized recent messages. Retrieved dialogue is labeled quoted context rather than instructions; this is not a comprehensive prompt-injection defense.
+
+## Ownership and deletion
+
+Production and synthetic test collections have `application=sillymemory` and the random owner metadata tag. Sync and deletion check these tags. Deletion never adopts a mismatched collection. Full deletion first disables further work, invalidates reads, drains writes, deletes only the owned collection, and verifies API disappearance. Tags are ownership safeguards against accidental selection, not an authorization boundary against another holder of the project API key.
+
+The extension retains target identity before creation so timeout cleanup is retryable. Collection deletion is an API visibility check; physical backup erasure is not established. Browser storage loss, multiple devices, deleted/renamed chats, and account resets can leave orphaned remote scopes requiring project-side cleanup. Cross-device concurrent editing is not supported.

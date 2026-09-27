@@ -1,0 +1,7 @@
+#sillymemory label { display: block; margin: 0.5rem 0; }
+#sillymemory .sm-actions { display: flex; flex-wrap: wrap; gap: 0.4rem; margin: 0.5rem 0; }
+#sillymemory .menu_button { width: auto; }
+#sillymemory pre { white-space: pre-wrap; overflow-wrap: anywhere; max-height: 24rem; overflow: auto; }
+#sillymemory [data-sm="status"] { border-left: 3px solid var(--SmartThemeQuoteColor, #8ab4f8); padding-left: 0.6rem; }
+
+#sillymemory label.sm-toggle { display: flex; align-items: center; gap: 0.5rem; }
