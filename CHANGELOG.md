@@ -1,9 +1,10 @@
 # Changelog
 
 Versions describe the extension, independently of the SillyTavern host version.
-An `Unreleased` entry is a candidate, not a published Git tag or GitHub Release.
+An `Unreleased` entry is a development candidate. A dated entry records a release
+boundary; publication is confirmed by the corresponding Git tag and GitHub Release.
 
-## [0.1.0] - Unreleased
+## [0.1.0] - 2026-09-28
 
 ### Added
 
