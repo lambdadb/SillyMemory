@@ -845,3 +845,70 @@ remain subsequent work. The ignored review artifact is
 3. Expand the completed synthetic three-mode comparison to more repetitions, held-out realistic conversations and constrained-context cases. Measure user usefulness and total costs (including embeddings and LambdaDB), while controlling or explicitly reporting cache effects. The current 54-sample result is a bounded experiment, not a general performance benchmark.
 
 Known limits: no cross-device concurrent editing; local bookkeeping loss can leave orphaned remote data; chat/character rename or complete chat deletion retains old remote scopes until full collection cleanup; external `docsUrl` query responses fail safely; third-party prompt-rewriting extensions are unverified; provider backup erasure is not proven. The public source is licensed under AGPL-3.0-only; a stable release and deployment remain separate from these prototype checks.
+
+## Natural dialogue live adapter and interrupted first run — 2026-09-28
+
+The frozen 16-case protocol now has a real-host runner with isolated sample chats,
+a hard 64-attempt bound, no retry, current-document/token/prompt checks and atomic
+partial reports. A separate summarizer creates blinded human annotation packets
+only for complete, successful, cleaned-up runs; assistant scoring remains
+explicitly provisional. No extension runtime or frozen corpus was changed.
+
+The first attempt made **22 OpenAI requests**: **21 samples completed** (11 off,
+10 on), then `en-workshop-reference/r1/on` received HTTP 500 from OpenAI after
+30.6 seconds. There was no retry. Both owned remote collections were cleaned up
+and verified with 404; all 91 LambdaDB requests were free of transport failures
+and HTTP 5xx. The report remains failed and is rejected by the normal summarizer.
+No 64-sample answer-quality result or human scoring is claimed. The final browser
+secret audit was not reached; post-run local artifacts passed a separate key scan.
+
+All **79 unit tests** pass on Node.js 20.12.0 and 24.15.0, with syntax and release
+metadata checks. See [execution, failure evidence and remaining work](natural-dialogue-live.md).
+
+## Bounded generation retries and complete natural dialogue run — 2026-09-28
+
+The maintainer authorized a transport-only amendment after the initial OpenAI
+500 failure: at most two retries per sample, eight extra attempts per run, only
+explicit 500/502/503/504 responses, with unchanged serialized requests and bounded
+backoff/deadlines. The shipped extension and frozen corpus remain unchanged.
+Local HTTP tests verify 500-to-200 recovery; further regressions cover attempt
+bounds, non-retriable errors, cancellation, Retry-After and report validation.
+All **84 unit tests** pass on Node.js 20.12.0 and 24.15.0.
+
+The separate full run completed **64/64 samples**, **676 integrity checks**, the
+browser/persisted-settings secret audit and verified owned collection cleanup.
+All **64 provider attempts succeeded first time**, so no live retry occurred.
+All **238 LambdaDB requests** were free of transport failures and HTTP 5xx.
+The original failed run is preserved and excluded from aggregation.
+
+Required facts were in memory for all **24/24 answerable on samples**, with a
+maximum **796/800 tokens**. Provisional assistant review found correct answer
+facts and unknown handling in both modes but flagged **4 on-mode answers** that
+recast the user's earlier first-person statements as the assistant's own actions.
+The provisional strict result is **off 32/32, on 28/32**; the human quality gate
+remains unset. Full-history baselines fit the context, and median prompt tokens
+were higher with memory; no recall advantage or token saving is claimed.
+See [complete results and all reviewed answers](natural-dialogue-results.md).
+
+
+## Natural dialogue review corrections — 2026-09-29
+
+PR #15 review identified host-start pacing that did not guarantee upstream-start
+spacing, and missing paired semantic comparisons. The bridge now shares a
+monotonic send clock across samples/retries and records/validates each dispatch.
+The scorer emits 32 case/repetition pairs with both labels and strict-pass deltas.
+Existing annotations yield 0 improvements, 28 ties and 4 regressions; answers,
+annotations, source corpus and the raw live report remain unchanged.
+
+All **90 unit tests** pass on Node.js 20.12.0 and 24.15.0, plus syntax and release
+metadata checks. Mock-clock tests cover preparation variance, early timers,
+concurrent sends, cancellation and retries. A separate local HTTP check uses real
+15-second timers for 500-to-200 recovery and the next sample. No paid provider or
+SillyTavern rerun was performed for these fixes.
+
+The old live report's 676 checks did not verify spacing: 32 of 63 bridge-entry
+gaps are below 15 seconds (minimum 14,222 ms). Exact upstream starts were not
+recorded. The derived summary marks spacing unverified, and the results document
+explicitly records this protocol limitation. Full compliance of the corrected
+runner still requires a new live run; human semantic review remains pending.
+See [results and local review-fix evidence](natural-dialogue-results.md).

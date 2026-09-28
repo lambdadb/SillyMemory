@@ -19,7 +19,8 @@
     "test:comparison:live": "node scripts/generation-smoke.mjs --comparison",
     "test:heldout:live": "node scripts/generation-smoke.mjs --heldout",
     "test:recovery": "node scripts/browser-smoke.mjs --recovery",
-    "test:challenges:live": "node scripts/generation-smoke.mjs --challenges"
+    "test:challenges:live": "node scripts/generation-smoke.mjs --challenges",
+    "test:natural:live": "node scripts/generation-smoke.mjs --natural"
   },
   "engines": {
     "node": ">=20.12"

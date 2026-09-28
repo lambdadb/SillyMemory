@@ -4,11 +4,14 @@ import { chromium } from '@playwright/test';
 import { createServer } from 'node:http';
 import { parseEnv } from 'node:util';
 import { createHash } from 'node:crypto';
-import { readFile, writeFile, mkdir, mkdtemp, rm, realpath } from 'node:fs/promises';
+import { readFile, writeFile, mkdir, mkdtemp, rm, realpath, rename } from 'node:fs/promises';
 import { spawn, execFileSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { NATURAL_RETRY, requestWithRetry } from './provider-retry.mjs';
+import { PROVIDER_SPACING, createSpacedSender, summarizeProviderSpacing } from './provider-spacing.mjs';
+import { verifyNaturalPlan, runNaturalDialogue } from './natural-eval.mjs';
 import { runComparison } from './comparison-eval.mjs';
 import { runChallenges } from './challenge-eval.mjs';
 import { runKoreanEvaluation } from './korean-eval.mjs';
@@ -17,6 +20,11 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const source = process.env.ST_SOURCE || '/tmp/sillymemory-st-source';
 const revision = '06bde939fb1e9c4c8d8641d810f0a916b5bce127';
 const env = parseEnv(await readFile(process.env.SM_ENV_FILE || path.join(root, '.env.local'), 'utf8'));
+const natural = process.argv.includes('--natural');
+const retryTransient = process.argv.includes('--retry-transient');
+if (retryTransient && !natural) throw new Error('--retry-transient requires --natural');
+const retryBudget = { calls: 0, retries: 0 };
+const frozenNatural = natural ? await verifyNaturalPlan(process.env.SM_NATURAL_PLAN) : null;
 const comparison = process.argv.includes('--comparison');
 const setupOnly = process.argv.includes('--comparison-setup');
 const comparisonStart = Number(process.env.SM_COMPARE_START || 0);
@@ -25,44 +33,59 @@ const koreanEvaluation = process.argv.includes('--korean-eval');
 const heldout = process.argv.includes('--heldout');
 const challenges = process.argv.includes('--challenges') || heldout;
 const challengeCount = heldout ? 24 : 12;
-if ([comparison, koreanEvaluation, challenges].filter(Boolean).length > 1) throw new Error('Choose one evaluation mode.');
+if ([comparison, koreanEvaluation, challenges, natural].filter(Boolean).length > 1) throw new Error('Choose one evaluation mode.');
 const challengeStart = Number(process.env.SM_CHALLENGE_START || 0);
 if (!Number.isInteger(challengeStart) || challengeStart < 0 || challengeStart >= challengeCount) throw new Error('Invalid SM_CHALLENGE_START');
 const artifactTag = process.env.SM_ARTIFACT_TAG || '';
 if (artifactTag && !/^[a-zA-Z0-9][a-zA-Z0-9._-]{0,79}$/.test(artifactTag)) throw new Error('Invalid SM_ARTIFACT_TAG.');
-const liveModel = process.argv.includes('--live-model') || koreanEvaluation || comparison || challenges;
+const liveModel = process.argv.includes('--live-model') || koreanEvaluation || comparison || challenges || natural;
 const hostContextTokens = (koreanEvaluation || comparison) ? 32768 : 8192;
 const caseStart = koreanEvaluation ? Number(process.env.SM_CASE_START || 0) : 0;
 if (!Number.isInteger(caseStart) || caseStart < 0 || caseStart > 7) throw new Error('SM_CASE_START must be an integer from 0 to 7.');
 const sampleStart = koreanEvaluation ? Number(process.env.SM_SAMPLE_START ?? caseStart * 2) : 0;
 if (!Number.isInteger(sampleStart) || sampleStart < 0 || sampleStart > 15) throw new Error('SM_SAMPLE_START must be an integer from 0 to 15.');
-let transientRetriesRemaining = 1;
+let transientRetriesRemaining = natural ? 0 : 1;
 if (liveModel && !(env.LLM_BASE_URL && (process.env.SM_MODEL || env.LLM_MODEL) && env.LLM_API_KEY)) throw new Error('Live model requires LLM_BASE_URL, LLM_MODEL, and LLM_API_KEY in .env.local.');
 const model = liveModel ? (process.env.SM_MODEL || env.LLM_MODEL) : 'sillymemory-deterministic-fixture';
-if ((comparison || challenges) && (env.LLM_BASE_URL !== 'https://api.openai.com/v1' || model !== 'gpt-4.1-mini-2025-04-14')) throw new Error('Comparison requires the fixed OpenAI snapshot and endpoint.');
-const generationIntervalMs = liveModel ? 15000 : 0;
+if ((comparison || challenges || natural) && (env.LLM_BASE_URL !== 'https://api.openai.com/v1' || model !== 'gpt-4.1-mini-2025-04-14')) throw new Error('Comparison requires the fixed OpenAI snapshot and endpoint.');
+const generationIntervalMs = liveModel ? PROVIDER_SPACING.minimumIntervalMs : 0;
 const maxOutputTokens = liveModel ? 256 : 100;
 const reasoningEffort = liveModel ? env.LLM_REASONING_EFFORT : undefined;
 if (reasoningEffort && !['none', 'minimal', 'low', 'medium', 'high'].includes(reasoningEffort)) throw new Error('Invalid LLM_REASONING_EFFORT.');
 // Gemini rejects these fields emitted by the pinned host's generic Custom API.
 // Use the host's documented body exclusions, not a prompt-rewriting bridge.
 const excludedParameters = liveModel && new URL(env.LLM_BASE_URL).hostname === 'generativelanguage.googleapis.com' ? ['frequency_penalty', 'logprobs', 'top_logprobs'] : [];
-let lastGenerationStarted = 0;
 const credentials = { endpoint: env.LAMBDADB_BASE_URL, project: env.LAMBDADB_PROJECT_NAME, key: env.LAMBDADB_PROJECT_API_KEY };
 if (!Object.values(credentials).every(Boolean)) throw new Error('LambdaDB configuration is incomplete.');
 if (execFileSync('git', ['-C', source, 'rev-parse', 'HEAD'], { encoding: 'utf8' }).trim() !== revision) throw new Error('Unexpected host revision.');
 if (await realpath(path.join(source, 'public/scripts/extensions/third-party/sillymemory')) !== root) throw new Error('Host extension symlink must point to this checkout.');
 const artifacts = path.join(root, 'artifacts'); await mkdir(artifacts, { recursive: true });
-const modeSuffix = challenges ? `${heldout ? 'heldout' : 'challenges'}${challengeStart ? `-from-${challengeStart}` : ''}` : comparison ? `comparison${comparisonStart ? `-from-${comparisonStart}` : ''}${setupOnly ? '-setup' : ''}` : koreanEvaluation ? `korean-eval${process.env.SM_SAMPLE_START ? `-from-sample-${sampleStart}` : caseStart ? `-from-${caseStart}` : ''}` : liveModel ? 'live-model' : 'fixture-model';
+const modeSuffix = natural ? 'natural' : challenges ? `${heldout ? 'heldout' : 'challenges'}${challengeStart ? `-from-${challengeStart}` : ''}` : comparison ? `comparison${comparisonStart ? `-from-${comparisonStart}` : ''}${setupOnly ? '-setup' : ''}` : koreanEvaluation ? `korean-eval${process.env.SM_SAMPLE_START ? `-from-sample-${sampleStart}` : caseStart ? `-from-${caseStart}` : ''}` : liveModel ? 'live-model' : 'fixture-model';
 const suffix = modeSuffix + (artifactTag ? `-${artifactTag}` : '');
+const reportPath = path.join(artifacts, `generation-${suffix}.json`);
+if (natural) await writeFile(reportPath, JSON.stringify({ passed: false, incomplete: true }), { flag: 'wx' });
+const naturalSourceFiles = ['index.js', 'src/client.js', 'src/gate.js', 'src/memory.js', 'src/status.js', 'scripts/generation-smoke.mjs', 'scripts/provider-spacing.mjs', 'scripts/generation-cleanup.mjs', 'scripts/natural-eval.mjs', 'scripts/natural-dialogue.mjs', 'tests/fixtures/natural-dialogue-v1.json', 'docs/natural-dialogue-evaluation.md', ...(retryTransient ? ['scripts/provider-retry.mjs', 'docs/natural-dialogue-retry.md', 'scripts/natural-summary.mjs', 'scripts/natural-score.mjs'] : [])];
+const naturalSourceSha256 = natural ? Object.fromEntries(await Promise.all(naturalSourceFiles.map(async file => [file, createHash('sha256').update(await readFile(path.join(root, file))).digest('hex')]))) : null;
 const pendingPath = path.join(artifacts, `generation-${suffix}-pending.json`);
 const pending = { collections: [], connectionHash: createHash('sha256').update(JSON.stringify([credentials.endpoint, credentials.project])).digest('hex') };
 await writeFile(pendingPath, JSON.stringify(pending), { flag: 'wx' });
 const work = await mkdtemp(path.join(tmpdir(), 'sillymemory-generation-'));
-const checks = [], generations = [], embeddings = [], vectorQueries = [];
+const checks = [], generations = [], embeddings = [], vectorQueries = [], lambdaRequests = [];
+const lambdaRequestMap = new Map();
+const redact = value => { let output = JSON.stringify(value, null, 2); for (const secret of [credentials.key, env.LLM_API_KEY, credentials.endpoint, credentials.project, env.LLM_BASE_URL].filter(Boolean)) output = output.replaceAll(secret, "[REDACTED]"); return output; };
+async function checkpointNatural() {
+    if (!natural) return;
+    const temporary = `${reportPath}.tmp`;
+    await writeFile(temporary, redact({ passed: false, incomplete: true, evaluation, generations, providerCalls, lambdaRequests, transportProtocol: retryTransient ? NATURAL_RETRY : null, providerSpacing: PROVIDER_SPACING, sourceSha256: naturalSourceSha256 }));
+    await rename(temporary, reportPath);
+}
 let nativeCleanupComplete = !comparison, providerCalls = 0;
 let stage = 'startup', failRetrieval = false, server, browser, page, failure, cleanupComplete = false;
 const assert = (condition, name) => { if (!condition) throw new Error(name); checks.push(name); console.log(`PASS ${name}`); };
+const sendGeneration = createSpacedSender((body, signal) => {
+    providerCalls++;
+    return fetch(`${env.LLM_BASE_URL.replace(/\/$/, '')}/chat/completions`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${env.LLM_API_KEY}` }, body, signal });
+});
 // This loopback test bridge is not an extension component or server plugin.
 // Live provider keys remain in this process; the host only sees its local URL.
 const bridge = createServer(async (req, res) => {
@@ -87,16 +110,27 @@ const bridge = createServer(async (req, res) => {
         const buffers = []; for await (const b of req) buffers.push(b);
         const body = JSON.parse(Buffer.concat(buffers).toString());
         const entry = { stage, messages: body.messages, stream: body.stream, model, maxOutputTokens: body.max_tokens, reasoningEffort: body.reasoning_effort, startedAt: Date.now() };
+        if (natural && (body.model !== model || body.temperature !== 0 || body.max_tokens !== 256)) throw new Error('Frozen model parameters changed');
         entry.requestOptions = Object.fromEntries(Object.entries(body).filter(([key]) => key !== 'messages'));
         generations.push(entry);
         if (liveModel) {
             let upstream; entry.attempts = [];
-            for (;;) {
+            if (retryTransient) {
+                const controller = new AbortController();
+                const cancel = () => { if (!res.writableEnded) controller.abort(); };
+                res.once('close', cancel);
+                upstream = await requestWithRetry({ body: JSON.stringify(body), budget: retryBudget, attempts: entry.attempts, signal: controller.signal,
+                        send: sendGeneration, checkpoint: checkpointNatural });
+            } else for (;;) {
                 if (comparison && (setupOnly || providerCalls >= 55 - comparisonStart)) throw new Error('Generation call bound exceeded');
                 if (challenges && providerCalls >= challengeCount + 1 - challengeStart) throw new Error('Challenge call bound exceeded');
-                providerCalls++;
-                upstream = await fetch(`${env.LLM_BASE_URL.replace(/\/$/, '')}/chat/completions`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${env.LLM_API_KEY}` }, body: JSON.stringify(body), signal: AbortSignal.timeout(90000) });
-                entry.attempts.push({ status: upstream.status, elapsedMs: Date.now() - entry.startedAt });
+                if (natural && providerCalls >= frozenNatural.plan.schedule.length) throw new Error('Natural dialogue call bound exceeded');
+                const attempt = { status: null }; entry.attempts.push(attempt);
+                const attemptStarted = performance.now();
+                try {
+                    upstream = await sendGeneration(JSON.stringify(body), AbortSignal.timeout(90000), attempt);
+                    attempt.status = upstream.status;
+                } finally { attempt.elapsedMs = performance.now() - attemptStarted; }
                 if (upstream.status !== 503 || transientRetriesRemaining === 0) break;
                 transientRetriesRemaining--;
                 await upstream.body?.cancel();
@@ -168,9 +202,6 @@ async function seed(location = 'beneath the cedar tree') {
 }
 async function generate(name, type = 'normal', streaming = false, evaluationOptions) {
     stage = name; const start = generations.length;
-    const remaining = generationIntervalMs - (Date.now() - lastGenerationStarted);
-    if (remaining > 0) await new Promise(resolve => setTimeout(resolve, remaining));
-    lastGenerationStarted = Date.now();
     const continuationPrefix = type === 'continue' ? await page.evaluate(() => SillyTavern.getContext().chat.at(-1)?.mes || '') : '';
     const generationStart = performance.now();
     await page.evaluate(async ({ type, streaming, question }) => {
@@ -178,13 +209,16 @@ async function generate(name, type = 'normal', streaming = false, evaluationOpti
         if (type === 'normal') document.querySelector('#send_textarea').value = question || 'Where is the blue compass? Answer with the location, or UNKNOWN if no fact is available.';
         await SillyTavern.getContext().generate(type);
     }, { type, streaming, question: evaluationOptions?.question });
-    const generationMs = performance.now() - generationStart;
+    const generationElapsedMs = performance.now() - generationStart;
     if (generations.length !== start + 1) throw new Error('Expected exactly one final model request');
     const result = await page.evaluate(() => {
         const c = SillyTavern.getContext();
         return { last: c.chat.at(-1)?.mes, isUser: c.chat.at(-1)?.is_user, chatLength: c.chat.length, inspection: document.querySelector('[data-sm="inspection"]').textContent, chatId: c.getCurrentChatId() };
     });
-    const request = generations.at(-1); request.answer = result.last; request.generationMs = generationMs;
+    const request = generations.at(-1);
+    request.answer = result.last; request.generationElapsedMs = generationElapsedMs;
+    // Exclude only initial pacing; retry waits remain part of generation latency.
+    request.generationMs = generationElapsedMs - (request.attempts?.[0]?.spacingWaitMs || 0);
     request.promptCharacters = JSON.stringify(request.messages).length;
     request.hostTextTokens = await page.evaluate(async messages => SillyTavern.getContext().getTokenCountAsync(messages.map(m => typeof m.content === 'string' ? m.content : JSON.stringify(m.content)).join('\n')), request.messages);
     request.memoryInspection = result.inspection;
@@ -202,15 +236,25 @@ async function generate(name, type = 'normal', streaming = false, evaluationOpti
     return { ...result, request, prompt: JSON.stringify(request.messages) };
 }
 try {
+    if (natural) {
+        stage = 'fixed model availability';
+        const response = await fetch(`${env.LLM_BASE_URL}/models/${encodeURIComponent(model)}`, { headers: { Authorization: `Bearer ${env.LLM_API_KEY}` }, signal: AbortSignal.timeout(30000) });
+        assert(response.ok && (await response.json()).id === model, 'fixed model is available; no substitution');
+    }
     const configPath = path.join(work, 'config.yaml'); await writeFile(configPath, await readFile(path.join(source, 'default/config.yaml')));
     server = spawn(process.execPath, ['server.js', '--configPath', configPath, '--dataRoot', path.join(work, 'data'), '--port', String(port), '--listen', 'false', '--browserLaunchEnabled', 'false', '--corsProxy', 'true'], { cwd: source, stdio: 'ignore' });
     let ready = false;
     for (let i = 0; i < 90; i++) { if (server.exitCode !== null) throw new Error('Host exited'); try { if ((await fetch(url)).ok) { ready = true; break; } } catch {} await new Promise(r => setTimeout(r, 500)); }
     if (!ready) throw new Error('Host startup timeout');
     browser = await chromium.launch(); page = await browser.newPage({ viewport: { width: 1440, height: 1000 } }); page.setDefaultTimeout(20000);
+    if (natural) {
+        page.on('response', response => { const entry = lambdaRequestMap.get(response.request()); if (entry) { entry.status = response.status(); entry.elapsedMs = performance.now() - entry.started; delete entry.started; } });
+        page.on('requestfailed', request => { const entry = lambdaRequestMap.get(request); if (entry) { entry.failed = true; entry.elapsedMs = performance.now() - entry.started; delete entry.started; } });
+    }
     // Persist only non-secret ownership metadata before any collection creation.
     await page.route('**/proxy/**', async route => {
         const req = route.request(); const target = new URL(decodeURIComponent(new URL(req.url()).pathname.split('/proxy/')[1]));
+        if (natural) { const entry = { stage, method: req.method(), path: target.pathname.replace(/^\/projects\/[^/]+/, ''), started: performance.now() }; lambdaRequests.push(entry); lambdaRequestMap.set(req, entry); }
         if (req.method() === 'POST' && target.pathname.endsWith('/collections')) {
             const body = req.postDataJSON(); pending.collections.push({ name: body.collectionName, owner: body.tags.owner });
             await writeFile(pendingPath, JSON.stringify(pending, null, 2));
@@ -230,13 +274,13 @@ try {
     stage = 'configure model connection';
     await page.locator('#main_api').selectOption('openai', { force: true });
     await page.locator('#chat_completion_source').selectOption('custom', { force: true });
-    await page.evaluate(async ({ bridgeUrl, model, maxOutputTokens, reasoningEffort, excludedParameters, hostContextTokens }) => {
+    await page.evaluate(async ({ bridgeUrl, model, maxOutputTokens, reasoningEffort, excludedParameters, hostContextTokens, instruction }) => {
         const { oai_settings } = await import('/scripts/openai.js');
         Object.assign(oai_settings, { custom_url: bridgeUrl, custom_model: model, custom_include_headers: '', custom_include_body: reasoningEffort ? `reasoning_effort: ${reasoningEffort}` : '', custom_exclude_body: excludedParameters.map(name => `- ${name}`).join('\n'), openai_max_context: hostContextTokens, openai_max_tokens: maxOutputTokens, temp_openai: 0, stream_openai: false });
         const { saveSettings } = await import('/script.js'); await saveSettings();
-        const c = SillyTavern.getContext(); const data = new FormData(); data.set('ch_name', 'SillyMemory E2E Mira'); data.set('description', 'A synthetic recall test character. Answer questions only from the supplied conversation.'); data.set('first_mes', 'Ready for a synthetic test.');
+        const c = SillyTavern.getContext(); const data = new FormData(); data.set('ch_name', 'SillyMemory E2E Mira'); data.set('description', instruction || 'A synthetic recall test character. Answer questions only from the supplied conversation.'); data.set('first_mes', 'Ready for a synthetic test.');
         const r = await fetch('/api/characters/create', { method: 'POST', headers: c.getRequestHeaders({ omitContentType: true }), body: data }); if (!r.ok) throw new Error('Character creation failed');
-    }, { bridgeUrl, model, maxOutputTokens, reasoningEffort, excludedParameters, hostContextTokens });
+    }, { bridgeUrl, model, maxOutputTokens, reasoningEffort, excludedParameters, hostContextTokens, instruction: frozenNatural?.plan.generation.instruction });
     await page.reload(); await page.locator('#sillymemory').waitFor({ state: 'attached', timeout: 45000 });
     await page.locator('#rightNavHolder .drawer-toggle').click(); await page.locator('.character_select').filter({ hasText: 'SillyMemory E2E Mira' }).click();
     await page.locator('#api_button_openai').dispatchEvent('click');
@@ -250,7 +294,11 @@ try {
     await page.evaluate(({ endpoint, project, key }) => { for (const [name, value] of Object.entries({ endpoint, project, key })) document.querySelector(`[data-sm="${name}"]`).value = value; }, credentials);
     await field('connect').click(); await field('gate').click(); await waitStatus('Transport gate passed');
     await field('provision').click(); await waitStatus('Memory collection created');
-    if (comparison) {
+    if (natural) {
+        evaluation = {};
+        await runNaturalDialogue({ page, field, openSettings, waitStatus, generate, assert, setStage: value => { stage = value; }, result: evaluation, frozen: frozenNatural, checkpoint: checkpointNatural });
+        events = await page.evaluate(() => globalThis.generationTestEvents);
+    } else if (comparison) {
         evaluation = {};
         await runComparison({ page, field, openSettings, waitStatus, generate, assert, setStage: value => { stage = value; }, bridgeUrl, vectorQueries, startSample: comparisonStart, setupOnly, result: evaluation });
         events = await page.evaluate(() => globalThis.generationTestEvents);
@@ -312,6 +360,8 @@ try {
     // Do not print raw browser exceptions: they can contain typed inputs/URLs.
     console.log(`FAIL ${stage}`);
 } finally {
+    stage = 'cleanup';
+    if (pending.collections.length === 0) { cleanupComplete = true; await rm(pendingPath, { force: true }); }
     if (page && !page.isClosed()) {
         try {
             failRetrieval = false;
@@ -355,11 +405,16 @@ try {
         } catch { console.log('Cleanup incomplete; keep pending resource record.'); }
     }
     const sourceSha256 = {};
-    for (const file of ['index.js','src/client.js','src/gate.js','src/memory.js','src/status.js','scripts/generation-smoke.mjs','scripts/generation-cleanup.mjs','scripts/korean-eval.mjs','scripts/korean-fixture.mjs','scripts/comparison-fixture.mjs','scripts/comparison-eval.mjs','scripts/challenge-eval.mjs','scripts/recall-challenges.mjs','scripts/heldout-fixture.mjs']) sourceSha256[file] = createHash('sha256').update(await readFile(path.join(root, file))).digest('hex');
-    const report = { time:new Date().toISOString(), sillyTavern:revision, lambdaDB:'live', generator:liveModel?'live compatible model':'deterministic test fixture, not a real LLM', model, generationIntervalMs, maxOutputTokens, reasoningEffort, excludedParameters, hostContextTokens, evaluation, embeddings, vectorQueries, nativeCleanupComplete, providerCalls, checks, failure, events, generations, cleanupComplete, sourceSha256, passed:!failure&&cleanupComplete&&nativeCleanupComplete };
+    for (const file of ['index.js','src/client.js','src/gate.js','src/memory.js','src/status.js','scripts/generation-smoke.mjs','scripts/provider-spacing.mjs','scripts/generation-cleanup.mjs','scripts/korean-eval.mjs','scripts/korean-fixture.mjs','scripts/comparison-fixture.mjs','scripts/comparison-eval.mjs','scripts/challenge-eval.mjs','scripts/recall-challenges.mjs','scripts/heldout-fixture.mjs', ...(natural ? ['scripts/natural-eval.mjs', 'scripts/natural-dialogue.mjs', 'tests/fixtures/natural-dialogue-v1.json', 'docs/natural-dialogue-evaluation.md', ...(retryTransient ? ['scripts/provider-retry.mjs', 'docs/natural-dialogue-retry.md', 'scripts/natural-summary.mjs', 'scripts/natural-score.mjs'] : [])] : [])]) sourceSha256[file] = createHash('sha256').update(await readFile(path.join(root, file))).digest('hex');
+    if (natural && Object.entries(naturalSourceSha256).some(([file, digest]) => sourceSha256[file] !== digest)) failure ||= { stage: 'source identity', reason: 'Source changed during execution' };
+    if (natural && !failure) {
+        try { assert(summarizeProviderSpacing(generations, PROVIDER_SPACING).verified, 'actual provider starts respect the 15-second interval'); }
+        catch (error) { failure = { stage: 'provider spacing', reason: error.message }; }
+    }
+    const report = { time:new Date().toISOString(), sillyTavern:revision, lambdaDB:'live', generator:liveModel?'live compatible model':'deterministic test fixture, not a real LLM', model, generationIntervalMs, maxOutputTokens, reasoningEffort, excludedParameters, hostContextTokens, evaluation, embeddings, vectorQueries, ...(natural ? { lambdaRequests, transportProtocol: retryTransient ? NATURAL_RETRY : null, providerSpacing: PROVIDER_SPACING, initialSourceSha256: naturalSourceSha256, managedEmbeddingUsage: null, managedEmbeddingCost: null, semanticScores: null } : {}), nativeCleanupComplete, providerCalls, checks, failure, events, generations, cleanupComplete, sourceSha256, passed:!failure&&cleanupComplete&&nativeCleanupComplete };
     let output = JSON.stringify(report,null,2);
     for (const value of [credentials.key,env.LLM_API_KEY,credentials.endpoint,credentials.project,env.LLM_BASE_URL].filter(Boolean)) output=output.replaceAll(value,'[REDACTED]');
-    await writeFile(path.join(artifacts,`generation-${suffix}.json`),output);
+    await writeFile(reportPath,output);
     await browser?.close(); if (server && server.exitCode===null) {server.kill('SIGTERM');await new Promise(r=>server.once('exit',r));}
     await new Promise(r=>bridge.close(r)); await rm(work,{recursive:true,force:true});
 }
