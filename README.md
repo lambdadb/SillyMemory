@@ -6,16 +6,18 @@ Long-term memory for SillyTavern.
 
 An installable, experimental UI extension for character chats. SillyMemory keeps recent messages intact and replaces older plain-text history with relevant source passages under a fixed memory token budget. It uses LambdaDB managed embeddings through SillyTavern's built-in CORS proxy. No server plugin or LambdaDB modification is required.
 
-**Validation status:** experimental. The sync-status update has 44 passing unit tests on Node.js 20.12.0 and 24 and expanded real-host/emulator fault coverage (see the [validation record](docs/validation.md)). The merged runtime also passed 15 live LambdaDB recovery checks and 45 full-generation checks with nine real OpenAI answers; all nine matched the narrow synthetic facts. Six requests injected memory within the configured 220-token budget, and both runs confirmed owned collection cleanup. Historical latest-user/context evaluation completed 54 scheduled real OpenAI answers: each mode scored 18/18, while SillyMemory actually injected memory in 16 answers and used full-source fallback in two. Historical injections fit 800 tokens; median input was 9,420 tokens without memory and 1,439 with SillyMemory. Large managed writes intermittently exceeded the unchanged 15-second request deadline. These bounded synthetic results do not establish general reliability or uniformly successful retrieval. See [query policy and service observations](docs/query-policy.md) and the [fixed comparison protocol](docs/comparison-evaluation.md).
+**Validation status:** experimental. The current suite passes 68 unit tests on Node.js 20.12.0 and 24, plus 188 real-host/emulator checks including two host SIGKILL/restarts and 24 repeated chat/branch cycles. A new fixed 12-case English/Korean evaluation made 24 real OpenAI requests: memory-on selected the target and answered with its code in 12/12 cases, with 11/12 strict code-only answers. One Korean continuation added a suffix. Maximum injection was 797/800 tokens, and owned remote collections were cleaned up. These are small synthetic cases and bounded repetition, not general quality or long-duration reliability guarantees. See [the held-out protocol and results](docs/heldout-recovery.md), [earlier development cases](docs/recall-challenges.md), and [validation record](docs/validation.md).
+
+The real Git URL installation/update check passed 17 assertions for the `SillyMemory` URL, including settings retention and session-key clearing. This tested two unreleased 0.1.0 commits, not an upgrade between published releases; see the [installation validation](docs/validation.md#repository-naming-and-installation--2026-09-28).
 
 ## Supported host
 
 The development baseline is **SillyTavern 1.19.0**, pinned to commit [`06bde939fb1e9c4c8d8641d810f0a916b5bce127`](https://github.com/SillyTavern/SillyTavern/tree/06bde939fb1e9c4c8d8641d810f0a916b5bce127). Other revisions are unverified. Use a browser with Web Crypto, Web Locks, and `AbortSignal.any` (the automated browser test uses Chromium). Serve SillyTavern on localhost or HTTPS. One active SillyMemory tab per SillyTavern account/browser profile is enforced with a Web Lock.
 
-## Install locally
+## Install
 
-1. Install the pinned SillyTavern revision using its normal Node.js setup. Run `npm ci` in that checkout.
-2. Copy this repository into `SillyTavern/data/<user-handle>/extensions/sillymemory`, or symlink it into `SillyTavern/public/scripts/extensions/third-party/sillymemory` for local development. The extension itself has no runtime npm dependencies or build step. Do not install two copies.
+1. Prepare SillyTavern **1.19.0** and Git on the host. Other host revisions are unverified.
+2. Open **Extensions → Install extension**, enter `https://github.com/lambdadb/SillyMemory`, leave the optional branch/tag field empty, and choose **Install just for me** (or **Install** for a non-admin account). Review SillyTavern's third-party-extension prompt and confirm. The default branch is `main`; `develop` and PR branches are for development. The extension has no runtime npm dependencies or build step. Do not install two copies.
 3. Set this in SillyTavern's `config.yaml` and **restart SillyTavern**:
 
    ```yaml
@@ -29,7 +31,30 @@ The development baseline is **SillyTavern 1.19.0**, pinned to commit [`06bde939f
 7. If a test fails, use **Clean up test collection**. Pending test identity is preserved across reloads so cleanup can be retried after reconnecting. A failed cleanup is not reported as successful.
 8. Click **Create memory collection**, select a character chat, then enable memory. Default settings retain 12 recent messages and allow 800 memory tokens, including passage labels and the wrapper. Configure the bounds in the panel. Disable built-in Vector Storage chat vectorization and other prompt-rewriting memory extensions for this prototype.
 
-Source repository: [lambdadb/sillymemory](https://github.com/lambdadb/sillymemory). Clone it with `git clone https://github.com/lambdadb/sillymemory.git` and follow the setup above. The default branch contains the experimental MVP; no stable release is tagged.
+For local development, symlink the checkout into
+`SillyTavern/public/scripts/extensions/third-party/sillymemory`; do not also install
+a user-scoped copy. Manual copies without Git metadata cannot use the normal
+Git-based update flow.
+
+## Version and updates
+
+**0.1.0 is experimental.** See [CHANGELOG.md](CHANGELOG.md) for changes and
+[GitHub Releases](https://github.com/lambdadb/SillyMemory/releases) for published
+versions. A dated changelog entry can precede publication. The `main` branch is
+the public installation baseline; `develop` contains ongoing work. The version
+shown in the extension manager comes from `manifest.json`.
+
+Open **Extensions → Manage extensions** and use SillyMemory's update button,
+then reload. It pulls your installed branch, normally `main`; it does not select
+the newest GitHub Release/tag. Automatic updates are currently disabled. After
+reload, re-enter the LambdaDB key and re-enable memory. Budget, recent-message
+settings and installation ownership are retained. Normal updates do not require
+deleting the owned memory collection or reinstalling the extension.
+
+For rollback and maintainer publication steps, see [RELEASING.md](RELEASING.md).
+Use only a tag listed in the published releases for rollback. Disable memory
+first if an update causes a problem; code rollback does not restore chat edits
+or undo remote data changes.
 
 ## Use and behavior
 
@@ -37,7 +62,7 @@ Source repository: [lambdadb/sillymemory](https://github.com/lambdadb/sillymemor
 - Send messages normally. Message generation, edits, selected swipes, deletion, chat changes, and reload/re-enable trigger reconciliation. Click **Sync this chat** to retry after a network failure. For authentication errors, re-enter the key using **Use key for this session** first; for rate limits or timeouts, wait before retrying. Successful batches are skipped within the session. A lost response can require an idempotent re-upsert, and reload conservatively rechecks current records after key re-entry and re-enabling memory. Progress is not saved across reloads.
 - Only older plain-text messages are embedded. Recent messages stay in the generation array. Files, media, and tool messages are not indexed; group chats and chats with system tool invocations are bypassed.
 - Character avatar identity, chat filename (including native branch filenames), and installation owner identity define a strict hashed scope. A native branch gets its own index; inherited chat text is reindexed there.
-- Before generation, the extension synchronizes current source text and retrieves matching chunks with `knn.queryText`: the latest user message is searched alone, and separately with the preceding two messages as context. It interleaves the two result lists, validates every result against current local text and IDs, and token-counts the complete injected string using the host tokenizer. Macro braces and legacy macro markers are shown with fullwidth delimiters so recalled dialogue stays literal during host prompt assembly.
+- Before generation, the extension synchronizes current source text and retrieves matching chunks with `knn.queryText`: the latest user message is searched alone, and separately with the preceding two messages as context. Explicit **Continue** generation instead anchors on the latest message being extended; regenerate and swipe still use the user question. It interleaves the two result lists, validates every result against current local text and IDs, and token-counts the complete injected string using the host tokenizer. Macro braces and legacy macro markers are shown with fullwidth delimiters so recalled dialogue stays literal during host prompt assembly.
 - If at least one valid passage fits, older eligible full messages are removed from the ephemeral prompt array and the selected passages are injected. Source chat messages on disk are not modified. If nothing fits or an operation fails, the original prompt remains. A mid-request chat change aborts that generation; generate again in the new chat.
 - **Last injected memory** shows the source message numbers, speakers, passages, and token count. A separate total model prompt budget remains SillyTavern's responsibility; oversized recent history may still be truncated by the host.
 - **Disable** stops synchronization/retrieval and clears the injection. It retains remote data. **Forget key** also disables memory. Reload starts disabled and requires key re-entry.
@@ -72,6 +97,7 @@ new reports. Historical summaries require their exact recorded source versions.
 npm ci
 npm test
 npm run check
+npm run check:release
 npx playwright install chromium
 ST_SOURCE=/absolute/path/to/pinned/SillyTavern npm run test:browser
 ```
@@ -124,6 +150,21 @@ Aggregate completed, nonoverlapping runs with `node scripts/comparison-summary.m
 For the search-only diagnosis, run `SM_ARTIFACT_TAG=diagnosis-next node scripts/retrieval-diagnostic.mjs`. It compares four query constructions, actual managed `queryText` results, and an identical-vector server/exhaustive control without any text-generation calls. It still incurs LambdaDB embedding and data usage. The completed experiment reproduced all six old-fact misses in exhaustive search with the current query; the latest user message alone retrieved and selected all six. This is a retrieval result, not a new answer-quality score. See the [diagnostic and committed-index limitation](docs/retrieval-diagnostic.md).
 
 The live harnesses require Node.js 20.12+ for `util.parseEnv`; recorded runs use Node.js 24.15.0.
+
+For the fixed ambiguous-reference, continuation and context-overflow evaluation,
+see [the protocol and results](docs/recall-challenges.md). Run
+`npm run test:challenges:live` only with an authorized synthetic-data scope and
+the configured provider credentials; it makes 12 scheduled model requests plus
+managed embedding operations. A separate existing credential file can be read
+by the generation harness with `SM_ENV_FILE=/absolute/path/to/.env.local` without
+copying it into the worktree.
+
+For 12 new counterbalanced cases (24 real model answers), use
+`npm run test:heldout:live`; aggregate with
+`node scripts/challenge-summary.mjs --heldout <reports...> --output <summary.json>`.
+`npm run test:recovery` adds two real host SIGKILL/restarts and 24 repeated
+edit/swipe/delete cycles to the emulator fault suite. See the
+[held-out and recovery protocol](docs/heldout-recovery.md) for limits and evidence.
 
 See [architecture](docs/architecture.md), [pinned contracts](docs/contracts.md), and [validation and remaining checks](docs/validation.md).
 

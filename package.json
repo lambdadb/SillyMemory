@@ -6,6 +6,8 @@
   "type": "module",
   "scripts": {
     "test": "node --test tests/*.test.js",
+    "check:release": "node scripts/check-release.mjs",
+    "test:install": "node scripts/install-smoke.mjs",
     "check": "node --check index.js && node --check src/client.js && node --check src/memory.js && node --check src/gate.js && node --check src/status.js",
     "test:browser": "node scripts/browser-smoke.mjs",
     "test:faults": "node scripts/browser-smoke.mjs --faults",
@@ -14,7 +16,10 @@
     "test:generation": "node scripts/generation-smoke.mjs",
     "test:generation:live": "node scripts/generation-smoke.mjs --live-model",
     "test:korean:live": "node scripts/generation-smoke.mjs --korean-eval",
-    "test:comparison:live": "node scripts/generation-smoke.mjs --comparison"
+    "test:comparison:live": "node scripts/generation-smoke.mjs --comparison",
+    "test:heldout:live": "node scripts/generation-smoke.mjs --heldout",
+    "test:recovery": "node scripts/browser-smoke.mjs --recovery",
+    "test:challenges:live": "node scripts/generation-smoke.mjs --challenges"
   },
   "engines": {
     "node": ">=20.12"
@@ -25,6 +30,6 @@
   "license": "AGPL-3.0-only",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/lambdadb/sillymemory.git"
+    "url": "git+https://github.com/lambdadb/SillyMemory.git"
   }
 }

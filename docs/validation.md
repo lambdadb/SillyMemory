@@ -649,10 +649,176 @@ ignored local evidence in the execution checkout's `artifacts/` directory:
 answers contain only the synthetic fixture. The tests do not use personal chats,
 change LambdaDB, or deploy the extension.
 
+## Continuation and context-overflow evaluation — 2026-09-28
+
+The [fixed six-case protocol](recall-challenges.md) adds English/Korean ambiguous
+references, seven-message assistant-only continuation, and histories exceeding
+an 8,192-token host context. Two complete live runs used the same frozen fixture,
+grader and model configuration: 12 OpenAI answers and 93 integrity checks each.
+The baseline policy selected target memory in 4/6 on-mode cases; explicit
+continuation was still querying the earlier user topic. The adapter now passes
+the host generation type, and `latest-user-or-continuation-plus-context-v2`
+anchors only explicit continuation on the latest message being extended.
+Normal, regenerate and swipe retain the original user anchor.
+
+The retest selected target memory in all 6/6 on-mode cases (maximum 799/800
+tokens). Strict answers improved 4/6 to 5/6; the remaining answer contains the
+correct Korean label plus a format-disallowed suffix. This is a development-set
+retest, not independent held-out validation. Both runs confirmed owned remote
+cleanup and absence of persisted keys. The final runtime also passed 68
+real-host/emulator fault checks and 51 unit tests on Node.js 20.12.0 and 24.15.0.
+Raw reports, hashes, query ranks, per-case results, baseline truncation and
+limitations are recorded in the linked protocol. Earlier 54-answer comparisons
+are historical evidence of their own runtime revision.
+
+PR #7 review added both generation and cleanup harness hashes to the offline
+summary's required source identity. Changed/missing-hash regressions bring the
+unit suite to 53 passing tests on both supported Node versions. Separate
+reaggregation of the existing live reports passed with unchanged sample rows
+and metrics; this review fix did not rerun paid or emulator tests. See the
+[review regression record](recall-challenges.md#review-regression--2026-09-28).
+
+## Held-out and host-restart validation — 2026-09-28
+
+The [frozen held-out/recovery protocol](heldout-recovery.md) adds new
+counterbalanced object references, natural assistant-only continuation, and
+context-overflow cases without changing the v2 runtime. The protocol separates
+strict answer format from expected-code evidence and limits the live evaluation
+to 24 scheduled answers plus one bounded transient retry.
+
+All 24 scheduled live answers completed with 183 integrity checks and owned
+remote cleanup. Memory-on selected the target in 12/12 cases and returned the
+expected code in 12/12, with 11/12 strict format matches. Memory-off returned the
+expected code in 8/12 and strict matches in 6/12; all four truncated overflow
+baselines answered UNKNOWN. One on-mode Korean continuation added `이다.`.
+Maximum injection was 797/800 tokens. This is one response per condition on new
+synthetic cases, not a general quality guarantee. Runtime code was unchanged.
+The unit suite passes 58 tests on both supported Node versions.
+
+The expanded real-host/emulator suite passed 188 checks: two actual SIGKILL
+restarts at controlled remote acceptance boundaries, 24 sequential parent/branch
+edit/swipe/delete cycles, four periodic reloads, and the existing fault suite.
+The recovery portion took 75.2 seconds; this is bounded repetition, not a
+long-duration soak or a live LambdaDB outage. Exact remote IDs, recent source,
+budget, deletion filtering and no redundant upserts held; final emulator
+collections and journal were empty, with no uncaught primary-page errors.
+
+The PR #8 review follow-up now rejects any report without explicit successful
+completion or with a failure record, even with successful cleanup or `--partial`.
+The expanded 60-test unit suite passes on Node 20.12.0 and 24.15.0; all three
+existing live reports reaggregate with unchanged rows and metrics. No additional
+live calls were needed. See the [review integrity regression](heldout-recovery.md#review-integrity-regression--2026-09-28).
+
+## Git URL installation and release metadata — 2026-09-28
+
+The isolated SillyTavern 1.19.0 host at
+`06bde939fb1e9c4c8d8641d810f0a916b5bce127` passed **15 assertions** using Chromium,
+the actual Extensions install/update UI, and the public GitHub repository.
+Installation and update both returned HTTP 200. This was a real Git clone/pull,
+not an extension symlink or mocked installation endpoint.
+
+| Identity | Value |
+| --- | --- |
+| Installed public main | `7826a76be1f776fdb309ffad6a94421f6eca2c2f` |
+| Updated candidate branch | `chore/release-process` |
+| Updated candidate commit | `13d4ff9a2efe21c48b7bb5eb9363802b87ad0015` |
+| Common ancestor used to seed update | `aea782941ba363869b227381523be23271d917a0` |
+| Install harness SHA-256 | `99598f77b668464afd08323e0f5b517466f4f5e86349e47bd1b26e39786a2a6a` |
+| Initial / updated manifest version | `0.1.0` / `0.1.0` |
+
+The test first installed default main through **Install just for me**. In that
+disposable installed clone, it then created a branch tracking the published
+candidate at the common ancestor, after asserting that ancestor's complete tree
+was identical to installed main. The actual UI Update button pulled the candidate.
+Main currently has a promotion merge wrapper that is not an ancestor of develop;
+an initial test seeded directly at that divergent commit failed with update HTTP
+500. Correcting the fixture ancestry produced two successful 15-check runs. This
+is evidence for the candidate-branch Git update mechanism, not a published
+main-to-main release upgrade or a cross-version data migration.
+
+The successful run checked branding, real user-scoped Git installation, manifest
+version display, exact update commit, retention of owner/nonsecret configuration
+and recent-message/token-budget settings, key clearing and disabled memory after
+reload, detached-commit rollback, and return to the candidate. Both commits use
+0.1.0 and compatible settings. There is no published tag to test tag rollback.
+No LambdaDB or model requests were made: proxy traffic was blocked and remained
+zero. The key was synthetic and absent from persistent browser state. There were
+no uncaught page errors, and the disposable profile was removed.
+
+The current suite passes **64 unit tests** on Node.js 20.12.0 and 24.15.0.
+Release checks cover all four version locations, SemVer, missing/duplicate/empty
+notes, invalid calendar dates, and publication date/tag mismatches. Runtime and
+development-script syntax checks pass. CLI checks accept the current Unreleased
+candidate and reject publication checks without a date or with a mismatched tag.
+Runtime files remain unchanged from develop. No tag was pushed, so the actual
+tag-triggered GitHub workflow and published-release upgrade remain untested.
+
+Reproduce with the isolated host and a published candidate branch using the
+[installation smoke protocol](../RELEASING.md#installation-smoke-test). The final
+ignored local evidence is [git-install-v3.json](../artifacts/git-install-v3.json),
+[execution log](../artifacts/git-install-v3.log), and
+[version display screenshot](../artifacts/git-install-v3.png); unit logs are
+[Node 20](../artifacts/unit-release-20.log) and
+[Node 24](../artifacts/unit-release-24.log). These files live in the execution
+worktree and are not included in fresh clones. The earlier `git-install-v1.*`
+failed-fixture evidence and `git-install-v2.*` successful evidence are retained
+locally. Later documentation-only commits do not change the tested harness or
+runtime identities. See [release rules](../RELEASING.md) for main promotion and
+separately approved tag/Release publication.
+
+## Release promotion review regression — 2026-09-28
+
+PR #9 review identified that a later main promotion could reuse the dated 0.1.0
+entry and all existing version fields. The main-target PR check now reads the
+exact base commit and fetched version tags. It requires higher SemVer precedence
+after a dated main entry and rejects reuse of a tagged version, including changes
+to build metadata alone. First publication remains possible with the initial
+untagged version when main has no dated entry. The existing metadata check still
+requires notes for the candidate version.
+
+Four additional tests cover numeric/prerelease precedence, first versus subsequent
+publication, existing tag reuse, and the actual CLI in a disposable Git repository.
+The CLI fixture verifies missing historical changelog support, undated candidate
+rejection, version advancement before tag creation, tag reuse rejection, missing
+new-version notes, and invalid base refs. Invocation through a symlink also caught
+and fixed an entrypoint guard that could silently skip the CLI on aliased paths.
+All **68 unit tests** pass on Node.js 20.12.0 and 24.15.0. Syntax and current-candidate
+metadata checks pass. The Git fixture creates only local synthetic tags and is
+removed afterward; no public tags, main promotions or releases were performed.
+The conditional main-target workflow is covered by local CLI tests, not an actual
+main-target GitHub PR. Runtime and install harness files are unchanged, so the
+previous 15-check browser installation result remains separate evidence.
+
+## Repository naming and installation — 2026-09-28
+
+The public repository is `lambdadb/SillyMemory`; main remains the default branch
+and develop the integration branch. Installation and source/license links use
+`https://github.com/lambdadb/SillyMemory`. The installation smoke test uses this
+single URL and checks the `SillyMemory` directory spelling. The npm package,
+internal settings keys and development symlink use lowercase technical identifiers.
+Runtime JavaScript, manifest and lockfile are unchanged from develop.
+
+The isolated macOS/Chromium run against pinned SillyTavern 1.19.0
+(`06bde939fb1e9c4c8d8641d810f0a916b5bce127`) passed **17 assertions**, with
+install/update HTTP 200. It installed main
+`7826a76be1f776fdb309ffad6a94421f6eca2c2f` and updated through the actual UI to
+candidate `3abfce5eaf3db9db334b19b1e293862af8a665fc`. The update fixture used
+common ancestor `aea782941ba363869b227381523be23271d917a0`, whose tree equals
+installed main. Both builds identify as 0.1.0. The recorded harness SHA-256 is
+`3d1c90884f18753b69984ddf6e3a650769abd50fb6b3b5ba1f8540fa01454403`.
+
+Checks covered directory spelling, source/license links, version display, exact
+update commit, owner/configuration retention, key clearing, disabled memory after
+reload, and commit rollback/return. No LambdaDB/model calls or uncaught page errors
+occurred; the temporary profile was removed. These are synthetic pre-release
+checks, not a published cross-version upgrade or migration test. The ignored
+local report is [branding-single-url.json](../artifacts/branding-single-url.json),
+with matching `.log` and `.png` files in the execution worktree.
+
 ## Remaining validation
 
-1. Expand evaluation of the latest-user/context policy to strongly ambiguous references and assistant-only continuation. The retrieval-only diagnostic identifies query construction as a sufficient cause of the original misses; the new implementation preserves a separate primary search. The small held-out retrieval fixture does not establish the incremental benefit of the second query; committed-index ANN recall remains a separate unverified boundary. Realistic personal-chat use and histories exceeding the full-context baseline remain unverified. The historical Gemini comparison still lacks one quota-blocked baseline sample; provider-specific streaming usage/accounting also needs broader coverage.
-2. Expand the controlled fault coverage above to realistic sustained load, host/server interruption, and additional ambiguous commit orderings. Injected HTTP statuses and response delays do not establish actual service availability or outage behavior.
+1. Extend the new 12-case evaluation to more natural histories and repeated observations. Counterbalanced references and natural assistant-only continuations now have live coverage, but there is no controlled query ablation or committed-index ANN ground truth. Realistic personal-chat use remains unverified, and the four overflow cases use repetitive synthetic histories. The historical Gemini comparison still lacks one quota-blocked baseline sample; provider-specific streaming usage/accounting needs broader coverage.
+2. Extend the two host-crash cases and 24-cycle sequential test to hours/days of realistic sustained load and live-service interruption. The completed emulator run verifies recovery at controlled write boundaries; injected responses and 75 seconds of repetition do not establish service availability, multi-device consistency or long-duration reliability.
 3. Expand the completed synthetic three-mode comparison to more repetitions, held-out realistic conversations and constrained-context cases. Measure user usefulness and total costs (including embeddings and LambdaDB), while controlling or explicitly reporting cache effects. The current 54-sample result is a bounded experiment, not a general performance benchmark.
 
 Known limits: no cross-device concurrent editing; local bookkeeping loss can leave orphaned remote data; chat/character rename or complete chat deletion retains old remote scopes until full collection cleanup; external `docsUrl` query responses fail safely; third-party prompt-rewriting extensions are unverified; provider backup erasure is not proven. The public source is licensed under AGPL-3.0-only; a stable release and deployment remain separate from these prototype checks.

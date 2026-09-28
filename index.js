@@ -83,7 +83,7 @@ globalThis.sillymemory_intercept = async (chat, contextSize, abort, type) => {
         // The extension budget includes its complete wrapper; SillyTavern still manages
         // total prompt overhead, character instructions, and final model context limits.
         config.budget = Math.min(config.budget, Math.max(0, Math.floor(contextSize / 4)));
-        const result = await instance.retrieve(snapshot, config, text => context().getTokenCountAsync(text), unchangedPrompt, operation.update);
+        const result = await instance.retrieve(snapshot, config, text => context().getTokenCountAsync(text), unchangedPrompt, operation.update, type);
         if (!valid()) { operation.finish('Memory operation canceled because the prompt changed. Generate again.'); abort(true); return; }
         if (!result?.text) { operation.finish('No current matching memory fits the budget. Original prompt retained.'); return; }
         // Protect the most recent prompt messages, including during swipe/regenerate.

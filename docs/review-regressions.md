@@ -1,13 +1,13 @@
 # Promotion review regressions — 2026-09-28
 
-The two P2 findings on [PR #5](https://github.com/lambdadb/sillymemory/pull/5)
+The two P2 findings on [PR #5](https://github.com/lambdadb/SillyMemory/pull/5)
 were reproduced against the merged sync-status adapter:
 
-- [Quiet generation](https://github.com/lambdadb/sillymemory/pull/5#discussion_r4116204769)
+- [Quiet generation](https://github.com/lambdadb/SillyMemory/pull/5#discussion_r4116204769)
   consumed the 400 ms event debounce without replacing it with synchronization.
   It now clears the memory injection while preserving both pending and in-flight
   sync. Only a generation that proceeds to retrieval cancels the debounce timer.
-- [Lock-conflict status](https://github.com/lambdadb/sillymemory/pull/5#discussion_r4116204773)
+- [Lock-conflict status](https://github.com/lambdadb/SillyMemory/pull/5#discussion_r4116204773)
   was overwritten by key-entry guidance after a chat event despite disabled
   controls. Scheduling now leaves the status untouched when the session is not
   ready. No lock or credential policy changed.
@@ -46,7 +46,7 @@ harness syntax checks also pass.
 
 ## Follow-up: quiet/normal retrieval overlap
 
-[The follow-up P2 finding on PR #6](https://github.com/lambdadb/sillymemory/pull/6#discussion_r4118248799)
+[The follow-up P2 finding on PR #6](https://github.com/lambdadb/SillyMemory/pull/6#discussion_r4118248799)
 identified an overly broad preservation of earlier work: a normal retrieval
 could finish after a quiet call and restore the global memory injection.
 `fault-smoke-quiet-overlap-red.json` reproduced this with a held query through
