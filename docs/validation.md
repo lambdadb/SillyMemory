@@ -845,3 +845,22 @@ remain subsequent work. The ignored review artifact is
 3. Expand the completed synthetic three-mode comparison to more repetitions, held-out realistic conversations and constrained-context cases. Measure user usefulness and total costs (including embeddings and LambdaDB), while controlling or explicitly reporting cache effects. The current 54-sample result is a bounded experiment, not a general performance benchmark.
 
 Known limits: no cross-device concurrent editing; local bookkeeping loss can leave orphaned remote data; chat/character rename or complete chat deletion retains old remote scopes until full collection cleanup; external `docsUrl` query responses fail safely; third-party prompt-rewriting extensions are unverified; provider backup erasure is not proven. The public source is licensed under AGPL-3.0-only; a stable release and deployment remain separate from these prototype checks.
+
+## Natural dialogue live adapter and interrupted first run — 2026-09-28
+
+The frozen 16-case protocol now has a real-host runner with isolated sample chats,
+a hard 64-attempt bound, no retry, current-document/token/prompt checks and atomic
+partial reports. A separate summarizer creates blinded human annotation packets
+only for complete, successful, cleaned-up runs; assistant scoring remains
+explicitly provisional. No extension runtime or frozen corpus was changed.
+
+The first attempt made **22 OpenAI requests**: **21 samples completed** (11 off,
+10 on), then `en-workshop-reference/r1/on` received HTTP 500 from OpenAI after
+30.6 seconds. There was no retry. Both owned remote collections were cleaned up
+and verified with 404; all 91 LambdaDB requests were free of transport failures
+and HTTP 5xx. The report remains failed and is rejected by the normal summarizer.
+No 64-sample answer-quality result or human scoring is claimed. The final browser
+secret audit was not reached; post-run local artifacts passed a separate key scan.
+
+All **79 unit tests** pass on Node.js 20.12.0 and 24.15.0, with syntax and release
+metadata checks. See [execution, failure evidence and remaining work](natural-dialogue-live.md).
