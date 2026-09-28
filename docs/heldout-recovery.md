@@ -72,11 +72,14 @@ node scripts/challenge-summary.mjs --heldout \
 ST_SOURCE=/path/to/pinned/host SM_ARTIFACT_TAG=recovery-v1 npm run test:recovery
 ```
 
-For interrupted evaluation, use a new artifact tag and `SM_CHALLENGE_START=N`
-with the first missing index (0–23), then supply all report paths to the summary.
-Preserve the fixture/runtime/harness identity. A partial summary requires
-`--partial` and does not meet completion. Clear pending owned cleanup before
-resuming. Raw reports stay in ignored local `artifacts/`.
+Only reports with `passed: true`, no failure record and verified cleanup are
+eligible for aggregation. `--partial` relaxes sample completeness only; it cannot
+bypass an integrity failure. Preserve failed/interrupted reports for diagnosis,
+complete owned cleanup, then rerun the full evaluation with a new artifact tag.
+Do not combine a failed prefix with a successful suffix. `SM_CHALLENGE_START=N`
+(0–23) can run a diagnostic suffix, but cannot repair a failed report. When
+combining nonoverlapping successful reports, preserve fixture/runtime/harness
+identity. Raw reports stay in ignored local `artifacts/`.
 
 ## Recovery result — 2026-09-28
 
@@ -166,3 +169,27 @@ Local live evidence:
 - [Historical v1 compatibility summary](../artifacts/historical-baseline-compatibility.json)
 - [Historical v2 compatibility summary](../artifacts/historical-v2-compatibility.json)
 - [Source identity, credential and cleanup verification](../artifacts/verification.json)
+
+
+## Review integrity regression — 2026-09-28
+
+PR #8 review found that successful cleanup alone allowed a failed run into the
+summary, including one that failed its secret audit after producing all answers.
+Aggregation now requires `passed === true` and no failure record, for both
+protocols and in partial mode. Regression cases cover false, missing and
+non-boolean success flags, and a contradictory success flag with failure data.
+All **60 unit tests** pass on Node.js 20.12.0 and 24.15.0.
+
+The three existing successful live reports were reaggregated without changing
+rows or metrics. The complete 24-sample report, cloned in memory with a synthetic
+late audit failure, is rejected in both full and partial modes. No real audit
+failed and no additional model, host or emulator run was made for this fix.
+
+Review evidence:
+
+- [Reviewed held-out summary](../artifacts/heldout-summary-v1-reviewed.json)
+- [Reviewed historical baseline](../artifacts/historical-baseline-reviewed.json)
+- [Reviewed historical v2](../artifacts/historical-v2-reviewed.json)
+- [Offline review verification](../artifacts/pr8-review-verification.json)
+- [Node 20 review test log](../artifacts/unit-pr8-review-20.log)
+- [Node 24 review test log](../artifacts/unit-pr8-review-24.log)

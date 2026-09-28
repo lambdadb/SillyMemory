@@ -14,6 +14,7 @@ export function summarizeChallenges(reports, { partial = false, heldout = false 
     assert(reports.length, 'Reports required');
     const rows = [], seen = new Set(); let hashes, configuration;
     for (const report of reports) {
+        assert(report.passed === true && !report.failure, 'Report must pass all integrity checks before aggregation');
         assert(report.cleanupComplete && report.nativeCleanupComplete, 'Cleanup must be verified');
         assert.equal(report.evaluation?.version, version);
         assert.equal(report.evaluation.fixtureHash, hash(cases), 'Fixture mismatch');

@@ -703,6 +703,12 @@ long-duration soak or a live LambdaDB outage. Exact remote IDs, recent source,
 budget, deletion filtering and no redundant upserts held; final emulator
 collections and journal were empty, with no uncaught primary-page errors.
 
+The PR #8 review follow-up now rejects any report without explicit successful
+completion or with a failure record, even with successful cleanup or `--partial`.
+The expanded 60-test unit suite passes on Node 20.12.0 and 24.15.0; all three
+existing live reports reaggregate with unchanged rows and metrics. No additional
+live calls were needed. See the [review integrity regression](heldout-recovery.md#review-integrity-regression--2026-09-28).
+
 ## Remaining validation
 
 1. Extend the new 12-case evaluation to more natural histories and repeated observations. Counterbalanced references and natural assistant-only continuations now have live coverage, but there is no controlled query ablation or committed-index ANN ground truth. Realistic personal-chat use remains unverified, and the four overflow cases use repetitive synthetic histories. The historical Gemini comparison still lacks one quota-blocked baseline sample; provider-specific streaming usage/accounting needs broader coverage.

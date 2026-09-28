@@ -10,7 +10,7 @@ function fixture(heldout = false) {
     const row = { index: 0, case: item.id, mode: 'off', label: item.label, type: item.type, kind: item.kind, sourceTokens: 1600, sourceHash: hash(item.source.map(m => ({text:m.mes,user:m.is_user,name:m.name}))), answer: item.label, correct: true, injected: false, memoryTokens: 0, targetInPrompt: true, targetInMemory: false, sourceMessagesPresent: item.source.length, promptTokens: 2000 };
     if (heldout) row.answerEvidence = answerEvidence(row.answer, row.label);
     const g = { stage: `challenge/${item.id}/off`, upstreamStatus: 200, finishReason: 'stop', providerAnswer: item.label, challenge: row, messages: item.source.map(m => ({role:'user',content:m.mes})), providerUsage: {prompt_tokens: 2000} };
-    return { cleanupComplete: true, nativeCleanupComplete: true, generator: 'live compatible model', model: 'gpt-4.1-mini-2025-04-14', sillyTavern: '06bde939fb1e9c4c8d8641d810f0a916b5bce127', hostContextTokens: 8192, maxOutputTokens: 256,
+    return { passed: true, cleanupComplete: true, nativeCleanupComplete: true, generator: 'live compatible model', model: 'gpt-4.1-mini-2025-04-14', sillyTavern: '06bde939fb1e9c4c8d8641d810f0a916b5bce127', hostContextTokens: 8192, maxOutputTokens: 256,
         sourceSha256: Object.fromEntries(['index.js','src/client.js','src/gate.js','src/memory.js','src/status.js','scripts/recall-challenges.mjs','scripts/challenge-eval.mjs','scripts/generation-smoke.mjs','scripts/generation-cleanup.mjs', ...(heldout ? ['scripts/heldout-fixture.mjs'] : [])].map(f=>[f,'0'.repeat(64)])),
         evaluation: {version:heldout ? heldoutVersion : challengeVersion,fixtureHash:hash(cases),settings:challengeSettings,rows:[row]}, generations:[g], checks:['identical source restored','intended context boundary verified','original source preserved','recent source retained'].map(s=>`${item.id}/off: ${s}`) };
 }
@@ -55,3 +55,22 @@ test('held-out summary enforces its fixture identity and independently recompute
     const mixed = structuredClone(report); mixed.sourceSha256['scripts/heldout-fixture.mjs'] = '1'.repeat(64);
     assert.throws(() => summarizeChallenges([report, mixed], opts), /Mixed runtime/);
 });
+
+for (const heldout of [false, true]) {
+    test(`${heldout ? 'held-out' : 'original'} summary rejects failed or unverified runs even after successful cleanup`, () => {
+        const report = fixture(heldout);
+        assert.equal(summarizeChallenges([report], { heldout, partial: true }).completedSamples, 1);
+        const variants = [
+            { ...report, passed: false, failure: { stage: 'secret audit', reason: 'Synthetic audit failure' } },
+            { ...report, passed: false },
+            { ...report, passed: undefined },
+            { ...report, passed: 'true' },
+            { ...report, failure: { stage: 'secret audit', reason: 'Inconsistent success flag' } },
+        ];
+        for (const invalid of variants) {
+            for (const partial of [true, false]) {
+                assert.throws(() => summarizeChallenges([invalid], { heldout, partial }), /Report must pass all integrity checks/);
+            }
+        }
+    });
+}
