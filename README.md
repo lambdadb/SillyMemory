@@ -6,7 +6,7 @@ Long-term memory for SillyTavern.
 
 An installable, experimental UI extension for character chats. SillyMemory keeps recent messages intact and replaces older plain-text history with relevant source passages under a fixed memory token budget. It uses LambdaDB managed embeddings through SillyTavern's built-in CORS proxy. No server plugin or LambdaDB modification is required.
 
-**Validation status:** experimental. The current suite passes 79 unit tests on Node.js 20.12.0 and 24, plus 188 real-host/emulator checks including two host SIGKILL/restarts and 24 repeated chat/branch cycles. A new fixed 12-case English/Korean evaluation made 24 real OpenAI requests: memory-on selected the target and answered with its code in 12/12 cases, with 11/12 strict code-only answers. One Korean continuation added a suffix. Maximum injection was 797/800 tokens, and owned remote collections were cleaned up. These are small synthetic cases and bounded repetition, not general quality or long-duration reliability guarantees. See [the held-out protocol and results](docs/heldout-recovery.md), [earlier development cases](docs/recall-challenges.md), and [validation record](docs/validation.md).
+**Validation status:** experimental. The current suite passes 84 unit tests on Node.js 20.12.0 and 24, plus 188 real-host/emulator checks including two host SIGKILL/restarts and 24 repeated chat/branch cycles. A new fixed 12-case English/Korean evaluation made 24 real OpenAI requests: memory-on selected the target and answered with its code in 12/12 cases, with 11/12 strict code-only answers. One Korean continuation added a suffix. Maximum injection was 797/800 tokens, and owned remote collections were cleaned up. These are small synthetic cases and bounded repetition, not general quality or long-duration reliability guarantees. See [the held-out protocol and results](docs/heldout-recovery.md), [earlier development cases](docs/recall-challenges.md), and [validation record](docs/validation.md).
 
 The real Git URL installation/update check passed 17 assertions for the `SillyMemory` URL, including settings retention and session-key clearing. This tested two unreleased 0.1.0 commits, not an upgrade between published releases; see the [installation validation](docs/validation.md#repository-naming-and-installation--2026-09-28).
 
@@ -79,8 +79,11 @@ Ordinary document deletion removes current retrievable records; snapshot retenti
 The [natural-dialogue evaluation protocol](docs/natural-dialogue-evaluation.md)
 provides four frozen bilingual synthetic histories, 16 cases and an offline plan
 exporter. The [first live attempt](docs/natural-dialogue-live.md#first-live-attempt--2026-09-28)
-completed 21 samples before an OpenAI HTTP 500 stopped request 22. Owned data
-cleanup succeeded; the 64-sample evaluation and human scoring remain incomplete.
+completed 21 samples before an OpenAI HTTP 500 stopped request 22. A separate
+[completed run](docs/natural-dialogue-results.md) now has all 64 answers, 676
+integrity checks and verified cleanup. It used the bounded retry policy but
+needed no retries. Provisional assistant review flagged four memory-on answers
+for unsupported speaker attribution; independent human scoring remains pending.
 
 Start ongoing work from `develop` and open feature/fix PRs against `develop`.
 Promote validated changes to the public `main` branch through a separate PR.
@@ -173,7 +176,8 @@ edit/swipe/delete cycles to the emulator fault suite. See the
 [held-out and recovery protocol](docs/heldout-recovery.md) for limits and evidence.
 
 The natural-dialogue runner uses the frozen 16-case English/Korean corpus for
-64 real memory-off/on responses without retries. See [execution and blinded
+64 real memory-off/on responses. An opt-in [transport amendment](docs/natural-dialogue-retry.md)
+allows bounded provider 5xx retries while recording every failure. See [execution and blinded
 semantic review](docs/natural-dialogue-live.md) for the fixed model, usage bounds,
 cleanup requirements and scoring workflow. Automated retrieval/integrity checks
 and assistant annotations do not replace the protocol's human semantic review.

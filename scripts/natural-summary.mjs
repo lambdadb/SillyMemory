@@ -5,6 +5,7 @@ import { readFileSync, realpathSync } from 'node:fs';
 import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { NATURAL_RETRY } from './provider-retry.mjs';
 import { hash, loadNaturalFixture, naturalCases, naturalSchedule } from './natural-dialogue.mjs';
 
 const distribution = values => {
@@ -21,7 +22,14 @@ export function summarizeNatural(report) {
     assert.equal(evaluation.fixtureHash, hash(fixture), 'Fixture mismatch');
     assert.deepEqual(evaluation.settings, fixture.settings); assert.deepEqual(evaluation.generation, fixture.generation);
     assert.equal(evaluation.rows.length, schedule.length); assert.equal(report.generations.length, schedule.length);
-    assert.equal(report.providerCalls, schedule.length, 'No retries or substituted provider samples');
+    const retryEnabled = report.transportProtocol != null;
+    if (retryEnabled) {
+        assert.deepEqual(report.transportProtocol, NATURAL_RETRY, 'Unknown retry protocol');
+        for (const file of ['scripts/provider-retry.mjs', 'docs/natural-dialogue-retry.md']) assert(/^[a-f0-9]{64}$/.test(report.initialSourceSha256?.[file]), 'Missing retry source identity');
+    }
+    const attemptCount = report.generations.reduce((count, generation) => count + generation.attempts.length, 0);
+    assert.equal(report.providerCalls, attemptCount, 'Provider ledger mismatch');
+    assert(attemptCount >= schedule.length && attemptCount <= schedule.length + (retryEnabled ? NATURAL_RETRY.maxRetriesPerRun : 0), 'Retry run bound exceeded');
     assert.equal(report.model, fixture.generation.model); assert.equal(report.hostContextTokens, fixture.settings.context);
     assert(report.initialSourceSha256 && Object.keys(report.initialSourceSha256).length >= 11, 'Missing initial source identity');
     for (const [file, digest] of Object.entries(report.initialSourceSha256)) assert.equal(report.sourceSha256[file], digest, 'Source changed during execution');
@@ -34,7 +42,21 @@ export function summarizeNatural(report) {
         assert.deepEqual(row.supersededEvidence.map(e => e.message), item.rubric.supersededEvidence.map(e => e.message));
         for (const key of ['id', 'case', 'repetition', 'mode']) assert.equal(row[key], sample[key], 'Wrong sample order or identity');
         assert.equal(generation.naturalSampleId, row.id); assert.equal(generation.upstreamStatus, 200);
-        assert.equal(generation.attempts.length, 1, 'Retries are prohibited'); assert.equal(generation.finishReason, 'stop');
+        assert(generation.attempts.length >= 1 && generation.attempts.length <= (retryEnabled ? 1 + NATURAL_RETRY.maxRetriesPerSample : 1), 'Sample retry bound exceeded');
+        assert.equal(generation.attempts.at(-1).status, 200, 'Last attempt must succeed');
+        for (const [j, attempt] of generation.attempts.entries()) {
+            if (retryEnabled) {
+                assert.equal(attempt.number, j + 1); assert(!attempt.failure);
+                assert(/^[a-f0-9]{64}$/.test(attempt.requestSha256));
+                assert.equal(attempt.requestSha256, generation.attempts[0].requestSha256, 'Retry request body changed');
+                assert(Number.isFinite(attempt.elapsedMs) && attempt.elapsedMs >= 0);
+            }
+            if (j < generation.attempts.length - 1) {
+                assert(retryEnabled && NATURAL_RETRY.statuses.includes(attempt.status), 'Ineligible retry');
+                assert(attempt.retryWaitMs >= NATURAL_RETRY.baseDelayMs * 2 ** j && attempt.retryWaitMs <= NATURAL_RETRY.maxDelayMs, 'Invalid retry delay');
+            }
+        }
+        assert.equal(generation.finishReason, 'stop');
         assert.equal(generation.providerAnswer.trim(), row.answer.trim(), 'Provider answer mismatch');
         assert.equal(generation.answer.trim(), row.answer.trim(), 'Saved host answer mismatch');
         assert(Number.isFinite(row.memoryTokens) && row.memoryTokens >= 0 && row.memoryTokens <= fixture.settings.budget);
@@ -58,7 +80,7 @@ export function summarizeNatural(report) {
         requestCounts[key] = (requestCounts[key] || 0) + 1;
     }
     const usageComplete = evaluation.rows.every(row => Number.isFinite(row.usage?.prompt_tokens) && Number.isFinite(row.usage?.completion_tokens));
-    return { version: fixture.version, integrityPassed: true, reportHash: hash(report), fixtureHash: evaluation.fixtureHash, planSha256: evaluation.planSha256, samples: schedule.length, providerAttempts: report.providerCalls, groups, requestCounts, providerUsage: usageComplete ? { promptTokens: evaluation.rows.reduce((n, row) => n + row.usage.prompt_tokens, 0), completionTokens: evaluation.rows.reduce((n, row) => n + row.usage.completion_tokens, 0) } : null, managedEmbeddingUsage: null, managedEmbeddingCost: null, semanticQualityGate: null, scoringStatus: 'Pending blinded human semantic review; retrieval is not answer correctness' };
+    return { version: fixture.version, integrityPassed: true, reportHash: hash(report), fixtureHash: evaluation.fixtureHash, planSha256: evaluation.planSha256, samples: schedule.length, providerAttempts: report.providerCalls, transportProtocol: report.transportProtocol ?? null, firstAttemptFailures: report.generations.filter(g => g.attempts[0].status !== 200).length, recoveredSamples: report.generations.filter(g => g.attempts.length > 1).length, extraAttempts: attemptCount - schedule.length, failedAttemptUsage: attemptCount > schedule.length ? null : { attempts: 0 }, groups, requestCounts, providerUsage: usageComplete ? { promptTokens: evaluation.rows.reduce((n, row) => n + row.usage.prompt_tokens, 0), completionTokens: evaluation.rows.reduce((n, row) => n + row.usage.completion_tokens, 0) } : null, managedEmbeddingUsage: null, managedEmbeddingCost: null, semanticQualityGate: null, scoringStatus: 'Pending blinded human semantic review; retrieval is not answer correctness' };
 }
 
 export function blindNaturalReview(report) {

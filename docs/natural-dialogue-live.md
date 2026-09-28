@@ -3,7 +3,8 @@
 The [frozen protocol](natural-dialogue-evaluation.md) and fixture remain unchanged.
 That document's status describes the original preparation milestone. This runner
 adds actual SillyTavern, LambdaDB and OpenAI execution; semantic annotations are a
-separate review step. No extension runtime or retrieval policy changes are part
+separate review step. See the [completed retry-enabled run](natural-dialogue-results.md)
+for all 64 answers and provisional findings. No extension runtime or retrieval policy changes are part
 of this work.
 
 ## Reproduction
@@ -33,8 +34,10 @@ Do not copy credentials into the checkout or pass them in command arguments.
 
 Execution makes up to **64 paid generation attempts**, spaced at least 15 seconds
 apart, plus live LambdaDB collection/index/query/delete operations and managed
-embedding usage. There is no retry, suffix resume, answer substitution or model
-substitution in this mode. Allow roughly 20 minutes, potentially longer for
+embedding usage. By default there is no retry, suffix resume, answer substitution or model
+substitution. The opt-in [transport amendment](natural-dialogue-retry.md) permits
+bounded 5xx retries; use `npm run test:natural:live -- --retry-transient` with a
+new artifact tag. It permits 72 total attempts for the same 64 answers. Allow roughly 20 minutes, potentially longer for
 remote service latency. A failed run remains failed even if cleanup succeeds.
 Do not start a replacement run solely to obtain a better answer.
 
@@ -102,7 +105,7 @@ The runner used the original pre-execution plan, SHA-256
 Fixture hash remains
 `17fa71452939ed093a5e16e67973a17380e806eade85ebe9754ff0a904e0555e`.
 All recorded runtime and harness files matched their start/end hashes and the
-files reviewed for this implementation. This is an **incomplete failed run**,
+runner files at commit `54c46f9`. This is an **incomplete failed run**,
 not a completed natural-dialogue quality evaluation.
 
 | Observation | Result |
@@ -147,9 +150,10 @@ answer mismatches, blind packet separation, and human versus assistant scoring.
 Runtime and all development-script/test syntax checks and release metadata pass.
 The answer fixture, frozen protocol and extension runtime are unchanged.
 
-A separately initiated full run with a new artifact tag is still needed. Keep
-this failed run intact; do not append a successful suffix or automatically repeat
-it under the same identity. Human meaning-based scoring remains subsequent work.
+This attempt required a separately initiated full run with a new artifact tag.
+That [replacement run has now completed](natural-dialogue-results.md); the failed
+run remains intact. No successful suffix was appended. Independent human
+meaning-based scoring remains subsequent work.
 
 Local ignored evidence (available only in the validation checkout):
 

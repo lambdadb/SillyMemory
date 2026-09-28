@@ -9,6 +9,7 @@ import { spawn, execFileSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { NATURAL_RETRY, requestWithRetry } from './provider-retry.mjs';
 import { verifyNaturalPlan, runNaturalDialogue } from './natural-eval.mjs';
 import { runComparison } from './comparison-eval.mjs';
 import { runChallenges } from './challenge-eval.mjs';
@@ -19,6 +20,9 @@ const source = process.env.ST_SOURCE || '/tmp/sillymemory-st-source';
 const revision = '06bde939fb1e9c4c8d8641d810f0a916b5bce127';
 const env = parseEnv(await readFile(process.env.SM_ENV_FILE || path.join(root, '.env.local'), 'utf8'));
 const natural = process.argv.includes('--natural');
+const retryTransient = process.argv.includes('--retry-transient');
+if (retryTransient && !natural) throw new Error('--retry-transient requires --natural');
+const retryBudget = { calls: 0, retries: 0 };
 const frozenNatural = natural ? await verifyNaturalPlan(process.env.SM_NATURAL_PLAN) : null;
 const comparison = process.argv.includes('--comparison');
 const setupOnly = process.argv.includes('--comparison-setup');
@@ -60,7 +64,7 @@ const modeSuffix = natural ? 'natural' : challenges ? `${heldout ? 'heldout' : '
 const suffix = modeSuffix + (artifactTag ? `-${artifactTag}` : '');
 const reportPath = path.join(artifacts, `generation-${suffix}.json`);
 if (natural) await writeFile(reportPath, JSON.stringify({ passed: false, incomplete: true }), { flag: 'wx' });
-const naturalSourceFiles = ['index.js', 'src/client.js', 'src/gate.js', 'src/memory.js', 'src/status.js', 'scripts/generation-smoke.mjs', 'scripts/generation-cleanup.mjs', 'scripts/natural-eval.mjs', 'scripts/natural-dialogue.mjs', 'tests/fixtures/natural-dialogue-v1.json', 'docs/natural-dialogue-evaluation.md'];
+const naturalSourceFiles = ['index.js', 'src/client.js', 'src/gate.js', 'src/memory.js', 'src/status.js', 'scripts/generation-smoke.mjs', 'scripts/generation-cleanup.mjs', 'scripts/natural-eval.mjs', 'scripts/natural-dialogue.mjs', 'tests/fixtures/natural-dialogue-v1.json', 'docs/natural-dialogue-evaluation.md', ...(retryTransient ? ['scripts/provider-retry.mjs', 'docs/natural-dialogue-retry.md', 'scripts/natural-summary.mjs', 'scripts/natural-score.mjs'] : [])];
 const naturalSourceSha256 = natural ? Object.fromEntries(await Promise.all(naturalSourceFiles.map(async file => [file, createHash('sha256').update(await readFile(path.join(root, file))).digest('hex')]))) : null;
 const pendingPath = path.join(artifacts, `generation-${suffix}-pending.json`);
 const pending = { collections: [], connectionHash: createHash('sha256').update(JSON.stringify([credentials.endpoint, credentials.project])).digest('hex') };
@@ -72,7 +76,7 @@ const redact = value => { let output = JSON.stringify(value, null, 2); for (cons
 async function checkpointNatural() {
     if (!natural) return;
     const temporary = `${reportPath}.tmp`;
-    await writeFile(temporary, redact({ passed: false, incomplete: true, evaluation, generations, providerCalls, lambdaRequests, sourceSha256: naturalSourceSha256 }));
+    await writeFile(temporary, redact({ passed: false, incomplete: true, evaluation, generations, providerCalls, lambdaRequests, transportProtocol: retryTransient ? NATURAL_RETRY : null, sourceSha256: naturalSourceSha256 }));
     await rename(temporary, reportPath);
 }
 let nativeCleanupComplete = !comparison, providerCalls = 0;
@@ -107,7 +111,16 @@ const bridge = createServer(async (req, res) => {
         generations.push(entry);
         if (liveModel) {
             let upstream; entry.attempts = [];
-            for (;;) {
+            if (retryTransient) {
+                const controller = new AbortController();
+                const cancel = () => { if (!res.writableEnded) controller.abort(); };
+                res.once('close', cancel);
+                upstream = await requestWithRetry({ body: JSON.stringify(body), budget: retryBudget, attempts: entry.attempts, signal: controller.signal,
+                        send: (serialized, signal) => {
+                            providerCalls++;
+                            return fetch(`${env.LLM_BASE_URL}/chat/completions`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${env.LLM_API_KEY}` }, body: serialized, signal });
+                        }, checkpoint: checkpointNatural });
+            } else for (;;) {
                 if (comparison && (setupOnly || providerCalls >= 55 - comparisonStart)) throw new Error('Generation call bound exceeded');
                 if (challenges && providerCalls >= challengeCount + 1 - challengeStart) throw new Error('Challenge call bound exceeded');
                 if (natural && providerCalls >= frozenNatural.plan.schedule.length) throw new Error('Natural dialogue call bound exceeded');
@@ -388,9 +401,9 @@ try {
         } catch { console.log('Cleanup incomplete; keep pending resource record.'); }
     }
     const sourceSha256 = {};
-    for (const file of ['index.js','src/client.js','src/gate.js','src/memory.js','src/status.js','scripts/generation-smoke.mjs','scripts/generation-cleanup.mjs','scripts/korean-eval.mjs','scripts/korean-fixture.mjs','scripts/comparison-fixture.mjs','scripts/comparison-eval.mjs','scripts/challenge-eval.mjs','scripts/recall-challenges.mjs','scripts/heldout-fixture.mjs', ...(natural ? ['scripts/natural-eval.mjs', 'scripts/natural-dialogue.mjs', 'tests/fixtures/natural-dialogue-v1.json', 'docs/natural-dialogue-evaluation.md'] : [])]) sourceSha256[file] = createHash('sha256').update(await readFile(path.join(root, file))).digest('hex');
+    for (const file of ['index.js','src/client.js','src/gate.js','src/memory.js','src/status.js','scripts/generation-smoke.mjs','scripts/generation-cleanup.mjs','scripts/korean-eval.mjs','scripts/korean-fixture.mjs','scripts/comparison-fixture.mjs','scripts/comparison-eval.mjs','scripts/challenge-eval.mjs','scripts/recall-challenges.mjs','scripts/heldout-fixture.mjs', ...(natural ? ['scripts/natural-eval.mjs', 'scripts/natural-dialogue.mjs', 'tests/fixtures/natural-dialogue-v1.json', 'docs/natural-dialogue-evaluation.md', ...(retryTransient ? ['scripts/provider-retry.mjs', 'docs/natural-dialogue-retry.md', 'scripts/natural-summary.mjs', 'scripts/natural-score.mjs'] : [])] : [])]) sourceSha256[file] = createHash('sha256').update(await readFile(path.join(root, file))).digest('hex');
     if (natural && Object.entries(naturalSourceSha256).some(([file, digest]) => sourceSha256[file] !== digest)) failure ||= { stage: 'source identity', reason: 'Source changed during execution' };
-    const report = { time:new Date().toISOString(), sillyTavern:revision, lambdaDB:'live', generator:liveModel?'live compatible model':'deterministic test fixture, not a real LLM', model, generationIntervalMs, maxOutputTokens, reasoningEffort, excludedParameters, hostContextTokens, evaluation, embeddings, vectorQueries, ...(natural ? { lambdaRequests, initialSourceSha256: naturalSourceSha256, managedEmbeddingUsage: null, managedEmbeddingCost: null, semanticScores: null } : {}), nativeCleanupComplete, providerCalls, checks, failure, events, generations, cleanupComplete, sourceSha256, passed:!failure&&cleanupComplete&&nativeCleanupComplete };
+    const report = { time:new Date().toISOString(), sillyTavern:revision, lambdaDB:'live', generator:liveModel?'live compatible model':'deterministic test fixture, not a real LLM', model, generationIntervalMs, maxOutputTokens, reasoningEffort, excludedParameters, hostContextTokens, evaluation, embeddings, vectorQueries, ...(natural ? { lambdaRequests, transportProtocol: retryTransient ? NATURAL_RETRY : null, initialSourceSha256: naturalSourceSha256, managedEmbeddingUsage: null, managedEmbeddingCost: null, semanticScores: null } : {}), nativeCleanupComplete, providerCalls, checks, failure, events, generations, cleanupComplete, sourceSha256, passed:!failure&&cleanupComplete&&nativeCleanupComplete };
     let output = JSON.stringify(report,null,2);
     for (const value of [credentials.key,env.LLM_API_KEY,credentials.endpoint,credentials.project,env.LLM_BASE_URL].filter(Boolean)) output=output.replaceAll(value,'[REDACTED]');
     await writeFile(reportPath,output);

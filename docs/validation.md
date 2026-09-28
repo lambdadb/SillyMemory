@@ -864,3 +864,28 @@ secret audit was not reached; post-run local artifacts passed a separate key sca
 
 All **79 unit tests** pass on Node.js 20.12.0 and 24.15.0, with syntax and release
 metadata checks. See [execution, failure evidence and remaining work](natural-dialogue-live.md).
+
+## Bounded generation retries and complete natural dialogue run — 2026-09-28
+
+The maintainer authorized a transport-only amendment after the initial OpenAI
+500 failure: at most two retries per sample, eight extra attempts per run, only
+explicit 500/502/503/504 responses, with unchanged serialized requests and bounded
+backoff/deadlines. The shipped extension and frozen corpus remain unchanged.
+Local HTTP tests verify 500-to-200 recovery; further regressions cover attempt
+bounds, non-retriable errors, cancellation, Retry-After and report validation.
+All **84 unit tests** pass on Node.js 20.12.0 and 24.15.0.
+
+The separate full run completed **64/64 samples**, **676 integrity checks**, the
+browser/persisted-settings secret audit and verified owned collection cleanup.
+All **64 provider attempts succeeded first time**, so no live retry occurred.
+All **238 LambdaDB requests** were free of transport failures and HTTP 5xx.
+The original failed run is preserved and excluded from aggregation.
+
+Required facts were in memory for all **24/24 answerable on samples**, with a
+maximum **796/800 tokens**. Provisional assistant review found correct answer
+facts and unknown handling in both modes but flagged **4 on-mode answers** that
+recast the user's earlier first-person statements as the assistant's own actions.
+The provisional strict result is **off 32/32, on 28/32**; the human quality gate
+remains unset. Full-history baselines fit the context, and median prompt tokens
+were higher with memory; no recall advantage or token saving is claimed.
+See [complete results and all reviewed answers](natural-dialogue-results.md).

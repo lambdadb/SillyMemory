@@ -5,6 +5,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { NATURAL_RETRY } from '../scripts/provider-retry.mjs';
 import { verifyNaturalPlan } from '../scripts/natural-eval.mjs';
 import { hash, loadNaturalFixture, naturalCases, naturalSchedule } from '../scripts/natural-dialogue.mjs';
 import { summarizeNatural, blindNaturalReview, scoreNaturalAnnotations } from '../scripts/natural-summary.mjs';
@@ -109,4 +110,24 @@ test('review CLIs export and import annotations without overwriting existing evi
         const result = await readFile(output, 'utf8'); assert.equal(JSON.parse(result).semanticQualityGate, null);
         assert.notEqual(spawnSync(process.execPath, args).status, 0); assert.equal(await readFile(output, 'utf8'), result);
     } finally { await rm(dir, { recursive: true, force: true }); }
+});
+
+
+test('amended reports expose first-attempt failures and accept only bounded same-request server retries', () => {
+    const report = reportFixture(); report.transportProtocol = structuredClone(NATURAL_RETRY);
+    for (const file of ['scripts/provider-retry.mjs', 'docs/natural-dialogue-retry.md']) { report.initialSourceSha256[file] = 'a'.repeat(64); report.sourceSha256[file] = 'a'.repeat(64); }
+    for (const generation of report.generations) generation.attempts = [{ number: 1, status: 200, requestSha256: 'b'.repeat(64), elapsedMs: 10 }];
+    report.generations[0].attempts[0].number = 2;
+    report.generations[0].attempts.unshift({ number: 1, status: 500, requestSha256: 'b'.repeat(64), elapsedMs: 10, retryWaitMs: 15000 });
+    report.providerCalls++;
+    const summary = summarizeNatural(report);
+    assert.equal(summary.firstAttemptFailures, 1); assert.equal(summary.recoveredSamples, 1); assert.equal(summary.extraAttempts, 1); assert.equal(summary.failedAttemptUsage, null);
+    for (const mutate of [
+        r => { r.generations[0].attempts[0].status = 429; },
+        r => { r.generations[0].attempts[1].requestSha256 = 'c'.repeat(64); },
+        r => { r.generations[0].attempts[0].retryWaitMs = 1; },
+        r => { r.transportProtocol.maxRetriesPerRun = 100; },
+        r => { r.providerCalls = 64; },
+        r => { delete r.initialSourceSha256['docs/natural-dialogue-retry.md']; },
+    ]) { const changed = structuredClone(report); mutate(changed); assert.throws(() => summarizeNatural(changed)); }
 });
