@@ -1,5 +1,6 @@
 // Real GitHub clone/pull through the pinned host UI. No LambdaDB/model traffic.
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import { chromium } from '@playwright/test';
 import { spawn, execFileSync } from 'node:child_process';
 import { mkdtemp, mkdir, readFile, writeFile, lstat, rm } from 'node:fs/promises';
@@ -29,7 +30,8 @@ const reportPath = path.join(artifacts, `${artifactTag}.json`);
 await writeFile(reportPath, '{}', { flag: 'wx' });
 const port = Number(process.env.ST_INSTALL_PORT || 18129), url = `http://127.0.0.1:${port}`;
 const installed = path.join(work, 'data/default-user/extensions/sillymemory');
-const report = { host: revision, repository, initialBranch: 'main', mainSha, updateBranch, updateSha, checks: [], api: [], pageErrors: [], proxyRequests: 0, passed: false };
+const harnessSha256 = createHash('sha256').update(await readFile(fileURLToPath(import.meta.url))).digest('hex');
+const report = { harnessSha256, host: revision, repository, initialBranch: 'main', mainSha, updateBranch, updateSha, checks: [], api: [], pageErrors: [], proxyRequests: 0, passed: false };
 const check = (name, value) => { assert(value, name); report.checks.push(name); console.log(`PASS ${name}`); };
 let server, browser, page;
 try {
@@ -91,6 +93,8 @@ try {
     check('candidate manifest version agrees with package version', candidate.version === JSON.parse(await readFile(path.join(installed, 'package.json'), 'utf8')).version);
     report.updatedVersion = candidate.version;
     await page.locator('#extensions_details').click();
+    await page.getByText('Loading third-party extensions... Please wait...', { exact: true }).waitFor({ state: 'hidden' });
+    await page.waitForFunction(() => [...document.querySelectorAll('dialog[open]')].some(d => d.querySelector('.extensions_info') && Number(getComputedStyle(d).opacity) === 1));
     check('extension manager displays the candidate version', (await page.locator('.extensions_info .extension_block').filter({ hasText: 'SillyMemory' }).innerText()).includes(candidate.version));
     await page.screenshot({ path: path.join(artifacts, `${artifactTag}.png`) });
     // Exercise detached-commit rollback in the disposable clone. Public tags do not exist yet.
