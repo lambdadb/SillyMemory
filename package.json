@@ -14,7 +14,8 @@
     "test:generation": "node scripts/generation-smoke.mjs",
     "test:generation:live": "node scripts/generation-smoke.mjs --live-model",
     "test:korean:live": "node scripts/generation-smoke.mjs --korean-eval",
-    "test:comparison:live": "node scripts/generation-smoke.mjs --comparison"
+    "test:comparison:live": "node scripts/generation-smoke.mjs --comparison",
+    "test:challenges:live": "node scripts/generation-smoke.mjs --challenges"
   },
   "engines": {
     "node": ">=20.12"

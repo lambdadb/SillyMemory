@@ -649,9 +649,31 @@ ignored local evidence in the execution checkout's `artifacts/` directory:
 answers contain only the synthetic fixture. The tests do not use personal chats,
 change LambdaDB, or deploy the extension.
 
+## Continuation and context-overflow evaluation — 2026-09-28
+
+The [fixed six-case protocol](recall-challenges.md) adds English/Korean ambiguous
+references, seven-message assistant-only continuation, and histories exceeding
+an 8,192-token host context. Two complete live runs used the same frozen fixture,
+grader and model configuration: 12 OpenAI answers and 93 integrity checks each.
+The baseline policy selected target memory in 4/6 on-mode cases; explicit
+continuation was still querying the earlier user topic. The adapter now passes
+the host generation type, and `latest-user-or-continuation-plus-context-v2`
+anchors only explicit continuation on the latest message being extended.
+Normal, regenerate and swipe retain the original user anchor.
+
+The retest selected target memory in all 6/6 on-mode cases (maximum 799/800
+tokens). Strict answers improved 4/6 to 5/6; the remaining answer contains the
+correct Korean label plus a format-disallowed suffix. This is a development-set
+retest, not independent held-out validation. Both runs confirmed owned remote
+cleanup and absence of persisted keys. The final runtime also passed 68
+real-host/emulator fault checks and 51 unit tests on Node.js 20.12.0 and 24.15.0.
+Raw reports, hashes, query ranks, per-case results, baseline truncation and
+limitations are recorded in the linked protocol. Earlier 54-answer comparisons
+are historical evidence of their own runtime revision.
+
 ## Remaining validation
 
-1. Expand evaluation of the latest-user/context policy to strongly ambiguous references and assistant-only continuation. The retrieval-only diagnostic identifies query construction as a sufficient cause of the original misses; the new implementation preserves a separate primary search. The small held-out retrieval fixture does not establish the incremental benefit of the second query; committed-index ANN recall remains a separate unverified boundary. Realistic personal-chat use and histories exceeding the full-context baseline remain unverified. The historical Gemini comparison still lacks one quota-blocked baseline sample; provider-specific streaming usage/accounting also needs broader coverage.
+1. Extend the six-case continuation experiment to independently held-out, counterbalanced referents and natural assistant-only continuations. The retrieval-only diagnostic identifies query construction as a sufficient cause of the original misses; the new implementation preserves a separate primary search. The small held-out retrieval fixture does not establish the incremental benefit of the second query; committed-index ANN recall remains a separate unverified boundary. Realistic personal-chat use remains unverified; the new overflow result covers only two repetitive synthetic histories beyond the configured host context. The historical Gemini comparison still lacks one quota-blocked baseline sample; provider-specific streaming usage/accounting also needs broader coverage.
 2. Expand the controlled fault coverage above to realistic sustained load, host/server interruption, and additional ambiguous commit orderings. Injected HTTP statuses and response delays do not establish actual service availability or outage behavior.
 3. Expand the completed synthetic three-mode comparison to more repetitions, held-out realistic conversations and constrained-context cases. Measure user usefulness and total costs (including embeddings and LambdaDB), while controlling or explicitly reporting cache effects. The current 54-sample result is a bounded experiment, not a general performance benchmark.
 

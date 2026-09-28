@@ -10,20 +10,25 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { runComparison } from './comparison-eval.mjs';
+import { runChallenges } from './challenge-eval.mjs';
 import { runKoreanEvaluation } from './korean-eval.mjs';
 import { cleanupGenerationResources } from './generation-cleanup.mjs';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const source = process.env.ST_SOURCE || '/tmp/sillymemory-st-source';
 const revision = '06bde939fb1e9c4c8d8641d810f0a916b5bce127';
-const env = parseEnv(await readFile(path.join(root, '.env.local'), 'utf8'));
+const env = parseEnv(await readFile(process.env.SM_ENV_FILE || path.join(root, '.env.local'), 'utf8'));
 const comparison = process.argv.includes('--comparison');
 const setupOnly = process.argv.includes('--comparison-setup');
 const comparisonStart = Number(process.env.SM_COMPARE_START || 0);
 if (!Number.isInteger(comparisonStart) || comparisonStart < 0 || comparisonStart > 53) throw new Error('Invalid SM_COMPARE_START');
 const koreanEvaluation = process.argv.includes('--korean-eval');
+const challenges = process.argv.includes('--challenges');
+if ([comparison, koreanEvaluation, challenges].filter(Boolean).length > 1) throw new Error('Choose one evaluation mode.');
+const challengeStart = Number(process.env.SM_CHALLENGE_START || 0);
+if (!Number.isInteger(challengeStart) || challengeStart < 0 || challengeStart > 11) throw new Error('Invalid SM_CHALLENGE_START');
 const artifactTag = process.env.SM_ARTIFACT_TAG || '';
 if (artifactTag && !/^[a-zA-Z0-9][a-zA-Z0-9._-]{0,79}$/.test(artifactTag)) throw new Error('Invalid SM_ARTIFACT_TAG.');
-const liveModel = process.argv.includes('--live-model') || koreanEvaluation || comparison;
+const liveModel = process.argv.includes('--live-model') || koreanEvaluation || comparison || challenges;
 const hostContextTokens = (koreanEvaluation || comparison) ? 32768 : 8192;
 const caseStart = koreanEvaluation ? Number(process.env.SM_CASE_START || 0) : 0;
 if (!Number.isInteger(caseStart) || caseStart < 0 || caseStart > 7) throw new Error('SM_CASE_START must be an integer from 0 to 7.');
@@ -32,7 +37,7 @@ if (!Number.isInteger(sampleStart) || sampleStart < 0 || sampleStart > 15) throw
 let transientRetriesRemaining = 1;
 if (liveModel && !(env.LLM_BASE_URL && (process.env.SM_MODEL || env.LLM_MODEL) && env.LLM_API_KEY)) throw new Error('Live model requires LLM_BASE_URL, LLM_MODEL, and LLM_API_KEY in .env.local.');
 const model = liveModel ? (process.env.SM_MODEL || env.LLM_MODEL) : 'sillymemory-deterministic-fixture';
-if (comparison && (env.LLM_BASE_URL !== 'https://api.openai.com/v1' || model !== 'gpt-4.1-mini-2025-04-14')) throw new Error('Comparison requires the fixed OpenAI snapshot and endpoint.');
+if ((comparison || challenges) && (env.LLM_BASE_URL !== 'https://api.openai.com/v1' || model !== 'gpt-4.1-mini-2025-04-14')) throw new Error('Comparison requires the fixed OpenAI snapshot and endpoint.');
 const generationIntervalMs = liveModel ? 15000 : 0;
 const maxOutputTokens = liveModel ? 256 : 100;
 const reasoningEffort = liveModel ? env.LLM_REASONING_EFFORT : undefined;
@@ -46,7 +51,7 @@ if (!Object.values(credentials).every(Boolean)) throw new Error('LambdaDB config
 if (execFileSync('git', ['-C', source, 'rev-parse', 'HEAD'], { encoding: 'utf8' }).trim() !== revision) throw new Error('Unexpected host revision.');
 if (await realpath(path.join(source, 'public/scripts/extensions/third-party/sillymemory')) !== root) throw new Error('Host extension symlink must point to this checkout.');
 const artifacts = path.join(root, 'artifacts'); await mkdir(artifacts, { recursive: true });
-const modeSuffix = comparison ? `comparison${comparisonStart ? `-from-${comparisonStart}` : ''}${setupOnly ? '-setup' : ''}` : koreanEvaluation ? `korean-eval${process.env.SM_SAMPLE_START ? `-from-sample-${sampleStart}` : caseStart ? `-from-${caseStart}` : ''}` : liveModel ? 'live-model' : 'fixture-model';
+const modeSuffix = challenges ? `challenges${challengeStart ? `-from-${challengeStart}` : ''}` : comparison ? `comparison${comparisonStart ? `-from-${comparisonStart}` : ''}${setupOnly ? '-setup' : ''}` : koreanEvaluation ? `korean-eval${process.env.SM_SAMPLE_START ? `-from-sample-${sampleStart}` : caseStart ? `-from-${caseStart}` : ''}` : liveModel ? 'live-model' : 'fixture-model';
 const suffix = modeSuffix + (artifactTag ? `-${artifactTag}` : '');
 const pendingPath = path.join(artifacts, `generation-${suffix}-pending.json`);
 const pending = { collections: [], connectionHash: createHash('sha256').update(JSON.stringify([credentials.endpoint, credentials.project])).digest('hex') };
@@ -86,6 +91,7 @@ const bridge = createServer(async (req, res) => {
             let upstream; entry.attempts = [];
             for (;;) {
                 if (comparison && (setupOnly || providerCalls >= 55 - comparisonStart)) throw new Error('Generation call bound exceeded');
+                if (challenges && providerCalls >= 13 - challengeStart) throw new Error('Challenge call bound exceeded');
                 providerCalls++;
                 upstream = await fetch(`${env.LLM_BASE_URL.replace(/\/$/, '')}/chat/completions`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${env.LLM_API_KEY}` }, body: JSON.stringify(body), signal: AbortSignal.timeout(90000) });
                 entry.attempts.push({ status: upstream.status, elapsedMs: Date.now() - entry.startedAt });
@@ -163,6 +169,7 @@ async function generate(name, type = 'normal', streaming = false, evaluationOpti
     const remaining = generationIntervalMs - (Date.now() - lastGenerationStarted);
     if (remaining > 0) await new Promise(resolve => setTimeout(resolve, remaining));
     lastGenerationStarted = Date.now();
+    const continuationPrefix = type === 'continue' ? await page.evaluate(() => SillyTavern.getContext().chat.at(-1)?.mes || '') : '';
     const generationStart = performance.now();
     await page.evaluate(async ({ type, streaming, question }) => {
         const { oai_settings } = await import('/scripts/openai.js'); oai_settings.stream_openai = streaming;
@@ -181,7 +188,7 @@ async function generate(name, type = 'normal', streaming = false, evaluationOpti
     request.memoryInspection = result.inspection;
     assert(!result.isUser && typeof result.last === 'string' && result.last.length > 0, `${name}: generated assistant response saved`);
     if (liveModel) {
-        assert(request.upstreamStatus === 200 && request.finishReason === 'stop' && request.providerAnswer.trim() === result.last.trim(), `${name}: complete provider answer matches saved host message`);
+        assert(request.upstreamStatus === 200 && request.finishReason === 'stop' && (type === 'continue' ? (continuationPrefix + request.providerAnswer).replace(/\s/g, '') === result.last.replace(/\s/g, '') : request.providerAnswer.trim() === result.last.trim()), `${name}: complete provider answer matches saved host message`);
         if (!evaluationOptions?.evaluate) {
             const expected = name === 'after-delete' ? 'UNKNOWN' : ['after-edit', 'streaming-regenerate', 'swipe-generation', 'native-branch'].includes(name) ? 'stone tower' : 'cedar tree';
             request.expectedAnswer = expected;
@@ -244,6 +251,10 @@ try {
     if (comparison) {
         evaluation = {};
         await runComparison({ page, field, openSettings, waitStatus, generate, assert, setStage: value => { stage = value; }, bridgeUrl, vectorQueries, startSample: comparisonStart, setupOnly, result: evaluation });
+        events = await page.evaluate(() => globalThis.generationTestEvents);
+    } else if (challenges) {
+        evaluation = {};
+        await runChallenges({ page, field, openSettings, waitStatus, generate, assert, setStage: value => { stage = value; }, result: evaluation, startSample: challengeStart });
         events = await page.evaluate(() => globalThis.generationTestEvents);
     } else if (koreanEvaluation) {
         evaluation = await runKoreanEvaluation({ page, field, openSettings, waitStatus, generate, assert, setStage: value => { stage = value; }, startCase: caseStart, startSample: sampleStart });
@@ -342,7 +353,7 @@ try {
         } catch { console.log('Cleanup incomplete; keep pending resource record.'); }
     }
     const sourceSha256 = {};
-    for (const file of ['index.js','src/client.js','src/gate.js','src/memory.js','src/status.js','scripts/generation-smoke.mjs','scripts/generation-cleanup.mjs','scripts/korean-eval.mjs','scripts/korean-fixture.mjs','scripts/comparison-fixture.mjs','scripts/comparison-eval.mjs']) sourceSha256[file] = createHash('sha256').update(await readFile(path.join(root, file))).digest('hex');
+    for (const file of ['index.js','src/client.js','src/gate.js','src/memory.js','src/status.js','scripts/generation-smoke.mjs','scripts/generation-cleanup.mjs','scripts/korean-eval.mjs','scripts/korean-fixture.mjs','scripts/comparison-fixture.mjs','scripts/comparison-eval.mjs','scripts/challenge-eval.mjs','scripts/recall-challenges.mjs']) sourceSha256[file] = createHash('sha256').update(await readFile(path.join(root, file))).digest('hex');
     const report = { time:new Date().toISOString(), sillyTavern:revision, lambdaDB:'live', generator:liveModel?'live compatible model':'deterministic test fixture, not a real LLM', model, generationIntervalMs, maxOutputTokens, reasoningEffort, excludedParameters, hostContextTokens, evaluation, embeddings, vectorQueries, nativeCleanupComplete, providerCalls, checks, failure, events, generations, cleanupComplete, sourceSha256, passed:!failure&&cleanupComplete&&nativeCleanupComplete };
     let output = JSON.stringify(report,null,2);
     for (const value of [credentials.key,env.LLM_API_KEY,credentials.endpoint,credentials.project,env.LLM_BASE_URL].filter(Boolean)) output=output.replaceAll(value,'[REDACTED]');
