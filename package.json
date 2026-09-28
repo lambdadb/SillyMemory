@@ -30,6 +30,6 @@
   "license": "AGPL-3.0-only",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/lambdadb/sillymemory.git"
+    "url": "git+https://github.com/lambdadb/SillyMemory.git"
   }
 }

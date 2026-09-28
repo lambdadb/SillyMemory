@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { chromium } from '@playwright/test';
 import { spawn, execFileSync } from 'node:child_process';
-import { mkdtemp, mkdir, readFile, writeFile, lstat, rm } from 'node:fs/promises';
+import { mkdtemp, mkdir, readFile, readdir, writeFile, lstat, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -16,8 +16,9 @@ const git = (cwd, ...args) => execFileSync('git', ['-C', cwd, ...args], { encodi
 git(root, 'check-ref-format', '--branch', updateBranch);
 const revision = '06bde939fb1e9c4c8d8641d810f0a916b5bce127';
 assert.equal(git(source, 'rev-parse', 'HEAD'), revision);
-await assert.rejects(lstat(path.join(source, 'public/scripts/extensions/third-party/sillymemory')), { code: 'ENOENT' });
-const repository = 'https://github.com/lambdadb/sillymemory';
+for (const folder of ['sillymemory', 'SillyMemory']) await assert.rejects(lstat(path.join(source, 'public/scripts/extensions/third-party', folder)), { code: 'ENOENT' });
+const repository = 'https://github.com/lambdadb/SillyMemory';
+const installFolder = 'SillyMemory';
 const expected = ref => git(root, 'ls-remote', repository, `refs/heads/${ref}`).split(/\s+/)[0];
 const mainSha = expected('main'), updateSha = expected(updateBranch);
 assert(/^[a-f0-9]{40}$/.test(mainSha) && /^[a-f0-9]{40}$/.test(updateSha));
@@ -29,9 +30,9 @@ assert(/^[a-zA-Z0-9][a-zA-Z0-9._-]{0,79}$/.test(artifactTag));
 const reportPath = path.join(artifacts, `${artifactTag}.json`);
 await writeFile(reportPath, '{}', { flag: 'wx' });
 const port = Number(process.env.ST_INSTALL_PORT || 18129), url = `http://127.0.0.1:${port}`;
-const installed = path.join(work, 'data/default-user/extensions/sillymemory');
+const installed = path.join(work, 'data/default-user/extensions', installFolder);
 const harnessSha256 = createHash('sha256').update(await readFile(fileURLToPath(import.meta.url))).digest('hex');
-const report = { harnessSha256, host: revision, repository, initialBranch: 'main', mainSha, updateBranch, updateSha, checks: [], api: [], pageErrors: [], proxyRequests: 0, passed: false };
+const report = { harnessSha256, host: revision, repository, installFolder, initialBranch: 'main', mainSha, updateBranch, updateSha, checks: [], api: [], pageErrors: [], proxyRequests: 0, passed: false };
 const check = (name, value) => { assert(value, name); report.checks.push(name); console.log(`PASS ${name}`); };
 let server, browser, page;
 try {
@@ -54,6 +55,7 @@ try {
     await page.locator('#sillymemory').waitFor({ state: 'attached', timeout: 90000 });
     check('Git URL UI installation clones the public default branch', git(installed, 'rev-parse', 'HEAD') === mainSha && git(installed, 'branch', '--show-current') === 'main');
     check('user-scoped installation is a real Git checkout, not a symlink', !(await lstat(installed)).isSymbolicLink() && git(installed, 'remote', 'get-url', 'origin').replace(/\/$/, '') === repository);
+    check('installed directory preserves the requested repository spelling', (await readdir(path.dirname(installed))).includes(installFolder));
     report.initialVersion = JSON.parse(await readFile(path.join(installed, 'manifest.json'), 'utf8')).version;
     const field = name => page.locator(`#sillymemory [data-sm="${name}"]`);
     async function settings() {
@@ -89,6 +91,7 @@ try {
     check('update reload preserves ownership and nonsecret configuration', await page.evaluate(saved => { const owner = SillyTavern.getContext().extensionSettings.sillymemory.owner; return owner === saved.owner && localStorage.getItem(`sillymemory:state:${owner}`) === saved.state; }, saved));
     check('update reload clears the session key and leaves memory disabled', await field('key').inputValue() === '' && !await field('enabled').isChecked());
     check('updated controls retain configured budget and recent messages', await field('recent').inputValue() === '14' && await field('budget').inputValue() === '600');
+    check('updated settings link to the canonical source and license', await page.locator('#sillymemory a', { hasText: 'Source' }).getAttribute('href') === repository && await page.locator('#sillymemory a', { hasText: 'AGPL-3.0-only' }).getAttribute('href') === `${repository}/blob/main/LICENSE`);
     const candidate = JSON.parse(await readFile(path.join(installed, 'manifest.json'), 'utf8'));
     check('candidate manifest version agrees with package version', candidate.version === JSON.parse(await readFile(path.join(installed, 'package.json'), 'utf8')).version);
     report.updatedVersion = candidate.version;

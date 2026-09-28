@@ -789,6 +789,32 @@ The conditional main-target workflow is covered by local CLI tests, not an actua
 main-target GitHub PR. Runtime and install harness files are unchanged, so the
 previous 15-check browser installation result remains separate evidence.
 
+## Repository naming and installation — 2026-09-28
+
+The public repository is `lambdadb/SillyMemory`; main remains the default branch
+and develop the integration branch. Installation and source/license links use
+`https://github.com/lambdadb/SillyMemory`. The installation smoke test uses this
+single URL and checks the `SillyMemory` directory spelling. The npm package,
+internal settings keys and development symlink use lowercase technical identifiers.
+Runtime JavaScript, manifest and lockfile are unchanged from develop.
+
+The isolated macOS/Chromium run against pinned SillyTavern 1.19.0
+(`06bde939fb1e9c4c8d8641d810f0a916b5bce127`) passed **17 assertions**, with
+install/update HTTP 200. It installed main
+`7826a76be1f776fdb309ffad6a94421f6eca2c2f` and updated through the actual UI to
+candidate `3abfce5eaf3db9db334b19b1e293862af8a665fc`. The update fixture used
+common ancestor `aea782941ba363869b227381523be23271d917a0`, whose tree equals
+installed main. Both builds identify as 0.1.0. The recorded harness SHA-256 is
+`3d1c90884f18753b69984ddf6e3a650769abd50fb6b3b5ba1f8540fa01454403`.
+
+Checks covered directory spelling, source/license links, version display, exact
+update commit, owner/configuration retention, key clearing, disabled memory after
+reload, and commit rollback/return. No LambdaDB/model calls or uncaught page errors
+occurred; the temporary profile was removed. These are synthetic pre-release
+checks, not a published cross-version upgrade or migration test. The ignored
+local report is [branding-single-url.json](../artifacts/branding-single-url.json),
+with matching `.log` and `.png` files in the execution worktree.
+
 ## Remaining validation
 
 1. Extend the new 12-case evaluation to more natural histories and repeated observations. Counterbalanced references and natural assistant-only continuations now have live coverage, but there is no controlled query ablation or committed-index ANN ground truth. Realistic personal-chat use remains unverified, and the four overflow cases use repetitive synthetic histories. The historical Gemini comparison still lacks one quota-blocked baseline sample; provider-specific streaming usage/accounting needs broader coverage.

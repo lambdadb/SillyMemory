@@ -97,7 +97,7 @@ For a problem, first disable memory to preserve ordinary chat operation. Back up
 SillyTavern data before changing versions. Do not uninstall or delete collections
 just to change code versions. Advanced users can pin a known-good published tag
 in the installed extension's Git directory (normally
-`SillyTavern/data/<user-handle>/extensions/sillymemory`):
+`SillyTavern/data/<user-handle>/extensions/SillyMemory`):
 
 ```sh
 git status --short
@@ -134,7 +134,7 @@ commit rollback/return. It makes no LambdaDB/model calls.
 
 ```sh
 ST_SOURCE=/path/to/isolated/pinned/SillyTavern \
-SM_UPDATE_BRANCH=chore/release-process SM_ARTIFACT_TAG=install-unique \
+SM_UPDATE_BRANCH=your-published-candidate-branch SM_ARTIFACT_TAG=install-unique \
   npm run test:install
 ```
 
