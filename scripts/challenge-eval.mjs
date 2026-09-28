@@ -1,17 +1,19 @@
 import { createHash } from 'node:crypto';
+import { heldoutCases, heldoutVersion, heldoutSettings, answerEvidence } from './heldout-fixture.mjs';
 import { challengeCases, challengeVersion, challengeSettings, gradeChallenge } from './recall-challenges.mjs';
 const sourceView = messages => messages.map(m => ({ text: m.mes, user: m.is_user, name: m.name }));
 const hash = value => createHash('sha256').update(JSON.stringify(value)).digest('hex');
-export async function runChallenges({ page, field, openSettings, waitStatus, generate, assert, setStage, result, startSample = 0 }) {
-    const cases = challengeCases();
-    Object.assign(result, { version: challengeVersion, settings: challengeSettings, fixtureHash: hash(cases), plannedSamples: cases.length * 2, startSample, rows: [], preparation: [] });
+export async function runChallenges({ page, field, openSettings, waitStatus, generate, assert, setStage, result, startSample = 0, heldout = false }) {
+    const cases = heldout ? heldoutCases() : challengeCases();
+    const settings = heldout ? heldoutSettings : challengeSettings;
+    Object.assign(result, { version: heldout ? heldoutVersion : challengeVersion, settings, fixtureHash: hash(cases), plannedSamples: cases.length * 2, startSample, rows: [], preparation: [] });
     async function enable(value) {
         await openSettings();
         if (await field('enabled').isChecked() !== value) await field('enabled').setChecked(value);
         if (value) await waitStatus('synchronized');
     }
-    await field('recent').fill(String(challengeSettings.recent)); await field('recent').dispatchEvent('change');
-    await field('budget').fill(String(challengeSettings.budget)); await field('budget').dispatchEvent('change');
+    await field('recent').fill(String(settings.recent)); await field('recent').dispatchEvent('change');
+    await field('budget').fill(String(settings.budget)); await field('budget').dispatchEvent('change');
     await page.evaluate(async () => {
         const { LambdaClient } = await import('/scripts/extensions/third-party/sillymemory/src/client.js');
         const original = LambdaClient.prototype.search;
@@ -36,7 +38,7 @@ export async function runChallenges({ page, field, openSettings, waitStatus, gen
             const before = await page.evaluate(() => SillyTavern.getContext().chat.map(m => ({ text: m.mes, user: m.is_user, name: m.name })));
             assert(hash(before) === sourceHash, `${item.id}/${mode}: identical source restored`);
             const sourceTokens = await page.evaluate(async () => { const c = SillyTavern.getContext(); return c.getTokenCountAsync(c.chat.map(m => m.mes).join('\n')); });
-            assert(item.kind === 'overflow' ? sourceTokens > challengeSettings.context : sourceTokens < challengeSettings.context - 1000, `${item.id}/${mode}: intended context boundary verified`);
+            assert(item.kind === 'overflow' ? sourceTokens > settings.context : sourceTokens < settings.context - 1000, `${item.id}/${mode}: intended context boundary verified`);
             const started = performance.now(); await enable(mode === 'on');
             result.preparation.push({ index, case: item.id, mode, sourceHash, sourceTokens, syncMs: performance.now() - started });
             await page.evaluate(() => { globalThis.challengeQueries = []; });
@@ -46,7 +48,7 @@ export async function runChallenges({ page, field, openSettings, waitStatus, gen
             const promptText = output.request.messages.map(m => typeof m.content === 'string' ? m.content : JSON.stringify(m.content)).join('\n');
             const injected = promptText.includes('Past conversation excerpts');
             const counts = /^(\d+) \/ (\d+) tokens/.exec(output.inspection);
-            if (injected) assert(mode === 'on' && counts && Number(counts[1]) <= challengeSettings.budget, `${item.id}/${mode}: memory budget enforced`);
+            if (injected) assert(mode === 'on' && counts && Number(counts[1]) <= settings.budget, `${item.id}/${mode}: memory budget enforced`);
             if (mode === 'off') assert(!injected, `${item.id}/${mode}: memory disabled`);
             assert(item.source.slice(-11).every(m => promptText.includes(m.mes.trim())), `${item.id}/${mode}: recent source retained`);
             const sourceMessagesPresent = item.source.filter(m => promptText.includes(m.mes.trim())).length;
@@ -54,6 +56,7 @@ export async function runChallenges({ page, field, openSettings, waitStatus, gen
             const queries = await page.evaluate(label => globalThis.challengeQueries.map(q => ({ query: q.query, targetRank: q.hits.findIndex(h => h.text.includes(label)) + 1 })), item.label);
             const answer = item.type === 'continue' ? output.request.providerAnswer : output.last;
             const row = { index, case: item.id, kind: item.kind, mode, type: item.type, label: item.label, answer, correct: gradeChallenge(answer, item.label), sourceHash, sourceTokens, sourceMessagesPresent, targetInPrompt: promptText.includes(item.label), targetInMemory: injected && output.inspection.includes(item.label), injected, memoryTokens: injected ? Number(counts[1]) : 0, queries, promptTokens: output.request.providerUsage?.prompt_tokens ?? null, generationMs: output.request.generationMs };
+            if (heldout) row.answerEvidence = answerEvidence(answer, item.label);
             result.rows.push(row); output.request.challenge = row;
             console.log(`RESULT ${item.id}/${mode}: ${row.correct ? 'correct' : 'incorrect'}; target ${row.targetInPrompt ? 'present' : 'absent'}; memory ${injected ? 'injected' : 'absent'}`);
         }

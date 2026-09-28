@@ -6,7 +6,7 @@ Long-term memory for SillyTavern.
 
 An installable, experimental UI extension for character chats. SillyMemory keeps recent messages intact and replaces older plain-text history with relevant source passages under a fixed memory token budget. It uses LambdaDB managed embeddings through SillyTavern's built-in CORS proxy. No server plugin or LambdaDB modification is required.
 
-**Validation status:** experimental. The continuation-aware runtime passes 53 unit tests on Node.js 20.12.0 and 24 and 68 real-host/emulator fault checks. A fixed six-case English/Korean evaluation made 12 real OpenAI requests before and 12 after the change. Required memory was selected in 4/6 cases before and 6/6 afterward; strict label-only answers improved from 4/6 to 5/6. The remaining answer contained the correct Korean label plus a disallowed suffix. All final injections fit 800 tokens, and both live runs confirmed owned collection cleanup. These are reused synthetic development cases, not broad quality or reliability guarantees. See [the protocol, results and limitations](docs/recall-challenges.md), [historical query-policy experiments](docs/query-policy.md), and [validation record](docs/validation.md).
+**Validation status:** experimental. The unchanged continuation-aware runtime passes 60 unit tests on Node.js 20.12.0 and 24, plus 188 real-host/emulator checks including two host SIGKILL/restarts and 24 repeated chat/branch cycles. A new fixed 12-case English/Korean evaluation made 24 real OpenAI requests: memory-on selected the target and answered with its code in 12/12 cases, with 11/12 strict code-only answers. One Korean continuation added a suffix. Maximum injection was 797/800 tokens, and owned remote collections were cleaned up. These are small synthetic cases and bounded repetition, not general quality or long-duration reliability guarantees. See [the held-out protocol and results](docs/heldout-recovery.md), [earlier development cases](docs/recall-challenges.md), and [validation record](docs/validation.md).
 
 ## Supported host
 
@@ -132,6 +132,13 @@ the configured provider credentials; it makes 12 scheduled model requests plus
 managed embedding operations. A separate existing credential file can be read
 by the generation harness with `SM_ENV_FILE=/absolute/path/to/.env.local` without
 copying it into the worktree.
+
+For 12 new counterbalanced cases (24 real model answers), use
+`npm run test:heldout:live`; aggregate with
+`node scripts/challenge-summary.mjs --heldout <reports...> --output <summary.json>`.
+`npm run test:recovery` adds two real host SIGKILL/restarts and 24 repeated
+edit/swipe/delete cycles to the emulator fault suite. See the
+[held-out and recovery protocol](docs/heldout-recovery.md) for limits and evidence.
 
 See [architecture](docs/architecture.md), [pinned contracts](docs/contracts.md), and [validation and remaining checks](docs/validation.md).
 

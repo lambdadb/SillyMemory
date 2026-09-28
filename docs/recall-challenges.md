@@ -56,9 +56,11 @@ behavior are unchanged. Raw reports and pending-cleanup files are ignored local
 artifacts named `generation-challenges-<tag>.json` and
 `generation-challenges-<tag>-pending.json`.
 
-On interruption, preserve the report and resume with `SM_CHALLENGE_START=N`
-using a new tag, where N is the first missing sample index. Keep the fixture and
-runtime unchanged. Partial rows are not a completed 12-answer comparison.
+On interruption or failure, preserve the report for diagnosis, complete owned
+cleanup, then rerun the full evaluation with a new tag. Failed reports cannot
+supply a prefix for aggregation, even if all sample rows and cleanup exist.
+`SM_CHALLENGE_START=N` can run a diagnostic suffix; it does not repair a failed
+report. Partial rows are not a completed 12-answer comparison.
 
 
 ## Aggregation and interpretation
@@ -68,9 +70,10 @@ node scripts/challenge-summary.mjs artifacts/generation-challenges-<tag>.json \
   --output artifacts/challenge-summary-<tag>.json
 ```
 
-Supply multiple report paths for a resumed run. The summarizer rejects duplicate
-samples, incomplete comparisons unless explicitly `--partial`, mixed runtime or
-evaluation sources (including the generation and cleanup harnesses), missing
+Every input report must have `passed: true`, no failure record, and verified
+cleanup, including when supplying multiple paths or using `--partial`.
+The summarizer rejects duplicate samples, incomplete comparisons unless
+explicitly `--partial`, mixed runtime or evaluation sources (including the generation and cleanup harnesses), missing
 source hashes, missing cleanup, mismatched provider answers, missing source
 integrity checks, and injection claims inconsistent with the outgoing request.
 It records input file hashes. Summarize different policy versions separately;

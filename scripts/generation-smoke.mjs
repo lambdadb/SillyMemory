@@ -22,10 +22,12 @@ const setupOnly = process.argv.includes('--comparison-setup');
 const comparisonStart = Number(process.env.SM_COMPARE_START || 0);
 if (!Number.isInteger(comparisonStart) || comparisonStart < 0 || comparisonStart > 53) throw new Error('Invalid SM_COMPARE_START');
 const koreanEvaluation = process.argv.includes('--korean-eval');
-const challenges = process.argv.includes('--challenges');
+const heldout = process.argv.includes('--heldout');
+const challenges = process.argv.includes('--challenges') || heldout;
+const challengeCount = heldout ? 24 : 12;
 if ([comparison, koreanEvaluation, challenges].filter(Boolean).length > 1) throw new Error('Choose one evaluation mode.');
 const challengeStart = Number(process.env.SM_CHALLENGE_START || 0);
-if (!Number.isInteger(challengeStart) || challengeStart < 0 || challengeStart > 11) throw new Error('Invalid SM_CHALLENGE_START');
+if (!Number.isInteger(challengeStart) || challengeStart < 0 || challengeStart >= challengeCount) throw new Error('Invalid SM_CHALLENGE_START');
 const artifactTag = process.env.SM_ARTIFACT_TAG || '';
 if (artifactTag && !/^[a-zA-Z0-9][a-zA-Z0-9._-]{0,79}$/.test(artifactTag)) throw new Error('Invalid SM_ARTIFACT_TAG.');
 const liveModel = process.argv.includes('--live-model') || koreanEvaluation || comparison || challenges;
@@ -51,7 +53,7 @@ if (!Object.values(credentials).every(Boolean)) throw new Error('LambdaDB config
 if (execFileSync('git', ['-C', source, 'rev-parse', 'HEAD'], { encoding: 'utf8' }).trim() !== revision) throw new Error('Unexpected host revision.');
 if (await realpath(path.join(source, 'public/scripts/extensions/third-party/sillymemory')) !== root) throw new Error('Host extension symlink must point to this checkout.');
 const artifacts = path.join(root, 'artifacts'); await mkdir(artifacts, { recursive: true });
-const modeSuffix = challenges ? `challenges${challengeStart ? `-from-${challengeStart}` : ''}` : comparison ? `comparison${comparisonStart ? `-from-${comparisonStart}` : ''}${setupOnly ? '-setup' : ''}` : koreanEvaluation ? `korean-eval${process.env.SM_SAMPLE_START ? `-from-sample-${sampleStart}` : caseStart ? `-from-${caseStart}` : ''}` : liveModel ? 'live-model' : 'fixture-model';
+const modeSuffix = challenges ? `${heldout ? 'heldout' : 'challenges'}${challengeStart ? `-from-${challengeStart}` : ''}` : comparison ? `comparison${comparisonStart ? `-from-${comparisonStart}` : ''}${setupOnly ? '-setup' : ''}` : koreanEvaluation ? `korean-eval${process.env.SM_SAMPLE_START ? `-from-sample-${sampleStart}` : caseStart ? `-from-${caseStart}` : ''}` : liveModel ? 'live-model' : 'fixture-model';
 const suffix = modeSuffix + (artifactTag ? `-${artifactTag}` : '');
 const pendingPath = path.join(artifacts, `generation-${suffix}-pending.json`);
 const pending = { collections: [], connectionHash: createHash('sha256').update(JSON.stringify([credentials.endpoint, credentials.project])).digest('hex') };
@@ -91,7 +93,7 @@ const bridge = createServer(async (req, res) => {
             let upstream; entry.attempts = [];
             for (;;) {
                 if (comparison && (setupOnly || providerCalls >= 55 - comparisonStart)) throw new Error('Generation call bound exceeded');
-                if (challenges && providerCalls >= 13 - challengeStart) throw new Error('Challenge call bound exceeded');
+                if (challenges && providerCalls >= challengeCount + 1 - challengeStart) throw new Error('Challenge call bound exceeded');
                 providerCalls++;
                 upstream = await fetch(`${env.LLM_BASE_URL.replace(/\/$/, '')}/chat/completions`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${env.LLM_API_KEY}` }, body: JSON.stringify(body), signal: AbortSignal.timeout(90000) });
                 entry.attempts.push({ status: upstream.status, elapsedMs: Date.now() - entry.startedAt });
@@ -254,7 +256,7 @@ try {
         events = await page.evaluate(() => globalThis.generationTestEvents);
     } else if (challenges) {
         evaluation = {};
-        await runChallenges({ page, field, openSettings, waitStatus, generate, assert, setStage: value => { stage = value; }, result: evaluation, startSample: challengeStart });
+        await runChallenges({ page, field, openSettings, waitStatus, generate, assert, setStage: value => { stage = value; }, result: evaluation, startSample: challengeStart, heldout });
         events = await page.evaluate(() => globalThis.generationTestEvents);
     } else if (koreanEvaluation) {
         evaluation = await runKoreanEvaluation({ page, field, openSettings, waitStatus, generate, assert, setStage: value => { stage = value; }, startCase: caseStart, startSample: sampleStart });
@@ -353,7 +355,7 @@ try {
         } catch { console.log('Cleanup incomplete; keep pending resource record.'); }
     }
     const sourceSha256 = {};
-    for (const file of ['index.js','src/client.js','src/gate.js','src/memory.js','src/status.js','scripts/generation-smoke.mjs','scripts/generation-cleanup.mjs','scripts/korean-eval.mjs','scripts/korean-fixture.mjs','scripts/comparison-fixture.mjs','scripts/comparison-eval.mjs','scripts/challenge-eval.mjs','scripts/recall-challenges.mjs']) sourceSha256[file] = createHash('sha256').update(await readFile(path.join(root, file))).digest('hex');
+    for (const file of ['index.js','src/client.js','src/gate.js','src/memory.js','src/status.js','scripts/generation-smoke.mjs','scripts/generation-cleanup.mjs','scripts/korean-eval.mjs','scripts/korean-fixture.mjs','scripts/comparison-fixture.mjs','scripts/comparison-eval.mjs','scripts/challenge-eval.mjs','scripts/recall-challenges.mjs','scripts/heldout-fixture.mjs']) sourceSha256[file] = createHash('sha256').update(await readFile(path.join(root, file))).digest('hex');
     const report = { time:new Date().toISOString(), sillyTavern:revision, lambdaDB:'live', generator:liveModel?'live compatible model':'deterministic test fixture, not a real LLM', model, generationIntervalMs, maxOutputTokens, reasoningEffort, excludedParameters, hostContextTokens, evaluation, embeddings, vectorQueries, nativeCleanupComplete, providerCalls, checks, failure, events, generations, cleanupComplete, sourceSha256, passed:!failure&&cleanupComplete&&nativeCleanupComplete };
     let output = JSON.stringify(report,null,2);
     for (const value of [credentials.key,env.LLM_API_KEY,credentials.endpoint,credentials.project,env.LLM_BASE_URL].filter(Boolean)) output=output.replaceAll(value,'[REDACTED]');

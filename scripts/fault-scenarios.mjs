@@ -1,5 +1,6 @@
 // Deterministic upstream failures. Only used by the local HTTPS emulator harness.
 import assert from 'node:assert/strict';
+import { runRecoveryScenarios } from './recovery-scenarios.mjs';
 
 export function faultController() {
     let armed;
@@ -20,8 +21,11 @@ export function faultController() {
             if (item.mode === 'http') { item.enter(); return send(item.status); }
             // Apply writes / capture query results BEFORE withholding the response.
             // This models an uncertain accepted write and genuinely stale query data.
-            const response = normal(); held.add(item); item.enter();
-            await item.released; held.delete(item); send(...response);
+            const response = item.mode === 'hold-before' ? undefined : normal(); held.add(item); item.enter();
+            await item.released; held.delete(item);
+            // A pre-acceptance request lost with the proxy must never commit later.
+            if (item.mode === 'hold-before') return send(503);
+            send(...response);
         },
         releaseAll() { for (const item of held) item.release(); armed = undefined; },
     };
@@ -32,7 +36,7 @@ async function entered(item) {
     finally { clearTimeout(timer); }
 }
 
-export async function runFaultScenarios({ page, field, waitStatus, prompt, check, faults, collections, calls, screenshot }) {
+export async function runFaultScenarios({ page, field, waitStatus, prompt, check, faults, collections, calls, screenshot, restartHost }) {
     const timings = {};
     const activeCollection = () => [...collections.values()][0];
     const sync = async () => { await field('sync').click(); await waitStatus('synchronized'); };
@@ -222,6 +226,8 @@ export async function runFaultScenarios({ page, field, waitStatus, prompt, check
     const reloaded = await prompt();
     check('reload reconciles an accepted timed-out write after its source was deleted', await remoteMatches() && ![...activeCollection().docs.values()].some(d => d.text.includes('FAULT_UNCERTAIN')) && !reloaded.injection.includes('FAULT_UNCERTAIN'));
 
+    const recovery = restartHost ? await runRecoveryScenarios({ page, field, waitStatus, prompt, check, faults, collections, calls, seed, edit, entered, remoteMatches, reconnect, restartHost }) : undefined;
+
     // Collection removal must await an in-flight write before sending DELETE.
     await seed(); const inFlight = faults.arm('upsert', 'hold');
     await edit('FAULT_DRAIN: Pending write before full deletion.'); await entered(inFlight);
@@ -231,5 +237,5 @@ export async function runFaultScenarios({ page, field, waitStatus, prompt, check
     check('owned collection deletion waits for the outstanding write', collections.size === 1 && calls.filter(c => c.method === 'DELETE').length === deletesBefore);
     inFlight.release(); await waitStatus('no longer accessible');
     check('drained collection deletion leaves no remote data or journal', collections.size === 0 && await page.evaluate(() => !Object.keys(localStorage).some(k => k.startsWith('sillymemory:journal:'))));
-    return { timings, injectedFaults: faults.observations };
+    return { timings, recovery, injectedFaults: faults.observations };
 }
