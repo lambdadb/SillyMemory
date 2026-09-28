@@ -198,3 +198,18 @@ test('speaker fixture freezes 24 samples and uses its own oracle for paired revi
         assert.throws(() => loadNaturalFixture('../../arbitrary'), /Unknown evaluation/);
     } finally { await rm(dir, { recursive: true, force: true }); }
 });
+
+test('native speaker evaluation includes reported actions without confusing speaker and actor', async () => {
+    const fixture = loadNaturalFixture('speaker-native-v1');
+    assert.equal(naturalSchedule(fixture).length, 32);
+    const prior = naturalCases(loadNaturalFixture('speaker-attribution-v1'));
+    assert.deepEqual(naturalCases(fixture).slice(0, 6), prior);
+    for (const c of naturalCases(fixture).slice(6)) {
+        const source = c.input.source[c.rubric.requiredEvidence[0].message];
+        assert.equal(source.is_user, c.language === 'en');
+        assert(c.rubric.requiredEvidence[0].meaning.startsWith(c.language === 'en' ? 'The assistant' : 'The user'));
+    }
+    const report = reportFixture('speaker-native-v1');
+    assert.equal(summarizeNatural(report).samples, 32);
+    assert.equal(blindNaturalReview(report).packet.records.length, 32);
+});

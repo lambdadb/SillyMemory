@@ -317,7 +317,7 @@ try {
         assert(baseline.prompt.includes('DISTRACTOR_1'), 'memory-off final request contains older full history');
         await seed(); await openSettings(); await field('enabled').check(); await waitStatus('synchronized');
         const on = await generate('memory-on');
-        assert(on.prompt.includes('Past conversation excerpts') && on.prompt.includes('beneath the cedar tree'), 'final model request contains retrieved live memory');
+        assert(on.prompt.includes('Past conversation excerpt') && on.prompt.includes('beneath the cedar tree'), 'final model request contains retrieved live memory');
         assert(on.prompt.includes('RECENT_KEEP_A') && on.prompt.includes('RECENT_KEEP_B'), 'final model request retains recent complete messages');
         assert(on.request.promptCharacters < baseline.request.promptCharacters, 'memory-on reduces this fixture final prompt size');
         assert(!on.prompt.includes('DISTRACTOR_1'), 'older full distractor message omitted from final request');
@@ -346,12 +346,12 @@ try {
         const deleted = await generate('after-delete');
         assert(!deleted.prompt.includes('in the stone tower') && !deleted.prompt.includes('beneath the cedar tree'), 'deleted source fact is absent from final request');
         await seed(); failRetrieval = true; const fallback = await generate('retrieval-failure'); failRetrieval = false;
-        assert(fallback.prompt.includes('DISTRACTOR_1') && !fallback.prompt.includes('Past conversation excerpts'), 'retrieval failure still generates from original full prompt');
+        assert(fallback.prompt.includes('DISTRACTOR_1') && !fallback.prompt.includes('Past conversation excerpt'), 'retrieval failure still generates from original full prompt');
         events = await page.evaluate(() => globalThis.generationTestEvents);
         assert(events.includes('MESSAGE_RECEIVED') && events.includes('STREAM_TOKEN_RECEIVED') && events.includes('MESSAGE_UPDATED') && events.includes('MESSAGE_DELETED'), 'host emitted real generation streaming edit and deletion events');
         await openSettings(); await field('enabled').uncheck();
         const disabled = await generate('disabled-again');
-        assert(!disabled.prompt.includes('Past conversation excerpts'), 'disable removes injected memory from final request');
+        assert(!disabled.prompt.includes('Past conversation excerpt'), 'disable removes injected memory from final request');
     }
     stage = 'secret audit';
     const serialized = await page.evaluate(async () => { const c = SillyTavern.getContext(); const r = await fetch('/api/settings/get', {method:'POST', headers:c.getRequestHeaders(), body:'{}'}); return JSON.stringify({local:{...localStorage},session:{...sessionStorage},settings:await r.json()}); });

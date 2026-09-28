@@ -912,3 +912,39 @@ recorded. The derived summary marks spacing unverified, and the results document
 explicitly records this protocol limitation. Full compliance of the corrected
 runner still requires a new live run; human semantic review remains pending.
 See [results and local review-fix evidence](natural-dialogue-results.md).
+
+## Native speaker roles and attribution regression — 2026-09-29
+
+The runtime now replaces eligible older prompt messages with source-ordered
+excerpts in their original user/assistant roles. Local source remains authoritative;
+recent messages, persisted chat, session-only keys and proxy transport are unchanged.
+The pinned host's outgoing API roles were checked in 16 memory-on generations.
+World Info can scan these excerpts as ordinary history; interoperability is unverified.
+
+Two system-wrapper trials were preserved with remaining errors. The separate
+native-role run completed **32 answers / 341 integrity checks**, all provider
+attempts successful without retry and all **126 LambdaDB requests** free of
+transport failures/5xx. Required evidence reached memory and the outgoing prompt
+in 16/16 on samples; maximum memory content was **748/800 tokens**. Actual sends
+were at least 15 seconds apart. Both owned collections were cleaned up, source
+hashes matched and key audits passed.
+
+Provisional strict results are **off 14/16, on 14/16** (0 improved, 16 tied,
+0 regressed). The original two attribution failures did not recur, but a new
+English reported-action case failed in both conditions. The strict diagnostic
+gate remains false; human review remains pending. The full-history baselines fit,
+and this does not show general recall improvement or token savings.
+
+All **96 unit tests** passed on Node.js 20.12.0 and 24.15.0. The final real-host
+emulator recovery run passed **188 checks**, two SIGKILL/restarts and 24 repeated
+cycles, with zero remaining collections/page errors. Earlier failed attempts are
+retained, including default Horde startup API 500s; the emulator harness now uses
+an unconnected OpenAI UI in its temporary profile. See [all trial results,
+limitations and evidence](speaker-attribution-results.md). Broader natural/long-
+context evaluation and independent human scoring remain next steps.
+
+A separate real-host/live-LambdaDB run passed **27 checks across nine generations**
+with a deterministic local generation fixture, including streaming regenerate,
+swipe, branching, edit/delete, fallback and disable. Cleanup and key audits passed;
+this is integration evidence, not an additional model-quality result. See
+[the recorded fixture checks](results/speaker-native-generation-fixture.json).

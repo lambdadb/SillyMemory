@@ -94,10 +94,17 @@ globalThis.sillymemory_intercept = async (chat, contextSize, abort, type) => {
         // Require the pinned coreChat index contract before pruning anything.
         if (!chat.every(m => Number.isInteger(m.index))) { operation.finish('Unexpected prompt shape. Original prompt retained.'); return; }
         if (![...indexedMessages].every(i => eligible.has(i))) { operation.finish('Memory no longer matches eligible source. Original prompt retained.'); return; }
-        for (let i = cutoff - 1; i >= 0; i--) {
-            if (eligible.has(chat[i].index)) chat.splice(i, 1);
+        // Replace only eligible old prompt messages, in place and in source order.
+        // Preserve native user/assistant roles instead of flattening all excerpts
+        // into one system message. These copies never enter the persisted chat.
+        const recalled = new Map();
+        for (const message of result.messages) {
+            const group = recalled.get(message.index) || [];
+            group.push(message); recalled.set(message.index, group);
         }
-        context().setExtensionPrompt('sillymemory', result.text, 1, config.recent, false, 0);
+        for (let i = cutoff - 1; i >= 0; i--) {
+            if (eligible.has(chat[i].index)) chat.splice(i, 1, ...(recalled.get(chat[i].index) || []));
+        }
         element('inspection').textContent = `${result.tokens} / ${config.budget} tokens\n\n${result.text}`;
         operation.finish(`Injected ${result.passages.length} passages (${result.tokens} tokens); kept the recent ${config.recent} messages.`);
     } catch (e) {

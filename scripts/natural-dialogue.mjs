@@ -10,8 +10,8 @@ import { capture, documents, options, retrievalQueries } from '../src/memory.js'
 const root = fileURLToPath(new URL('../', import.meta.url));
 export const hash = value => createHash('sha256').update(JSON.stringify(value)).digest('hex');
 export function fixtureFiles(version = 'natural-dialogue-v1') {
-    assert(['natural-dialogue-v1', 'speaker-attribution-v1'].includes(version), 'Unknown evaluation fixture');
-    return [`tests/fixtures/${version}.json`, ...(version === 'natural-dialogue-v1' ? ['docs/natural-dialogue-evaluation.md'] : ['docs/speaker-attribution-evaluation.md', 'docs/speaker-attribution-perspective-v2.md'])];
+    assert(['natural-dialogue-v1', 'speaker-attribution-v1', 'speaker-native-v1'].includes(version), 'Unknown evaluation fixture');
+    return [`tests/fixtures/${version}.json`, ...(version === 'natural-dialogue-v1' ? ['docs/natural-dialogue-evaluation.md'] : version === 'speaker-attribution-v1' ? ['docs/speaker-attribution-evaluation.md', 'docs/speaker-attribution-perspective-v2.md'] : ['docs/speaker-native-evaluation.md'])];
 }
 export const loadNaturalFixture = (version = 'natural-dialogue-v1') => JSON.parse(readFileSync(new URL(`../${fixtureFiles(version)[0]}`, import.meta.url), 'utf8'));
 
@@ -73,7 +73,7 @@ export async function auditNaturalDialogue(fixture = loadNaturalFixture()) {
 
 if (process.argv[1] && import.meta.url === pathToFileURL(realpathSync(process.argv[1])).href) {
     const args = process.argv.slice(2);
-    assert([2, 4].includes(args.length) && args[0] === '--output' && args[1] && (args.length === 2 || args[2] === '--fixture'), 'Usage: node scripts/natural-dialogue.mjs --output artifacts/unique-plan.json [--fixture speaker-attribution-v1]');
+    assert([2, 4].includes(args.length) && args[0] === '--output' && args[1] && (args.length === 2 || args[2] === '--fixture'), 'Usage: node scripts/natural-dialogue.mjs --output artifacts/unique-plan.json [--fixture version]');
     const fixture = loadNaturalFixture(args[3]), audit = await auditNaturalDialogue(fixture);
     const sourceFiles = ['index.js', 'src/client.js', 'src/gate.js', 'src/memory.js', 'src/status.js', 'scripts/natural-dialogue.mjs', ...fixtureFiles(fixture.version)];
     const sourceSha256 = Object.fromEntries(sourceFiles.map(file => [file, createHash('sha256').update(readFileSync(path.join(root, file))).digest('hex')]));

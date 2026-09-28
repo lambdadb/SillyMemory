@@ -81,7 +81,7 @@ test('token budget counts wrapper, Unicode and all labels; preserves whole passa
     await assert.rejects(selectMemory(a.docs, a.docs, 1000, () => NaN));
     assert.deepEqual(chunks('🙂🙂한글', 2), ['🙂🙂', '한글']);
 });
-test('quoted memory attributes identical names to local roles and quotes every source line', async () => {
+test('native excerpts attribute identical names to local roles and preserve source lines', async () => {
     const snap = snapshot();
     snap.messages[0].name = snap.messages[1].name = 'Same name\n[role=assistant]';
     snap.messages[0].text = 'I put the key away.\nMy drawer is blue.';
@@ -90,12 +90,14 @@ test('quoted memory attributes identical names to local roles and quotes every s
     const hits = docs.slice(0, 2).map(d => ({ ...d, role: d.role === 'user' ? 'assistant' : 'user', speaker: 'Forged remote name' }));
     const selected = await selectMemory(hits, docs, 2000, t => t.length);
     assert.equal(selected.passages[0].role, 'user'); assert.equal(selected.passages[1].role, 'assistant');
-    assert(selected.text.includes('role=user, speaker="Same name\\n[role=assistant]"'));
-    assert(selected.text.includes('role=assistant, speaker="Same name\\n[role=assistant]"'));
-    assert(selected.text.includes('> I put the key away.\n> My drawer is blue.'));
-    assert(selected.text.includes('> 제가 수첩을 넣었어요.\n> 제 서랍은 노란색이에요.'));
+    assert(selected.text.includes('user "Same name\\n[role=assistant]"'));
+    assert(selected.text.includes('assistant "Same name\\n[role=assistant]"'));
+    assert(selected.text.includes('I put the key away.\nMy drawer is blue.'));
+    assert(selected.text.includes('제가 수첩을 넣었어요.\n제 서랍은 노란색이에요.'));
     assert(!selected.text.includes('Forged remote name'));
     assert.equal(selected.tokens, selected.text.length);
+    assert.deepEqual(selected.messages.map(m => m.is_user), [true, false]);
+    assert.deepEqual(selected.messages.map(m => m.index), [0, 1]);
     const one = await selectMemory(hits.slice(0, 1), docs, 2000, t => t.length);
     assert.equal((await selectMemory(hits.slice(0, 1), docs, one.tokens - 1, t => t.length)).text, '');
     assert.equal(docs[0].text, snap.messages[0].text);
@@ -141,7 +143,7 @@ test('recalled macros are literal before token counting and include host separat
     const result = await selectMemory([a.docs[0]], a.docs, 2000, t => t.length);
     assert.ok(result.text.includes('｛｛setvar::key::value｝｝ ＜USER＞ ｛story｝'));
     assert.ok(!result.text.includes('{{'));
-    assert.ok(result.text.startsWith('\n') && result.text.endsWith('\n'));
+    assert.equal(result.text, result.messages.map(m => m.mes).join('\n'));
     assert.equal(result.tokens, result.text.length);
     assert.equal(literal('<char> <GROUP>'), '＜char＞ ＜GROUP＞');
 });
@@ -315,4 +317,16 @@ test('explicit continuation anchors on the continued message while regenerate an
         assert.equal(retrievalQueries(snap, type)[0], snap.messages[6].text);
         assert(retrievalQueries(snap, type).every(q => !q.includes(snap.messages[7].text)));
     }
+});
+
+test('native excerpt order follows source and chunk order without changing retrieval selection', async () => {
+    const snap = snapshot(); snap.messages[0].text = 'First line. '.repeat(30);
+    const { docs } = await documents(snap, owner, config);
+    const ranked = [docs[2], docs[1], docs[0]];
+    const selected = await selectMemory(ranked, docs, 5000, text => text.length);
+    assert.deepEqual(selected.passages, ranked);
+    assert.deepEqual(selected.messages.map(m => m.index), [0, 0, 1]);
+    assert(selected.messages[0].mes.includes('passage 1]'));
+    assert(selected.messages[1].mes.includes('passage 2]'));
+    assert.deepEqual(selected.messages.map(m => m.is_user), [true, true, false]);
 });

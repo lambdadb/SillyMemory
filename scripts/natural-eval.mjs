@@ -68,13 +68,13 @@ export async function runNaturalDialogue({ page, field, openSettings, waitStatus
         const telemetry = await page.evaluate(() => ({ retrieval: globalThis.naturalRetrieval, queries: globalThis.naturalQueries }));
         const promptText = output.request.messages.map(m => typeof m.content === 'string' ? m.content : JSON.stringify(m.content)).join('\n');
         const selected = telemetry.retrieval?.selected, passages = selected?.passages || [], injected = Boolean(selected?.text);
-        if (sample.mode === 'off') check(!telemetry.retrieval && !promptText.includes('Past conversation excerpts'), `${sample.id}: memory disabled`);
+        if (sample.mode === 'off') check(!telemetry.retrieval && !promptText.includes('Past conversation excerpt'), `${sample.id}: memory disabled`);
         else {
             check(Boolean(telemetry.retrieval && selected), `${sample.id}: retrieval completed without fallback`);
             const expected = new Map(telemetry.retrieval.expected.map(doc => [doc.id, doc]));
             check(passages.every(doc => JSON.stringify(doc) === JSON.stringify(expected.get(doc.id))), `${sample.id}: selected IDs and text match current local documents`);
             check(selected.tokens === telemetry.retrieval.hostTokens && selected.tokens <= plan.settings.budget, `${sample.id}: exact host-tokenized memory budget`);
-            check(!injected || promptText.includes(selected.text.trim()), `${sample.id}: selected memory reached outgoing prompt`);
+            check(!injected || selected.messages.every(excerpt => output.request.messages.some(m => m.role === (excerpt.is_user ? 'user' : 'assistant') && typeof m.content === 'string' && m.content.includes(excerpt.mes.trim()))), `${sample.id}: every excerpt reached outgoing prompt with its source role`);
         }
         check(source.slice(-(plan.settings.recent - 1)).every(m => promptText.includes(m.mes.trim())) && promptText.includes(question), `${sample.id}: recent source and question retained`);
         check(promptText.includes(plan.generation.instruction), `${sample.id}: frozen generation instruction present`);

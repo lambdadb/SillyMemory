@@ -82,3 +82,11 @@ test('explicit partial summaries retain only a complete balanced scheduled prefi
     const skipped = evidence(); skipped.generations = skipped.generations.slice(18, 36); skipped.evaluation.rows = skipped.generations.map(g => g.comparison);
     assert.throws(() => summarize([{ report: skipped }], { allowPartial: true }), /prefix/);
 });
+
+test('comparison evidence recognizes native-role excerpts and checks every captured passage', () => {
+    const text = '[Past conversation excerpt: user "User", message 1, passage 1]\nA source fact.';
+    const second = '[Past conversation excerpt: assistant "Mira", message 2, passage 1]\nAnother source fact.';
+    const g = { messages: [{ role: 'user', content: text }, { role: 'assistant', content: second }], memoryInspection: `70 / 800 tokens\n\n${text}\n${second}` };
+    assert.deepEqual(injectionEvidence(g, 'sillymemory'), { injected: true, memoryTokens: 70 });
+    g.messages.pop(); assert.throws(() => injectionEvidence(g, 'sillymemory'), /does not match/);
+});

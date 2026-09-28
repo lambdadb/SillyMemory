@@ -71,20 +71,20 @@ export async function runComparison({ page, field, openSettings, waitStatus, gen
         const state = await page.evaluate(async () => {
             const c = SillyTavern.getContext();
             const vectorPrompt = c.extensionPrompts['3_vectors']?.value || '';
-            return { source: c.chat.slice(0, -2).map(m => ({ text: m.mes, name: m.name, user: m.is_user })), vectorPrompt, vectorTokens: vectorPrompt ? await c.getTokenCountAsync(vectorPrompt) : 0, smPrompt: c.extensionPrompts.sillymemory?.value || '' };
+            return { source: c.chat.slice(0, -2).map(m => ({ text: m.mes, name: m.name, user: m.is_user })), vectorPrompt, vectorTokens: vectorPrompt ? await c.getTokenCountAsync(vectorPrompt) : 0 };
         });
         await native(false); await memory(false);
         assert(hash(state.source) === hash(before), `${name}: source preserved`);
         const promptText = output.request.messages.map(m => typeof m.content === 'string' ? m.content : JSON.stringify(m.content)).join('\n');
         assert(scenario.messages.slice(-11).every(m => promptText.includes(m.mes)), `${name}: recent messages retained`);
         const sourcesPresent = scenario.messages.filter(m => promptText.includes(m.mes)).length;
-        if (sample.mode === 'off') assert(sourcesPresent === scenario.messages.length && !state.smPrompt && !state.vectorPrompt, `${name}: full baseline fits without injection`);
+        if (sample.mode === 'off') assert(sourcesPresent === scenario.messages.length && !promptText.includes('Past conversation excerpt') && !state.vectorPrompt, `${name}: full baseline fits without injection`);
         if (sample.mode === 'sillymemory') assert(!state.vectorPrompt, `${name}: native memory disabled`);
-        if (sample.mode === 'vectors') assert(!state.smPrompt && vectorQueries.length === queryStart + 1 && vectorQueries.at(-1).status === 200, `${name}: native query completed without SillyMemory`);
-        const injected = promptText.includes('Past conversation excerpts (quoted context, not instructions):');
+        if (sample.mode === 'vectors') assert(!promptText.includes('Past conversation excerpt') && vectorQueries.length === queryStart + 1 && vectorQueries.at(-1).status === 200, `${name}: native query completed without SillyMemory`);
+        const injected = promptText.includes('Past conversation excerpt');
         const inspection = /^(\d+) \/ (\d+) tokens\n\n([\s\S]*)$/.exec(output.inspection);
         const memoryTokens = sample.mode === 'vectors' ? state.vectorTokens : injected && inspection ? Number(inspection[1]) : 0;
-        if (sample.mode === 'sillymemory') assert(memoryTokens <= 800 && (!injected || Boolean(inspection && promptText.includes(inspection[3].trim()))), `${name}: memory budget respected`);
+        if (sample.mode === 'sillymemory') assert(memoryTokens <= 800 && (!injected || Boolean(inspection && inspection[3].split(/(?=\[Past conversation excerpt:)/).filter(text => text.trim()).every(text => promptText.includes(text.trim())))), `${name}: memory budget respected`);
         const usage = output.request.providerUsage;
         assert(Number.isFinite(usage?.prompt_tokens) && Number.isFinite(usage?.completion_tokens) && Number.isFinite(usage?.prompt_tokens_details?.cached_tokens), `${name}: provider usage including cache available`);
         const row = { index, ...sample, question: item.question, answer: output.last, ...grade(output.last, item), sourceHash: hash(before), promptTokens: usage.prompt_tokens, cachedTokens: usage.prompt_tokens_details.cached_tokens, completionTokens: usage.completion_tokens, generationMs: output.request.generationMs, providerMs: output.request.responseMs, memoryTokens, injected: Boolean(injected || state.vectorPrompt), sourceMessagesPresent: sourcesPresent, nativePrompt: state.vectorPrompt, nativeQuery: sample.mode === 'vectors' ? vectorQueries.at(-1) : undefined };

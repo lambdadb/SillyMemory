@@ -6,7 +6,7 @@ Long-term memory for SillyTavern.
 
 An installable, experimental UI extension for character chats. SillyMemory keeps recent messages intact and replaces older plain-text history with relevant source passages under a fixed memory token budget. It uses LambdaDB managed embeddings through SillyTavern's built-in CORS proxy. No server plugin or LambdaDB modification is required.
 
-**Validation status:** experimental. The current suite passes 93 unit tests on Node.js 20.12.0 and 24, plus 188 real-host/emulator checks including two host SIGKILL/restarts and 24 repeated chat/branch cycles. A new fixed 12-case English/Korean evaluation made 24 real OpenAI requests: memory-on selected the target and answered with its code in 12/12 cases, with 11/12 strict code-only answers. One Korean continuation added a suffix. Maximum injection was 797/800 tokens, and owned remote collections were cleaned up. These are small synthetic cases and bounded repetition, not general quality or long-duration reliability guarantees. See [the held-out protocol and results](docs/heldout-recovery.md), [earlier development cases](docs/recall-challenges.md), and [validation record](docs/validation.md).
+**Validation status:** experimental. The current suite passes 96 unit tests on Node.js 20.12.0 and 24, plus 188 real-host/emulator checks including two host SIGKILL/restarts and 24 repeated chat/branch cycles. A new 32-answer live speaker regression verifies that recalled excerpts reach OpenAI in their original user/assistant roles. The original attribution failures did not recur, but a new reported-action case failed in both memory-off and memory-on conditions: provisional strict results are 14/16 in each mode, so the diagnostic quality gate remains failed and human review is pending. See [speaker results and limitations](docs/speaker-attribution-results.md) and the [validation record](docs/validation.md). Older evaluations describe their recorded implementations; they have not all been rerun against this change.
 
 The real Git URL installation/update check passed 17 assertions for the `SillyMemory` URL, including settings retention and session-key clearing. This tested two unreleased 0.1.0 commits, not an upgrade between published releases; see the [installation validation](docs/validation.md#repository-naming-and-installation--2026-09-28).
 
@@ -29,7 +29,7 @@ The development baseline is **SillyTavern 1.19.0**, pinned to commit [`06bde939f
 5. Click **Use key for this session**. The input is immediately cleared. The key lives only in the client instance's browser memory, never in saved settings, local/session storage, a URL, or extension logs. A reload or **Forget key** requires re-entry. Other trusted extensions and the browser/server runtime can still observe network requests; this is not an isolation boundary against malicious extensions.
 6. Click **Test synthetic upsert / query / delete**. This creates a dedicated `smtest_<random>` collection, upserts a synthetic story, queries `knn.queryText`, deletes its document, verifies it no longer appears, then deletes the owned test collection. This consumes LambdaDB resources and inference usage. The test must pass before **Create memory collection** becomes available.
 7. If a test fails, use **Clean up test collection**. Pending test identity is preserved across reloads so cleanup can be retried after reconnecting. A failed cleanup is not reported as successful.
-8. Click **Create memory collection**, select a character chat, then enable memory. Default settings retain 12 recent messages and allow 800 memory tokens, including passage labels and the wrapper. Configure the bounds in the panel. Disable built-in Vector Storage chat vectorization and other prompt-rewriting memory extensions for this prototype.
+8. Click **Create memory collection**, select a character chat, then enable memory. Default settings retain 12 recent messages and allow 800 memory tokens, including excerpt content and source labels; provider message-envelope overhead is managed by the host. Configure the bounds in the panel. Disable built-in Vector Storage chat vectorization and other prompt-rewriting memory extensions for this prototype.
 
 For local development, symlink the checkout into
 `SillyTavern/public/scripts/extensions/third-party/sillymemory`; do not also install
@@ -83,11 +83,14 @@ completed 21 samples before an OpenAI HTTP 500 stopped request 22. A separate
 [completed run](docs/natural-dialogue-results.md) now has all 64 answers, 676
 integrity checks and verified cleanup. It used the bounded retry policy but
 needed no retries. Review found that the historical run did not verify the required
-provider-start spacing; the corrected bridge currently has local test coverage. Provisional assistant review flagged four memory-on answers
+provider-start spacing; the new speaker runs verify actual upstream starts at least 15 seconds apart. Provisional assistant review flagged four memory-on answers
 for unsupported speaker attribution; independent human scoring remains pending.
-The [speaker-attribution follow-up](docs/speaker-attribution-evaluation.md) adds
-explicit local roles and quoted passages, with a separate 24-answer development
-evaluation.
+The [speaker-attribution follow-up](docs/speaker-attribution-results.md) preserves
+two unsuccessful 24-answer system-wrapper trials and the separate 32-answer
+[native-role evaluation](docs/speaker-native-evaluation.md). Selected excerpts now
+replace older eligible prompt messages in their original roles and source order.
+World Info may scan these excerpts as ordinary history; interoperability with
+World Info and other prompt rewriters remains unverified.
 
 Start ongoing work from `develop` and open feature/fix PRs against `develop`.
 Promote validated changes to the public `main` branch through a separate PR.
