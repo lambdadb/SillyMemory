@@ -8,6 +8,7 @@ const uuid = () => crypto.randomUUID().replaceAll('-', '');
 let client, engine, root, state, stateKey, owner, timer, busy = false, gatePassed = false;
 let sessionReady = false;
 let promptSequence = 0;
+let retrievalSequence = 0, retrievalOperation;
 let statusView;
 const element = name => root.querySelector(`[data-sm="${name}"]`);
 const status = text => statusView.show(text);
@@ -35,8 +36,9 @@ async function sync() {
     } catch (e) { if (operation.current()) fail(e, operation); }
 }
 function schedule() {
+    if (!sessionReady) return; // Preserve the lock-conflict explanation.
     invalidate(); clearTimeout(timer);
-    if (!sessionReady || !client) { status('Enter your project API key. Keys are cleared on reload.'); return; }
+    if (!client) { status('Enter your project API key. Keys are cleared on reload.'); return; }
     if (!state.enabled) { status('Memory disabled. Remote data is retained until deleted.'); return; }
     if (!engine || !capture(context())) { status('Select a supported character chat and connect to a memory collection.'); return; }
     status('Waiting to synchronize current chat…');
@@ -56,24 +58,32 @@ async function action(job) {
 
 // Called with SillyTavern's ephemeral coreChat array. Never mutate source messages.
 globalThis.sillymemory_intercept = async (chat, contextSize, abort, type) => {
-    invalidate(); clearTimeout(timer);
+    // Quiet prompts cancel older reads/injection while preserving source sync.
+    if (type === 'quiet') {
+        retrievalOperation?.finish('Memory retrieval skipped for quiet generation.');
+        retrievalSequence++; engine?.cancelReads(); clearInjection(); return;
+    }
+    invalidate();
     const sequence = promptSequence;
-    if (type === 'quiet') { if (statusView) status('Memory retrieval skipped for quiet generation.'); return; }
+    const retrieval = ++retrievalSequence;
     if (!sessionReady || busy || !state?.enabled || !engine) return;
     if (context().extensionSettings.vectors?.enabled_chats) {
         status('Disable built-in Vector Storage chat vectorization before using SillyMemory.'); return;
     }
     const snapshot = capture(context()); if (!snapshot) { status('Select a supported character chat to use memory.'); return; }
+    clearTimeout(timer); // Retrieval below replaces the pending synchronization.
     const instance = engine; const config = options(state);
     const promptBefore = JSON.stringify(chat);
     const sourceValid = () => sequence === promptSequence && validSnapshot(snapshot, instance);
-    const valid = () => sourceValid() && JSON.stringify(chat) === promptBefore;
-    const operation = statusView.start(sourceValid);
+    const unchangedPrompt = () => sourceValid() && JSON.stringify(chat) === promptBefore;
+    const valid = () => retrieval === retrievalSequence && unchangedPrompt();
+    const operation = statusView.start(() => retrieval === retrievalSequence && sourceValid());
+    retrievalOperation = operation;
     try {
         // The extension budget includes its complete wrapper; SillyTavern still manages
         // total prompt overhead, character instructions, and final model context limits.
         config.budget = Math.min(config.budget, Math.max(0, Math.floor(contextSize / 4)));
-        const result = await instance.retrieve(snapshot, config, text => context().getTokenCountAsync(text), valid, operation.update);
+        const result = await instance.retrieve(snapshot, config, text => context().getTokenCountAsync(text), unchangedPrompt, operation.update);
         if (!valid()) { operation.finish('Memory operation canceled because the prompt changed. Generate again.'); abort(true); return; }
         if (!result?.text) { operation.finish('No current matching memory fits the budget. Original prompt retained.'); return; }
         // Protect the most recent prompt messages, including during swipe/regenerate.
@@ -93,6 +103,8 @@ globalThis.sillymemory_intercept = async (chat, contextSize, abort, type) => {
     } catch (e) {
         if (!valid()) { operation.finish('Memory operation canceled because the prompt changed. Generate again.'); abort(true); return; }
         if (operation.current()) fail(e, operation);
+    } finally {
+        if (retrievalOperation === operation) retrievalOperation = undefined;
     }
 };
 

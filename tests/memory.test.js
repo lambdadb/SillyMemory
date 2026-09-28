@@ -227,3 +227,51 @@ test('journal cleanup tolerates storage key reordering during removal and preser
     journal.clear();
     assert.deepEqual([...storage.values.keys()].sort(), ['host-setting', 'sillymemory:journal:other:a']);
 });
+
+test('canceling retrieval during synchronization preserves all source writes and starts no query', async () => {
+    const s = setup(), snap = snapshot();
+    snap.messages = Array.from({ length: 122 }, (_, index) => ({ ...snap.messages[0], index, text: `Quiet overlap fixture ${index}` }));
+    let release, started, searches = 0;
+    const writing = new Promise(resolve => { started = resolve; });
+    const write = s.client.upsert;
+    s.client.upsert = async (...args) => {
+        await write(...args);
+        if (s.writes.length === 1) { started(); await new Promise(resolve => { release = resolve; }); }
+    };
+    const search = s.client.search;
+    s.client.search = async (...args) => { searches++; return search(...args); };
+    const pending = s.engine.retrieve(snap, config, text => text.length / 4);
+    await writing; s.engine.cancelReads(); release();
+    assert.equal(await pending, null);
+    assert.deepEqual(s.writes.map(batch => batch.length), [50, 50, 20]);
+    assert.equal(s.remote.size, 120); assert.equal(searches, 0);
+    assert.equal(s.engine.journal.read((await documents(snap, owner, config)).scope).length, 120);
+    assert((await s.engine.retrieve(snap, config, text => text.length / 4)).text);
+});
+
+test('read cancellation rejects late results even when transport ignores abort', async () => {
+    const s = setup(), signals = [], resolvers = []; let started;
+    const searching = new Promise(resolve => { started = resolve; });
+    s.client.search = async (_, o, scope, query, signal) => {
+        signals.push(signal);
+        return new Promise(resolve => { resolvers.push(resolve); if (resolvers.length === 2) started(); });
+    };
+    const pending = s.engine.retrieve(snapshot(), config, text => text.length / 4);
+    await searching; s.engine.cancelReads();
+    assert(signals.every(signal => signal.aborted));
+    resolvers.forEach(resolve => resolve([...s.remote.values()]));
+    assert.equal(await pending, null);
+    assert.equal(s.remote.size, 4);
+});
+
+test('read cancellation while token counting rejects the completed selection', async () => {
+    const s = setup(); let release, started, first = true;
+    const counting = new Promise(resolve => { started = resolve; });
+    const pending = s.engine.retrieve(snapshot(), config, async text => {
+        if (first) { first = false; started(); await new Promise(resolve => { release = resolve; }); }
+        return text.length / 4;
+    });
+    await counting; s.engine.cancelReads(); release();
+    assert.equal(await pending, null);
+    assert.equal(s.remote.size, 4);
+});

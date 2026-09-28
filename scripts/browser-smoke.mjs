@@ -83,7 +83,9 @@ try {
     const disabled = await fetch(`${url}/proxy/${encodeURIComponent(`${endpoint}/projects/synthetic/collections`)}`);
     check('real server rejects proxy when disabled', disabled.status === 404 && (await disabled.text()).includes('CORS proxy is disabled'));
     await stop(); await start(true);
-    browser = await chromium.launch(); const page = await browser.newPage({ viewport: { width: 1440, height: 1100 } });
+    browser = await chromium.launch();
+    const browserContext = await browser.newContext({ viewport: { width: 1440, height: 1100 } });
+    const page = await browserContext.newPage();
     debugPage = page; page.setDefaultTimeout(15000);
     const errors = []; page.on('pageerror', e => errors.push(e.message));
     await page.goto(url); await page.getByText('Welcome to SillyTavern!', { exact: true }).waitFor();

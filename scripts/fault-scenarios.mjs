@@ -78,6 +78,53 @@ export async function runFaultScenarios({ page, field, waitStatus, prompt, check
         await field('enabled').check(); await waitStatus('synchronized');
     }
     await seed();
+    // A quiet prompt must not consume a chat event's pending debounce timer.
+    await page.evaluate(async () => {
+        const c = SillyTavern.getContext();
+        c.chat[0].mes = 'QUIET_SYNC: The compass is in the copper cabinet.';
+        await c.saveChat();
+        await c.eventSource.emit(c.eventTypes.MESSAGE_UPDATED, 0);
+        await globalThis.sillymemory_intercept([], 8192, () => {}, 'quiet');
+    });
+    await waitStatus('synchronized');
+    check('quiet generation preserves pending event synchronization', await remoteMatches());
+    const quietWrite = faults.arm('upsert', 'hold');
+    await edit('QUIET_IN_FLIGHT: The compass is in the oak cabinet.'); await entered(quietWrite);
+    await page.evaluate(() => globalThis.sillymemory_intercept([], 8192, () => {}, 'quiet'));
+    quietWrite.release(); await waitStatus('synchronized');
+    check('quiet generation preserves in-flight synchronization and its completion status', await remoteMatches() && await field('progress').isHidden());
+
+    const quietQuery = faults.arm('query', 'hold');
+    const overlapping = prompt(); await entered(quietQuery);
+    const quietPrompt = await page.evaluate(async () => {
+        const c = SillyTavern.getContext();
+        const chat = c.chat.map((m, index) => ({ ...m, index }));
+        const before = JSON.stringify(chat);
+        const { runGenerationInterceptors } = await import('/scripts/extensions.js');
+        const aborted = await runGenerationInterceptors(chat, 8192, 'quiet');
+        return { aborted, unchanged: before === JSON.stringify(chat), injection: c.extensionPrompts.sillymemory?.value };
+    });
+    quietQuery.release(); const oldPrompt = await overlapping;
+    check('quiet prompt cancels overlapping normal retrieval without pruning or reinjection', !quietPrompt.aborted && quietPrompt.unchanged && !quietPrompt.injection && oldPrompt.aborted && oldPrompt.chat.length === 8 && !oldPrompt.injection && await field('progress').isHidden());
+    const afterQuiet = await prompt();
+    check('normal retrieval recovers after quiet cancellation', !afterQuiet.aborted && Boolean(afterQuiet.injection) && await remoteMatches());
+
+    const blockedTab = await page.context().newPage();
+    let blockedProxyRequests = 0;
+    blockedTab.on('request', request => { if (new URL(request.url()).pathname.startsWith('/proxy/')) blockedProxyRequests++; });
+    try {
+        await blockedTab.goto(page.url());
+        await blockedTab.waitForFunction(() => document.querySelector('#sillymemory [data-sm="status"]')?.textContent.includes('already open in another tab'), null, { timeout: 45000 });
+        const retained = await blockedTab.evaluate(async () => {
+            const status = () => document.querySelector('#sillymemory [data-sm="status"]').textContent;
+            const before = status(), c = SillyTavern.getContext();
+            await c.eventSource.emit(c.eventTypes.CHAT_CHANGED);
+            await c.eventSource.emit(c.eventTypes.MESSAGE_UPDATED, 0);
+            await globalThis.sillymemory_intercept([], 8192, () => {}, 'quiet');
+            return status() === before && [...document.querySelectorAll('#sillymemory button, #sillymemory input')].every(e => e.disabled);
+        });
+        check('lock-conflict explanation survives chat events and quiet generation with controls disabled', retained && blockedProxyRequests === 0);
+    } finally { await blockedTab.close(); }
     // Exercise multiple batches in the real adapter with a failed second write.
     const firstBatch = faults.arm('upsert', 'hold');
     await page.evaluate(async () => {
