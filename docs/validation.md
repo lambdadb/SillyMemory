@@ -678,10 +678,35 @@ reaggregation of the existing live reports passed with unchanged sample rows
 and metrics; this review fix did not rerun paid or emulator tests. See the
 [review regression record](recall-challenges.md#review-regression--2026-09-28).
 
+## Held-out and host-restart validation — 2026-09-28
+
+The [frozen held-out/recovery protocol](heldout-recovery.md) adds new
+counterbalanced object references, natural assistant-only continuation, and
+context-overflow cases without changing the v2 runtime. The protocol separates
+strict answer format from expected-code evidence and limits the live evaluation
+to 24 scheduled answers plus one bounded transient retry.
+
+All 24 scheduled live answers completed with 183 integrity checks and owned
+remote cleanup. Memory-on selected the target in 12/12 cases and returned the
+expected code in 12/12, with 11/12 strict format matches. Memory-off returned the
+expected code in 8/12 and strict matches in 6/12; all four truncated overflow
+baselines answered UNKNOWN. One on-mode Korean continuation added `이다.`.
+Maximum injection was 797/800 tokens. This is one response per condition on new
+synthetic cases, not a general quality guarantee. Runtime code was unchanged.
+The unit suite passes 58 tests on both supported Node versions.
+
+The expanded real-host/emulator suite passed 188 checks: two actual SIGKILL
+restarts at controlled remote acceptance boundaries, 24 sequential parent/branch
+edit/swipe/delete cycles, four periodic reloads, and the existing fault suite.
+The recovery portion took 75.2 seconds; this is bounded repetition, not a
+long-duration soak or a live LambdaDB outage. Exact remote IDs, recent source,
+budget, deletion filtering and no redundant upserts held; final emulator
+collections and journal were empty, with no uncaught primary-page errors.
+
 ## Remaining validation
 
-1. Extend the six-case continuation experiment to independently held-out, counterbalanced referents and natural assistant-only continuations. The retrieval-only diagnostic identifies query construction as a sufficient cause of the original misses; the new implementation preserves a separate primary search. The small held-out retrieval fixture does not establish the incremental benefit of the second query; committed-index ANN recall remains a separate unverified boundary. Realistic personal-chat use remains unverified; the new overflow result covers only two repetitive synthetic histories beyond the configured host context. The historical Gemini comparison still lacks one quota-blocked baseline sample; provider-specific streaming usage/accounting also needs broader coverage.
-2. Expand the controlled fault coverage above to realistic sustained load, host/server interruption, and additional ambiguous commit orderings. Injected HTTP statuses and response delays do not establish actual service availability or outage behavior.
+1. Extend the new 12-case evaluation to more natural histories and repeated observations. Counterbalanced references and natural assistant-only continuations now have live coverage, but there is no controlled query ablation or committed-index ANN ground truth. Realistic personal-chat use remains unverified, and the four overflow cases use repetitive synthetic histories. The historical Gemini comparison still lacks one quota-blocked baseline sample; provider-specific streaming usage/accounting needs broader coverage.
+2. Extend the two host-crash cases and 24-cycle sequential test to hours/days of realistic sustained load and live-service interruption. The completed emulator run verifies recovery at controlled write boundaries; injected responses and 75 seconds of repetition do not establish service availability, multi-device consistency or long-duration reliability.
 3. Expand the completed synthetic three-mode comparison to more repetitions, held-out realistic conversations and constrained-context cases. Measure user usefulness and total costs (including embeddings and LambdaDB), while controlling or explicitly reporting cache effects. The current 54-sample result is a bounded experiment, not a general performance benchmark.
 
 Known limits: no cross-device concurrent editing; local bookkeeping loss can leave orphaned remote data; chat/character rename or complete chat deletion retains old remote scopes until full collection cleanup; external `docsUrl` query responses fail safely; third-party prompt-rewriting extensions are unverified; provider backup erasure is not proven. The public source is licensed under AGPL-3.0-only; a stable release and deployment remain separate from these prototype checks.
