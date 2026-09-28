@@ -55,8 +55,10 @@ between mutation batches. Invalidation stops further work and progress callbacks
 already-started writes may still complete and their IDs remain recoverable. A
 display revision additionally prevents a superseded manual sync from replacing
 a newer operation's progress, success, or failure. This display ownership does
-not invalidate an otherwise current generation prompt. Generation takes over a
-pending debounce timer because its retrieval already synchronizes the source.
+not invalidate an otherwise current generation prompt. A generation that starts retrieval takes over a
+pending debounce timer because retrieval already synchronizes the source. Quiet
+prompts clear the injection without invalidating pending or in-flight sync. A tab
+without the session lock retains its lock-conflict explanation across chat events.
 
 Terminal states hide the progress bar. Failure retains the last confirmed stage
 and count, with separate key/permission, rate-limit, network, and timeout guidance.

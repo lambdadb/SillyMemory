@@ -35,8 +35,9 @@ async function sync() {
     } catch (e) { if (operation.current()) fail(e, operation); }
 }
 function schedule() {
+    if (!sessionReady) return; // Preserve the lock-conflict explanation.
     invalidate(); clearTimeout(timer);
-    if (!sessionReady || !client) { status('Enter your project API key. Keys are cleared on reload.'); return; }
+    if (!client) { status('Enter your project API key. Keys are cleared on reload.'); return; }
     if (!state.enabled) { status('Memory disabled. Remote data is retained until deleted.'); return; }
     if (!engine || !capture(context())) { status('Select a supported character chat and connect to a memory collection.'); return; }
     status('Waiting to synchronize current chat…');
@@ -56,14 +57,16 @@ async function action(job) {
 
 // Called with SillyTavern's ephemeral coreChat array. Never mutate source messages.
 globalThis.sillymemory_intercept = async (chat, contextSize, abort, type) => {
-    invalidate(); clearTimeout(timer);
+    // Quiet prompts use no memory; keep scheduled and in-flight sync intact.
+    if (type === 'quiet') { clearInjection(); return; }
+    invalidate();
     const sequence = promptSequence;
-    if (type === 'quiet') { if (statusView) status('Memory retrieval skipped for quiet generation.'); return; }
     if (!sessionReady || busy || !state?.enabled || !engine) return;
     if (context().extensionSettings.vectors?.enabled_chats) {
         status('Disable built-in Vector Storage chat vectorization before using SillyMemory.'); return;
     }
     const snapshot = capture(context()); if (!snapshot) { status('Select a supported character chat to use memory.'); return; }
+    clearTimeout(timer); // Retrieval below replaces the pending synchronization.
     const instance = engine; const config = options(state);
     const promptBefore = JSON.stringify(chat);
     const sourceValid = () => sequence === promptSequence && validSnapshot(snapshot, instance);
