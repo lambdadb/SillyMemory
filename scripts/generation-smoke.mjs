@@ -10,6 +10,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { NATURAL_RETRY, requestWithRetry } from './provider-retry.mjs';
+import { PROVIDER_SPACING, createSpacedSender, summarizeProviderSpacing } from './provider-spacing.mjs';
 import { verifyNaturalPlan, runNaturalDialogue } from './natural-eval.mjs';
 import { runComparison } from './comparison-eval.mjs';
 import { runChallenges } from './challenge-eval.mjs';
@@ -47,14 +48,13 @@ let transientRetriesRemaining = natural ? 0 : 1;
 if (liveModel && !(env.LLM_BASE_URL && (process.env.SM_MODEL || env.LLM_MODEL) && env.LLM_API_KEY)) throw new Error('Live model requires LLM_BASE_URL, LLM_MODEL, and LLM_API_KEY in .env.local.');
 const model = liveModel ? (process.env.SM_MODEL || env.LLM_MODEL) : 'sillymemory-deterministic-fixture';
 if ((comparison || challenges || natural) && (env.LLM_BASE_URL !== 'https://api.openai.com/v1' || model !== 'gpt-4.1-mini-2025-04-14')) throw new Error('Comparison requires the fixed OpenAI snapshot and endpoint.');
-const generationIntervalMs = liveModel ? 15000 : 0;
+const generationIntervalMs = liveModel ? PROVIDER_SPACING.minimumIntervalMs : 0;
 const maxOutputTokens = liveModel ? 256 : 100;
 const reasoningEffort = liveModel ? env.LLM_REASONING_EFFORT : undefined;
 if (reasoningEffort && !['none', 'minimal', 'low', 'medium', 'high'].includes(reasoningEffort)) throw new Error('Invalid LLM_REASONING_EFFORT.');
 // Gemini rejects these fields emitted by the pinned host's generic Custom API.
 // Use the host's documented body exclusions, not a prompt-rewriting bridge.
 const excludedParameters = liveModel && new URL(env.LLM_BASE_URL).hostname === 'generativelanguage.googleapis.com' ? ['frequency_penalty', 'logprobs', 'top_logprobs'] : [];
-let lastGenerationStarted = 0;
 const credentials = { endpoint: env.LAMBDADB_BASE_URL, project: env.LAMBDADB_PROJECT_NAME, key: env.LAMBDADB_PROJECT_API_KEY };
 if (!Object.values(credentials).every(Boolean)) throw new Error('LambdaDB configuration is incomplete.');
 if (execFileSync('git', ['-C', source, 'rev-parse', 'HEAD'], { encoding: 'utf8' }).trim() !== revision) throw new Error('Unexpected host revision.');
@@ -64,7 +64,7 @@ const modeSuffix = natural ? 'natural' : challenges ? `${heldout ? 'heldout' : '
 const suffix = modeSuffix + (artifactTag ? `-${artifactTag}` : '');
 const reportPath = path.join(artifacts, `generation-${suffix}.json`);
 if (natural) await writeFile(reportPath, JSON.stringify({ passed: false, incomplete: true }), { flag: 'wx' });
-const naturalSourceFiles = ['index.js', 'src/client.js', 'src/gate.js', 'src/memory.js', 'src/status.js', 'scripts/generation-smoke.mjs', 'scripts/generation-cleanup.mjs', 'scripts/natural-eval.mjs', 'scripts/natural-dialogue.mjs', 'tests/fixtures/natural-dialogue-v1.json', 'docs/natural-dialogue-evaluation.md', ...(retryTransient ? ['scripts/provider-retry.mjs', 'docs/natural-dialogue-retry.md', 'scripts/natural-summary.mjs', 'scripts/natural-score.mjs'] : [])];
+const naturalSourceFiles = ['index.js', 'src/client.js', 'src/gate.js', 'src/memory.js', 'src/status.js', 'scripts/generation-smoke.mjs', 'scripts/provider-spacing.mjs', 'scripts/generation-cleanup.mjs', 'scripts/natural-eval.mjs', 'scripts/natural-dialogue.mjs', 'tests/fixtures/natural-dialogue-v1.json', 'docs/natural-dialogue-evaluation.md', ...(retryTransient ? ['scripts/provider-retry.mjs', 'docs/natural-dialogue-retry.md', 'scripts/natural-summary.mjs', 'scripts/natural-score.mjs'] : [])];
 const naturalSourceSha256 = natural ? Object.fromEntries(await Promise.all(naturalSourceFiles.map(async file => [file, createHash('sha256').update(await readFile(path.join(root, file))).digest('hex')]))) : null;
 const pendingPath = path.join(artifacts, `generation-${suffix}-pending.json`);
 const pending = { collections: [], connectionHash: createHash('sha256').update(JSON.stringify([credentials.endpoint, credentials.project])).digest('hex') };
@@ -76,12 +76,16 @@ const redact = value => { let output = JSON.stringify(value, null, 2); for (cons
 async function checkpointNatural() {
     if (!natural) return;
     const temporary = `${reportPath}.tmp`;
-    await writeFile(temporary, redact({ passed: false, incomplete: true, evaluation, generations, providerCalls, lambdaRequests, transportProtocol: retryTransient ? NATURAL_RETRY : null, sourceSha256: naturalSourceSha256 }));
+    await writeFile(temporary, redact({ passed: false, incomplete: true, evaluation, generations, providerCalls, lambdaRequests, transportProtocol: retryTransient ? NATURAL_RETRY : null, providerSpacing: PROVIDER_SPACING, sourceSha256: naturalSourceSha256 }));
     await rename(temporary, reportPath);
 }
 let nativeCleanupComplete = !comparison, providerCalls = 0;
 let stage = 'startup', failRetrieval = false, server, browser, page, failure, cleanupComplete = false;
 const assert = (condition, name) => { if (!condition) throw new Error(name); checks.push(name); console.log(`PASS ${name}`); };
+const sendGeneration = createSpacedSender((body, signal) => {
+    providerCalls++;
+    return fetch(`${env.LLM_BASE_URL.replace(/\/$/, '')}/chat/completions`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${env.LLM_API_KEY}` }, body, signal });
+});
 // This loopback test bridge is not an extension component or server plugin.
 // Live provider keys remain in this process; the host only sees its local URL.
 const bridge = createServer(async (req, res) => {
@@ -116,17 +120,17 @@ const bridge = createServer(async (req, res) => {
                 const cancel = () => { if (!res.writableEnded) controller.abort(); };
                 res.once('close', cancel);
                 upstream = await requestWithRetry({ body: JSON.stringify(body), budget: retryBudget, attempts: entry.attempts, signal: controller.signal,
-                        send: (serialized, signal) => {
-                            providerCalls++;
-                            return fetch(`${env.LLM_BASE_URL}/chat/completions`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${env.LLM_API_KEY}` }, body: serialized, signal });
-                        }, checkpoint: checkpointNatural });
+                        send: sendGeneration, checkpoint: checkpointNatural });
             } else for (;;) {
                 if (comparison && (setupOnly || providerCalls >= 55 - comparisonStart)) throw new Error('Generation call bound exceeded');
                 if (challenges && providerCalls >= challengeCount + 1 - challengeStart) throw new Error('Challenge call bound exceeded');
                 if (natural && providerCalls >= frozenNatural.plan.schedule.length) throw new Error('Natural dialogue call bound exceeded');
-                providerCalls++;
-                upstream = await fetch(`${env.LLM_BASE_URL.replace(/\/$/, '')}/chat/completions`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${env.LLM_API_KEY}` }, body: JSON.stringify(body), signal: AbortSignal.timeout(90000) });
-                entry.attempts.push({ status: upstream.status, elapsedMs: Date.now() - entry.startedAt });
+                const attempt = { status: null }; entry.attempts.push(attempt);
+                const attemptStarted = performance.now();
+                try {
+                    upstream = await sendGeneration(JSON.stringify(body), AbortSignal.timeout(90000), attempt);
+                    attempt.status = upstream.status;
+                } finally { attempt.elapsedMs = performance.now() - attemptStarted; }
                 if (upstream.status !== 503 || transientRetriesRemaining === 0) break;
                 transientRetriesRemaining--;
                 await upstream.body?.cancel();
@@ -198,9 +202,6 @@ async function seed(location = 'beneath the cedar tree') {
 }
 async function generate(name, type = 'normal', streaming = false, evaluationOptions) {
     stage = name; const start = generations.length;
-    const remaining = generationIntervalMs - (Date.now() - lastGenerationStarted);
-    if (remaining > 0) await new Promise(resolve => setTimeout(resolve, remaining));
-    lastGenerationStarted = Date.now();
     const continuationPrefix = type === 'continue' ? await page.evaluate(() => SillyTavern.getContext().chat.at(-1)?.mes || '') : '';
     const generationStart = performance.now();
     await page.evaluate(async ({ type, streaming, question }) => {
@@ -208,13 +209,16 @@ async function generate(name, type = 'normal', streaming = false, evaluationOpti
         if (type === 'normal') document.querySelector('#send_textarea').value = question || 'Where is the blue compass? Answer with the location, or UNKNOWN if no fact is available.';
         await SillyTavern.getContext().generate(type);
     }, { type, streaming, question: evaluationOptions?.question });
-    const generationMs = performance.now() - generationStart;
+    const generationElapsedMs = performance.now() - generationStart;
     if (generations.length !== start + 1) throw new Error('Expected exactly one final model request');
     const result = await page.evaluate(() => {
         const c = SillyTavern.getContext();
         return { last: c.chat.at(-1)?.mes, isUser: c.chat.at(-1)?.is_user, chatLength: c.chat.length, inspection: document.querySelector('[data-sm="inspection"]').textContent, chatId: c.getCurrentChatId() };
     });
-    const request = generations.at(-1); request.answer = result.last; request.generationMs = generationMs;
+    const request = generations.at(-1);
+    request.answer = result.last; request.generationElapsedMs = generationElapsedMs;
+    // Exclude only initial pacing; retry waits remain part of generation latency.
+    request.generationMs = generationElapsedMs - (request.attempts?.[0]?.spacingWaitMs || 0);
     request.promptCharacters = JSON.stringify(request.messages).length;
     request.hostTextTokens = await page.evaluate(async messages => SillyTavern.getContext().getTokenCountAsync(messages.map(m => typeof m.content === 'string' ? m.content : JSON.stringify(m.content)).join('\n')), request.messages);
     request.memoryInspection = result.inspection;
@@ -401,9 +405,13 @@ try {
         } catch { console.log('Cleanup incomplete; keep pending resource record.'); }
     }
     const sourceSha256 = {};
-    for (const file of ['index.js','src/client.js','src/gate.js','src/memory.js','src/status.js','scripts/generation-smoke.mjs','scripts/generation-cleanup.mjs','scripts/korean-eval.mjs','scripts/korean-fixture.mjs','scripts/comparison-fixture.mjs','scripts/comparison-eval.mjs','scripts/challenge-eval.mjs','scripts/recall-challenges.mjs','scripts/heldout-fixture.mjs', ...(natural ? ['scripts/natural-eval.mjs', 'scripts/natural-dialogue.mjs', 'tests/fixtures/natural-dialogue-v1.json', 'docs/natural-dialogue-evaluation.md', ...(retryTransient ? ['scripts/provider-retry.mjs', 'docs/natural-dialogue-retry.md', 'scripts/natural-summary.mjs', 'scripts/natural-score.mjs'] : [])] : [])]) sourceSha256[file] = createHash('sha256').update(await readFile(path.join(root, file))).digest('hex');
+    for (const file of ['index.js','src/client.js','src/gate.js','src/memory.js','src/status.js','scripts/generation-smoke.mjs','scripts/provider-spacing.mjs','scripts/generation-cleanup.mjs','scripts/korean-eval.mjs','scripts/korean-fixture.mjs','scripts/comparison-fixture.mjs','scripts/comparison-eval.mjs','scripts/challenge-eval.mjs','scripts/recall-challenges.mjs','scripts/heldout-fixture.mjs', ...(natural ? ['scripts/natural-eval.mjs', 'scripts/natural-dialogue.mjs', 'tests/fixtures/natural-dialogue-v1.json', 'docs/natural-dialogue-evaluation.md', ...(retryTransient ? ['scripts/provider-retry.mjs', 'docs/natural-dialogue-retry.md', 'scripts/natural-summary.mjs', 'scripts/natural-score.mjs'] : [])] : [])]) sourceSha256[file] = createHash('sha256').update(await readFile(path.join(root, file))).digest('hex');
     if (natural && Object.entries(naturalSourceSha256).some(([file, digest]) => sourceSha256[file] !== digest)) failure ||= { stage: 'source identity', reason: 'Source changed during execution' };
-    const report = { time:new Date().toISOString(), sillyTavern:revision, lambdaDB:'live', generator:liveModel?'live compatible model':'deterministic test fixture, not a real LLM', model, generationIntervalMs, maxOutputTokens, reasoningEffort, excludedParameters, hostContextTokens, evaluation, embeddings, vectorQueries, ...(natural ? { lambdaRequests, transportProtocol: retryTransient ? NATURAL_RETRY : null, initialSourceSha256: naturalSourceSha256, managedEmbeddingUsage: null, managedEmbeddingCost: null, semanticScores: null } : {}), nativeCleanupComplete, providerCalls, checks, failure, events, generations, cleanupComplete, sourceSha256, passed:!failure&&cleanupComplete&&nativeCleanupComplete };
+    if (natural && !failure) {
+        try { assert(summarizeProviderSpacing(generations, PROVIDER_SPACING).verified, 'actual provider starts respect the 15-second interval'); }
+        catch (error) { failure = { stage: 'provider spacing', reason: error.message }; }
+    }
+    const report = { time:new Date().toISOString(), sillyTavern:revision, lambdaDB:'live', generator:liveModel?'live compatible model':'deterministic test fixture, not a real LLM', model, generationIntervalMs, maxOutputTokens, reasoningEffort, excludedParameters, hostContextTokens, evaluation, embeddings, vectorQueries, ...(natural ? { lambdaRequests, transportProtocol: retryTransient ? NATURAL_RETRY : null, providerSpacing: PROVIDER_SPACING, initialSourceSha256: naturalSourceSha256, managedEmbeddingUsage: null, managedEmbeddingCost: null, semanticScores: null } : {}), nativeCleanupComplete, providerCalls, checks, failure, events, generations, cleanupComplete, sourceSha256, passed:!failure&&cleanupComplete&&nativeCleanupComplete };
     let output = JSON.stringify(report,null,2);
     for (const value of [credentials.key,env.LLM_API_KEY,credentials.endpoint,credentials.project,env.LLM_BASE_URL].filter(Boolean)) output=output.replaceAll(value,'[REDACTED]');
     await writeFile(reportPath,output);

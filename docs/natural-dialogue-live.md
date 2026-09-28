@@ -33,8 +33,8 @@ and `LLM_API_KEY`. The frozen endpoint/model are `https://api.openai.com/v1` and
 Do not copy credentials into the checkout or pass them in command arguments.
 
 Execution makes up to **64 paid generation attempts**, spaced at least 15 seconds
-apart, plus live LambdaDB collection/index/query/delete operations and managed
-embedding usage. By default there is no retry, suffix resume, answer substitution or model
+apart at the actual upstream send (including retries), plus live LambdaDB
+collection/index/query/delete operations and managed embedding usage. By default there is no retry, suffix resume, answer substitution or model
 substitution. The opt-in [transport amendment](natural-dialogue-retry.md) permits
 bounded 5xx retries; use `npm run test:natural:live -- --retry-transient` with a
 new artifact tag. It permits 72 total attempts for the same 64 answers. Allow roughly 20 minutes, potentially longer for
@@ -55,7 +55,13 @@ IDs, provider token usage, request statuses and monotonic timing. Request counts
 separate setup, initial synchronization, generation and cleanup. Retrieval timing
 includes synchronization performed by the retrieval path; generation timing
 includes host prompt preparation and retrieval, so these are not additive cost
-components. Managed embedding usage and cost remain unknown (`null`). A model
+components. New reports also record each attempt's `upstreamStartedMs` on a shared
+monotonic clock and its `spacingWaitMs`. `generationElapsedMs` includes all waits;
+`generationMs` subtracts only the initial spacing wait, retaining retry delays.
+The runner and summarizer enforce the 15-second send interval. Historical reports
+without this evidence have `providerSpacing.verified: false`; see the
+[historical spacing correction](natural-dialogue-results.md#execution-and-transport).
+Managed embedding usage and cost remain unknown (`null`). A model
 listing check and LambdaDB calls do not count as generation attempts.
 
 Each completed sample atomically checkpoints an **incomplete** report. Final
@@ -68,8 +74,15 @@ quality evaluation.
 
 ## Human review
 
+Score imports include 32 `paired` case/repetition comparisons and `pairedSummary`
+counts. `strictPassDelta` is on minus off (pass = 1, fail = 0); improved/tied/regressed
+refer only to this frozen strict criterion. Each pair retains both semantic labels
+and unsupported-assertion flags, including when both fail. The importer does not
+invent a numeric ordering for partial, incorrect and abstained answers.
+
 The summary command validates all 64 sample identities, complete responses,
-request bounds, source hashes and cleanup. It creates three files:
+request bounds, source hashes, available provider-spacing evidence and cleanup.
+It creates three files:
 
 - `summary.json`: retrieval, token and timing measurements; semantic gate is null.
 - `blind-review.json`: randomized review IDs, source, question, rubric and answer;

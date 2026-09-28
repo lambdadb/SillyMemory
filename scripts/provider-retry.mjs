@@ -26,7 +26,7 @@ export async function requestWithRetry({ body, send, budget, attempts, signal, c
         const attemptStarted = now(); let response;
         try {
             const timeout = AbortSignal.timeout(Math.max(1, Math.ceil(Math.min(remaining, NATURAL_RETRY.attemptTimeoutMs))));
-            response = await send(body, signal ? AbortSignal.any([signal, timeout]) : timeout);
+            response = await send(body, signal ? AbortSignal.any([signal, timeout]) : timeout, entry);
             entry.status = response.status; entry.requestId = response.headers.get('x-request-id');
         } catch (error) {
             entry.failure = signal?.aborted ? 'canceled' : 'transport-error';

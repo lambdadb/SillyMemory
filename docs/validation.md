@@ -889,3 +889,26 @@ The provisional strict result is **off 32/32, on 28/32**; the human quality gate
 remains unset. Full-history baselines fit the context, and median prompt tokens
 were higher with memory; no recall advantage or token saving is claimed.
 See [complete results and all reviewed answers](natural-dialogue-results.md).
+
+
+## Natural dialogue review corrections — 2026-09-29
+
+PR #15 review identified host-start pacing that did not guarantee upstream-start
+spacing, and missing paired semantic comparisons. The bridge now shares a
+monotonic send clock across samples/retries and records/validates each dispatch.
+The scorer emits 32 case/repetition pairs with both labels and strict-pass deltas.
+Existing annotations yield 0 improvements, 28 ties and 4 regressions; answers,
+annotations, source corpus and the raw live report remain unchanged.
+
+All **90 unit tests** pass on Node.js 20.12.0 and 24.15.0, plus syntax and release
+metadata checks. Mock-clock tests cover preparation variance, early timers,
+concurrent sends, cancellation and retries. A separate local HTTP check uses real
+15-second timers for 500-to-200 recovery and the next sample. No paid provider or
+SillyTavern rerun was performed for these fixes.
+
+The old live report's 676 checks did not verify spacing: 32 of 63 bridge-entry
+gaps are below 15 seconds (minimum 14,222 ms). Exact upstream starts were not
+recorded. The derived summary marks spacing unverified, and the results document
+explicitly records this protocol limitation. Full compliance of the corrected
+runner still requires a new live run; human semantic review remains pending.
+See [results and local review-fix evidence](natural-dialogue-results.md).

@@ -5,6 +5,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { PROVIDER_SPACING } from '../scripts/provider-spacing.mjs';
 import { NATURAL_RETRY } from '../scripts/provider-retry.mjs';
 import { verifyNaturalPlan } from '../scripts/natural-eval.mjs';
 import { hash, loadNaturalFixture, naturalCases, naturalSchedule } from '../scripts/natural-dialogue.mjs';
@@ -58,6 +59,48 @@ test('natural summary separates retrieval, usage, timing and pending human corre
     assert.equal(off.allRequiredInPrompt, 24);
     const missing = reportFixture(); missing.evaluation.rows[0].usage = null;
     assert.equal(summarizeNatural(missing).providerUsage, null);
+    assert.equal(summary.providerSpacing.verified, false);
+});
+
+test('new natural reports must prove spacing for every actual provider send', () => {
+    const report = reportFixture(); report.providerSpacing = PROVIDER_SPACING;
+    report.initialSourceSha256['scripts/provider-spacing.mjs'] = 'a'.repeat(64);
+    report.sourceSha256['scripts/provider-spacing.mjs'] = 'a'.repeat(64);
+    for (const [i, generation] of report.generations.entries()) Object.assign(generation.attempts[0], { upstreamStartedMs: i * 15000, spacingWaitMs: 0 });
+    assert.equal(summarizeNatural(report).providerSpacing.verified, true);
+    delete report.providerSpacing;
+    assert.throws(() => summarizeNatural(report), /Missing provider spacing protocol/);
+    report.providerSpacing = PROVIDER_SPACING;
+    report.generations[5].attempts[0].upstreamStartedMs--;
+    assert.throws(() => summarizeNatural(report), /less than 15 seconds/);
+});
+
+test('semantic pairs preserve case and repetition across shuffled annotations and report losses', () => {
+    const report = reportFixture(), { packet, key } = blindNaturalReview(report);
+    packet.reviewer = 'Synthetic pair test'; packet.reviewerType = 'assistant';
+    for (const record of packet.records) {
+        record.outcome = record.rubric.requiredEvidence.length ? 'correct' : 'unknown-handled';
+        record.unsupportedAssertion = false; record.rationale = 'Synthetic pair annotation.';
+    }
+    const set = (id, change) => Object.assign(packet.records.find(record => record.reviewId === key.records.find(k => k.sampleId === id).reviewId), change);
+    set('en-workshop-return/r1/on', { unsupportedAssertion: true });
+    set('en-workshop-return/r2/off', { outcome: 'partial' });
+    set('en-observatory-unknown/r1/on', { outcome: 'incorrect', unsupportedAssertion: true });
+    set('ko-workshop-return/r1/off', { outcome: 'incorrect' });
+    set('ko-workshop-return/r1/on', { outcome: 'partial' }); // Both fail strict gate; no invented ordinal score.
+    const result = scoreNaturalAnnotations(report, packet, key);
+    assert.equal(result.semanticQualityGate, null);
+    assert.equal(result.paired.length, 32);
+    assert.equal(new Set(result.paired.map(p => `${p.case}/${p.repetition}`)).size, 32);
+    assert.deepEqual(result.pairedSummary, { improved: 1, tied: 29, regressed: 2 });
+    const loss = result.paired.find(p => p.case === 'en-workshop-return' && p.repetition === 1);
+    assert.equal(loss.strictPassDelta, -1); assert.equal(loss.on.outcome, 'correct'); assert.equal(loss.on.unsupportedAssertion, true);
+    const bothFail = result.paired.find(p => p.case === 'ko-workshop-return' && p.repetition === 1);
+    assert.equal(bothFail.comparison, 'tied'); assert.equal(bothFail.off.outcome, 'incorrect'); assert.equal(bothFail.on.outcome, 'partial');
+    packet.records.reverse(); key.records.reverse();
+    assert.deepEqual(scoreNaturalAnnotations(report, packet, key).paired, result.paired);
+    packet.reviewerType = 'human';
+    assert.equal(scoreNaturalAnnotations(report, packet, key).semanticQualityGate, false);
 });
 
 test('blind review has no mode, repetition, retrieval evidence or automatic grades, and maps every answer once', () => {

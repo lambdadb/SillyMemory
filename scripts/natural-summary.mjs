@@ -6,6 +6,7 @@ import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { NATURAL_RETRY } from './provider-retry.mjs';
+import { summarizeProviderSpacing } from './provider-spacing.mjs';
 import { hash, loadNaturalFixture, naturalCases, naturalSchedule } from './natural-dialogue.mjs';
 
 const distribution = values => {
@@ -64,6 +65,9 @@ export function summarizeNatural(report) {
         assert.equal(generation.requestOptions.model, fixture.generation.model);
         assert.equal(generation.maxOutputTokens, fixture.settings.maxOutputTokens);
     }
+    if (report.initialSourceSha256['scripts/provider-spacing.mjs']) assert(report.providerSpacing, 'Missing provider spacing protocol');
+    const providerSpacing = summarizeProviderSpacing(report.generations, report.providerSpacing);
+    if (report.providerSpacing) assert(/^[a-f0-9]{64}$/.test(report.initialSourceSha256['scripts/provider-spacing.mjs']), 'Missing spacing source identity');
     const metrics = rows => ({ samples: rows.length, answerable: rows.filter(row => row.kind !== 'unknown').length, allRequiredInMemory: rows.filter(row => row.requiredEvidence.length && row.requiredEvidence.every(e => e.inMemory)).length, allRequiredInPrompt: rows.filter(row => row.requiredEvidence.length && row.requiredEvidence.every(e => e.inPrompt)).length, oldWithoutCorrection: rows.filter(row => row.kind === 'correction' && row.supersededEvidence.some(e => e.inMemory) && !row.requiredEvidence.every(e => e.inMemory)).length, baselineTruncated: rows.filter(row => row.baselineTruncated).length, memoryTokens: distribution(rows.map(row => row.memoryTokens)), promptTokens: distribution(rows.map(row => row.usage?.prompt_tokens)), syncMs: distribution(rows.map(row => row.syncMs)), retrievalMs: distribution(rows.map(row => row.retrievalMs)), generationMs: distribution(rows.map(row => row.generationMs)) });
     const groups = [];
     for (const mode of ['off', 'on']) {
@@ -80,7 +84,7 @@ export function summarizeNatural(report) {
         requestCounts[key] = (requestCounts[key] || 0) + 1;
     }
     const usageComplete = evaluation.rows.every(row => Number.isFinite(row.usage?.prompt_tokens) && Number.isFinite(row.usage?.completion_tokens));
-    return { version: fixture.version, integrityPassed: true, reportHash: hash(report), fixtureHash: evaluation.fixtureHash, planSha256: evaluation.planSha256, samples: schedule.length, providerAttempts: report.providerCalls, transportProtocol: report.transportProtocol ?? null, firstAttemptFailures: report.generations.filter(g => g.attempts[0].status !== 200).length, recoveredSamples: report.generations.filter(g => g.attempts.length > 1).length, extraAttempts: attemptCount - schedule.length, failedAttemptUsage: attemptCount > schedule.length ? null : { attempts: 0 }, groups, requestCounts, providerUsage: usageComplete ? { promptTokens: evaluation.rows.reduce((n, row) => n + row.usage.prompt_tokens, 0), completionTokens: evaluation.rows.reduce((n, row) => n + row.usage.completion_tokens, 0) } : null, managedEmbeddingUsage: null, managedEmbeddingCost: null, semanticQualityGate: null, scoringStatus: 'Pending blinded human semantic review; retrieval is not answer correctness' };
+    return { version: fixture.version, integrityPassed: true, providerSpacing, reportHash: hash(report), fixtureHash: evaluation.fixtureHash, planSha256: evaluation.planSha256, samples: schedule.length, providerAttempts: report.providerCalls, transportProtocol: report.transportProtocol ?? null, firstAttemptFailures: report.generations.filter(g => g.attempts[0].status !== 200).length, recoveredSamples: report.generations.filter(g => g.attempts.length > 1).length, extraAttempts: attemptCount - schedule.length, failedAttemptUsage: attemptCount > schedule.length ? null : { attempts: 0 }, groups, requestCounts, providerUsage: usageComplete ? { promptTokens: evaluation.rows.reduce((n, row) => n + row.usage.prompt_tokens, 0), completionTokens: evaluation.rows.reduce((n, row) => n + row.usage.completion_tokens, 0) } : null, managedEmbeddingUsage: null, managedEmbeddingCost: null, semanticQualityGate: null, scoringStatus: 'Pending blinded human semantic review; retrieval is not answer correctness' };
 }
 
 export function blindNaturalReview(report) {
@@ -121,7 +125,7 @@ export function scoreNaturalAnnotations(report, packet, key) {
         assert.equal(typeof record.unsupportedAssertion, 'boolean'); assert(typeof record.rationale === 'string' && record.rationale.trim(), 'Every score needs a rationale');
         assert(item.kind === 'unknown' ? ['unknown-handled', 'incorrect'].includes(record.outcome) : record.outcome !== 'unknown-handled', 'Outcome incompatible with case kind');
         assert(!(record.outcome === 'unknown-handled' && record.unsupportedAssertion), 'An unsupported guess cannot handle an unknown');
-        return { id: row.id, language: row.language, kind: row.kind, mode: row.mode, repetition: row.repetition, outcome: record.outcome, unsupportedAssertion: record.unsupportedAssertion, rationale: record.rationale };
+        return { id: row.id, case: row.case, language: row.language, kind: row.kind, mode: row.mode, repetition: row.repetition, outcome: record.outcome, unsupportedAssertion: record.unsupportedAssertion, rationale: record.rationale };
     });
     const pass = r => ['correct', 'unknown-handled'].includes(r.outcome) && !r.unsupportedAssertion;
     const groups = [];
@@ -129,6 +133,16 @@ export function scoreNaturalAnnotations(report, packet, key) {
         const rows = scored.filter(r => r.mode === mode && (!language || r.language === language) && (!kind || r.kind === kind));
         groups.push({ mode, language, kind, samples: rows.length, passed: rows.filter(pass).length, outcomes: Object.fromEntries(['correct', 'partial', 'incorrect', 'abstained', 'unknown-handled'].map(outcome => [outcome, rows.filter(r => r.outcome === outcome).length])), unsupportedAssertions: rows.filter(r => r.unsupportedAssertion).length });
     }
+    const byId = new Map(scored.map(row => [row.id, row]));
+    const paired = naturalSchedule().filter(sample => sample.mode === 'off').map(sample => {
+        const off = byId.get(sample.id);
+        const on = scored.find(row => row.case === sample.case && row.repetition === sample.repetition && row.mode === 'on');
+        assert(off && on, 'Missing paired score');
+        const strictPassDelta = Number(pass(on)) - Number(pass(off));
+        const outcome = row => ({ id: row.id, outcome: row.outcome, unsupportedAssertion: row.unsupportedAssertion, passed: pass(row) });
+        return { case: sample.case, repetition: sample.repetition, language: off.language, kind: off.kind, off: outcome(off), on: outcome(on), strictPassDelta, comparison: strictPassDelta > 0 ? 'improved' : strictPassDelta < 0 ? 'regressed' : 'tied' };
+    });
+    const pairedSummary = Object.fromEntries(['improved', 'tied', 'regressed'].map(result => [result, paired.filter(pair => pair.comparison === result).length]));
     const gate = scored.filter(r => r.mode === 'on').every(pass);
-    return { reportHash: summary.reportHash, reviewer: packet.reviewer, reviewerType: packet.reviewerType, semanticQualityGate: packet.reviewerType === 'human' ? gate : null, provisionalAssistantGate: packet.reviewerType === 'assistant' ? gate : null, groups, rows: scored.sort((a, b) => a.id.localeCompare(b.id)) };
+    return { reportHash: summary.reportHash, reviewer: packet.reviewer, reviewerType: packet.reviewerType, semanticQualityGate: packet.reviewerType === 'human' ? gate : null, provisionalAssistantGate: packet.reviewerType === 'assistant' ? gate : null, pairedSummary, paired, groups, rows: scored.sort((a, b) => a.id.localeCompare(b.id)) };
 }

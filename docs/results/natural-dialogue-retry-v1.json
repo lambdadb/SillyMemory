@@ -30,6 +30,13 @@
   "summary": {
     "version": "natural-dialogue-v1",
     "integrityPassed": true,
+    "providerSpacing": {
+      "verified": false,
+      "evidence": "legacy bridge-entry timestamps, not upstream sends",
+      "minimumIntervalMs": 15000,
+      "minimumObservedIntervalMs": 14222,
+      "gapsBelowMinimum": 32
+    },
     "reportHash": "a8604f5facb02ad9af7297c6429ccb605bec541e8b8edbc9421901d78f668cfa",
     "fixtureHash": "17fa71452939ed093a5e16e67973a17380e806eade85ebe9754ff0a904e0555e",
     "planSha256": "481fc81148ad1a6d306cfcae9bb492314a7e2e69b9c6b486fe4974d68b441f1c",
@@ -1050,6 +1057,653 @@
           "unknown-handled": 4
         },
         "unsupportedAssertions": 0
+      }
+    ],
+    "pairedSummary": {
+      "improved": 0,
+      "tied": 28,
+      "regressed": 4
+    },
+    "paired": [
+      {
+        "case": "en-observatory-return",
+        "repetition": 1,
+        "language": "en",
+        "kind": "return",
+        "off": {
+          "id": "en-observatory-return/r1/off",
+          "outcome": "correct",
+          "unsupportedAssertion": false,
+          "passed": true
+        },
+        "on": {
+          "id": "en-observatory-return/r1/on",
+          "outcome": "correct",
+          "unsupportedAssertion": false,
+          "passed": true
+        },
+        "strictPassDelta": 0,
+        "comparison": "tied"
+      },
+      {
+        "case": "en-observatory-correction",
+        "repetition": 1,
+        "language": "en",
+        "kind": "correction",
+        "off": {
+          "id": "en-observatory-correction/r1/off",
+          "outcome": "correct",
+          "unsupportedAssertion": false,
+          "passed": true
+        },
+        "on": {
+          "id": "en-observatory-correction/r1/on",
+          "outcome": "correct",
+          "unsupportedAssertion": true,
+          "passed": false
+        },
+        "strictPassDelta": -1,
+        "comparison": "regressed"
+      },
+      {
+        "case": "en-observatory-reference",
+        "repetition": 1,
+        "language": "en",
+        "kind": "reference",
+        "off": {
+          "id": "en-observatory-reference/r1/off",
+          "outcome": "correct",
+          "unsupportedAssertion": false,
+          "passed": true
+        },
+        "on": {
+          "id": "en-observatory-reference/r1/on",
+          "outcome": "correct",
+          "unsupportedAssertion": false,
+          "passed": true
+        },
+        "strictPassDelta": 0,
+        "comparison": "tied"
+      },
+      {
+        "case": "en-observatory-unknown",
+        "repetition": 1,
+        "language": "en",
+        "kind": "unknown",
+        "off": {
+          "id": "en-observatory-unknown/r1/off",
+          "outcome": "unknown-handled",
+          "unsupportedAssertion": false,
+          "passed": true
+        },
+        "on": {
+          "id": "en-observatory-unknown/r1/on",
+          "outcome": "unknown-handled",
+          "unsupportedAssertion": false,
+          "passed": true
+        },
+        "strictPassDelta": 0,
+        "comparison": "tied"
+      },
+      {
+        "case": "ko-observatory-return",
+        "repetition": 1,
+        "language": "ko",
+        "kind": "return",
+        "off": {
+          "id": "ko-observatory-return/r1/off",
+          "outcome": "correct",
+          "unsupportedAssertion": false,
+          "passed": true
+        },
+        "on": {
+          "id": "ko-observatory-return/r1/on",
+          "outcome": "correct",
+          "unsupportedAssertion": false,
+          "passed": true
+        },
+        "strictPassDelta": 0,
+        "comparison": "tied"
+      },
+      {
+        "case": "ko-observatory-correction",
+        "repetition": 1,
+        "language": "ko",
+        "kind": "correction",
+        "off": {
+          "id": "ko-observatory-correction/r1/off",
+          "outcome": "correct",
+          "unsupportedAssertion": false,
+          "passed": true
+        },
+        "on": {
+          "id": "ko-observatory-correction/r1/on",
+          "outcome": "correct",
+          "unsupportedAssertion": false,
+          "passed": true
+        },
+        "strictPassDelta": 0,
+        "comparison": "tied"
+      },
+      {
+        "case": "ko-observatory-reference",
+        "repetition": 1,
+        "language": "ko",
+        "kind": "reference",
+        "off": {
+          "id": "ko-observatory-reference/r1/off",
+          "outcome": "correct",
+          "unsupportedAssertion": false,
+          "passed": true
+        },
+        "on": {
+          "id": "ko-observatory-reference/r1/on",
+          "outcome": "correct",
+          "unsupportedAssertion": false,
+          "passed": true
+        },
+        "strictPassDelta": 0,
+        "comparison": "tied"
+      },
+      {
+        "case": "ko-observatory-unknown",
+        "repetition": 1,
+        "language": "ko",
+        "kind": "unknown",
+        "off": {
+          "id": "ko-observatory-unknown/r1/off",
+          "outcome": "unknown-handled",
+          "unsupportedAssertion": false,
+          "passed": true
+        },
+        "on": {
+          "id": "ko-observatory-unknown/r1/on",
+          "outcome": "unknown-handled",
+          "unsupportedAssertion": false,
+          "passed": true
+        },
+        "strictPassDelta": 0,
+        "comparison": "tied"
+      },
+      {
+        "case": "en-workshop-return",
+        "repetition": 1,
+        "language": "en",
+        "kind": "return",
+        "off": {
+          "id": "en-workshop-return/r1/off",
+          "outcome": "correct",
+          "unsupportedAssertion": false,
+          "passed": true
+        },
+        "on": {
+          "id": "en-workshop-return/r1/on",
+          "outcome": "correct",
+          "unsupportedAssertion": true,
+          "passed": false
+        },
+        "strictPassDelta": -1,
+        "comparison": "regressed"
+      },
+      {
+        "case": "en-workshop-correction",
+        "repetition": 1,
+        "language": "en",
+        "kind": "correction",
+        "off": {
+          "id": "en-workshop-correction/r1/off",
+          "outcome": "correct",
+          "unsupportedAssertion": false,
+          "passed": true
+        },
+        "on": {
+          "id": "en-workshop-correction/r1/on",
+          "outcome": "correct",
+          "unsupportedAssertion": false,
+          "passed": true
+        },
+        "strictPassDelta": 0,
+        "comparison": "tied"
+      },
+      {
+        "case": "en-workshop-reference",
+        "repetition": 1,
+        "language": "en",
+        "kind": "reference",
+        "off": {
+          "id": "en-workshop-reference/r1/off",
+          "outcome": "correct",
+          "unsupportedAssertion": false,
+          "passed": true
+        },
+        "on": {
+          "id": "en-workshop-reference/r1/on",
+          "outcome": "correct",
+          "unsupportedAssertion": false,
+          "passed": true
+        },
+        "strictPassDelta": 0,
+        "comparison": "tied"
+      },
+      {
+        "case": "en-workshop-unknown",
+        "repetition": 1,
+        "language": "en",
+        "kind": "unknown",
+        "off": {
+          "id": "en-workshop-unknown/r1/off",
+          "outcome": "unknown-handled",
+          "unsupportedAssertion": false,
+          "passed": true
+        },
+        "on": {
+          "id": "en-workshop-unknown/r1/on",
+          "outcome": "unknown-handled",
+          "unsupportedAssertion": false,
+          "passed": true
+        },
+        "strictPassDelta": 0,
+        "comparison": "tied"
+      },
+      {
+        "case": "ko-workshop-return",
+        "repetition": 1,
+        "language": "ko",
+        "kind": "return",
+        "off": {
+          "id": "ko-workshop-return/r1/off",
+          "outcome": "correct",
+          "unsupportedAssertion": false,
+          "passed": true
+        },
+        "on": {
+          "id": "ko-workshop-return/r1/on",
+          "outcome": "correct",
+          "unsupportedAssertion": false,
+          "passed": true
+        },
+        "strictPassDelta": 0,
+        "comparison": "tied"
+      },
+      {
+        "case": "ko-workshop-correction",
+        "repetition": 1,
+        "language": "ko",
+        "kind": "correction",
+        "off": {
+          "id": "ko-workshop-correction/r1/off",
+          "outcome": "correct",
+          "unsupportedAssertion": false,
+          "passed": true
+        },
+        "on": {
+          "id": "ko-workshop-correction/r1/on",
+          "outcome": "correct",
+          "unsupportedAssertion": false,
+          "passed": true
+        },
+        "strictPassDelta": 0,
+        "comparison": "tied"
+      },
+      {
+        "case": "ko-workshop-reference",
+        "repetition": 1,
+        "language": "ko",
+        "kind": "reference",
+        "off": {
+          "id": "ko-workshop-reference/r1/off",
+          "outcome": "correct",
+          "unsupportedAssertion": false,
+          "passed": true
+        },
+        "on": {
+          "id": "ko-workshop-reference/r1/on",
+          "outcome": "correct",
+          "unsupportedAssertion": false,
+          "passed": true
+        },
+        "strictPassDelta": 0,
+        "comparison": "tied"
+      },
+      {
+        "case": "ko-workshop-unknown",
+        "repetition": 1,
+        "language": "ko",
+        "kind": "unknown",
+        "off": {
+          "id": "ko-workshop-unknown/r1/off",
+          "outcome": "unknown-handled",
+          "unsupportedAssertion": false,
+          "passed": true
+        },
+        "on": {
+          "id": "ko-workshop-unknown/r1/on",
+          "outcome": "unknown-handled",
+          "unsupportedAssertion": false,
+          "passed": true
+        },
+        "strictPassDelta": 0,
+        "comparison": "tied"
+      },
+      {
+        "case": "en-observatory-return",
+        "repetition": 2,
+        "language": "en",
+        "kind": "return",
+        "off": {
+          "id": "en-observatory-return/r2/off",
+          "outcome": "correct",
+          "unsupportedAssertion": false,
+          "passed": true
+        },
+        "on": {
+          "id": "en-observatory-return/r2/on",
+          "outcome": "correct",
+          "unsupportedAssertion": false,
+          "passed": true
+        },
+        "strictPassDelta": 0,
+        "comparison": "tied"
+      },
+      {
+        "case": "en-observatory-correction",
+        "repetition": 2,
+        "language": "en",
+        "kind": "correction",
+        "off": {
+          "id": "en-observatory-correction/r2/off",
+          "outcome": "correct",
+          "unsupportedAssertion": false,
+          "passed": true
+        },
+        "on": {
+          "id": "en-observatory-correction/r2/on",
+          "outcome": "correct",
+          "unsupportedAssertion": true,
+          "passed": false
+        },
+        "strictPassDelta": -1,
+        "comparison": "regressed"
+      },
+      {
+        "case": "en-observatory-reference",
+        "repetition": 2,
+        "language": "en",
+        "kind": "reference",
+        "off": {
+          "id": "en-observatory-reference/r2/off",
+          "outcome": "correct",
+          "unsupportedAssertion": false,
+          "passed": true
+        },
+        "on": {
+          "id": "en-observatory-reference/r2/on",
+          "outcome": "correct",
+          "unsupportedAssertion": false,
+          "passed": true
+        },
+        "strictPassDelta": 0,
+        "comparison": "tied"
+      },
+      {
+        "case": "en-observatory-unknown",
+        "repetition": 2,
+        "language": "en",
+        "kind": "unknown",
+        "off": {
+          "id": "en-observatory-unknown/r2/off",
+          "outcome": "unknown-handled",
+          "unsupportedAssertion": false,
+          "passed": true
+        },
+        "on": {
+          "id": "en-observatory-unknown/r2/on",
+          "outcome": "unknown-handled",
+          "unsupportedAssertion": false,
+          "passed": true
+        },
+        "strictPassDelta": 0,
+        "comparison": "tied"
+      },
+      {
+        "case": "ko-observatory-return",
+        "repetition": 2,
+        "language": "ko",
+        "kind": "return",
+        "off": {
+          "id": "ko-observatory-return/r2/off",
+          "outcome": "correct",
+          "unsupportedAssertion": false,
+          "passed": true
+        },
+        "on": {
+          "id": "ko-observatory-return/r2/on",
+          "outcome": "correct",
+          "unsupportedAssertion": false,
+          "passed": true
+        },
+        "strictPassDelta": 0,
+        "comparison": "tied"
+      },
+      {
+        "case": "ko-observatory-correction",
+        "repetition": 2,
+        "language": "ko",
+        "kind": "correction",
+        "off": {
+          "id": "ko-observatory-correction/r2/off",
+          "outcome": "correct",
+          "unsupportedAssertion": false,
+          "passed": true
+        },
+        "on": {
+          "id": "ko-observatory-correction/r2/on",
+          "outcome": "correct",
+          "unsupportedAssertion": false,
+          "passed": true
+        },
+        "strictPassDelta": 0,
+        "comparison": "tied"
+      },
+      {
+        "case": "ko-observatory-reference",
+        "repetition": 2,
+        "language": "ko",
+        "kind": "reference",
+        "off": {
+          "id": "ko-observatory-reference/r2/off",
+          "outcome": "correct",
+          "unsupportedAssertion": false,
+          "passed": true
+        },
+        "on": {
+          "id": "ko-observatory-reference/r2/on",
+          "outcome": "correct",
+          "unsupportedAssertion": false,
+          "passed": true
+        },
+        "strictPassDelta": 0,
+        "comparison": "tied"
+      },
+      {
+        "case": "ko-observatory-unknown",
+        "repetition": 2,
+        "language": "ko",
+        "kind": "unknown",
+        "off": {
+          "id": "ko-observatory-unknown/r2/off",
+          "outcome": "unknown-handled",
+          "unsupportedAssertion": false,
+          "passed": true
+        },
+        "on": {
+          "id": "ko-observatory-unknown/r2/on",
+          "outcome": "unknown-handled",
+          "unsupportedAssertion": false,
+          "passed": true
+        },
+        "strictPassDelta": 0,
+        "comparison": "tied"
+      },
+      {
+        "case": "en-workshop-return",
+        "repetition": 2,
+        "language": "en",
+        "kind": "return",
+        "off": {
+          "id": "en-workshop-return/r2/off",
+          "outcome": "correct",
+          "unsupportedAssertion": false,
+          "passed": true
+        },
+        "on": {
+          "id": "en-workshop-return/r2/on",
+          "outcome": "correct",
+          "unsupportedAssertion": true,
+          "passed": false
+        },
+        "strictPassDelta": -1,
+        "comparison": "regressed"
+      },
+      {
+        "case": "en-workshop-correction",
+        "repetition": 2,
+        "language": "en",
+        "kind": "correction",
+        "off": {
+          "id": "en-workshop-correction/r2/off",
+          "outcome": "correct",
+          "unsupportedAssertion": false,
+          "passed": true
+        },
+        "on": {
+          "id": "en-workshop-correction/r2/on",
+          "outcome": "correct",
+          "unsupportedAssertion": false,
+          "passed": true
+        },
+        "strictPassDelta": 0,
+        "comparison": "tied"
+      },
+      {
+        "case": "en-workshop-reference",
+        "repetition": 2,
+        "language": "en",
+        "kind": "reference",
+        "off": {
+          "id": "en-workshop-reference/r2/off",
+          "outcome": "correct",
+          "unsupportedAssertion": false,
+          "passed": true
+        },
+        "on": {
+          "id": "en-workshop-reference/r2/on",
+          "outcome": "correct",
+          "unsupportedAssertion": false,
+          "passed": true
+        },
+        "strictPassDelta": 0,
+        "comparison": "tied"
+      },
+      {
+        "case": "en-workshop-unknown",
+        "repetition": 2,
+        "language": "en",
+        "kind": "unknown",
+        "off": {
+          "id": "en-workshop-unknown/r2/off",
+          "outcome": "unknown-handled",
+          "unsupportedAssertion": false,
+          "passed": true
+        },
+        "on": {
+          "id": "en-workshop-unknown/r2/on",
+          "outcome": "unknown-handled",
+          "unsupportedAssertion": false,
+          "passed": true
+        },
+        "strictPassDelta": 0,
+        "comparison": "tied"
+      },
+      {
+        "case": "ko-workshop-return",
+        "repetition": 2,
+        "language": "ko",
+        "kind": "return",
+        "off": {
+          "id": "ko-workshop-return/r2/off",
+          "outcome": "correct",
+          "unsupportedAssertion": false,
+          "passed": true
+        },
+        "on": {
+          "id": "ko-workshop-return/r2/on",
+          "outcome": "correct",
+          "unsupportedAssertion": false,
+          "passed": true
+        },
+        "strictPassDelta": 0,
+        "comparison": "tied"
+      },
+      {
+        "case": "ko-workshop-correction",
+        "repetition": 2,
+        "language": "ko",
+        "kind": "correction",
+        "off": {
+          "id": "ko-workshop-correction/r2/off",
+          "outcome": "correct",
+          "unsupportedAssertion": false,
+          "passed": true
+        },
+        "on": {
+          "id": "ko-workshop-correction/r2/on",
+          "outcome": "correct",
+          "unsupportedAssertion": false,
+          "passed": true
+        },
+        "strictPassDelta": 0,
+        "comparison": "tied"
+      },
+      {
+        "case": "ko-workshop-reference",
+        "repetition": 2,
+        "language": "ko",
+        "kind": "reference",
+        "off": {
+          "id": "ko-workshop-reference/r2/off",
+          "outcome": "correct",
+          "unsupportedAssertion": false,
+          "passed": true
+        },
+        "on": {
+          "id": "ko-workshop-reference/r2/on",
+          "outcome": "correct",
+          "unsupportedAssertion": false,
+          "passed": true
+        },
+        "strictPassDelta": 0,
+        "comparison": "tied"
+      },
+      {
+        "case": "ko-workshop-unknown",
+        "repetition": 2,
+        "language": "ko",
+        "kind": "unknown",
+        "off": {
+          "id": "ko-workshop-unknown/r2/off",
+          "outcome": "unknown-handled",
+          "unsupportedAssertion": false,
+          "passed": true
+        },
+        "on": {
+          "id": "ko-workshop-unknown/r2/on",
+          "outcome": "unknown-handled",
+          "unsupportedAssertion": false,
+          "passed": true
+        },
+        "strictPassDelta": 0,
+        "comparison": "tied"
       }
     ]
   },

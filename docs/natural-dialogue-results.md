@@ -23,6 +23,17 @@ artifact key scan passed. Recorded start/end source hashes match the files used.
 The original 22-attempt, HTTP-500-interrupted run is preserved separately and is
 not combined with these results.
 
+**Review correction (2026-09-29): the historical run does not establish the
+required 15-second provider-start spacing.** Its runner paced host generation
+before variable prompt preparation. Of 63 consecutive bridge-entry intervals,
+32 were below 15 seconds; the minimum was 14,222 ms. Those timestamps are not
+exact upstream-send times. The 676 checks did not validate that requirement.
+The original raw report and its hashes remain unchanged, and the derived summary
+now explicitly reports `providerSpacing.verified: false`. Answer completion,
+cleanup and provisional observations remain evidence, not proof of full protocol
+compliance. The corrected sender has local validation below; it has not had a
+replacement 64-sample live run.
+
 ## Retrieval and provisional semantic review
 
 The assistant read all four source histories and all 64 answers in a randomized
@@ -60,6 +71,13 @@ fail. A human reviewer should confirm the speaker-attribution interpretation.
 Korean subject omission was not treated as an explicit first-person claim.
 No retrieval/prompt changes or favorable retest followed these observations.
 
+The offline score import now emits all **32 case/repetition pairs**: **0 improved,
+28 tied, 4 regressed** on the frozen strict-pass criterion. Each pair retains both
+outcome labels, unsupported-assertion flags, pass booleans and the on-minus-off
+pass difference (-1, 0 or +1). A tie means equal strict-pass status, not necessarily
+identical semantic labels. The four regressions are the cases above. No answer
+was regenerated or annotation changed to produce these paired comparisons.
+
 ## Tokens and elapsed time
 
 | Measurement, median [min–max] | Memory off | Memory on |
@@ -72,7 +90,8 @@ No retrieval/prompt changes or favorable retest followed these observations.
 Off-mode “sync” measures the disabled-setting operation, not a remote sync.
 The stages overlap: do not add retrieval time to generation time. Each sample
 has a fresh chat scope, so this measures cold per-sample indexing, not a warmed
-ongoing chat. Generation timing excludes the fixed 15-second inter-sample wait.
+ongoing chat. Historical generation timing excludes the host-start pacing wait,
+which did not guarantee the required provider-start interval.
 
 Successful responses reported **62,276 prompt tokens** and **1,384 completion
 tokens** in total. Managed-embedding usage and total operating cost remain
@@ -87,9 +106,18 @@ quality or provider reliability.
 Use the [runner instructions](natural-dialogue-live.md) with a new artifact tag
 and `npm run test:natural:live -- --retry-transient`. The original frozen plan is
 still required; the report additionally pins the retry amendment and tooling.
-Unit tests: **84 passing** on Node.js 20.12.0 and 24.15.0. Runtime and all script/test
-syntax checks and release metadata pass. The extension runtime and frozen corpus
+Unit tests after review fixes: **90 passing** on Node.js 20.12.0 and 24.15.0.
+Runtime and all script/test syntax checks and release metadata pass. The extension runtime and frozen corpus
 are unchanged. Main promotion, release and deployment are outside this work.
+
+The corrected test bridge shares one monotonic dispatch clock across samples and
+retries, records every actual send and pacing wait, and validates all send gaps.
+New reports with spacing metadata reject missing timestamps or sub-15-second
+gaps. Legacy reports remain usable for semantic review with spacing explicitly
+unverified. Unit tests cover uneven preparation, early timers, concurrent sends,
+cancellation, retry-to-next-sample spacing and shuffled paired annotations. A
+separate local HTTP 500-to-200-to-next-sample check uses real 15-second timers;
+it is not an OpenAI, LambdaDB or SillyTavern integration rerun.
 
 The next product investigation is speaker attribution when quoted old passages
 contain first-person claims. That needs a separately declared development change
@@ -108,6 +136,10 @@ Ignored local artifacts (available only in this validation checkout):
 - [Unfilled human-review packet](../artifacts/natural-review-retry-v1/blind-review.json)
 - [Assistant annotations](../artifacts/natural-review-retry-v1/assistant-review.json)
 - [Decoded provisional scores](../artifacts/natural-review-retry-v1/assistant-scores.json)
+- [Recomputed scores with 32 pairs](../artifacts/natural-review-retry-v1/assistant-scores-review-fixes.json)
+- [Local HTTP spacing check with real timers](../artifacts/provider-spacing-real-timer.json)
+- [Review-fix Node 20 tests](../artifacts/unit-review-fixes20.log)
+- [Review-fix Node 24 tests](../artifacts/unit-review-fixes24.log)
 - [Source, credential and cleanup verification](../artifacts/natural-retry-v1-verification.json)
 - [Run log](../artifacts/natural-retry-v1.log)
 - [Node 20 tests](../artifacts/unit-retry20.log)
