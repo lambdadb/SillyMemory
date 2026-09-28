@@ -97,7 +97,7 @@ For a problem, first disable memory to preserve ordinary chat operation. Back up
 SillyTavern data before changing versions. Do not uninstall or delete collections
 just to change code versions. Advanced users can pin a known-good published tag
 in the installed extension's Git directory (normally
-`SillyTavern/data/<user-handle>/extensions/SillyMemory`; older installations may use `sillymemory`):
+`SillyTavern/data/<user-handle>/extensions/SillyMemory`):
 
 ```sh
 git status --short
@@ -142,7 +142,3 @@ The test branch must exist on GitHub and differ from main. The report identifies
 the exact commits; it must not be presented as a published main-to-main release
 upgrade. Artifact tags must be unique. Reports/screenshots stay in ignored local
 `artifacts/`; checked-in validation records retain results and limits.
-
-To repeat the same smoke check for an existing lowercase installation URL, set
-`SM_INSTALL_URL=https://github.com/lambdadb/sillymemory` and use another artifact
-tag. The default uses the canonical `https://github.com/lambdadb/SillyMemory`.

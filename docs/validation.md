@@ -789,48 +789,31 @@ The conditional main-target workflow is covered by local CLI tests, not an actua
 main-target GitHub PR. Runtime and install harness files are unchanged, so the
 previous 15-check browser installation result remains separate evidence.
 
-## Repository naming and installation compatibility — 2026-09-28
+## Repository naming and installation — 2026-09-28
 
-The public repository was renamed to `lambdadb/SillyMemory`; its default branch
-remains main, with develop as the integration branch. The shared local Git remote
-now uses `https://github.com/lambdadb/SillyMemory.git`. The local checkout folder,
-npm package name, settings/storage keys and development symlink remain lowercase.
-Only public links in the settings template changed; runtime JavaScript, manifest
-and lockfile are unchanged from develop.
+The public repository is `lambdadb/SillyMemory`; main remains the default branch
+and develop the integration branch. Installation and source/license links use
+`https://github.com/lambdadb/SillyMemory`. The installation smoke test uses this
+single URL and checks the `SillyMemory` directory spelling. The npm package,
+internal settings keys and development symlink use lowercase technical identifiers.
+Runtime JavaScript, manifest and lockfile are unchanged from develop.
 
-Two isolated macOS/Chromium runs against pinned SillyTavern 1.19.0
-(`06bde939fb1e9c4c8d8641d810f0a916b5bce127`) each passed **17 assertions**:
-
-| Installation URL | Created directory | Result |
-| --- | --- | --- |
-| `https://github.com/lambdadb/SillyMemory` | `SillyMemory` | 17/17; install/update HTTP 200 |
-| `https://github.com/lambdadb/sillymemory` | `sillymemory` | 17/17; install/update HTTP 200 |
-
-Both installed public main `7826a76be1f776fdb309ffad6a94421f6eca2c2f` and updated
-through the real host UI to candidate `96ca09e5a2e02988a2222ca2aa300058baa28218`.
-The update fixture used common ancestor `aea782941ba363869b227381523be23271d917a0`,
-whose tree equals installed main, as described in the installation protocol above.
-Both builds identify as 0.1.0. Harness SHA-256:
+The isolated macOS/Chromium run against pinned SillyTavern 1.19.0
+(`06bde939fb1e9c4c8d8641d810f0a916b5bce127`) passed **17 assertions**, with
+install/update HTTP 200. It installed main
+`7826a76be1f776fdb309ffad6a94421f6eca2c2f` and updated through the actual UI to
+candidate `96ca09e5a2e02988a2222ca2aa300058baa28218`. The update fixture used
+common ancestor `aea782941ba363869b227381523be23271d917a0`, whose tree equals
+installed main. Both builds identify as 0.1.0. The recorded harness SHA-256 is
 `bcece8a103db1452285a3a181dc07d9277c8195b2f6314f8a67d6c3decf40a72`.
-Later documentation-only changes do not alter this tested harness.
 
-Checks covered exact directory spelling, source/license links using the canonical
-URL, version display, update commit, owner/configuration retention, key clearing,
-disabled memory after reload, commit rollback and return. The lowercase run kept
-its original lowercase remote and folder during update; no reinstall or manual
-remote rewrite was needed. Both used newly created synthetic profiles, so they
-do not establish compatibility with every historical user installation or other
-operating systems. They do not test a published cross-version migration.
-No LambdaDB/model calls or uncaught page errors occurred, and both temporary
-profiles were deleted. Unit tests pass 68/68 on Node 20.12.0 and 24.15.0; runtime,
-script syntax and release metadata checks pass.
-
-Ignored local reports are [canonical](../artifacts/branding-canonical.json) and
-[legacy](../artifacts/branding-legacy.json), with matching `.log` and `.png` files
-in the execution worktree. To reproduce, run the install smoke command with a
-published candidate branch and unique artifact tag, then repeat with
-`SM_INSTALL_URL=https://github.com/lambdadb/sillymemory`. No main promotion,
-public version tag or GitHub Release was created.
+Checks covered directory spelling, source/license links, version display, exact
+update commit, owner/configuration retention, key clearing, disabled memory after
+reload, and commit rollback/return. No LambdaDB/model calls or uncaught page errors
+occurred; the temporary profile was removed. These are synthetic pre-release
+checks, not a published cross-version upgrade or migration test. The ignored
+local report is [branding-canonical.json](../artifacts/branding-canonical.json),
+with matching `.log` and `.png` files in the execution worktree.
 
 ## Remaining validation
 

@@ -8,7 +8,7 @@ An installable, experimental UI extension for character chats. SillyMemory keeps
 
 **Validation status:** experimental. The current suite passes 68 unit tests on Node.js 20.12.0 and 24, plus 188 real-host/emulator checks including two host SIGKILL/restarts and 24 repeated chat/branch cycles. A new fixed 12-case English/Korean evaluation made 24 real OpenAI requests: memory-on selected the target and answered with its code in 12/12 cases, with 11/12 strict code-only answers. One Korean continuation added a suffix. Maximum injection was 797/800 tokens, and owned remote collections were cleaned up. These are small synthetic cases and bounded repetition, not general quality or long-duration reliability guarantees. See [the held-out protocol and results](docs/heldout-recovery.md), [earlier development cases](docs/recall-challenges.md), and [validation record](docs/validation.md).
 
-Real Git URL installation/update checks passed 17 assertions each for the canonical `SillyMemory` URL and the legacy lowercase URL, including settings retention and session-key clearing. These tested two unreleased 0.1.0 commits, not an upgrade between published releases; see the [repository naming validation](docs/validation.md#repository-naming-and-installation-compatibility--2026-09-28).
+The real Git URL installation/update check passed 17 assertions for the `SillyMemory` URL, including settings retention and session-key clearing. This tested two unreleased 0.1.0 commits, not an upgrade between published releases; see the [installation validation](docs/validation.md#repository-naming-and-installation--2026-09-28).
 
 ## Supported host
 
@@ -35,13 +35,6 @@ For local development, symlink the checkout into
 `SillyTavern/public/scripts/extensions/third-party/sillymemory`; do not also install
 a user-scoped copy. Manual copies without Git metadata cannot use the normal
 Git-based update flow.
-
-The public repository and product are named **SillyMemory**. The npm package,
-internal settings keys and local development checkout may remain `sillymemory`.
-The lowercase development symlink above is intentional and used by the development
-test harnesses. New URL installs normally use the `SillyMemory` directory.
-Existing lowercase installations can keep their directory and settings; update
-the existing copy rather than installing another copy under the new spelling.
 
 ## Version and updates
 
