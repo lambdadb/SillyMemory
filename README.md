@@ -17,7 +17,7 @@ The development baseline is **SillyTavern 1.19.0**, pinned to commit [`06bde939f
 ## Install
 
 1. Prepare SillyTavern **1.19.0** and Git on the host. Other host revisions are unverified.
-2. Open **Extensions → Install extension**, enter `https://github.com/lambdadb/sillymemory`, leave the optional branch/tag field empty, and choose **Install just for me** (or **Install** for a non-admin account). Review SillyTavern's third-party-extension prompt and confirm. The default branch is `main`; `develop` and PR branches are for development. The extension has no runtime npm dependencies or build step. Do not install two copies.
+2. Open **Extensions → Install extension**, enter `https://github.com/lambdadb/SillyMemory`, leave the optional branch/tag field empty, and choose **Install just for me** (or **Install** for a non-admin account). Review SillyTavern's third-party-extension prompt and confirm. The default branch is `main`; `develop` and PR branches are for development. The extension has no runtime npm dependencies or build step. Do not install two copies.
 3. Set this in SillyTavern's `config.yaml` and **restart SillyTavern**:
 
    ```yaml
@@ -35,6 +35,13 @@ For local development, symlink the checkout into
 `SillyTavern/public/scripts/extensions/third-party/sillymemory`; do not also install
 a user-scoped copy. Manual copies without Git metadata cannot use the normal
 Git-based update flow.
+
+The public repository and product are named **SillyMemory**. The npm package,
+internal settings keys and local development checkout may remain `sillymemory`.
+The lowercase development symlink above is intentional and used by the development
+test harnesses. New URL installs normally use the `SillyMemory` directory.
+Existing lowercase installations can keep their directory and settings; update
+the existing copy rather than installing another copy under the new spelling.
 
 ## Version and updates
 
