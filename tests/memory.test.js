@@ -275,3 +275,14 @@ test('read cancellation while token counting rejects the completed selection', a
     assert.equal(await pending, null);
     assert.equal(s.remote.size, 4);
 });
+
+test('explicit continuation anchors on the continued message while regenerate and swipe keep the user anchor', () => {
+    const snap = snapshot();
+    snap.messages.push({ ...snap.messages[0], index: 6, user: true, text: 'Tell me about the red passport.' });
+    snap.messages.push({ ...snap.messages[0], index: 7, user: false, text: 'Now return to the blue compass. Its location is' });
+    assert.equal(retrievalQueries(snap, 'continue')[0], snap.messages[7].text);
+    for (const type of ['normal', 'regenerate', 'swipe']) {
+        assert.equal(retrievalQueries(snap, type)[0], snap.messages[6].text);
+        assert(retrievalQueries(snap, type).every(q => !q.includes(snap.messages[7].text)));
+    }
+});

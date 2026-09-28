@@ -20,12 +20,14 @@ export function capture(context) {
     return { character: avatar, chat: context.getCurrentChatId(), messages };
 }
 export function fingerprint(snapshot) { return JSON.stringify(snapshot); }
-export const RETRIEVAL_POLICY = 'latest-user-plus-context-v1';
-export function retrievalQueries(snapshot) {
+export const RETRIEVAL_POLICY = 'latest-user-or-continuation-plus-context-v2';
+export function retrievalQueries(snapshot, type = 'normal') {
     const messages = snapshot.messages;
     // Swipe/regenerate may retain an assistant answer in the source. Anchor on
     // the last user message so that answer cannot steer its own replacement.
-    let anchor = messages.findLastIndex(m => m.user && m.text.trim());
+    // Explicit continuation follows the message being extended. Regenerate and
+    // swipe still exclude the old answer from the query for its replacement.
+    let anchor = messages.findLastIndex(m => (type === 'continue' || m.user) && m.text.trim());
     if (anchor < 0) anchor = messages.findLastIndex(m => m.text.trim());
     if (anchor < 0) return [];
     const primary = messages[anchor].text.trim().slice(0, 6000);
@@ -161,7 +163,7 @@ export class MemoryEngine {
             return prepared;
         });
     }
-    async retrieve(snapshot, config, countTokens, valid = () => true, progress = () => {}) {
+    async retrieve(snapshot, config, countTokens, valid = () => true, progress = () => {}, type = 'normal') {
         const generation = this.generation;
         const pendingReads = this.pendingReads.signal;
         const sourceCurrent = () => generation === this.generation && valid();
@@ -170,7 +172,7 @@ export class MemoryEngine {
         const prepared = await this.sync(snapshot, config, sourceCurrent, progress);
         if (!prepared || !current()) return null;
         if (!prepared.docs.length) return { text: '', tokens: 0, passages: [] };
-        const queries = retrievalQueries(snapshot);
+        const queries = retrievalQueries(snapshot, type);
         if (!queries.length) return null;
         const reads = new AbortController();
         const signal = AbortSignal.any([pendingReads, reads.signal]);

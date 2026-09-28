@@ -4,11 +4,20 @@ The original fixed comparison scored 6/18 with SillyMemory. A subsequent vector 
 
 ## Policy
 
+The current `latest-user-or-continuation-plus-context-v2` policy preserves the
+normal/swipe/regenerate behavior below. For explicit `continue` requests only,
+it searches the latest non-empty message being extended instead of the earlier
+user topic, with the same separate contextual query. This fixes the observed
+assistant-topic shift; it does not interpret arbitrary references or use retained
+answers to steer their own replacement. See [the fixed six-case protocol and
+results](recall-challenges.md). Historical v1 evidence below retains its original
+source hashes and is not a v2 benchmark.
+
 Search the latest non-empty user message on its own. Separately search that message followed by the preceding two non-empty messages, newest first. Ignore assistant messages after the user anchor so a previous answer cannot steer its own swipe/regeneration. If there is no user message, use the latest non-empty message. Bound each query to 6,000 UTF-16 code units and remove duplicate query strings.
 
 Run at most two scoped managed `knn.queryText` requests concurrently, 30 candidates each. Interleave their ranks, starting with the question-only result, then validate against the exact current local source and deduplicate. The existing complete-passage selector counts the full wrapper against the same configured budget. Source isolation, synchronization journals and prompt mutation rules stay as described in [architecture](architecture.md).
 
-If either search fails, cancel the other and preserve the full original prompt. Invalidation cancels both and rejects any late result. This costs up to two embedding/query operations per retrieval. It is a bounded heuristic, not a relevance guarantee or semantic reference resolver. A very small budget can still exclude a contextual result; long assistant-only continuations have not been evaluated.
+If either search fails, cancel the other and preserve the full original prompt. Invalidation cancels both and rejects any late result. This costs up to two embedding/query operations per retrieval. It is a bounded heuristic, not a relevance guarantee or semantic reference resolver. A very small budget can still exclude a contextual result; the six-case continuation evaluation is bounded synthetic evidence, not a general guarantee.
 
 ## Validation protocol
 
