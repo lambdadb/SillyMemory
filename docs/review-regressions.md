@@ -43,3 +43,34 @@ the final runtime/harness. Review the ignored local
 [passing report](../artifacts/fault-smoke-review-fixes-verified.json).
 All **44 unit tests** pass on Node.js 20.12.0 and 24.15.0; runtime and changed
 harness syntax checks also pass.
+
+## Follow-up: quiet/normal retrieval overlap
+
+[The follow-up P2 finding on PR #6](https://github.com/lambdadb/sillymemory/pull/6#discussion_r4118248799)
+identified an overly broad preservation of earlier work: a normal retrieval
+could finish after a quiet call and restore the global memory injection.
+`fault-smoke-quiet-overlap-red.json` reproduced this with a held query through
+the real host interceptor dispatcher, while both earlier quiet-sync checks
+still passed.
+
+Read cancellation is now separate from source invalidation. A retrieval captures
+its cancellation signal before synchronization, permits current source writes
+to complete, and rejects canceled reads after search or token counting. The
+adapter separately invalidates prompt ownership, aborting the old normal
+interceptor without pruning its history or restoring an injection. A quiet
+prompt completes without memory and does not disturb a newer manual sync's
+status. No batch sizes, request timeouts, key handling, or retry policy changed.
+
+Three unit regressions cover cancellation during a 120-chunk write (all three
+batches complete and no query starts), late query responses that ignore abort,
+and cancellation during token counting. Two browser checks cover overlapping
+normal/quiet dispatch and recovery on the next normal generation. This exercises
+real host dispatch with an emulated upstream, not paid model generation.
+
+The follow-up passed **47 unit tests** on Node.js 20.12.0 and 24.15.0 and
+**68 real-host/emulator checks**, with no uncaught primary-page errors and no
+remaining emulator collections or journals. All ten runtime/harness hashes
+match the final source. Review the ignored local
+[follow-up report](../artifacts/fault-smoke-quiet-overlap-verified.json); use
+`SM_ARTIFACT_TAG=quiet-overlap-verified` with the command above to reproduce
+under a fresh tag. Live LambdaDB/OpenAI generation was not rerun.

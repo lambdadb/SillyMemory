@@ -8,6 +8,7 @@ const uuid = () => crypto.randomUUID().replaceAll('-', '');
 let client, engine, root, state, stateKey, owner, timer, busy = false, gatePassed = false;
 let sessionReady = false;
 let promptSequence = 0;
+let retrievalSequence = 0, retrievalOperation;
 let statusView;
 const element = name => root.querySelector(`[data-sm="${name}"]`);
 const status = text => statusView.show(text);
@@ -57,10 +58,14 @@ async function action(job) {
 
 // Called with SillyTavern's ephemeral coreChat array. Never mutate source messages.
 globalThis.sillymemory_intercept = async (chat, contextSize, abort, type) => {
-    // Quiet prompts use no memory; keep scheduled and in-flight sync intact.
-    if (type === 'quiet') { clearInjection(); return; }
+    // Quiet prompts cancel older reads/injection while preserving source sync.
+    if (type === 'quiet') {
+        retrievalOperation?.finish('Memory retrieval skipped for quiet generation.');
+        retrievalSequence++; engine?.cancelReads(); clearInjection(); return;
+    }
     invalidate();
     const sequence = promptSequence;
+    const retrieval = ++retrievalSequence;
     if (!sessionReady || busy || !state?.enabled || !engine) return;
     if (context().extensionSettings.vectors?.enabled_chats) {
         status('Disable built-in Vector Storage chat vectorization before using SillyMemory.'); return;
@@ -70,13 +75,15 @@ globalThis.sillymemory_intercept = async (chat, contextSize, abort, type) => {
     const instance = engine; const config = options(state);
     const promptBefore = JSON.stringify(chat);
     const sourceValid = () => sequence === promptSequence && validSnapshot(snapshot, instance);
-    const valid = () => sourceValid() && JSON.stringify(chat) === promptBefore;
-    const operation = statusView.start(sourceValid);
+    const unchangedPrompt = () => sourceValid() && JSON.stringify(chat) === promptBefore;
+    const valid = () => retrieval === retrievalSequence && unchangedPrompt();
+    const operation = statusView.start(() => retrieval === retrievalSequence && sourceValid());
+    retrievalOperation = operation;
     try {
         // The extension budget includes its complete wrapper; SillyTavern still manages
         // total prompt overhead, character instructions, and final model context limits.
         config.budget = Math.min(config.budget, Math.max(0, Math.floor(contextSize / 4)));
-        const result = await instance.retrieve(snapshot, config, text => context().getTokenCountAsync(text), valid, operation.update);
+        const result = await instance.retrieve(snapshot, config, text => context().getTokenCountAsync(text), unchangedPrompt, operation.update);
         if (!valid()) { operation.finish('Memory operation canceled because the prompt changed. Generate again.'); abort(true); return; }
         if (!result?.text) { operation.finish('No current matching memory fits the budget. Original prompt retained.'); return; }
         // Protect the most recent prompt messages, including during swipe/regenerate.
@@ -96,6 +103,8 @@ globalThis.sillymemory_intercept = async (chat, contextSize, abort, type) => {
     } catch (e) {
         if (!valid()) { operation.finish('Memory operation canceled because the prompt changed. Generate again.'); abort(true); return; }
         if (operation.current()) fail(e, operation);
+    } finally {
+        if (retrievalOperation === operation) retrievalOperation = undefined;
     }
 };
 

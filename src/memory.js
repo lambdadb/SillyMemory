@@ -112,7 +112,8 @@ export class MemoryEngine {
         this.queue = Promise.resolve(); this.acknowledged = new Set(); this.generation = 0;
         this.pendingReads = new AbortController();
     }
-    invalidate() { this.generation++; this.pendingReads.abort(); this.pendingReads = new AbortController(); }
+    cancelReads() { this.pendingReads.abort(); this.pendingReads = new AbortController(); }
+    invalidate() { this.generation++; this.cancelReads(); }
     serial(job) {
         const task = this.queue.catch(() => {}).then(() => this.lock(job));
         this.queue = task; return task;
@@ -162,14 +163,17 @@ export class MemoryEngine {
     }
     async retrieve(snapshot, config, countTokens, valid = () => true, progress = () => {}) {
         const generation = this.generation;
-        const current = () => generation === this.generation && valid();
-        const prepared = await this.sync(snapshot, config, current, progress);
+        const pendingReads = this.pendingReads.signal;
+        const sourceCurrent = () => generation === this.generation && valid();
+        const current = () => !pendingReads.aborted && sourceCurrent();
+        // Canceling a prompt's reads must not cancel its source reconciliation.
+        const prepared = await this.sync(snapshot, config, sourceCurrent, progress);
         if (!prepared || !current()) return null;
         if (!prepared.docs.length) return { text: '', tokens: 0, passages: [] };
         const queries = retrievalQueries(snapshot);
         if (!queries.length) return null;
         const reads = new AbortController();
-        const signal = AbortSignal.any([this.pendingReads.signal, reads.signal]);
+        const signal = AbortSignal.any([pendingReads, reads.signal]);
         let results;
         try {
             let completed = 0;

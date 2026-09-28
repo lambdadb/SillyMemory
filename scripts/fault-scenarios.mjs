@@ -94,6 +94,21 @@ export async function runFaultScenarios({ page, field, waitStatus, prompt, check
     quietWrite.release(); await waitStatus('synchronized');
     check('quiet generation preserves in-flight synchronization and its completion status', await remoteMatches() && await field('progress').isHidden());
 
+    const quietQuery = faults.arm('query', 'hold');
+    const overlapping = prompt(); await entered(quietQuery);
+    const quietPrompt = await page.evaluate(async () => {
+        const c = SillyTavern.getContext();
+        const chat = c.chat.map((m, index) => ({ ...m, index }));
+        const before = JSON.stringify(chat);
+        const { runGenerationInterceptors } = await import('/scripts/extensions.js');
+        const aborted = await runGenerationInterceptors(chat, 8192, 'quiet');
+        return { aborted, unchanged: before === JSON.stringify(chat), injection: c.extensionPrompts.sillymemory?.value };
+    });
+    quietQuery.release(); const oldPrompt = await overlapping;
+    check('quiet prompt cancels overlapping normal retrieval without pruning or reinjection', !quietPrompt.aborted && quietPrompt.unchanged && !quietPrompt.injection && oldPrompt.aborted && oldPrompt.chat.length === 8 && !oldPrompt.injection && await field('progress').isHidden());
+    const afterQuiet = await prompt();
+    check('normal retrieval recovers after quiet cancellation', !afterQuiet.aborted && Boolean(afterQuiet.injection) && await remoteMatches());
+
     const blockedTab = await page.context().newPage();
     let blockedProxyRequests = 0;
     blockedTab.on('request', request => { if (new URL(request.url()).pathname.startsWith('/proxy/')) blockedProxyRequests++; });
