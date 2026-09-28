@@ -802,17 +802,17 @@ The isolated macOS/Chromium run against pinned SillyTavern 1.19.0
 (`06bde939fb1e9c4c8d8641d810f0a916b5bce127`) passed **17 assertions**, with
 install/update HTTP 200. It installed main
 `7826a76be1f776fdb309ffad6a94421f6eca2c2f` and updated through the actual UI to
-candidate `96ca09e5a2e02988a2222ca2aa300058baa28218`. The update fixture used
+candidate `3abfce5eaf3db9db334b19b1e293862af8a665fc`. The update fixture used
 common ancestor `aea782941ba363869b227381523be23271d917a0`, whose tree equals
 installed main. Both builds identify as 0.1.0. The recorded harness SHA-256 is
-`bcece8a103db1452285a3a181dc07d9277c8195b2f6314f8a67d6c3decf40a72`.
+`3d1c90884f18753b69984ddf6e3a650769abd50fb6b3b5ba1f8540fa01454403`.
 
 Checks covered directory spelling, source/license links, version display, exact
 update commit, owner/configuration retention, key clearing, disabled memory after
 reload, and commit rollback/return. No LambdaDB/model calls or uncaught page errors
 occurred; the temporary profile was removed. These are synthetic pre-release
 checks, not a published cross-version upgrade or migration test. The ignored
-local report is [branding-canonical.json](../artifacts/branding-canonical.json),
+local report is [branding-single-url.json](../artifacts/branding-single-url.json),
 with matching `.log` and `.png` files in the execution worktree.
 
 ## Remaining validation
