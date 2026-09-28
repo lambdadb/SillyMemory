@@ -162,7 +162,7 @@ try {
     await page.evaluate(async () => { const c = SillyTavern.getContext(); c.chat[0].mes = 'Edited: the compass is in the tower.'; await c.eventSource.emit(c.eventTypes.MESSAGE_UPDATED, 0); });
     await waitStatus('synchronized'); staleHits = [old];
     const edited = await prompt();
-    check('edits delete stale records and reject delayed old hits', !collection.docs.has(old.id) && !edited.injection.includes('[Message 1, User, passage 1]\nSynthetic'));
+    check('edits delete stale records and reject delayed old hits', !collection.docs.has(old.id) && !edited.injection.includes('Synthetic passage 0'));
     await page.evaluate(async () => { const c = SillyTavern.getContext(); c.chat[1].mes = 'Selected swipe: silver compass'; c.chat[1].swipe_id = 1; await c.eventSource.emit(c.eventTypes.MESSAGE_SWIPED, 1); });
     await waitStatus('synchronized');
     check('swipe event updates remote source', [...collection.docs.values()].some(d => d.text.includes('Selected swipe')));

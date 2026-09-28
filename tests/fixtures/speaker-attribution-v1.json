@@ -1,0 +1,930 @@
+{
+  "settings": {
+    "context": 8192,
+    "recent": 12,
+    "budget": 800,
+    "repetitions": 2,
+    "maxOutputTokens": 256
+  },
+  "generation": {
+    "model": "gpt-4.1-mini-2025-04-14",
+    "temperature": 0,
+    "instruction": "Answer the user's question using only this conversation. Follow explicit corrections. If the requested information is not stated, say so without guessing. Reply in the language of the question."
+  },
+  "version": "speaker-attribution-v1",
+  "cases": [
+    {
+      "id": "en-workshop-return",
+      "story": "en-workshop",
+      "kind": "return",
+      "question": "Where should I look for the spare studio key?",
+      "context": [],
+      "requiredEvidence": [
+        {
+          "message": 2,
+          "quote": "inside the blue sewing tin",
+          "meaning": "The spare key is inside the blue sewing tin."
+        }
+      ],
+      "supersededEvidence": [],
+      "answerRule": "State every required meaning as the current answer. Paraphrases are accepted; do not endorse a superseded or competing fact."
+    },
+    {
+      "id": "en-observatory-correction",
+      "story": "en-observatory",
+      "kind": "correction",
+      "question": "What time should we use for the return ferry now?",
+      "context": [],
+      "requiredEvidence": [
+        {
+          "message": 14,
+          "quote": "7:10 p.m.",
+          "meaning": "The corrected departure is 7:10 p.m."
+        }
+      ],
+      "supersededEvidence": [
+        {
+          "message": 8,
+          "quote": "6:20 p.m."
+        }
+      ],
+      "answerRule": "State every required meaning as the current answer. Paraphrases are accepted; do not endorse a superseded or competing fact."
+    },
+    {
+      "id": "en-notebook-user",
+      "story": "en-notebook-user",
+      "kind": "return",
+      "context": [],
+      "question": "Who put the amber notebook away, and where is it?",
+      "requiredEvidence": [
+        {
+          "message": 2,
+          "quote": "I put the amber notebook in the top drawer of the oak desk.",
+          "meaning": "The user put the notebook away; it is in the top drawer of the oak desk."
+        }
+      ],
+      "supersededEvidence": [],
+      "answerRule": "Identify the user as the person who put the notebook away and give the exact drawer and desk. First person is appropriate only if the assistant was the source speaker. Do not reverse the actor or invent extra actions."
+    },
+    {
+      "id": "en-notebook-assistant",
+      "story": "en-notebook-assistant",
+      "kind": "return",
+      "context": [],
+      "question": "Who put the amber notebook away, and where is it?",
+      "requiredEvidence": [
+        {
+          "message": 3,
+          "quote": "I put the amber notebook in the top drawer of the oak desk.",
+          "meaning": "The assistant put the notebook away; it is in the top drawer of the oak desk."
+        }
+      ],
+      "supersededEvidence": [],
+      "answerRule": "Identify the assistant as the person who put the notebook away and give the exact drawer and desk. First person is appropriate only if the assistant was the source speaker. Do not reverse the actor or invent extra actions."
+    },
+    {
+      "id": "ko-notebook-user",
+      "story": "ko-notebook-user",
+      "kind": "return",
+      "context": [],
+      "question": "청록색 수첩은 누가 어디에 넣었나요?",
+      "requiredEvidence": [
+        {
+          "message": 2,
+          "quote": "제가 청록색 수첩을 소나무 책상의 맨 아래 서랍에 넣었어요.",
+          "meaning": "The user put the notebook away; it is in the bottom drawer of the pine desk."
+        }
+      ],
+      "supersededEvidence": [],
+      "answerRule": "Identify the user as the person who put the notebook away and give the exact drawer and desk. First person is appropriate only if the assistant was the source speaker. Do not reverse the actor or invent extra actions."
+    },
+    {
+      "id": "ko-notebook-assistant",
+      "story": "ko-notebook-assistant",
+      "kind": "return",
+      "context": [],
+      "question": "청록색 수첩은 누가 어디에 넣었나요?",
+      "requiredEvidence": [
+        {
+          "message": 3,
+          "quote": "제가 청록색 수첩을 소나무 책상의 맨 아래 서랍에 넣었어요.",
+          "meaning": "The assistant put the notebook away; it is in the bottom drawer of the pine desk."
+        }
+      ],
+      "supersededEvidence": [],
+      "answerRule": "Identify the assistant as the person who put the notebook away and give the exact drawer and desk. First person is appropriate only if the assistant was the source speaker. Do not reverse the actor or invent extra actions."
+    }
+  ],
+  "stories": [
+    {
+      "id": "en-observatory",
+      "language": "en",
+      "character": "Mira",
+      "messages": [
+        {
+          "role": "user",
+          "text": "I finally have a free evening for our visit to the hill observatory."
+        },
+        {
+          "role": "assistant",
+          "text": "That sounds better than trying to fit it between your shifts. How shall we get there?"
+        },
+        {
+          "role": "user",
+          "text": "Let's meet at the orchard gate. The main entrance is buried behind construction fencing."
+        },
+        {
+          "role": "assistant",
+          "text": "I'll tell the others to avoid the construction crew's driveway."
+        },
+        {
+          "role": "user",
+          "text": "I put the red-strapped telescope case on the bottom shelf of the linen closet. Please bring that one, not the small binocular bag."
+        },
+        {
+          "role": "assistant",
+          "text": "I'll carry the heavier case, and you can take the notebook and the picnic blanket."
+        },
+        {
+          "role": "user",
+          "text": "For supper I'd rather bring soup in a flask than buy food at the visitor centre."
+        },
+        {
+          "role": "assistant",
+          "text": "I'll bake some bread. It should still be warm when we leave the house."
+        },
+        {
+          "role": "user",
+          "text": "The return ferry leaves at 6:20 p.m., so I thought we'd have to leave the hill early."
+        },
+        {
+          "role": "assistant",
+          "text": "That's a short visit. Let me see if the new timetable has been put up yet."
+        },
+        {
+          "role": "user",
+          "text": "While you look, I'll water the balcony plants. The basil is drooping again."
+        },
+        {
+          "role": "assistant",
+          "text": "Move it away from the hot wall; the mint seemed happier in the shade yesterday."
+        },
+        {
+          "role": "user",
+          "text": "I also found the notebook from our last trip, with your sketch of the moon."
+        },
+        {
+          "role": "assistant",
+          "text": "Keep the blank pages dry this time. The ink ran when we packed up in the rain."
+        },
+        {
+          "role": "user",
+          "text": "The harbour office just corrected me: the return ferry is at 7:10 p.m. now. My earlier 6:20 time came from last month's timetable."
+        },
+        {
+          "role": "assistant",
+          "text": "Good, we can stay for the evening demonstration without rushing down the path."
+        },
+        {
+          "role": "user",
+          "text": "Jules is coming too, but only if his bicycle is repaired before we set off."
+        },
+        {
+          "role": "assistant",
+          "text": "He can borrow my spare pump. The valve on his front tyre looked loose."
+        },
+        {
+          "role": "user",
+          "text": "I'll put a note by his helmet rather than interrupt him while he's working."
+        },
+        {
+          "role": "assistant",
+          "text": "Then let's finish the household chores before we get distracted by another project."
+        },
+        {
+          "role": "user",
+          "text": "The kitchen window has started rattling whenever the wind changes direction."
+        },
+        {
+          "role": "assistant",
+          "text": "The latch catches if you lift the frame a little. We can tighten it tomorrow."
+        },
+        {
+          "role": "user",
+          "text": "I found an old postcard behind the frame while I was dusting it."
+        },
+        {
+          "role": "assistant",
+          "text": "Was it the one with the painted lighthouse? I wondered where that had gone."
+        },
+        {
+          "role": "user",
+          "text": "Yes, the stamp is faded but the little drawing is still quite clear."
+        },
+        {
+          "role": "assistant",
+          "text": "Put it on the mantel for now; it might give you an idea for your next sketch."
+        },
+        {
+          "role": "user",
+          "text": "I'd like to draw people this week instead of another landscape."
+        },
+        {
+          "role": "assistant",
+          "text": "The market would be a good place to sit, provided you don't block the stalls."
+        },
+        {
+          "role": "user",
+          "text": "I'll take a folding stool. Standing still makes my knee ache lately."
+        },
+        {
+          "role": "assistant",
+          "text": "We could ask the bookseller if you may sit near her doorway."
+        },
+        {
+          "role": "user",
+          "text": "That can wait until tomorrow. I should finish packing for tonight first."
+        },
+        {
+          "role": "assistant",
+          "text": "All right, I'll clear a space on the table so we can see what is still missing."
+        }
+      ]
+    },
+    {
+      "id": "en-workshop",
+      "language": "en",
+      "character": "Theo",
+      "messages": [
+        {
+          "role": "user",
+          "text": "Can you help me get the neighbourhood print workshop ready this weekend?"
+        },
+        {
+          "role": "assistant",
+          "text": "Of course. I'd like people to try the old hand press without feeling rushed."
+        },
+        {
+          "role": "user",
+          "text": "The spare studio key is inside the blue sewing tin. I moved it there when the hook beside the door broke."
+        },
+        {
+          "role": "assistant",
+          "text": "I'll make sure the last volunteer knows where to put it after locking up."
+        },
+        {
+          "role": "user",
+          "text": "Rowan cannot eat sesame. Mira's allergy is to almonds, so keep those two requests separate when you arrange the snacks."
+        },
+        {
+          "role": "assistant",
+          "text": "I'll label each plate and keep the original packets where people can check them."
+        },
+        {
+          "role": "user",
+          "text": "We can put the leaf prints on the low table so the children can see them."
+        },
+        {
+          "role": "assistant",
+          "text": "Then the drying rack should go near the back wall, out of the queue."
+        },
+        {
+          "role": "user",
+          "text": "The borrowed frames are due to arrive on Friday. I can help unload them after lunch."
+        },
+        {
+          "role": "assistant",
+          "text": "I'll ask the courier to call when they reach the lane; the sign is hard to spot."
+        },
+        {
+          "role": "user",
+          "text": "Did you ever find a replacement handle for the drawer under the press?"
+        },
+        {
+          "role": "assistant",
+          "text": "Not yet. A loop of sturdy cord will do until the carpenter has time to visit."
+        },
+        {
+          "role": "user",
+          "text": "There's some red cord in my tool bag, but it stains if it gets wet."
+        },
+        {
+          "role": "assistant",
+          "text": "Let's use the plain cotton one. We don't want marks on the visitors' paper."
+        },
+        {
+          "role": "user",
+          "text": "The courier changed the frame delivery to Saturday. Please cross out Friday on our plan; no frames are arriving that day."
+        },
+        {
+          "role": "assistant",
+          "text": "I'll move the unpacking job and tell the volunteer who offered to come early."
+        },
+        {
+          "role": "user",
+          "text": "My neighbour has offered to lend us a kettle if ours is still unreliable."
+        },
+        {
+          "role": "assistant",
+          "text": "That would help. The switch on ours sometimes sticks halfway down."
+        },
+        {
+          "role": "user",
+          "text": "I'll bring hers over after asking whether she needs it back the same evening."
+        },
+        {
+          "role": "assistant",
+          "text": "Good idea. Let's leave a note with the equipment so it doesn't get mixed up."
+        },
+        {
+          "role": "user",
+          "text": "A visitor left a scarf on the bench outside yesterday."
+        },
+        {
+          "role": "assistant",
+          "text": "Was it still there after the rain? We should put it somewhere dry."
+        },
+        {
+          "role": "user",
+          "text": "I hung it near the radiator, well away from the fresh sheets of paper."
+        },
+        {
+          "role": "assistant",
+          "text": "I'll mention it when the dog walkers come by; they often recognise lost things."
+        },
+        {
+          "role": "user",
+          "text": "The street musicians have been rehearsing a new tune in the square."
+        },
+        {
+          "role": "assistant",
+          "text": "I heard them too. It is slower than the one they played through the summer."
+        },
+        {
+          "role": "user",
+          "text": "One of them asked whether we could print a small poster for their next concert."
+        },
+        {
+          "role": "assistant",
+          "text": "We can discuss it after the workshop, when the tables are clear again."
+        },
+        {
+          "role": "user",
+          "text": "I'll save some offcuts so they can choose a paper colour without wasting a sheet."
+        },
+        {
+          "role": "assistant",
+          "text": "Leave the colours loose rather than stapling them. They may want to compare them in daylight."
+        },
+        {
+          "role": "user",
+          "text": "That reminds me to clean the front windows before everyone arrives."
+        },
+        {
+          "role": "assistant",
+          "text": "I'll fetch a bucket while you clear the ledge. There are pots behind the curtain."
+        }
+      ]
+    },
+    {
+      "id": "en-notebook-user",
+      "language": "en",
+      "character": "Mira",
+      "messages": [
+        {
+          "role": "user",
+          "text": "We are preparing the community reading room for the weekend."
+        },
+        {
+          "role": "assistant",
+          "text": "The room has enough space for a small group."
+        },
+        {
+          "role": "user",
+          "text": "I put the amber notebook in the top drawer of the oak desk."
+        },
+        {
+          "role": "assistant",
+          "text": "The windows will stay open while the paint dries."
+        },
+        {
+          "role": "user",
+          "text": "The posters arrived in a flat envelope this morning."
+        },
+        {
+          "role": "assistant",
+          "text": "The green poster can hang beside the entrance."
+        },
+        {
+          "role": "user",
+          "text": "We should leave a clear path between the shelves."
+        },
+        {
+          "role": "assistant",
+          "text": "The folding chairs are light enough to move later."
+        },
+        {
+          "role": "user",
+          "text": "I checked the lights near the reading corner."
+        },
+        {
+          "role": "assistant",
+          "text": "Those bulbs give a softer light than the ceiling lamp."
+        },
+        {
+          "role": "user",
+          "text": "The afternoon workshop will use plain paper."
+        },
+        {
+          "role": "assistant",
+          "text": "There are several unopened paper packs available."
+        },
+        {
+          "role": "user",
+          "text": "We can put the pencils in a shallow tray."
+        },
+        {
+          "role": "assistant",
+          "text": "The round tray has enough room for all of them."
+        },
+        {
+          "role": "user",
+          "text": "The old curtains have been taken down for washing."
+        },
+        {
+          "role": "assistant",
+          "text": "The spare curtains are a little shorter."
+        },
+        {
+          "role": "user",
+          "text": "The front door squeaks when it opens fully."
+        },
+        {
+          "role": "assistant",
+          "text": "A small amount of oil should help the hinge."
+        },
+        {
+          "role": "user",
+          "text": "The weather forecast mentions light rain."
+        },
+        {
+          "role": "assistant",
+          "text": "Visitors can leave their umbrellas by the door."
+        },
+        {
+          "role": "user",
+          "text": "We should check the room again after lunch."
+        },
+        {
+          "role": "assistant",
+          "text": "There is still plenty of time before the event."
+        },
+        {
+          "role": "user",
+          "text": "The volunteer list has a few empty spaces."
+        },
+        {
+          "role": "assistant",
+          "text": "Two more people offered to help this afternoon."
+        },
+        {
+          "role": "user",
+          "text": "Let us keep the welcome sign simple."
+        },
+        {
+          "role": "assistant",
+          "text": "Large lettering will be easier to read from outside."
+        },
+        {
+          "role": "user",
+          "text": "The new rug is still rolled up near the wall."
+        },
+        {
+          "role": "assistant",
+          "text": "We can unroll it after the floor is dry."
+        },
+        {
+          "role": "user",
+          "text": "That finishes the room preparation notes for now."
+        },
+        {
+          "role": "assistant",
+          "text": "We can return to any unfinished details later."
+        },
+        {
+          "role": "user",
+          "text": "I would like to check something from earlier."
+        },
+        {
+          "role": "assistant",
+          "text": "Go ahead with your question."
+        }
+      ]
+    },
+    {
+      "id": "en-notebook-assistant",
+      "language": "en",
+      "character": "Mira",
+      "messages": [
+        {
+          "role": "user",
+          "text": "We are preparing the community reading room for the weekend."
+        },
+        {
+          "role": "assistant",
+          "text": "The room has enough space for a small group."
+        },
+        {
+          "role": "user",
+          "text": "The windows will stay open while the paint dries."
+        },
+        {
+          "role": "assistant",
+          "text": "I put the amber notebook in the top drawer of the oak desk."
+        },
+        {
+          "role": "user",
+          "text": "The posters arrived in a flat envelope this morning."
+        },
+        {
+          "role": "assistant",
+          "text": "The green poster can hang beside the entrance."
+        },
+        {
+          "role": "user",
+          "text": "We should leave a clear path between the shelves."
+        },
+        {
+          "role": "assistant",
+          "text": "The folding chairs are light enough to move later."
+        },
+        {
+          "role": "user",
+          "text": "I checked the lights near the reading corner."
+        },
+        {
+          "role": "assistant",
+          "text": "Those bulbs give a softer light than the ceiling lamp."
+        },
+        {
+          "role": "user",
+          "text": "The afternoon workshop will use plain paper."
+        },
+        {
+          "role": "assistant",
+          "text": "There are several unopened paper packs available."
+        },
+        {
+          "role": "user",
+          "text": "We can put the pencils in a shallow tray."
+        },
+        {
+          "role": "assistant",
+          "text": "The round tray has enough room for all of them."
+        },
+        {
+          "role": "user",
+          "text": "The old curtains have been taken down for washing."
+        },
+        {
+          "role": "assistant",
+          "text": "The spare curtains are a little shorter."
+        },
+        {
+          "role": "user",
+          "text": "The front door squeaks when it opens fully."
+        },
+        {
+          "role": "assistant",
+          "text": "A small amount of oil should help the hinge."
+        },
+        {
+          "role": "user",
+          "text": "The weather forecast mentions light rain."
+        },
+        {
+          "role": "assistant",
+          "text": "Visitors can leave their umbrellas by the door."
+        },
+        {
+          "role": "user",
+          "text": "We should check the room again after lunch."
+        },
+        {
+          "role": "assistant",
+          "text": "There is still plenty of time before the event."
+        },
+        {
+          "role": "user",
+          "text": "The volunteer list has a few empty spaces."
+        },
+        {
+          "role": "assistant",
+          "text": "Two more people offered to help this afternoon."
+        },
+        {
+          "role": "user",
+          "text": "Let us keep the welcome sign simple."
+        },
+        {
+          "role": "assistant",
+          "text": "Large lettering will be easier to read from outside."
+        },
+        {
+          "role": "user",
+          "text": "The new rug is still rolled up near the wall."
+        },
+        {
+          "role": "assistant",
+          "text": "We can unroll it after the floor is dry."
+        },
+        {
+          "role": "user",
+          "text": "That finishes the room preparation notes for now."
+        },
+        {
+          "role": "assistant",
+          "text": "We can return to any unfinished details later."
+        },
+        {
+          "role": "user",
+          "text": "I would like to check something from earlier."
+        },
+        {
+          "role": "assistant",
+          "text": "Go ahead with your question."
+        }
+      ]
+    },
+    {
+      "id": "ko-notebook-user",
+      "language": "ko",
+      "character": "미라",
+      "messages": [
+        {
+          "role": "user",
+          "text": "주말 행사를 위해 동네 독서실을 준비하고 있어요."
+        },
+        {
+          "role": "assistant",
+          "text": "소규모 모임을 열기에는 충분히 넓네요."
+        },
+        {
+          "role": "user",
+          "text": "제가 청록색 수첩을 소나무 책상의 맨 아래 서랍에 넣었어요."
+        },
+        {
+          "role": "assistant",
+          "text": "페인트가 마를 때까지 창문을 열어 두기로 했어요."
+        },
+        {
+          "role": "user",
+          "text": "오늘 아침에 안내 포스터가 납작한 봉투로 왔어요."
+        },
+        {
+          "role": "assistant",
+          "text": "초록색 포스터는 입구 옆에 걸면 좋겠어요."
+        },
+        {
+          "role": "user",
+          "text": "책장 사이에는 사람들이 지날 길을 남겨 두죠."
+        },
+        {
+          "role": "assistant",
+          "text": "접이식 의자는 가벼워서 나중에 옮겨도 돼요."
+        },
+        {
+          "role": "user",
+          "text": "독서 공간 쪽 조명을 확인했어요."
+        },
+        {
+          "role": "assistant",
+          "text": "그 전구가 천장 조명보다 빛이 부드럽네요."
+        },
+        {
+          "role": "user",
+          "text": "오후 체험 행사에는 무지 종이를 쓸 거예요."
+        },
+        {
+          "role": "assistant",
+          "text": "아직 뜯지 않은 종이 묶음이 몇 개 있어요."
+        },
+        {
+          "role": "user",
+          "text": "연필은 얕은 쟁반에 담아 두면 되겠네요."
+        },
+        {
+          "role": "assistant",
+          "text": "둥근 쟁반이면 모두 들어갈 거예요."
+        },
+        {
+          "role": "user",
+          "text": "오래된 커튼은 세탁하려고 내려 두었어요."
+        },
+        {
+          "role": "assistant",
+          "text": "여분 커튼은 길이가 조금 짧네요."
+        },
+        {
+          "role": "user",
+          "text": "현관문을 끝까지 열면 삐걱거리는 소리가 나요."
+        },
+        {
+          "role": "assistant",
+          "text": "경첩에 기름을 조금 바르면 나아질 거예요."
+        },
+        {
+          "role": "user",
+          "text": "일기예보에서는 약한 비가 온다고 했어요."
+        },
+        {
+          "role": "assistant",
+          "text": "방문객들이 우산을 문 옆에 둘 수 있겠네요."
+        },
+        {
+          "role": "user",
+          "text": "점심을 먹은 뒤 방을 다시 확인해요."
+        },
+        {
+          "role": "assistant",
+          "text": "행사가 시작될 때까지 시간은 넉넉해요."
+        },
+        {
+          "role": "user",
+          "text": "자원봉사자 명단에 빈자리가 조금 있어요."
+        },
+        {
+          "role": "assistant",
+          "text": "오후에 두 사람이 더 도와주겠다고 했어요."
+        },
+        {
+          "role": "user",
+          "text": "환영 안내판은 간단하게 만들어요."
+        },
+        {
+          "role": "assistant",
+          "text": "글씨가 크면 밖에서도 읽기 편하겠네요."
+        },
+        {
+          "role": "user",
+          "text": "새 깔개는 아직 벽 근처에 말려 있어요."
+        },
+        {
+          "role": "assistant",
+          "text": "바닥이 다 마르면 펼쳐 놓을 수 있어요."
+        },
+        {
+          "role": "user",
+          "text": "방 준비에 관한 이야기는 일단 여기까지예요."
+        },
+        {
+          "role": "assistant",
+          "text": "마무리하지 못한 내용은 나중에 다시 살펴봐요."
+        },
+        {
+          "role": "user",
+          "text": "앞서 나눴던 이야기 중 하나를 확인하고 싶어요."
+        },
+        {
+          "role": "assistant",
+          "text": "궁금한 내용을 물어보세요."
+        }
+      ]
+    },
+    {
+      "id": "ko-notebook-assistant",
+      "language": "ko",
+      "character": "미라",
+      "messages": [
+        {
+          "role": "user",
+          "text": "주말 행사를 위해 동네 독서실을 준비하고 있어요."
+        },
+        {
+          "role": "assistant",
+          "text": "소규모 모임을 열기에는 충분히 넓네요."
+        },
+        {
+          "role": "user",
+          "text": "페인트가 마를 때까지 창문을 열어 두기로 했어요."
+        },
+        {
+          "role": "assistant",
+          "text": "제가 청록색 수첩을 소나무 책상의 맨 아래 서랍에 넣었어요."
+        },
+        {
+          "role": "user",
+          "text": "오늘 아침에 안내 포스터가 납작한 봉투로 왔어요."
+        },
+        {
+          "role": "assistant",
+          "text": "초록색 포스터는 입구 옆에 걸면 좋겠어요."
+        },
+        {
+          "role": "user",
+          "text": "책장 사이에는 사람들이 지날 길을 남겨 두죠."
+        },
+        {
+          "role": "assistant",
+          "text": "접이식 의자는 가벼워서 나중에 옮겨도 돼요."
+        },
+        {
+          "role": "user",
+          "text": "독서 공간 쪽 조명을 확인했어요."
+        },
+        {
+          "role": "assistant",
+          "text": "그 전구가 천장 조명보다 빛이 부드럽네요."
+        },
+        {
+          "role": "user",
+          "text": "오후 체험 행사에는 무지 종이를 쓸 거예요."
+        },
+        {
+          "role": "assistant",
+          "text": "아직 뜯지 않은 종이 묶음이 몇 개 있어요."
+        },
+        {
+          "role": "user",
+          "text": "연필은 얕은 쟁반에 담아 두면 되겠네요."
+        },
+        {
+          "role": "assistant",
+          "text": "둥근 쟁반이면 모두 들어갈 거예요."
+        },
+        {
+          "role": "user",
+          "text": "오래된 커튼은 세탁하려고 내려 두었어요."
+        },
+        {
+          "role": "assistant",
+          "text": "여분 커튼은 길이가 조금 짧네요."
+        },
+        {
+          "role": "user",
+          "text": "현관문을 끝까지 열면 삐걱거리는 소리가 나요."
+        },
+        {
+          "role": "assistant",
+          "text": "경첩에 기름을 조금 바르면 나아질 거예요."
+        },
+        {
+          "role": "user",
+          "text": "일기예보에서는 약한 비가 온다고 했어요."
+        },
+        {
+          "role": "assistant",
+          "text": "방문객들이 우산을 문 옆에 둘 수 있겠네요."
+        },
+        {
+          "role": "user",
+          "text": "점심을 먹은 뒤 방을 다시 확인해요."
+        },
+        {
+          "role": "assistant",
+          "text": "행사가 시작될 때까지 시간은 넉넉해요."
+        },
+        {
+          "role": "user",
+          "text": "자원봉사자 명단에 빈자리가 조금 있어요."
+        },
+        {
+          "role": "assistant",
+          "text": "오후에 두 사람이 더 도와주겠다고 했어요."
+        },
+        {
+          "role": "user",
+          "text": "환영 안내판은 간단하게 만들어요."
+        },
+        {
+          "role": "assistant",
+          "text": "글씨가 크면 밖에서도 읽기 편하겠네요."
+        },
+        {
+          "role": "user",
+          "text": "새 깔개는 아직 벽 근처에 말려 있어요."
+        },
+        {
+          "role": "assistant",
+          "text": "바닥이 다 마르면 펼쳐 놓을 수 있어요."
+        },
+        {
+          "role": "user",
+          "text": "방 준비에 관한 이야기는 일단 여기까지예요."
+        },
+        {
+          "role": "assistant",
+          "text": "마무리하지 못한 내용은 나중에 다시 살펴봐요."
+        },
+        {
+          "role": "user",
+          "text": "앞서 나눴던 이야기 중 하나를 확인하고 싶어요."
+        },
+        {
+          "role": "assistant",
+          "text": "궁금한 내용을 물어보세요."
+        }
+      ]
+    }
+  ]
+}

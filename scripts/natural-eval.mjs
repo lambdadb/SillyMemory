@@ -2,17 +2,17 @@
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
-import { hash, loadNaturalFixture, naturalCases, naturalSchedule } from './natural-dialogue.mjs';
+import { hash, fixtureFiles, loadNaturalFixture, naturalCases, naturalSchedule } from './natural-dialogue.mjs';
 const sourceView = messages => messages.map(m => ({ text: m.mes, user: m.is_user, name: m.name }));
 export async function verifyNaturalPlan(filename) {
     assert(filename, 'SM_NATURAL_PLAN must identify the pre-execution frozen plan');
     const bytes = await readFile(filename), plan = JSON.parse(bytes);
-    const fixture = loadNaturalFixture();
+    const fixture = loadNaturalFixture(plan.version);
     assert.equal(plan.audit.fixtureHash, hash(fixture), 'Frozen fixture changed');
     assert.deepEqual(plan.settings, fixture.settings); assert.deepEqual(plan.generation, fixture.generation);
-    assert.deepEqual(plan.cases, naturalCases()); assert.deepEqual(plan.schedule, naturalSchedule());
+    assert.deepEqual(plan.cases, naturalCases(fixture)); assert.deepEqual(plan.schedule, naturalSchedule(fixture));
     assert.equal(plan.results, null);
-    for (const file of ['index.js', 'src/client.js', 'src/gate.js', 'src/memory.js', 'src/status.js', 'scripts/natural-dialogue.mjs', 'tests/fixtures/natural-dialogue-v1.json', 'docs/natural-dialogue-evaluation.md']) {
+    for (const file of ['index.js', 'src/client.js', 'src/gate.js', 'src/memory.js', 'src/status.js', 'scripts/natural-dialogue.mjs', ...fixtureFiles(plan.version)]) {
         assert.equal(createHash('sha256').update(await readFile(new URL(`../${file}`, import.meta.url))).digest('hex'), plan.sourceSha256[file], `Frozen source changed: ${file}`);
     }
     return { plan, sha256: createHash('sha256').update(bytes).digest('hex') };

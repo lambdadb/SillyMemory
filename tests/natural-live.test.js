@@ -11,11 +11,11 @@ import { verifyNaturalPlan } from '../scripts/natural-eval.mjs';
 import { hash, loadNaturalFixture, naturalCases, naturalSchedule } from '../scripts/natural-dialogue.mjs';
 import { summarizeNatural, blindNaturalReview, scoreNaturalAnnotations } from '../scripts/natural-summary.mjs';
 
-function reportFixture() {
-    const fixture = loadNaturalFixture(), cases = new Map(naturalCases().map(c => [c.id, c]));
-    const rows = naturalSchedule().map((sample, index) => ({ ...sample, chatId: `chat-${index}`, language: cases.get(sample.case).language, kind: cases.get(sample.case).kind, answer: 'Synthetic answer, deliberately ungraded.', memoryTokens: 0, requiredEvidence: cases.get(sample.case).rubric.requiredEvidence.map(e => ({ message: e.message, inMemory: false, inPrompt: true })), supersededEvidence: cases.get(sample.case).rubric.supersededEvidence.map(e => ({ message: e.message, inMemory: false, inPrompt: true })), baselineTruncated: false, syncMs: 1, retrievalMs: sample.mode === 'on' ? 2 : null, generationMs: 3, usage: { prompt_tokens: 100, completion_tokens: 10 } }));
+function reportFixture(version) {
+    const fixture = loadNaturalFixture(version), cases = new Map(naturalCases(fixture).map(c => [c.id, c]));
+    const rows = naturalSchedule(fixture).map((sample, index) => ({ ...sample, chatId: `chat-${index}`, language: cases.get(sample.case).language, kind: cases.get(sample.case).kind, answer: 'Synthetic answer, deliberately ungraded.', memoryTokens: 0, requiredEvidence: cases.get(sample.case).rubric.requiredEvidence.map(e => ({ message: e.message, inMemory: false, inPrompt: true })), supersededEvidence: cases.get(sample.case).rubric.supersededEvidence.map(e => ({ message: e.message, inMemory: false, inPrompt: true })), baselineTruncated: false, syncMs: 1, retrievalMs: sample.mode === 'on' ? 2 : null, generationMs: 3, usage: { prompt_tokens: 100, completion_tokens: 10 } }));
     const sourceSha256 = Object.fromEntries(Array.from({ length: 11 }, (_, i) => [`test-file-${i}`, 'a'.repeat(64)]));
-    return { sillyTavern: '06bde939fb1e9c4c8d8641d810f0a916b5bce127', passed: true, cleanupComplete: true, nativeCleanupComplete: true, model: fixture.generation.model, hostContextTokens: fixture.settings.context, providerCalls: 64, initialSourceSha256: sourceSha256, sourceSha256: structuredClone(sourceSha256), evaluation: { version: fixture.version, complete: true, fixtureHash: hash(fixture), planSha256: 'b'.repeat(64), settings: fixture.settings, generation: fixture.generation, rows }, generations: rows.map(row => ({ naturalSampleId: row.id, upstreamStatus: 200, attempts: [{ status: 200 }], finishReason: 'stop', providerAnswer: row.answer, answer: row.answer, requestOptions: { temperature: 0, model: fixture.generation.model }, maxOutputTokens: 256 })), lambdaRequests: [{ stage: 'cleanup', method: 'GET', path: '/collections/synthetic-owned', status: 404 }] };
+    return { sillyTavern: '06bde939fb1e9c4c8d8641d810f0a916b5bce127', passed: true, cleanupComplete: true, nativeCleanupComplete: true, model: fixture.generation.model, hostContextTokens: fixture.settings.context, providerCalls: rows.length, initialSourceSha256: sourceSha256, sourceSha256: structuredClone(sourceSha256), evaluation: { version: fixture.version, complete: true, fixtureHash: hash(fixture), planSha256: 'b'.repeat(64), settings: fixture.settings, generation: fixture.generation, rows }, generations: rows.map(row => ({ naturalSampleId: row.id, upstreamStatus: 200, attempts: [{ status: 200 }], finishReason: 'stop', providerAnswer: row.answer, answer: row.answer, requestOptions: { temperature: 0, model: fixture.generation.model }, maxOutputTokens: 256 })), lambdaRequests: [{ stage: 'cleanup', method: 'GET', path: '/collections/synthetic-owned', status: 404 }] };
 }
 
 test('natural live adapter accepts a freshly frozen plan and rejects source, oracle and schedule tampering', async () => {
@@ -173,4 +173,28 @@ test('amended reports expose first-attempt failures and accept only bounded same
         r => { r.providerCalls = 64; },
         r => { delete r.initialSourceSha256['docs/natural-dialogue-retry.md']; },
     ]) { const changed = structuredClone(report); mutate(changed); assert.throws(() => summarizeNatural(changed)); }
+});
+
+test('speaker fixture freezes 24 samples and uses its own oracle for paired review', async () => {
+    const version = 'speaker-attribution-v1', fixture = loadNaturalFixture(version);
+    assert.equal(naturalSchedule(fixture).length, 24);
+    const originals = new Map(naturalCases().map(c => [c.id, c]));
+    for (const item of naturalCases(fixture).slice(0, 2)) assert.deepEqual(item, originals.get(item.id));
+    const report = reportFixture(version), { packet, key } = blindNaturalReview(report);
+    assert.equal(packet.records.length, 24);
+    packet.reviewer = 'Synthetic speaker test'; packet.reviewerType = 'assistant';
+    for (const r of packet.records) { r.outcome = 'correct'; r.unsupportedAssertion = false; r.rationale = 'Synthetic annotation, not live quality.'; }
+    const score = scoreNaturalAnnotations(report, packet, key);
+    assert.equal(score.paired.length, 12); assert.equal(score.semanticQualityGate, null);
+    assert.equal(score.provisionalAssistantGate, true);
+    const dir = await mkdtemp(path.join(tmpdir(), 'sm-speaker-plan-'));
+    try {
+        const filename = path.join(dir, 'plan.json');
+        const result = spawnSync(process.execPath, [fileURLToPath(new URL('../scripts/natural-dialogue.mjs', import.meta.url)), '--output', filename, '--fixture', version], { encoding: 'utf8' });
+        assert.equal(result.status, 0, result.stderr);
+        assert.equal((await verifyNaturalPlan(filename)).plan.version, version);
+        const plan = JSON.parse(await readFile(filename)); plan.version = 'natural-dialogue-v1';
+        await writeFile(filename, JSON.stringify(plan)); await assert.rejects(verifyNaturalPlan(filename));
+        assert.throws(() => loadNaturalFixture('../../arbitrary'), /Unknown evaluation/);
+    } finally { await rm(dir, { recursive: true, force: true }); }
 });
