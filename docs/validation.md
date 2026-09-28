@@ -671,6 +671,13 @@ Raw reports, hashes, query ranks, per-case results, baseline truncation and
 limitations are recorded in the linked protocol. Earlier 54-answer comparisons
 are historical evidence of their own runtime revision.
 
+PR #7 review added both generation and cleanup harness hashes to the offline
+summary's required source identity. Changed/missing-hash regressions bring the
+unit suite to 53 passing tests on both supported Node versions. Separate
+reaggregation of the existing live reports passed with unchanged sample rows
+and metrics; this review fix did not rerun paid or emulator tests. See the
+[review regression record](recall-challenges.md#review-regression--2026-09-28).
+
 ## Remaining validation
 
 1. Extend the six-case continuation experiment to independently held-out, counterbalanced referents and natural assistant-only continuations. The retrieval-only diagnostic identifies query construction as a sufficient cause of the original misses; the new implementation preserves a separate primary search. The small held-out retrieval fixture does not establish the incremental benefit of the second query; committed-index ANN recall remains a separate unverified boundary. Realistic personal-chat use remains unverified; the new overflow result covers only two repetitive synthetic histories beyond the configured host context. The historical Gemini comparison still lacks one quota-blocked baseline sample; provider-specific streaming usage/accounting also needs broader coverage.

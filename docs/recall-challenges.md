@@ -70,7 +70,8 @@ node scripts/challenge-summary.mjs artifacts/generation-challenges-<tag>.json \
 
 Supply multiple report paths for a resumed run. The summarizer rejects duplicate
 samples, incomplete comparisons unless explicitly `--partial`, mixed runtime or
-evaluation sources, missing cleanup, mismatched provider answers, missing source
+evaluation sources (including the generation and cleanup harnesses), missing
+source hashes, missing cleanup, mismatched provider answers, missing source
 integrity checks, and injection claims inconsistent with the outgoing request.
 It records input file hashes. Summarize different policy versions separately;
 never pool the pre-fix and post-fix samples as repetitions of one policy.
@@ -154,3 +155,19 @@ passed on Node.js 20.12.0 and 24.15.0. Real credentials stayed in the existing
 ignored file and process/browser memory, with no copy in this worktree and no
 known secret in the reviewed reports or publishable files. This is an
 experimental behavior improvement; no release or deployment occurred.
+
+## Review regression — 2026-09-28
+
+PR #7 review identified that aggregation omitted the already-recorded hashes of
+`scripts/generation-smoke.mjs` and `scripts/generation-cleanup.mjs`. Both hashes
+are now required and compared across reports, preventing resumed evaluations
+from combining different request-capture or cleanup implementations. Regression
+tests reproduced the omission and now reject changed or missing hashes for each
+harness. All **53 unit tests** pass on Node.js 20.12.0 and 24.15.0.
+
+The existing live reports were reaggregated separately with the stricter checks:
+[v1 reviewed summary](../artifacts/challenge-summary-baseline-v1-reviewed.json)
+and [v2 reviewed summary](../artifacts/challenge-summary-continuation-v2-reviewed.json).
+Their sample rows and metrics are unchanged, and both harness hashes match the
+current files. This review fix changes only offline aggregation, tests and
+documentation; no additional model calls or live/emulator runs were made.
