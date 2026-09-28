@@ -4,6 +4,7 @@ on:
   pull_request:
   push:
     branches: [main, develop]
+    tags: ['v*']
   workflow_dispatch:
 
 permissions:
@@ -26,12 +27,26 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           persist-credentials: false
+          fetch-depth: 0
       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
           node-version: ${{ matrix.node }}
           cache: npm
       - name: Install locked development dependencies
         run: npm ci
+      - name: Check release metadata
+        run: npm run check:release
+      - name: Require publication notes for main promotions
+        if: (github.event_name == 'pull_request' && github.base_ref == 'main') || github.ref == 'refs/heads/main'
+        run: npm run check:release -- --require-date
+      - name: Verify release tag and main ancestry
+        if: github.ref_type == 'tag'
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          npm run check:release -- --tag "$RELEASE_TAG"
+          git fetch origin main
+          git merge-base --is-ancestor HEAD origin/main
       - name: Check runtime syntax
         run: npm run check
       - name: Check development tool syntax

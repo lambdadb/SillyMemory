@@ -36,9 +36,17 @@ After a PR merges, fetch the destination and confirm that it contains the intend
 changes before removing its clean local worktree/branch. Do not remove unrelated
 or uncommitted work.
 
+## Release preparation
+
+Follow [RELEASING.md](RELEASING.md) for version/changelog checks, installation
+validation, main promotion and separately approved tag/Release publication.
+Keep manifest, package and root lockfile versions equal. Development candidates
+use an `Unreleased` changelog date; main promotion requires a reviewed date.
+A main merge makes code available to branch-based installers immediately.
+
 ## Validation and evidence
 
-Run `npm test` and `npm run check`. CI checks all runtime, script, and test syntax
+Run `npm test`, `npm run check`, and `npm run check:release`. CI checks all runtime, script, and test syntax
 and runs the unit suite on Node.js 20.12.0 and 24 for PRs and pushes to `main` or
 `develop`. Unit coverage does not establish browser or provider compatibility.
 
