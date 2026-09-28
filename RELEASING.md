@@ -112,8 +112,11 @@ change; it does not prove arbitrary future-version downgrade safety.
 Use an isolated pinned host checkout with no global SillyMemory symlink. The
 script creates/removes its own host data directory and browser profile. It
 installs public main from the actual GitHub URL through the UI. In the disposable
-installed clone, it creates a local branch at that old main commit tracking the
-published candidate PR branch, then clicks the actual UI Update button. This
+installed clone, it finds the common ancestor of main and the candidate and
+requires its tree to equal the installed main tree. It creates a local branch
+there tracking the published candidate PR branch, then clicks the actual UI
+Update button. This avoids the divergent merge-commit history of the two
+long-lived branches while preserving exactly the installed files. This
 checks real GitHub fetch/pull without promoting public main or publishing a tag.
 It also checks version display, settings/owner preservation, key clearing and
 commit rollback/return. It makes no LambdaDB/model calls.

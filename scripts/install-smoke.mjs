@@ -71,8 +71,11 @@ try {
     // Prepare a behind-the-remote test branch in this disposable installed clone.
     // GitHub main is never changed. The actual update still uses the host UI + git pull.
     git(installed, 'remote', 'set-branches', '--add', 'origin', updateBranch);
-    git(installed, 'fetch', 'origin');
-    git(installed, 'switch', '-c', updateBranch);
+    git(installed, 'fetch', '--unshallow', 'origin');
+    const updateBase = git(installed, 'merge-base', mainSha, updateSha);
+    check('test update base has exactly the installed main tree', git(installed, 'rev-parse', `${updateBase}^{tree}`) === git(installed, 'rev-parse', `${mainSha}^{tree}`));
+    report.updateBase = updateBase;
+    git(installed, 'switch', '-c', updateBranch, updateBase);
     git(installed, 'branch', '--set-upstream-to', `origin/${updateBranch}`);
     await page.locator('#extensions_details').click();
     const block = page.locator('.extensions_info .extension_block').filter({ hasText: 'SillyMemory' });
