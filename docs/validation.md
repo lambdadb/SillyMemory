@@ -815,6 +815,29 @@ checks, not a published cross-version upgrade or migration test. The ignored
 local report is [branding-single-url.json](../artifacts/branding-single-url.json),
 with matching `.log` and `.png` files in the execution worktree.
 
+## Natural dialogue protocol preparation — 2026-09-28
+
+The [natural dialogue protocol](natural-dialogue-evaluation.md) freezes four
+32-message English/Korean synthetic histories and 16 cases covering topic return,
+explicit corrections, references and unstated information. It schedules 64 future
+answers (off/on, two repetitions), with model instructions, source quotations and
+meaning-based human scoring rules fixed before live execution. Fixture SHA-256:
+`17fa71452939ed093a5e16e67973a17380e806eade85ebe9754ff0a904e0555e`.
+
+The offline audit passed all 16 cases using the production capture, chunking and
+query builder: required evidence is indexable outside the recent window and
+questions anchor normal retrieval. The exporter records source/protocol identities,
+keeps model input separate from the oracle, and refuses to overwrite evidence.
+Five regressions cover corpus identity/coverage, balanced sample order, leaked or
+misidentified evidence, indexability and CLI output preservation. The complete
+73-test unit suite passes on Node.js 20.12.0 and 24.15.0.
+
+This is preparation, not a retrieval-quality or model result. No host, LambdaDB,
+embedding or model request ran; `results` is null. The browser/live adapter,
+provider/token/timing measurements, blinded human scoring and sustained-use tests
+remain subsequent work. The ignored review artifact is
+[natural-dialogue-frozen-v1.json](../artifacts/natural-dialogue-frozen-v1.json).
+
 ## Remaining validation
 
 1. Extend the new 12-case evaluation to more natural histories and repeated observations. Counterbalanced references and natural assistant-only continuations now have live coverage, but there is no controlled query ablation or committed-index ANN ground truth. Realistic personal-chat use remains unverified, and the four overflow cases use repetitive synthetic histories. The historical Gemini comparison still lacks one quota-blocked baseline sample; provider-specific streaming usage/accounting needs broader coverage.
