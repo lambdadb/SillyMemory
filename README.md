@@ -38,10 +38,11 @@ Git-based update flow.
 
 ## Version and updates
 
-The current **0.1.0** entry is an **unreleased experimental candidate**, not a
-published GitHub Release. See [CHANGELOG.md](CHANGELOG.md). The existing `main`
-branch is installable but may lag validated development until a promotion PR
-merges. The version shown in the extension manager comes from `manifest.json`.
+**0.1.0 is experimental.** See [CHANGELOG.md](CHANGELOG.md) for changes and
+[GitHub Releases](https://github.com/lambdadb/SillyMemory/releases) for published
+versions. A dated changelog entry can precede publication. The `main` branch is
+the public installation baseline; `develop` contains ongoing work. The version
+shown in the extension manager comes from `manifest.json`.
 
 Open **Extensions → Manage extensions** and use SillyMemory's update button,
 then reload. It pulls your installed branch, normally `main`; it does not select
@@ -51,8 +52,9 @@ settings and installation ownership are retained. Normal updates do not require
 deleting the owned memory collection or reinstalling the extension.
 
 For rollback and maintainer publication steps, see [RELEASING.md](RELEASING.md).
-No rollback tag exists yet. Disable memory first if an update causes a problem;
-code rollback does not restore chat edits or undo remote data changes.
+Use only a tag listed in the published releases for rollback. Disable memory
+first if an update causes a problem; code rollback does not restore chat edits
+or undo remote data changes.
 
 ## Use and behavior
 

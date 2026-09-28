@@ -6,9 +6,10 @@ Release or highest version tag. Keep `main` at reviewed release boundaries.
 `develop` integrates ongoing work. Merge `develop` into `main` with a merge
 commit to preserve long-lived branch ancestry.
 
-The repository currently prepares **0.1.0**, an experimental first release.
-Its changelog entry remains **Unreleased** until publication is approved. No
-release tag or GitHub Release is created by the validation workflow.
+The first release is **0.1.0**, marked experimental. Its prepared publication
+notes are in [docs/releases/0.1.0.md](docs/releases/0.1.0.md). A dated changelog
+entry is preparation metadata, not proof of publication or authorization to
+publish. No release tag or GitHub Release is created by the validation workflow.
 
 ## Version and changelog rules
 
@@ -76,7 +77,7 @@ the dated changelog, tests and whether the tagged commit is contained in
 existing tag. Mark the first 0.1.0 release as **pre-release**, describing it as
 experimental and linking the installation guide. Use a reviewed release-notes
 file with `gh release create v0.1.0 --verify-tag --prerelease --title
-'SillyMemory 0.1.0 (experimental)' --notes-file /path/to/release-notes.md`.
+'SillyMemory 0.1.0 (experimental)' --notes-file docs/releases/0.1.0.md`.
 
 Tags and Releases are not published automatically. CI detects mistakes after a
 push; it is not a server-side prohibition on changing branches or tags. Branch
@@ -111,7 +112,7 @@ while pinned. To resume normal updates: `git switch main`, then update through
 the UI and reload. If installed with an explicit tag and no local main branch,
 fetch `git fetch origin main:refs/remotes/origin/main`, then use
 `git switch -c main --track origin/main` instead. These examples only work after
-that tag exists; there is currently no published rollback tag.
+that tag exists. Check GitHub Releases before choosing a rollback target.
 
 Code rollback does not undo LambdaDB writes, chat edits or data migrations.
 Review each release's compatibility notes before downgrading. The current
