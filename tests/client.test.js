@@ -76,3 +76,25 @@ test('readiness polling does not retry permanent authentication errors', async (
     await assert.rejects(poll(async () => { calls++; throw Object.assign(new Error('denied'), { status: 401 }); }, { attempts: 3, delayMs: 0 }), e => e.status === 401);
     assert.equal(calls, 1);
 });
+
+test('network failure, timeout and explicit cancellation have distinct safe error codes', async () => {
+    const network = new LambdaClient(config, 'test-key', { fetcher: async () => { throw new Error('echoed private key'); } });
+    await assert.rejects(network.get('test'), e => e.code === 'network' && !e.message.includes('private'));
+    // Keep the process alive independently of AbortSignal.timeout's unref timer.
+    const keeper = setTimeout(() => {}, 1000);
+    try {
+        const timeout = new LambdaClient(config, 'test-key', { timeoutMs: 10, fetcher: async (_, { signal }) => new Promise((resolve, reject) => signal.addEventListener('abort', () => reject(signal.reason), { once: true })) });
+        await assert.rejects(timeout.get('test'), e => e.code === 'timeout');
+        const controller = new AbortController(); controller.abort();
+        const canceled = new LambdaClient(config, 'test-key', { fetcher: async (_, { signal }) => { signal.throwIfAborted(); } });
+        await assert.rejects(canceled.get('test', controller.signal), e => e.code === 'canceled');
+    } finally { clearTimeout(keeper); }
+});
+
+test('a response-body deadline is reported as timeout instead of invalid JSON', async () => {
+    const keeper = setTimeout(() => {}, 1000);
+    try {
+        const client = new LambdaClient(config, 'test-key', { timeoutMs: 10, fetcher: async (_, { signal }) => ({ ok: true, status: 200, json: () => new Promise((resolve, reject) => signal.addEventListener('abort', () => reject(signal.reason), { once: true })) }) });
+        await assert.rejects(client.get('test'), e => e.code === 'timeout');
+    } finally { clearTimeout(keeper); }
+});

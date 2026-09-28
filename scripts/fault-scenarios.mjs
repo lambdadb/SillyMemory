@@ -32,7 +32,7 @@ async function entered(item) {
     finally { clearTimeout(timer); }
 }
 
-export async function runFaultScenarios({ page, field, waitStatus, prompt, check, faults, collections, calls }) {
+export async function runFaultScenarios({ page, field, waitStatus, prompt, check, faults, collections, calls, screenshot }) {
     const timings = {};
     const activeCollection = () => [...collections.values()][0];
     const sync = async () => { await field('sync').click(); await waitStatus('synchronized'); };
@@ -64,6 +64,7 @@ export async function runFaultScenarios({ page, field, waitStatus, prompt, check
     async function reconnect(chatId) {
         await page.locator('#sillymemory').waitFor({ state: 'attached', timeout: 45000 });
         check('fault reload clears the key and keeps memory disabled', await field('key').inputValue() === '' && !await field('enabled').isChecked());
+        check('reload discards transient progress and previous failure status', await field('progress').isHidden() && !(await field('status').innerText()).includes('chunks confirmed'));
         if (await page.evaluate(() => SillyTavern.getContext().characterId === undefined)) {
             await page.locator('#rightNavHolder .drawer-toggle').click();
             await page.locator('.character_select').filter({ hasText: 'SillyMemory Synthetic' }).click();
@@ -77,12 +78,88 @@ export async function runFaultScenarios({ page, field, waitStatus, prompt, check
         await field('enabled').check(); await waitStatus('synchronized');
     }
     await seed();
+    // A quiet prompt must not consume a chat event's pending debounce timer.
+    await page.evaluate(async () => {
+        const c = SillyTavern.getContext();
+        c.chat[0].mes = 'QUIET_SYNC: The compass is in the copper cabinet.';
+        await c.saveChat();
+        await c.eventSource.emit(c.eventTypes.MESSAGE_UPDATED, 0);
+        await globalThis.sillymemory_intercept([], 8192, () => {}, 'quiet');
+    });
+    await waitStatus('synchronized');
+    check('quiet generation preserves pending event synchronization', await remoteMatches());
+    const quietWrite = faults.arm('upsert', 'hold');
+    await edit('QUIET_IN_FLIGHT: The compass is in the oak cabinet.'); await entered(quietWrite);
+    await page.evaluate(() => globalThis.sillymemory_intercept([], 8192, () => {}, 'quiet'));
+    quietWrite.release(); await waitStatus('synchronized');
+    check('quiet generation preserves in-flight synchronization and its completion status', await remoteMatches() && await field('progress').isHidden());
+
+    const quietQuery = faults.arm('query', 'hold');
+    const overlapping = prompt(); await entered(quietQuery);
+    const quietPrompt = await page.evaluate(async () => {
+        const c = SillyTavern.getContext();
+        const chat = c.chat.map((m, index) => ({ ...m, index }));
+        const before = JSON.stringify(chat);
+        const { runGenerationInterceptors } = await import('/scripts/extensions.js');
+        const aborted = await runGenerationInterceptors(chat, 8192, 'quiet');
+        return { aborted, unchanged: before === JSON.stringify(chat), injection: c.extensionPrompts.sillymemory?.value };
+    });
+    quietQuery.release(); const oldPrompt = await overlapping;
+    check('quiet prompt cancels overlapping normal retrieval without pruning or reinjection', !quietPrompt.aborted && quietPrompt.unchanged && !quietPrompt.injection && oldPrompt.aborted && oldPrompt.chat.length === 8 && !oldPrompt.injection && await field('progress').isHidden());
+    const afterQuiet = await prompt();
+    check('normal retrieval recovers after quiet cancellation', !afterQuiet.aborted && Boolean(afterQuiet.injection) && await remoteMatches());
+
+    const blockedTab = await page.context().newPage();
+    let blockedProxyRequests = 0;
+    blockedTab.on('request', request => { if (new URL(request.url()).pathname.startsWith('/proxy/')) blockedProxyRequests++; });
+    try {
+        await blockedTab.goto(page.url());
+        await blockedTab.waitForFunction(() => document.querySelector('#sillymemory [data-sm="status"]')?.textContent.includes('already open in another tab'), null, { timeout: 45000 });
+        const retained = await blockedTab.evaluate(async () => {
+            const status = () => document.querySelector('#sillymemory [data-sm="status"]').textContent;
+            const before = status(), c = SillyTavern.getContext();
+            await c.eventSource.emit(c.eventTypes.CHAT_CHANGED);
+            await c.eventSource.emit(c.eventTypes.MESSAGE_UPDATED, 0);
+            await globalThis.sillymemory_intercept([], 8192, () => {}, 'quiet');
+            return status() === before && [...document.querySelectorAll('#sillymemory button, #sillymemory input')].every(e => e.disabled);
+        });
+        check('lock-conflict explanation survives chat events and quiet generation with controls disabled', retained && blockedProxyRequests === 0);
+    } finally { await blockedTab.close(); }
+    // Exercise multiple batches in the real adapter with a failed second write.
+    const firstBatch = faults.arm('upsert', 'hold');
+    await page.evaluate(async () => {
+        const c = SillyTavern.getContext();
+        c.chat.splice(0, c.chat.length, ...Array.from({ length: 122 }, (_, i) => ({ name: i % 2 ? 'Mira' : 'User', is_user: !(i % 2), is_system: false, send_date: Date.now(), extra: {}, mes: `Progress fixture ${i}: a compass in a wooden box.` })));
+        await c.saveChat(); await c.eventSource.emit(c.eventTypes.MESSAGE_UPDATED, 0);
+    });
+    await entered(firstBatch);
+    const firstIds = new Set(calls.filter(c => c.path.endsWith('/docs/upsert')).at(-1).body.docs.map(d => d.id));
+    check('unacknowledged first upload shows zero of 120 chunks', (await field('status').innerText()).includes('0 / 120') && await field('progress').isVisible() && await field('progress').evaluate(e => e.value === 0 && e.max === 120));
+    const failedBatch = faults.arm('upsert', 'http', 503); firstBatch.release();
+    await entered(failedBatch); await waitStatus('HTTP 503');
+    check('failed second batch keeps 50 of 120 and offers explicit retry', /50 \/ 120.*HTTP 503.*Sync this chat/.test(await field('status').innerText()) && await field('progress').isHidden());
+    await field('status').scrollIntoViewIfNeeded(); await screenshot?.('sync-failure');
+    const uploadsBefore = calls.filter(c => c.path.endsWith('/docs/upsert')).length;
+    await sync();
+    const retried = calls.filter(c => c.path.endsWith('/docs/upsert')).slice(uploadsBefore);
+    check('manual retry skips confirmed chunks and completes the current source', JSON.stringify(retried.map(c => c.body.docs.length)) === '[50,20]' && retried.every(c => c.body.docs.every(d => !firstIds.has(d.id))) && await remoteMatches() && (await field('status').innerText()).includes('120 older chunks') && await field('progress').isHidden());
+
+    const queuedWrite = faults.arm('upsert', 'hold');
+    await edit('Progress fixture changed: compass moved to an oak chest.'); await entered(queuedWrite);
+    check('upload progress includes chunks already confirmed in this session', (await field('status').innerText()).includes('119 / 120'));
+    await field('progress').scrollIntoViewIfNeeded(); await screenshot?.('sync-progress');
+    await field('sync').click(); await waitStatus('earlier memory write');
+    const queuedCalls = calls.filter(c => c.path.endsWith('/docs/upsert')).length;
+    queuedWrite.release(); await waitStatus('synchronized');
+    check('overlapping manual sync waits without duplicating the confirmed write', calls.filter(c => c.path.endsWith('/docs/upsert')).length === queuedCalls && await remoteMatches() && await field('progress').isHidden());
+    await seed();
     for (const status of [429, 503]) {
         assert((await prompt()).injection);
         const before = calls.filter(c => c.path.endsWith('/query')).length;
         const failure = faults.arm('query', 'http', status);
         const result = await prompt(); await entered(failure);
         check(`HTTP ${status} clears previous memory and preserves source/full prompt`, !result.injection && result.before === result.after && result.chat.length === 8 && !result.aborted);
+        check(`HTTP ${status} explains how to retry and clears progress`, (await field('status').innerText()).includes('Sync this chat') && await field('progress').isHidden());
         const queries = calls.filter(c => c.path.endsWith('/query')).slice(before).map(c => c.body.query.knn.queryText);
         check(`HTTP ${status} does not immediately retry retrieval`, queries.length >= 1 && queries.length <= 2 && new Set(queries).size === queries.length);
         check(`HTTP ${status} recovers on the next generation`, Boolean((await prompt()).injection));
@@ -91,18 +168,21 @@ export async function runFaultScenarios({ page, field, waitStatus, prompt, check
     const started = performance.now(), timingOut = prompt(); await entered(stalled);
     const timeout = await timingOut; timings.queryTimeoutMs = performance.now() - started; stalled.release();
     check('real 15-second query timeout retains the original prompt without injection', !timeout.injection && timeout.chat.length === 8 && timeout.before === timeout.after && !timeout.aborted && timings.queryTimeoutMs >= 14000 && timings.queryTimeoutMs < 25000);
+    check('timeout is distinct from an HTTP error and includes recovery guidance', /timed out.*Sync this chat/.test(await field('status').innerText()) && await field('progress').isHidden());
     check('query timeout recovers on a subsequent generation', Boolean((await prompt()).injection));
 
     for (const operation of ['edit', 'delete', 'branch', 'disable']) {
         await seed();
         const delayed = faults.arm('query', 'hold');
         const pending = prompt(); await entered(delayed);
+        check(`held query exposes search progress before ${operation}`, (await field('status').innerText()).includes('Searching memory:') && await field('progress').isVisible());
         if (operation === 'edit') await edit('FAULT_NEW: The compass moved to the stone tower.');
         if (operation === 'delete') await page.evaluate(async () => { await SillyTavern.getContext().deleteMessage(0); });
         if (operation === 'branch') await page.evaluate(async () => { const c = SillyTavern.getContext(); const { createBranch } = await import('/scripts/bookmarks.js'); const branch = await createBranch(c.chat.length - 1); if (!branch) throw new Error('Branch creation failed'); await c.openCharacterChat(branch); });
         if (operation === 'disable') await field('enabled').uncheck();
         delayed.release(); const canceled = await pending;
         check(`held query during ${operation} aborts the old generation and cannot inject`, canceled.aborted && !canceled.injection && canceled.chat.length === 8);
+        if (operation === 'disable') check('disabled state cannot be overwritten by late query progress', (await field('status').innerText()).includes('Memory disabled') && await field('progress').isHidden());
         if (operation === 'disable') { await field('enabled').check(); }
         await waitStatus('synchronized');
         const fresh = await prompt();
@@ -112,6 +192,7 @@ export async function runFaultScenarios({ page, field, waitStatus, prompt, check
     // A failed document deletion must prevent retrieval until reconciliation succeeds.
     await seed(); const blockedDelete = faults.arm('delete-docs', 'http', 503);
     await edit('FAULT_DELETE_RETRY: The compass is in the attic.'); await entered(blockedDelete); await waitStatus('HTTP 503');
+    check('failed deletion reports its own stage without claiming removed chunks', /Removing outdated memory: 0 \/ 1.*HTTP 503/.test(await field('status').innerText()) && await field('progress').isHidden());
     const retrievalBlocked = faults.arm('delete-docs', 'http', 503);
     const queryCount = calls.filter(c => c.path.endsWith('/query')).length;
     const failedSync = await prompt(); await entered(retrievalBlocked);

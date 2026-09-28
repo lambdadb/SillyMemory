@@ -1,6 +1,6 @@
 // Keys live only in this instance. Never include server response bodies in errors.
 export class ConnectionError extends Error {
-    constructor(message, status = 0) { super(message); this.name = 'ConnectionError'; this.status = status; }
+    constructor(message, status = 0, code = '') { super(message); this.name = 'ConnectionError'; this.status = status; this.code = code; }
 }
 
 export function connectionConfig(input) {
@@ -36,17 +36,22 @@ export class LambdaClient {
     async request(path, { method = 'POST', body, signal } = {}) {
         if (!this.#key) throw new ConnectionError('Enter your API key again. Keys are cleared on reload.');
         const target = `${this.config.endpoint}/projects/${encodeURIComponent(this.config.project)}${path}`;
+        const timeout = AbortSignal.timeout(this.timeoutMs);
+        const failure = () => signal?.aborted
+            ? new ConnectionError('Memory request canceled.', 0, 'canceled')
+            : timeout.aborted
+                ? new ConnectionError('Memory request timed out.', 0, 'timeout')
+                : new ConnectionError('Memory request failed. Check the server and network.', 0, 'network');
         let response;
         try {
             response = await this.fetcher(`/proxy/${encodeURIComponent(target)}`, {
                 method, credentials: 'same-origin', redirect: 'error',
                 headers: { ...this.headers(), 'Content-Type': 'application/json', 'x-api-key': this.#key },
                 body: body === undefined ? undefined : JSON.stringify(body),
-                signal: signal ? AbortSignal.any([signal, AbortSignal.timeout(this.timeoutMs)]) : AbortSignal.timeout(this.timeoutMs),
+                signal: signal ? AbortSignal.any([signal, timeout]) : timeout,
             });
         } catch {
-            if (signal?.aborted) throw new ConnectionError('Memory request canceled.');
-            throw new ConnectionError('Memory request failed or timed out. Check the server and network; retry when ready.');
+            throw failure();
         }
         if (!response.ok) {
             // Pinned SillyTavern rewrites upstream 401 to 400 Unauthorized to
@@ -55,7 +60,8 @@ export class LambdaClient {
             if (status === 404) {
                 // A disabled host proxy also returns 404. It must never count as
                 // confirmed collection deletion. Inspect only its fixed marker.
-                const body = await response.text();
+                let body;
+                try { body = await response.text(); } catch { throw failure(); }
                 if (body.includes('CORS proxy is disabled')) throw new ConnectionError('CORS proxy is disabled. Set enableCorsProxy: true and restart SillyTavern.');
             }
             const messages = {
@@ -69,7 +75,10 @@ export class LambdaClient {
             throw new ConnectionError(messages[status] || `Memory service returned HTTP ${status}.`, status);
         }
         if (response.status === 204) return {};
-        try { return await response.json(); } catch { throw new ConnectionError('Memory service returned an invalid JSON response.'); }
+        try { return await response.json(); } catch {
+            if (signal?.aborted || timeout.aborted) throw failure();
+            throw new ConnectionError('Memory service returned an invalid JSON response.');
+        }
     }
     path(collection, suffix = '') {
         if (!/^[a-zA-Z0-9_-]{3,52}$/.test(collection)) throw new ConnectionError('Invalid collection name.');

@@ -524,6 +524,131 @@ runtime is unchanged from the previous live evaluation; the settings change is a
 source/license notice. This is source publication, not a stable release or a
 hosted deployment.
 
+## Synchronization progress and recovery UI — 2026-09-28
+
+The status panel now distinguishes preparation, waiting for serialized writes,
+ownership checking, outdated-chunk deletion, upload, search, and token budgeting.
+Upload counts include earlier acknowledged chunks from the current session and
+advance only after a response. A failed second batch in a 120-chunk history shows
+50/120; manual Sync retries only the remaining 50+20 chunks. A lost response may
+require re-upserting an accepted batch, and reload intentionally loses session
+acknowledgements while retaining durable ID intent. Counts do not establish
+embedding/index visibility or sustained throughput.
+
+The implementation separates display ownership from prompt validity. Older
+operations cannot overwrite a newer sync or a changed/disabled chat. Invalidation
+also stops queued work and further deletion/upload batches after an already-started
+request settles; uncertain IDs remain in the recovery journal. The client now
+classifies network failures, request timeouts (including response-body timeouts),
+and cancellation separately. HTTP auth/rate-limit/server errors get appropriate
+reconnect or retry guidance. No batch sizes, request deadline, retrieval policy,
+token budget, key persistence, or automatic retry policy changed.
+
+Validation uses Node.js 20.12.0 and 24.15.0, pinned SillyTavern 1.19.0, and Chromium.
+The 44 unit tests pass on both Node versions. Runtime, script and test syntax
+checks pass. The local real-host fault harness exercises 63 checks, including:
+
+- 0/120 before acknowledgement, 50/120 after partial failure, retry without
+  resending the acknowledged first batch, and 119/120 during a subsequent edit;
+- overlapping manual sync without duplicate uploads;
+- authentication guidance, HTTP 429/503, and actual 15-second request timeout;
+- held-query cancellation across edit/deletion/branch/disable;
+- accepted-write response loss, persisted-source reload, key re-entry and recovery;
+- drain-before-delete and complete emulator collection cleanup.
+
+An intermediate rerun failed local journal cleanup after remote deletion had
+already left zero collections. The preserved [failed report](../artifacts/fault-smoke-sync-status-final.json)
+is not a successful validation result. A deterministic regression test reproduced
+keys being skipped when Storage enumeration reordered after removal. Cleanup now
+snapshots the owned namespace keys before removing them, preserving other
+namespaces and host settings. The regression failed before the fix and passes
+afterward; the final browser rerun also checks complete journal cleanup.
+
+The host checkout is isolated from other worktrees. The harness now verifies
+that the extension symlink points to the exact checkout under test. New generation
+reports hash the status module, and summaries reject mixing its versions. Earlier
+live comparison/generation reports remain historical evidence of their recorded
+source hashes; they were not rerun or rewritten for this UI update. No live
+LambdaDB or generation-provider calls were made in this validation.
+
+Review the ignored local [final fault report](../artifacts/fault-smoke-sync-status-verified.json),
+[Node 24 unit log](../artifacts/unit-sync-status-verified.log), and
+[Node 20.12 unit log](../artifacts/unit-node20-sync-status-verified.log).
+The [in-progress panel](../artifacts/sync-progress-sync-status-verified.png) and
+[failed-batch panel](../artifacts/sync-failure-sync-status-verified.png) show synthetic
+content only. Raw artifacts are local evidence and are not included in Git.
+
+```sh
+ST_SOURCE=/absolute/path/to/isolated/pinned/SillyTavern SM_ARTIFACT_TAG=sync-status-verified npm run test:faults
+```
+
+## Live verification before main promotion — 2026-09-28
+
+The merged `develop` revision `0a91fd5f1205560da3457121a2b372650383fbde`
+was tested through pinned SillyTavern 1.19.0
+(`06bde939fb1e9c4c8d8641d810f0a916b5bce127`) and the existing built-in proxy.
+This is fresh live evidence for the synchronization-status runtime. The earlier
+54-answer comparison remains historical and was not repeated.
+
+The live fault harness passed **15 checks** against real LambdaDB, including
+managed embedding upsert/query/delete, character/chat/branch isolation, edits,
+swipes, accepted-write response loss, reconciliation with a fresh engine, and
+rejection of a delayed query after source invalidation. The response loss and
+delay were injected in the browser after real operations; they do not establish
+behavior during an actual service outage. Both owned test collections were
+confirmed absent, and an actual page reload discarded the key and left memory
+disabled. The recovery test itself recreates the engine while retaining storage;
+it is separate from the final page-reload check.
+
+The full settings/chat/generation harness passed **45 checks** and completed
+**nine real OpenAI requests** using `gpt-4.1-mini-2025-04-14`. Every request
+returned HTTP 200 and a completed answer matching both the host-saved message
+and its narrow synthetic-fact expectation. No provider retry was needed.
+
+| Generation stage | Retrieved memory in outgoing request | Memory tokens / 220 |
+| --- | --- | --- |
+| Memory off | No | — |
+| Memory on | Yes | 156 |
+| After native edit | Yes | 156 |
+| Streaming regenerate | Yes | 156 |
+| Swipe | Yes | 179 |
+| Native branch | Yes | 203 |
+| After source deletion | Yes, without the deleted fact; answer was UNKNOWN | 131 |
+| Injected retrieval failure | No; full-source fallback | — |
+| Disabled again | No | — |
+
+The run checked recent-message retention, smaller outgoing fixture prompts,
+source-chat preservation, native editing/branching, streaming, swipe, source
+fact deletion, full-prompt fallback, and disabling memory. Cleanup used the
+extension settings UI to drain writes and delete the owned memory collection;
+a further ownership-checked cleanup confirmed all tracked collections absent.
+Both live runs left no pending-cleanup record. Keys were absent from browser
+storage and saved host settings; known credentials were also absent from both
+reports. The original `.env.local` remained unchanged.
+
+All seven live-fault and eleven generation source hashes match the tested
+checkout. A separate documentation worktree reran all **44 unit tests** and
+runtime syntax checks on Node.js 24.15.0 without a credential file. Earlier
+Node.js 20.12.0/24 CI and 63 emulator fault checks remain separate evidence.
+These small synthetic live runs establish the recorded paths, not sustained
+load, realistic-chat quality, a fresh 54-answer benchmark, or release status.
+
+Reproduce from a checkout with its own ignored `.env.local` and the pinned host
+extension symlink pointing at that checkout:
+
+```sh
+ST_SOURCE=/absolute/path/to/pinned/SillyTavern SM_ARTIFACT_TAG=sync-status-promote-20260928 npm run test:live:faults
+ST_SOURCE=/absolute/path/to/pinned/SillyTavern SM_ARTIFACT_TAG=sync-status-promote-20260928 npm run test:generation:live
+```
+
+Use a new artifact tag for a new run. The authorized run reads the existing
+credential file without copying it into the documentation worktree. Reports are
+ignored local evidence in the execution checkout's `artifacts/` directory:
+`live-faults-sync-status-promote-20260928.json` and
+`generation-live-model-sync-status-promote-20260928.json`. Model prompts and
+answers contain only the synthetic fixture. The tests do not use personal chats,
+change LambdaDB, or deploy the extension.
+
 ## Remaining validation
 
 1. Expand evaluation of the latest-user/context policy to strongly ambiguous references and assistant-only continuation. The retrieval-only diagnostic identifies query construction as a sufficient cause of the original misses; the new implementation preserves a separate primary search. The small held-out retrieval fixture does not establish the incremental benefit of the second query; committed-index ANN recall remains a separate unverified boundary. Realistic personal-chat use and histories exceeding the full-context baseline remain unverified. The historical Gemini comparison still lacks one quota-blocked baseline sample; provider-specific streaming usage/accounting also needs broader coverage.

@@ -5,3 +5,5 @@
 #sillymemory [data-sm="status"] { border-left: 3px solid var(--SmartThemeQuoteColor, #8ab4f8); padding-left: 0.6rem; }
 
 #sillymemory label.sm-toggle { display: flex; align-items: center; gap: 0.5rem; }
+
+#sillymemory progress { width: 100%; accent-color: var(--SmartThemeQuoteColor, #8ab4f8); }

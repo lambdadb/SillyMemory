@@ -1,14 +1,17 @@
 import { LambdaClient, ConnectionError, connectionConfig } from './src/client.js';
 import { runTransportGate } from './src/gate.js';
 import { MemoryEngine, Journal, capture, fingerprint, options } from './src/memory.js';
+import { OperationStatus, failureText } from './src/status.js';
 
 const context = () => SillyTavern.getContext();
 const uuid = () => crypto.randomUUID().replaceAll('-', '');
 let client, engine, root, state, stateKey, owner, timer, busy = false, gatePassed = false;
 let sessionReady = false;
 let promptSequence = 0;
+let retrievalSequence = 0, retrievalOperation;
+let statusView;
 const element = name => root.querySelector(`[data-sm="${name}"]`);
-const status = text => { element('status').textContent = text; };
+const status = text => statusView.show(text);
 function clearInjection() {
     context().setExtensionPrompt('sillymemory', '', 1, 0, false, 0);
 }
@@ -25,20 +28,26 @@ async function sync() {
     if (!sessionReady || !state.enabled || !engine || busy) return;
     const snapshot = capture(context()); if (!snapshot) return;
     const instance = engine; const sequence = promptSequence;
+    const valid = () => sequence === promptSequence && validSnapshot(snapshot, instance);
+    const operation = statusView.start(valid);
     try {
-        await instance.sync(snapshot, options(state), () => sequence === promptSequence && validSnapshot(snapshot, instance));
-        if (sequence === promptSequence && validSnapshot(snapshot, instance)) status('Current chat synchronized. Memory will be retrieved on generation.');
-    } catch (e) { if (sequence === promptSequence && validSnapshot(snapshot, instance)) fail(e); }
+        const result = await instance.sync(snapshot, options(state), valid, operation.update);
+        if (result) operation.finish(`Current chat synchronized: ${result.docs.length} older chunks. Memory will be retrieved on generation.`);
+    } catch (e) { if (operation.current()) fail(e, operation); }
 }
 function schedule() {
+    if (!sessionReady) return; // Preserve the lock-conflict explanation.
     invalidate(); clearTimeout(timer);
-    if (sessionReady && state.enabled && engine) status('Waiting to synchronize current chat…');
+    if (!client) { status('Enter your project API key. Keys are cleared on reload.'); return; }
+    if (!state.enabled) { status('Memory disabled. Remote data is retained until deleted.'); return; }
+    if (!engine || !capture(context())) { status('Select a supported character chat and connect to a memory collection.'); return; }
+    status('Waiting to synchronize current chat…');
     timer = setTimeout(sync, 400);
 }
-function fail(error) {
+function fail(error, operation) {
     clearInjection();
     if (root) element('inspection').textContent = 'No memory injected: operation failed.';
-    status(error instanceof ConnectionError ? error.message : 'Memory operation failed. Original prompt retained; retry sync or check local storage and token counting.');
+    if (operation) operation.fail(error); else status(failureText(error, { sync: false }));
 }
 async function action(job) {
     if (busy) return;
@@ -49,40 +58,53 @@ async function action(job) {
 
 // Called with SillyTavern's ephemeral coreChat array. Never mutate source messages.
 globalThis.sillymemory_intercept = async (chat, contextSize, abort, type) => {
+    // Quiet prompts cancel older reads/injection while preserving source sync.
+    if (type === 'quiet') {
+        retrievalOperation?.finish('Memory retrieval skipped for quiet generation.');
+        retrievalSequence++; engine?.cancelReads(); clearInjection(); return;
+    }
     invalidate();
     const sequence = promptSequence;
-    if (!sessionReady || busy || !state?.enabled || !engine || type === 'quiet') return;
+    const retrieval = ++retrievalSequence;
+    if (!sessionReady || busy || !state?.enabled || !engine) return;
     if (context().extensionSettings.vectors?.enabled_chats) {
         status('Disable built-in Vector Storage chat vectorization before using SillyMemory.'); return;
     }
-    const snapshot = capture(context()); if (!snapshot) return;
+    const snapshot = capture(context()); if (!snapshot) { status('Select a supported character chat to use memory.'); return; }
+    clearTimeout(timer); // Retrieval below replaces the pending synchronization.
     const instance = engine; const config = options(state);
     const promptBefore = JSON.stringify(chat);
-    const valid = () => sequence === promptSequence && validSnapshot(snapshot, instance) && JSON.stringify(chat) === promptBefore;
+    const sourceValid = () => sequence === promptSequence && validSnapshot(snapshot, instance);
+    const unchangedPrompt = () => sourceValid() && JSON.stringify(chat) === promptBefore;
+    const valid = () => retrieval === retrievalSequence && unchangedPrompt();
+    const operation = statusView.start(() => retrieval === retrievalSequence && sourceValid());
+    retrievalOperation = operation;
     try {
         // The extension budget includes its complete wrapper; SillyTavern still manages
         // total prompt overhead, character instructions, and final model context limits.
         config.budget = Math.min(config.budget, Math.max(0, Math.floor(contextSize / 4)));
-        const result = await instance.retrieve(snapshot, config, text => context().getTokenCountAsync(text), valid);
-        if (!valid()) { abort(true); return; }
-        if (!result?.text) { status('No current matching memory fits the budget. Original prompt retained.'); return; }
+        const result = await instance.retrieve(snapshot, config, text => context().getTokenCountAsync(text), unchangedPrompt, operation.update);
+        if (!valid()) { operation.finish('Memory operation canceled because the prompt changed. Generate again.'); abort(true); return; }
+        if (!result?.text) { operation.finish('No current matching memory fits the budget. Original prompt retained.'); return; }
         // Protect the most recent prompt messages, including during swipe/regenerate.
         const cutoff = chat.length - config.recent;
         const indexedMessages = new Set(result.passages.map(p => p.message));
         // All plain older messages were candidates; retain special/file/tool messages.
         const eligible = new Set(snapshot.messages.slice(0, -config.recent).filter(m => m.eligible && m.text.trim()).map(m => m.index));
         // Require the pinned coreChat index contract before pruning anything.
-        if (!chat.every(m => Number.isInteger(m.index))) { status('Unexpected prompt shape. Original prompt retained.'); return; }
-        if (![...indexedMessages].every(i => eligible.has(i))) return;
+        if (!chat.every(m => Number.isInteger(m.index))) { operation.finish('Unexpected prompt shape. Original prompt retained.'); return; }
+        if (![...indexedMessages].every(i => eligible.has(i))) { operation.finish('Memory no longer matches eligible source. Original prompt retained.'); return; }
         for (let i = cutoff - 1; i >= 0; i--) {
             if (eligible.has(chat[i].index)) chat.splice(i, 1);
         }
         context().setExtensionPrompt('sillymemory', result.text, 1, config.recent, false, 0);
         element('inspection').textContent = `${result.tokens} / ${config.budget} tokens\n\n${result.text}`;
-        status(`Injected ${result.passages.length} passages (${result.tokens} tokens); kept the recent ${config.recent} messages.`);
+        operation.finish(`Injected ${result.passages.length} passages (${result.tokens} tokens); kept the recent ${config.recent} messages.`);
     } catch (e) {
-        if (!valid()) { abort(true); return; }
-        fail(e);
+        if (!valid()) { operation.finish('Memory operation canceled because the prompt changed. Generate again.'); abort(true); return; }
+        if (operation.current()) fail(e, operation);
+    } finally {
+        if (retrievalOperation === operation) retrievalOperation = undefined;
     }
 };
 
@@ -107,6 +129,13 @@ async function initialize() {
     const html = await ctx.renderExtensionTemplateAsync(folder, 'settings');
     document.querySelector('#extensions_settings2').insertAdjacentHTML('beforeend', html);
     root = document.querySelector('#sillymemory');
+    statusView = new OperationStatus((text, progress) => {
+        element('status').textContent = text;
+        const bar = element('progress');
+        bar.hidden = !progress;
+        if (progress?.total > 0) { bar.max = progress.total; bar.value = progress.completed; }
+        else bar.removeAttribute('value');
+    });
     for (const name of ['endpoint', 'project', 'recent', 'budget']) element(name).value = state[name];
     element('enabled').checked = false; state.enabled = false; persist();
     if (!navigator.locks) { status('This browser needs Web Locks support (localhost or HTTPS) to use SillyMemory safely.'); return; }
@@ -120,7 +149,8 @@ async function initialize() {
     element('connect').onclick = () => action(async () => {
         const candidate = connectionConfig({ endpoint: element('endpoint').value.trim(), project: element('project').value.trim() });
         if ((state.collection || state.testCollection) && (candidate.endpoint !== state.endpoint || candidate.project !== state.project)) throw new ConnectionError('Clean up owned collections before changing the connection.');
-        invalidate(); await engine?.queue.catch(() => {}); client?.forget();
+        invalidate(); status('Connecting: waiting for earlier writes to finish…');
+        await engine?.queue.catch(() => {}); client?.forget();
         client = new LambdaClient(candidate, element('key').value, { headers: () => context().getRequestHeaders() });
         element('key').value = ''; gatePassed = false;
         Object.assign(state, candidate); persist(); makeEngine();
@@ -128,6 +158,7 @@ async function initialize() {
     });
     element('forget').onclick = () => action(async () => {
         state.enabled = false; element('enabled').checked = false; persist(); invalidate();
+        status('Forgetting key: waiting for earlier writes to finish…');
         await engine?.queue.catch(() => {}); client?.forget(); client = undefined; engine = undefined;
         element('key').value = ''; gatePassed = false; status('Key forgotten. Enter it again to reconnect.');
     });
@@ -157,6 +188,7 @@ async function initialize() {
         const requested = element('enabled').checked;
         state.enabled = false; persist();
         if (requested) {
+            status('Checking memory collection ownership…');
             try {
                 if (!client || !engine) throw new ConnectionError('Connect and create a memory collection first.');
                 await client.assertOwned(state.collection, owner);
@@ -173,6 +205,7 @@ async function initialize() {
         if (!client || !engine) throw new ConnectionError('Reconnect to the owned memory collection before deleting it.');
         if (!confirm('Delete ALL SillyMemory data in this installation’s owned memory collection? This includes every indexed chat and branch. Your SillyTavern chats will remain.')) return;
         state.enabled = false; element('enabled').checked = false; persist(); invalidate();
+        status('Deleting owned memory: waiting for earlier writes to finish…');
         await engine.deleteAll(); engine = undefined; delete state.collection; persist();
         status('Owned remote memory collection is no longer accessible. Provider backup/retention policies still apply.');
     });

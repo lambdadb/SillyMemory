@@ -52,6 +52,8 @@ test('summary rejects incomplete, duplicated, mixed, or unverified evidence', ()
     assert.throws(() => summarize([{ report: missingCheck }]), /Missing integrity check/);
     const newHarness = structuredClone(report);
     newHarness.sourceSha256['scripts/generation-cleanup.mjs'] = 'cleanup-version';
+    newHarness.sourceSha256['src/status.js'] = 'status-version';
+    assert.equal(summarize([{ report: newHarness }]).sourceHashes['src/status.js'], 'status-version');
     assert.equal(summarize([{ report: newHarness }]).sourceHashes['scripts/generation-cleanup.mjs'], 'cleanup-version');
     assert.throws(() => summarize([{ report }, { report: newHarness }]), /Mixed source versions/);
 });

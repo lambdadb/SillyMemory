@@ -6,7 +6,7 @@ Long-term memory for SillyTavern.
 
 An installable, experimental UI extension for character chats. SillyMemory keeps recent messages intact and replaces older plain-text history with relevant source passages under a fixed memory token budget. It uses LambdaDB managed embeddings through SillyTavern's built-in CORS proxy. No server plugin or LambdaDB modification is required.
 
-**Validation status:** experimental. The latest-user/context policy completed all **54 scheduled real OpenAI answers** across the original and resumed segments. Each mode scored 18/18; SillyMemory actually injected memory in 16 answers and used the full-source error fallback in two. All injections fit 800 tokens. Median input tokens were 9,420 without memory and 1,439 with SillyMemory; median generation times were 1.094 s and 2.086 s. The current-policy nine-generation lifecycle rerun passed all 45 checks, including streaming, regenerate, swipe, edits/deletion and branches. Unit tests (34), real-host emulator fault checks (48), and live retrieval/recovery checks (19) also passed. Large managed writes intermittently exceeded the unchanged 15-second request deadline during testing, so this does not establish general reliability or uniformly successful retrieval. See [query policy, complete results and service observations](docs/query-policy.md), the [fixed protocol](docs/comparison-evaluation.md) and [validation record](docs/validation.md). The original policy's 6/18 result remains historical evidence.
+**Validation status:** experimental. The sync-status update has 44 passing unit tests on Node.js 20.12.0 and 24 and expanded real-host/emulator fault coverage (see the [validation record](docs/validation.md)). The merged runtime also passed 15 live LambdaDB recovery checks and 45 full-generation checks with nine real OpenAI answers; all nine matched the narrow synthetic facts. Six requests injected memory within the configured 220-token budget, and both runs confirmed owned collection cleanup. Historical latest-user/context evaluation completed 54 scheduled real OpenAI answers: each mode scored 18/18, while SillyMemory actually injected memory in 16 answers and used full-source fallback in two. Historical injections fit 800 tokens; median input was 9,420 tokens without memory and 1,439 with SillyMemory. Large managed writes intermittently exceeded the unchanged 15-second request deadline. These bounded synthetic results do not establish general reliability or uniformly successful retrieval. See [query policy and service observations](docs/query-policy.md) and the [fixed comparison protocol](docs/comparison-evaluation.md).
 
 ## Supported host
 
@@ -33,7 +33,8 @@ Source repository: [lambdadb/sillymemory](https://github.com/lambdadb/sillymemor
 
 ## Use and behavior
 
-- Send messages normally. Message generation, edits, selected swipes, deletion, chat changes, and reload/re-enable trigger reconciliation. Click **Sync this chat** to retry after a network failure.
+- The status panel shows preparation, queued writes, ownership checks, outdated-chunk deletion, upload, search, and token budgeting. Upload totals count current older chunks; confirmed chunks include this session's earlier successful writes. Counts advance only after a service response, not merely after sending a request. They do not measure embedding/index visibility or bytes transferred. A failed operation keeps the last confirmed count and shows retry guidance.
+- Send messages normally. Message generation, edits, selected swipes, deletion, chat changes, and reload/re-enable trigger reconciliation. Click **Sync this chat** to retry after a network failure. For authentication errors, re-enter the key using **Use key for this session** first; for rate limits or timeouts, wait before retrying. Successful batches are skipped within the session. A lost response can require an idempotent re-upsert, and reload conservatively rechecks current records after key re-entry and re-enabling memory. Progress is not saved across reloads.
 - Only older plain-text messages are embedded. Recent messages stay in the generation array. Files, media, and tool messages are not indexed; group chats and chats with system tool invocations are bypassed.
 - Character avatar identity, chat filename (including native branch filenames), and installation owner identity define a strict hashed scope. A native branch gets its own index; inherited chat text is reindexed there.
 - Before generation, the extension synchronizes current source text and retrieves matching chunks with `knn.queryText`: the latest user message is searched alone, and separately with the preceding two messages as context. It interleaves the two result lists, validates every result against current local text and IDs, and token-counts the complete injected string using the host tokenizer. Macro braces and legacy macro markers are shown with fullwidth delimiters so recalled dialogue stays literal during host prompt assembly.
@@ -50,8 +51,12 @@ Ordinary document deletion removes current retrievable records; snapshot retenti
 
 ## Development and verification
 
+Start ongoing work from `develop` and open feature/fix PRs against `develop`.
+Promote validated changes to the public `main` branch through a separate PR.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the branch and verification workflow.
+
 The GitHub Actions workflow runs unit regressions and syntax checks for the
-runtime, scripts, and tests on pull requests and pushes to `main`, using the
+runtime, scripts, and tests on pull requests and pushes to `main` or `develop`, using the
 declared minimum Node.js 20.12.0 and Node.js 24 with the npm lockfile. This workflow
 does not use LambdaDB or model credentials.
 Browser/emulator checks and paid live integration runs remain separate commands
@@ -71,9 +76,11 @@ npx playwright install chromium
 ST_SOURCE=/absolute/path/to/pinned/SillyTavern npm run test:browser
 ```
 
+The host extension symlink must point at the worktree being tested; the browser harness rejects a different checkout. Use a separate pinned host checkout for parallel worktrees.
+
 The browser harness starts an isolated SillyTavern on localhost port 18126 (override with `ST_TEST_PORT`), creates synthetic data, and runs a local HTTPS LambdaDB API emulator. It trusts a temporary self-signed test certificate only in that child server process; global TLS verification stays enabled. It does not contact LambdaDB, call an LLM, or use real credentials. Results are written to ignored `artifacts/browser-smoke.json` and `artifacts/settings.png`.
 
-For repeatable failure and recovery checks, run `npm run test:faults`. This extends the real-host browser test with controlled upstream 429/503 responses, the shipped 15-second request timeout, delayed-query cancellation during edits/deletion/branch changes/disable, accepted writes with missing acknowledgements, actual page reload and key re-entry, and deletion while a write is outstanding. Its latest run passed 48 checks with no uncaught browser errors or remaining emulator collections. It uses synthetic credentials and a local emulator; it does not establish actual LambdaDB outage behavior. Review `artifacts/fault-smoke.json`.
+For repeatable failure and recovery checks, run `npm run test:faults`. This extends the real-host browser test with controlled upstream 429/503 responses, the shipped 15-second request timeout, delayed-query cancellation during edits/deletion/branch changes/disable, accepted writes with missing acknowledgements, actual page reload and key re-entry, and deletion while a write is outstanding. The sync-status run also covers 120-chunk partial failure, confirmed-batch retry, overlapping manual sync, and stale progress after cancellation or reload. It passed with no uncaught browser errors or remaining emulator collections; see the validation record for the exact count and tagged report. It uses synthetic credentials and a local emulator; it does not establish actual LambdaDB outage behavior. Review `artifacts/fault-smoke.json`.
 
 To explicitly run the live test, put `LAMBDADB_BASE_URL`, `LAMBDADB_PROJECT_NAME`, and `LAMBDADB_PROJECT_API_KEY` in the Git-ignored `.env.local`. Keep the extension symlink pointing at this checkout, then run:
 
