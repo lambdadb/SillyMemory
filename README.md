@@ -6,7 +6,7 @@ Long-term memory for SillyTavern.
 
 An installable, experimental UI extension for character chats. SillyMemory keeps recent messages intact and replaces older plain-text history with relevant source passages under a fixed memory token budget. It uses LambdaDB managed embeddings through SillyTavern's built-in CORS proxy. No server plugin or LambdaDB modification is required.
 
-**Validation status:** experimental. The current suite passes 68 unit tests on Node.js 20.12.0 and 24, plus 188 real-host/emulator checks including two host SIGKILL/restarts and 24 repeated chat/branch cycles. A new fixed 12-case English/Korean evaluation made 24 real OpenAI requests: memory-on selected the target and answered with its code in 12/12 cases, with 11/12 strict code-only answers. One Korean continuation added a suffix. Maximum injection was 797/800 tokens, and owned remote collections were cleaned up. These are small synthetic cases and bounded repetition, not general quality or long-duration reliability guarantees. See [the held-out protocol and results](docs/heldout-recovery.md), [earlier development cases](docs/recall-challenges.md), and [validation record](docs/validation.md).
+**Validation status:** experimental. The current suite passes 73 unit tests on Node.js 20.12.0 and 24, plus 188 real-host/emulator checks including two host SIGKILL/restarts and 24 repeated chat/branch cycles. A new fixed 12-case English/Korean evaluation made 24 real OpenAI requests: memory-on selected the target and answered with its code in 12/12 cases, with 11/12 strict code-only answers. One Korean continuation added a suffix. Maximum injection was 797/800 tokens, and owned remote collections were cleaned up. These are small synthetic cases and bounded repetition, not general quality or long-duration reliability guarantees. See [the held-out protocol and results](docs/heldout-recovery.md), [earlier development cases](docs/recall-challenges.md), and [validation record](docs/validation.md).
 
 The real Git URL installation/update check passed 17 assertions for the `SillyMemory` URL, including settings retention and session-key clearing. This tested two unreleased 0.1.0 commits, not an upgrade between published releases; see the [installation validation](docs/validation.md#repository-naming-and-installation--2026-09-28).
 
@@ -75,6 +75,11 @@ A LambdaDB project/API key with collection create/read/delete and document write
 Ordinary document deletion removes current retrievable records; snapshot retention and provider backup policies are separate. The extension requests one-day snapshot retention for its collections and creates no Tags/savepoints. Removing the extension, deleting a SillyTavern chat, renaming a chat, changing browsers, or clearing browser storage does **not** automatically delete every remote record. Renamed chats get a new scope; previous scopes remain until full cleanup. Delete the owned memory collection and any pending test collection before uninstalling or changing connection settings. If local bookkeeping is lost, inspect your LambdaDB project's `sillymemory_*` / `smtest_*` collections and ownership tags to clean up the correct collections manually.
 
 ## Development and verification
+
+The [natural-dialogue evaluation protocol](docs/natural-dialogue-evaluation.md)
+provides four frozen bilingual synthetic histories, 16 cases and an offline plan
+exporter for the next recall evaluation. Corpus validation is complete; live
+answers and human scoring are not yet available.
 
 Start ongoing work from `develop` and open feature/fix PRs against `develop`.
 Promote validated changes to the public `main` branch through a separate PR.

@@ -1,0 +1,823 @@
+{
+  "version": "natural-dialogue-v1",
+  "settings": {
+    "context": 8192,
+    "recent": 12,
+    "budget": 800,
+    "repetitions": 2,
+    "maxOutputTokens": 256
+  },
+  "stories": [
+    {
+      "id": "en-observatory",
+      "language": "en",
+      "character": "Mira",
+      "messages": [
+        {
+          "role": "user",
+          "text": "I finally have a free evening for our visit to the hill observatory."
+        },
+        {
+          "role": "assistant",
+          "text": "That sounds better than trying to fit it between your shifts. How shall we get there?"
+        },
+        {
+          "role": "user",
+          "text": "Let's meet at the orchard gate. The main entrance is buried behind construction fencing."
+        },
+        {
+          "role": "assistant",
+          "text": "I'll tell the others to avoid the construction crew's driveway."
+        },
+        {
+          "role": "user",
+          "text": "I put the red-strapped telescope case on the bottom shelf of the linen closet. Please bring that one, not the small binocular bag."
+        },
+        {
+          "role": "assistant",
+          "text": "I'll carry the heavier case, and you can take the notebook and the picnic blanket."
+        },
+        {
+          "role": "user",
+          "text": "For supper I'd rather bring soup in a flask than buy food at the visitor centre."
+        },
+        {
+          "role": "assistant",
+          "text": "I'll bake some bread. It should still be warm when we leave the house."
+        },
+        {
+          "role": "user",
+          "text": "The return ferry leaves at 6:20 p.m., so I thought we'd have to leave the hill early."
+        },
+        {
+          "role": "assistant",
+          "text": "That's a short visit. Let me see if the new timetable has been put up yet."
+        },
+        {
+          "role": "user",
+          "text": "While you look, I'll water the balcony plants. The basil is drooping again."
+        },
+        {
+          "role": "assistant",
+          "text": "Move it away from the hot wall; the mint seemed happier in the shade yesterday."
+        },
+        {
+          "role": "user",
+          "text": "I also found the notebook from our last trip, with your sketch of the moon."
+        },
+        {
+          "role": "assistant",
+          "text": "Keep the blank pages dry this time. The ink ran when we packed up in the rain."
+        },
+        {
+          "role": "user",
+          "text": "The harbour office just corrected me: the return ferry is at 7:10 p.m. now. My earlier 6:20 time came from last month's timetable."
+        },
+        {
+          "role": "assistant",
+          "text": "Good, we can stay for the evening demonstration without rushing down the path."
+        },
+        {
+          "role": "user",
+          "text": "Jules is coming too, but only if his bicycle is repaired before we set off."
+        },
+        {
+          "role": "assistant",
+          "text": "He can borrow my spare pump. The valve on his front tyre looked loose."
+        },
+        {
+          "role": "user",
+          "text": "I'll put a note by his helmet rather than interrupt him while he's working."
+        },
+        {
+          "role": "assistant",
+          "text": "Then let's finish the household chores before we get distracted by another project."
+        },
+        {
+          "role": "user",
+          "text": "The kitchen window has started rattling whenever the wind changes direction."
+        },
+        {
+          "role": "assistant",
+          "text": "The latch catches if you lift the frame a little. We can tighten it tomorrow."
+        },
+        {
+          "role": "user",
+          "text": "I found an old postcard behind the frame while I was dusting it."
+        },
+        {
+          "role": "assistant",
+          "text": "Was it the one with the painted lighthouse? I wondered where that had gone."
+        },
+        {
+          "role": "user",
+          "text": "Yes, the stamp is faded but the little drawing is still quite clear."
+        },
+        {
+          "role": "assistant",
+          "text": "Put it on the mantel for now; it might give you an idea for your next sketch."
+        },
+        {
+          "role": "user",
+          "text": "I'd like to draw people this week instead of another landscape."
+        },
+        {
+          "role": "assistant",
+          "text": "The market would be a good place to sit, provided you don't block the stalls."
+        },
+        {
+          "role": "user",
+          "text": "I'll take a folding stool. Standing still makes my knee ache lately."
+        },
+        {
+          "role": "assistant",
+          "text": "We could ask the bookseller if you may sit near her doorway."
+        },
+        {
+          "role": "user",
+          "text": "That can wait until tomorrow. I should finish packing for tonight first."
+        },
+        {
+          "role": "assistant",
+          "text": "All right, I'll clear a space on the table so we can see what is still missing."
+        }
+      ]
+    },
+    {
+      "id": "ko-observatory",
+      "language": "ko",
+      "character": "서윤",
+      "messages": [
+        {
+          "role": "user",
+          "text": "이번 주에는 야근이 없어서 저녁에 천문대에 갈 수 있겠어."
+        },
+        {
+          "role": "assistant",
+          "text": "잘됐다. 지난번에는 구름 때문에 입구까지 갔다가 돌아왔잖아."
+        },
+        {
+          "role": "user",
+          "text": "이번에는 대나무 정문에서 만나자. 매표소 쪽 계단은 공사 중이래."
+        },
+        {
+          "role": "assistant",
+          "text": "도윤에게도 공사 안내판만 따라가면 안 된다고 알려 둘게."
+        },
+        {
+          "role": "user",
+          "text": "노란 손잡이가 달린 관측 가방은 서재 창가 의자 밑에 넣어 뒀어. 검은 카메라 가방하고 바뀌지 않게 챙겨 줘."
+        },
+        {
+          "role": "assistant",
+          "text": "알겠어. 네가 도시락을 들면 내가 장비를 맡을게."
+        },
+        {
+          "role": "user",
+          "text": "도시락은 주먹밥으로 할까? 지난번 샌드위치는 빵이 너무 눅눅했어."
+        },
+        {
+          "role": "assistant",
+          "text": "그게 낫겠다. 김은 먹기 직전에 꺼낼 수 있게 따로 싸자."
+        },
+        {
+          "role": "user",
+          "text": "돌아오는 마을버스가 오후 8시 10분에 출발하니까 관측을 길게 하기는 어렵겠네."
+        },
+        {
+          "role": "assistant",
+          "text": "안내문이 겨울 시간표일 수도 있어. 관리실에 한번 물어볼게."
+        },
+        {
+          "role": "user",
+          "text": "그동안 나는 화분을 안으로 옮길게. 밤에 바람이 세진다고 하더라."
+        },
+        {
+          "role": "assistant",
+          "text": "큰 화분은 혼자 들지 마. 받침에 바퀴가 있으니까 같이 밀면 돼."
+        },
+        {
+          "role": "user",
+          "text": "베란다에 있던 접이식 의자도 가져가면 기다릴 때 편하겠지?"
+        },
+        {
+          "role": "assistant",
+          "text": "좋아. 다만 지면이 고르지 않으면 다리가 빠질 수 있으니 살펴보자."
+        },
+        {
+          "role": "user",
+          "text": "관리실에서 확인했어. 돌아오는 마을버스는 오후 9시 5분으로 바뀌었대. 아까 말한 오후 8시 10분은 지난 계절 시간표였어."
+        },
+        {
+          "role": "assistant",
+          "text": "그럼 별자리 설명까지 듣고 내려와도 되겠다. 새 시간을 기준으로 움직이자."
+        },
+        {
+          "role": "user",
+          "text": "도윤은 자전거 수리가 끝나면 합류하겠대."
+        },
+        {
+          "role": "assistant",
+          "text": "지난주에도 체인이 빠졌다고 했지? 급하게 타다가 다치지 않았으면 좋겠다."
+        },
+        {
+          "role": "user",
+          "text": "그래서 늦더라도 괜찮다고 답했어. 꼭 같이 출발할 필요는 없잖아."
+        },
+        {
+          "role": "assistant",
+          "text": "응. 저녁 준비부터 끝내고 날씨를 다시 확인하자."
+        },
+        {
+          "role": "user",
+          "text": "싱크대 아래에서 물방울 소리가 나는데 어디서 새는 걸까?"
+        },
+        {
+          "role": "assistant",
+          "text": "호스 연결 부위를 닦아 보면 새 물방울이 맺히는 곳을 찾을 수 있을 거야."
+        },
+        {
+          "role": "user",
+          "text": "닦는 동안 고양이가 걸레를 물고 달아나서 한참 쫓아다녔어."
+        },
+        {
+          "role": "assistant",
+          "text": "새 장난감인 줄 알았나 보다. 문을 잠깐 닫고 작업하는 게 낫겠네."
+        },
+        {
+          "role": "user",
+          "text": "물이 새는 게 아니라 옆에 둔 우산에서 떨어진 거였어."
+        },
+        {
+          "role": "assistant",
+          "text": "큰 수리가 아니라 다행이네. 우산은 욕실에 펼쳐 두자."
+        },
+        {
+          "role": "user",
+          "text": "욕실 선반에 있던 작은 비누는 향이 꽤 오래 남더라."
+        },
+        {
+          "role": "assistant",
+          "text": "지난번 장터에서 산 거야. 다음에 가면 같은 가게가 있는지 볼게."
+        },
+        {
+          "role": "user",
+          "text": "장터에 가면 수선집에도 들르고 싶어. 외투 단추가 또 헐거워졌거든."
+        },
+        {
+          "role": "assistant",
+          "text": "여분 단추를 안주머니에 넣어 두면 찾기 편할 거야."
+        },
+        {
+          "role": "user",
+          "text": "그건 내일 하고 오늘 외출 준비부터 마저 해야겠다."
+        },
+        {
+          "role": "assistant",
+          "text": "좋아. 식탁 위를 비워 둘 테니 가져갈 것들을 펼쳐 보자."
+        }
+      ]
+    },
+    {
+      "id": "en-workshop",
+      "language": "en",
+      "character": "Theo",
+      "messages": [
+        {
+          "role": "user",
+          "text": "Can you help me get the neighbourhood print workshop ready this weekend?"
+        },
+        {
+          "role": "assistant",
+          "text": "Of course. I'd like people to try the old hand press without feeling rushed."
+        },
+        {
+          "role": "user",
+          "text": "The spare studio key is inside the blue sewing tin. I moved it there when the hook beside the door broke."
+        },
+        {
+          "role": "assistant",
+          "text": "I'll make sure the last volunteer knows where to put it after locking up."
+        },
+        {
+          "role": "user",
+          "text": "Rowan cannot eat sesame. Mira's allergy is to almonds, so keep those two requests separate when you arrange the snacks."
+        },
+        {
+          "role": "assistant",
+          "text": "I'll label each plate and keep the original packets where people can check them."
+        },
+        {
+          "role": "user",
+          "text": "We can put the leaf prints on the low table so the children can see them."
+        },
+        {
+          "role": "assistant",
+          "text": "Then the drying rack should go near the back wall, out of the queue."
+        },
+        {
+          "role": "user",
+          "text": "The borrowed frames are due to arrive on Friday. I can help unload them after lunch."
+        },
+        {
+          "role": "assistant",
+          "text": "I'll ask the courier to call when they reach the lane; the sign is hard to spot."
+        },
+        {
+          "role": "user",
+          "text": "Did you ever find a replacement handle for the drawer under the press?"
+        },
+        {
+          "role": "assistant",
+          "text": "Not yet. A loop of sturdy cord will do until the carpenter has time to visit."
+        },
+        {
+          "role": "user",
+          "text": "There's some red cord in my tool bag, but it stains if it gets wet."
+        },
+        {
+          "role": "assistant",
+          "text": "Let's use the plain cotton one. We don't want marks on the visitors' paper."
+        },
+        {
+          "role": "user",
+          "text": "The courier changed the frame delivery to Saturday. Please cross out Friday on our plan; no frames are arriving that day."
+        },
+        {
+          "role": "assistant",
+          "text": "I'll move the unpacking job and tell the volunteer who offered to come early."
+        },
+        {
+          "role": "user",
+          "text": "My neighbour has offered to lend us a kettle if ours is still unreliable."
+        },
+        {
+          "role": "assistant",
+          "text": "That would help. The switch on ours sometimes sticks halfway down."
+        },
+        {
+          "role": "user",
+          "text": "I'll bring hers over after asking whether she needs it back the same evening."
+        },
+        {
+          "role": "assistant",
+          "text": "Good idea. Let's leave a note with the equipment so it doesn't get mixed up."
+        },
+        {
+          "role": "user",
+          "text": "A visitor left a scarf on the bench outside yesterday."
+        },
+        {
+          "role": "assistant",
+          "text": "Was it still there after the rain? We should put it somewhere dry."
+        },
+        {
+          "role": "user",
+          "text": "I hung it near the radiator, well away from the fresh sheets of paper."
+        },
+        {
+          "role": "assistant",
+          "text": "I'll mention it when the dog walkers come by; they often recognise lost things."
+        },
+        {
+          "role": "user",
+          "text": "The street musicians have been rehearsing a new tune in the square."
+        },
+        {
+          "role": "assistant",
+          "text": "I heard them too. It is slower than the one they played through the summer."
+        },
+        {
+          "role": "user",
+          "text": "One of them asked whether we could print a small poster for their next concert."
+        },
+        {
+          "role": "assistant",
+          "text": "We can discuss it after the workshop, when the tables are clear again."
+        },
+        {
+          "role": "user",
+          "text": "I'll save some offcuts so they can choose a paper colour without wasting a sheet."
+        },
+        {
+          "role": "assistant",
+          "text": "Leave the colours loose rather than stapling them. They may want to compare them in daylight."
+        },
+        {
+          "role": "user",
+          "text": "That reminds me to clean the front windows before everyone arrives."
+        },
+        {
+          "role": "assistant",
+          "text": "I'll fetch a bucket while you clear the ledge. There are pots behind the curtain."
+        }
+      ]
+    },
+    {
+      "id": "ko-workshop",
+      "language": "ko",
+      "character": "지후",
+      "messages": [
+        {
+          "role": "user",
+          "text": "주말 동네 판화 교실 준비하는데 같이 와 줄 수 있어?"
+        },
+        {
+          "role": "assistant",
+          "text": "물론이지. 처음 오는 사람도 서두르지 않고 손으로 찍어 보면 좋겠어."
+        },
+        {
+          "role": "user",
+          "text": "공방 보조 열쇠는 줄무늬 필통 안에 넣어 뒀어. 문 옆 고리가 떨어져서 자리를 옮겼거든."
+        },
+        {
+          "role": "assistant",
+          "text": "마지막에 문 잠그는 봉사자에게도 그 자리를 알려 줄게."
+        },
+        {
+          "role": "user",
+          "text": "민서는 땅콩을 먹으면 안 돼. 하린은 복숭아 알레르기가 있으니까 간식 준비할 때 둘을 혼동하지 말아 줘."
+        },
+        {
+          "role": "assistant",
+          "text": "접시마다 재료를 적고 포장지도 버리지 않고 옆에 둘게."
+        },
+        {
+          "role": "user",
+          "text": "잎사귀 판화는 낮은 책상에 놓으면 아이들도 보기 편하겠지?"
+        },
+        {
+          "role": "assistant",
+          "text": "응. 말리는 선반은 줄 서는 곳과 떨어진 벽 쪽으로 옮기자."
+        },
+        {
+          "role": "user",
+          "text": "빌린 액자는 목요일에 도착한대. 점심 지나서 내리는 일을 도울 수 있어."
+        },
+        {
+          "role": "assistant",
+          "text": "골목 입구에 도착하면 연락 달라고 해 둘게. 공방 간판이 작아서 지나치기 쉽거든."
+        },
+        {
+          "role": "user",
+          "text": "인쇄기 밑 서랍 손잡이는 새로 구했어?"
+        },
+        {
+          "role": "assistant",
+          "text": "아직 못 구했어. 목공소가 바쁘다니까 당분간 끈을 묶어 쓰면 될 것 같아."
+        },
+        {
+          "role": "user",
+          "text": "내 공구 가방에 보라색 끈이 있는데 젖으면 물이 좀 빠져."
+        },
+        {
+          "role": "assistant",
+          "text": "그럼 흰 면 끈을 쓰자. 방문객 종이에 얼룩이 생기면 곤란하니까."
+        },
+        {
+          "role": "user",
+          "text": "배송 기사님이 액자 도착일을 금요일로 바꿨어. 계획표의 목요일은 지워 줘. 그날은 배송이 없대."
+        },
+        {
+          "role": "assistant",
+          "text": "포장 푸는 일정을 옮기고 일찍 오겠다는 봉사자에게도 알려 둘게."
+        },
+        {
+          "role": "user",
+          "text": "우리 주전자가 계속 말썽이면 옆집에서 하나 빌려준다고 했어."
+        },
+        {
+          "role": "assistant",
+          "text": "잘됐다. 전원 스위치가 중간에 걸릴 때가 있어서 신경 쓰였거든."
+        },
+        {
+          "role": "user",
+          "text": "당일 저녁에 돌려드려야 하는지만 확인하고 가져올게."
+        },
+        {
+          "role": "assistant",
+          "text": "빌린 물건에는 쪽지를 붙여 두자. 우리 장비하고 섞이면 찾기 힘들어."
+        },
+        {
+          "role": "user",
+          "text": "어제 누가 바깥 벤치에 목도리를 두고 갔더라."
+        },
+        {
+          "role": "assistant",
+          "text": "비 오기 전에 발견했어? 젖었으면 잘 말려야 할 텐데."
+        },
+        {
+          "role": "user",
+          "text": "살짝 축축해서 난방기 근처에 걸었어. 새 종이하고는 멀리 떨어뜨렸고."
+        },
+        {
+          "role": "assistant",
+          "text": "산책하러 오는 이웃들에게 물어볼게. 잃어버린 사람을 알 수도 있잖아."
+        },
+        {
+          "role": "user",
+          "text": "광장 악단이 요즘 새로운 곡을 연습하는 것 같아."
+        },
+        {
+          "role": "assistant",
+          "text": "나도 들었어. 여름 내내 하던 곡보다 느려서 분위기가 다르더라."
+        },
+        {
+          "role": "user",
+          "text": "단원이 다음 공연 포스터를 작은 판화로 만들 수 있냐고 물었어."
+        },
+        {
+          "role": "assistant",
+          "text": "수업이 끝나고 책상이 비면 같이 이야기해 보자."
+        },
+        {
+          "role": "user",
+          "text": "남은 종이를 조금 모아 두면 색을 고르기 편하겠네."
+        },
+        {
+          "role": "assistant",
+          "text": "스테이플러로 묶지 말고 낱장으로 두자. 햇빛 아래서 비교해 볼 수도 있으니까."
+        },
+        {
+          "role": "user",
+          "text": "그 전에 앞 유리창부터 닦아야겠어. 손자국이 꽤 많이 남았네."
+        },
+        {
+          "role": "assistant",
+          "text": "내가 물통을 가져올게. 너는 커튼 뒤 화분을 잠깐 옮겨 줘."
+        }
+      ]
+    }
+  ],
+  "cases": [
+    {
+      "id": "en-observatory-return",
+      "story": "en-observatory",
+      "kind": "return",
+      "question": "Where did we agree to meet for the observatory trip?",
+      "context": [],
+      "requiredEvidence": [
+        {
+          "message": 2,
+          "quote": "orchard gate",
+          "meaning": "Meet at the orchard gate."
+        }
+      ],
+      "supersededEvidence": [],
+      "answerRule": "State every required meaning as the current answer. Paraphrases are accepted; do not endorse a superseded or competing fact."
+    },
+    {
+      "id": "en-observatory-correction",
+      "story": "en-observatory",
+      "kind": "correction",
+      "question": "What time should we use for the return ferry now?",
+      "context": [],
+      "requiredEvidence": [
+        {
+          "message": 14,
+          "quote": "7:10 p.m.",
+          "meaning": "The corrected departure is 7:10 p.m."
+        }
+      ],
+      "supersededEvidence": [
+        {
+          "message": 8,
+          "quote": "6:20 p.m."
+        }
+      ],
+      "answerRule": "State every required meaning as the current answer. Paraphrases are accepted; do not endorse a superseded or competing fact."
+    },
+    {
+      "id": "en-observatory-reference",
+      "story": "en-observatory",
+      "kind": "reference",
+      "question": "Where did I put that one?",
+      "context": [
+        "We still need the red-strapped telescope case for tonight.",
+        "Right, the larger case rather than the binocular bag."
+      ],
+      "requiredEvidence": [
+        {
+          "message": 4,
+          "quote": "bottom shelf of the linen closet",
+          "meaning": "The red-strapped case is on the bottom shelf of the linen closet."
+        }
+      ],
+      "supersededEvidence": [],
+      "answerRule": "State every required meaning as the current answer. Paraphrases are accepted; do not endorse a superseded or competing fact."
+    },
+    {
+      "id": "en-observatory-unknown",
+      "story": "en-observatory",
+      "kind": "unknown",
+      "question": "How much is an admission ticket for the observatory?",
+      "context": [],
+      "requiredEvidence": [],
+      "supersededEvidence": [],
+      "answerRule": "Acknowledge that the conversation does not specify the requested information; do not invent a value."
+    },
+    {
+      "id": "ko-observatory-return",
+      "story": "ko-observatory",
+      "kind": "return",
+      "question": "천문대 갈 때 우리 어디서 만나기로 했지?",
+      "context": [],
+      "requiredEvidence": [
+        {
+          "message": 2,
+          "quote": "대나무 정문",
+          "meaning": "약속 장소는 대나무 정문이다."
+        }
+      ],
+      "supersededEvidence": [],
+      "answerRule": "State every required meaning as the current answer. Paraphrases are accepted; do not endorse a superseded or competing fact."
+    },
+    {
+      "id": "ko-observatory-correction",
+      "story": "ko-observatory",
+      "kind": "correction",
+      "question": "돌아오는 마을버스 시간은 최종적으로 몇 시로 생각하면 돼?",
+      "context": [],
+      "requiredEvidence": [
+        {
+          "message": 14,
+          "quote": "오후 9시 5분",
+          "meaning": "최종 버스 출발 시각은 오후 9시 5분이다."
+        }
+      ],
+      "supersededEvidence": [
+        {
+          "message": 8,
+          "quote": "오후 8시 10분"
+        }
+      ],
+      "answerRule": "State every required meaning as the current answer. Paraphrases are accepted; do not endorse a superseded or competing fact."
+    },
+    {
+      "id": "ko-observatory-reference",
+      "story": "ko-observatory",
+      "kind": "reference",
+      "question": "그건 내가 어디에 넣어 뒀더라?",
+      "context": [
+        "노란 손잡이가 달린 관측 가방도 챙겨야겠어.",
+        "맞아. 검은 카메라 가방 말고 그 관측 장비를 가져가자."
+      ],
+      "requiredEvidence": [
+        {
+          "message": 4,
+          "quote": "서재 창가 의자 밑",
+          "meaning": "노란 손잡이 관측 가방은 서재 창가 의자 밑에 있다."
+        }
+      ],
+      "supersededEvidence": [],
+      "answerRule": "State every required meaning as the current answer. Paraphrases are accepted; do not endorse a superseded or competing fact."
+    },
+    {
+      "id": "ko-observatory-unknown",
+      "story": "ko-observatory",
+      "kind": "unknown",
+      "question": "천문대 입장권은 한 사람에 얼마라고 했어?",
+      "context": [],
+      "requiredEvidence": [],
+      "supersededEvidence": [],
+      "answerRule": "Acknowledge that the conversation does not specify the requested information; do not invent a value."
+    },
+    {
+      "id": "en-workshop-return",
+      "story": "en-workshop",
+      "kind": "return",
+      "question": "Where should I look for the spare studio key?",
+      "context": [],
+      "requiredEvidence": [
+        {
+          "message": 2,
+          "quote": "inside the blue sewing tin",
+          "meaning": "The spare key is inside the blue sewing tin."
+        }
+      ],
+      "supersededEvidence": [],
+      "answerRule": "State every required meaning as the current answer. Paraphrases are accepted; do not endorse a superseded or competing fact."
+    },
+    {
+      "id": "en-workshop-correction",
+      "story": "en-workshop",
+      "kind": "correction",
+      "question": "Which day are the borrowed frames actually arriving?",
+      "context": [],
+      "requiredEvidence": [
+        {
+          "message": 14,
+          "quote": "Saturday",
+          "meaning": "The corrected delivery day is Saturday."
+        }
+      ],
+      "supersededEvidence": [
+        {
+          "message": 8,
+          "quote": "Friday"
+        }
+      ],
+      "answerRule": "State every required meaning as the current answer. Paraphrases are accepted; do not endorse a superseded or competing fact."
+    },
+    {
+      "id": "en-workshop-reference",
+      "story": "en-workshop",
+      "kind": "reference",
+      "question": "What ingredient must we keep out of their food?",
+      "context": [
+        "Rowan just asked whether there will be a snack they can eat.",
+        "Let's check that guest's request before we set out another plate."
+      ],
+      "requiredEvidence": [
+        {
+          "message": 4,
+          "quote": "Rowan cannot eat sesame",
+          "meaning": "Rowan must avoid sesame, not Mira's almond restriction."
+        }
+      ],
+      "supersededEvidence": [],
+      "answerRule": "State every required meaning as the current answer. Paraphrases are accepted; do not endorse a superseded or competing fact."
+    },
+    {
+      "id": "en-workshop-unknown",
+      "story": "en-workshop",
+      "kind": "unknown",
+      "question": "What did the courier quote us for delivering the frames?",
+      "context": [],
+      "requiredEvidence": [],
+      "supersededEvidence": [],
+      "answerRule": "Acknowledge that the conversation does not specify the requested information; do not invent a value."
+    },
+    {
+      "id": "ko-workshop-return",
+      "story": "ko-workshop",
+      "kind": "return",
+      "question": "공방 보조 열쇠 어디에 두었다고 했지?",
+      "context": [],
+      "requiredEvidence": [
+        {
+          "message": 2,
+          "quote": "줄무늬 필통 안",
+          "meaning": "보조 열쇠는 줄무늬 필통 안에 있다."
+        }
+      ],
+      "supersededEvidence": [],
+      "answerRule": "State every required meaning as the current answer. Paraphrases are accepted; do not endorse a superseded or competing fact."
+    },
+    {
+      "id": "ko-workshop-correction",
+      "story": "ko-workshop",
+      "kind": "correction",
+      "question": "빌린 액자는 최종적으로 무슨 요일에 도착하는 거야?",
+      "context": [],
+      "requiredEvidence": [
+        {
+          "message": 14,
+          "quote": "금요일",
+          "meaning": "변경된 배송일은 금요일이다."
+        }
+      ],
+      "supersededEvidence": [
+        {
+          "message": 8,
+          "quote": "목요일"
+        }
+      ],
+      "answerRule": "State every required meaning as the current answer. Paraphrases are accepted; do not endorse a superseded or competing fact."
+    },
+    {
+      "id": "ko-workshop-reference",
+      "story": "ko-workshop",
+      "kind": "reference",
+      "question": "그 사람 간식에서는 어떤 재료를 빼야 하지?",
+      "context": [
+        "민서가 자기도 먹을 간식이 있는지 물어왔어.",
+        "새 접시를 꺼내기 전에 그 손님의 요청부터 확인하자."
+      ],
+      "requiredEvidence": [
+        {
+          "message": 4,
+          "quote": "민서는 땅콩을 먹으면 안 돼",
+          "meaning": "민서는 땅콩을 피해야 하며 하린의 복숭아 제한과 구분한다."
+        }
+      ],
+      "supersededEvidence": [],
+      "answerRule": "State every required meaning as the current answer. Paraphrases are accepted; do not endorse a superseded or competing fact."
+    },
+    {
+      "id": "ko-workshop-unknown",
+      "story": "ko-workshop",
+      "kind": "unknown",
+      "question": "액자 배송비가 얼마라고 안내받았지?",
+      "context": [],
+      "requiredEvidence": [],
+      "supersededEvidence": [],
+      "answerRule": "Acknowledge that the conversation does not specify the requested information; do not invent a value."
+    }
+  ],
+  "generation": {
+    "model": "gpt-4.1-mini-2025-04-14",
+    "temperature": 0,
+    "instruction": "Answer the user's question using only this conversation. Follow explicit corrections. If the requested information is not stated, say so without guessing. Reply in the language of the question."
+  }
+}
