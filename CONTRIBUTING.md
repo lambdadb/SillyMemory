@@ -7,6 +7,10 @@
 - `develop` integrates ongoing development.
 - Start ordinary work from the latest `origin/develop`, using a focused
   `feat/`, `fix/`, `docs/`, or `chore/` branch. Target `develop` in its pull request.
+- Squash ordinary work PRs into `develop`: one PR should represent one logical
+  change, with a descriptive PR title used for the resulting commit message.
+  Remove the merged topic branch and start the next task from current
+  `origin/develop`; do not continue working on a squashed branch.
 - Promote validated development with a separate `develop` → `main` PR. Preserve
   ancestry with a merge commit for this promotion rather than squashing the
   long-lived branch. A release tag or deployment is a separate action.
@@ -33,8 +37,12 @@ unfinished work. Specify the base explicitly because the repository default
 remains `main`. Merge, release, and deployment require maintainer authorization.
 
 After a PR merges, fetch the destination and confirm that it contains the intended
-changes before removing its clean local worktree/branch. Do not remove unrelated
-or uncommitted work.
+changes before removing its clean local worktree/branch. After a squash merge,
+the original topic commits may not be ancestors of the destination: verify the
+merged PR, its resulting commit and included changes instead of treating an
+ancestry check as proof that work is missing. Preserve ignored validation
+artifacts separately or keep the worktree detached. Do not remove unrelated or
+uncommitted work. Existing merged history is not rewritten for this policy.
 
 ## Release preparation
 

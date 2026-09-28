@@ -4,6 +4,8 @@ Read [CONTRIBUTING.md](CONTRIBUTING.md) before changing this repository.
 
 - Branch ordinary work from the latest `origin/develop` in a dedicated worktree
   and target `develop` in the PR. Keep `main` as the public installation baseline.
+- Use squash merge for ordinary work PRs into `develop`; use a merge commit
+  for `develop` → `main` promotions. Do not reuse squashed topic branches.
 - Do not merge PRs, create releases, or deploy without user authorization.
 - Open completed, validated work as a regular PR; reserve Draft for unfinished work.
 - Keep credentials and personal chat data out of Git, logs, PRs, and test artifacts.
