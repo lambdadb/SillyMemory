@@ -766,6 +766,29 @@ locally. Later documentation-only commits do not change the tested harness or
 runtime identities. See [release rules](../RELEASING.md) for main promotion and
 separately approved tag/Release publication.
 
+## Release promotion review regression — 2026-09-28
+
+PR #9 review identified that a later main promotion could reuse the dated 0.1.0
+entry and all existing version fields. The main-target PR check now reads the
+exact base commit and fetched version tags. It requires higher SemVer precedence
+after a dated main entry and rejects reuse of a tagged version, including changes
+to build metadata alone. First publication remains possible with the initial
+untagged version when main has no dated entry. The existing metadata check still
+requires notes for the candidate version.
+
+Four additional tests cover numeric/prerelease precedence, first versus subsequent
+publication, existing tag reuse, and the actual CLI in a disposable Git repository.
+The CLI fixture verifies missing historical changelog support, undated candidate
+rejection, version advancement before tag creation, tag reuse rejection, missing
+new-version notes, and invalid base refs. Invocation through a symlink also caught
+and fixed an entrypoint guard that could silently skip the CLI on aliased paths.
+All **68 unit tests** pass on Node.js 20.12.0 and 24.15.0. Syntax and current-candidate
+metadata checks pass. The Git fixture creates only local synthetic tags and is
+removed afterward; no public tags, main promotions or releases were performed.
+The conditional main-target workflow is covered by local CLI tests, not an actual
+main-target GitHub PR. Runtime and install harness files are unchanged, so the
+previous 15-check browser installation result remains separate evidence.
+
 ## Remaining validation
 
 1. Extend the new 12-case evaluation to more natural histories and repeated observations. Counterbalanced references and natural assistant-only continuations now have live coverage, but there is no controlled query ablation or committed-index ANN ground truth. Realistic personal-chat use remains unverified, and the four overflow cases use repetitive synthetic histories. The historical Gemini comparison still lacks one quota-blocked baseline sample; provider-specific streaming usage/accounting needs broader coverage.

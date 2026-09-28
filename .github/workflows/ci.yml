@@ -47,6 +47,13 @@ jobs:
           npm run check:release -- --tag "$RELEASE_TAG"
           git fetch origin main
           git merge-base --is-ancestor HEAD origin/main
+      - name: Reject reused versions in main promotion PRs
+        if: github.event_name == 'pull_request' && github.base_ref == 'main'
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          git fetch origin --tags
+          npm run check:release -- --base-ref "$BASE_SHA"
       - name: Check runtime syntax
         run: npm run check
       - name: Check development tool syntax

@@ -39,11 +39,22 @@ release tag or GitHub Release is created by the validation workflow.
    `YYYY-MM-DD` date in a reviewed preparation PR to `develop`. A dated entry
    alone is not a published release. Confirm all required checks and known limits.
 4. Open `develop` → `main` with release notes and validation links. The main-target
-   CI additionally requires a dated current changelog entry. Obtain maintainer
+   CI requires a dated current changelog entry and compares the candidate against
+   the PR base commit and fetched version tags. Once main has a dated entry, the
+   candidate must have higher SemVer precedence; a version already tagged cannot
+   be reused (build metadata does not make a new version). The first untagged
+   candidate may retain 0.1.0 when main has no dated entry. Obtain maintainer
    approval and merge with a **merge commit**, not squash/rebase.
 5. Verify the resulting main tree and CI. Record its full commit SHA. Users who
    install or manually update `main` can receive it immediately after this merge,
    even before the tag or GitHub Release is created.
+
+To run the promotion check locally, fetch the base and tags, then use
+`npm run check:release -- --base-ref origin/main`. This also requires dated notes.
+Development PRs may retain the current version while preparing the next release;
+version advancement is checked for every PR targeting main, including hotfixes
+and documentation changes. These checks rely on the PR workflow and do not
+prevent direct main pushes without branch protection.
 
 ## Tag and announce (separate maintainer approval)
 
