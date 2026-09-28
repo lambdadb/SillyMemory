@@ -6,16 +6,18 @@ Long-term memory for SillyTavern.
 
 An installable, experimental UI extension for character chats. SillyMemory keeps recent messages intact and replaces older plain-text history with relevant source passages under a fixed memory token budget. It uses LambdaDB managed embeddings through SillyTavern's built-in CORS proxy. No server plugin or LambdaDB modification is required.
 
-**Validation status:** experimental. The unchanged continuation-aware runtime passes 60 unit tests on Node.js 20.12.0 and 24, plus 188 real-host/emulator checks including two host SIGKILL/restarts and 24 repeated chat/branch cycles. A new fixed 12-case English/Korean evaluation made 24 real OpenAI requests: memory-on selected the target and answered with its code in 12/12 cases, with 11/12 strict code-only answers. One Korean continuation added a suffix. Maximum injection was 797/800 tokens, and owned remote collections were cleaned up. These are small synthetic cases and bounded repetition, not general quality or long-duration reliability guarantees. See [the held-out protocol and results](docs/heldout-recovery.md), [earlier development cases](docs/recall-challenges.md), and [validation record](docs/validation.md).
+**Validation status:** experimental. The current suite passes 68 unit tests on Node.js 20.12.0 and 24, plus 188 real-host/emulator checks including two host SIGKILL/restarts and 24 repeated chat/branch cycles. A new fixed 12-case English/Korean evaluation made 24 real OpenAI requests: memory-on selected the target and answered with its code in 12/12 cases, with 11/12 strict code-only answers. One Korean continuation added a suffix. Maximum injection was 797/800 tokens, and owned remote collections were cleaned up. These are small synthetic cases and bounded repetition, not general quality or long-duration reliability guarantees. See [the held-out protocol and results](docs/heldout-recovery.md), [earlier development cases](docs/recall-challenges.md), and [validation record](docs/validation.md).
+
+The real Git URL installation/update check also passed 15 assertions on the pinned host, including settings retention and session-key clearing. This tested two unreleased 0.1.0 commits, not an upgrade between published releases; see the [installation record](docs/validation.md#git-url-installation-and-release-metadata--2026-09-28).
 
 ## Supported host
 
 The development baseline is **SillyTavern 1.19.0**, pinned to commit [`06bde939fb1e9c4c8d8641d810f0a916b5bce127`](https://github.com/SillyTavern/SillyTavern/tree/06bde939fb1e9c4c8d8641d810f0a916b5bce127). Other revisions are unverified. Use a browser with Web Crypto, Web Locks, and `AbortSignal.any` (the automated browser test uses Chromium). Serve SillyTavern on localhost or HTTPS. One active SillyMemory tab per SillyTavern account/browser profile is enforced with a Web Lock.
 
-## Install locally
+## Install
 
-1. Install the pinned SillyTavern revision using its normal Node.js setup. Run `npm ci` in that checkout.
-2. Copy this repository into `SillyTavern/data/<user-handle>/extensions/sillymemory`, or symlink it into `SillyTavern/public/scripts/extensions/third-party/sillymemory` for local development. The extension itself has no runtime npm dependencies or build step. Do not install two copies.
+1. Prepare SillyTavern **1.19.0** and Git on the host. Other host revisions are unverified.
+2. Open **Extensions → Install extension**, enter `https://github.com/lambdadb/sillymemory`, leave the optional branch/tag field empty, and choose **Install just for me** (or **Install** for a non-admin account). Review SillyTavern's third-party-extension prompt and confirm. The default branch is `main`; `develop` and PR branches are for development. The extension has no runtime npm dependencies or build step. Do not install two copies.
 3. Set this in SillyTavern's `config.yaml` and **restart SillyTavern**:
 
    ```yaml
@@ -29,7 +31,28 @@ The development baseline is **SillyTavern 1.19.0**, pinned to commit [`06bde939f
 7. If a test fails, use **Clean up test collection**. Pending test identity is preserved across reloads so cleanup can be retried after reconnecting. A failed cleanup is not reported as successful.
 8. Click **Create memory collection**, select a character chat, then enable memory. Default settings retain 12 recent messages and allow 800 memory tokens, including passage labels and the wrapper. Configure the bounds in the panel. Disable built-in Vector Storage chat vectorization and other prompt-rewriting memory extensions for this prototype.
 
-Source repository: [lambdadb/sillymemory](https://github.com/lambdadb/sillymemory). Clone it with `git clone https://github.com/lambdadb/sillymemory.git` and follow the setup above. The default branch contains the experimental MVP; no stable release is tagged.
+For local development, symlink the checkout into
+`SillyTavern/public/scripts/extensions/third-party/sillymemory`; do not also install
+a user-scoped copy. Manual copies without Git metadata cannot use the normal
+Git-based update flow.
+
+## Version and updates
+
+The current **0.1.0** entry is an **unreleased experimental candidate**, not a
+published GitHub Release. See [CHANGELOG.md](CHANGELOG.md). The existing `main`
+branch is installable but may lag validated development until a promotion PR
+merges. The version shown in the extension manager comes from `manifest.json`.
+
+Open **Extensions → Manage extensions** and use SillyMemory's update button,
+then reload. It pulls your installed branch, normally `main`; it does not select
+the newest GitHub Release/tag. Automatic updates are currently disabled. After
+reload, re-enter the LambdaDB key and re-enable memory. Budget, recent-message
+settings and installation ownership are retained. Normal updates do not require
+deleting the owned memory collection or reinstalling the extension.
+
+For rollback and maintainer publication steps, see [RELEASING.md](RELEASING.md).
+No rollback tag exists yet. Disable memory first if an update causes a problem;
+code rollback does not restore chat edits or undo remote data changes.
 
 ## Use and behavior
 
@@ -72,6 +95,7 @@ new reports. Historical summaries require their exact recorded source versions.
 npm ci
 npm test
 npm run check
+npm run check:release
 npx playwright install chromium
 ST_SOURCE=/absolute/path/to/pinned/SillyTavern npm run test:browser
 ```
