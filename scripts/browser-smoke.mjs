@@ -79,6 +79,7 @@ async function start(enabled) {
     }
     throw new Error('SillyTavern did not start');
 }
+const errors = [];
 try {
     await start(false);
     const disabled = await fetch(`${url}/proxy/${encodeURIComponent(`${endpoint}/projects/synthetic/collections`)}`);
@@ -88,7 +89,7 @@ try {
     const browserContext = await browser.newContext({ viewport: { width: 1440, height: 1100 } });
     const page = await browserContext.newPage();
     debugPage = page; page.setDefaultTimeout(15000);
-    const errors = []; page.on('pageerror', e => errors.push(e.message));
+    page.on('pageerror', e => errors.push(e.message));
     await page.goto(url); await page.getByText('Welcome to SillyTavern!', { exact: true }).waitFor();
     await page.getByText('Save', { exact: true }).last().click();
     await page.locator('#sillymemory').waitFor({ state: 'attached', timeout: 30000 });
@@ -201,7 +202,7 @@ try {
     }
     await writeFile(path.join(artifacts, artifactName), JSON.stringify({ passed: true, faultResults, sourceSha256, time: new Date().toISOString(), sillyTavern: revision, node: process.version, browser: browser.version(), upstream: 'Local HTTPS LambdaDB emulator; no live managed embeddings', checks, pageErrors: errors, requestCount: calls.length, remainingCollections: collections.size }, null, 2));
 } catch (error) {
-    if (faultMode) await writeFile(path.join(artifacts, artifactName), JSON.stringify({ passed: false, checks, faultResults, faultObservations: faults.observations, failure: error.message, remainingCollections: collections.size }, null, 2));
+    if (faultMode) await writeFile(path.join(artifacts, artifactName), JSON.stringify({ passed: false, checks, faultResults, faultObservations: faults.observations, failure: error.message, pageErrors: errors, remainingCollections: collections.size }, null, 2));
     console.error('Browser failure status:', await debugPage?.locator('[data-sm="status"]').innerText().catch(() => 'unavailable'));
     console.error('Upstream request count:', calls.length);
     await debugPage?.screenshot({ path: path.join(artifacts, faultMode ? 'fault-failure.png' : 'failure.png') }).catch(() => {});

@@ -11,7 +11,7 @@ const root = fileURLToPath(new URL('../', import.meta.url));
 export const hash = value => createHash('sha256').update(JSON.stringify(value)).digest('hex');
 export function fixtureFiles(version = 'natural-dialogue-v1') {
     assert(['natural-dialogue-v1', 'speaker-attribution-v1'].includes(version), 'Unknown evaluation fixture');
-    return [`tests/fixtures/${version}.json`, version === 'natural-dialogue-v1' ? 'docs/natural-dialogue-evaluation.md' : 'docs/speaker-attribution-evaluation.md'];
+    return [`tests/fixtures/${version}.json`, ...(version === 'natural-dialogue-v1' ? ['docs/natural-dialogue-evaluation.md'] : ['docs/speaker-attribution-evaluation.md', 'docs/speaker-attribution-perspective-v2.md'])];
 }
 export const loadNaturalFixture = (version = 'natural-dialogue-v1') => JSON.parse(readFileSync(new URL(`../${fixtureFiles(version)[0]}`, import.meta.url), 'utf8'));
 
