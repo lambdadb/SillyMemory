@@ -1022,3 +1022,23 @@ Historical emulator results were not rerun for this diagnostic-only change.
 The independent human gate remains unset, the assistant gate remains false,
 and the earlier spatial ambiguity remains unresolved. No runtime fix, main
 promotion, release or deployment accompanies this evidence.
+
+
+## Assistant-topic query comparison — 2026-09-29
+
+The [fixed 38-case comparison](assistant-topic-results.md) used real browser/proxy
+managed searches and shared each distinct query response across baseline v3 and
+two test-only three-stream policies. Baseline selected 26/26 existing required
+sources and 4/6 boundary targets; both candidates selected 25/26 and 5/6. Each
+recovered the Korean first-user target but lost `ko-long-reference`, while the
+Korean assistant-topic target still failed. The target was present at rank 2 in
+the useful context stream but excluded after other streams consumed the budget.
+Neither policy qualified. Runtime remains v3.
+
+All 50 live integrity checks passed; 274 LambdaDB responses included only the
+expected invalid-key/absent-resource errors. Source identity, session-key audits
+and owned collection cleanup passed. All 38 cases, including six unknown cases
+without a source-coverage score, remain in [the evidence](results/assistant-topic-selection-v1.json).
+122 unit tests pass on Node 20.12.0/24.15.0, plus syntax and release checks.
+This was search-only: no new generated-answer, abstention, actor-attribution or
+ANN-versus-exact result. Emulator recovery was not rerun for the unchanged runtime.
