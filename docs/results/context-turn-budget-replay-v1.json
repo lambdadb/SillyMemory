@@ -1,0 +1,140 @@
+{
+  "kind": "Post-result offline diagnosis; no new searches or generations; recent12 filters recorded top-30 lists and is not a new live query",
+  "generationReportSha256": "fcf8dffc7e2c9ba594e7f686c91d5431da120157df31629e6aac337e4c99d8cd",
+  "serviceCalls": 0,
+  "reproducedLiveOnSelections": 32,
+  "configuredBudget": 400,
+  "effectiveBudget": 320,
+  "rows": [
+    {
+      "id": "ko-historical-assistant-topic/r1/on",
+      "queries": [
+        "그건 누가 언제 가져오기로 했죠?",
+        "전시실에 걸 자주색 천 현수막 이야기를 다시 해요."
+      ],
+      "variants": {
+        "recent8-budget320": {
+          "selected": [
+            39,
+            56,
+            1,
+            54
+          ],
+          "tokens": 320,
+          "targetSelected": false,
+          "targetRanks": [
+            7,
+            3
+          ]
+        },
+        "recent8-budget400": {
+          "selected": [
+            39,
+            56,
+            1,
+            6,
+            16
+          ],
+          "tokens": 398,
+          "targetSelected": false,
+          "targetRanks": [
+            7,
+            3
+          ]
+        },
+        "recent12-budget320": {
+          "selected": [
+            39,
+            6,
+            1
+          ],
+          "tokens": 250,
+          "targetSelected": false,
+          "targetRanks": [
+            7,
+            2
+          ]
+        },
+        "recent12-budget400": {
+          "selected": [
+            39,
+            6,
+            1,
+            8
+          ],
+          "tokens": 340,
+          "targetSelected": true,
+          "targetRanks": [
+            7,
+            2
+          ]
+        }
+      }
+    },
+    {
+      "id": "ko-historical-assistant-topic/r2/on",
+      "queries": [
+        "그건 누가 언제 가져오기로 했죠?",
+        "전시실에 걸 자주색 천 현수막 이야기를 다시 해요."
+      ],
+      "variants": {
+        "recent8-budget320": {
+          "selected": [
+            39,
+            56,
+            1,
+            54
+          ],
+          "tokens": 320,
+          "targetSelected": false,
+          "targetRanks": [
+            7,
+            3
+          ]
+        },
+        "recent8-budget400": {
+          "selected": [
+            39,
+            56,
+            1,
+            6,
+            16
+          ],
+          "tokens": 398,
+          "targetSelected": false,
+          "targetRanks": [
+            7,
+            3
+          ]
+        },
+        "recent12-budget320": {
+          "selected": [
+            39,
+            6,
+            1
+          ],
+          "tokens": 250,
+          "targetSelected": false,
+          "targetRanks": [
+            7,
+            2
+          ]
+        },
+        "recent12-budget400": {
+          "selected": [
+            39,
+            6,
+            1,
+            8
+          ],
+          "tokens": 340,
+          "targetSelected": true,
+          "targetRanks": [
+            7,
+            2
+          ]
+        }
+      }
+    }
+  ]
+}

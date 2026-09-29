@@ -1,0 +1,695 @@
+{
+  "version": "context-turn-v1",
+  "settings": {
+    "context": 2048,
+    "recent": 8,
+    "budget": 400,
+    "repetitions": 2,
+    "maxOutputTokens": 256
+  },
+  "generation": {
+    "model": "gpt-4.1-mini-2025-04-14",
+    "temperature": 0,
+    "instruction": "Answer the user's question using only this conversation. Follow explicit corrections. If the requested information is not stated, say so without guessing. Reply in the language of the question."
+  },
+  "stories": [
+    {
+      "id": "en-fresh-stage",
+      "language": "en",
+      "character": "SillyMemory E2E Mira",
+      "messages": [
+        {
+          "role": "user",
+          "text": "We have permission to turn the old tram depot into a small community theatre for one weekend. I want the entrance to feel calm enough that families can find their seats without a queue building across the street."
+        },
+        {
+          "role": "assistant",
+          "text": "I will walk through the depot before arranging chairs. The sliding doors and the raised track bed make the room less straightforward than a normal hall, so we should leave a clear route between the entrance and the stage."
+        },
+        {
+          "role": "user",
+          "text": "The storage cupboard has become crowded with equipment from several clubs. I put the brass cupboard key inside the striped biscuit tin on the office shelf, where the next volunteer should be able to find it."
+        },
+        {
+          "role": "assistant",
+          "text": "That gives the key a definite home. I will label the tin from the outside, because opening every box while carrying a stack of chairs would be inconvenient and could scatter the small tools."
+        },
+        {
+          "role": "user",
+          "text": "The puppet rehearsal is provisionally booked for 6:10 p.m. on Saturday. That was the time suggested before the visiting performers checked their train connection, so it may still need to change."
+        },
+        {
+          "role": "assistant",
+          "text": "I will leave the rehearsal time in pencil on the volunteer sheet. We can print the final schedule once the performers confirm it, rather than asking families to choose between two competing times."
+        },
+        {
+          "role": "user",
+          "text": "We need a quiet place for recording the introductory narration. The main depot echoes whenever somebody moves a chair, and I would prefer not to make everyone stop preparing the room for each sentence."
+        },
+        {
+          "role": "assistant",
+          "text": "The former ticket office has a carpet and a door that closes properly. I can try a short recording there and listen for traffic noise before deciding whether we need to hang another curtain."
+        },
+        {
+          "role": "user",
+          "text": "Leila will bring the white paper parasol on Tuesday afternoon. She repaired its wooden ribs at home and will carry it in a long cardboard sleeve; Owen is bringing the violet silk sash on Thursday morning."
+        },
+        {
+          "role": "assistant",
+          "text": "I will put the parasol beside the props table once it arrives. The sleeve should stay with it until the performers unpack their other things, so nobody mistakes a fragile prop for spare packaging."
+        },
+        {
+          "role": "user",
+          "text": "The workshop group wants a simple way to display its sketches without drilling into the brickwork. A freestanding board might fit by the stage, but I have not measured the space beside the curtain yet."
+        },
+        {
+          "role": "assistant",
+          "text": "We can use the board with wide feet from the classroom. I will check that its corners do not project into the audience route, and we can attach the sketches with removable clips."
+        },
+        {
+          "role": "user",
+          "text": "Some costumes have heavy buttons that make them difficult for younger performers to fasten. I would like a volunteer to check the closures before the dress rehearsal, while there is still time for a repair."
+        },
+        {
+          "role": "assistant",
+          "text": "I can gather the sewing kit and ask each performer to try the coat or vest they will wear. We should photograph any arrangement that has to be put back in a particular order."
+        },
+        {
+          "role": "user",
+          "text": "The old clock above the tram platform is decorative now and does not keep accurate time. Visitors may still glance at it, especially when the printed programme tells them to return for the next scene."
+        },
+        {
+          "role": "assistant",
+          "text": "A small note below it can say that it is part of the display. The working clock in the ticket office will be our reference, and the stage manager can give volunteers a clear signal."
+        },
+        {
+          "role": "user",
+          "text": "I tested the portable lamps against the painted scenery this morning. Bright white light made the paper windows look flat, while a warmer setting kept the colours distinct without making the performers hard to see."
+        },
+        {
+          "role": "assistant",
+          "text": "Let us mark that setting on the control sheet. I will tape down the leads along the wall and leave enough spare length for the scenery to move without pulling a plug out."
+        },
+        {
+          "role": "user",
+          "text": "The entrance table needs space for both the programmes and the donation jar. If we put the jar in the middle, people may stop directly in front of the door while looking for a coin."
+        },
+        {
+          "role": "assistant",
+          "text": "I would place it at the far end of the table with the programmes nearer the entrance. A volunteer can answer questions there while another keeps the main route clear."
+        },
+        {
+          "role": "user",
+          "text": "The performers have now confirmed that Saturday puppet rehearsal starts at 7:05 p.m. The earlier 6:10 p.m. booking is cancelled. Replace the old time everywhere instead of presenting it as another option."
+        },
+        {
+          "role": "assistant",
+          "text": "I will correct the volunteer sheet and remove the temporary notice. The new time should be the only one on the programme proof, so a person reading it quickly does not arrive for the cancelled slot."
+        },
+        {
+          "role": "user",
+          "text": "The stage has a narrow step that is easy to miss when the curtain is partly closed. I would like performers to practise entering in their actual shoes before we put any loose scenery nearby."
+        },
+        {
+          "role": "assistant",
+          "text": "I can mark the edge with a strip that is visible from backstage. It should not be shiny enough to distract the audience, and I will check whether it lifts when someone turns on the step."
+        },
+        {
+          "role": "user",
+          "text": "A neighbour offered several folding stools for the waiting area. They are light enough to move, but we should inspect the hinges rather than assuming they are safe just because they look clean."
+        },
+        {
+          "role": "assistant",
+          "text": "I will open and close each stool and set aside any that wobble. We can use ordinary chairs instead if the waiting area needs to stay in place for the whole evening."
+        },
+        {
+          "role": "user",
+          "text": "The sound desk is close to a radiator, and the volunteer operating it will need somewhere to put notes. A loose sheet on top of the equipment could slide behind the cables during a busy scene."
+        },
+        {
+          "role": "assistant",
+          "text": "A clipboard attached to the side of the desk should work. I can leave a pencil on a string and make sure neither the clip nor the paper covers a ventilation opening."
+        },
+        {
+          "role": "user",
+          "text": "We have a box of old tram tickets that could make a pleasant display. They are brittle, so I would rather visitors see a few under a clear cover than handle the entire collection."
+        },
+        {
+          "role": "assistant",
+          "text": "I will choose examples with readable printing and place them on a plain backing. We can make a separate copy for children who want to imagine punching a ticket at the entrance."
+        },
+        {
+          "role": "user",
+          "text": "Several volunteers are sharing the responsibility for refreshments. The room behind the stage is too narrow for people to carry hot drinks through while the performers are waiting for a cue."
+        },
+        {
+          "role": "assistant",
+          "text": "We should serve refreshments near the outer doors instead. I can arrange a small clear area for used cups so they do not accumulate on the prop boxes or on the sound equipment."
+        },
+        {
+          "role": "user",
+          "text": "A family asked whether the show will include a sudden loud noise. The script has a door slam, but the performers can suggest it with movement if the room makes a real slam too startling."
+        },
+        {
+          "role": "assistant",
+          "text": "I will mention that during rehearsal and put a short sound note beside the programme. Families should know what to expect without needing to explain their circumstances to every volunteer."
+        },
+        {
+          "role": "user",
+          "text": "The painted moon on the backdrop has a torn corner. The tear is small, but putting new tape directly on the painted side might remove the colour when we pack the scenery away."
+        },
+        {
+          "role": "assistant",
+          "text": "I can support the corner from behind with plain paper and test the adhesive on a scrap first. We should photograph the repair so the next group knows where to hold the backdrop."
+        },
+        {
+          "role": "user",
+          "text": "The depot floor slopes slightly towards the old track channel. Any table holding loose pencils or small props needs to be checked after it has been placed, not only while it is still in the storeroom."
+        },
+        {
+          "role": "assistant",
+          "text": "I will carry a level and some stable spacers. If a table still moves when someone leans on it, we should replace it instead of relying on a stack of folded leaflets."
+        },
+        {
+          "role": "user",
+          "text": "The volunteer briefing will be easier if we separate audience questions from backstage cues. A single crowded sheet encourages people to miss the instruction they need at the moment it matters."
+        },
+        {
+          "role": "assistant",
+          "text": "I can prepare a short front-of-house sheet and a separate cue sheet. Both will use the same scene names, and we can keep one complete reference copy in the ticket office."
+        },
+        {
+          "role": "user",
+          "text": "The costume rail is tall enough to block the view between the two backstage corners. It would be useful to move it, but its wheels may catch in the shallow groove beside the wall."
+        },
+        {
+          "role": "assistant",
+          "text": "I will try the route while the rail is empty. Once we choose a position, the heavy coats can hang at the end nearest the support so the rail is less likely to tilt."
+        },
+        {
+          "role": "user",
+          "text": "The chalk arrows outside were useful during the trial visit, but rain would wash them away. We need a sign that can be brought indoors at the end of the night without leaving marks on the pavement."
+        },
+        {
+          "role": "assistant",
+          "text": "The weighted sign stand can sit beside the gate. I will keep its message short and point it towards the entrance, while leaving enough space for a wheelchair to pass without turning into the road."
+        },
+        {
+          "role": "user",
+          "text": "I would like to collect comments after the show without asking everyone to wait. A short card near the exit seems better than a long questionnaire handed out while people are trying to leave."
+        },
+        {
+          "role": "assistant",
+          "text": "We can offer a box for cards and make filling one in optional. I will leave the box away from the main doorway so a person writing a comment does not hold up the departing audience."
+        },
+        {
+          "role": "user",
+          "text": "Most of the practical arrangements are now settled. Before printing the programme I want to revisit a few decisions from earlier in the discussion, because several details changed while we were checking the room."
+        },
+        {
+          "role": "assistant",
+          "text": "Ask about the point you want to confirm. I will use the details we actually settled, and distinguish them from provisional suggestions or things that were never decided."
+        }
+      ]
+    },
+    {
+      "id": "ko-fresh-stage",
+      "language": "ko",
+      "character": "SillyMemory E2E Mira",
+      "messages": [
+        {
+          "role": "user",
+          "text": "마을 관측소에서 작은 별자리 낭독회를 열기로 했어요. 처음 방문하는 가족도 입구에서 당황하지 않도록 안내판과 대기 의자의 위치를 차분하게 정하고 싶어요."
+        },
+        {
+          "role": "assistant",
+          "text": "관측 장비를 옮기기 전에 출입구부터 살펴볼게요. 둥근 벽을 따라 걸으면 좁아지는 곳이 있으니 사람들이 서로 비켜설 공간을 남겨 두는 편이 좋겠어요."
+        },
+        {
+          "role": "user",
+          "text": "보관실의 은색 자물쇠 열쇠는 사무실 선반에 있는 줄무늬 과자 통 안에 넣었어요. 여러 동아리의 장비가 섞여 있어서 다음 담당자가 쉽게 찾을 수 있게 하려는 거예요."
+        },
+        {
+          "role": "assistant",
+          "text": "통 바깥에 작은 이름표를 붙여 둘게요. 의자를 든 채로 상자를 하나씩 열다가 작은 부품을 쏟는 일이 없도록 정해진 자리를 공유해 두면 좋겠어요."
+        },
+        {
+          "role": "user",
+          "text": "토요일 그림자극 연습은 우선 오후 5시 20분으로 적어 뒀어요. 진행 팀이 기차편을 확인하기 전에 제안한 시각이라 아직은 바뀔 수 있어요."
+        },
+        {
+          "role": "assistant",
+          "text": "자원봉사자 일정표에는 연필로 표시할게요. 팀의 확답을 받은 뒤에 안내문을 인쇄해야 방문객이 서로 다른 두 시각 중에서 하나를 고르느라 혼란스럽지 않겠어요."
+        },
+        {
+          "role": "user",
+          "text": "낭독 도입부를 녹음할 조용한 장소가 필요해요. 관측실에서는 누가 의자만 움직여도 소리가 울려서 문장을 읽을 때마다 준비 작업을 멈추기는 어려워요."
+        },
+        {
+          "role": "assistant",
+          "text": "작은 기록실에는 카펫이 있고 문도 잘 닫혀요. 거기서 짧게 녹음한 뒤 도로 소리가 들어오는지 들어 보고 커튼이 더 필요한지 판단할게요."
+        },
+        {
+          "role": "user",
+          "text": "주황색 종이 풍등은 유진이 월요일 저녁에 가져오기로 했어요. 집에서 대나무 테두리를 고친 뒤 긴 상자에 넣어 온대요. 태호는 금요일 오전에 남색 천 띠를 가져오기로 했으니 구분해 주세요."
+        },
+        {
+          "role": "assistant",
+          "text": "풍등이 도착하면 소품 탁자 옆에 놓을게요. 다른 물건을 모두 풀 때까지 상자를 함께 두어야 얇은 종이 소품을 포장 쓰레기로 착각하는 일이 없겠어요."
+        },
+        {
+          "role": "user",
+          "text": "아이들이 그린 별자리 그림을 전시하고 싶은데 벽에는 못을 박을 수 없어요. 커튼 옆 공간에 이동식 게시판이 들어갈지 아직 치수를 재 보지 못했어요."
+        },
+        {
+          "role": "assistant",
+          "text": "교실에서 쓰던 넓은 받침의 게시판을 가져올 수 있어요. 모서리가 관람 동선으로 튀어나오지 않는지 확인하고 그림은 떼어낼 수 있는 집게로 고정할게요."
+        },
+        {
+          "role": "user",
+          "text": "공연 의상 중에는 단추가 무거워서 어린 참가자가 혼자 잠그기 힘든 것도 있어요. 수선할 시간이 남아 있을 때 실제로 입어 보고 여밈 부분을 확인하면 좋겠어요."
+        },
+        {
+          "role": "assistant",
+          "text": "바느질 도구를 모아 두고 각자 입을 조끼나 외투를 시험해 보도록 할게요. 순서대로 다시 달아야 하는 장식은 미리 사진을 찍어 놓겠어요."
+        },
+        {
+          "role": "user",
+          "text": "복도 위의 오래된 시계는 지금은 전시용이라 정확하지 않아요. 인쇄된 순서표를 보고 다음 장면에 맞춰 돌아오려는 방문객이 그 시계를 참고할 수도 있어요."
+        },
+        {
+          "role": "assistant",
+          "text": "전시물이라는 설명을 아래에 붙여 둘게요. 기록실의 정상 작동하는 시계를 기준으로 삼고 진행 담당자가 봉사자들에게 같은 신호를 주면 되겠어요."
+        },
+        {
+          "role": "user",
+          "text": "이동식 조명을 배경 그림에 비춰 봤어요. 차가운 흰빛에서는 종이 창문이 납작해 보였지만 따뜻한 빛에서는 색이 구분되면서 인물도 잘 보였어요."
+        },
+        {
+          "role": "assistant",
+          "text": "그 조명 설정을 운영 기록에 표시해 둘게요. 전선은 벽을 따라 고정하되 배경을 움직일 때 플러그가 빠지지 않도록 여유 길이를 남겨야겠어요."
+        },
+        {
+          "role": "user",
+          "text": "입구 탁자에는 순서표와 후원함이 함께 놓일 거예요. 후원함을 가운데 두면 동전을 찾는 사람들이 문 앞에 멈춰 서게 될 것 같아요."
+        },
+        {
+          "role": "assistant",
+          "text": "후원함은 탁자 끝에 두고 순서표를 입구 쪽에 놓는 편이 좋겠어요. 한 사람이 질문을 받는 동안 다른 사람은 출입 동선이 막히지 않는지 살필 수 있겠어요."
+        },
+        {
+          "role": "user",
+          "text": "진행 팀에서 토요일 그림자극 연습을 오후 6시 45분에 시작한다고 최종 확인했어요. 먼저 적었던 오후 5시 20분은 취소됐으니 모든 일정표에서 새 시각으로 바꿔 주세요."
+        },
+        {
+          "role": "assistant",
+          "text": "자원봉사자 일정표를 고치고 임시 안내문도 치울게요. 빠르게 읽는 사람도 취소된 시간에 오지 않도록 인쇄 교정본에는 새 시각만 남기겠어요."
+        },
+        {
+          "role": "user",
+          "text": "무대 앞의 좁은 단차는 커튼이 반쯤 닫히면 잘 보이지 않아요. 주변에 소품을 놓기 전에 참가자들이 실제 공연 신발로 들어오는 연습을 해 봤으면 해요."
+        },
+        {
+          "role": "assistant",
+          "text": "뒤쪽에서 볼 수 있는 표시를 단차 가장자리에 붙일게요. 관객의 시선을 끌 만큼 반짝이지 않아야 하고 발을 돌릴 때 들뜨지 않는지도 확인하겠어요."
+        },
+        {
+          "role": "user",
+          "text": "이웃이 대기 공간에 쓸 접이식 걸상 몇 개를 빌려주겠다고 했어요. 옮기기에는 가볍지만 깨끗해 보인다고 안전하다고 생각하지 말고 경첩을 살펴봐야겠어요."
+        },
+        {
+          "role": "assistant",
+          "text": "하나씩 접었다 펴 보고 흔들리는 것은 따로 놓을게요. 대기 공간을 저녁 내내 유지해야 한다면 움직이지 않는 일반 의자를 쓰는 편이 나을 수도 있어요."
+        },
+        {
+          "role": "user",
+          "text": "음향 탁자가 난방기 가까이에 있고 담당자가 메모를 놓을 자리도 필요해요. 장비 위에 종이 한 장만 두면 바쁜 장면 중에 전선 뒤로 떨어질 수 있겠어요."
+        },
+        {
+          "role": "assistant",
+          "text": "탁자 옆에 고정한 필기판을 쓰면 될 것 같아요. 연필도 끈으로 묶어 두되 집게나 종이가 장비의 통풍구를 가리지 않도록 확인할게요."
+        },
+        {
+          "role": "user",
+          "text": "옛 관측 행사 입장권이 한 상자 남아 있는데 전시하면 재미있겠어요. 종이가 약해져서 모두 만져 보게 하기보다는 몇 장만 투명 덮개 아래에 두고 싶어요."
+        },
+        {
+          "role": "assistant",
+          "text": "글씨가 읽히는 표를 골라 단순한 바탕 위에 놓을게요. 입구에서 표를 찍는 놀이를 하고 싶은 아이들을 위해서는 별도의 복사본을 만들면 되겠어요."
+        },
+        {
+          "role": "user",
+          "text": "여러 봉사자가 간식 준비를 나누어 맡고 있어요. 무대 뒤 방은 좁아서 참가자가 신호를 기다리는 동안 뜨거운 음료를 들고 지나가기는 위험해 보여요."
+        },
+        {
+          "role": "assistant",
+          "text": "간식은 바깥문 근처에서 나누는 편이 좋겠어요. 사용한 컵을 모을 자리를 따로 마련해 소품 상자나 음향 장비 위에 쌓이지 않도록 할게요."
+        },
+        {
+          "role": "user",
+          "text": "한 가족이 공연에 갑자기 큰 소리가 나는 장면이 있는지 물었어요. 대본에는 문을 세게 닫는 동작이 있지만 실제 소리가 너무 크면 몸짓으로 표현할 수도 있어요."
+        },
+        {
+          "role": "assistant",
+          "text": "연습 때 그 점을 전달하고 순서표 옆에 간단한 소리 안내를 붙일게요. 가족이 봉사자마다 사정을 반복해서 설명하지 않아도 무엇을 예상할지 알 수 있으면 좋겠어요."
+        },
+        {
+          "role": "user",
+          "text": "배경에 그려 놓은 달 모서리가 조금 찢어졌어요. 칠한 면에 새 테이프를 바로 붙이면 나중에 정리할 때 색까지 벗겨질 수 있을 것 같아요."
+        },
+        {
+          "role": "assistant",
+          "text": "뒤쪽에서 종이로 받치고 자투리에 접착제를 시험해 볼게요. 다음 팀이 어느 부분을 잡아야 하는지 알도록 수선한 곳도 사진으로 남기겠어요."
+        },
+        {
+          "role": "user",
+          "text": "관측소 바닥은 옛 배수로 쪽으로 약간 기울어 있어요. 연필이나 작은 소품을 놓는 탁자는 창고에서만 확인하지 말고 실제 자리에 놓은 다음에도 점검해야겠어요."
+        },
+        {
+          "role": "assistant",
+          "text": "수평계와 단단한 받침을 챙길게요. 누가 기대면 여전히 움직이는 탁자는 접은 안내문을 여러 장 끼워 버티기보다 다른 것으로 바꾸는 편이 안전하겠어요."
+        },
+        {
+          "role": "user",
+          "text": "자원봉사자 설명회에서는 관객 질문과 무대 뒤 신호를 나누어 정리하면 좋겠어요. 한 장에 너무 많은 내용을 넣으면 필요한 순간에 중요한 줄을 놓치기 쉬워요."
+        },
+        {
+          "role": "assistant",
+          "text": "입구 담당용 요약과 공연 진행표를 따로 만들게요. 장면 이름은 두 문서에서 같게 쓰고 전체 참고본 한 부는 기록실에 보관하면 되겠어요."
+        },
+        {
+          "role": "user",
+          "text": "의상 걸이가 높아서 무대 뒤 양쪽 모퉁이 사이의 시야를 막아요. 옮기는 것이 좋겠지만 바퀴가 벽 옆의 얕은 홈에 걸릴 수도 있어요."
+        },
+        {
+          "role": "assistant",
+          "text": "의상을 걸기 전에 빈 상태로 이동 경로를 시험할게요. 자리를 정한 뒤에는 무거운 외투를 지지대 가까운 쪽에 걸어 기울어질 가능성을 줄이겠어요."
+        },
+        {
+          "role": "user",
+          "text": "시험 방문 때 바깥에 그린 분필 화살표가 도움이 됐지만 비가 오면 지워질 거예요. 바닥에 흔적을 남기지 않고 밤마다 안으로 들일 수 있는 표지가 필요해요."
+        },
+        {
+          "role": "assistant",
+          "text": "무게추가 달린 안내판을 대문 옆에 세울 수 있어요. 문구는 짧게 쓰고 휠체어가 차도로 내려가지 않고도 지나갈 여유를 남겨 두겠어요."
+        },
+        {
+          "role": "user",
+          "text": "공연이 끝나면 모두 기다리게 하지 않고 소감을 받고 싶어요. 나가려는 사람에게 긴 설문지를 건네기보다는 출구 근처에 짧은 메모 카드를 두는 게 좋겠어요."
+        },
+        {
+          "role": "assistant",
+          "text": "원하는 사람만 카드를 적어 넣을 수 있는 상자를 준비할게요. 글을 쓰는 사람이 나가는 흐름을 막지 않도록 문에서 조금 떨어진 곳에 놓겠어요."
+        },
+        {
+          "role": "user",
+          "text": "실무 준비는 대부분 정리됐어요. 순서표를 인쇄하기 전에 앞서 이야기한 결정 몇 가지를 다시 확인하고 싶어요. 공간을 살피는 동안 세부 사항이 여러 번 바뀌었거든요."
+        },
+        {
+          "role": "assistant",
+          "text": "확인하고 싶은 부분을 물어보세요. 실제로 정해진 내용과 임시로 제안했던 내용, 끝내 결정하지 않은 내용을 구분해서 답할게요."
+        }
+      ]
+    }
+  ],
+  "cases": [
+    {
+      "id": "en-fresh-assistant-topic",
+      "story": "en-fresh-stage",
+      "shape": "assistant-topic",
+      "kind": "reference",
+      "context": [
+        "Let us check the brass cupboard key.",
+        "Let us return to the white paper parasol."
+      ],
+      "question": "Who is bringing it, and when?",
+      "requiredEvidence": [
+        {
+          "message": 8,
+          "quote": "Leila will bring the white paper parasol on Tuesday afternoon. She repaired its wooden ribs at home and will carry it in a long cardboard sleeve; Owen is bringing the violet silk sash on Thursday morning.",
+          "meaning": "Leila brings the white paper parasol on Tuesday afternoon."
+        }
+      ],
+      "supersededEvidence": [],
+      "answerRule": "Use the stated fact relevant to the question; follow the explicit final correction. Reject invented actors, times or prices. If no price is stated, say it is unknown."
+    },
+    {
+      "id": "en-fresh-user-topic",
+      "story": "en-fresh-stage",
+      "shape": "user-topic",
+      "kind": "reference",
+      "context": [
+        "Let us return to the white paper parasol.",
+        "Yes, what would you like to check?"
+      ],
+      "question": "Who is bringing it, and when?",
+      "requiredEvidence": [
+        {
+          "message": 8,
+          "quote": "Leila will bring the white paper parasol on Tuesday afternoon. She repaired its wooden ribs at home and will carry it in a long cardboard sleeve; Owen is bringing the violet silk sash on Thursday morning.",
+          "meaning": "Leila brings the white paper parasol on Tuesday afternoon."
+        }
+      ],
+      "supersededEvidence": [],
+      "answerRule": "Use the stated fact relevant to the question; follow the explicit final correction. Reject invented actors, times or prices. If no price is stated, say it is unknown."
+    },
+    {
+      "id": "en-fresh-explicit-switch",
+      "story": "en-fresh-stage",
+      "shape": "explicit-switch",
+      "kind": "reference",
+      "context": [
+        "Let us check the brass cupboard key.",
+        "Yes, let us check the storage key."
+      ],
+      "question": "Who is bringing the white paper parasol, and when?",
+      "requiredEvidence": [
+        {
+          "message": 8,
+          "quote": "Leila will bring the white paper parasol on Tuesday afternoon. She repaired its wooden ribs at home and will carry it in a long cardboard sleeve; Owen is bringing the violet silk sash on Thursday morning.",
+          "meaning": "Leila brings the white paper parasol on Tuesday afternoon."
+        }
+      ],
+      "supersededEvidence": [],
+      "answerRule": "Use the stated fact relevant to the question; follow the explicit final correction. Reject invented actors, times or prices. If no price is stated, say it is unknown."
+    },
+    {
+      "id": "en-fresh-correction",
+      "story": "en-fresh-stage",
+      "shape": "correction",
+      "kind": "correction",
+      "context": [
+        "Let us check the brass cupboard key.",
+        "Let us return to the Saturday puppet rehearsal schedule."
+      ],
+      "question": "What is the final start time?",
+      "requiredEvidence": [
+        {
+          "message": 20,
+          "quote": "The performers have now confirmed that Saturday puppet rehearsal starts at 7:05 p.m. The earlier 6:10 p.m. booking is cancelled. Replace the old time everywhere instead of presenting it as another option.",
+          "meaning": "The final Saturday rehearsal starts at 7:05 p.m.; 6:10 p.m. is cancelled."
+        }
+      ],
+      "supersededEvidence": [
+        {
+          "message": 4,
+          "quote": "6:10 p.m."
+        }
+      ],
+      "answerRule": "Use the stated fact relevant to the question; follow the explicit final correction. Reject invented actors, times or prices. If no price is stated, say it is unknown."
+    },
+    {
+      "id": "en-fresh-quoted-distractor",
+      "story": "en-fresh-stage",
+      "shape": "quoted-distractor",
+      "kind": "reference",
+      "context": [
+        "Let us return to the white paper parasol.",
+        "Owen mentioned the violet silk sash, but we are still discussing the white paper parasol."
+      ],
+      "question": "Who is bringing it, and when?",
+      "requiredEvidence": [
+        {
+          "message": 8,
+          "quote": "Leila will bring the white paper parasol on Tuesday afternoon. She repaired its wooden ribs at home and will carry it in a long cardboard sleeve; Owen is bringing the violet silk sash on Thursday morning.",
+          "meaning": "Leila brings the white paper parasol on Tuesday afternoon."
+        }
+      ],
+      "supersededEvidence": [],
+      "answerRule": "Use the stated fact relevant to the question; follow the explicit final correction. Reject invented actors, times or prices. If no price is stated, say it is unknown."
+    },
+    {
+      "id": "en-fresh-paraphrase",
+      "story": "en-fresh-stage",
+      "shape": "paraphrase",
+      "kind": "reference",
+      "context": [
+        "Let us check the brass cupboard key.",
+        "Let us return to the pale folding sunshade for the performance."
+      ],
+      "question": "Who is bringing it, and when?",
+      "requiredEvidence": [
+        {
+          "message": 8,
+          "quote": "Leila will bring the white paper parasol on Tuesday afternoon. She repaired its wooden ribs at home and will carry it in a long cardboard sleeve; Owen is bringing the violet silk sash on Thursday morning.",
+          "meaning": "Leila brings the white paper parasol on Tuesday afternoon."
+        }
+      ],
+      "supersededEvidence": [],
+      "answerRule": "Use the stated fact relevant to the question; follow the explicit final correction. Reject invented actors, times or prices. If no price is stated, say it is unknown."
+    },
+    {
+      "id": "en-fresh-unknown",
+      "story": "en-fresh-stage",
+      "shape": "unknown",
+      "kind": "unknown",
+      "context": [
+        "Let us return to the white paper parasol.",
+        "Yes, what would you like to check?"
+      ],
+      "question": "How much did it cost?",
+      "requiredEvidence": [],
+      "supersededEvidence": [],
+      "answerRule": "Use the stated fact relevant to the question; follow the explicit final correction. Reject invented actors, times or prices. If no price is stated, say it is unknown."
+    },
+    {
+      "id": "ko-fresh-assistant-topic",
+      "story": "ko-fresh-stage",
+      "shape": "assistant-topic",
+      "kind": "reference",
+      "context": [
+        "보관실 은색 열쇠 이야기부터 확인해요.",
+        "주황색 종이 풍등 이야기를 다시 해요."
+      ],
+      "question": "그건 누가 언제 가져오기로 했죠?",
+      "requiredEvidence": [
+        {
+          "message": 8,
+          "quote": "주황색 종이 풍등은 유진이 월요일 저녁에 가져오기로 했어요. 집에서 대나무 테두리를 고친 뒤 긴 상자에 넣어 온대요. 태호는 금요일 오전에 남색 천 띠를 가져오기로 했으니 구분해 주세요.",
+          "meaning": "유진이 주황색 종이 풍등을 월요일 저녁에 가져온다."
+        }
+      ],
+      "supersededEvidence": [],
+      "answerRule": "Use the stated fact relevant to the question; follow the explicit final correction. Reject invented actors, times or prices. If no price is stated, say it is unknown."
+    },
+    {
+      "id": "ko-fresh-user-topic",
+      "story": "ko-fresh-stage",
+      "shape": "user-topic",
+      "kind": "reference",
+      "context": [
+        "주황색 종이 풍등 이야기를 다시 해요.",
+        "네, 어떤 점을 확인하고 싶으세요?"
+      ],
+      "question": "그건 누가 언제 가져오기로 했죠?",
+      "requiredEvidence": [
+        {
+          "message": 8,
+          "quote": "주황색 종이 풍등은 유진이 월요일 저녁에 가져오기로 했어요. 집에서 대나무 테두리를 고친 뒤 긴 상자에 넣어 온대요. 태호는 금요일 오전에 남색 천 띠를 가져오기로 했으니 구분해 주세요.",
+          "meaning": "유진이 주황색 종이 풍등을 월요일 저녁에 가져온다."
+        }
+      ],
+      "supersededEvidence": [],
+      "answerRule": "Use the stated fact relevant to the question; follow the explicit final correction. Reject invented actors, times or prices. If no price is stated, say it is unknown."
+    },
+    {
+      "id": "ko-fresh-explicit-switch",
+      "story": "ko-fresh-stage",
+      "shape": "explicit-switch",
+      "kind": "reference",
+      "context": [
+        "보관실 은색 열쇠 이야기를 해요.",
+        "네, 보관실 열쇠를 확인해요."
+      ],
+      "question": "주황색 종이 풍등은 누가 언제 가져오기로 했죠?",
+      "requiredEvidence": [
+        {
+          "message": 8,
+          "quote": "주황색 종이 풍등은 유진이 월요일 저녁에 가져오기로 했어요. 집에서 대나무 테두리를 고친 뒤 긴 상자에 넣어 온대요. 태호는 금요일 오전에 남색 천 띠를 가져오기로 했으니 구분해 주세요.",
+          "meaning": "유진이 주황색 종이 풍등을 월요일 저녁에 가져온다."
+        }
+      ],
+      "supersededEvidence": [],
+      "answerRule": "Use the stated fact relevant to the question; follow the explicit final correction. Reject invented actors, times or prices. If no price is stated, say it is unknown."
+    },
+    {
+      "id": "ko-fresh-correction",
+      "story": "ko-fresh-stage",
+      "shape": "correction",
+      "kind": "correction",
+      "context": [
+        "보관실 은색 열쇠 이야기를 해요.",
+        "토요일 그림자극 연습 일정 이야기를 다시 해요."
+      ],
+      "question": "최종 시작 시각이 언제죠?",
+      "requiredEvidence": [
+        {
+          "message": 20,
+          "quote": "진행 팀에서 토요일 그림자극 연습을 오후 6시 45분에 시작한다고 최종 확인했어요. 먼저 적었던 오후 5시 20분은 취소됐으니 모든 일정표에서 새 시각으로 바꿔 주세요.",
+          "meaning": "토요일 연습은 오후 6시 45분이며 오후 5시 20분은 취소됐다."
+        }
+      ],
+      "supersededEvidence": [
+        {
+          "message": 4,
+          "quote": "오후 5시 20분"
+        }
+      ],
+      "answerRule": "Use the stated fact relevant to the question; follow the explicit final correction. Reject invented actors, times or prices. If no price is stated, say it is unknown."
+    },
+    {
+      "id": "ko-fresh-quoted-distractor",
+      "story": "ko-fresh-stage",
+      "shape": "quoted-distractor",
+      "kind": "reference",
+      "context": [
+        "주황색 종이 풍등 이야기를 다시 해요.",
+        "태호가 남색 천 띠를 언급했지만 우리는 계속 주황색 종이 풍등을 이야기하고 있어요."
+      ],
+      "question": "그건 누가 언제 가져오기로 했죠?",
+      "requiredEvidence": [
+        {
+          "message": 8,
+          "quote": "주황색 종이 풍등은 유진이 월요일 저녁에 가져오기로 했어요. 집에서 대나무 테두리를 고친 뒤 긴 상자에 넣어 온대요. 태호는 금요일 오전에 남색 천 띠를 가져오기로 했으니 구분해 주세요.",
+          "meaning": "유진이 주황색 종이 풍등을 월요일 저녁에 가져온다."
+        }
+      ],
+      "supersededEvidence": [],
+      "answerRule": "Use the stated fact relevant to the question; follow the explicit final correction. Reject invented actors, times or prices. If no price is stated, say it is unknown."
+    },
+    {
+      "id": "ko-fresh-paraphrase",
+      "story": "ko-fresh-stage",
+      "shape": "paraphrase",
+      "kind": "reference",
+      "context": [
+        "보관실 은색 열쇠 이야기를 해요.",
+        "공연에 쓸 귤빛 종이 등불 이야기를 다시 해요."
+      ],
+      "question": "그건 누가 언제 가져오기로 했죠?",
+      "requiredEvidence": [
+        {
+          "message": 8,
+          "quote": "주황색 종이 풍등은 유진이 월요일 저녁에 가져오기로 했어요. 집에서 대나무 테두리를 고친 뒤 긴 상자에 넣어 온대요. 태호는 금요일 오전에 남색 천 띠를 가져오기로 했으니 구분해 주세요.",
+          "meaning": "유진이 주황색 종이 풍등을 월요일 저녁에 가져온다."
+        }
+      ],
+      "supersededEvidence": [],
+      "answerRule": "Use the stated fact relevant to the question; follow the explicit final correction. Reject invented actors, times or prices. If no price is stated, say it is unknown."
+    },
+    {
+      "id": "ko-fresh-unknown",
+      "story": "ko-fresh-stage",
+      "shape": "unknown",
+      "kind": "unknown",
+      "context": [
+        "주황색 종이 풍등 이야기를 다시 해요.",
+        "네, 어떤 점을 확인하고 싶으세요?"
+      ],
+      "question": "그걸 사는 데 얼마가 들었죠?",
+      "requiredEvidence": [],
+      "supersededEvidence": [],
+      "answerRule": "Use the stated fact relevant to the question; follow the explicit final correction. Reject invented actors, times or prices. If no price is stated, say it is unknown."
+    }
+  ]
+}

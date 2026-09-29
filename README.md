@@ -6,7 +6,7 @@ Long-term memory for SillyTavern.
 
 An installable, experimental UI extension for character chats. SillyMemory keeps recent messages intact and replaces older plain-text history with relevant source passages under a fixed memory token budget. It uses LambdaDB managed embeddings through SillyTavern's built-in CORS proxy. No server plugin or LambdaDB modification is required.
 
-**Validation status:** experimental. The current suite passes 129 unit tests on Node.js 20.12.0 and 24. The latest 48-answer [candidate comparison](docs/context-candidate-results.md) scored current labels 9/16, label removal 10/16 and label removal plus adjacent turns 11/16 provisionally. On the new controls, however, scores regressed from current 7/8 to 4/8 and 6/8; the original English user-report failure remained. Both candidates stay test-only. This was a frozen-seed prompt experiment with generation-time retrieval disabled, not a runtime fix or retrieval benchmark. Independent human review is pending.
+**Validation status:** experimental. The current suite passes 137 unit tests on Node.js 20.12.0 and 24. The prior 48-answer [candidate comparison](docs/context-candidate-results.md) scored current labels 9/16, label removal 10/16 and label removal plus adjacent turns 11/16 provisionally. On the new controls, however, scores regressed from current 7/8 to 4/8 and 6/8; the original English user-report failure remained. Both candidates stay test-only. This was a frozen-seed prompt experiment with generation-time retrieval disabled, not a runtime fix or retrieval benchmark. Independent human review is pending.
 
 The preceding [label/context ablation](docs/actor-ablation-results.md) isolated contributions from both labels and omitted surroundings (full-raw 8/8, full-labelled 4/8, sparse-raw 6/8, sparse-labelled 2/8). These controlled results did not establish that label removal or local context expansion would generalize.
 
@@ -14,7 +14,19 @@ The preceding [reported-actor diagnostic](docs/actor-perspective-results.md) fou
 
 The [assistant-topic query comparison](docs/assistant-topic-results.md) added two fixed assistant-context policies across 38 search-only cases. Both recovered one boundary but lost the prior-user Korean reference; neither qualified in that experiment. Adding queries alone did not resolve competition within the token budget.
 
-The [v4 assistant fallback](docs/assistant-fallback-results.md) now uses prior assistant context only when no earlier nonempty user message exists. In 48 search cases, required-source selection improved from 37/42 to 41/42 without losing an existing success. A 24-answer real-host follow-up delivered all 12 required on-mode sources (provisional off 0/12, on 12/12). The ordinary Korean assistant-topic case remains unresolved; independent human review is pending.
+The [v4 assistant fallback](docs/assistant-fallback-results.md) introduced prior assistant context only when no earlier nonempty user message exists. In 48 search cases, required-source selection improved from 37/42 to 41/42 without losing an existing success. A 24-answer real-host follow-up delivered all 12 required on-mode sources (provisional off 0/12, on 12/12). That version left the ordinary Korean assistant-topic case unresolved; independent human review is pending.
+
+The [v5 context selection](docs/context-turn-results.md) uses a newer assistant
+turn when its local lexical match to older history is stronger than the prior
+user's. A frozen 62-case live search comparison selected 54/54 required sources
+versus v4's 53/54, recovering the remaining Korean boundary in that search configuration with no existing loss.
+The new English/Korean corpus was already 12/12 under v4, so it supplies regression
+coverage rather than a further comparative gain. This does not resolve the earlier
+actor-attribution failures or establish general semantic understanding. A separate
+64-answer actual-host run scored off 4/32 and on 28/32 provisionally. Its effective
+budget was 320 tokens: the historical Korean target was again excluded, and two
+Korean paraphrase answers were partial despite receiving the source. The assistant
+quality gate remains false; independent human review is pending.
 
 The earlier [v3 long-dialogue evaluation](docs/context-selection-results.md) used a smaller 2,048-token context and demonstrated retrieval of evidence lost by truncated baselines (on 12/12; provisional off 4/16, on 12/16). These are different cohorts and settings, not pooled results or general quality/release-readiness guarantees. See the [validation record](docs/validation.md).
 
@@ -218,6 +230,10 @@ generation calls; its integrity pass is separate from candidate qualification.
 The [assistant fallback protocol](docs/assistant-fallback-evaluation.md) runs with
 `SM_ARTIFACT_TAG=next-fallback node scripts/live-smoke.mjs --assistant-fallback`.
 See its [results and generation commands](docs/assistant-fallback-results.md).
+
+The [context-turn protocol](docs/context-turn-evaluation.md) runs with
+`SM_ARTIFACT_TAG=next-turn node scripts/live-smoke.mjs --context-turn`.
+See its [results and amended generation commands](docs/context-turn-results.md).
 
 The [context candidate protocol](docs/context-candidate-evaluation.md) compares
 the current labelled selector, label removal, and label removal plus adjacent-turn

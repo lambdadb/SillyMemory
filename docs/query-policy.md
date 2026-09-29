@@ -4,27 +4,33 @@ The original fixed comparison scored 6/18 with SillyMemory. A subsequent vector 
 
 ## Policy
 
-The current `latest-anchor-with-assistant-fallback-v4` policy searches the latest
-non-empty user message on its own and the preceding non-empty user message
-separately. If no preceding non-empty user message exists, use the preceding
-non-empty assistant message as the second query. Context always comes strictly
-before the anchor. This helps an assistant-only imported history's first user
-question; a normal greeting without old indexable history needs no retrieval.
-Generic acknowledgments never override an existing user topic. The heuristic can
-still miss an assistant-introduced topic when an unrelated earlier user exists.
-See the [fallback comparison and host follow-up](assistant-fallback-results.md).
-The [prior-user comparison](context-selection-results.md) remains historical v3
-evidence, and all of its 32 query pairs are unchanged by v4.
+The current `latest-anchor-with-context-selection-v5` policy searches the latest
+non-empty user message independently. Its second query normally uses the prior
+non-empty user turn. If a newer assistant turn, strictly before the anchor, has
+more than 1.25 times that user's lexical similarity to earlier history, use the
+assistant turn instead. Missing user context retains v4's assistant fallback.
+
+The comparison uses distinct Unicode word trigrams, NFKC/lowercase normalization
+and smoothed inverse-document-frequency weighted cosine similarity. Each score
+is the maximum similarity to one of the last 256 eligible nonempty messages
+strictly before the prior user. Both candidates and the anchor are excluded;
+each text is bounded to 6,000 UTF-16 code units. Ties and an empty reference corpus
+retain the user. This is a local heuristic; there is no extra provider request.
+It can misread quoted topics or paraphrases, and ignores words shorter than three
+characters. The bound limits scoring work but is not a latency guarantee.
+
+See the [frozen comparison and actual-host follow-up](context-turn-results.md).
+The [v4 fallback](assistant-fallback-results.md) and
+[prior-user comparison](context-selection-results.md) are historical evidence.
 
 Explicit `continue` anchors on the latest non-empty message being extended,
-including assistant text, and independently searches the preceding user turn,
-falling back to a preceding assistant only when that user turn is absent.
-Regenerate/swipe exclude retained answers after the user anchor. Without any
-non-empty user message, use the latest non-empty message. Bound each query to
-6,000 UTF-16 code units and remove duplicate strings.
+including assistant text, and applies the same context selection before that
+anchor. Regenerate/swipe exclude retained answers after the user anchor. Without
+any non-empty user message, use the latest non-empty message. Bound each query
+to 6,000 UTF-16 code units and remove duplicate strings.
 
 The historical v2 continuation fix and [six-case results](recall-challenges.md)
-remain unchanged below. Historical v1/v2 evidence is not a v4 benchmark.
+remain unchanged below. Historical v1/v2 evidence is not a v5 benchmark.
 
 Run at most two scoped managed `knn.queryText` requests concurrently, 30 candidates each. Interleave their ranks, starting with the question-only result, then validate against the exact current local source and deduplicate. The existing complete-passage selector counts the full wrapper against the same configured budget. Source isolation, synchronization journals and prompt mutation rules stay as described in [architecture](architecture.md).
 
