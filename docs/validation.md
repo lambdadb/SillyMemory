@@ -948,3 +948,29 @@ with a deterministic local generation fixture, including streaming regenerate,
 swipe, branching, edit/delete, fallback and disable. Cleanup and key audits passed;
 this is integration evidence, not an additional model-quality result. See
 [the recorded fixture checks](results/speaker-native-generation-fixture.json).
+
+
+## Frozen long dialogue and human-review tooling — 2026-09-29
+
+The merged PR #16 runtime was held fixed for two new 64-message synthetic stories
+and 32 real off/on OpenAI responses. Under a 2,048-token host context and 400-token
+memory budget, all 16 baselines were verified truncated. Required evidence reached
+0/12 answerable off prompts and 10/12 on prompts. All **389 integrity checks**
+passed; 32 provider attempts succeeded without retry, and all 142 LambdaDB
+requests were free of transport failures/5xx. Actual provider sends were at least
+15 seconds apart. Owned collections were deleted, keys were absent from persisted
+settings/artifacts and evaluated source/plan hashes matched.
+
+Provisional strict scores are **off 4/16, on 11/16**, with 7 improved pairs,
+9 ties and no regressions. Korean reference evidence was returned at ranks 4/7
+but excluded by the bounded selection; Korean actor answers failed despite correct
+source retrieval/roles. One English spatial wording score needs human adjudication
+because the frozen meaning is more specific than the source. The quality gate
+remains false and the human gate remains unset. See [full results, all answers
+and interpretation limits](long-dialogue-results.md).
+
+The new local HTML review form supports unscored human annotation, draft/resume
+and JSON export without network or browser storage. It does not manufacture human
+scores. All **102 unit tests** passed on Node.js 20.12.0 and 24.15.0, plus syntax
+and release checks; **eight local browser checks** passed. No runtime change or
+new emulator recovery result is claimed. See [human review](human-review.md).

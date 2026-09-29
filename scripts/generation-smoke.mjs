@@ -40,7 +40,7 @@ if (!Number.isInteger(challengeStart) || challengeStart < 0 || challengeStart >=
 const artifactTag = process.env.SM_ARTIFACT_TAG || '';
 if (artifactTag && !/^[a-zA-Z0-9][a-zA-Z0-9._-]{0,79}$/.test(artifactTag)) throw new Error('Invalid SM_ARTIFACT_TAG.');
 const liveModel = process.argv.includes('--live-model') || koreanEvaluation || comparison || challenges || natural;
-const hostContextTokens = (koreanEvaluation || comparison) ? 32768 : 8192;
+const hostContextTokens = natural ? frozenNatural.plan.settings.context : (koreanEvaluation || comparison) ? 32768 : 8192;
 const caseStart = koreanEvaluation ? Number(process.env.SM_CASE_START || 0) : 0;
 if (!Number.isInteger(caseStart) || caseStart < 0 || caseStart > 7) throw new Error('SM_CASE_START must be an integer from 0 to 7.');
 const sampleStart = koreanEvaluation ? Number(process.env.SM_SAMPLE_START ?? caseStart * 2) : 0;

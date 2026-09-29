@@ -10,8 +10,14 @@ import { capture, documents, options, retrievalQueries } from '../src/memory.js'
 const root = fileURLToPath(new URL('../', import.meta.url));
 export const hash = value => createHash('sha256').update(JSON.stringify(value)).digest('hex');
 export function fixtureFiles(version = 'natural-dialogue-v1') {
-    assert(['natural-dialogue-v1', 'speaker-attribution-v1', 'speaker-native-v1'].includes(version), 'Unknown evaluation fixture');
-    return [`tests/fixtures/${version}.json`, ...(version === 'natural-dialogue-v1' ? ['docs/natural-dialogue-evaluation.md'] : version === 'speaker-attribution-v1' ? ['docs/speaker-attribution-evaluation.md', 'docs/speaker-attribution-perspective-v2.md'] : ['docs/speaker-native-evaluation.md'])];
+    const protocols = {
+        'natural-dialogue-v1': ['docs/natural-dialogue-evaluation.md'],
+        'speaker-attribution-v1': ['docs/speaker-attribution-evaluation.md', 'docs/speaker-attribution-perspective-v2.md'],
+        'speaker-native-v1': ['docs/speaker-native-evaluation.md'],
+        'long-dialogue-v1': ['docs/long-dialogue-evaluation.md'],
+    };
+    assert(Object.hasOwn(protocols, version), 'Unknown evaluation fixture');
+    return [`tests/fixtures/${version}.json`, ...protocols[version]];
 }
 export const loadNaturalFixture = (version = 'natural-dialogue-v1') => JSON.parse(readFileSync(new URL(`../${fixtureFiles(version)[0]}`, import.meta.url), 'utf8'));
 

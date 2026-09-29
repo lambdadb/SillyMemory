@@ -73,3 +73,22 @@ test('offline CLI exports reviewable inputs/oracle identities and refuses to ove
         assert.notEqual(run().status, 0); assert.equal(readFileSync(output, 'utf8'), contents);
     } finally { rmSync(directory, { recursive: true, force: true }); }
 });
+
+test('long dialogue freezes new bilingual scenes, balanced cases and old evidence without repeating filler', async () => {
+    const fixture = loadNaturalFixture('long-dialogue-v1');
+    assert.equal(hash(fixture), '12ec656eb1909a9452dcafc6fb6ed7445d4aaaef0a75e333cb6a9914f7f3dbfb');
+    assert.deepEqual(fixture.settings, { context: 2048, recent: 12, budget: 400, repetitions: 2, maxOutputTokens: 256 });
+    const historical = new Set(['natural-dialogue-v1', 'speaker-native-v1'].flatMap(v => loadNaturalFixture(v).stories.flatMap(s => s.messages.map(m => m.text))));
+    for (const story of fixture.stories) {
+        assert.equal(story.messages.length, 64);
+        assert.equal(new Set(story.messages.map(m => m.text)).size, 64);
+        assert(story.messages.every(m => !historical.has(m.text)));
+    }
+    const cases = naturalCases(fixture);
+    for (const language of ['en', 'ko']) for (const kind of ['return', 'correction', 'reference', 'unknown']) assert.equal(cases.filter(c => c.language === language && c.kind === kind).length, 1);
+    assert.equal(naturalSchedule(fixture).length, 32);
+    const audit = await auditNaturalDialogue(fixture);
+    assert.equal(audit.serviceCalls, 0);
+    assert.equal(audit.rows.filter(r => r.requiredEvidence.length).length, 6);
+    assert(audit.rows.every(r => r.indexableChunks > 50));
+});
