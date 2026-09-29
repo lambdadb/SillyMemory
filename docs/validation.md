@@ -974,3 +974,27 @@ and JSON export without network or browser storage. It does not manufacture huma
 scores. All **102 unit tests** passed on Node.js 20.12.0 and 24.15.0, plus syntax
 and release checks; **eight local browser checks** passed. No runtime change or
 new emulator recovery result is claimed. See [human review](human-review.md).
+
+
+## Prior-user query selection — 2026-09-29
+
+The v3 runtime independently searches the latest anchor and preceding user turn.
+A fixed 32-case search-only comparison selected 26/26 required sources versus
+25/26 with the old query construction, with no previously selected source lost
+in that cohort. The previously missed Korean banner source moved from contextual
+rank 4 to 2 and fit within 330/400 tokens. See the [protocol and full
+results](context-selection-results.md); this is development evidence, not a
+held-out guarantee or proof of an ANN defect.
+
+The unchanged 32-answer long-dialogue schedule passed 389 live integrity checks,
+with 32 successful provider attempts, no retry, 142 LambdaDB requests without
+transport/5xx failures and verified owned cleanup. Required evidence reached
+12/12 on prompts, up from the prior run's 10/12. Both Korean banner answers were
+correct. Provisional strict scores are off 4/16 and on 12/16; Korean actor errors
+and the English spatial ambiguity remain. Human judgment is still pending.
+
+105 unit tests pass on Node 20.12.0/24.15.0, 188 real-host/emulator recovery checks
+pass, and a separate real-proxy contextual regression selected 8/8 targets with
+cleanup and source identity verified. [Checked-in evidence](results/context-selection-long-v1.json)
+keeps all answers, provisional grades and regression reports; historical results
+remain unchanged. No main promotion, release or deployment is implied.
