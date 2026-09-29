@@ -1,0 +1,4392 @@
+{
+  "description": "Frozen synthetic long-dialogue evaluation; assistant annotations provisional, human gate unset.",
+  "rawReportSha256": "e07d5f6f48dd5a601c04cd41638a22b0688ca104f333fbd0711c84bea25d8df3",
+  "sillyTavern": "06bde939fb1e9c4c8d8641d810f0a916b5bce127",
+  "runtimeBaseline": "cc37d44b2476b5a84a6bd76afd3891075a374d47",
+  "sourceSha256": {
+    "index.js": "e02dbd971a7864a58bbb87394b29391bb05ac6f10073668cd4da30c90cb7f301",
+    "src/client.js": "a808537f640d51e7b893d422a8c288f647d12641de2a785c4098afc681239da8",
+    "src/gate.js": "c1e5afada320e822a535ff4b464d6e565cfadbf56aabc78b1ba6f667bf4b78bf",
+    "src/memory.js": "291c665c34c84cf18166dcc97c87b7908676ab1378bf95e8c30fa0612189a537",
+    "src/status.js": "b9a826cfd393cc58bdcd64fcef698bc35f20a23f60a24f9e314b45919052d6f6",
+    "scripts/generation-smoke.mjs": "4fc75abe7d07f3f0468b0b186484f5a9260744183d90f1018f134d98b8b4f120",
+    "scripts/provider-spacing.mjs": "8e50762dcef277dc8d959d237fe6c59c20ac7f41349a32f0cb59ffb55ceac0d3",
+    "scripts/generation-cleanup.mjs": "3765a872a7a6a848c2d401636c81c010fbf19ecc720ca2c706ee34a4fad7680c",
+    "scripts/korean-eval.mjs": "b47d0040a3d8004b8450731fbe0acd27c6ce6696c5e80340dcd77f78745806da",
+    "scripts/korean-fixture.mjs": "a436d4fd0ee1521a51db590b3d7affce883db3f88179bb8fdf5af137d26e79d6",
+    "scripts/comparison-fixture.mjs": "da9363e925d7776c8bf09af9ccb3f5615ffffceb5791d7081ffa1d0c27e5cc2d",
+    "scripts/comparison-eval.mjs": "9b9b4c08c1a78c8c16a81906d328f40cb797084e7ffd134a293edf0a93062e14",
+    "scripts/challenge-eval.mjs": "ffa315ead230ac5235cc995ce2c4571136111bab5bb197f4d113ec0111ddb402",
+    "scripts/recall-challenges.mjs": "c0d45b713bf40fe4130f924b85728fe9d0775d1e01a163a168ef50e86b27c551",
+    "scripts/heldout-fixture.mjs": "9aeb8483a20f120ed89abdff50b25e0b0e03b04d5e2332d8e276f4d9e0999c67",
+    "scripts/natural-eval.mjs": "e77d0f2d479259932515a05ee17ecefa395ef708f7ed5adc428f56e09033d1f7",
+    "scripts/natural-dialogue.mjs": "c5e6fee7413024a33eee5bd129c5ab5f7cb541e487cb8986857e0409def874e8",
+    "tests/fixtures/long-dialogue-v1.json": "3c5e6506b01711f1f4e5041c7ac14aa1073ae85fa71f26bf9092d2f7219053b7",
+    "docs/long-dialogue-evaluation.md": "dfca69ae659e6b83279337a863a5414cdeaead8907f7a63925828764544ea663",
+    "scripts/provider-retry.mjs": "97a7fa4669dbbae764eda7528da0532158de450ad884ae825eb02b8d97d32bc1",
+    "docs/natural-dialogue-retry.md": "70c82de2a312d0d33eaab92ede40be824039bae00f284dae0caca30875fee82c",
+    "scripts/natural-summary.mjs": "9ebf1cc01ef3812ac39b88d618bf171b3bd00906d347e618ab8100fe413a6df3",
+    "scripts/natural-score.mjs": "6041936b22f8b3dcc2ebb27b1fa02c48cc5dbded4976260a82f067d874782ec3"
+  },
+  "initialSourceSha256": {
+    "index.js": "e02dbd971a7864a58bbb87394b29391bb05ac6f10073668cd4da30c90cb7f301",
+    "src/client.js": "a808537f640d51e7b893d422a8c288f647d12641de2a785c4098afc681239da8",
+    "src/gate.js": "c1e5afada320e822a535ff4b464d6e565cfadbf56aabc78b1ba6f667bf4b78bf",
+    "src/memory.js": "291c665c34c84cf18166dcc97c87b7908676ab1378bf95e8c30fa0612189a537",
+    "src/status.js": "b9a826cfd393cc58bdcd64fcef698bc35f20a23f60a24f9e314b45919052d6f6",
+    "scripts/generation-smoke.mjs": "4fc75abe7d07f3f0468b0b186484f5a9260744183d90f1018f134d98b8b4f120",
+    "scripts/provider-spacing.mjs": "8e50762dcef277dc8d959d237fe6c59c20ac7f41349a32f0cb59ffb55ceac0d3",
+    "scripts/generation-cleanup.mjs": "3765a872a7a6a848c2d401636c81c010fbf19ecc720ca2c706ee34a4fad7680c",
+    "scripts/natural-eval.mjs": "e77d0f2d479259932515a05ee17ecefa395ef708f7ed5adc428f56e09033d1f7",
+    "scripts/natural-dialogue.mjs": "c5e6fee7413024a33eee5bd129c5ab5f7cb541e487cb8986857e0409def874e8",
+    "tests/fixtures/long-dialogue-v1.json": "3c5e6506b01711f1f4e5041c7ac14aa1073ae85fa71f26bf9092d2f7219053b7",
+    "docs/long-dialogue-evaluation.md": "dfca69ae659e6b83279337a863a5414cdeaead8907f7a63925828764544ea663",
+    "scripts/provider-retry.mjs": "97a7fa4669dbbae764eda7528da0532158de450ad884ae825eb02b8d97d32bc1",
+    "docs/natural-dialogue-retry.md": "70c82de2a312d0d33eaab92ede40be824039bae00f284dae0caca30875fee82c",
+    "scripts/natural-summary.mjs": "9ebf1cc01ef3812ac39b88d618bf171b3bd00906d347e618ab8100fe413a6df3",
+    "scripts/natural-score.mjs": "6041936b22f8b3dcc2ebb27b1fa02c48cc5dbded4976260a82f067d874782ec3"
+  },
+  "integrityChecks": 389,
+  "cleanupComplete": true,
+  "summary": {
+    "version": "long-dialogue-v1",
+    "integrityPassed": true,
+    "providerSpacing": {
+      "verified": true,
+      "evidence": "monotonic upstream-send timestamps",
+      "minimumIntervalMs": 15000,
+      "minimumObservedIntervalMs": 15000.023415999996,
+      "gapsBelowMinimum": 0
+    },
+    "reportHash": "60345d2698210d64d0d3ec2e0c58b4ba8cee63e2397c54f7136f525c9a5a5869",
+    "fixtureHash": "12ec656eb1909a9452dcafc6fb6ed7445d4aaaef0a75e333cb6a9914f7f3dbfb",
+    "planSha256": "7e003d34014bc40a78f2cd20476728f35a61b863a5b4846efa4622e26b618905",
+    "samples": 32,
+    "providerAttempts": 32,
+    "transportProtocol": {
+      "version": "natural-transport-retry-v1",
+      "statuses": [
+        500,
+        502,
+        503,
+        504
+      ],
+      "maxRetriesPerSample": 2,
+      "maxRetriesPerRun": 8,
+      "maxCalls": 72,
+      "baseDelayMs": 15000,
+      "jitterMs": 1000,
+      "maxDelayMs": 60000,
+      "attemptTimeoutMs": 90000,
+      "sampleDeadlineMs": 180000
+    },
+    "firstAttemptFailures": 0,
+    "recoveredSamples": 0,
+    "extraAttempts": 0,
+    "failedAttemptUsage": {
+      "attempts": 0
+    },
+    "groups": [
+      {
+        "mode": "off",
+        "samples": 16,
+        "answerable": 12,
+        "allRequiredInMemory": 0,
+        "allRequiredInPrompt": 0,
+        "oldWithoutCorrection": 0,
+        "baselineTruncated": 16,
+        "memoryTokens": {
+          "n": 16,
+          "median": 0,
+          "min": 0,
+          "max": 0
+        },
+        "promptTokens": {
+          "n": 16,
+          "median": 1729,
+          "min": 1708,
+          "max": 1748
+        },
+        "syncMs": {
+          "n": 16,
+          "median": 5.009291499995015,
+          "min": 4.24633299999914,
+          "max": 7.056624999997439
+        },
+        "retrievalMs": null,
+        "generationMs": {
+          "n": 16,
+          "median": 1238.0465415000217,
+          "min": 939.7252909999952,
+          "max": 2748.9830419999926
+        }
+      },
+      {
+        "mode": "off",
+        "language": "en",
+        "kind": "return",
+        "samples": 2,
+        "answerable": 2,
+        "allRequiredInMemory": 0,
+        "allRequiredInPrompt": 0,
+        "oldWithoutCorrection": 0,
+        "baselineTruncated": 2,
+        "memoryTokens": {
+          "n": 2,
+          "median": 0,
+          "min": 0,
+          "max": 0
+        },
+        "promptTokens": {
+          "n": 2,
+          "median": 1719,
+          "min": 1719,
+          "max": 1719
+        },
+        "syncMs": {
+          "n": 2,
+          "median": 4.741604000000734,
+          "min": 4.24633299999914,
+          "max": 5.236875000002328
+        },
+        "retrievalMs": null,
+        "generationMs": {
+          "n": 2,
+          "median": 1894.9904584999858,
+          "min": 1309.6549999999697,
+          "max": 2480.325917000002
+        }
+      },
+      {
+        "mode": "off",
+        "language": "en",
+        "kind": "correction",
+        "samples": 2,
+        "answerable": 2,
+        "allRequiredInMemory": 0,
+        "allRequiredInPrompt": 0,
+        "oldWithoutCorrection": 0,
+        "baselineTruncated": 2,
+        "memoryTokens": {
+          "n": 2,
+          "median": 0,
+          "min": 0,
+          "max": 0
+        },
+        "promptTokens": {
+          "n": 2,
+          "median": 1718,
+          "min": 1718,
+          "max": 1718
+        },
+        "syncMs": {
+          "n": 2,
+          "median": 4.581166499989195,
+          "min": 4.31374999997206,
+          "max": 4.848583000006329
+        },
+        "retrievalMs": null,
+        "generationMs": {
+          "n": 2,
+          "median": 1366.2017499999856,
+          "min": 1074.272416999971,
+          "max": 1658.1310830000002
+        }
+      },
+      {
+        "mode": "off",
+        "language": "en",
+        "kind": "reference",
+        "samples": 2,
+        "answerable": 2,
+        "allRequiredInMemory": 0,
+        "allRequiredInPrompt": 0,
+        "oldWithoutCorrection": 0,
+        "baselineTruncated": 2,
+        "memoryTokens": {
+          "n": 2,
+          "median": 0,
+          "min": 0,
+          "max": 0
+        },
+        "promptTokens": {
+          "n": 2,
+          "median": 1748,
+          "min": 1748,
+          "max": 1748
+        },
+        "syncMs": {
+          "n": 2,
+          "median": 6.09427099999084,
+          "min": 5.4469999999855645,
+          "max": 6.741541999996116
+        },
+        "retrievalMs": null,
+        "generationMs": {
+          "n": 2,
+          "median": 2050.9221045000086,
+          "min": 1352.8611670000246,
+          "max": 2748.9830419999926
+        }
+      },
+      {
+        "mode": "off",
+        "language": "en",
+        "kind": "unknown",
+        "samples": 2,
+        "answerable": 0,
+        "allRequiredInMemory": 0,
+        "allRequiredInPrompt": 0,
+        "oldWithoutCorrection": 0,
+        "baselineTruncated": 2,
+        "memoryTokens": {
+          "n": 2,
+          "median": 0,
+          "min": 0,
+          "max": 0
+        },
+        "promptTokens": {
+          "n": 2,
+          "median": 1717,
+          "min": 1717,
+          "max": 1717
+        },
+        "syncMs": {
+          "n": 2,
+          "median": 4.520125000002736,
+          "min": 4.446041000002879,
+          "max": 4.594209000002593
+        },
+        "retrievalMs": null,
+        "generationMs": {
+          "n": 2,
+          "median": 1187.8091460000142,
+          "min": 1137.0022919999901,
+          "max": 1238.6160000000382
+        }
+      },
+      {
+        "mode": "off",
+        "language": "ko",
+        "kind": "return",
+        "samples": 2,
+        "answerable": 2,
+        "allRequiredInMemory": 0,
+        "allRequiredInPrompt": 0,
+        "oldWithoutCorrection": 0,
+        "baselineTruncated": 2,
+        "memoryTokens": {
+          "n": 2,
+          "median": 0,
+          "min": 0,
+          "max": 0
+        },
+        "promptTokens": {
+          "n": 2,
+          "median": 1739,
+          "min": 1739,
+          "max": 1739
+        },
+        "syncMs": {
+          "n": 2,
+          "median": 5.138354000024265,
+          "min": 4.510167000000365,
+          "max": 5.766541000048164
+        },
+        "retrievalMs": null,
+        "generationMs": {
+          "n": 2,
+          "median": 1150.6992500000124,
+          "min": 939.7252909999952,
+          "max": 1361.6732090000296
+        }
+      },
+      {
+        "mode": "off",
+        "language": "ko",
+        "kind": "correction",
+        "samples": 2,
+        "answerable": 2,
+        "allRequiredInMemory": 0,
+        "allRequiredInPrompt": 0,
+        "oldWithoutCorrection": 0,
+        "baselineTruncated": 2,
+        "memoryTokens": {
+          "n": 2,
+          "median": 0,
+          "min": 0,
+          "max": 0
+        },
+        "promptTokens": {
+          "n": 2,
+          "median": 1741,
+          "min": 1741,
+          "max": 1741
+        },
+        "syncMs": {
+          "n": 2,
+          "median": 4.999645999996574,
+          "min": 4.8292920000094455,
+          "max": 5.169999999983702
+        },
+        "retrievalMs": null,
+        "generationMs": {
+          "n": 2,
+          "median": 1108.2044170000008,
+          "min": 967.7272499999963,
+          "max": 1248.6815840000054
+        }
+      },
+      {
+        "mode": "off",
+        "language": "ko",
+        "kind": "reference",
+        "samples": 2,
+        "answerable": 2,
+        "allRequiredInMemory": 0,
+        "allRequiredInPrompt": 0,
+        "oldWithoutCorrection": 0,
+        "baselineTruncated": 2,
+        "memoryTokens": {
+          "n": 2,
+          "median": 0,
+          "min": 0,
+          "max": 0
+        },
+        "promptTokens": {
+          "n": 2,
+          "median": 1708,
+          "min": 1708,
+          "max": 1708
+        },
+        "syncMs": {
+          "n": 2,
+          "median": 5.529499999989639,
+          "min": 4.578457999974489,
+          "max": 6.480542000004789
+        },
+        "retrievalMs": null,
+        "generationMs": {
+          "n": 2,
+          "median": 1214.6670419999864,
+          "min": 1191.8570009999676,
+          "max": 1237.4770830000052
+        }
+      },
+      {
+        "mode": "off",
+        "language": "ko",
+        "kind": "unknown",
+        "samples": 2,
+        "answerable": 0,
+        "allRequiredInMemory": 0,
+        "allRequiredInPrompt": 0,
+        "oldWithoutCorrection": 0,
+        "baselineTruncated": 2,
+        "memoryTokens": {
+          "n": 2,
+          "median": 0,
+          "min": 0,
+          "max": 0
+        },
+        "promptTokens": {
+          "n": 2,
+          "median": 1742,
+          "min": 1742,
+          "max": 1742
+        },
+        "syncMs": {
+          "n": 2,
+          "median": 6.146332999996957,
+          "min": 5.236040999996476,
+          "max": 7.056624999997439
+        },
+        "retrievalMs": null,
+        "generationMs": {
+          "n": 2,
+          "median": 1095.8505000000005,
+          "min": 1081.1937920000055,
+          "max": 1110.5072079999954
+        }
+      },
+      {
+        "mode": "on",
+        "samples": 16,
+        "answerable": 12,
+        "allRequiredInMemory": 10,
+        "allRequiredInPrompt": 10,
+        "oldWithoutCorrection": 0,
+        "baselineTruncated": 0,
+        "memoryTokens": {
+          "n": 16,
+          "median": 380.5,
+          "min": 351,
+          "max": 399
+        },
+        "promptTokens": {
+          "n": 16,
+          "median": 1043,
+          "min": 925,
+          "max": 1196
+        },
+        "syncMs": {
+          "n": 16,
+          "median": 1618.1963335000037,
+          "min": 1416.5577080000076,
+          "max": 2058.8354590000235
+        },
+        "retrievalMs": {
+          "n": 16,
+          "median": 828.1000003814697,
+          "min": 772.5,
+          "max": 882.8999996185303
+        },
+        "generationMs": {
+          "n": 16,
+          "median": 2182.420249999981,
+          "min": 1764.2126679999637,
+          "max": 2857.047125000012
+        }
+      },
+      {
+        "mode": "on",
+        "language": "en",
+        "kind": "return",
+        "samples": 2,
+        "answerable": 2,
+        "allRequiredInMemory": 2,
+        "allRequiredInPrompt": 2,
+        "oldWithoutCorrection": 0,
+        "baselineTruncated": 0,
+        "memoryTokens": {
+          "n": 2,
+          "median": 351,
+          "min": 351,
+          "max": 351
+        },
+        "promptTokens": {
+          "n": 2,
+          "median": 962,
+          "min": 962,
+          "max": 962
+        },
+        "syncMs": {
+          "n": 2,
+          "median": 1675.0316045000018,
+          "min": 1595.3877090000024,
+          "max": 1754.6755000000012
+        },
+        "retrievalMs": {
+          "n": 2,
+          "median": 859.4500002861023,
+          "min": 838.6999998092651,
+          "max": 880.2000007629395
+        },
+        "generationMs": {
+          "n": 2,
+          "median": 2278.006562000006,
+          "min": 1919.48545800001,
+          "max": 2636.527666000002
+        }
+      },
+      {
+        "mode": "on",
+        "language": "en",
+        "kind": "correction",
+        "samples": 2,
+        "answerable": 2,
+        "allRequiredInMemory": 2,
+        "allRequiredInPrompt": 2,
+        "oldWithoutCorrection": 0,
+        "baselineTruncated": 0,
+        "memoryTokens": {
+          "n": 2,
+          "median": 368,
+          "min": 368,
+          "max": 368
+        },
+        "promptTokens": {
+          "n": 2,
+          "median": 978,
+          "min": 978,
+          "max": 978
+        },
+        "syncMs": {
+          "n": 2,
+          "median": 1698.4852505000053,
+          "min": 1573.3210840000029,
+          "max": 1823.6494170000078
+        },
+        "retrievalMs": {
+          "n": 2,
+          "median": 822.1999998092651,
+          "min": 787.8999996185303,
+          "max": 856.5
+        },
+        "generationMs": {
+          "n": 2,
+          "median": 1893.5219794999903,
+          "min": 1884.6578749999753,
+          "max": 1902.3860840000052
+        }
+      },
+      {
+        "mode": "on",
+        "language": "en",
+        "kind": "reference",
+        "samples": 2,
+        "answerable": 2,
+        "allRequiredInMemory": 2,
+        "allRequiredInPrompt": 2,
+        "oldWithoutCorrection": 0,
+        "baselineTruncated": 0,
+        "memoryTokens": {
+          "n": 2,
+          "median": 368,
+          "min": 368,
+          "max": 368
+        },
+        "promptTokens": {
+          "n": 2,
+          "median": 925,
+          "min": 925,
+          "max": 925
+        },
+        "syncMs": {
+          "n": 2,
+          "median": 1661.887854000015,
+          "min": 1570.2910000000265,
+          "max": 1753.4847080000036
+        },
+        "retrievalMs": {
+          "n": 2,
+          "median": 801.1499996185303,
+          "min": 772.5,
+          "max": 829.7999992370605
+        },
+        "generationMs": {
+          "n": 2,
+          "median": 2266.480437500002,
+          "min": 1931.341167000006,
+          "max": 2601.6197079999984
+        }
+      },
+      {
+        "mode": "on",
+        "language": "en",
+        "kind": "unknown",
+        "samples": 2,
+        "answerable": 0,
+        "allRequiredInMemory": 0,
+        "allRequiredInPrompt": 0,
+        "oldWithoutCorrection": 0,
+        "baselineTruncated": 0,
+        "memoryTokens": {
+          "n": 2,
+          "median": 358,
+          "min": 358,
+          "max": 358
+        },
+        "promptTokens": {
+          "n": 2,
+          "median": 967,
+          "min": 967,
+          "max": 967
+        },
+        "syncMs": {
+          "n": 2,
+          "median": 1757.2621045000124,
+          "min": 1455.6887500000012,
+          "max": 2058.8354590000235
+        },
+        "retrievalMs": {
+          "n": 2,
+          "median": 826.7000002861023,
+          "min": 823.1000003814697,
+          "max": 830.3000001907349
+        },
+        "generationMs": {
+          "n": 2,
+          "median": 2093.647125499985,
+          "min": 1764.2126679999637,
+          "max": 2423.0815830000065
+        }
+      },
+      {
+        "mode": "on",
+        "language": "ko",
+        "kind": "return",
+        "samples": 2,
+        "answerable": 2,
+        "allRequiredInMemory": 2,
+        "allRequiredInPrompt": 2,
+        "oldWithoutCorrection": 0,
+        "baselineTruncated": 0,
+        "memoryTokens": {
+          "n": 2,
+          "median": 398,
+          "min": 398,
+          "max": 398
+        },
+        "promptTokens": {
+          "n": 2,
+          "median": 1194,
+          "min": 1194,
+          "max": 1194
+        },
+        "syncMs": {
+          "n": 2,
+          "median": 1420.9846664999786,
+          "min": 1416.5577080000076,
+          "max": 1425.4116249999497
+        },
+        "retrievalMs": {
+          "n": 2,
+          "median": 849.8499994277954,
+          "min": 816.7999992370605,
+          "max": 882.8999996185303
+        },
+        "generationMs": {
+          "n": 2,
+          "median": 2182.420249999981,
+          "min": 2168.980249999964,
+          "max": 2195.860249999998
+        }
+      },
+      {
+        "mode": "on",
+        "language": "ko",
+        "kind": "correction",
+        "samples": 2,
+        "answerable": 2,
+        "allRequiredInMemory": 2,
+        "allRequiredInPrompt": 2,
+        "oldWithoutCorrection": 0,
+        "baselineTruncated": 0,
+        "memoryTokens": {
+          "n": 2,
+          "median": 398,
+          "min": 398,
+          "max": 398
+        },
+        "promptTokens": {
+          "n": 2,
+          "median": 1196,
+          "min": 1196,
+          "max": 1196
+        },
+        "syncMs": {
+          "n": 2,
+          "median": 1807.0124790000118,
+          "min": 1683.7428750000254,
+          "max": 1930.2820829999982
+        },
+        "retrievalMs": {
+          "n": 2,
+          "median": 823.4000000953674,
+          "min": 815,
+          "max": 831.8000001907349
+        },
+        "generationMs": {
+          "n": 2,
+          "median": 2377.379750000022,
+          "min": 2062.2464590000454,
+          "max": 2692.5130409999983
+        }
+      },
+      {
+        "mode": "on",
+        "language": "ko",
+        "kind": "reference",
+        "samples": 2,
+        "answerable": 2,
+        "allRequiredInMemory": 0,
+        "allRequiredInPrompt": 0,
+        "oldWithoutCorrection": 0,
+        "baselineTruncated": 0,
+        "memoryTokens": {
+          "n": 2,
+          "median": 399,
+          "min": 399,
+          "max": 399
+        },
+        "promptTokens": {
+          "n": 2,
+          "median": 1108,
+          "min": 1108,
+          "max": 1108
+        },
+        "syncMs": {
+          "n": 2,
+          "median": 1749.4649789999967,
+          "min": 1516.7127079999773,
+          "max": 1982.217250000016
+        },
+        "retrievalMs": {
+          "n": 2,
+          "median": 827.0000004768372,
+          "min": 825.6000003814697,
+          "max": 828.4000005722046
+        },
+        "generationMs": {
+          "n": 2,
+          "median": 2284.579062500008,
+          "min": 2279.8550830000313,
+          "max": 2289.303041999985
+        }
+      },
+      {
+        "mode": "on",
+        "language": "ko",
+        "kind": "unknown",
+        "samples": 2,
+        "answerable": 0,
+        "allRequiredInMemory": 0,
+        "allRequiredInPrompt": 0,
+        "oldWithoutCorrection": 0,
+        "baselineTruncated": 0,
+        "memoryTokens": {
+          "n": 2,
+          "median": 393,
+          "min": 393,
+          "max": 393
+        },
+        "promptTokens": {
+          "n": 2,
+          "median": 1192,
+          "min": 1192,
+          "max": 1192
+        },
+        "syncMs": {
+          "n": 2,
+          "median": 1591.4542710000096,
+          "min": 1541.9035840000142,
+          "max": 1641.004958000005
+        },
+        "retrievalMs": {
+          "n": 2,
+          "median": 809.8000001907349,
+          "min": 791.8000001907349,
+          "max": 827.8000001907349
+        },
+        "generationMs": {
+          "n": 2,
+          "median": 2485.73222900003,
+          "min": 2114.4173330000485,
+          "max": 2857.047125000012
+        }
+      }
+    ],
+    "requestCounts": {
+      "setup POST /collections 201": 2,
+      "setup POST /collections/:collection/docs/upsert 202": 1,
+      "setup POST /collections/:collection/query 200": 2,
+      "setup POST /collections/:collection/docs/delete 202": 1,
+      "setup GET /collections/:collection 200": 1,
+      "setup DELETE /collections/:collection 200": 1,
+      "setup GET /collections/:collection 404": 1,
+      "initial-sync GET /collections/:collection 200": 32,
+      "initial-sync POST /collections/:collection/docs/upsert 202": 32,
+      "generation GET /collections/:collection 200": 16,
+      "generation POST /collections/:collection/docs/upsert 202": 16,
+      "generation POST /collections/:collection/query 200": 32,
+      "cleanup GET /collections/:collection 200": 1,
+      "cleanup DELETE /collections/:collection 200": 1,
+      "cleanup GET /collections/:collection 404": 3
+    },
+    "providerUsage": {
+      "promptTokens": 44708,
+      "completionTokens": 888
+    },
+    "managedEmbeddingUsage": null,
+    "managedEmbeddingCost": null,
+    "semanticQualityGate": null,
+    "scoringStatus": "Pending blinded human semantic review; retrieval is not answer correctness"
+  },
+  "assessment": {
+    "reportHash": "60345d2698210d64d0d3ec2e0c58b4ba8cee63e2397c54f7136f525c9a5a5869",
+    "reviewer": "Codex source-and-answer review before condition mapping",
+    "reviewerType": "assistant",
+    "semanticQualityGate": null,
+    "provisionalAssistantGate": false,
+    "pairedSummary": {
+      "improved": 7,
+      "tied": 9,
+      "regressed": 0
+    },
+    "paired": [
+      {
+        "case": "en-long-return",
+        "repetition": 1,
+        "language": "en",
+        "kind": "return",
+        "off": {
+          "id": "en-long-return/r1/off",
+          "outcome": "abstained",
+          "unsupportedAssertion": false,
+          "passed": false
+        },
+        "on": {
+          "id": "en-long-return/r1/on",
+          "outcome": "partial",
+          "unsupportedAssertion": false,
+          "passed": false
+        },
+        "strictPassDelta": 0,
+        "comparison": "tied"
+      },
+      {
+        "case": "en-long-correction",
+        "repetition": 1,
+        "language": "en",
+        "kind": "correction",
+        "off": {
+          "id": "en-long-correction/r1/off",
+          "outcome": "abstained",
+          "unsupportedAssertion": false,
+          "passed": false
+        },
+        "on": {
+          "id": "en-long-correction/r1/on",
+          "outcome": "correct",
+          "unsupportedAssertion": false,
+          "passed": true
+        },
+        "strictPassDelta": 1,
+        "comparison": "improved"
+      },
+      {
+        "case": "en-long-reference",
+        "repetition": 1,
+        "language": "en",
+        "kind": "reference",
+        "off": {
+          "id": "en-long-reference/r1/off",
+          "outcome": "abstained",
+          "unsupportedAssertion": false,
+          "passed": false
+        },
+        "on": {
+          "id": "en-long-reference/r1/on",
+          "outcome": "correct",
+          "unsupportedAssertion": false,
+          "passed": true
+        },
+        "strictPassDelta": 1,
+        "comparison": "improved"
+      },
+      {
+        "case": "en-long-unknown",
+        "repetition": 1,
+        "language": "en",
+        "kind": "unknown",
+        "off": {
+          "id": "en-long-unknown/r1/off",
+          "outcome": "unknown-handled",
+          "unsupportedAssertion": false,
+          "passed": true
+        },
+        "on": {
+          "id": "en-long-unknown/r1/on",
+          "outcome": "unknown-handled",
+          "unsupportedAssertion": false,
+          "passed": true
+        },
+        "strictPassDelta": 0,
+        "comparison": "tied"
+      },
+      {
+        "case": "ko-long-return",
+        "repetition": 1,
+        "language": "ko",
+        "kind": "return",
+        "off": {
+          "id": "ko-long-return/r1/off",
+          "outcome": "abstained",
+          "unsupportedAssertion": false,
+          "passed": false
+        },
+        "on": {
+          "id": "ko-long-return/r1/on",
+          "outcome": "incorrect",
+          "unsupportedAssertion": true,
+          "passed": false
+        },
+        "strictPassDelta": 0,
+        "comparison": "tied"
+      },
+      {
+        "case": "ko-long-correction",
+        "repetition": 1,
+        "language": "ko",
+        "kind": "correction",
+        "off": {
+          "id": "ko-long-correction/r1/off",
+          "outcome": "abstained",
+          "unsupportedAssertion": false,
+          "passed": false
+        },
+        "on": {
+          "id": "ko-long-correction/r1/on",
+          "outcome": "correct",
+          "unsupportedAssertion": false,
+          "passed": true
+        },
+        "strictPassDelta": 1,
+        "comparison": "improved"
+      },
+      {
+        "case": "ko-long-reference",
+        "repetition": 1,
+        "language": "ko",
+        "kind": "reference",
+        "off": {
+          "id": "ko-long-reference/r1/off",
+          "outcome": "abstained",
+          "unsupportedAssertion": false,
+          "passed": false
+        },
+        "on": {
+          "id": "ko-long-reference/r1/on",
+          "outcome": "abstained",
+          "unsupportedAssertion": false,
+          "passed": false
+        },
+        "strictPassDelta": 0,
+        "comparison": "tied"
+      },
+      {
+        "case": "ko-long-unknown",
+        "repetition": 1,
+        "language": "ko",
+        "kind": "unknown",
+        "off": {
+          "id": "ko-long-unknown/r1/off",
+          "outcome": "unknown-handled",
+          "unsupportedAssertion": false,
+          "passed": true
+        },
+        "on": {
+          "id": "ko-long-unknown/r1/on",
+          "outcome": "unknown-handled",
+          "unsupportedAssertion": false,
+          "passed": true
+        },
+        "strictPassDelta": 0,
+        "comparison": "tied"
+      },
+      {
+        "case": "en-long-return",
+        "repetition": 2,
+        "language": "en",
+        "kind": "return",
+        "off": {
+          "id": "en-long-return/r2/off",
+          "outcome": "abstained",
+          "unsupportedAssertion": false,
+          "passed": false
+        },
+        "on": {
+          "id": "en-long-return/r2/on",
+          "outcome": "correct",
+          "unsupportedAssertion": false,
+          "passed": true
+        },
+        "strictPassDelta": 1,
+        "comparison": "improved"
+      },
+      {
+        "case": "en-long-correction",
+        "repetition": 2,
+        "language": "en",
+        "kind": "correction",
+        "off": {
+          "id": "en-long-correction/r2/off",
+          "outcome": "abstained",
+          "unsupportedAssertion": false,
+          "passed": false
+        },
+        "on": {
+          "id": "en-long-correction/r2/on",
+          "outcome": "correct",
+          "unsupportedAssertion": false,
+          "passed": true
+        },
+        "strictPassDelta": 1,
+        "comparison": "improved"
+      },
+      {
+        "case": "en-long-reference",
+        "repetition": 2,
+        "language": "en",
+        "kind": "reference",
+        "off": {
+          "id": "en-long-reference/r2/off",
+          "outcome": "abstained",
+          "unsupportedAssertion": false,
+          "passed": false
+        },
+        "on": {
+          "id": "en-long-reference/r2/on",
+          "outcome": "correct",
+          "unsupportedAssertion": false,
+          "passed": true
+        },
+        "strictPassDelta": 1,
+        "comparison": "improved"
+      },
+      {
+        "case": "en-long-unknown",
+        "repetition": 2,
+        "language": "en",
+        "kind": "unknown",
+        "off": {
+          "id": "en-long-unknown/r2/off",
+          "outcome": "unknown-handled",
+          "unsupportedAssertion": false,
+          "passed": true
+        },
+        "on": {
+          "id": "en-long-unknown/r2/on",
+          "outcome": "unknown-handled",
+          "unsupportedAssertion": false,
+          "passed": true
+        },
+        "strictPassDelta": 0,
+        "comparison": "tied"
+      },
+      {
+        "case": "ko-long-return",
+        "repetition": 2,
+        "language": "ko",
+        "kind": "return",
+        "off": {
+          "id": "ko-long-return/r2/off",
+          "outcome": "abstained",
+          "unsupportedAssertion": false,
+          "passed": false
+        },
+        "on": {
+          "id": "ko-long-return/r2/on",
+          "outcome": "incorrect",
+          "unsupportedAssertion": true,
+          "passed": false
+        },
+        "strictPassDelta": 0,
+        "comparison": "tied"
+      },
+      {
+        "case": "ko-long-correction",
+        "repetition": 2,
+        "language": "ko",
+        "kind": "correction",
+        "off": {
+          "id": "ko-long-correction/r2/off",
+          "outcome": "abstained",
+          "unsupportedAssertion": false,
+          "passed": false
+        },
+        "on": {
+          "id": "ko-long-correction/r2/on",
+          "outcome": "correct",
+          "unsupportedAssertion": false,
+          "passed": true
+        },
+        "strictPassDelta": 1,
+        "comparison": "improved"
+      },
+      {
+        "case": "ko-long-reference",
+        "repetition": 2,
+        "language": "ko",
+        "kind": "reference",
+        "off": {
+          "id": "ko-long-reference/r2/off",
+          "outcome": "abstained",
+          "unsupportedAssertion": false,
+          "passed": false
+        },
+        "on": {
+          "id": "ko-long-reference/r2/on",
+          "outcome": "abstained",
+          "unsupportedAssertion": false,
+          "passed": false
+        },
+        "strictPassDelta": 0,
+        "comparison": "tied"
+      },
+      {
+        "case": "ko-long-unknown",
+        "repetition": 2,
+        "language": "ko",
+        "kind": "unknown",
+        "off": {
+          "id": "ko-long-unknown/r2/off",
+          "outcome": "unknown-handled",
+          "unsupportedAssertion": false,
+          "passed": true
+        },
+        "on": {
+          "id": "ko-long-unknown/r2/on",
+          "outcome": "unknown-handled",
+          "unsupportedAssertion": false,
+          "passed": true
+        },
+        "strictPassDelta": 0,
+        "comparison": "tied"
+      }
+    ],
+    "groups": [
+      {
+        "mode": "off",
+        "language": null,
+        "kind": null,
+        "samples": 16,
+        "passed": 4,
+        "outcomes": {
+          "correct": 0,
+          "partial": 0,
+          "incorrect": 0,
+          "abstained": 12,
+          "unknown-handled": 4
+        },
+        "unsupportedAssertions": 0
+      },
+      {
+        "mode": "off",
+        "language": "en",
+        "kind": "return",
+        "samples": 2,
+        "passed": 0,
+        "outcomes": {
+          "correct": 0,
+          "partial": 0,
+          "incorrect": 0,
+          "abstained": 2,
+          "unknown-handled": 0
+        },
+        "unsupportedAssertions": 0
+      },
+      {
+        "mode": "off",
+        "language": "en",
+        "kind": "correction",
+        "samples": 2,
+        "passed": 0,
+        "outcomes": {
+          "correct": 0,
+          "partial": 0,
+          "incorrect": 0,
+          "abstained": 2,
+          "unknown-handled": 0
+        },
+        "unsupportedAssertions": 0
+      },
+      {
+        "mode": "off",
+        "language": "en",
+        "kind": "reference",
+        "samples": 2,
+        "passed": 0,
+        "outcomes": {
+          "correct": 0,
+          "partial": 0,
+          "incorrect": 0,
+          "abstained": 2,
+          "unknown-handled": 0
+        },
+        "unsupportedAssertions": 0
+      },
+      {
+        "mode": "off",
+        "language": "en",
+        "kind": "unknown",
+        "samples": 2,
+        "passed": 2,
+        "outcomes": {
+          "correct": 0,
+          "partial": 0,
+          "incorrect": 0,
+          "abstained": 0,
+          "unknown-handled": 2
+        },
+        "unsupportedAssertions": 0
+      },
+      {
+        "mode": "off",
+        "language": "ko",
+        "kind": "return",
+        "samples": 2,
+        "passed": 0,
+        "outcomes": {
+          "correct": 0,
+          "partial": 0,
+          "incorrect": 0,
+          "abstained": 2,
+          "unknown-handled": 0
+        },
+        "unsupportedAssertions": 0
+      },
+      {
+        "mode": "off",
+        "language": "ko",
+        "kind": "correction",
+        "samples": 2,
+        "passed": 0,
+        "outcomes": {
+          "correct": 0,
+          "partial": 0,
+          "incorrect": 0,
+          "abstained": 2,
+          "unknown-handled": 0
+        },
+        "unsupportedAssertions": 0
+      },
+      {
+        "mode": "off",
+        "language": "ko",
+        "kind": "reference",
+        "samples": 2,
+        "passed": 0,
+        "outcomes": {
+          "correct": 0,
+          "partial": 0,
+          "incorrect": 0,
+          "abstained": 2,
+          "unknown-handled": 0
+        },
+        "unsupportedAssertions": 0
+      },
+      {
+        "mode": "off",
+        "language": "ko",
+        "kind": "unknown",
+        "samples": 2,
+        "passed": 2,
+        "outcomes": {
+          "correct": 0,
+          "partial": 0,
+          "incorrect": 0,
+          "abstained": 0,
+          "unknown-handled": 2
+        },
+        "unsupportedAssertions": 0
+      },
+      {
+        "mode": "on",
+        "language": null,
+        "kind": null,
+        "samples": 16,
+        "passed": 11,
+        "outcomes": {
+          "correct": 7,
+          "partial": 1,
+          "incorrect": 2,
+          "abstained": 2,
+          "unknown-handled": 4
+        },
+        "unsupportedAssertions": 2
+      },
+      {
+        "mode": "on",
+        "language": "en",
+        "kind": "return",
+        "samples": 2,
+        "passed": 1,
+        "outcomes": {
+          "correct": 1,
+          "partial": 1,
+          "incorrect": 0,
+          "abstained": 0,
+          "unknown-handled": 0
+        },
+        "unsupportedAssertions": 0
+      },
+      {
+        "mode": "on",
+        "language": "en",
+        "kind": "correction",
+        "samples": 2,
+        "passed": 2,
+        "outcomes": {
+          "correct": 2,
+          "partial": 0,
+          "incorrect": 0,
+          "abstained": 0,
+          "unknown-handled": 0
+        },
+        "unsupportedAssertions": 0
+      },
+      {
+        "mode": "on",
+        "language": "en",
+        "kind": "reference",
+        "samples": 2,
+        "passed": 2,
+        "outcomes": {
+          "correct": 2,
+          "partial": 0,
+          "incorrect": 0,
+          "abstained": 0,
+          "unknown-handled": 0
+        },
+        "unsupportedAssertions": 0
+      },
+      {
+        "mode": "on",
+        "language": "en",
+        "kind": "unknown",
+        "samples": 2,
+        "passed": 2,
+        "outcomes": {
+          "correct": 0,
+          "partial": 0,
+          "incorrect": 0,
+          "abstained": 0,
+          "unknown-handled": 2
+        },
+        "unsupportedAssertions": 0
+      },
+      {
+        "mode": "on",
+        "language": "ko",
+        "kind": "return",
+        "samples": 2,
+        "passed": 0,
+        "outcomes": {
+          "correct": 0,
+          "partial": 0,
+          "incorrect": 2,
+          "abstained": 0,
+          "unknown-handled": 0
+        },
+        "unsupportedAssertions": 2
+      },
+      {
+        "mode": "on",
+        "language": "ko",
+        "kind": "correction",
+        "samples": 2,
+        "passed": 2,
+        "outcomes": {
+          "correct": 2,
+          "partial": 0,
+          "incorrect": 0,
+          "abstained": 0,
+          "unknown-handled": 0
+        },
+        "unsupportedAssertions": 0
+      },
+      {
+        "mode": "on",
+        "language": "ko",
+        "kind": "reference",
+        "samples": 2,
+        "passed": 0,
+        "outcomes": {
+          "correct": 0,
+          "partial": 0,
+          "incorrect": 0,
+          "abstained": 2,
+          "unknown-handled": 0
+        },
+        "unsupportedAssertions": 0
+      },
+      {
+        "mode": "on",
+        "language": "ko",
+        "kind": "unknown",
+        "samples": 2,
+        "passed": 2,
+        "outcomes": {
+          "correct": 0,
+          "partial": 0,
+          "incorrect": 0,
+          "abstained": 0,
+          "unknown-handled": 2
+        },
+        "unsupportedAssertions": 0
+      }
+    ],
+    "rows": [
+      {
+        "id": "en-long-correction/r1/off",
+        "case": "en-long-correction",
+        "language": "en",
+        "kind": "correction",
+        "mode": "off",
+        "repetition": 1,
+        "outcome": "abstained",
+        "unsupportedAssertion": false,
+        "rationale": "Abstains although the full source gives the corrected 5:25 p.m. departure."
+      },
+      {
+        "id": "en-long-correction/r1/on",
+        "case": "en-long-correction",
+        "language": "en",
+        "kind": "correction",
+        "mode": "on",
+        "repetition": 1,
+        "outcome": "correct",
+        "unsupportedAssertion": false,
+        "rationale": "Gives 5:25 p.m. as current and explicitly supersedes 4:40 p.m."
+      },
+      {
+        "id": "en-long-correction/r2/off",
+        "case": "en-long-correction",
+        "language": "en",
+        "kind": "correction",
+        "mode": "off",
+        "repetition": 2,
+        "outcome": "abstained",
+        "unsupportedAssertion": false,
+        "rationale": "Abstains although the full source gives the corrected 5:25 p.m. departure."
+      },
+      {
+        "id": "en-long-correction/r2/on",
+        "case": "en-long-correction",
+        "language": "en",
+        "kind": "correction",
+        "mode": "on",
+        "repetition": 2,
+        "outcome": "correct",
+        "unsupportedAssertion": false,
+        "rationale": "Gives 5:25 p.m. as current and explicitly supersedes 4:40 p.m."
+      },
+      {
+        "id": "en-long-reference/r1/off",
+        "case": "en-long-reference",
+        "language": "en",
+        "kind": "reference",
+        "mode": "off",
+        "repetition": 1,
+        "outcome": "abstained",
+        "unsupportedAssertion": false,
+        "rationale": "Abstains instead of naming Jonah and Thursday morning."
+      },
+      {
+        "id": "en-long-reference/r1/on",
+        "case": "en-long-reference",
+        "language": "en",
+        "kind": "reference",
+        "mode": "on",
+        "repetition": 1,
+        "outcome": "correct",
+        "unsupportedAssertion": false,
+        "rationale": "Correctly identifies Jonah and Thursday morning for the referenced green cloth banner."
+      },
+      {
+        "id": "en-long-reference/r2/off",
+        "case": "en-long-reference",
+        "language": "en",
+        "kind": "reference",
+        "mode": "off",
+        "repetition": 2,
+        "outcome": "abstained",
+        "unsupportedAssertion": false,
+        "rationale": "Abstains instead of naming Jonah and Thursday morning."
+      },
+      {
+        "id": "en-long-reference/r2/on",
+        "case": "en-long-reference",
+        "language": "en",
+        "kind": "reference",
+        "mode": "on",
+        "repetition": 2,
+        "outcome": "correct",
+        "unsupportedAssertion": false,
+        "rationale": "Correctly identifies Jonah and Thursday morning for the referenced green cloth banner."
+      },
+      {
+        "id": "en-long-return/r1/off",
+        "case": "en-long-return",
+        "language": "en",
+        "kind": "return",
+        "mode": "off",
+        "repetition": 1,
+        "outcome": "abstained",
+        "unsupportedAssertion": false,
+        "rationale": "Abstains instead of giving the user actor and source location."
+      },
+      {
+        "id": "en-long-return/r1/on",
+        "case": "en-long-return",
+        "language": "en",
+        "kind": "return",
+        "mode": "on",
+        "repetition": 1,
+        "outcome": "partial",
+        "unsupportedAssertion": false,
+        "rationale": "Correct user actor and supported assistant observation/door action, but says by the stand rather than in it as the frozen required meaning specifies. Conservative partial: the source says to the stand and put it there, so this spatial wording needs independent human adjudication; do not rewrite the oracle after seeing this answer."
+      },
+      {
+        "id": "en-long-return/r2/off",
+        "case": "en-long-return",
+        "language": "en",
+        "kind": "return",
+        "mode": "off",
+        "repetition": 2,
+        "outcome": "abstained",
+        "unsupportedAssertion": false,
+        "rationale": "Abstains instead of giving the user actor and source location."
+      },
+      {
+        "id": "en-long-return/r2/on",
+        "case": "en-long-return",
+        "language": "en",
+        "kind": "return",
+        "mode": "on",
+        "repetition": 2,
+        "outcome": "correct",
+        "unsupportedAssertion": false,
+        "rationale": "Correctly identifies the user and the brass umbrella stand beside the east doorway."
+      },
+      {
+        "id": "en-long-unknown/r1/off",
+        "case": "en-long-unknown",
+        "language": "en",
+        "kind": "unknown",
+        "mode": "off",
+        "repetition": 1,
+        "outcome": "unknown-handled",
+        "unsupportedAssertion": false,
+        "rationale": "Correctly acknowledges that admission price is unspecified; no guessed amount."
+      },
+      {
+        "id": "en-long-unknown/r1/on",
+        "case": "en-long-unknown",
+        "language": "en",
+        "kind": "unknown",
+        "mode": "on",
+        "repetition": 1,
+        "outcome": "unknown-handled",
+        "unsupportedAssertion": false,
+        "rationale": "Correctly acknowledges that admission price is unspecified; no guessed amount."
+      },
+      {
+        "id": "en-long-unknown/r2/off",
+        "case": "en-long-unknown",
+        "language": "en",
+        "kind": "unknown",
+        "mode": "off",
+        "repetition": 2,
+        "outcome": "unknown-handled",
+        "unsupportedAssertion": false,
+        "rationale": "Correctly acknowledges that admission price is unspecified; no guessed amount."
+      },
+      {
+        "id": "en-long-unknown/r2/on",
+        "case": "en-long-unknown",
+        "language": "en",
+        "kind": "unknown",
+        "mode": "on",
+        "repetition": 2,
+        "outcome": "unknown-handled",
+        "unsupportedAssertion": false,
+        "rationale": "Correctly acknowledges that admission price is unspecified; no guessed amount."
+      },
+      {
+        "id": "ko-long-correction/r1/off",
+        "case": "ko-long-correction",
+        "language": "ko",
+        "kind": "correction",
+        "mode": "off",
+        "repetition": 1,
+        "outcome": "abstained",
+        "unsupportedAssertion": false,
+        "rationale": "Abstains instead of giving the source-supported final 3:35 p.m. start."
+      },
+      {
+        "id": "ko-long-correction/r1/on",
+        "case": "ko-long-correction",
+        "language": "ko",
+        "kind": "correction",
+        "mode": "on",
+        "repetition": 1,
+        "outcome": "correct",
+        "unsupportedAssertion": false,
+        "rationale": "Gives final 3:35 p.m. and cancels the old 2:15 p.m."
+      },
+      {
+        "id": "ko-long-correction/r2/off",
+        "case": "ko-long-correction",
+        "language": "ko",
+        "kind": "correction",
+        "mode": "off",
+        "repetition": 2,
+        "outcome": "abstained",
+        "unsupportedAssertion": false,
+        "rationale": "Abstains instead of giving the final 3:35 p.m. start."
+      },
+      {
+        "id": "ko-long-correction/r2/on",
+        "case": "ko-long-correction",
+        "language": "ko",
+        "kind": "correction",
+        "mode": "on",
+        "repetition": 2,
+        "outcome": "correct",
+        "unsupportedAssertion": false,
+        "rationale": "Gives the final 3:35 p.m. and explicitly cancels the old 2:15 p.m."
+      },
+      {
+        "id": "ko-long-reference/r1/off",
+        "case": "ko-long-reference",
+        "language": "ko",
+        "kind": "reference",
+        "mode": "off",
+        "repetition": 1,
+        "outcome": "abstained",
+        "unsupportedAssertion": false,
+        "rationale": "Abstains instead of naming Soyeon and Wednesday evening."
+      },
+      {
+        "id": "ko-long-reference/r1/on",
+        "case": "ko-long-reference",
+        "language": "ko",
+        "kind": "reference",
+        "mode": "on",
+        "repetition": 1,
+        "outcome": "abstained",
+        "unsupportedAssertion": false,
+        "rationale": "Abstains instead of naming Soyeon and Wednesday evening."
+      },
+      {
+        "id": "ko-long-reference/r2/off",
+        "case": "ko-long-reference",
+        "language": "ko",
+        "kind": "reference",
+        "mode": "off",
+        "repetition": 2,
+        "outcome": "abstained",
+        "unsupportedAssertion": false,
+        "rationale": "Abstains instead of naming Soyeon and Wednesday evening."
+      },
+      {
+        "id": "ko-long-reference/r2/on",
+        "case": "ko-long-reference",
+        "language": "ko",
+        "kind": "reference",
+        "mode": "on",
+        "repetition": 2,
+        "outcome": "abstained",
+        "unsupportedAssertion": false,
+        "rationale": "Abstains instead of naming Soyeon and Wednesday evening."
+      },
+      {
+        "id": "ko-long-return/r1/off",
+        "case": "ko-long-return",
+        "language": "ko",
+        "kind": "return",
+        "mode": "off",
+        "repetition": 1,
+        "outcome": "abstained",
+        "unsupportedAssertion": false,
+        "rationale": "Abstains instead of identifying the assistant and bamboo basket below the north window."
+      },
+      {
+        "id": "ko-long-return/r1/on",
+        "case": "ko-long-return",
+        "language": "ko",
+        "kind": "return",
+        "mode": "on",
+        "repetition": 1,
+        "outcome": "incorrect",
+        "unsupportedAssertion": true,
+        "rationale": "Wrong actor and unsupported personal observation/packaging claims: source user described the assistant moving the map, but answer reverses those roles."
+      },
+      {
+        "id": "ko-long-return/r2/off",
+        "case": "ko-long-return",
+        "language": "ko",
+        "kind": "return",
+        "mode": "off",
+        "repetition": 2,
+        "outcome": "abstained",
+        "unsupportedAssertion": false,
+        "rationale": "Abstains instead of identifying the assistant and its bamboo-basket location."
+      },
+      {
+        "id": "ko-long-return/r2/on",
+        "case": "ko-long-return",
+        "language": "ko",
+        "kind": "return",
+        "mode": "on",
+        "repetition": 2,
+        "outcome": "incorrect",
+        "unsupportedAssertion": true,
+        "rationale": "Wrong actor: copies the user report as its own, saying the user moved the map and the assistant tidied packaging and observed. The source assigns the map action to the assistant and the observation/packaging to the user."
+      },
+      {
+        "id": "ko-long-unknown/r1/off",
+        "case": "ko-long-unknown",
+        "language": "ko",
+        "kind": "unknown",
+        "mode": "off",
+        "repetition": 1,
+        "outcome": "unknown-handled",
+        "unsupportedAssertion": false,
+        "rationale": "Correctly acknowledges the missing price without inventing a fee."
+      },
+      {
+        "id": "ko-long-unknown/r1/on",
+        "case": "ko-long-unknown",
+        "language": "ko",
+        "kind": "unknown",
+        "mode": "on",
+        "repetition": 1,
+        "outcome": "unknown-handled",
+        "unsupportedAssertion": false,
+        "rationale": "Correctly acknowledges that the price was not provided; no unsupported amount."
+      },
+      {
+        "id": "ko-long-unknown/r2/off",
+        "case": "ko-long-unknown",
+        "language": "ko",
+        "kind": "unknown",
+        "mode": "off",
+        "repetition": 2,
+        "outcome": "unknown-handled",
+        "unsupportedAssertion": false,
+        "rationale": "Correctly acknowledges the missing price without inventing a fee."
+      },
+      {
+        "id": "ko-long-unknown/r2/on",
+        "case": "ko-long-unknown",
+        "language": "ko",
+        "kind": "unknown",
+        "mode": "on",
+        "repetition": 2,
+        "outcome": "unknown-handled",
+        "unsupportedAssertion": false,
+        "rationale": "Correctly acknowledges that the price was not provided; no unsupported amount."
+      }
+    ]
+  },
+  "rows": [
+    {
+      "id": "en-long-return/r1/off",
+      "case": "en-long-return",
+      "repetition": 1,
+      "mode": "off",
+      "index": 0,
+      "language": "en",
+      "kind": "return",
+      "chatId": "natural-0-en-long-return-r1-off",
+      "sourceHash": "946bb425724098a09ae81a4a50787602fcce7fb72dbc678e01d8dcdd10e8f8ae",
+      "sourceTokens": 2643,
+      "sourceMessagesPresent": 36,
+      "baselineTruncated": true,
+      "answer": "That information was not mentioned in our conversation, so I don't have details about who put the rolled canal map away or its location.",
+      "injected": false,
+      "memoryTokens": 0,
+      "selectedIds": [],
+      "memoryText": "",
+      "requiredEvidence": [
+        {
+          "message": 3,
+          "inMemory": false,
+          "inPrompt": false,
+          "ranks": []
+        }
+      ],
+      "supersededEvidence": [],
+      "retrievalMs": null,
+      "queries": [],
+      "usage": {
+        "prompt_tokens": 1719,
+        "completion_tokens": 26,
+        "total_tokens": 1745,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "generationMs": 2480.325917000002,
+      "syncMs": 4.24633299999914,
+      "question": "Who put the rolled canal map away, and where is it?",
+      "requiredMeaning": [
+        "The user put the rolled canal map in the brass umbrella stand beside the east doorway."
+      ],
+      "assessment": {
+        "id": "en-long-return/r1/off",
+        "case": "en-long-return",
+        "language": "en",
+        "kind": "return",
+        "mode": "off",
+        "repetition": 1,
+        "outcome": "abstained",
+        "unsupportedAssertion": false,
+        "rationale": "Abstains instead of giving the user actor and source location."
+      }
+    },
+    {
+      "id": "en-long-return/r1/on",
+      "case": "en-long-return",
+      "repetition": 1,
+      "mode": "on",
+      "index": 1,
+      "language": "en",
+      "kind": "return",
+      "chatId": "natural-1-en-long-return-r1-on",
+      "sourceHash": "946bb425724098a09ae81a4a50787602fcce7fb72dbc678e01d8dcdd10e8f8ae",
+      "sourceTokens": 2643,
+      "sourceMessagesPresent": 17,
+      "baselineTruncated": false,
+      "answer": "You put the rolled canal map by the brass umbrella stand beside the east doorway. I watched you do this while holding the door open.",
+      "injected": true,
+      "memoryTokens": 351,
+      "selectedIds": [
+        "6cd9752c9174ac287848dc34eb3e97eaa4d79818ec0d726a9ba3fb503b7bfc0c_fa2d04dee91fd2294c870d266baf502122616c665e0c2c1c544fb82b135070dc_0",
+        "6cd9752c9174ac287848dc34eb3e97eaa4d79818ec0d726a9ba3fb503b7bfc0c_656b282ef1b80c8c74354c4f92c235cb0172023a4a25ac234aecf23a6d29360d_0",
+        "6cd9752c9174ac287848dc34eb3e97eaa4d79818ec0d726a9ba3fb503b7bfc0c_fd479a103b040d1aa8fd0a662501ee3c3d7613732780c7b33b8444e6d95439ae_0",
+        "6cd9752c9174ac287848dc34eb3e97eaa4d79818ec0d726a9ba3fb503b7bfc0c_8acb1f57ab795159fbc174a716cc3ea893297c72393bee9930d8a47ab42079bd_0",
+        "6cd9752c9174ac287848dc34eb3e97eaa4d79818ec0d726a9ba3fb503b7bfc0c_6df1a64ce9df86cf03326dabc62a9311ab9619d2d1780bea05dfcb4f4ac2da00_0",
+        "6cd9752c9174ac287848dc34eb3e97eaa4d79818ec0d726a9ba3fb503b7bfc0c_842a43e7344b9ac0bad75fbc86447af9fe34d3442cfe4a0f0a4d8bc3190a7a22_0"
+      ],
+      "memoryText": "[Past conversation excerpt: user \"User\", message 1, passage 1]\nThe old canal archive is lending us its reading room for the neighbourhood history weekend. I would like the event to feel welcoming to people who have never opened an archive box before, rather than like an examination.\n[Past conversation excerpt: user \"User\", message 3, passage 1]\nI have been sorting the canal maps this morning, but the weather interrupted us before we finished carrying things indoors. Can we first check what actually reached the room before planning any more jobs?\n[Past conversation excerpt: assistant \"Rhea\", message 4, passage 1]\nYou carried the rolled canal map to the brass umbrella stand beside the east doorway. I watched you put it there while I held the door open; the flat railway map stayed on the inspection table.\n[Past conversation excerpt: assistant \"Rhea\", message 6, passage 1]\nI will keep that part of the notice on a separate card. The rest can describe the walk along the towpath without promising how long the return trip takes, since the locks sometimes cause a delay.\n[Past conversation excerpt: user \"User\", message 29, passage 1]\nI spoke with a local teacher about bringing a small group. She thinks the pupils will be more interested in comparing a familiar bridge with its earlier photograph than memorising dates about the canal's construction and ownership.\n[Past conversation excerpt: assistant \"Rhea\", message 30, passage 1]\nThen the comparison can be a conversation rather than a worksheet with a single right answer. We can ask which features changed, which survived, and what the photograph does not tell us about the people crossing the bridge.",
+      "requiredEvidence": [
+        {
+          "message": 3,
+          "inMemory": true,
+          "inPrompt": true,
+          "ranks": [
+            1,
+            1
+          ]
+        }
+      ],
+      "supersededEvidence": [],
+      "retrievalMs": 880.2000007629395,
+      "queries": [
+        {
+          "query": "Who put the rolled canal map away, and where is it?\nGo ahead with the earlier questions. I will use what we actually established in the conversation, and if something was left unspecified I will say so instead of inventing a detail to make the plan sound complete.\nAfter that walk-through I would like to revisit a few things we discussed much earlier. We have changed subjects several times, and I want to be sure I am relying on the final information rather than a half-remembered suggestion.",
+          "targetRanks": [
+            {
+              "message": 3,
+              "rank": 1
+            }
+          ],
+          "selectedHitMessages": [
+            3,
+            2,
+            0,
+            5,
+            28,
+            29
+          ]
+        },
+        {
+          "query": "Who put the rolled canal map away, and where is it?",
+          "targetRanks": [
+            {
+              "message": 3,
+              "rank": 1
+            }
+          ],
+          "selectedHitMessages": [
+            3,
+            2,
+            0,
+            5,
+            28,
+            null
+          ]
+        }
+      ],
+      "usage": {
+        "prompt_tokens": 962,
+        "completion_tokens": 27,
+        "total_tokens": 989,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "generationMs": 2636.527666000002,
+      "syncMs": 1754.6755000000012,
+      "question": "Who put the rolled canal map away, and where is it?",
+      "requiredMeaning": [
+        "The user put the rolled canal map in the brass umbrella stand beside the east doorway."
+      ],
+      "assessment": {
+        "id": "en-long-return/r1/on",
+        "case": "en-long-return",
+        "language": "en",
+        "kind": "return",
+        "mode": "on",
+        "repetition": 1,
+        "outcome": "partial",
+        "unsupportedAssertion": false,
+        "rationale": "Correct user actor and supported assistant observation/door action, but says by the stand rather than in it as the frozen required meaning specifies. Conservative partial: the source says to the stand and put it there, so this spatial wording needs independent human adjudication; do not rewrite the oracle after seeing this answer."
+      }
+    },
+    {
+      "id": "en-long-correction/r1/on",
+      "case": "en-long-correction",
+      "repetition": 1,
+      "mode": "on",
+      "index": 2,
+      "language": "en",
+      "kind": "correction",
+      "chatId": "natural-2-en-long-correction-r1-on",
+      "sourceHash": "946bb425724098a09ae81a4a50787602fcce7fb72dbc678e01d8dcdd10e8f8ae",
+      "sourceTokens": 2643,
+      "sourceMessagesPresent": 17,
+      "baselineTruncated": false,
+      "answer": "The final Sunday departure time for the harbour launch is 5:25 p.m., replacing the old 4:40 p.m. time.",
+      "injected": true,
+      "memoryTokens": 368,
+      "selectedIds": [
+        "487ab594ab51da06e754da4140584d06f223ca194da2f32ba5748ebb5be39f94_e7e17591546b7e7ce404fbf9135d00dcb3d43bd11527856a19d6f3dae8a9e8f1_0",
+        "487ab594ab51da06e754da4140584d06f223ca194da2f32ba5748ebb5be39f94_5d2ae5d03212231f66ea22a90b30295b24506f81f47fb828d8475eeb85f90eb0_0",
+        "487ab594ab51da06e754da4140584d06f223ca194da2f32ba5748ebb5be39f94_a2a374798b7e55e07e083bfd432a7b518e023dbe87ad3eae4dea28110ff2a500_0",
+        "487ab594ab51da06e754da4140584d06f223ca194da2f32ba5748ebb5be39f94_656b282ef1b80c8c74354c4f92c235cb0172023a4a25ac234aecf23a6d29360d_0",
+        "487ab594ab51da06e754da4140584d06f223ca194da2f32ba5748ebb5be39f94_8acb1f57ab795159fbc174a716cc3ea893297c72393bee9930d8a47ab42079bd_0",
+        "487ab594ab51da06e754da4140584d06f223ca194da2f32ba5748ebb5be39f94_3b4bff275742a97407a2d44ac7e74db10b1c6dfc319e83d73a960a8eeabd73ba_0"
+      ],
+      "memoryText": "[Past conversation excerpt: user \"User\", message 3, passage 1]\nI have been sorting the canal maps this morning, but the weather interrupted us before we finished carrying things indoors. Can we first check what actually reached the room before planning any more jobs?\n[Past conversation excerpt: user \"User\", message 5, passage 1]\nThe harbour launch is provisionally due to leave the archive landing at 4:40 p.m. on Sunday. I copied that time from an old leaflet, so please leave some room on our notice in case the operator corrects it.\n[Past conversation excerpt: assistant \"Rhea\", message 6, passage 1]\nI will keep that part of the notice on a separate card. The rest can describe the walk along the towpath without promising how long the return trip takes, since the locks sometimes cause a delay.\n[Past conversation excerpt: user \"User\", message 9, passage 1]\nJonah will bring the green cloth banner on Thursday morning. He repaired its corner at home and wants us to unroll it before the fabric gets damp; Priya is bringing the paper route diagram on Friday afternoon.\n[Past conversation excerpt: user \"User\", message 21, passage 1]\nI have just spoken to the launch operator. The Sunday departure from the archive landing is now 5:25 p.m.; the old 4:40 p.m. time is cancelled. Please replace it rather than showing the two times as alternatives.\n[Past conversation excerpt: assistant \"Rhea\", message 22, passage 1]\nI will replace the departure card and remove the old one completely. We should check any copies already placed near the towpath as well, so someone arriving from outside does not follow the superseded notice.",
+      "requiredEvidence": [
+        {
+          "message": 20,
+          "inMemory": true,
+          "inPrompt": true,
+          "ranks": [
+            2,
+            2
+          ]
+        }
+      ],
+      "supersededEvidence": [
+        {
+          "message": 4,
+          "inMemory": true,
+          "inPrompt": true,
+          "ranks": [
+            1,
+            1
+          ]
+        }
+      ],
+      "retrievalMs": 787.8999996185303,
+      "queries": [
+        {
+          "query": "What is the final Sunday departure time for the harbour launch?\nGo ahead with the earlier questions. I will use what we actually established in the conversation, and if something was left unspecified I will say so instead of inventing a detail to make the plan sound complete.\nAfter that walk-through I would like to revisit a few things we discussed much earlier. We have changed subjects several times, and I want to be sure I am relying on the final information rather than a half-remembered suggestion.",
+          "targetRanks": [
+            {
+              "message": 20,
+              "rank": 2
+            }
+          ],
+          "selectedHitMessages": [
+            4,
+            20,
+            21,
+            2,
+            5,
+            8
+          ]
+        },
+        {
+          "query": "What is the final Sunday departure time for the harbour launch?",
+          "targetRanks": [
+            {
+              "message": 20,
+              "rank": 2
+            }
+          ],
+          "selectedHitMessages": [
+            4,
+            20,
+            21,
+            2,
+            5,
+            8
+          ]
+        }
+      ],
+      "usage": {
+        "prompt_tokens": 978,
+        "completion_tokens": 29,
+        "total_tokens": 1007,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "generationMs": 1902.3860840000052,
+      "syncMs": 1573.3210840000029,
+      "question": "What is the final Sunday departure time for the harbour launch?",
+      "requiredMeaning": [
+        "The final Sunday departure is 5:25 p.m."
+      ],
+      "assessment": {
+        "id": "en-long-correction/r1/on",
+        "case": "en-long-correction",
+        "language": "en",
+        "kind": "correction",
+        "mode": "on",
+        "repetition": 1,
+        "outcome": "correct",
+        "unsupportedAssertion": false,
+        "rationale": "Gives 5:25 p.m. as current and explicitly supersedes 4:40 p.m."
+      }
+    },
+    {
+      "id": "en-long-correction/r1/off",
+      "case": "en-long-correction",
+      "repetition": 1,
+      "mode": "off",
+      "index": 3,
+      "language": "en",
+      "kind": "correction",
+      "chatId": "natural-3-en-long-correction-r1-off",
+      "sourceHash": "946bb425724098a09ae81a4a50787602fcce7fb72dbc678e01d8dcdd10e8f8ae",
+      "sourceTokens": 2643,
+      "sourceMessagesPresent": 36,
+      "baselineTruncated": true,
+      "answer": "The final Sunday departure time for the harbour launch is not stated in our conversation.",
+      "injected": false,
+      "memoryTokens": 0,
+      "selectedIds": [],
+      "memoryText": "",
+      "requiredEvidence": [
+        {
+          "message": 20,
+          "inMemory": false,
+          "inPrompt": false,
+          "ranks": []
+        }
+      ],
+      "supersededEvidence": [
+        {
+          "message": 4,
+          "inMemory": false,
+          "inPrompt": false,
+          "ranks": []
+        }
+      ],
+      "retrievalMs": null,
+      "queries": [],
+      "usage": {
+        "prompt_tokens": 1718,
+        "completion_tokens": 16,
+        "total_tokens": 1734,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "generationMs": 1658.1310830000002,
+      "syncMs": 4.848583000006329,
+      "question": "What is the final Sunday departure time for the harbour launch?",
+      "requiredMeaning": [
+        "The final Sunday departure is 5:25 p.m."
+      ],
+      "assessment": {
+        "id": "en-long-correction/r1/off",
+        "case": "en-long-correction",
+        "language": "en",
+        "kind": "correction",
+        "mode": "off",
+        "repetition": 1,
+        "outcome": "abstained",
+        "unsupportedAssertion": false,
+        "rationale": "Abstains although the full source gives the corrected 5:25 p.m. departure."
+      }
+    },
+    {
+      "id": "en-long-reference/r1/off",
+      "case": "en-long-reference",
+      "repetition": 1,
+      "mode": "off",
+      "index": 4,
+      "language": "en",
+      "kind": "reference",
+      "chatId": "natural-4-en-long-reference-r1-off",
+      "sourceHash": "d4ec92da1b77e9928e891458a5d5de61b87393430f79df618c213e9c2b685e04",
+      "sourceTokens": 2669,
+      "sourceMessagesPresent": 38,
+      "baselineTruncated": true,
+      "answer": "The conversation does not mention who is bringing the green cloth banner for the reading room or when it will arrive.",
+      "injected": false,
+      "memoryTokens": 0,
+      "selectedIds": [],
+      "memoryText": "",
+      "requiredEvidence": [
+        {
+          "message": 8,
+          "inMemory": false,
+          "inPrompt": false,
+          "ranks": []
+        }
+      ],
+      "supersededEvidence": [],
+      "retrievalMs": null,
+      "queries": [],
+      "usage": {
+        "prompt_tokens": 1748,
+        "completion_tokens": 22,
+        "total_tokens": 1770,
+        "prompt_tokens_details": {
+          "cached_tokens": 1536,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "generationMs": 2748.9830419999926,
+      "syncMs": 6.741541999996116,
+      "question": "Who is bringing it, and when?",
+      "requiredMeaning": [
+        "Jonah brings the green cloth banner on Thursday morning, not Priya on Friday."
+      ],
+      "assessment": {
+        "id": "en-long-reference/r1/off",
+        "case": "en-long-reference",
+        "language": "en",
+        "kind": "reference",
+        "mode": "off",
+        "repetition": 1,
+        "outcome": "abstained",
+        "unsupportedAssertion": false,
+        "rationale": "Abstains instead of naming Jonah and Thursday morning."
+      }
+    },
+    {
+      "id": "en-long-reference/r1/on",
+      "case": "en-long-reference",
+      "repetition": 1,
+      "mode": "on",
+      "index": 5,
+      "language": "en",
+      "kind": "reference",
+      "chatId": "natural-5-en-long-reference-r1-on",
+      "sourceHash": "d4ec92da1b77e9928e891458a5d5de61b87393430f79df618c213e9c2b685e04",
+      "sourceTokens": 2669,
+      "sourceMessagesPresent": 17,
+      "baselineTruncated": false,
+      "answer": "Jonah will bring the green cloth banner on Thursday morning.",
+      "injected": true,
+      "memoryTokens": 368,
+      "selectedIds": [
+        "71a946485adaadd820b674b9507e53b149b5901fe539e5fb5a2e55bbe14befeb_3b4bff275742a97407a2d44ac7e74db10b1c6dfc319e83d73a960a8eeabd73ba_0",
+        "71a946485adaadd820b674b9507e53b149b5901fe539e5fb5a2e55bbe14befeb_e7e17591546b7e7ce404fbf9135d00dcb3d43bd11527856a19d6f3dae8a9e8f1_0",
+        "71a946485adaadd820b674b9507e53b149b5901fe539e5fb5a2e55bbe14befeb_c50e669a38a8024736a6e6f8c5911ca83898f6c6cef196d79644c790fcd1154b_0",
+        "71a946485adaadd820b674b9507e53b149b5901fe539e5fb5a2e55bbe14befeb_3e9afc393a62dc9044d3574b1940127313929a04e547838fe4442c03d990e877_0",
+        "71a946485adaadd820b674b9507e53b149b5901fe539e5fb5a2e55bbe14befeb_9685230edae906ff840c93843fb660cc07d73359a701286cf74f663e4a340613_0",
+        "71a946485adaadd820b674b9507e53b149b5901fe539e5fb5a2e55bbe14befeb_db1da9fceab10843f8b8cb3dbe026538be46315073441445b9b604ac3f2591db_0"
+      ],
+      "memoryText": "[Past conversation excerpt: user \"User\", message 5, passage 1]\nThe harbour launch is provisionally due to leave the archive landing at 4:40 p.m. on Sunday. I copied that time from an old leaflet, so please leave some room on our notice in case the operator corrects it.\n[Past conversation excerpt: user \"User\", message 9, passage 1]\nJonah will bring the green cloth banner on Thursday morning. He repaired its corner at home and wants us to unroll it before the fabric gets damp; Priya is bringing the paper route diagram on Friday afternoon.\n[Past conversation excerpt: assistant \"Rhea\", message 16, passage 1]\nWe can display it with a small explanation of how it was used and keep the clapper secured for the event. A recording played at a chosen moment would let visitors hear it without constantly interrupting the interviews.\n[Past conversation excerpt: user \"User\", message 33, passage 1]\nSomeone offered to lend a folding screen for the interview corner. The hinges are stiff and make a sharp noise, so we should decide where it belongs before any recording starts rather than moving it between every visitor.\n[Past conversation excerpt: assistant \"Rhea\", message 48, passage 1]\nI can check the frames over an empty padded tray. We should set aside anything doubtful rather than trying a quick repair beside the archive material, and show visitors how to hold a magnifier without touching the page.\n[Past conversation excerpt: assistant \"Rhea\", message 52, passage 1]\nWe can test it in the courtyard and ask the caretaker about a safe position. Keeping the message brief will help with legibility, and the detailed programme can remain inside where people have time to read it.",
+      "requiredEvidence": [
+        {
+          "message": 8,
+          "inMemory": true,
+          "inPrompt": true,
+          "ranks": [
+            1,
+            1
+          ]
+        }
+      ],
+      "supersededEvidence": [],
+      "retrievalMs": 829.7999992370605,
+      "queries": [
+        {
+          "query": "Who is bringing it, and when?\nAll right, what would you like to check about that item?\nLet us return to the green cloth banner for the reading room.",
+          "targetRanks": [
+            {
+              "message": 8,
+              "rank": 1
+            }
+          ],
+          "selectedHitMessages": [
+            8,
+            null,
+            51,
+            15,
+            47,
+            32
+          ]
+        },
+        {
+          "query": "Who is bringing it, and when?",
+          "targetRanks": [
+            {
+              "message": 8,
+              "rank": 1
+            }
+          ],
+          "selectedHitMessages": [
+            8,
+            4,
+            51,
+            15,
+            null,
+            32
+          ]
+        }
+      ],
+      "usage": {
+        "prompt_tokens": 925,
+        "completion_tokens": 12,
+        "total_tokens": 937,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "generationMs": 2601.6197079999984,
+      "syncMs": 1753.4847080000036,
+      "question": "Who is bringing it, and when?",
+      "requiredMeaning": [
+        "Jonah brings the green cloth banner on Thursday morning, not Priya on Friday."
+      ],
+      "assessment": {
+        "id": "en-long-reference/r1/on",
+        "case": "en-long-reference",
+        "language": "en",
+        "kind": "reference",
+        "mode": "on",
+        "repetition": 1,
+        "outcome": "correct",
+        "unsupportedAssertion": false,
+        "rationale": "Correctly identifies Jonah and Thursday morning for the referenced green cloth banner."
+      }
+    },
+    {
+      "id": "en-long-unknown/r1/on",
+      "case": "en-long-unknown",
+      "repetition": 1,
+      "mode": "on",
+      "index": 6,
+      "language": "en",
+      "kind": "unknown",
+      "chatId": "natural-6-en-long-unknown-r1-on",
+      "sourceHash": "946bb425724098a09ae81a4a50787602fcce7fb72dbc678e01d8dcdd10e8f8ae",
+      "sourceTokens": 2643,
+      "sourceMessagesPresent": 17,
+      "baselineTruncated": false,
+      "answer": "The exact admission price for the history weekend is not stated in our conversation.",
+      "injected": true,
+      "memoryTokens": 358,
+      "selectedIds": [
+        "28db2565532de59e8c977734918833bd2316e33fc0ff8b50809b9a29fff3ad42_fd479a103b040d1aa8fd0a662501ee3c3d7613732780c7b33b8444e6d95439ae_0",
+        "28db2565532de59e8c977734918833bd2316e33fc0ff8b50809b9a29fff3ad42_d967845b9975a2631b20795725bad750a7ad888831697a0b103c35dff6f86eee_0",
+        "28db2565532de59e8c977734918833bd2316e33fc0ff8b50809b9a29fff3ad42_6df1a64ce9df86cf03326dabc62a9311ab9619d2d1780bea05dfcb4f4ac2da00_0",
+        "28db2565532de59e8c977734918833bd2316e33fc0ff8b50809b9a29fff3ad42_e7e17591546b7e7ce404fbf9135d00dcb3d43bd11527856a19d6f3dae8a9e8f1_0",
+        "28db2565532de59e8c977734918833bd2316e33fc0ff8b50809b9a29fff3ad42_ebadd4874145ab2526c28e5338705c25b43b842b937105b5d8c0a97ca4c17b12_0",
+        "28db2565532de59e8c977734918833bd2316e33fc0ff8b50809b9a29fff3ad42_3c17ee6d869f47ed8d8269942f670cf38e9bd7e28ebacc61419ec62272b13937_0"
+      ],
+      "memoryText": "[Past conversation excerpt: user \"User\", message 1, passage 1]\nThe old canal archive is lending us its reading room for the neighbourhood history weekend. I would like the event to feel welcoming to people who have never opened an archive box before, rather than like an examination.\n[Past conversation excerpt: user \"User\", message 5, passage 1]\nThe harbour launch is provisionally due to leave the archive landing at 4:40 p.m. on Sunday. I copied that time from an old leaflet, so please leave some room on our notice in case the operator corrects it.\n[Past conversation excerpt: assistant \"Rhea\", message 14, passage 1]\nLet's invite suggestions on separate slips instead of writing directly on the display. That lets the archive compare different recollections afterwards and keeps an uncertain identification from looking like an established catalogue entry.\n[Past conversation excerpt: user \"User\", message 19, passage 1]\nThe refreshments table can use the courtyard if the weather stays dry. I will ask the volunteers to keep cups away from the archive material even when a visitor says they are only coming inside for a quick look.\n[Past conversation excerpt: user \"User\", message 29, passage 1]\nI spoke with a local teacher about bringing a small group. She thinks the pupils will be more interested in comparing a familiar bridge with its earlier photograph than memorising dates about the canal's construction and ownership.\n[Past conversation excerpt: assistant \"Rhea\", message 38, passage 1]\nWe should show its date and explain that it is a later recollection. It could prompt useful discussion, as long as the caption does not present a remembered detail as proof that the shelter certainly stood there.",
+      "requiredEvidence": [],
+      "supersededEvidence": [],
+      "retrievalMs": 823.1000003814697,
+      "queries": [
+        {
+          "query": "What is the exact admission price for the history weekend?",
+          "targetRanks": [],
+          "selectedHitMessages": [
+            0,
+            13,
+            28,
+            4,
+            37,
+            18
+          ]
+        },
+        {
+          "query": "What is the exact admission price for the history weekend?\nGo ahead with the earlier questions. I will use what we actually established in the conversation, and if something was left unspecified I will say so instead of inventing a detail to make the plan sound complete.\nAfter that walk-through I would like to revisit a few things we discussed much earlier. We have changed subjects several times, and I want to be sure I am relying on the final information rather than a half-remembered suggestion.",
+          "targetRanks": [],
+          "selectedHitMessages": [
+            0,
+            13,
+            28,
+            4,
+            37,
+            18
+          ]
+        }
+      ],
+      "usage": {
+        "prompt_tokens": 967,
+        "completion_tokens": 15,
+        "total_tokens": 982,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "generationMs": 2423.0815830000065,
+      "syncMs": 1455.6887500000012,
+      "question": "What is the exact admission price for the history weekend?",
+      "requiredMeaning": [],
+      "assessment": {
+        "id": "en-long-unknown/r1/on",
+        "case": "en-long-unknown",
+        "language": "en",
+        "kind": "unknown",
+        "mode": "on",
+        "repetition": 1,
+        "outcome": "unknown-handled",
+        "unsupportedAssertion": false,
+        "rationale": "Correctly acknowledges that admission price is unspecified; no guessed amount."
+      }
+    },
+    {
+      "id": "en-long-unknown/r1/off",
+      "case": "en-long-unknown",
+      "repetition": 1,
+      "mode": "off",
+      "index": 7,
+      "language": "en",
+      "kind": "unknown",
+      "chatId": "natural-7-en-long-unknown-r1-off",
+      "sourceHash": "946bb425724098a09ae81a4a50787602fcce7fb72dbc678e01d8dcdd10e8f8ae",
+      "sourceTokens": 2643,
+      "sourceMessagesPresent": 36,
+      "baselineTruncated": true,
+      "answer": "The exact admission price for the history weekend is not stated in our conversation.",
+      "injected": false,
+      "memoryTokens": 0,
+      "selectedIds": [],
+      "memoryText": "",
+      "requiredEvidence": [],
+      "supersededEvidence": [],
+      "retrievalMs": null,
+      "queries": [],
+      "usage": {
+        "prompt_tokens": 1717,
+        "completion_tokens": 15,
+        "total_tokens": 1732,
+        "prompt_tokens_details": {
+          "cached_tokens": 1536,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "generationMs": 1137.0022919999901,
+      "syncMs": 4.446041000002879,
+      "question": "What is the exact admission price for the history weekend?",
+      "requiredMeaning": [],
+      "assessment": {
+        "id": "en-long-unknown/r1/off",
+        "case": "en-long-unknown",
+        "language": "en",
+        "kind": "unknown",
+        "mode": "off",
+        "repetition": 1,
+        "outcome": "unknown-handled",
+        "unsupportedAssertion": false,
+        "rationale": "Correctly acknowledges that admission price is unspecified; no guessed amount."
+      }
+    },
+    {
+      "id": "ko-long-return/r1/off",
+      "case": "ko-long-return",
+      "repetition": 1,
+      "mode": "off",
+      "index": 8,
+      "language": "ko",
+      "kind": "return",
+      "chatId": "natural-8-ko-long-return-r1-off",
+      "sourceHash": "e52f7eecae4e4fcb4666b373aff0403851ad8020b7dc7140959b2a997e39d7bf",
+      "sourceTokens": 3853,
+      "sourceMessagesPresent": 26,
+      "baselineTruncated": true,
+      "answer": "접이식 노선도를 누가 어디에 넣었는지에 대한 정보는 이 대화에서 언급되지 않았어요.",
+      "injected": false,
+      "memoryTokens": 0,
+      "selectedIds": [],
+      "memoryText": "",
+      "requiredEvidence": [
+        {
+          "message": 2,
+          "inMemory": false,
+          "inPrompt": false,
+          "ranks": []
+        }
+      ],
+      "supersededEvidence": [],
+      "retrievalMs": null,
+      "queries": [],
+      "usage": {
+        "prompt_tokens": 1739,
+        "completion_tokens": 28,
+        "total_tokens": 1767,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "generationMs": 939.7252909999952,
+      "syncMs": 4.510167000000365,
+      "question": "접이식 노선도는 누가 어디에 넣었나요?",
+      "requiredMeaning": [
+        "The assistant put the folding route map in the bamboo basket below the north window."
+      ],
+      "assessment": {
+        "id": "ko-long-return/r1/off",
+        "case": "ko-long-return",
+        "language": "ko",
+        "kind": "return",
+        "mode": "off",
+        "repetition": 1,
+        "outcome": "abstained",
+        "unsupportedAssertion": false,
+        "rationale": "Abstains instead of identifying the assistant and bamboo basket below the north window."
+      }
+    },
+    {
+      "id": "ko-long-return/r1/on",
+      "case": "ko-long-return",
+      "repetition": 1,
+      "mode": "on",
+      "index": 9,
+      "language": "ko",
+      "kind": "return",
+      "chatId": "natural-9-ko-long-return-r1-on",
+      "sourceHash": "e52f7eecae4e4fcb4666b373aff0403851ad8020b7dc7140959b2a997e39d7bf",
+      "sourceTokens": 3853,
+      "sourceMessagesPresent": 16,
+      "baselineTruncated": false,
+      "answer": "아침에 네가 접이식 노선도를 북쪽 창문 아래의 대나무 바구니에 넣었고, 나는 옆에서 빈 포장지를 정리하고 있었으며, 네가 노선도를 접어서 넣는 것을 봤어요.",
+      "injected": true,
+      "memoryTokens": 398,
+      "selectedIds": [
+        "6d1eb169291e69e5e792ff93c812689def1faeb2ae527764d948b4f0b18e5629_32d0fbb3112e38c89d96a6d23cb0132be4533f9e2b2aae390ba7c5c170a4ec13_0",
+        "6d1eb169291e69e5e792ff93c812689def1faeb2ae527764d948b4f0b18e5629_c3854c95d696bdf0ab8208feefc3f1b4a751c1073d7a979d45eb79a5bbfa86e3_0",
+        "6d1eb169291e69e5e792ff93c812689def1faeb2ae527764d948b4f0b18e5629_8e4de5dccec1553c92f375c4bc524770d16dcf6adf217192484793575a3168be_0",
+        "6d1eb169291e69e5e792ff93c812689def1faeb2ae527764d948b4f0b18e5629_72d6262cf1411809f79b3ee8875f118a80a744ab474bca2396843e09933a8554_0",
+        "6d1eb169291e69e5e792ff93c812689def1faeb2ae527764d948b4f0b18e5629_6c984effe0085f872a0bdae4672bc5c874789f2df8ef83eb2cffe1640ebc8315_0"
+      ],
+      "memoryText": "[Past conversation excerpt: user \"User\", message 1, passage 1]\n동네 철도 전시실에서 주말 기록 모임을 열기로 했어요. 오래된 기차를 잘 모르는 사람도 편하게 둘러볼 수 있도록, 어려운 용어를 외우게 하기보다는 생활 속 이야기를 나누는 자리로 준비하고 싶어요.\n[Past conversation excerpt: user \"User\", message 3, passage 1]\n아침에 네가 접이식 노선도를 북쪽 창문 아래의 대나무 바구니에 넣었어. 나는 옆에서 빈 포장지를 정리하고 있었고, 네가 노선도를 접어서 넣는 걸 봤어. 큰 역 구내 도면은 작업대에 그대로 두었지.\n[Past conversation excerpt: user \"User\", message 31, passage 1]\n전시 조명이 밝아서 흰 종이 설명문의 글씨가 오히려 잘 안 보이는 구역이 있어요. 컴퓨터 화면에서 보던 색과 다르니 최종 인쇄 전에 실제 조명 아래에서 다시 비교하고 싶어요.\n[Past conversation excerpt: user \"User\", message 35, passage 1]\n철도 부품을 부르는 이름이 기록마다 조금씩 달라요. 공식 문서의 명칭과 현장에서 쓰던 별칭이 모두 의미가 있으니, 어느 하나가 틀렸다고 단정하지 않고 사용 맥락을 보여 주고 싶어요.\n[Past conversation excerpt: user \"User\", message 45, passage 1]\n노선 사진은 기차가 출발하는 방향에 맞춰 배열했는데 관람객 대부분은 반대쪽 문으로 들어오게 돼요. 꼭 정해진 순서대로 보지 않아도 각 사진을 이해할 수 있게 설명을 보완하고 싶어요.",
+      "requiredEvidence": [
+        {
+          "message": 2,
+          "inMemory": true,
+          "inPrompt": true,
+          "ranks": [
+            1,
+            1
+          ]
+        }
+      ],
+      "supersededEvidence": [],
+      "retrievalMs": 882.8999996185303,
+      "queries": [
+        {
+          "query": "접이식 노선도는 누가 어디에 넣었나요?\n궁금한 것을 물어보세요. 이 대화에서 실제로 확인한 내용을 바탕으로 답하고, 끝내 정해지지 않은 정보라면 빈칸을 임의로 채우지 않고 아직 알 수 없다고 말씀드릴게요.\n동선을 확인하고 나니 앞서 나눴던 이야기 몇 가지를 다시 확인하고 싶어요. 중간에 주제가 여러 번 바뀌어서 처음 제안했던 내용과 나중에 확정한 내용을 혼동하지 않으려 해요.",
+          "targetRanks": [
+            {
+              "message": 2,
+              "rank": 1
+            }
+          ],
+          "selectedHitMessages": [
+            2,
+            44,
+            0,
+            34,
+            30
+          ]
+        },
+        {
+          "query": "접이식 노선도는 누가 어디에 넣었나요?",
+          "targetRanks": [
+            {
+              "message": 2,
+              "rank": 1
+            }
+          ],
+          "selectedHitMessages": [
+            2,
+            44,
+            0,
+            34,
+            30
+          ]
+        }
+      ],
+      "usage": {
+        "prompt_tokens": 1194,
+        "completion_tokens": 56,
+        "total_tokens": 1250,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "generationMs": 2195.860249999998,
+      "syncMs": 1416.5577080000076,
+      "question": "접이식 노선도는 누가 어디에 넣었나요?",
+      "requiredMeaning": [
+        "The assistant put the folding route map in the bamboo basket below the north window."
+      ],
+      "assessment": {
+        "id": "ko-long-return/r1/on",
+        "case": "ko-long-return",
+        "language": "ko",
+        "kind": "return",
+        "mode": "on",
+        "repetition": 1,
+        "outcome": "incorrect",
+        "unsupportedAssertion": true,
+        "rationale": "Wrong actor and unsupported personal observation/packaging claims: source user described the assistant moving the map, but answer reverses those roles."
+      }
+    },
+    {
+      "id": "ko-long-correction/r1/on",
+      "case": "ko-long-correction",
+      "repetition": 1,
+      "mode": "on",
+      "index": 10,
+      "language": "ko",
+      "kind": "correction",
+      "chatId": "natural-10-ko-long-correction-r1-on",
+      "sourceHash": "e52f7eecae4e4fcb4666b373aff0403851ad8020b7dc7140959b2a997e39d7bf",
+      "sourceTokens": 3853,
+      "sourceMessagesPresent": 16,
+      "baselineTruncated": false,
+      "answer": "일요일 해설 산책은 최종적으로 오후 3시 35분에 시작합니다. 이전에 적었던 오후 2시 15분은 취소되었어요.",
+      "injected": true,
+      "memoryTokens": 398,
+      "selectedIds": [
+        "1caf964a46ff0adef0ddaafdd0b59e81be90d16ac0d2701414a11bb3cca70895_1760308fcdf2a712f07ffd5b77f96b3c8ae149281d046c9611f76f7d6134ef3b_0",
+        "1caf964a46ff0adef0ddaafdd0b59e81be90d16ac0d2701414a11bb3cca70895_598a35eb55439e5f1abf178def77714bebbb74aefb82eb0c36c83c4b9f0ea154_0",
+        "1caf964a46ff0adef0ddaafdd0b59e81be90d16ac0d2701414a11bb3cca70895_2effa00af4f8aaaaafcac372bf82af376ec0e31d85d8780fb51f3b7fcc2819d9_0",
+        "1caf964a46ff0adef0ddaafdd0b59e81be90d16ac0d2701414a11bb3cca70895_8e4de5dccec1553c92f375c4bc524770d16dcf6adf217192484793575a3168be_0",
+        "1caf964a46ff0adef0ddaafdd0b59e81be90d16ac0d2701414a11bb3cca70895_6c984effe0085f872a0bdae4672bc5c874789f2df8ef83eb2cffe1640ebc8315_0"
+      ],
+      "memoryText": "[Past conversation excerpt: user \"User\", message 1, passage 1]\n동네 철도 전시실에서 주말 기록 모임을 열기로 했어요. 오래된 기차를 잘 모르는 사람도 편하게 둘러볼 수 있도록, 어려운 용어를 외우게 하기보다는 생활 속 이야기를 나누는 자리로 준비하고 싶어요.\n[Past conversation excerpt: user \"User\", message 5, passage 1]\n일요일 해설 산책은 일단 오후 2시 15분에 시작하는 것으로 적어 두었어요. 작년에 사용한 안내문에서 옮긴 시각이라 아직 확정은 아니에요. 담당자의 연락을 받으면 다시 확인해서 알려 줄게요.\n[Past conversation excerpt: assistant \"하린\", message 6, passage 1]\n그 부분은 따로 붙이는 작은 안내 카드로 만들면 수정하기 편하겠네요. 산책 경로를 소개하는 본문에는 아직 시작 시각을 넣지 않고, 관람객이 어디에서 기다리면 되는지만 설명해 둘게요.\n[Past conversation excerpt: user \"User\", message 21, passage 1]\n담당자에게 최종 연락을 받았어요. 일요일 해설 산책 시작은 오후 3시 35분으로 바뀌었고, 앞서 적었던 오후 2시 15분은 취소됐어요. 두 시각을 함께 남기지 말고 새 시각으로 완전히 교체해 주세요.\n[Past conversation excerpt: user \"User\", message 31, passage 1]\n전시 조명이 밝아서 흰 종이 설명문의 글씨가 오히려 잘 안 보이는 구역이 있어요. 컴퓨터 화면에서 보던 색과 다르니 최종 인쇄 전에 실제 조명 아래에서 다시 비교하고 싶어요.",
+      "requiredEvidence": [
+        {
+          "message": 20,
+          "inMemory": true,
+          "inPrompt": true,
+          "ranks": [
+            2,
+            2
+          ]
+        }
+      ],
+      "supersededEvidence": [
+        {
+          "message": 4,
+          "inMemory": true,
+          "inPrompt": true,
+          "ranks": [
+            1,
+            1
+          ]
+        }
+      ],
+      "retrievalMs": 815,
+      "queries": [
+        {
+          "query": "일요일 해설 산책은 최종적으로 몇 시에 시작하나요?",
+          "targetRanks": [
+            {
+              "message": 20,
+              "rank": 2
+            }
+          ],
+          "selectedHitMessages": [
+            4,
+            20,
+            5,
+            0,
+            30
+          ]
+        },
+        {
+          "query": "일요일 해설 산책은 최종적으로 몇 시에 시작하나요?\n궁금한 것을 물어보세요. 이 대화에서 실제로 확인한 내용을 바탕으로 답하고, 끝내 정해지지 않은 정보라면 빈칸을 임의로 채우지 않고 아직 알 수 없다고 말씀드릴게요.\n동선을 확인하고 나니 앞서 나눴던 이야기 몇 가지를 다시 확인하고 싶어요. 중간에 주제가 여러 번 바뀌어서 처음 제안했던 내용과 나중에 확정한 내용을 혼동하지 않으려 해요.",
+          "targetRanks": [
+            {
+              "message": 20,
+              "rank": 2
+            }
+          ],
+          "selectedHitMessages": [
+            4,
+            20,
+            5,
+            0,
+            30
+          ]
+        }
+      ],
+      "usage": {
+        "prompt_tokens": 1196,
+        "completion_tokens": 39,
+        "total_tokens": 1235,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "generationMs": 2692.5130409999983,
+      "syncMs": 1683.7428750000254,
+      "question": "일요일 해설 산책은 최종적으로 몇 시에 시작하나요?",
+      "requiredMeaning": [
+        "The final Sunday start is 3:35 p.m."
+      ],
+      "assessment": {
+        "id": "ko-long-correction/r1/on",
+        "case": "ko-long-correction",
+        "language": "ko",
+        "kind": "correction",
+        "mode": "on",
+        "repetition": 1,
+        "outcome": "correct",
+        "unsupportedAssertion": false,
+        "rationale": "Gives final 3:35 p.m. and cancels the old 2:15 p.m."
+      }
+    },
+    {
+      "id": "ko-long-correction/r1/off",
+      "case": "ko-long-correction",
+      "repetition": 1,
+      "mode": "off",
+      "index": 11,
+      "language": "ko",
+      "kind": "correction",
+      "chatId": "natural-11-ko-long-correction-r1-off",
+      "sourceHash": "e52f7eecae4e4fcb4666b373aff0403851ad8020b7dc7140959b2a997e39d7bf",
+      "sourceTokens": 3853,
+      "sourceMessagesPresent": 26,
+      "baselineTruncated": true,
+      "answer": "일요일 해설 산책의 최종 시작 시간은 이 대화에서 언급되지 않았어요.",
+      "injected": false,
+      "memoryTokens": 0,
+      "selectedIds": [],
+      "memoryText": "",
+      "requiredEvidence": [
+        {
+          "message": 20,
+          "inMemory": false,
+          "inPrompt": false,
+          "ranks": []
+        }
+      ],
+      "supersededEvidence": [
+        {
+          "message": 4,
+          "inMemory": false,
+          "inPrompt": false,
+          "ranks": []
+        }
+      ],
+      "retrievalMs": null,
+      "queries": [],
+      "usage": {
+        "prompt_tokens": 1741,
+        "completion_tokens": 22,
+        "total_tokens": 1763,
+        "prompt_tokens_details": {
+          "cached_tokens": 1536,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "generationMs": 967.7272499999963,
+      "syncMs": 4.8292920000094455,
+      "question": "일요일 해설 산책은 최종적으로 몇 시에 시작하나요?",
+      "requiredMeaning": [
+        "The final Sunday start is 3:35 p.m."
+      ],
+      "assessment": {
+        "id": "ko-long-correction/r1/off",
+        "case": "ko-long-correction",
+        "language": "ko",
+        "kind": "correction",
+        "mode": "off",
+        "repetition": 1,
+        "outcome": "abstained",
+        "unsupportedAssertion": false,
+        "rationale": "Abstains instead of giving the source-supported final 3:35 p.m. start."
+      }
+    },
+    {
+      "id": "ko-long-reference/r1/off",
+      "case": "ko-long-reference",
+      "repetition": 1,
+      "mode": "off",
+      "index": 12,
+      "language": "ko",
+      "kind": "reference",
+      "chatId": "natural-12-ko-long-reference-r1-off",
+      "sourceHash": "950180bd8f883e460e6cdfb99afdb9d035ff669117937401899cf5d073378c78",
+      "sourceTokens": 3886,
+      "sourceMessagesPresent": 27,
+      "baselineTruncated": true,
+      "answer": "죄송하지만, 이 대화에서는 자주색 천 현수막을 누가 언제 가져오기로 했는지에 대한 정보가 없습니다.",
+      "injected": false,
+      "memoryTokens": 0,
+      "selectedIds": [],
+      "memoryText": "",
+      "requiredEvidence": [
+        {
+          "message": 8,
+          "inMemory": false,
+          "inPrompt": false,
+          "ranks": []
+        }
+      ],
+      "supersededEvidence": [],
+      "retrievalMs": null,
+      "queries": [],
+      "usage": {
+        "prompt_tokens": 1708,
+        "completion_tokens": 31,
+        "total_tokens": 1739,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "generationMs": 1237.4770830000052,
+      "syncMs": 6.480542000004789,
+      "question": "그건 누가 언제 가져오기로 했죠?",
+      "requiredMeaning": [
+        "Soyeon brings the purple cloth banner on Wednesday evening, not Minsu on Saturday."
+      ],
+      "assessment": {
+        "id": "ko-long-reference/r1/off",
+        "case": "ko-long-reference",
+        "language": "ko",
+        "kind": "reference",
+        "mode": "off",
+        "repetition": 1,
+        "outcome": "abstained",
+        "unsupportedAssertion": false,
+        "rationale": "Abstains instead of naming Soyeon and Wednesday evening."
+      }
+    },
+    {
+      "id": "ko-long-reference/r1/on",
+      "case": "ko-long-reference",
+      "repetition": 1,
+      "mode": "on",
+      "index": 13,
+      "language": "ko",
+      "kind": "reference",
+      "chatId": "natural-13-ko-long-reference-r1-on",
+      "sourceHash": "950180bd8f883e460e6cdfb99afdb9d035ff669117937401899cf5d073378c78",
+      "sourceTokens": 3886,
+      "sourceMessagesPresent": 16,
+      "baselineTruncated": false,
+      "answer": "이 대화에서는 자주색 천 현수막을 누가 언제 가져오기로 했는지에 대한 정보가 아직 나오지 않았어요. 따라서 그 부분은 아직 알 수 없어요.",
+      "injected": true,
+      "memoryTokens": 399,
+      "selectedIds": [
+        "a5c6bece3d923766481c8e489e09ba2d56b76b8d2910e06b087e7800d6bdf531_1c51875fb9b8bae5e6a7ff69c4e8f6245bfbf9291c8d306816ae6b371d2f336b_0",
+        "a5c6bece3d923766481c8e489e09ba2d56b76b8d2910e06b087e7800d6bdf531_57b6bc11d1290319567193a965f67e791ea180abae61a4ffcaac6f07fb512ba1_0",
+        "a5c6bece3d923766481c8e489e09ba2d56b76b8d2910e06b087e7800d6bdf531_45afb4731d2c48dd2005106a9822a9e449bb15c012490059cf48c4d2fc492993_0",
+        "a5c6bece3d923766481c8e489e09ba2d56b76b8d2910e06b087e7800d6bdf531_6e3c8755c32b6039ff93f64defd4f58bb2533230df25b49915cc4e514f6faf30_0",
+        "a5c6bece3d923766481c8e489e09ba2d56b76b8d2910e06b087e7800d6bdf531_694a2b6a4bbae4b5480d9daff8a2b9f7cd12c9c7e1e5b272c1212d3f91940fef_0"
+      ],
+      "memoryText": "[Past conversation excerpt: assistant \"하린\", message 2, passage 1]\n좋아요. 사진 옆에 당시 사용하던 일상 물건을 놓으면 이야기를 시작하기 쉽겠네요. 처음 온 사람이 전시 순서를 몰라도 자연스럽게 구경할 수 있도록 테이블 사이를 넉넉하게 비워 둘게요.\n[Past conversation excerpt: assistant \"하린\", message 4, passage 1]\n정리한 물건과 아직 펼쳐 둔 물건을 구분해서 확인하면 준비가 덜 헷갈리겠어요. 통로에 남아 있는 빈 상자는 먼저 치워 두고, 다른 자료는 담당자가 확인한 뒤에 옮기도록 하죠.\n[Past conversation excerpt: user \"User\", message 17, passage 1]\n복도에서 마당으로 나가는 곳에 낮은 턱이 있어요. 빈 상자를 들고 가다가 저도 잠깐 멈칫했어요. 건물을 처음 방문한 사람이 쉽게 알아볼 수 있도록 대비되는 색으로 표시하고 싶어요.\n[Past conversation excerpt: user \"User\", message 39, passage 1]\n비가 온 뒤 좁은 수납장 안에서 눅눅한 냄새가 났어요. 빈 포장 상자는 빼 두었지만 원인을 모르니, 중요한 자료를 넣거나 벽을 직접 손대기 전에 관리인에게 확인을 부탁하려고 해요.\n[Past conversation excerpt: assistant \"하린\", message 40, passage 1]\n언제 냄새가 났는지와 주변에 젖은 곳이 있는지만 메모해 두면 점검에 도움이 되겠어요. 행사 물품은 마른 선반에 따로 두고, 환기만으로 해결됐다고 성급하게 판단하지 않는 게 좋겠네요.",
+      "requiredEvidence": [
+        {
+          "message": 8,
+          "inMemory": false,
+          "inPrompt": false,
+          "ranks": [
+            4,
+            7
+          ]
+        }
+      ],
+      "supersededEvidence": [],
+      "retrievalMs": 828.4000005722046,
+      "queries": [
+        {
+          "query": "그건 누가 언제 가져오기로 했죠?\n네, 그 물건에 대해 무엇을 확인하고 싶으세요?\n전시실에 걸 자주색 천 현수막 이야기를 다시 해요.",
+          "targetRanks": [
+            {
+              "message": 8,
+              "rank": 4
+            }
+          ],
+          "selectedHitMessages": [
+            39,
+            3,
+            1,
+            16,
+            38
+          ]
+        },
+        {
+          "query": "그건 누가 언제 가져오기로 했죠?",
+          "targetRanks": [
+            {
+              "message": 8,
+              "rank": 7
+            }
+          ],
+          "selectedHitMessages": [
+            39,
+            3,
+            1,
+            16,
+            38
+          ]
+        }
+      ],
+      "usage": {
+        "prompt_tokens": 1108,
+        "completion_tokens": 41,
+        "total_tokens": 1149,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "generationMs": 2279.8550830000313,
+      "syncMs": 1982.217250000016,
+      "question": "그건 누가 언제 가져오기로 했죠?",
+      "requiredMeaning": [
+        "Soyeon brings the purple cloth banner on Wednesday evening, not Minsu on Saturday."
+      ],
+      "assessment": {
+        "id": "ko-long-reference/r1/on",
+        "case": "ko-long-reference",
+        "language": "ko",
+        "kind": "reference",
+        "mode": "on",
+        "repetition": 1,
+        "outcome": "abstained",
+        "unsupportedAssertion": false,
+        "rationale": "Abstains instead of naming Soyeon and Wednesday evening."
+      }
+    },
+    {
+      "id": "ko-long-unknown/r1/on",
+      "case": "ko-long-unknown",
+      "repetition": 1,
+      "mode": "on",
+      "index": 14,
+      "language": "ko",
+      "kind": "unknown",
+      "chatId": "natural-14-ko-long-unknown-r1-on",
+      "sourceHash": "e52f7eecae4e4fcb4666b373aff0403851ad8020b7dc7140959b2a997e39d7bf",
+      "sourceTokens": 3853,
+      "sourceMessagesPresent": 16,
+      "baselineTruncated": false,
+      "answer": "이 대화에서는 주말 철도 기록 모임의 입장료에 관한 정보가 나오지 않았어요. 정확한 금액은 아직 알 수 없어요.",
+      "injected": true,
+      "memoryTokens": 393,
+      "selectedIds": [
+        "81b278868674dac97407175571d611611eea82a80eef210789c9609886fb2ecc_8e4de5dccec1553c92f375c4bc524770d16dcf6adf217192484793575a3168be_0",
+        "81b278868674dac97407175571d611611eea82a80eef210789c9609886fb2ecc_4c5d71484c935b5e2ce9abc9f922bd90bc9ea04e2e4db20d432db63638535b2c_0",
+        "81b278868674dac97407175571d611611eea82a80eef210789c9609886fb2ecc_d172ec2c98ad0a829917509fb75301f1f310ded9b88350f22dbc30bfca41f220_0",
+        "81b278868674dac97407175571d611611eea82a80eef210789c9609886fb2ecc_72d6262cf1411809f79b3ee8875f118a80a744ab474bca2396843e09933a8554_0",
+        "81b278868674dac97407175571d611611eea82a80eef210789c9609886fb2ecc_a930df3929c186020fe4216e1a039dbff7ee2d581ebf532e48a6b8ab463715cf_0"
+      ],
+      "memoryText": "[Past conversation excerpt: user \"User\", message 1, passage 1]\n동네 철도 전시실에서 주말 기록 모임을 열기로 했어요. 오래된 기차를 잘 모르는 사람도 편하게 둘러볼 수 있도록, 어려운 용어를 외우게 하기보다는 생활 속 이야기를 나누는 자리로 준비하고 싶어요.\n[Past conversation excerpt: assistant \"하린\", message 14, passage 1]\n추측은 별도 메모로 받아 두고 사진 설명에는 확인된 내용만 적는 게 좋겠어요. 나중에 다른 기록과 비교할 수 있도록 의견이 나온 경위도 남기되, 관람객의 개인정보는 불필요하게 모으지 말아요.\n[Past conversation excerpt: assistant \"하린\", message 18, passage 1]\n시설 담당자에게 붙여도 되는 표시 재료를 먼저 확인해 볼게요. 안내판이나 화분이 턱을 가리지 않도록 위치도 함께 살펴보고, 옆에서 접근하는 사람에게도 표시가 보이는지 확인하면 좋겠어요.\n[Past conversation excerpt: assistant \"하린\", message 32, passage 1]\n조명을 모두 어둡게 하기 전에 각도를 조금 바꿔 보면 반사가 줄어들 수 있어요. 관람객이 서서 읽는 위치에서도 확인하고, 빛에 약한 원본 자료에는 조명이 직접 닿지 않게 해요.\n[Past conversation excerpt: user \"User\", message 35, passage 1]\n철도 부품을 부르는 이름이 기록마다 조금씩 달라요. 공식 문서의 명칭과 현장에서 쓰던 별칭이 모두 의미가 있으니, 어느 하나가 틀렸다고 단정하지 않고 사용 맥락을 보여 주고 싶어요.",
+      "requiredEvidence": [],
+      "supersededEvidence": [],
+      "retrievalMs": 791.8000001907349,
+      "queries": [
+        {
+          "query": "주말 철도 기록 모임의 정확한 입장료는 얼마인가요?\n궁금한 것을 물어보세요. 이 대화에서 실제로 확인한 내용을 바탕으로 답하고, 끝내 정해지지 않은 정보라면 빈칸을 임의로 채우지 않고 아직 알 수 없다고 말씀드릴게요.\n동선을 확인하고 나니 앞서 나눴던 이야기 몇 가지를 다시 확인하고 싶어요. 중간에 주제가 여러 번 바뀌어서 처음 제안했던 내용과 나중에 확정한 내용을 혼동하지 않으려 해요.",
+          "targetRanks": [],
+          "selectedHitMessages": [
+            0,
+            13,
+            31,
+            34,
+            17
+          ]
+        },
+        {
+          "query": "주말 철도 기록 모임의 정확한 입장료는 얼마인가요?",
+          "targetRanks": [],
+          "selectedHitMessages": [
+            0,
+            13,
+            31,
+            34,
+            17
+          ]
+        }
+      ],
+      "usage": {
+        "prompt_tokens": 1192,
+        "completion_tokens": 35,
+        "total_tokens": 1227,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "generationMs": 2857.047125000012,
+      "syncMs": 1641.004958000005,
+      "question": "주말 철도 기록 모임의 정확한 입장료는 얼마인가요?",
+      "requiredMeaning": [],
+      "assessment": {
+        "id": "ko-long-unknown/r1/on",
+        "case": "ko-long-unknown",
+        "language": "ko",
+        "kind": "unknown",
+        "mode": "on",
+        "repetition": 1,
+        "outcome": "unknown-handled",
+        "unsupportedAssertion": false,
+        "rationale": "Correctly acknowledges that the price was not provided; no unsupported amount."
+      }
+    },
+    {
+      "id": "ko-long-unknown/r1/off",
+      "case": "ko-long-unknown",
+      "repetition": 1,
+      "mode": "off",
+      "index": 15,
+      "language": "ko",
+      "kind": "unknown",
+      "chatId": "natural-15-ko-long-unknown-r1-off",
+      "sourceHash": "e52f7eecae4e4fcb4666b373aff0403851ad8020b7dc7140959b2a997e39d7bf",
+      "sourceTokens": 3853,
+      "sourceMessagesPresent": 26,
+      "baselineTruncated": true,
+      "answer": "죄송하지만, 이 대화에서는 주말 철도 기록 모임의 정확한 입장료에 대한 정보가 제공되지 않았어요.",
+      "injected": false,
+      "memoryTokens": 0,
+      "selectedIds": [],
+      "memoryText": "",
+      "requiredEvidence": [],
+      "supersededEvidence": [],
+      "retrievalMs": null,
+      "queries": [],
+      "usage": {
+        "prompt_tokens": 1742,
+        "completion_tokens": 30,
+        "total_tokens": 1772,
+        "prompt_tokens_details": {
+          "cached_tokens": 1536,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "generationMs": 1081.1937920000055,
+      "syncMs": 7.056624999997439,
+      "question": "주말 철도 기록 모임의 정확한 입장료는 얼마인가요?",
+      "requiredMeaning": [],
+      "assessment": {
+        "id": "ko-long-unknown/r1/off",
+        "case": "ko-long-unknown",
+        "language": "ko",
+        "kind": "unknown",
+        "mode": "off",
+        "repetition": 1,
+        "outcome": "unknown-handled",
+        "unsupportedAssertion": false,
+        "rationale": "Correctly acknowledges the missing price without inventing a fee."
+      }
+    },
+    {
+      "id": "en-long-return/r2/on",
+      "case": "en-long-return",
+      "repetition": 2,
+      "mode": "on",
+      "index": 16,
+      "language": "en",
+      "kind": "return",
+      "chatId": "natural-16-en-long-return-r2-on",
+      "sourceHash": "946bb425724098a09ae81a4a50787602fcce7fb72dbc678e01d8dcdd10e8f8ae",
+      "sourceTokens": 2643,
+      "sourceMessagesPresent": 17,
+      "baselineTruncated": false,
+      "answer": "You put the rolled canal map away by placing it in the brass umbrella stand beside the east doorway.",
+      "injected": true,
+      "memoryTokens": 351,
+      "selectedIds": [
+        "8cebf56c84340cca76dc7b24ae63a5d4ac69c3c3d9805a1e9427bd426119eacf_fa2d04dee91fd2294c870d266baf502122616c665e0c2c1c544fb82b135070dc_0",
+        "8cebf56c84340cca76dc7b24ae63a5d4ac69c3c3d9805a1e9427bd426119eacf_656b282ef1b80c8c74354c4f92c235cb0172023a4a25ac234aecf23a6d29360d_0",
+        "8cebf56c84340cca76dc7b24ae63a5d4ac69c3c3d9805a1e9427bd426119eacf_fd479a103b040d1aa8fd0a662501ee3c3d7613732780c7b33b8444e6d95439ae_0",
+        "8cebf56c84340cca76dc7b24ae63a5d4ac69c3c3d9805a1e9427bd426119eacf_8acb1f57ab795159fbc174a716cc3ea893297c72393bee9930d8a47ab42079bd_0",
+        "8cebf56c84340cca76dc7b24ae63a5d4ac69c3c3d9805a1e9427bd426119eacf_6df1a64ce9df86cf03326dabc62a9311ab9619d2d1780bea05dfcb4f4ac2da00_0",
+        "8cebf56c84340cca76dc7b24ae63a5d4ac69c3c3d9805a1e9427bd426119eacf_842a43e7344b9ac0bad75fbc86447af9fe34d3442cfe4a0f0a4d8bc3190a7a22_0"
+      ],
+      "memoryText": "[Past conversation excerpt: user \"User\", message 1, passage 1]\nThe old canal archive is lending us its reading room for the neighbourhood history weekend. I would like the event to feel welcoming to people who have never opened an archive box before, rather than like an examination.\n[Past conversation excerpt: user \"User\", message 3, passage 1]\nI have been sorting the canal maps this morning, but the weather interrupted us before we finished carrying things indoors. Can we first check what actually reached the room before planning any more jobs?\n[Past conversation excerpt: assistant \"Rhea\", message 4, passage 1]\nYou carried the rolled canal map to the brass umbrella stand beside the east doorway. I watched you put it there while I held the door open; the flat railway map stayed on the inspection table.\n[Past conversation excerpt: assistant \"Rhea\", message 6, passage 1]\nI will keep that part of the notice on a separate card. The rest can describe the walk along the towpath without promising how long the return trip takes, since the locks sometimes cause a delay.\n[Past conversation excerpt: user \"User\", message 29, passage 1]\nI spoke with a local teacher about bringing a small group. She thinks the pupils will be more interested in comparing a familiar bridge with its earlier photograph than memorising dates about the canal's construction and ownership.\n[Past conversation excerpt: assistant \"Rhea\", message 30, passage 1]\nThen the comparison can be a conversation rather than a worksheet with a single right answer. We can ask which features changed, which survived, and what the photograph does not tell us about the people crossing the bridge.",
+      "requiredEvidence": [
+        {
+          "message": 3,
+          "inMemory": true,
+          "inPrompt": true,
+          "ranks": [
+            1,
+            1
+          ]
+        }
+      ],
+      "supersededEvidence": [],
+      "retrievalMs": 838.6999998092651,
+      "queries": [
+        {
+          "query": "Who put the rolled canal map away, and where is it?",
+          "targetRanks": [
+            {
+              "message": 3,
+              "rank": 1
+            }
+          ],
+          "selectedHitMessages": [
+            3,
+            2,
+            0,
+            5,
+            28,
+            null
+          ]
+        },
+        {
+          "query": "Who put the rolled canal map away, and where is it?\nGo ahead with the earlier questions. I will use what we actually established in the conversation, and if something was left unspecified I will say so instead of inventing a detail to make the plan sound complete.\nAfter that walk-through I would like to revisit a few things we discussed much earlier. We have changed subjects several times, and I want to be sure I am relying on the final information rather than a half-remembered suggestion.",
+          "targetRanks": [
+            {
+              "message": 3,
+              "rank": 1
+            }
+          ],
+          "selectedHitMessages": [
+            3,
+            2,
+            0,
+            5,
+            28,
+            29
+          ]
+        }
+      ],
+      "usage": {
+        "prompt_tokens": 962,
+        "completion_tokens": 20,
+        "total_tokens": 982,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "generationMs": 1919.48545800001,
+      "syncMs": 1595.3877090000024,
+      "question": "Who put the rolled canal map away, and where is it?",
+      "requiredMeaning": [
+        "The user put the rolled canal map in the brass umbrella stand beside the east doorway."
+      ],
+      "assessment": {
+        "id": "en-long-return/r2/on",
+        "case": "en-long-return",
+        "language": "en",
+        "kind": "return",
+        "mode": "on",
+        "repetition": 2,
+        "outcome": "correct",
+        "unsupportedAssertion": false,
+        "rationale": "Correctly identifies the user and the brass umbrella stand beside the east doorway."
+      }
+    },
+    {
+      "id": "en-long-return/r2/off",
+      "case": "en-long-return",
+      "repetition": 2,
+      "mode": "off",
+      "index": 17,
+      "language": "en",
+      "kind": "return",
+      "chatId": "natural-17-en-long-return-r2-off",
+      "sourceHash": "946bb425724098a09ae81a4a50787602fcce7fb72dbc678e01d8dcdd10e8f8ae",
+      "sourceTokens": 2643,
+      "sourceMessagesPresent": 36,
+      "baselineTruncated": true,
+      "answer": "That information was not mentioned in our conversation, so I don't have details about who put the rolled canal map away or its location.",
+      "injected": false,
+      "memoryTokens": 0,
+      "selectedIds": [],
+      "memoryText": "",
+      "requiredEvidence": [
+        {
+          "message": 3,
+          "inMemory": false,
+          "inPrompt": false,
+          "ranks": []
+        }
+      ],
+      "supersededEvidence": [],
+      "retrievalMs": null,
+      "queries": [],
+      "usage": {
+        "prompt_tokens": 1719,
+        "completion_tokens": 26,
+        "total_tokens": 1745,
+        "prompt_tokens_details": {
+          "cached_tokens": 1536,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "generationMs": 1309.6549999999697,
+      "syncMs": 5.236875000002328,
+      "question": "Who put the rolled canal map away, and where is it?",
+      "requiredMeaning": [
+        "The user put the rolled canal map in the brass umbrella stand beside the east doorway."
+      ],
+      "assessment": {
+        "id": "en-long-return/r2/off",
+        "case": "en-long-return",
+        "language": "en",
+        "kind": "return",
+        "mode": "off",
+        "repetition": 2,
+        "outcome": "abstained",
+        "unsupportedAssertion": false,
+        "rationale": "Abstains instead of giving the user actor and source location."
+      }
+    },
+    {
+      "id": "en-long-correction/r2/off",
+      "case": "en-long-correction",
+      "repetition": 2,
+      "mode": "off",
+      "index": 18,
+      "language": "en",
+      "kind": "correction",
+      "chatId": "natural-18-en-long-correction-r2-off",
+      "sourceHash": "946bb425724098a09ae81a4a50787602fcce7fb72dbc678e01d8dcdd10e8f8ae",
+      "sourceTokens": 2643,
+      "sourceMessagesPresent": 36,
+      "baselineTruncated": true,
+      "answer": "The final Sunday departure time for the harbour launch is not stated in our conversation.",
+      "injected": false,
+      "memoryTokens": 0,
+      "selectedIds": [],
+      "memoryText": "",
+      "requiredEvidence": [
+        {
+          "message": 20,
+          "inMemory": false,
+          "inPrompt": false,
+          "ranks": []
+        }
+      ],
+      "supersededEvidence": [
+        {
+          "message": 4,
+          "inMemory": false,
+          "inPrompt": false,
+          "ranks": []
+        }
+      ],
+      "retrievalMs": null,
+      "queries": [],
+      "usage": {
+        "prompt_tokens": 1718,
+        "completion_tokens": 16,
+        "total_tokens": 1734,
+        "prompt_tokens_details": {
+          "cached_tokens": 1536,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "generationMs": 1074.272416999971,
+      "syncMs": 4.31374999997206,
+      "question": "What is the final Sunday departure time for the harbour launch?",
+      "requiredMeaning": [
+        "The final Sunday departure is 5:25 p.m."
+      ],
+      "assessment": {
+        "id": "en-long-correction/r2/off",
+        "case": "en-long-correction",
+        "language": "en",
+        "kind": "correction",
+        "mode": "off",
+        "repetition": 2,
+        "outcome": "abstained",
+        "unsupportedAssertion": false,
+        "rationale": "Abstains although the full source gives the corrected 5:25 p.m. departure."
+      }
+    },
+    {
+      "id": "en-long-correction/r2/on",
+      "case": "en-long-correction",
+      "repetition": 2,
+      "mode": "on",
+      "index": 19,
+      "language": "en",
+      "kind": "correction",
+      "chatId": "natural-19-en-long-correction-r2-on",
+      "sourceHash": "946bb425724098a09ae81a4a50787602fcce7fb72dbc678e01d8dcdd10e8f8ae",
+      "sourceTokens": 2643,
+      "sourceMessagesPresent": 17,
+      "baselineTruncated": false,
+      "answer": "The final Sunday departure time for the harbour launch is 5:25 p.m., replacing the earlier 4:40 p.m. time.",
+      "injected": true,
+      "memoryTokens": 368,
+      "selectedIds": [
+        "dd150e1fd89271196f25e63e8062fee54e0103c1fbfeb40bc1ecb244367df377_e7e17591546b7e7ce404fbf9135d00dcb3d43bd11527856a19d6f3dae8a9e8f1_0",
+        "dd150e1fd89271196f25e63e8062fee54e0103c1fbfeb40bc1ecb244367df377_5d2ae5d03212231f66ea22a90b30295b24506f81f47fb828d8475eeb85f90eb0_0",
+        "dd150e1fd89271196f25e63e8062fee54e0103c1fbfeb40bc1ecb244367df377_a2a374798b7e55e07e083bfd432a7b518e023dbe87ad3eae4dea28110ff2a500_0",
+        "dd150e1fd89271196f25e63e8062fee54e0103c1fbfeb40bc1ecb244367df377_656b282ef1b80c8c74354c4f92c235cb0172023a4a25ac234aecf23a6d29360d_0",
+        "dd150e1fd89271196f25e63e8062fee54e0103c1fbfeb40bc1ecb244367df377_8acb1f57ab795159fbc174a716cc3ea893297c72393bee9930d8a47ab42079bd_0",
+        "dd150e1fd89271196f25e63e8062fee54e0103c1fbfeb40bc1ecb244367df377_3b4bff275742a97407a2d44ac7e74db10b1c6dfc319e83d73a960a8eeabd73ba_0"
+      ],
+      "memoryText": "[Past conversation excerpt: user \"User\", message 3, passage 1]\nI have been sorting the canal maps this morning, but the weather interrupted us before we finished carrying things indoors. Can we first check what actually reached the room before planning any more jobs?\n[Past conversation excerpt: user \"User\", message 5, passage 1]\nThe harbour launch is provisionally due to leave the archive landing at 4:40 p.m. on Sunday. I copied that time from an old leaflet, so please leave some room on our notice in case the operator corrects it.\n[Past conversation excerpt: assistant \"Rhea\", message 6, passage 1]\nI will keep that part of the notice on a separate card. The rest can describe the walk along the towpath without promising how long the return trip takes, since the locks sometimes cause a delay.\n[Past conversation excerpt: user \"User\", message 9, passage 1]\nJonah will bring the green cloth banner on Thursday morning. He repaired its corner at home and wants us to unroll it before the fabric gets damp; Priya is bringing the paper route diagram on Friday afternoon.\n[Past conversation excerpt: user \"User\", message 21, passage 1]\nI have just spoken to the launch operator. The Sunday departure from the archive landing is now 5:25 p.m.; the old 4:40 p.m. time is cancelled. Please replace it rather than showing the two times as alternatives.\n[Past conversation excerpt: assistant \"Rhea\", message 22, passage 1]\nI will replace the departure card and remove the old one completely. We should check any copies already placed near the towpath as well, so someone arriving from outside does not follow the superseded notice.",
+      "requiredEvidence": [
+        {
+          "message": 20,
+          "inMemory": true,
+          "inPrompt": true,
+          "ranks": [
+            2,
+            2
+          ]
+        }
+      ],
+      "supersededEvidence": [
+        {
+          "message": 4,
+          "inMemory": true,
+          "inPrompt": true,
+          "ranks": [
+            1,
+            1
+          ]
+        }
+      ],
+      "retrievalMs": 856.5,
+      "queries": [
+        {
+          "query": "What is the final Sunday departure time for the harbour launch?\nGo ahead with the earlier questions. I will use what we actually established in the conversation, and if something was left unspecified I will say so instead of inventing a detail to make the plan sound complete.\nAfter that walk-through I would like to revisit a few things we discussed much earlier. We have changed subjects several times, and I want to be sure I am relying on the final information rather than a half-remembered suggestion.",
+          "targetRanks": [
+            {
+              "message": 20,
+              "rank": 2
+            }
+          ],
+          "selectedHitMessages": [
+            4,
+            20,
+            21,
+            2,
+            5,
+            8
+          ]
+        },
+        {
+          "query": "What is the final Sunday departure time for the harbour launch?",
+          "targetRanks": [
+            {
+              "message": 20,
+              "rank": 2
+            }
+          ],
+          "selectedHitMessages": [
+            4,
+            20,
+            21,
+            2,
+            5,
+            8
+          ]
+        }
+      ],
+      "usage": {
+        "prompt_tokens": 978,
+        "completion_tokens": 29,
+        "total_tokens": 1007,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "generationMs": 1884.6578749999753,
+      "syncMs": 1823.6494170000078,
+      "question": "What is the final Sunday departure time for the harbour launch?",
+      "requiredMeaning": [
+        "The final Sunday departure is 5:25 p.m."
+      ],
+      "assessment": {
+        "id": "en-long-correction/r2/on",
+        "case": "en-long-correction",
+        "language": "en",
+        "kind": "correction",
+        "mode": "on",
+        "repetition": 2,
+        "outcome": "correct",
+        "unsupportedAssertion": false,
+        "rationale": "Gives 5:25 p.m. as current and explicitly supersedes 4:40 p.m."
+      }
+    },
+    {
+      "id": "en-long-reference/r2/on",
+      "case": "en-long-reference",
+      "repetition": 2,
+      "mode": "on",
+      "index": 20,
+      "language": "en",
+      "kind": "reference",
+      "chatId": "natural-20-en-long-reference-r2-on",
+      "sourceHash": "d4ec92da1b77e9928e891458a5d5de61b87393430f79df618c213e9c2b685e04",
+      "sourceTokens": 2669,
+      "sourceMessagesPresent": 17,
+      "baselineTruncated": false,
+      "answer": "Jonah will bring the green cloth banner on Thursday morning.",
+      "injected": true,
+      "memoryTokens": 368,
+      "selectedIds": [
+        "654e27a730627b8d1f800ccf7296004314265ace707337b14add32b46a8d60bd_3b4bff275742a97407a2d44ac7e74db10b1c6dfc319e83d73a960a8eeabd73ba_0",
+        "654e27a730627b8d1f800ccf7296004314265ace707337b14add32b46a8d60bd_e7e17591546b7e7ce404fbf9135d00dcb3d43bd11527856a19d6f3dae8a9e8f1_0",
+        "654e27a730627b8d1f800ccf7296004314265ace707337b14add32b46a8d60bd_c50e669a38a8024736a6e6f8c5911ca83898f6c6cef196d79644c790fcd1154b_0",
+        "654e27a730627b8d1f800ccf7296004314265ace707337b14add32b46a8d60bd_3e9afc393a62dc9044d3574b1940127313929a04e547838fe4442c03d990e877_0",
+        "654e27a730627b8d1f800ccf7296004314265ace707337b14add32b46a8d60bd_9685230edae906ff840c93843fb660cc07d73359a701286cf74f663e4a340613_0",
+        "654e27a730627b8d1f800ccf7296004314265ace707337b14add32b46a8d60bd_db1da9fceab10843f8b8cb3dbe026538be46315073441445b9b604ac3f2591db_0"
+      ],
+      "memoryText": "[Past conversation excerpt: user \"User\", message 5, passage 1]\nThe harbour launch is provisionally due to leave the archive landing at 4:40 p.m. on Sunday. I copied that time from an old leaflet, so please leave some room on our notice in case the operator corrects it.\n[Past conversation excerpt: user \"User\", message 9, passage 1]\nJonah will bring the green cloth banner on Thursday morning. He repaired its corner at home and wants us to unroll it before the fabric gets damp; Priya is bringing the paper route diagram on Friday afternoon.\n[Past conversation excerpt: assistant \"Rhea\", message 16, passage 1]\nWe can display it with a small explanation of how it was used and keep the clapper secured for the event. A recording played at a chosen moment would let visitors hear it without constantly interrupting the interviews.\n[Past conversation excerpt: user \"User\", message 33, passage 1]\nSomeone offered to lend a folding screen for the interview corner. The hinges are stiff and make a sharp noise, so we should decide where it belongs before any recording starts rather than moving it between every visitor.\n[Past conversation excerpt: assistant \"Rhea\", message 48, passage 1]\nI can check the frames over an empty padded tray. We should set aside anything doubtful rather than trying a quick repair beside the archive material, and show visitors how to hold a magnifier without touching the page.\n[Past conversation excerpt: assistant \"Rhea\", message 52, passage 1]\nWe can test it in the courtyard and ask the caretaker about a safe position. Keeping the message brief will help with legibility, and the detailed programme can remain inside where people have time to read it.",
+      "requiredEvidence": [
+        {
+          "message": 8,
+          "inMemory": true,
+          "inPrompt": true,
+          "ranks": [
+            1,
+            1
+          ]
+        }
+      ],
+      "supersededEvidence": [],
+      "retrievalMs": 772.5,
+      "queries": [
+        {
+          "query": "Who is bringing it, and when?",
+          "targetRanks": [
+            {
+              "message": 8,
+              "rank": 1
+            }
+          ],
+          "selectedHitMessages": [
+            8,
+            4,
+            51,
+            15,
+            null,
+            32
+          ]
+        },
+        {
+          "query": "Who is bringing it, and when?\nAll right, what would you like to check about that item?\nLet us return to the green cloth banner for the reading room.",
+          "targetRanks": [
+            {
+              "message": 8,
+              "rank": 1
+            }
+          ],
+          "selectedHitMessages": [
+            8,
+            null,
+            51,
+            15,
+            47,
+            32
+          ]
+        }
+      ],
+      "usage": {
+        "prompt_tokens": 925,
+        "completion_tokens": 12,
+        "total_tokens": 937,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "generationMs": 1931.341167000006,
+      "syncMs": 1570.2910000000265,
+      "question": "Who is bringing it, and when?",
+      "requiredMeaning": [
+        "Jonah brings the green cloth banner on Thursday morning, not Priya on Friday."
+      ],
+      "assessment": {
+        "id": "en-long-reference/r2/on",
+        "case": "en-long-reference",
+        "language": "en",
+        "kind": "reference",
+        "mode": "on",
+        "repetition": 2,
+        "outcome": "correct",
+        "unsupportedAssertion": false,
+        "rationale": "Correctly identifies Jonah and Thursday morning for the referenced green cloth banner."
+      }
+    },
+    {
+      "id": "en-long-reference/r2/off",
+      "case": "en-long-reference",
+      "repetition": 2,
+      "mode": "off",
+      "index": 21,
+      "language": "en",
+      "kind": "reference",
+      "chatId": "natural-21-en-long-reference-r2-off",
+      "sourceHash": "d4ec92da1b77e9928e891458a5d5de61b87393430f79df618c213e9c2b685e04",
+      "sourceTokens": 2669,
+      "sourceMessagesPresent": 38,
+      "baselineTruncated": true,
+      "answer": "The conversation does not mention who is bringing the green cloth banner for the reading room or when it will arrive.",
+      "injected": false,
+      "memoryTokens": 0,
+      "selectedIds": [],
+      "memoryText": "",
+      "requiredEvidence": [
+        {
+          "message": 8,
+          "inMemory": false,
+          "inPrompt": false,
+          "ranks": []
+        }
+      ],
+      "supersededEvidence": [],
+      "retrievalMs": null,
+      "queries": [],
+      "usage": {
+        "prompt_tokens": 1748,
+        "completion_tokens": 22,
+        "total_tokens": 1770,
+        "prompt_tokens_details": {
+          "cached_tokens": 1536,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "generationMs": 1352.8611670000246,
+      "syncMs": 5.4469999999855645,
+      "question": "Who is bringing it, and when?",
+      "requiredMeaning": [
+        "Jonah brings the green cloth banner on Thursday morning, not Priya on Friday."
+      ],
+      "assessment": {
+        "id": "en-long-reference/r2/off",
+        "case": "en-long-reference",
+        "language": "en",
+        "kind": "reference",
+        "mode": "off",
+        "repetition": 2,
+        "outcome": "abstained",
+        "unsupportedAssertion": false,
+        "rationale": "Abstains instead of naming Jonah and Thursday morning."
+      }
+    },
+    {
+      "id": "en-long-unknown/r2/off",
+      "case": "en-long-unknown",
+      "repetition": 2,
+      "mode": "off",
+      "index": 22,
+      "language": "en",
+      "kind": "unknown",
+      "chatId": "natural-22-en-long-unknown-r2-off",
+      "sourceHash": "946bb425724098a09ae81a4a50787602fcce7fb72dbc678e01d8dcdd10e8f8ae",
+      "sourceTokens": 2643,
+      "sourceMessagesPresent": 36,
+      "baselineTruncated": true,
+      "answer": "The exact admission price for the history weekend is not stated in our conversation.",
+      "injected": false,
+      "memoryTokens": 0,
+      "selectedIds": [],
+      "memoryText": "",
+      "requiredEvidence": [],
+      "supersededEvidence": [],
+      "retrievalMs": null,
+      "queries": [],
+      "usage": {
+        "prompt_tokens": 1717,
+        "completion_tokens": 15,
+        "total_tokens": 1732,
+        "prompt_tokens_details": {
+          "cached_tokens": 1536,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "generationMs": 1238.6160000000382,
+      "syncMs": 4.594209000002593,
+      "question": "What is the exact admission price for the history weekend?",
+      "requiredMeaning": [],
+      "assessment": {
+        "id": "en-long-unknown/r2/off",
+        "case": "en-long-unknown",
+        "language": "en",
+        "kind": "unknown",
+        "mode": "off",
+        "repetition": 2,
+        "outcome": "unknown-handled",
+        "unsupportedAssertion": false,
+        "rationale": "Correctly acknowledges that admission price is unspecified; no guessed amount."
+      }
+    },
+    {
+      "id": "en-long-unknown/r2/on",
+      "case": "en-long-unknown",
+      "repetition": 2,
+      "mode": "on",
+      "index": 23,
+      "language": "en",
+      "kind": "unknown",
+      "chatId": "natural-23-en-long-unknown-r2-on",
+      "sourceHash": "946bb425724098a09ae81a4a50787602fcce7fb72dbc678e01d8dcdd10e8f8ae",
+      "sourceTokens": 2643,
+      "sourceMessagesPresent": 17,
+      "baselineTruncated": false,
+      "answer": "The exact admission price for the history weekend was not stated in our conversation.",
+      "injected": true,
+      "memoryTokens": 358,
+      "selectedIds": [
+        "db19b71a0ef431b7e3acd83ca9e946076df508480a74368be3d10effbc8798b6_fd479a103b040d1aa8fd0a662501ee3c3d7613732780c7b33b8444e6d95439ae_0",
+        "db19b71a0ef431b7e3acd83ca9e946076df508480a74368be3d10effbc8798b6_d967845b9975a2631b20795725bad750a7ad888831697a0b103c35dff6f86eee_0",
+        "db19b71a0ef431b7e3acd83ca9e946076df508480a74368be3d10effbc8798b6_6df1a64ce9df86cf03326dabc62a9311ab9619d2d1780bea05dfcb4f4ac2da00_0",
+        "db19b71a0ef431b7e3acd83ca9e946076df508480a74368be3d10effbc8798b6_e7e17591546b7e7ce404fbf9135d00dcb3d43bd11527856a19d6f3dae8a9e8f1_0",
+        "db19b71a0ef431b7e3acd83ca9e946076df508480a74368be3d10effbc8798b6_ebadd4874145ab2526c28e5338705c25b43b842b937105b5d8c0a97ca4c17b12_0",
+        "db19b71a0ef431b7e3acd83ca9e946076df508480a74368be3d10effbc8798b6_3c17ee6d869f47ed8d8269942f670cf38e9bd7e28ebacc61419ec62272b13937_0"
+      ],
+      "memoryText": "[Past conversation excerpt: user \"User\", message 1, passage 1]\nThe old canal archive is lending us its reading room for the neighbourhood history weekend. I would like the event to feel welcoming to people who have never opened an archive box before, rather than like an examination.\n[Past conversation excerpt: user \"User\", message 5, passage 1]\nThe harbour launch is provisionally due to leave the archive landing at 4:40 p.m. on Sunday. I copied that time from an old leaflet, so please leave some room on our notice in case the operator corrects it.\n[Past conversation excerpt: assistant \"Rhea\", message 14, passage 1]\nLet's invite suggestions on separate slips instead of writing directly on the display. That lets the archive compare different recollections afterwards and keeps an uncertain identification from looking like an established catalogue entry.\n[Past conversation excerpt: user \"User\", message 19, passage 1]\nThe refreshments table can use the courtyard if the weather stays dry. I will ask the volunteers to keep cups away from the archive material even when a visitor says they are only coming inside for a quick look.\n[Past conversation excerpt: user \"User\", message 29, passage 1]\nI spoke with a local teacher about bringing a small group. She thinks the pupils will be more interested in comparing a familiar bridge with its earlier photograph than memorising dates about the canal's construction and ownership.\n[Past conversation excerpt: assistant \"Rhea\", message 38, passage 1]\nWe should show its date and explain that it is a later recollection. It could prompt useful discussion, as long as the caption does not present a remembered detail as proof that the shelter certainly stood there.",
+      "requiredEvidence": [],
+      "supersededEvidence": [],
+      "retrievalMs": 830.3000001907349,
+      "queries": [
+        {
+          "query": "What is the exact admission price for the history weekend?",
+          "targetRanks": [],
+          "selectedHitMessages": [
+            0,
+            13,
+            28,
+            4,
+            37,
+            18
+          ]
+        },
+        {
+          "query": "What is the exact admission price for the history weekend?\nGo ahead with the earlier questions. I will use what we actually established in the conversation, and if something was left unspecified I will say so instead of inventing a detail to make the plan sound complete.\nAfter that walk-through I would like to revisit a few things we discussed much earlier. We have changed subjects several times, and I want to be sure I am relying on the final information rather than a half-remembered suggestion.",
+          "targetRanks": [],
+          "selectedHitMessages": [
+            0,
+            13,
+            28,
+            4,
+            37,
+            18
+          ]
+        }
+      ],
+      "usage": {
+        "prompt_tokens": 967,
+        "completion_tokens": 15,
+        "total_tokens": 982,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "generationMs": 1764.2126679999637,
+      "syncMs": 2058.8354590000235,
+      "question": "What is the exact admission price for the history weekend?",
+      "requiredMeaning": [],
+      "assessment": {
+        "id": "en-long-unknown/r2/on",
+        "case": "en-long-unknown",
+        "language": "en",
+        "kind": "unknown",
+        "mode": "on",
+        "repetition": 2,
+        "outcome": "unknown-handled",
+        "unsupportedAssertion": false,
+        "rationale": "Correctly acknowledges that admission price is unspecified; no guessed amount."
+      }
+    },
+    {
+      "id": "ko-long-return/r2/on",
+      "case": "ko-long-return",
+      "repetition": 2,
+      "mode": "on",
+      "index": 24,
+      "language": "ko",
+      "kind": "return",
+      "chatId": "natural-24-ko-long-return-r2-on",
+      "sourceHash": "e52f7eecae4e4fcb4666b373aff0403851ad8020b7dc7140959b2a997e39d7bf",
+      "sourceTokens": 3853,
+      "sourceMessagesPresent": 16,
+      "baselineTruncated": false,
+      "answer": "아침에 네가 접이식 노선도를 북쪽 창문 아래의 대나무 바구니에 넣었고, 나는 옆에서 빈 포장지를 정리하고 있었으며, 네가 노선도를 접어서 넣는 걸 봤어요.",
+      "injected": true,
+      "memoryTokens": 398,
+      "selectedIds": [
+        "65723cb8d735227f7fb4a35df6046c7bf5b49c5eb57c233ceacd7b45b6b8deb7_32d0fbb3112e38c89d96a6d23cb0132be4533f9e2b2aae390ba7c5c170a4ec13_0",
+        "65723cb8d735227f7fb4a35df6046c7bf5b49c5eb57c233ceacd7b45b6b8deb7_c3854c95d696bdf0ab8208feefc3f1b4a751c1073d7a979d45eb79a5bbfa86e3_0",
+        "65723cb8d735227f7fb4a35df6046c7bf5b49c5eb57c233ceacd7b45b6b8deb7_8e4de5dccec1553c92f375c4bc524770d16dcf6adf217192484793575a3168be_0",
+        "65723cb8d735227f7fb4a35df6046c7bf5b49c5eb57c233ceacd7b45b6b8deb7_72d6262cf1411809f79b3ee8875f118a80a744ab474bca2396843e09933a8554_0",
+        "65723cb8d735227f7fb4a35df6046c7bf5b49c5eb57c233ceacd7b45b6b8deb7_6c984effe0085f872a0bdae4672bc5c874789f2df8ef83eb2cffe1640ebc8315_0"
+      ],
+      "memoryText": "[Past conversation excerpt: user \"User\", message 1, passage 1]\n동네 철도 전시실에서 주말 기록 모임을 열기로 했어요. 오래된 기차를 잘 모르는 사람도 편하게 둘러볼 수 있도록, 어려운 용어를 외우게 하기보다는 생활 속 이야기를 나누는 자리로 준비하고 싶어요.\n[Past conversation excerpt: user \"User\", message 3, passage 1]\n아침에 네가 접이식 노선도를 북쪽 창문 아래의 대나무 바구니에 넣었어. 나는 옆에서 빈 포장지를 정리하고 있었고, 네가 노선도를 접어서 넣는 걸 봤어. 큰 역 구내 도면은 작업대에 그대로 두었지.\n[Past conversation excerpt: user \"User\", message 31, passage 1]\n전시 조명이 밝아서 흰 종이 설명문의 글씨가 오히려 잘 안 보이는 구역이 있어요. 컴퓨터 화면에서 보던 색과 다르니 최종 인쇄 전에 실제 조명 아래에서 다시 비교하고 싶어요.\n[Past conversation excerpt: user \"User\", message 35, passage 1]\n철도 부품을 부르는 이름이 기록마다 조금씩 달라요. 공식 문서의 명칭과 현장에서 쓰던 별칭이 모두 의미가 있으니, 어느 하나가 틀렸다고 단정하지 않고 사용 맥락을 보여 주고 싶어요.\n[Past conversation excerpt: user \"User\", message 45, passage 1]\n노선 사진은 기차가 출발하는 방향에 맞춰 배열했는데 관람객 대부분은 반대쪽 문으로 들어오게 돼요. 꼭 정해진 순서대로 보지 않아도 각 사진을 이해할 수 있게 설명을 보완하고 싶어요.",
+      "requiredEvidence": [
+        {
+          "message": 2,
+          "inMemory": true,
+          "inPrompt": true,
+          "ranks": [
+            1,
+            1
+          ]
+        }
+      ],
+      "supersededEvidence": [],
+      "retrievalMs": 816.7999992370605,
+      "queries": [
+        {
+          "query": "접이식 노선도는 누가 어디에 넣었나요?\n궁금한 것을 물어보세요. 이 대화에서 실제로 확인한 내용을 바탕으로 답하고, 끝내 정해지지 않은 정보라면 빈칸을 임의로 채우지 않고 아직 알 수 없다고 말씀드릴게요.\n동선을 확인하고 나니 앞서 나눴던 이야기 몇 가지를 다시 확인하고 싶어요. 중간에 주제가 여러 번 바뀌어서 처음 제안했던 내용과 나중에 확정한 내용을 혼동하지 않으려 해요.",
+          "targetRanks": [
+            {
+              "message": 2,
+              "rank": 1
+            }
+          ],
+          "selectedHitMessages": [
+            2,
+            44,
+            0,
+            34,
+            30
+          ]
+        },
+        {
+          "query": "접이식 노선도는 누가 어디에 넣었나요?",
+          "targetRanks": [
+            {
+              "message": 2,
+              "rank": 1
+            }
+          ],
+          "selectedHitMessages": [
+            2,
+            44,
+            0,
+            34,
+            30
+          ]
+        }
+      ],
+      "usage": {
+        "prompt_tokens": 1194,
+        "completion_tokens": 56,
+        "total_tokens": 1250,
+        "prompt_tokens_details": {
+          "cached_tokens": 1024,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "generationMs": 2168.980249999964,
+      "syncMs": 1425.4116249999497,
+      "question": "접이식 노선도는 누가 어디에 넣었나요?",
+      "requiredMeaning": [
+        "The assistant put the folding route map in the bamboo basket below the north window."
+      ],
+      "assessment": {
+        "id": "ko-long-return/r2/on",
+        "case": "ko-long-return",
+        "language": "ko",
+        "kind": "return",
+        "mode": "on",
+        "repetition": 2,
+        "outcome": "incorrect",
+        "unsupportedAssertion": true,
+        "rationale": "Wrong actor: copies the user report as its own, saying the user moved the map and the assistant tidied packaging and observed. The source assigns the map action to the assistant and the observation/packaging to the user."
+      }
+    },
+    {
+      "id": "ko-long-return/r2/off",
+      "case": "ko-long-return",
+      "repetition": 2,
+      "mode": "off",
+      "index": 25,
+      "language": "ko",
+      "kind": "return",
+      "chatId": "natural-25-ko-long-return-r2-off",
+      "sourceHash": "e52f7eecae4e4fcb4666b373aff0403851ad8020b7dc7140959b2a997e39d7bf",
+      "sourceTokens": 3853,
+      "sourceMessagesPresent": 26,
+      "baselineTruncated": true,
+      "answer": "죄송하지만, 이 대화에서는 접이식 노선도를 누가 어디에 넣었는지에 대한 정보가 나오지 않았어요.",
+      "injected": false,
+      "memoryTokens": 0,
+      "selectedIds": [],
+      "memoryText": "",
+      "requiredEvidence": [
+        {
+          "message": 2,
+          "inMemory": false,
+          "inPrompt": false,
+          "ranks": []
+        }
+      ],
+      "supersededEvidence": [],
+      "retrievalMs": null,
+      "queries": [],
+      "usage": {
+        "prompt_tokens": 1739,
+        "completion_tokens": 31,
+        "total_tokens": 1770,
+        "prompt_tokens_details": {
+          "cached_tokens": 1536,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "generationMs": 1361.6732090000296,
+      "syncMs": 5.766541000048164,
+      "question": "접이식 노선도는 누가 어디에 넣었나요?",
+      "requiredMeaning": [
+        "The assistant put the folding route map in the bamboo basket below the north window."
+      ],
+      "assessment": {
+        "id": "ko-long-return/r2/off",
+        "case": "ko-long-return",
+        "language": "ko",
+        "kind": "return",
+        "mode": "off",
+        "repetition": 2,
+        "outcome": "abstained",
+        "unsupportedAssertion": false,
+        "rationale": "Abstains instead of identifying the assistant and its bamboo-basket location."
+      }
+    },
+    {
+      "id": "ko-long-correction/r2/off",
+      "case": "ko-long-correction",
+      "repetition": 2,
+      "mode": "off",
+      "index": 26,
+      "language": "ko",
+      "kind": "correction",
+      "chatId": "natural-26-ko-long-correction-r2-off",
+      "sourceHash": "e52f7eecae4e4fcb4666b373aff0403851ad8020b7dc7140959b2a997e39d7bf",
+      "sourceTokens": 3853,
+      "sourceMessagesPresent": 26,
+      "baselineTruncated": true,
+      "answer": "일요일 해설 산책 시작 시간에 대한 정보는 이 대화에서 아직 알 수 없어요.",
+      "injected": false,
+      "memoryTokens": 0,
+      "selectedIds": [],
+      "memoryText": "",
+      "requiredEvidence": [
+        {
+          "message": 20,
+          "inMemory": false,
+          "inPrompt": false,
+          "ranks": []
+        }
+      ],
+      "supersededEvidence": [
+        {
+          "message": 4,
+          "inMemory": false,
+          "inPrompt": false,
+          "ranks": []
+        }
+      ],
+      "retrievalMs": null,
+      "queries": [],
+      "usage": {
+        "prompt_tokens": 1741,
+        "completion_tokens": 22,
+        "total_tokens": 1763,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "generationMs": 1248.6815840000054,
+      "syncMs": 5.169999999983702,
+      "question": "일요일 해설 산책은 최종적으로 몇 시에 시작하나요?",
+      "requiredMeaning": [
+        "The final Sunday start is 3:35 p.m."
+      ],
+      "assessment": {
+        "id": "ko-long-correction/r2/off",
+        "case": "ko-long-correction",
+        "language": "ko",
+        "kind": "correction",
+        "mode": "off",
+        "repetition": 2,
+        "outcome": "abstained",
+        "unsupportedAssertion": false,
+        "rationale": "Abstains instead of giving the final 3:35 p.m. start."
+      }
+    },
+    {
+      "id": "ko-long-correction/r2/on",
+      "case": "ko-long-correction",
+      "repetition": 2,
+      "mode": "on",
+      "index": 27,
+      "language": "ko",
+      "kind": "correction",
+      "chatId": "natural-27-ko-long-correction-r2-on",
+      "sourceHash": "e52f7eecae4e4fcb4666b373aff0403851ad8020b7dc7140959b2a997e39d7bf",
+      "sourceTokens": 3853,
+      "sourceMessagesPresent": 16,
+      "baselineTruncated": false,
+      "answer": "일요일 해설 산책 시작 시각은 최종적으로 오후 3시 35분으로 바뀌었고, 이전에 적었던 오후 2시 15분은 취소됐어요.",
+      "injected": true,
+      "memoryTokens": 398,
+      "selectedIds": [
+        "dccc3346e1dba7c7187ff14fb12544914dbce7afba371578ced1571dc719353b_1760308fcdf2a712f07ffd5b77f96b3c8ae149281d046c9611f76f7d6134ef3b_0",
+        "dccc3346e1dba7c7187ff14fb12544914dbce7afba371578ced1571dc719353b_598a35eb55439e5f1abf178def77714bebbb74aefb82eb0c36c83c4b9f0ea154_0",
+        "dccc3346e1dba7c7187ff14fb12544914dbce7afba371578ced1571dc719353b_2effa00af4f8aaaaafcac372bf82af376ec0e31d85d8780fb51f3b7fcc2819d9_0",
+        "dccc3346e1dba7c7187ff14fb12544914dbce7afba371578ced1571dc719353b_8e4de5dccec1553c92f375c4bc524770d16dcf6adf217192484793575a3168be_0",
+        "dccc3346e1dba7c7187ff14fb12544914dbce7afba371578ced1571dc719353b_6c984effe0085f872a0bdae4672bc5c874789f2df8ef83eb2cffe1640ebc8315_0"
+      ],
+      "memoryText": "[Past conversation excerpt: user \"User\", message 1, passage 1]\n동네 철도 전시실에서 주말 기록 모임을 열기로 했어요. 오래된 기차를 잘 모르는 사람도 편하게 둘러볼 수 있도록, 어려운 용어를 외우게 하기보다는 생활 속 이야기를 나누는 자리로 준비하고 싶어요.\n[Past conversation excerpt: user \"User\", message 5, passage 1]\n일요일 해설 산책은 일단 오후 2시 15분에 시작하는 것으로 적어 두었어요. 작년에 사용한 안내문에서 옮긴 시각이라 아직 확정은 아니에요. 담당자의 연락을 받으면 다시 확인해서 알려 줄게요.\n[Past conversation excerpt: assistant \"하린\", message 6, passage 1]\n그 부분은 따로 붙이는 작은 안내 카드로 만들면 수정하기 편하겠네요. 산책 경로를 소개하는 본문에는 아직 시작 시각을 넣지 않고, 관람객이 어디에서 기다리면 되는지만 설명해 둘게요.\n[Past conversation excerpt: user \"User\", message 21, passage 1]\n담당자에게 최종 연락을 받았어요. 일요일 해설 산책 시작은 오후 3시 35분으로 바뀌었고, 앞서 적었던 오후 2시 15분은 취소됐어요. 두 시각을 함께 남기지 말고 새 시각으로 완전히 교체해 주세요.\n[Past conversation excerpt: user \"User\", message 31, passage 1]\n전시 조명이 밝아서 흰 종이 설명문의 글씨가 오히려 잘 안 보이는 구역이 있어요. 컴퓨터 화면에서 보던 색과 다르니 최종 인쇄 전에 실제 조명 아래에서 다시 비교하고 싶어요.",
+      "requiredEvidence": [
+        {
+          "message": 20,
+          "inMemory": true,
+          "inPrompt": true,
+          "ranks": [
+            2,
+            2
+          ]
+        }
+      ],
+      "supersededEvidence": [
+        {
+          "message": 4,
+          "inMemory": true,
+          "inPrompt": true,
+          "ranks": [
+            1,
+            1
+          ]
+        }
+      ],
+      "retrievalMs": 831.8000001907349,
+      "queries": [
+        {
+          "query": "일요일 해설 산책은 최종적으로 몇 시에 시작하나요?",
+          "targetRanks": [
+            {
+              "message": 20,
+              "rank": 2
+            }
+          ],
+          "selectedHitMessages": [
+            4,
+            20,
+            5,
+            0,
+            30
+          ]
+        },
+        {
+          "query": "일요일 해설 산책은 최종적으로 몇 시에 시작하나요?\n궁금한 것을 물어보세요. 이 대화에서 실제로 확인한 내용을 바탕으로 답하고, 끝내 정해지지 않은 정보라면 빈칸을 임의로 채우지 않고 아직 알 수 없다고 말씀드릴게요.\n동선을 확인하고 나니 앞서 나눴던 이야기 몇 가지를 다시 확인하고 싶어요. 중간에 주제가 여러 번 바뀌어서 처음 제안했던 내용과 나중에 확정한 내용을 혼동하지 않으려 해요.",
+          "targetRanks": [
+            {
+              "message": 20,
+              "rank": 2
+            }
+          ],
+          "selectedHitMessages": [
+            4,
+            20,
+            5,
+            0,
+            30
+          ]
+        }
+      ],
+      "usage": {
+        "prompt_tokens": 1196,
+        "completion_tokens": 44,
+        "total_tokens": 1240,
+        "prompt_tokens_details": {
+          "cached_tokens": 1024,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "generationMs": 2062.2464590000454,
+      "syncMs": 1930.2820829999982,
+      "question": "일요일 해설 산책은 최종적으로 몇 시에 시작하나요?",
+      "requiredMeaning": [
+        "The final Sunday start is 3:35 p.m."
+      ],
+      "assessment": {
+        "id": "ko-long-correction/r2/on",
+        "case": "ko-long-correction",
+        "language": "ko",
+        "kind": "correction",
+        "mode": "on",
+        "repetition": 2,
+        "outcome": "correct",
+        "unsupportedAssertion": false,
+        "rationale": "Gives the final 3:35 p.m. and explicitly cancels the old 2:15 p.m."
+      }
+    },
+    {
+      "id": "ko-long-reference/r2/on",
+      "case": "ko-long-reference",
+      "repetition": 2,
+      "mode": "on",
+      "index": 28,
+      "language": "ko",
+      "kind": "reference",
+      "chatId": "natural-28-ko-long-reference-r2-on",
+      "sourceHash": "950180bd8f883e460e6cdfb99afdb9d035ff669117937401899cf5d073378c78",
+      "sourceTokens": 3886,
+      "sourceMessagesPresent": 16,
+      "baselineTruncated": false,
+      "answer": "이 대화에서는 자주색 천 현수막을 누가 언제 가져오기로 했는지에 대한 언급이 없어요. 따라서 그 정보는 아직 알 수 없습니다.",
+      "injected": true,
+      "memoryTokens": 399,
+      "selectedIds": [
+        "ab4b7a95d688e88b34352fef6e7dc8de89afccb89e812620bcb78b42da9852c0_1c51875fb9b8bae5e6a7ff69c4e8f6245bfbf9291c8d306816ae6b371d2f336b_0",
+        "ab4b7a95d688e88b34352fef6e7dc8de89afccb89e812620bcb78b42da9852c0_57b6bc11d1290319567193a965f67e791ea180abae61a4ffcaac6f07fb512ba1_0",
+        "ab4b7a95d688e88b34352fef6e7dc8de89afccb89e812620bcb78b42da9852c0_45afb4731d2c48dd2005106a9822a9e449bb15c012490059cf48c4d2fc492993_0",
+        "ab4b7a95d688e88b34352fef6e7dc8de89afccb89e812620bcb78b42da9852c0_6e3c8755c32b6039ff93f64defd4f58bb2533230df25b49915cc4e514f6faf30_0",
+        "ab4b7a95d688e88b34352fef6e7dc8de89afccb89e812620bcb78b42da9852c0_694a2b6a4bbae4b5480d9daff8a2b9f7cd12c9c7e1e5b272c1212d3f91940fef_0"
+      ],
+      "memoryText": "[Past conversation excerpt: assistant \"하린\", message 2, passage 1]\n좋아요. 사진 옆에 당시 사용하던 일상 물건을 놓으면 이야기를 시작하기 쉽겠네요. 처음 온 사람이 전시 순서를 몰라도 자연스럽게 구경할 수 있도록 테이블 사이를 넉넉하게 비워 둘게요.\n[Past conversation excerpt: assistant \"하린\", message 4, passage 1]\n정리한 물건과 아직 펼쳐 둔 물건을 구분해서 확인하면 준비가 덜 헷갈리겠어요. 통로에 남아 있는 빈 상자는 먼저 치워 두고, 다른 자료는 담당자가 확인한 뒤에 옮기도록 하죠.\n[Past conversation excerpt: user \"User\", message 17, passage 1]\n복도에서 마당으로 나가는 곳에 낮은 턱이 있어요. 빈 상자를 들고 가다가 저도 잠깐 멈칫했어요. 건물을 처음 방문한 사람이 쉽게 알아볼 수 있도록 대비되는 색으로 표시하고 싶어요.\n[Past conversation excerpt: user \"User\", message 39, passage 1]\n비가 온 뒤 좁은 수납장 안에서 눅눅한 냄새가 났어요. 빈 포장 상자는 빼 두었지만 원인을 모르니, 중요한 자료를 넣거나 벽을 직접 손대기 전에 관리인에게 확인을 부탁하려고 해요.\n[Past conversation excerpt: assistant \"하린\", message 40, passage 1]\n언제 냄새가 났는지와 주변에 젖은 곳이 있는지만 메모해 두면 점검에 도움이 되겠어요. 행사 물품은 마른 선반에 따로 두고, 환기만으로 해결됐다고 성급하게 판단하지 않는 게 좋겠네요.",
+      "requiredEvidence": [
+        {
+          "message": 8,
+          "inMemory": false,
+          "inPrompt": false,
+          "ranks": [
+            4,
+            7
+          ]
+        }
+      ],
+      "supersededEvidence": [],
+      "retrievalMs": 825.6000003814697,
+      "queries": [
+        {
+          "query": "그건 누가 언제 가져오기로 했죠?\n네, 그 물건에 대해 무엇을 확인하고 싶으세요?\n전시실에 걸 자주색 천 현수막 이야기를 다시 해요.",
+          "targetRanks": [
+            {
+              "message": 8,
+              "rank": 4
+            }
+          ],
+          "selectedHitMessages": [
+            39,
+            3,
+            1,
+            16,
+            38
+          ]
+        },
+        {
+          "query": "그건 누가 언제 가져오기로 했죠?",
+          "targetRanks": [
+            {
+              "message": 8,
+              "rank": 7
+            }
+          ],
+          "selectedHitMessages": [
+            39,
+            3,
+            1,
+            16,
+            38
+          ]
+        }
+      ],
+      "usage": {
+        "prompt_tokens": 1108,
+        "completion_tokens": 38,
+        "total_tokens": 1146,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "generationMs": 2289.303041999985,
+      "syncMs": 1516.7127079999773,
+      "question": "그건 누가 언제 가져오기로 했죠?",
+      "requiredMeaning": [
+        "Soyeon brings the purple cloth banner on Wednesday evening, not Minsu on Saturday."
+      ],
+      "assessment": {
+        "id": "ko-long-reference/r2/on",
+        "case": "ko-long-reference",
+        "language": "ko",
+        "kind": "reference",
+        "mode": "on",
+        "repetition": 2,
+        "outcome": "abstained",
+        "unsupportedAssertion": false,
+        "rationale": "Abstains instead of naming Soyeon and Wednesday evening."
+      }
+    },
+    {
+      "id": "ko-long-reference/r2/off",
+      "case": "ko-long-reference",
+      "repetition": 2,
+      "mode": "off",
+      "index": 29,
+      "language": "ko",
+      "kind": "reference",
+      "chatId": "natural-29-ko-long-reference-r2-off",
+      "sourceHash": "950180bd8f883e460e6cdfb99afdb9d035ff669117937401899cf5d073378c78",
+      "sourceTokens": 3886,
+      "sourceMessagesPresent": 27,
+      "baselineTruncated": true,
+      "answer": "죄송하지만, 이 대화에서는 자주색 천 현수막을 누가 언제 가져오기로 했는지에 대한 정보가 없습니다.",
+      "injected": false,
+      "memoryTokens": 0,
+      "selectedIds": [],
+      "memoryText": "",
+      "requiredEvidence": [
+        {
+          "message": 8,
+          "inMemory": false,
+          "inPrompt": false,
+          "ranks": []
+        }
+      ],
+      "supersededEvidence": [],
+      "retrievalMs": null,
+      "queries": [],
+      "usage": {
+        "prompt_tokens": 1708,
+        "completion_tokens": 31,
+        "total_tokens": 1739,
+        "prompt_tokens_details": {
+          "cached_tokens": 1536,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "generationMs": 1191.8570009999676,
+      "syncMs": 4.578457999974489,
+      "question": "그건 누가 언제 가져오기로 했죠?",
+      "requiredMeaning": [
+        "Soyeon brings the purple cloth banner on Wednesday evening, not Minsu on Saturday."
+      ],
+      "assessment": {
+        "id": "ko-long-reference/r2/off",
+        "case": "ko-long-reference",
+        "language": "ko",
+        "kind": "reference",
+        "mode": "off",
+        "repetition": 2,
+        "outcome": "abstained",
+        "unsupportedAssertion": false,
+        "rationale": "Abstains instead of naming Soyeon and Wednesday evening."
+      }
+    },
+    {
+      "id": "ko-long-unknown/r2/off",
+      "case": "ko-long-unknown",
+      "repetition": 2,
+      "mode": "off",
+      "index": 30,
+      "language": "ko",
+      "kind": "unknown",
+      "chatId": "natural-30-ko-long-unknown-r2-off",
+      "sourceHash": "e52f7eecae4e4fcb4666b373aff0403851ad8020b7dc7140959b2a997e39d7bf",
+      "sourceTokens": 3853,
+      "sourceMessagesPresent": 26,
+      "baselineTruncated": true,
+      "answer": "죄송하지만, 이 대화에서는 주말 철도 기록 모임의 정확한 입장료에 대한 정보가 제공되지 않았어요.",
+      "injected": false,
+      "memoryTokens": 0,
+      "selectedIds": [],
+      "memoryText": "",
+      "requiredEvidence": [],
+      "supersededEvidence": [],
+      "retrievalMs": null,
+      "queries": [],
+      "usage": {
+        "prompt_tokens": 1742,
+        "completion_tokens": 30,
+        "total_tokens": 1772,
+        "prompt_tokens_details": {
+          "cached_tokens": 1536,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "generationMs": 1110.5072079999954,
+      "syncMs": 5.236040999996476,
+      "question": "주말 철도 기록 모임의 정확한 입장료는 얼마인가요?",
+      "requiredMeaning": [],
+      "assessment": {
+        "id": "ko-long-unknown/r2/off",
+        "case": "ko-long-unknown",
+        "language": "ko",
+        "kind": "unknown",
+        "mode": "off",
+        "repetition": 2,
+        "outcome": "unknown-handled",
+        "unsupportedAssertion": false,
+        "rationale": "Correctly acknowledges the missing price without inventing a fee."
+      }
+    },
+    {
+      "id": "ko-long-unknown/r2/on",
+      "case": "ko-long-unknown",
+      "repetition": 2,
+      "mode": "on",
+      "index": 31,
+      "language": "ko",
+      "kind": "unknown",
+      "chatId": "natural-31-ko-long-unknown-r2-on",
+      "sourceHash": "e52f7eecae4e4fcb4666b373aff0403851ad8020b7dc7140959b2a997e39d7bf",
+      "sourceTokens": 3853,
+      "sourceMessagesPresent": 16,
+      "baselineTruncated": false,
+      "answer": "이 대화에서는 주말 철도 기록 모임의 입장료에 관한 정보가 제공되지 않았어요. 따라서 정확한 입장료는 아직 알 수 없어요.",
+      "injected": true,
+      "memoryTokens": 393,
+      "selectedIds": [
+        "1cbbe3b39978a97461b3dd65d47839e8c7f38fc5ae603bace8d0e3e160c3748a_8e4de5dccec1553c92f375c4bc524770d16dcf6adf217192484793575a3168be_0",
+        "1cbbe3b39978a97461b3dd65d47839e8c7f38fc5ae603bace8d0e3e160c3748a_4c5d71484c935b5e2ce9abc9f922bd90bc9ea04e2e4db20d432db63638535b2c_0",
+        "1cbbe3b39978a97461b3dd65d47839e8c7f38fc5ae603bace8d0e3e160c3748a_d172ec2c98ad0a829917509fb75301f1f310ded9b88350f22dbc30bfca41f220_0",
+        "1cbbe3b39978a97461b3dd65d47839e8c7f38fc5ae603bace8d0e3e160c3748a_72d6262cf1411809f79b3ee8875f118a80a744ab474bca2396843e09933a8554_0",
+        "1cbbe3b39978a97461b3dd65d47839e8c7f38fc5ae603bace8d0e3e160c3748a_a930df3929c186020fe4216e1a039dbff7ee2d581ebf532e48a6b8ab463715cf_0"
+      ],
+      "memoryText": "[Past conversation excerpt: user \"User\", message 1, passage 1]\n동네 철도 전시실에서 주말 기록 모임을 열기로 했어요. 오래된 기차를 잘 모르는 사람도 편하게 둘러볼 수 있도록, 어려운 용어를 외우게 하기보다는 생활 속 이야기를 나누는 자리로 준비하고 싶어요.\n[Past conversation excerpt: assistant \"하린\", message 14, passage 1]\n추측은 별도 메모로 받아 두고 사진 설명에는 확인된 내용만 적는 게 좋겠어요. 나중에 다른 기록과 비교할 수 있도록 의견이 나온 경위도 남기되, 관람객의 개인정보는 불필요하게 모으지 말아요.\n[Past conversation excerpt: assistant \"하린\", message 18, passage 1]\n시설 담당자에게 붙여도 되는 표시 재료를 먼저 확인해 볼게요. 안내판이나 화분이 턱을 가리지 않도록 위치도 함께 살펴보고, 옆에서 접근하는 사람에게도 표시가 보이는지 확인하면 좋겠어요.\n[Past conversation excerpt: assistant \"하린\", message 32, passage 1]\n조명을 모두 어둡게 하기 전에 각도를 조금 바꿔 보면 반사가 줄어들 수 있어요. 관람객이 서서 읽는 위치에서도 확인하고, 빛에 약한 원본 자료에는 조명이 직접 닿지 않게 해요.\n[Past conversation excerpt: user \"User\", message 35, passage 1]\n철도 부품을 부르는 이름이 기록마다 조금씩 달라요. 공식 문서의 명칭과 현장에서 쓰던 별칭이 모두 의미가 있으니, 어느 하나가 틀렸다고 단정하지 않고 사용 맥락을 보여 주고 싶어요.",
+      "requiredEvidence": [],
+      "supersededEvidence": [],
+      "retrievalMs": 827.8000001907349,
+      "queries": [
+        {
+          "query": "주말 철도 기록 모임의 정확한 입장료는 얼마인가요?\n궁금한 것을 물어보세요. 이 대화에서 실제로 확인한 내용을 바탕으로 답하고, 끝내 정해지지 않은 정보라면 빈칸을 임의로 채우지 않고 아직 알 수 없다고 말씀드릴게요.\n동선을 확인하고 나니 앞서 나눴던 이야기 몇 가지를 다시 확인하고 싶어요. 중간에 주제가 여러 번 바뀌어서 처음 제안했던 내용과 나중에 확정한 내용을 혼동하지 않으려 해요.",
+          "targetRanks": [],
+          "selectedHitMessages": [
+            0,
+            13,
+            31,
+            34,
+            17
+          ]
+        },
+        {
+          "query": "주말 철도 기록 모임의 정확한 입장료는 얼마인가요?",
+          "targetRanks": [],
+          "selectedHitMessages": [
+            0,
+            13,
+            31,
+            34,
+            17
+          ]
+        }
+      ],
+      "usage": {
+        "prompt_tokens": 1192,
+        "completion_tokens": 37,
+        "total_tokens": 1229,
+        "prompt_tokens_details": {
+          "cached_tokens": 1024,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "generationMs": 2114.4173330000485,
+      "syncMs": 1541.9035840000142,
+      "question": "주말 철도 기록 모임의 정확한 입장료는 얼마인가요?",
+      "requiredMeaning": [],
+      "assessment": {
+        "id": "ko-long-unknown/r2/on",
+        "case": "ko-long-unknown",
+        "language": "ko",
+        "kind": "unknown",
+        "mode": "on",
+        "repetition": 2,
+        "outcome": "unknown-handled",
+        "unsupportedAssertion": false,
+        "rationale": "Correctly acknowledges that the price was not provided; no unsupported amount."
+      }
+    }
+  ]
+}

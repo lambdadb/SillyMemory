@@ -6,7 +6,7 @@ Long-term memory for SillyTavern.
 
 An installable, experimental UI extension for character chats. SillyMemory keeps recent messages intact and replaces older plain-text history with relevant source passages under a fixed memory token budget. It uses LambdaDB managed embeddings through SillyTavern's built-in CORS proxy. No server plugin or LambdaDB modification is required.
 
-**Validation status:** experimental. The current suite passes 96 unit tests on Node.js 20.12.0 and 24, plus 188 real-host/emulator checks including two host SIGKILL/restarts and 24 repeated chat/branch cycles. A new 32-answer live speaker regression verifies that recalled excerpts reach OpenAI in their original user/assistant roles. The original attribution failures did not recur, but a new reported-action case failed in both memory-off and memory-on conditions: provisional strict results are 14/16 in each mode, so the diagnostic quality gate remains failed and human review is pending. See [speaker results and limitations](docs/speaker-attribution-results.md) and the [validation record](docs/validation.md). Older evaluations describe their recorded implementations; they have not all been rerun against this change.
+**Validation status:** experimental. The current suite passes 102 unit tests on Node.js 20.12.0 and 24. A new 32-answer live evaluation uses two 64-message English/Korean synthetic histories with a 2,048-token host context and 400-token memory budget. All off-mode prompts were actually truncated; required old evidence reached 0/12 answerable off prompts and 10/12 on prompts. Provisional strict scores are off 4/16 and on 11/16, including one spatial wording judgment needing human adjudication. The quality gate remains failed and independent human review is pending. See [results and limitations](docs/long-dialogue-results.md), [the earlier speaker regression](docs/speaker-attribution-results.md), and the [validation record](docs/validation.md). These are bounded synthetic results, not general quality or release-readiness guarantees.
 
 The real Git URL installation/update check passed 17 assertions for the `SillyMemory` URL, including settings retention and session-key clearing. This tested two unreleased 0.1.0 commits, not an upgrade between published releases; see the [installation validation](docs/validation.md#repository-naming-and-installation--2026-09-28).
 
@@ -188,6 +188,12 @@ allows bounded provider 5xx retries while recording every failure. See [executio
 semantic review](docs/natural-dialogue-live.md) for the fixed model, usage bounds,
 cleanup requirements and scoring workflow. Automated retrieval/integrity checks
 and assistant annotations do not replace the protocol's human semantic review.
+
+The [long-dialogue protocol](docs/long-dialogue-evaluation.md) adds a separately
+frozen 32-answer test with measured context overflow. See [its results](docs/long-dialogue-results.md)
+and [offline human-review workflow](docs/human-review.md). Generate a local review
+form with `node scripts/natural-review.mjs blind-review.json --output review.html`;
+it provides no automatic grades and sends no data over the network.
 
 See [architecture](docs/architecture.md), [pinned contracts](docs/contracts.md), and [validation and remaining checks](docs/validation.md).
 
