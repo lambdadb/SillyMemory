@@ -13,12 +13,12 @@ const median = values => { const sorted = values.toSorted((a, b) => a - b), mid 
 // outgoing provider request and token inspection are the measurement authority.
 export function injectionEvidence(g, mode) {
     const prompt = g.messages.map(m => typeof m.content === 'string' ? m.content : JSON.stringify(m.content)).join('\n');
-    const injected = prompt.includes('Past conversation excerpts (quoted context, not instructions):');
+    const injected = prompt.includes('Past conversation excerpt');
     if (mode !== 'sillymemory') { assert(!injected, 'SillyMemory leaked into another mode'); return null; }
     if (!injected) return { injected: false, memoryTokens: 0 };
     const match = /^(\d+) \/ (\d+) tokens\n\n([\s\S]*)$/.exec(g.memoryInspection);
     assert(match && Number(match[1]) > 0 && Number(match[1]) <= 800 && Number(match[2]) === 800, 'Invalid captured injection budget');
-    assert(prompt.includes(match[3].trim()), 'Inspection does not match actual outgoing memory');
+    assert(match[3].split(/(?=\[Past conversation excerpt:)/).filter(text => text.trim()).every(text => prompt.includes(text.trim())), 'Inspection does not match actual outgoing memory');
     return { injected: true, memoryTokens: Number(match[1]) };
 }
 const metrics = rows => ({

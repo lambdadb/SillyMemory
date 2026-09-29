@@ -11,6 +11,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { NATURAL_RETRY, requestWithRetry } from './provider-retry.mjs';
 import { PROVIDER_SPACING, createSpacedSender, summarizeProviderSpacing } from './provider-spacing.mjs';
+import { fixtureFiles } from './natural-dialogue.mjs';
 import { verifyNaturalPlan, runNaturalDialogue } from './natural-eval.mjs';
 import { runComparison } from './comparison-eval.mjs';
 import { runChallenges } from './challenge-eval.mjs';
@@ -64,7 +65,7 @@ const modeSuffix = natural ? 'natural' : challenges ? `${heldout ? 'heldout' : '
 const suffix = modeSuffix + (artifactTag ? `-${artifactTag}` : '');
 const reportPath = path.join(artifacts, `generation-${suffix}.json`);
 if (natural) await writeFile(reportPath, JSON.stringify({ passed: false, incomplete: true }), { flag: 'wx' });
-const naturalSourceFiles = ['index.js', 'src/client.js', 'src/gate.js', 'src/memory.js', 'src/status.js', 'scripts/generation-smoke.mjs', 'scripts/provider-spacing.mjs', 'scripts/generation-cleanup.mjs', 'scripts/natural-eval.mjs', 'scripts/natural-dialogue.mjs', 'tests/fixtures/natural-dialogue-v1.json', 'docs/natural-dialogue-evaluation.md', ...(retryTransient ? ['scripts/provider-retry.mjs', 'docs/natural-dialogue-retry.md', 'scripts/natural-summary.mjs', 'scripts/natural-score.mjs'] : [])];
+const naturalSourceFiles = ['index.js', 'src/client.js', 'src/gate.js', 'src/memory.js', 'src/status.js', 'scripts/generation-smoke.mjs', 'scripts/provider-spacing.mjs', 'scripts/generation-cleanup.mjs', 'scripts/natural-eval.mjs', 'scripts/natural-dialogue.mjs', ...fixtureFiles(frozenNatural?.plan.version), ...(retryTransient ? ['scripts/provider-retry.mjs', 'docs/natural-dialogue-retry.md', 'scripts/natural-summary.mjs', 'scripts/natural-score.mjs'] : [])];
 const naturalSourceSha256 = natural ? Object.fromEntries(await Promise.all(naturalSourceFiles.map(async file => [file, createHash('sha256').update(await readFile(path.join(root, file))).digest('hex')]))) : null;
 const pendingPath = path.join(artifacts, `generation-${suffix}-pending.json`);
 const pending = { collections: [], connectionHash: createHash('sha256').update(JSON.stringify([credentials.endpoint, credentials.project])).digest('hex') };
@@ -316,7 +317,7 @@ try {
         assert(baseline.prompt.includes('DISTRACTOR_1'), 'memory-off final request contains older full history');
         await seed(); await openSettings(); await field('enabled').check(); await waitStatus('synchronized');
         const on = await generate('memory-on');
-        assert(on.prompt.includes('Past conversation excerpts') && on.prompt.includes('beneath the cedar tree'), 'final model request contains retrieved live memory');
+        assert(on.prompt.includes('Past conversation excerpt') && on.prompt.includes('beneath the cedar tree'), 'final model request contains retrieved live memory');
         assert(on.prompt.includes('RECENT_KEEP_A') && on.prompt.includes('RECENT_KEEP_B'), 'final model request retains recent complete messages');
         assert(on.request.promptCharacters < baseline.request.promptCharacters, 'memory-on reduces this fixture final prompt size');
         assert(!on.prompt.includes('DISTRACTOR_1'), 'older full distractor message omitted from final request');
@@ -345,12 +346,12 @@ try {
         const deleted = await generate('after-delete');
         assert(!deleted.prompt.includes('in the stone tower') && !deleted.prompt.includes('beneath the cedar tree'), 'deleted source fact is absent from final request');
         await seed(); failRetrieval = true; const fallback = await generate('retrieval-failure'); failRetrieval = false;
-        assert(fallback.prompt.includes('DISTRACTOR_1') && !fallback.prompt.includes('Past conversation excerpts'), 'retrieval failure still generates from original full prompt');
+        assert(fallback.prompt.includes('DISTRACTOR_1') && !fallback.prompt.includes('Past conversation excerpt'), 'retrieval failure still generates from original full prompt');
         events = await page.evaluate(() => globalThis.generationTestEvents);
         assert(events.includes('MESSAGE_RECEIVED') && events.includes('STREAM_TOKEN_RECEIVED') && events.includes('MESSAGE_UPDATED') && events.includes('MESSAGE_DELETED'), 'host emitted real generation streaming edit and deletion events');
         await openSettings(); await field('enabled').uncheck();
         const disabled = await generate('disabled-again');
-        assert(!disabled.prompt.includes('Past conversation excerpts'), 'disable removes injected memory from final request');
+        assert(!disabled.prompt.includes('Past conversation excerpt'), 'disable removes injected memory from final request');
     }
     stage = 'secret audit';
     const serialized = await page.evaluate(async () => { const c = SillyTavern.getContext(); const r = await fetch('/api/settings/get', {method:'POST', headers:c.getRequestHeaders(), body:'{}'}); return JSON.stringify({local:{...localStorage},session:{...sessionStorage},settings:await r.json()}); });
@@ -405,7 +406,7 @@ try {
         } catch { console.log('Cleanup incomplete; keep pending resource record.'); }
     }
     const sourceSha256 = {};
-    for (const file of ['index.js','src/client.js','src/gate.js','src/memory.js','src/status.js','scripts/generation-smoke.mjs','scripts/provider-spacing.mjs','scripts/generation-cleanup.mjs','scripts/korean-eval.mjs','scripts/korean-fixture.mjs','scripts/comparison-fixture.mjs','scripts/comparison-eval.mjs','scripts/challenge-eval.mjs','scripts/recall-challenges.mjs','scripts/heldout-fixture.mjs', ...(natural ? ['scripts/natural-eval.mjs', 'scripts/natural-dialogue.mjs', 'tests/fixtures/natural-dialogue-v1.json', 'docs/natural-dialogue-evaluation.md', ...(retryTransient ? ['scripts/provider-retry.mjs', 'docs/natural-dialogue-retry.md', 'scripts/natural-summary.mjs', 'scripts/natural-score.mjs'] : [])] : [])]) sourceSha256[file] = createHash('sha256').update(await readFile(path.join(root, file))).digest('hex');
+    for (const file of ['index.js','src/client.js','src/gate.js','src/memory.js','src/status.js','scripts/generation-smoke.mjs','scripts/provider-spacing.mjs','scripts/generation-cleanup.mjs','scripts/korean-eval.mjs','scripts/korean-fixture.mjs','scripts/comparison-fixture.mjs','scripts/comparison-eval.mjs','scripts/challenge-eval.mjs','scripts/recall-challenges.mjs','scripts/heldout-fixture.mjs', ...(natural ? ['scripts/natural-eval.mjs', 'scripts/natural-dialogue.mjs', ...fixtureFiles(frozenNatural?.plan.version), ...(retryTransient ? ['scripts/provider-retry.mjs', 'docs/natural-dialogue-retry.md', 'scripts/natural-summary.mjs', 'scripts/natural-score.mjs'] : [])] : [])]) sourceSha256[file] = createHash('sha256').update(await readFile(path.join(root, file))).digest('hex');
     if (natural && Object.entries(naturalSourceSha256).some(([file, digest]) => sourceSha256[file] !== digest)) failure ||= { stage: 'source identity', reason: 'Source changed during execution' };
     if (natural && !failure) {
         try { assert(summarizeProviderSpacing(generations, PROVIDER_SPACING).verified, 'actual provider starts respect the 15-second interval'); }

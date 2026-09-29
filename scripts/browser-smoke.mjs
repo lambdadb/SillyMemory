@@ -79,16 +79,28 @@ async function start(enabled) {
     }
     throw new Error('SillyTavern did not start');
 }
+const errors = [], pageErrorDetails = [], hostFailures = [];
 try {
     await start(false);
     const disabled = await fetch(`${url}/proxy/${encodeURIComponent(`${endpoint}/projects/synthetic/collections`)}`);
     check('real server rejects proxy when disabled', disabled.status === 404 && (await disabled.text()).includes('CORS proxy is disabled'));
     await stop(); await start(true);
+    // The default profile selects the remote Horde service. This interceptor
+    // test generates no model responses; do not make its success depend on
+    // Horde availability during startup/reloads. Use an unconnected OpenAI UI.
+    const profilePath = path.join(work, 'data/default-user/settings.json');
+    const profile = JSON.parse(await readFile(profilePath, 'utf8'));
+    profile.main_api = 'openai';
+    await writeFile(profilePath, JSON.stringify(profile));
     browser = await chromium.launch();
     const browserContext = await browser.newContext({ viewport: { width: 1440, height: 1100 } });
     const page = await browserContext.newPage();
     debugPage = page; page.setDefaultTimeout(15000);
-    const errors = []; page.on('pageerror', e => errors.push(e.message));
+    page.on('pageerror', e => { errors.push(e.message); pageErrorDetails.push(e.stack); });
+    page.on('response', response => {
+        const pathname = new URL(response.url()).pathname;
+        if (response.status() >= 500 && pathname.startsWith('/api/')) hostFailures.push({ path: pathname, status: response.status() });
+    });
     await page.goto(url); await page.getByText('Welcome to SillyTavern!', { exact: true }).waitFor();
     await page.getByText('Save', { exact: true }).last().click();
     await page.locator('#sillymemory').waitFor({ state: 'attached', timeout: 30000 });
@@ -143,15 +155,14 @@ try {
         const chat = c.chat.map((m, index) => ({ ...m, index })); let aborted = false;
         // Exercise the actual host interceptor dispatcher, including manifest order.
         const { runGenerationInterceptors } = await import('/scripts/extensions.js');
-        const { getExtensionPrompt } = await import('/script.js');
         aborted = await runGenerationInterceptors(chat, 4096, 'normal');
-        const rendered = await getExtensionPrompt(1, 2, '\n', 0, true);
-        return { before, after: JSON.stringify(c.chat), chat, aborted, rendered, renderedTokens: await c.getTokenCountAsync(rendered), macroValue: c.chatMetadata.variables?.sillymemory_test, injection: c.extensionPrompts.sillymemory?.value, inspection: document.querySelector('[data-sm="inspection"]').textContent };
+        const rendered = chat.filter(m => m.mes.startsWith('[Past conversation excerpt:')).map(m => m.mes).join('\n');
+        return { before, after: JSON.stringify(c.chat), chat, aborted, rendered, renderedTokens: await c.getTokenCountAsync(rendered), macroValue: c.chatMetadata.variables?.sillymemory_test, injection: rendered, inspection: document.querySelector('[data-sm="inspection"]').textContent };
     });
     const result = await prompt();
     check('real host dispatcher injects bounded memory', Boolean(result.injection) && /\d+ \/ 250 tokens/.test(result.inspection));
-    check('host prompt assembly keeps recalled macros literal within budget', result.rendered.includes('｛｛char｝｝') && result.rendered.includes('＜USER＞') && result.macroValue === undefined && result.renderedTokens <= 250);
-    check('recent messages and persisted source chat are preserved', result.chat.length === 2 && result.chat[0].mes.includes('passage 6') && result.before === result.after);
+    check('native recalled excerpts keep macros literal within budget', result.rendered.includes('｛｛char｝｝') && result.rendered.includes('＜USER＞') && result.macroValue === undefined && result.renderedTokens <= 250);
+    check('recent messages and persisted source chat are preserved', result.chat.filter(m => !m.mes.startsWith('[Past conversation excerpt:')).length === 2 && result.chat.at(-2).mes.includes('passage 6') && result.before === result.after);
     delayedQuery = 400;
     const olderGeneration = prompt();
     await page.waitForTimeout(100);
@@ -162,7 +173,7 @@ try {
     await page.evaluate(async () => { const c = SillyTavern.getContext(); c.chat[0].mes = 'Edited: the compass is in the tower.'; await c.eventSource.emit(c.eventTypes.MESSAGE_UPDATED, 0); });
     await waitStatus('synchronized'); staleHits = [old];
     const edited = await prompt();
-    check('edits delete stale records and reject delayed old hits', !collection.docs.has(old.id) && !edited.injection.includes('[Message 1, User, passage 1]\nSynthetic'));
+    check('edits delete stale records and reject delayed old hits', !collection.docs.has(old.id) && !edited.injection.includes('Synthetic passage 0'));
     await page.evaluate(async () => { const c = SillyTavern.getContext(); c.chat[1].mes = 'Selected swipe: silver compass'; c.chat[1].swipe_id = 1; await c.eventSource.emit(c.eventTypes.MESSAGE_SWIPED, 1); });
     await waitStatus('synchronized');
     check('swipe event updates remote source', [...collection.docs.values()].some(d => d.text.includes('Selected swipe')));
@@ -201,7 +212,7 @@ try {
     }
     await writeFile(path.join(artifacts, artifactName), JSON.stringify({ passed: true, faultResults, sourceSha256, time: new Date().toISOString(), sillyTavern: revision, node: process.version, browser: browser.version(), upstream: 'Local HTTPS LambdaDB emulator; no live managed embeddings', checks, pageErrors: errors, requestCount: calls.length, remainingCollections: collections.size }, null, 2));
 } catch (error) {
-    if (faultMode) await writeFile(path.join(artifacts, artifactName), JSON.stringify({ passed: false, checks, faultResults, faultObservations: faults.observations, failure: error.message, remainingCollections: collections.size }, null, 2));
+    if (faultMode) await writeFile(path.join(artifacts, artifactName), JSON.stringify({ passed: false, checks, faultResults, faultObservations: faults.observations, failure: error.message, pageErrors: errors, pageErrorDetails, hostFailures, remainingCollections: collections.size }, null, 2));
     console.error('Browser failure status:', await debugPage?.locator('[data-sm="status"]').innerText().catch(() => 'unavailable'));
     console.error('Upstream request count:', calls.length);
     await debugPage?.screenshot({ path: path.join(artifacts, faultMode ? 'fault-failure.png' : 'failure.png') }).catch(() => {});

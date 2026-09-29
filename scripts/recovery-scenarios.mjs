@@ -37,7 +37,7 @@ export async function runRecoveryScenarios({ page, field, waitStatus, prompt, ch
         await waitStatus('synchronized');
         check(`cycle ${i}: edit/swipe remote state matches source`, await remoteMatches());
         const before = await prompt();
-        check(`cycle ${i}: scoped memory preserves recent messages and budget`, !before.aborted && before.injection?.includes(marker) && !new RegExp(`CYCLE_(?!${i}\\b)\\d+`).test(before.injection) && before.chat.length === 2 && before.before === before.after && before.renderedTokens <= 250);
+        check(`cycle ${i}: scoped memory preserves recent messages and budget`, !before.aborted && before.injection?.includes(marker) && !new RegExp(`CYCLE_(?!${i}\\b)\\d+`).test(before.injection) && before.chat.filter(m => !m.mes.startsWith('[Past conversation excerpt:')).length === 2 && before.before === before.after && before.renderedTokens <= 800);
         await page.evaluate(async i => {
             const c = SillyTavern.getContext(); await c.deleteMessage(0);
             c.chat.push({ mes: `Recent arrival ${i}: ready for tomorrow.`, name: 'User', is_user: true, is_system: false, send_date: 0, extra: {} });

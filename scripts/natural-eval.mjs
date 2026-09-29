@@ -2,17 +2,17 @@
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
-import { hash, loadNaturalFixture, naturalCases, naturalSchedule } from './natural-dialogue.mjs';
+import { hash, fixtureFiles, loadNaturalFixture, naturalCases, naturalSchedule } from './natural-dialogue.mjs';
 const sourceView = messages => messages.map(m => ({ text: m.mes, user: m.is_user, name: m.name }));
 export async function verifyNaturalPlan(filename) {
     assert(filename, 'SM_NATURAL_PLAN must identify the pre-execution frozen plan');
     const bytes = await readFile(filename), plan = JSON.parse(bytes);
-    const fixture = loadNaturalFixture();
+    const fixture = loadNaturalFixture(plan.version);
     assert.equal(plan.audit.fixtureHash, hash(fixture), 'Frozen fixture changed');
     assert.deepEqual(plan.settings, fixture.settings); assert.deepEqual(plan.generation, fixture.generation);
-    assert.deepEqual(plan.cases, naturalCases()); assert.deepEqual(plan.schedule, naturalSchedule());
+    assert.deepEqual(plan.cases, naturalCases(fixture)); assert.deepEqual(plan.schedule, naturalSchedule(fixture));
     assert.equal(plan.results, null);
-    for (const file of ['index.js', 'src/client.js', 'src/gate.js', 'src/memory.js', 'src/status.js', 'scripts/natural-dialogue.mjs', 'tests/fixtures/natural-dialogue-v1.json', 'docs/natural-dialogue-evaluation.md']) {
+    for (const file of ['index.js', 'src/client.js', 'src/gate.js', 'src/memory.js', 'src/status.js', 'scripts/natural-dialogue.mjs', ...fixtureFiles(plan.version)]) {
         assert.equal(createHash('sha256').update(await readFile(new URL(`../${file}`, import.meta.url))).digest('hex'), plan.sourceSha256[file], `Frozen source changed: ${file}`);
     }
     return { plan, sha256: createHash('sha256').update(bytes).digest('hex') };
@@ -68,13 +68,13 @@ export async function runNaturalDialogue({ page, field, openSettings, waitStatus
         const telemetry = await page.evaluate(() => ({ retrieval: globalThis.naturalRetrieval, queries: globalThis.naturalQueries }));
         const promptText = output.request.messages.map(m => typeof m.content === 'string' ? m.content : JSON.stringify(m.content)).join('\n');
         const selected = telemetry.retrieval?.selected, passages = selected?.passages || [], injected = Boolean(selected?.text);
-        if (sample.mode === 'off') check(!telemetry.retrieval && !promptText.includes('Past conversation excerpts'), `${sample.id}: memory disabled`);
+        if (sample.mode === 'off') check(!telemetry.retrieval && !promptText.includes('Past conversation excerpt'), `${sample.id}: memory disabled`);
         else {
             check(Boolean(telemetry.retrieval && selected), `${sample.id}: retrieval completed without fallback`);
             const expected = new Map(telemetry.retrieval.expected.map(doc => [doc.id, doc]));
             check(passages.every(doc => JSON.stringify(doc) === JSON.stringify(expected.get(doc.id))), `${sample.id}: selected IDs and text match current local documents`);
             check(selected.tokens === telemetry.retrieval.hostTokens && selected.tokens <= plan.settings.budget, `${sample.id}: exact host-tokenized memory budget`);
-            check(!injected || promptText.includes(selected.text.trim()), `${sample.id}: selected memory reached outgoing prompt`);
+            check(!injected || selected.messages.every(excerpt => output.request.messages.some(m => m.role === (excerpt.is_user ? 'user' : 'assistant') && typeof m.content === 'string' && m.content.includes(excerpt.mes.trim()))), `${sample.id}: every excerpt reached outgoing prompt with its source role`);
         }
         check(source.slice(-(plan.settings.recent - 1)).every(m => promptText.includes(m.mes.trim())) && promptText.includes(question), `${sample.id}: recent source and question retained`);
         check(promptText.includes(plan.generation.instruction), `${sample.id}: frozen generation instruction present`);

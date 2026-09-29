@@ -1,0 +1,93 @@
+{
+  "description": "Real pinned SillyTavern and live LambdaDB with deterministic local generation fixture, not a real LLM or answer-quality test.",
+  "rawReportSha256": "4dcb124088f9205cd96250393c452482d7fb8c0ad5d78d316cf724304b67f6e9",
+  "time": "2026-09-28T16:26:12.359Z",
+  "sillyTavern": "06bde939fb1e9c4c8d8641d810f0a916b5bce127",
+  "generator": "deterministic test fixture, not a real LLM",
+  "sourceSha256": {
+    "index.js": "e02dbd971a7864a58bbb87394b29391bb05ac6f10073668cd4da30c90cb7f301",
+    "src/client.js": "a808537f640d51e7b893d422a8c288f647d12641de2a785c4098afc681239da8",
+    "src/gate.js": "c1e5afada320e822a535ff4b464d6e565cfadbf56aabc78b1ba6f667bf4b78bf",
+    "src/memory.js": "291c665c34c84cf18166dcc97c87b7908676ab1378bf95e8c30fa0612189a537",
+    "src/status.js": "b9a826cfd393cc58bdcd64fcef698bc35f20a23f60a24f9e314b45919052d6f6",
+    "scripts/generation-smoke.mjs": "5b640f8660f3dc833c9d7bbab272d215e976d0eebedc2ecf37ecc8bcf2785f5a",
+    "scripts/provider-spacing.mjs": "8e50762dcef277dc8d959d237fe6c59c20ac7f41349a32f0cb59ffb55ceac0d3",
+    "scripts/generation-cleanup.mjs": "3765a872a7a6a848c2d401636c81c010fbf19ecc720ca2c706ee34a4fad7680c",
+    "scripts/korean-eval.mjs": "b47d0040a3d8004b8450731fbe0acd27c6ce6696c5e80340dcd77f78745806da",
+    "scripts/korean-fixture.mjs": "a436d4fd0ee1521a51db590b3d7affce883db3f88179bb8fdf5af137d26e79d6",
+    "scripts/comparison-fixture.mjs": "da9363e925d7776c8bf09af9ccb3f5615ffffceb5791d7081ffa1d0c27e5cc2d",
+    "scripts/comparison-eval.mjs": "9b9b4c08c1a78c8c16a81906d328f40cb797084e7ffd134a293edf0a93062e14",
+    "scripts/challenge-eval.mjs": "ffa315ead230ac5235cc995ce2c4571136111bab5bb197f4d113ec0111ddb402",
+    "scripts/recall-challenges.mjs": "c0d45b713bf40fe4130f924b85728fe9d0775d1e01a163a168ef50e86b27c551",
+    "scripts/heldout-fixture.mjs": "9aeb8483a20f120ed89abdff50b25e0b0e03b04d5e2332d8e276f4d9e0999c67"
+  },
+  "checks": [
+    "real host connected to the selected completion endpoint",
+    "real settings buttons completed the live LambdaDB gate and provisioning",
+    "memory-off: generated assistant response saved",
+    "memory-off final request contains older full history",
+    "memory-on: generated assistant response saved",
+    "final model request contains retrieved live memory",
+    "final model request retains recent complete messages",
+    "memory-on reduces this fixture final prompt size",
+    "older full distractor message omitted from final request",
+    "prompt pruning preserves source conversation",
+    "after-edit: generated assistant response saved",
+    "native edit reaches the final request without the old fact",
+    "streaming-regenerate: generated assistant response saved",
+    "real generation consumed an SSE streaming response",
+    "swipe-generation: generated assistant response saved",
+    "swipe generation uses current memory",
+    "native-branch: generated assistant response saved",
+    "native branch completes generation with its own synchronized memory",
+    "after-delete: generated assistant response saved",
+    "deleted source fact is absent from final request",
+    "retrieval-failure: generated assistant response saved",
+    "retrieval failure still generates from original full prompt",
+    "host emitted real generation streaming edit and deletion events",
+    "disabled-again: generated assistant response saved",
+    "disable removes injected memory from final request",
+    "real keys are absent from browser and persisted host settings",
+    "settings deletion drains writes and removes owned memory"
+  ],
+  "cleanupComplete": true,
+  "passed": true,
+  "generations": [
+    {
+      "stage": "memory-off",
+      "stream": false
+    },
+    {
+      "stage": "memory-on",
+      "stream": false
+    },
+    {
+      "stage": "after-edit",
+      "stream": false
+    },
+    {
+      "stage": "streaming-regenerate",
+      "stream": true
+    },
+    {
+      "stage": "swipe-generation",
+      "stream": true
+    },
+    {
+      "stage": "native-branch",
+      "stream": false
+    },
+    {
+      "stage": "after-delete",
+      "stream": false
+    },
+    {
+      "stage": "retrieval-failure",
+      "stream": false
+    },
+    {
+      "stage": "disabled-again",
+      "stream": false
+    }
+  ]
+}

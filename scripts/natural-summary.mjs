@@ -16,7 +16,7 @@ const distribution = values => {
 export function summarizeNatural(report) {
     assert(report.passed === true && !report.failure && !report.incomplete, 'A successful complete integrity report is required');
     assert(report.cleanupComplete === true && report.nativeCleanupComplete === true, 'Verified cleanup is required');
-    const fixture = loadNaturalFixture(), schedule = naturalSchedule(), evaluation = report.evaluation, cases = new Map(naturalCases().map(item => [item.id, item]));
+    const evaluation = report.evaluation, fixture = loadNaturalFixture(evaluation?.version), schedule = naturalSchedule(fixture), cases = new Map(naturalCases(fixture).map(item => [item.id, item]));
     assert.equal(report.sillyTavern, '06bde939fb1e9c4c8d8641d810f0a916b5bce127', 'Wrong host revision');
     assert.equal(evaluation?.version, fixture.version, 'Wrong evaluation version');
     assert(evaluation?.complete === true, 'Incomplete natural evaluation');
@@ -88,7 +88,7 @@ export function summarizeNatural(report) {
 }
 
 export function blindNaturalReview(report) {
-    const summary = summarizeNatural(report), cases = new Map(naturalCases().map(item => [item.id, item]));
+    const summary = summarizeNatural(report), cases = new Map(naturalCases(loadNaturalFixture(report.evaluation.version)).map(item => [item.id, item]));
     const records = report.evaluation.rows.map(row => ({ reviewId: randomUUID(), row })).sort((a, b) => a.reviewId.localeCompare(b.reviewId));
     return {
         packet: { version: 'natural-human-review-v1', reportHash: summary.reportHash, reviewer: null, reviewerType: 'human', records: records.map(({ reviewId, row }) => { const item = cases.get(row.case); return { reviewId, question: item.input.question, source: item.input.source.map(m => ({ speaker: m.name, text: m.mes })), rubric: item.rubric, answer: row.answer, outcome: null, unsupportedAssertion: null, rationale: null }; }) },
@@ -108,13 +108,14 @@ if (process.argv[1] && import.meta.url === pathToFileURL(realpathSync(process.ar
 
 // Import assertions made by a reviewer; never infer semantic labels from text.
 export function scoreNaturalAnnotations(report, packet, key) {
-    const summary = summarizeNatural(report), cases = new Map(naturalCases().map(item => [item.id, item]));
+    const summary = summarizeNatural(report), cases = new Map(naturalCases(loadNaturalFixture(report.evaluation.version)).map(item => [item.id, item]));
     assert.equal(packet.reportHash, summary.reportHash); assert.equal(key.reportHash, summary.reportHash);
     assert(['human', 'assistant'].includes(packet.reviewerType) && typeof packet.reviewer === 'string' && packet.reviewer.trim(), 'Identify the reviewer and review type');
-    assert.equal(packet.records.length, 64); assert.equal(key.records.length, 64);
-    assert.equal(new Set(key.records.map(r => r.reviewId)).size, 64);
-    assert.equal(new Set(key.records.map(r => r.sampleId)).size, 64);
-    assert.equal(new Set(packet.records.map(r => r.reviewId)).size, 64);
+    const schedule = naturalSchedule(loadNaturalFixture(report.evaluation.version)), count = schedule.length;
+    assert.equal(packet.records.length, count); assert.equal(key.records.length, count);
+    assert.equal(new Set(key.records.map(r => r.reviewId)).size, count);
+    assert.equal(new Set(key.records.map(r => r.sampleId)).size, count);
+    assert.equal(new Set(packet.records.map(r => r.reviewId)).size, count);
     const keys = new Map(key.records.map(r => [r.reviewId, r.sampleId])), rows = new Map(report.evaluation.rows.map(r => [r.id, r]));
     const scored = packet.records.map(record => {
         const row = rows.get(keys.get(record.reviewId)); assert(row, 'Unknown review/sample identity');
@@ -134,7 +135,7 @@ export function scoreNaturalAnnotations(report, packet, key) {
         groups.push({ mode, language, kind, samples: rows.length, passed: rows.filter(pass).length, outcomes: Object.fromEntries(['correct', 'partial', 'incorrect', 'abstained', 'unknown-handled'].map(outcome => [outcome, rows.filter(r => r.outcome === outcome).length])), unsupportedAssertions: rows.filter(r => r.unsupportedAssertion).length });
     }
     const byId = new Map(scored.map(row => [row.id, row]));
-    const paired = naturalSchedule().filter(sample => sample.mode === 'off').map(sample => {
+    const paired = schedule.filter(sample => sample.mode === 'off').map(sample => {
         const off = byId.get(sample.id);
         const on = scored.find(row => row.case === sample.case && row.repetition === sample.repetition && row.mode === 'on');
         assert(off && on, 'Missing paired score');

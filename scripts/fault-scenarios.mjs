@@ -81,6 +81,11 @@ export async function runFaultScenarios({ page, field, waitStatus, prompt, check
         await field('key').fill('synthetic-session-key'); await field('connect').click();
         await field('enabled').check(); await waitStatus('synchronized');
     }
+    // Fault recovery verifies reconciliation, not ranking: the emulator returns
+    // insertion order. Fit all six old fixture messages including quote labels.
+    // The base browser checks above already exercise the tighter 250-token budget.
+    await field('budget').fill('800'); await field('budget').dispatchEvent('change');
+    await waitStatus('synchronized');
     await seed();
     // A quiet prompt must not consume a chat event's pending debounce timer.
     await page.evaluate(async () => {
