@@ -1,5 +1,6 @@
 // Explicit live test: reads .env.local without exporting secrets to child processes.
 // Sends only synthetic data through the pinned SillyTavern browser/proxy path.
+import { runContextEdges } from './context-edges.mjs';
 import { runSelectionDiagnostic } from './selection-diagnostic.mjs';
 import { scenarios } from './comparison-fixture.mjs';
 import { runContextRetrieval } from './context-retrieval.mjs';
@@ -12,10 +13,12 @@ import { spawn, execFileSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+const contextEdgesMode = process.argv.includes('--context-edges');
 const selectionMode = process.argv.includes('--selection');
 const faultMode = process.argv.includes('--faults');
 const contextMode = process.argv.includes('--context');
 const probeMode = process.argv.includes('--probe');
+if (contextEdgesMode && (selectionMode || probeMode || contextMode || faultMode)) throw new Error('--context-edges requires its own live run.');
 if (selectionMode && (probeMode || contextMode || faultMode)) throw new Error('--selection cannot be combined with other live modes.');
 const probeBatchSize = Number(process.env.SM_PROBE_BATCH_SIZE || 1);
 const probeTimeoutMs = Number(process.env.SM_PROBE_TIMEOUT_MS || 15000);
@@ -23,7 +26,7 @@ const probeQuery = process.env.SM_PROBE_QUERY === '1';
 if (probeMode && (!Number.isInteger(probeBatchSize) || probeBatchSize < 1 || probeBatchSize > 50 || !Number.isInteger(probeTimeoutMs) || probeTimeoutMs < 1000 || probeTimeoutMs > 45000)) throw new Error('Invalid bounded probe settings.');
 const artifactTag = process.env.SM_ARTIFACT_TAG || '';
 if (artifactTag && !/^[a-zA-Z0-9][a-zA-Z0-9._-]{0,79}$/.test(artifactTag)) throw new Error('Invalid SM_ARTIFACT_TAG.');
-const suffix = `${selectionMode ? 'live-selection' : probeMode ? 'live-probe' : contextMode ? 'live-context' : faultMode ? 'live-faults' : 'live'}${artifactTag ? `-${artifactTag}` : ''}`;
+const suffix = `${contextEdgesMode ? 'live-context-edges' : selectionMode ? 'live-selection' : probeMode ? 'live-probe' : contextMode ? 'live-context' : faultMode ? 'live-faults' : 'live'}${artifactTag ? `-${artifactTag}` : ''}`;
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const source = process.env.ST_SOURCE || '/tmp/sillymemory-st-source';
 const revision = '06bde939fb1e9c4c8d8641d810f0a916b5bce127';
@@ -32,7 +35,7 @@ const credentials = { endpoint: variables.LAMBDADB_BASE_URL, project: variables.
 if (!Object.values(credentials).every(v => typeof v === 'string' && v.length)) throw new Error('Missing required LambdaDB environment variables.');
 if (execFileSync('git', ['-C', source, 'rev-parse', 'HEAD'], { encoding: 'utf8' }).trim() !== revision) throw new Error('Unexpected SillyTavern revision.');
 if (await realpath(path.join(source, 'public/scripts/extensions/third-party/sillymemory')) !== root) throw new Error('Install this checkout as the pinned host extension symlink before live testing.');
-const sourceFiles = ['src/client.js', 'src/gate.js', 'src/memory.js', 'scripts/live-smoke.mjs', 'scripts/live-fault-scenarios.mjs', 'scripts/context-retrieval.mjs', 'scripts/comparison-fixture.mjs', 'scripts/selection-diagnostic.mjs', 'scripts/natural-dialogue.mjs', 'docs/context-selection-evaluation.md', ...['natural-dialogue-v1', 'speaker-native-v1', 'long-dialogue-v1'].map(v => `tests/fixtures/${v}.json`)];
+const sourceFiles = ['scripts/context-edges.mjs', 'docs/context-edge-evaluation.md', 'src/client.js', 'src/gate.js', 'src/memory.js', 'scripts/live-smoke.mjs', 'scripts/live-fault-scenarios.mjs', 'scripts/context-retrieval.mjs', 'scripts/comparison-fixture.mjs', 'scripts/selection-diagnostic.mjs', 'scripts/natural-dialogue.mjs', 'docs/context-selection-evaluation.md', ...['natural-dialogue-v1', 'speaker-native-v1', 'long-dialogue-v1'].map(v => `tests/fixtures/${v}.json`)];
 const sourceHashes = async () => Object.fromEntries(await Promise.all(sourceFiles.map(async file => [file, createHash('sha256').update(await readFile(path.join(root, file))).digest('hex')])));
 const initialSourceSha256 = await sourceHashes();
 const work = await mkdtemp(path.join(tmpdir(), 'sillymemory-live-'));
@@ -177,6 +180,7 @@ try {
     if (faultMode) await runLiveFaultScenarios(run, report);
     if (contextMode) await runContextRetrieval(run, report);
     if (selectionMode) await runSelectionDiagnostic(run, report);
+    if (contextEdgesMode) await runContextEdges(run, report);
     }
     await run('real key is absent from browser storage and host settings', async key => {
         const c = SillyTavern.getContext();
@@ -212,7 +216,7 @@ try {
     // Defense in depth: fail rather than write any known credential into a report.
     const output = JSON.stringify(report, null, 2);
     if (output.includes(credentials.key)) throw new Error('Report redaction guard failed');
-    await writeFile(path.join(artifacts, `${suffix}${!selectionMode && !probeMode && !contextMode && !faultMode ? '-smoke' : ''}.json`), output);
+    await writeFile(path.join(artifacts, `${suffix}${!contextEdgesMode && !selectionMode && !probeMode && !contextMode && !faultMode ? '-smoke' : ''}.json`), output);
     await browser?.close();
     if (server && server.exitCode === null) { server.kill('SIGTERM'); await new Promise(r => server.once('exit', r)); }
     await rm(work, { recursive: true, force: true });
