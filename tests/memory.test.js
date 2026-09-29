@@ -347,10 +347,10 @@ test('reference retrieval keeps the prior user topic separate from generic ackno
     assert.deepEqual(retrievalQueries({ messages }, 'continue'), [messages[5].text, messages[4].text]);
 });
 
-test('prior-user queries are bounded, deduplicated, and absent without a previous user turn', () => {
+test('prior-user queries stay bounded and use assistant context only without a previous user turn', () => {
     assert.deepEqual(retrievalQueries({ messages: [
         { user: false, text: 'An assistant introduction' }, { user: true, text: 'A first question' },
-    ] }), ['A first question']);
+    ] }), ['A first question', 'An assistant introduction']);
     assert.deepEqual(retrievalQueries({ messages: [
         { user: true, text: 'Repeated topic' }, { user: false, text: 'A reply' }, { user: true, text: ' Repeated topic ' },
     ] }), ['Repeated topic']);
@@ -358,4 +358,19 @@ test('prior-user queries are bounded, deduplicated, and absent without a previou
         { user: true, text: 'y'.repeat(7000) }, { user: false, text: 'A reply' }, { user: true, text: 'x'.repeat(7000) },
     ] });
     assert.deepEqual(long, ['x'.repeat(6000), 'y'.repeat(6000)]);
+});
+
+test('assistant-only fallback cancels its other query and exposes no partial memory on failure', async () => {
+    const s = setup(), snap = snapshot();
+    snap.messages.forEach(m => { m.user = false; });
+    snap.messages.push({ ...snap.messages[0], index: 6, user: true, text: 'First user question' });
+    const queries = []; let aborted = false;
+    s.client.search = async (_, o, scope, query, signal) => {
+        queries.push(query);
+        if (query === 'First user question') return new Promise((resolve,reject) => signal.addEventListener('abort', () => { aborted = true; reject(signal.reason); }, { once: true }));
+        throw new Error('assistant context query failed');
+    };
+    await assert.rejects(s.engine.retrieve(snap, config, text => text.length), /assistant context query failed/);
+    assert.deepEqual(queries, ['First user question', snap.messages[5].text]);
+    assert.equal(aborted, true);
 });

@@ -62,7 +62,7 @@ export async function runNaturalDialogue({ page, field, openSettings, waitStatus
         check(!chatIds.has(before.id) && before.id === chatId, `${sample.id}: isolated chat identity`); chatIds.add(before.id);
         const sourceHash = hash(sourceView(source)); check(hash(before.source) === sourceHash, `${sample.id}: exact source restored`);
         const sourceTokens = await page.evaluate(async () => { const c = SillyTavern.getContext(); return c.getTokenCountAsync(c.chat.map(m => m.mes).join('\n')); });
-        if (plan.version === 'long-dialogue-v1') check(sourceTokens > plan.settings.context, `${sample.id}: source text alone exceeds frozen host context`);
+        if (['long-dialogue-v1', 'assistant-fallback-v1'].includes(plan.version)) check(sourceTokens > plan.settings.context, `${sample.id}: source text alone exceeds frozen host context`);
         const syncStarted = performance.now(); await enable(sample.mode === 'on');
         result.preparation.push({ id: sample.id, sourceHash, sourceTokens, syncMs: performance.now() - syncStarted });
         await page.evaluate(() => { globalThis.naturalQueries = []; globalThis.naturalRetrieval = null; });
@@ -85,7 +85,7 @@ export async function runNaturalDialogue({ page, field, openSettings, waitStatus
         check(output.request.requestOptions.temperature === plan.generation.temperature && output.request.maxOutputTokens === plan.settings.maxOutputTokens && output.request.model === plan.generation.model, `${sample.id}: frozen generation parameters`);
         const evidence = refs => refs.map(ref => ({ message: ref.message, inMemory: passages.some(p => p.message === ref.message && p.text.includes(ref.quote)), inPrompt: promptText.includes(ref.quote), ranks: telemetry.queries.map(q => (q.hits || []).findIndex(h => h.text.includes(ref.quote)) + 1) }));
         const row = { ...sample, index, language: item.language, kind: item.kind, chatId, sourceHash, sourceTokens, sourceMessagesPresent: source.filter(m => promptText.includes(m.mes.trim())).length, baselineTruncated: sample.mode === 'off' && source.some(m => !promptText.includes(m.mes.trim())), answer: output.last, injected, memoryTokens: selected?.tokens || 0, selectedIds: passages.map(p => p.id), memoryText: selected?.text || '', requiredEvidence: evidence(item.rubric.requiredEvidence), supersededEvidence: evidence(item.rubric.supersededEvidence), retrievalMs: telemetry.retrieval?.elapsedMs ?? null, queries: telemetry.queries, usage: output.request.providerUsage ?? null, generationMs: output.request.generationMs, syncMs: result.preparation.at(-1).syncMs };
-        if (plan.version === 'long-dialogue-v1' && sample.mode === 'off') check(row.baselineTruncated && row.sourceMessagesPresent < source.length, `${sample.id}: outgoing baseline is actually truncated`);
+        if (['long-dialogue-v1', 'assistant-fallback-v1'].includes(plan.version) && sample.mode === 'off') check(row.baselineTruncated && row.sourceMessagesPresent < source.length, `${sample.id}: outgoing baseline is actually truncated`);
         if (plan.version === 'actor-perspective-v1') {
             row.actorEvidence = actorPromptEvidence(item, sample.mode, output.request.messages);
             check(true, `${sample.id}: complete actor baseline, source roles and reply identity verified`);

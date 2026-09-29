@@ -20,7 +20,7 @@ export function capture(context) {
     return { character: avatar, chat: context.getCurrentChatId(), messages };
 }
 export function fingerprint(snapshot) { return JSON.stringify(snapshot); }
-export const RETRIEVAL_POLICY = 'latest-anchor-plus-prior-user-v3';
+export const RETRIEVAL_POLICY = 'latest-anchor-with-assistant-fallback-v4';
 export function retrievalQueries(snapshot, type = 'normal') {
     const messages = snapshot.messages;
     // Swipe/regenerate may retain an assistant answer in the source. Anchor on
@@ -33,7 +33,11 @@ export function retrievalQueries(snapshot, type = 'normal') {
     const primary = messages[anchor].text.trim().slice(0, 6000);
     // Search the prior user topic independently: generic questions and assistant
     // acknowledgments can dilute its embedding when concatenated together.
-    const contextual = messages.slice(0, anchor).findLast(m => m.user && m.text.trim())?.text.trim().slice(0, 6000);
+    // An imported assistant-only history has no preceding user topic. Use its
+    // last assistant turn only in that case, never the answer after the anchor.
+    const prior = messages.slice(0, anchor);
+    const context = prior.findLast(m => m.user && m.text.trim()) ?? prior.findLast(m => !m.user && m.text.trim());
+    const contextual = context?.text.trim().slice(0, 6000);
     return [...new Set([primary, contextual].filter(Boolean))];
 }
 export function interleaveHits(lists) {

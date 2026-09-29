@@ -35,7 +35,7 @@ test('fixed cohort preserves all 32 regression and six boundary source targets',
         const { docs } = await documents(item.snapshot, 'assistant-test-owner', item.config);
         for (const ref of item.evidence) assert(docs.some(d => d.message === ref.message && d.text.includes(ref.quote)));
         const queries = assistantTopicQueries(item.snapshot);
-        assert.deepEqual(queries.baseline, retrievalQueries(item.snapshot));
+        assert.deepEqual(item.kind === 'first-user' ? queries['user-first'] : queries.baseline, retrievalQueries(item.snapshot));
         assert(Object.values(queries).every(q => q.length <= 3));
     }
 });

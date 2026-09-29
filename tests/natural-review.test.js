@@ -32,3 +32,15 @@ test('review CLI preserves an existing output instead of overwriting review work
         assert.notEqual(run().status, 0); assert.equal(readFileSync(output, 'utf8'), html);
     } finally { rmSync(directory, { recursive: true, force: true }); }
 });
+
+test('quote-only required evidence renders without inventing an interpretation or accepting extra fields', () => {
+    const p = packet(); delete p.records[0].rubric.requiredEvidence[0].meaning;
+    assert.equal(validateReviewPacket(p), p);
+    const embedded = /<script id="packet" type="application\/json">([\s\S]*?)<\/script>/.exec(renderReview(p))[1];
+    assert.deepEqual(JSON.parse(embedded), p);
+    p.records[0].rubric.requiredEvidence[0].meaning = null;
+    assert.throws(() => renderReview(p));
+    delete p.records[0].rubric.requiredEvidence[0].meaning;
+    p.records[0].rubric.requiredEvidence[0].mode = 'on';
+    assert.throws(() => renderReview(p));
+});

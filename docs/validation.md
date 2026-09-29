@@ -1042,3 +1042,25 @@ without a source-coverage score, remain in [the evidence](results/assistant-topi
 122 unit tests pass on Node 20.12.0/24.15.0, plus syntax and release checks.
 This was search-only: no new generated-answer, abstention, actor-attribution or
 ANN-versus-exact result. Emulator recovery was not rerun for the unchanged runtime.
+
+
+## Assistant-only fallback — 2026-09-30
+
+The v4 runtime preserves prior-user queries and falls back to preceding assistant
+context only without an earlier nonempty user turn. Five exploratory rank-fusion
+replays all lost existing sources and were rejected. A separately frozen 48-case
+real-proxy comparison selected 41/42 required sources versus v3's 37/42, with no
+baseline loss. Ten new first-user input-shape controls all passed. The ordinary
+Korean assistant-topic miss remains. See [results and limitations](assistant-fallback-results.md).
+
+Actual SillyTavern generation used 24 scheduled answers and 24 first-attempt 200s.
+Memory delivered 12/12 required on-mode sources; all off prompts were truncated.
+Provisional semantic outcomes were off 0/12 and on 12/12; human review remains
+unset. All 293 live integrity checks passed across 110 LambdaDB requests, with
+source hashes, key audits and owned/native cleanup verified. This narrow corpus
+does not supersede prior actor failures or constitute stable-release readiness.
+
+129 unit tests pass on Node 20.12.0 and 24.15.0. The pinned real host with emulated
+LambdaDB passes 188 recovery checks, including two crashes/restarts and 24 mutation
+cycles. Search-only, emulator, generated-answer and provisional semantic evidence
+are recorded separately. No main promotion or release was performed.

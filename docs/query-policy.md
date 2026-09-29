@@ -4,23 +4,27 @@ The original fixed comparison scored 6/18 with SillyMemory. A subsequent vector 
 
 ## Policy
 
-The current `latest-anchor-plus-prior-user-v3` policy searches the latest
+The current `latest-anchor-with-assistant-fallback-v4` policy searches the latest
 non-empty user message on its own and the preceding non-empty user message
-separately. Generic assistant acknowledgments and the question are not appended
-to that prior topic. Without an earlier user message there is only one query;
-assistant-only topic setup before a first user turn has no second-query coverage.
-This remains a heuristic: a prior user turn may be unrelated to the new question.
-See the [controlled comparison](context-selection-evaluation.md) and
-[results](context-selection-results.md) for its bounded evidence.
+separately. If no preceding non-empty user message exists, use the preceding
+non-empty assistant message as the second query. Context always comes strictly
+before the anchor. This helps an assistant-only imported history's first user
+question; a normal greeting without old indexable history needs no retrieval.
+Generic acknowledgments never override an existing user topic. The heuristic can
+still miss an assistant-introduced topic when an unrelated earlier user exists.
+See the [fallback comparison and host follow-up](assistant-fallback-results.md).
+The [prior-user comparison](context-selection-results.md) remains historical v3
+evidence, and all of its 32 query pairs are unchanged by v4.
 
 Explicit `continue` anchors on the latest non-empty message being extended,
-including assistant text, and independently searches the preceding user turn.
+including assistant text, and independently searches the preceding user turn,
+falling back to a preceding assistant only when that user turn is absent.
 Regenerate/swipe exclude retained answers after the user anchor. Without any
 non-empty user message, use the latest non-empty message. Bound each query to
 6,000 UTF-16 code units and remove duplicate strings.
 
 The historical v2 continuation fix and [six-case results](recall-challenges.md)
-remain unchanged below. Historical v1/v2 evidence is not a v3 benchmark.
+remain unchanged below. Historical v1/v2 evidence is not a v4 benchmark.
 
 Run at most two scoped managed `knn.queryText` requests concurrently, 30 candidates each. Interleave their ranks, starting with the question-only result, then validate against the exact current local source and deduplicate. The existing complete-passage selector counts the full wrapper against the same configured budget. Source isolation, synchronization journals and prompt mutation rules stay as described in [architecture](architecture.md).
 
