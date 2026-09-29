@@ -1,5 +1,6 @@
 // Offline corpus/schedule preparation only. This module makes no service calls.
 import assert from 'node:assert/strict';
+import { candidateSchedule } from './context-candidate.mjs';
 import { ablationSchedule } from './actor-ablation.mjs';
 import { createHash } from 'node:crypto';
 import { readFileSync, realpathSync } from 'node:fs';
@@ -16,6 +17,7 @@ export function fixtureFiles(version = 'natural-dialogue-v1') {
         'speaker-attribution-v1': ['docs/speaker-attribution-evaluation.md', 'docs/speaker-attribution-perspective-v2.md'],
         'speaker-native-v1': ['docs/speaker-native-evaluation.md'],
         'long-dialogue-v1': ['docs/long-dialogue-evaluation.md'],
+        'actor-candidate-v1': ['docs/context-candidate-evaluation.md', 'scripts/context-candidate.mjs', 'scripts/actor-ablation-eval.mjs', 'scripts/actor-ablation.mjs', 'scripts/actor-perspective.mjs'],
         'actor-ablation-v1': ['docs/actor-ablation-evaluation.md', 'scripts/actor-ablation.mjs', 'scripts/actor-ablation-eval.mjs', 'scripts/actor-perspective.mjs'],
         'actor-perspective-v1': ['docs/actor-perspective-evaluation.md', 'scripts/actor-perspective.mjs'],
     };
@@ -56,6 +58,7 @@ export function naturalCases(fixture = loadNaturalFixture()) {
 
 export function naturalSchedule(fixture = loadNaturalFixture()) {
     const cases = naturalCases(fixture);
+    if (fixture.version === 'actor-candidate-v1') return candidateSchedule(cases, fixture.settings.repetitions);
     if (fixture.version === 'actor-ablation-v1') return ablationSchedule(cases, fixture.settings.repetitions);
     return Array.from({ length: fixture.settings.repetitions }, (_, repetition) => cases.flatMap((item, i) =>
         ((i + repetition) % 2 ? ['on', 'off'] : ['off', 'on']).map(mode => ({
