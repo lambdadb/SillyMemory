@@ -998,3 +998,27 @@ pass, and a separate real-proxy contextual regression selected 8/8 targets with
 cleanup and source identity verified. [Checked-in evidence](results/context-selection-long-v1.json)
 keeps all answers, provisional grades and regression reports; historical results
 remain unchanged. No main promotion, release or deployment is implied.
+
+
+## Reported actors and assistant-topic boundaries — 2026-09-29
+
+The runtime remains PR #18. A new matched 32-answer diagnostic aligns source and
+host names, verifies complete 64-message off baselines and preserves every
+required source in its original API role. Provisional scores are off 16/16 and
+on 10/16: six samples from three pronoun cases regress only in the memory condition. Explicit-name
+controls pass in both modes. This does not isolate excerpt labels from omitted
+surrounding history, and does not justify pronoun rewriting. See [full results
+and all provisional judgments](actor-perspective-results.md).
+
+All 373 live actor integrity checks passed with 32 first-attempt model successes,
+142 LambdaDB requests without transport/5xx failure and verified owned cleanup.
+A separate six-case search boundary selected 4/6 targets under both v3 and v2;
+two Korean assistant-topic references remained outside selected memory despite
+being returned among candidates. The 18 lifecycle groups passed; that integrity
+status is not a quality pass. Both explicit topic-switch cases succeeded.
+
+108 unit tests pass on Node 20.12.0/24.15.0, plus syntax and release checks.
+Historical emulator results were not rerun for this diagnostic-only change.
+The independent human gate remains unset, the assistant gate remains false,
+and the earlier spatial ambiguity remains unresolved. No runtime fix, main
+promotion, release or deployment accompanies this evidence.
