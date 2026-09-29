@@ -1,5 +1,7 @@
 // Real-host adapter. Oracle data stays in Node, outside the browser/model input.
 import assert from 'node:assert/strict';
+import { runActorAblation } from './actor-ablation-eval.mjs';
+import { actorPromptEvidence } from './actor-perspective.mjs';
 import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import { hash, fixtureFiles, loadNaturalFixture, naturalCases, naturalSchedule } from './natural-dialogue.mjs';
@@ -19,6 +21,7 @@ export async function verifyNaturalPlan(filename) {
 }
 
 export async function runNaturalDialogue({ page, field, openSettings, waitStatus, generate, assert: check, setStage, result, frozen, checkpoint }) {
+    if (['actor-ablation-v1', 'actor-candidate-v1'].includes(frozen.plan.version)) return runActorAblation({ page, field, openSettings, generate, assert: check, setStage, result, frozen, checkpoint });
     const { plan } = frozen, cases = new Map(plan.cases.map(item => [item.id, item]));
     Object.assign(result, { version: plan.version, planSha256: frozen.sha256, fixtureHash: plan.audit.fixtureHash, settings: plan.settings, generation: plan.generation, plannedSamples: plan.schedule.length, rows: [], preparation: [], complete: false });
     async function enable(value) {
@@ -83,6 +86,10 @@ export async function runNaturalDialogue({ page, field, openSettings, waitStatus
         const evidence = refs => refs.map(ref => ({ message: ref.message, inMemory: passages.some(p => p.message === ref.message && p.text.includes(ref.quote)), inPrompt: promptText.includes(ref.quote), ranks: telemetry.queries.map(q => (q.hits || []).findIndex(h => h.text.includes(ref.quote)) + 1) }));
         const row = { ...sample, index, language: item.language, kind: item.kind, chatId, sourceHash, sourceTokens, sourceMessagesPresent: source.filter(m => promptText.includes(m.mes.trim())).length, baselineTruncated: sample.mode === 'off' && source.some(m => !promptText.includes(m.mes.trim())), answer: output.last, injected, memoryTokens: selected?.tokens || 0, selectedIds: passages.map(p => p.id), memoryText: selected?.text || '', requiredEvidence: evidence(item.rubric.requiredEvidence), supersededEvidence: evidence(item.rubric.supersededEvidence), retrievalMs: telemetry.retrieval?.elapsedMs ?? null, queries: telemetry.queries, usage: output.request.providerUsage ?? null, generationMs: output.request.generationMs, syncMs: result.preparation.at(-1).syncMs };
         if (plan.version === 'long-dialogue-v1' && sample.mode === 'off') check(row.baselineTruncated && row.sourceMessagesPresent < source.length, `${sample.id}: outgoing baseline is actually truncated`);
+        if (plan.version === 'actor-perspective-v1') {
+            row.actorEvidence = actorPromptEvidence(item, sample.mode, output.request.messages);
+            check(true, `${sample.id}: complete actor baseline, source roles and reply identity verified`);
+        }
         result.rows.push(row); output.request.naturalSampleId = sample.id;
         await checkpoint(); console.log(`RESULT ${sample.id}: integrity passed; semantic score pending`);
     }
