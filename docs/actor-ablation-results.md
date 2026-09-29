@@ -94,6 +94,11 @@ estimates or tune repeated prompts on these same failures until they pass.
 
 ## Review and next decision
 
+The [implemented candidate comparison](context-candidate-results.md) now tests
+label removal and bounded adjacent-turn retention on these four cases plus four
+new controls. Both candidates have new-control regressions and leave the English
+user-report failure unresolved, so neither was adopted into the runtime.
+
 [Committed evidence](results/actor-ablation-v1.json) records all answers, provisional
 semantic rationales, all four paired contrasts, source indices, prompt hashes,
 fixed-selection identities, exact historical reference checks and lifecycle data.
