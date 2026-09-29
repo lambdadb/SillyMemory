@@ -6,11 +6,13 @@ Long-term memory for SillyTavern.
 
 An installable, experimental UI extension for character chats. SillyMemory keeps recent messages intact and replaces older plain-text history with relevant source passages under a fixed memory token budget. It uses LambdaDB managed embeddings through SillyTavern's built-in CORS proxy. No server plugin or LambdaDB modification is required.
 
-**Validation status:** experimental. The current suite passes 117 unit tests on Node.js 20.12.0 and 24. The latest 48-answer [candidate comparison](docs/context-candidate-results.md) scored current labels 9/16, label removal 10/16 and label removal plus adjacent turns 11/16 provisionally. On the new controls, however, scores regressed from current 7/8 to 4/8 and 6/8; the original English user-report failure remained. Both candidates stay test-only. This was a frozen-seed prompt experiment with generation-time retrieval disabled, not a runtime fix or retrieval benchmark. Independent human review is pending.
+**Validation status:** experimental. The current suite passes 122 unit tests on Node.js 20.12.0 and 24. The latest 48-answer [candidate comparison](docs/context-candidate-results.md) scored current labels 9/16, label removal 10/16 and label removal plus adjacent turns 11/16 provisionally. On the new controls, however, scores regressed from current 7/8 to 4/8 and 6/8; the original English user-report failure remained. Both candidates stay test-only. This was a frozen-seed prompt experiment with generation-time retrieval disabled, not a runtime fix or retrieval benchmark. Independent human review is pending.
 
 The preceding [label/context ablation](docs/actor-ablation-results.md) isolated contributions from both labels and omitted surroundings (full-raw 8/8, full-labelled 4/8, sparse-raw 6/8, sparse-labelled 2/8). These controlled results did not establish that label removal or local context expansion would generalize.
 
 The preceding [reported-actor diagnostic](docs/actor-perspective-results.md) found six memory-only actor failures (off 16/16, on 10/16) despite complete baselines and correct source API roles. Its separate search-only boundary check selected 4/6 targets in both v3 and historical v2, missing two Korean assistant-topic references.
+
+The [assistant-topic query comparison](docs/assistant-topic-results.md) added two fixed assistant-context policies across 38 search-only cases. Both recovered one boundary but lost the prior-user Korean reference; neither qualified, so runtime remains v3. Adding queries alone did not resolve competition within the token budget.
 
 The earlier [v3 long-dialogue evaluation](docs/context-selection-results.md) used a smaller 2,048-token context and demonstrated retrieval of evidence lost by truncated baselines (on 12/12; provisional off 4/16, on 12/16). These are different cohorts and settings, not pooled results or general quality/release-readiness guarantees. See the [validation record](docs/validation.md).
 
@@ -205,6 +207,11 @@ The [prior-user query comparison and follow-up](docs/context-selection-results.m
 records the v3 selection fix, its fixed-budget evidence and remaining limits.
 Run `SM_ARTIFACT_TAG=next-selection node scripts/live-smoke.mjs --selection` for
 the search-only comparison; the live runner also accepts `SM_ENV_FILE`.
+
+Run `SM_ARTIFACT_TAG=next-assistant-topic node scripts/live-smoke.mjs --assistant-topic`
+for the [assistant-topic query comparison](docs/assistant-topic-evaluation.md).
+It shares each distinct query response across the frozen policies and makes no
+generation calls; its integrity pass is separate from candidate qualification.
 
 The [context candidate protocol](docs/context-candidate-evaluation.md) compares
 the current labelled selector, label removal, and label removal plus adjacent-turn
