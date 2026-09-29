@@ -1,5 +1,6 @@
 // Explicit live test: reads .env.local without exporting secrets to child processes.
 // Sends only synthetic data through the pinned SillyTavern browser/proxy path.
+import { runSelectionDiagnostic } from './selection-diagnostic.mjs';
 import { scenarios } from './comparison-fixture.mjs';
 import { runContextRetrieval } from './context-retrieval.mjs';
 import { runLiveFaultScenarios } from './live-fault-scenarios.mjs';
@@ -11,6 +12,7 @@ import { spawn, execFileSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+const selectionMode = process.argv.includes('--selection');
 const faultMode = process.argv.includes('--faults');
 const contextMode = process.argv.includes('--context');
 const probeMode = process.argv.includes('--probe');
@@ -20,11 +22,11 @@ const probeQuery = process.env.SM_PROBE_QUERY === '1';
 if (probeMode && (!Number.isInteger(probeBatchSize) || probeBatchSize < 1 || probeBatchSize > 50 || !Number.isInteger(probeTimeoutMs) || probeTimeoutMs < 1000 || probeTimeoutMs > 45000)) throw new Error('Invalid bounded probe settings.');
 const artifactTag = process.env.SM_ARTIFACT_TAG || '';
 if (artifactTag && !/^[a-zA-Z0-9][a-zA-Z0-9._-]{0,79}$/.test(artifactTag)) throw new Error('Invalid SM_ARTIFACT_TAG.');
-const suffix = `${probeMode ? 'live-probe' : contextMode ? 'live-context' : faultMode ? 'live-faults' : 'live'}${artifactTag ? `-${artifactTag}` : ''}`;
+const suffix = `${selectionMode ? 'live-selection' : probeMode ? 'live-probe' : contextMode ? 'live-context' : faultMode ? 'live-faults' : 'live'}${artifactTag ? `-${artifactTag}` : ''}`;
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const source = process.env.ST_SOURCE || '/tmp/sillymemory-st-source';
 const revision = '06bde939fb1e9c4c8d8641d810f0a916b5bce127';
-const variables = parseEnv(await readFile(path.join(root, '.env.local'), 'utf8'));
+const variables = parseEnv(await readFile(process.env.SM_ENV_FILE || path.join(root, '.env.local'), 'utf8'));
 const credentials = { endpoint: variables.LAMBDADB_BASE_URL, project: variables.LAMBDADB_PROJECT_NAME, key: variables.LAMBDADB_PROJECT_API_KEY };
 if (!Object.values(credentials).every(v => typeof v === 'string' && v.length)) throw new Error('Missing required LambdaDB environment variables.');
 if (execFileSync('git', ['-C', source, 'rev-parse', 'HEAD'], { encoding: 'utf8' }).trim() !== revision) throw new Error('Unexpected SillyTavern revision.');
@@ -61,6 +63,11 @@ try {
         await new Promise(r => setTimeout(r, 500));
     }
     if (!ready) throw new Error('Host startup timeout');
+    // Keep the isolated profile independent of the default remote Horde service.
+    const profilePath = path.join(work, 'data/default-user/settings.json');
+    const profile = JSON.parse(await readFile(profilePath, 'utf8'));
+    profile.main_api = 'openai';
+    await writeFile(profilePath, JSON.stringify(profile));
     browser = await chromium.launch(); page = await browser.newPage(); page.setDefaultTimeout(20000);
     // Status and operation only; never collect request headers, bodies, URLs or traces.
     page.on('response', response => { if (response.url().includes('/proxy/')) responses.push({ stage, status: response.status() }); });
@@ -165,6 +172,7 @@ try {
     });
     if (faultMode) await runLiveFaultScenarios(run, report);
     if (contextMode) await runContextRetrieval(run, report);
+    if (selectionMode) await runSelectionDiagnostic(run, report);
     }
     await run('real key is absent from browser storage and host settings', async key => {
         const c = SillyTavern.getContext();
@@ -196,11 +204,11 @@ try {
     }
     report.cleanupComplete = cleanupComplete; report.passed = !failure && cleanupComplete;
     report.sourceSha256 = {};
-    for (const file of ['src/client.js', 'src/gate.js', 'src/memory.js', 'scripts/live-smoke.mjs', 'scripts/live-fault-scenarios.mjs', 'scripts/context-retrieval.mjs', 'scripts/comparison-fixture.mjs']) report.sourceSha256[file] = createHash('sha256').update(await readFile(path.join(root, file))).digest('hex');
+    for (const file of ['src/client.js', 'src/gate.js', 'src/memory.js', 'scripts/live-smoke.mjs', 'scripts/live-fault-scenarios.mjs', 'scripts/context-retrieval.mjs', 'scripts/comparison-fixture.mjs', 'scripts/selection-diagnostic.mjs', 'scripts/natural-dialogue.mjs', 'docs/context-selection-evaluation.md', ...['natural-dialogue-v1', 'speaker-native-v1', 'long-dialogue-v1'].map(v => `tests/fixtures/${v}.json`)]) report.sourceSha256[file] = createHash('sha256').update(await readFile(path.join(root, file))).digest('hex');
     // Defense in depth: fail rather than write any known credential into a report.
     const output = JSON.stringify(report, null, 2);
     if (output.includes(credentials.key)) throw new Error('Report redaction guard failed');
-    await writeFile(path.join(artifacts, `${suffix}${!probeMode && !contextMode && !faultMode ? '-smoke' : ''}.json`), output);
+    await writeFile(path.join(artifacts, `${suffix}${!selectionMode && !probeMode && !contextMode && !faultMode ? '-smoke' : ''}.json`), output);
     await browser?.close();
     if (server && server.exitCode === null) { server.kill('SIGTERM'); await new Promise(r => server.once('exit', r)); }
     await rm(work, { recursive: true, force: true });
