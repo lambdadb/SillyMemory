@@ -1,0 +1,5674 @@
+{
+  "description": "Frozen selected-source 2x2 prompt ablation through real SillyTavern. Retrieval disabled during generation. Assistant grades provisional; no release gate.",
+  "frozenDiagnosticCommit": "2554080",
+  "rawReportSha256": "5b37eef64d0d111553efc90400e9c1fbfc3e0d5253ccd4c9bfbec64f3559afef",
+  "previousReportSha256": "a3387673de8ab058f83bf17ccac5cd11b07eed63a1c30576794855c41b8c4518",
+  "sillyTavern": "06bde939fb1e9c4c8d8641d810f0a916b5bce127",
+  "initialSourceSha256": {
+    "index.js": "e02dbd971a7864a58bbb87394b29391bb05ac6f10073668cd4da30c90cb7f301",
+    "src/client.js": "a808537f640d51e7b893d422a8c288f647d12641de2a785c4098afc681239da8",
+    "src/gate.js": "c1e5afada320e822a535ff4b464d6e565cfadbf56aabc78b1ba6f667bf4b78bf",
+    "src/memory.js": "127a75207e6fb53f425a0896122c22a864041795c9098cb22ba61251a06c5502",
+    "src/status.js": "b9a826cfd393cc58bdcd64fcef698bc35f20a23f60a24f9e314b45919052d6f6",
+    "scripts/generation-smoke.mjs": "4fc75abe7d07f3f0468b0b186484f5a9260744183d90f1018f134d98b8b4f120",
+    "scripts/provider-spacing.mjs": "8e50762dcef277dc8d959d237fe6c59c20ac7f41349a32f0cb59ffb55ceac0d3",
+    "scripts/generation-cleanup.mjs": "3765a872a7a6a848c2d401636c81c010fbf19ecc720ca2c706ee34a4fad7680c",
+    "scripts/natural-eval.mjs": "2a5293cc9c0d51c6c1d004568ae1616dc0b88aa4ff58b78bc421812f07482c70",
+    "scripts/natural-dialogue.mjs": "858485a04799bf28c752d7b8580f7c6b0d9c44c1ed925a810edcec4d4a6d03d9",
+    "tests/fixtures/actor-ablation-v1.json": "d02fccab89fb2fed013a7e0be95930ee7fdb95e1bf583b450007ee5a7fbd1284",
+    "docs/actor-ablation-evaluation.md": "81f033e3736bb8dfb0640bd39e5999ddb46d558dbc98ee6bb3aa2eac342a9f9b",
+    "scripts/actor-ablation.mjs": "71c41491b1f2d663a2ffa424db2c7e42371146cead7d55335608389ea470278b",
+    "scripts/actor-ablation-eval.mjs": "ed2c05f5b7848534b19a48feb685b5f0a8ecb493ad9ca78c1b82852aa79ed030",
+    "scripts/actor-perspective.mjs": "e9da7714c081adad062480a81acb4f28948e4e1f9db55f64cf84e9b5be0d4f08",
+    "scripts/provider-retry.mjs": "97a7fa4669dbbae764eda7528da0532158de450ad884ae825eb02b8d97d32bc1",
+    "docs/natural-dialogue-retry.md": "70c82de2a312d0d33eaab92ede40be824039bae00f284dae0caca30875fee82c",
+    "scripts/natural-summary.mjs": "5247437e6313a4d4b5653e062dfd3889af0b6544939fd492fc9df0669f553c30",
+    "scripts/natural-score.mjs": "6041936b22f8b3dcc2ebb27b1fa02c48cc5dbded4976260a82f067d874782ec3"
+  },
+  "sourceSha256": {
+    "index.js": "e02dbd971a7864a58bbb87394b29391bb05ac6f10073668cd4da30c90cb7f301",
+    "src/client.js": "a808537f640d51e7b893d422a8c288f647d12641de2a785c4098afc681239da8",
+    "src/gate.js": "c1e5afada320e822a535ff4b464d6e565cfadbf56aabc78b1ba6f667bf4b78bf",
+    "src/memory.js": "127a75207e6fb53f425a0896122c22a864041795c9098cb22ba61251a06c5502",
+    "src/status.js": "b9a826cfd393cc58bdcd64fcef698bc35f20a23f60a24f9e314b45919052d6f6",
+    "scripts/generation-smoke.mjs": "4fc75abe7d07f3f0468b0b186484f5a9260744183d90f1018f134d98b8b4f120",
+    "scripts/provider-spacing.mjs": "8e50762dcef277dc8d959d237fe6c59c20ac7f41349a32f0cb59ffb55ceac0d3",
+    "scripts/generation-cleanup.mjs": "3765a872a7a6a848c2d401636c81c010fbf19ecc720ca2c706ee34a4fad7680c",
+    "scripts/korean-eval.mjs": "b47d0040a3d8004b8450731fbe0acd27c6ce6696c5e80340dcd77f78745806da",
+    "scripts/korean-fixture.mjs": "a436d4fd0ee1521a51db590b3d7affce883db3f88179bb8fdf5af137d26e79d6",
+    "scripts/comparison-fixture.mjs": "da9363e925d7776c8bf09af9ccb3f5615ffffceb5791d7081ffa1d0c27e5cc2d",
+    "scripts/comparison-eval.mjs": "9b9b4c08c1a78c8c16a81906d328f40cb797084e7ffd134a293edf0a93062e14",
+    "scripts/challenge-eval.mjs": "ffa315ead230ac5235cc995ce2c4571136111bab5bb197f4d113ec0111ddb402",
+    "scripts/recall-challenges.mjs": "c0d45b713bf40fe4130f924b85728fe9d0775d1e01a163a168ef50e86b27c551",
+    "scripts/heldout-fixture.mjs": "9aeb8483a20f120ed89abdff50b25e0b0e03b04d5e2332d8e276f4d9e0999c67",
+    "scripts/natural-eval.mjs": "2a5293cc9c0d51c6c1d004568ae1616dc0b88aa4ff58b78bc421812f07482c70",
+    "scripts/natural-dialogue.mjs": "858485a04799bf28c752d7b8580f7c6b0d9c44c1ed925a810edcec4d4a6d03d9",
+    "tests/fixtures/actor-ablation-v1.json": "d02fccab89fb2fed013a7e0be95930ee7fdb95e1bf583b450007ee5a7fbd1284",
+    "docs/actor-ablation-evaluation.md": "81f033e3736bb8dfb0640bd39e5999ddb46d558dbc98ee6bb3aa2eac342a9f9b",
+    "scripts/actor-ablation.mjs": "71c41491b1f2d663a2ffa424db2c7e42371146cead7d55335608389ea470278b",
+    "scripts/actor-ablation-eval.mjs": "ed2c05f5b7848534b19a48feb685b5f0a8ecb493ad9ca78c1b82852aa79ed030",
+    "scripts/actor-perspective.mjs": "e9da7714c081adad062480a81acb4f28948e4e1f9db55f64cf84e9b5be0d4f08",
+    "scripts/provider-retry.mjs": "97a7fa4669dbbae764eda7528da0532158de450ad884ae825eb02b8d97d32bc1",
+    "docs/natural-dialogue-retry.md": "70c82de2a312d0d33eaab92ede40be824039bae00f284dae0caca30875fee82c",
+    "scripts/natural-summary.mjs": "5247437e6313a4d4b5653e062dfd3889af0b6544939fd492fc9df0669f553c30",
+    "scripts/natural-score.mjs": "6041936b22f8b3dcc2ebb27b1fa02c48cc5dbded4976260a82f067d874782ec3"
+  },
+  "integrityChecks": 197,
+  "cleanupComplete": true,
+  "measurementNote": "memoryTokens and allRequiredInMemory refer to the fixed labelled selected slice in every condition, not new retrieval or per-condition prompt size. Prompt usage measures actual requests.",
+  "summary": {
+    "version": "actor-ablation-v1",
+    "integrityPassed": true,
+    "providerSpacing": {
+      "verified": true,
+      "evidence": "monotonic upstream-send timestamps",
+      "minimumIntervalMs": 15000,
+      "minimumObservedIntervalMs": 15000.060166999989,
+      "gapsBelowMinimum": 0
+    },
+    "reportHash": "26617ee1877d1319e1545e38d8a8092c12efaf68cdce518fa8d7ce3a5943e7c5",
+    "fixtureHash": "0ab79ff869e469a32cbcf7254d0d04ecaa21231a1538287a078a26c281aabc40",
+    "planSha256": "a6644451fe1c5c48bb8c4fd40667a2c6232be352a2b826aab2133462038824bf",
+    "samples": 32,
+    "providerAttempts": 32,
+    "transportProtocol": {
+      "version": "natural-transport-retry-v1",
+      "statuses": [
+        500,
+        502,
+        503,
+        504
+      ],
+      "maxRetriesPerSample": 2,
+      "maxRetriesPerRun": 8,
+      "maxCalls": 72,
+      "baseDelayMs": 15000,
+      "jitterMs": 1000,
+      "maxDelayMs": 60000,
+      "attemptTimeoutMs": 90000,
+      "sampleDeadlineMs": 180000
+    },
+    "firstAttemptFailures": 0,
+    "recoveredSamples": 0,
+    "extraAttempts": 0,
+    "failedAttemptUsage": {
+      "attempts": 0
+    },
+    "groups": [
+      {
+        "mode": "full-raw",
+        "samples": 8,
+        "answerable": 8,
+        "allRequiredInMemory": 8,
+        "allRequiredInPrompt": 8,
+        "oldWithoutCorrection": 0,
+        "baselineTruncated": 0,
+        "memoryTokens": {
+          "n": 8,
+          "median": 381.5,
+          "min": 361,
+          "max": 398
+        },
+        "promptTokens": {
+          "n": 8,
+          "median": 3573.5,
+          "min": 2971,
+          "max": 4176
+        },
+        "syncMs": null,
+        "retrievalMs": null,
+        "generationMs": {
+          "n": 8,
+          "median": 1166.0554374999992,
+          "min": 1018.6334159999969,
+          "max": 1982.1550819999993
+        }
+      },
+      {
+        "mode": "full-raw",
+        "language": "en",
+        "kind": "return",
+        "samples": 4,
+        "answerable": 4,
+        "allRequiredInMemory": 4,
+        "allRequiredInPrompt": 4,
+        "oldWithoutCorrection": 0,
+        "baselineTruncated": 0,
+        "memoryTokens": {
+          "n": 4,
+          "median": 364,
+          "min": 361,
+          "max": 367
+        },
+        "promptTokens": {
+          "n": 4,
+          "median": 2971,
+          "min": 2971,
+          "max": 2971
+        },
+        "syncMs": null,
+        "retrievalMs": null,
+        "generationMs": {
+          "n": 4,
+          "median": 1166.0554374999992,
+          "min": 1118.632833999989,
+          "max": 1982.1550819999993
+        }
+      },
+      {
+        "mode": "full-raw",
+        "language": "en",
+        "kind": "correction",
+        "samples": 0,
+        "answerable": 0,
+        "allRequiredInMemory": 0,
+        "allRequiredInPrompt": 0,
+        "oldWithoutCorrection": 0,
+        "baselineTruncated": 0,
+        "memoryTokens": null,
+        "promptTokens": null,
+        "syncMs": null,
+        "retrievalMs": null,
+        "generationMs": null
+      },
+      {
+        "mode": "full-raw",
+        "language": "en",
+        "kind": "reference",
+        "samples": 0,
+        "answerable": 0,
+        "allRequiredInMemory": 0,
+        "allRequiredInPrompt": 0,
+        "oldWithoutCorrection": 0,
+        "baselineTruncated": 0,
+        "memoryTokens": null,
+        "promptTokens": null,
+        "syncMs": null,
+        "retrievalMs": null,
+        "generationMs": null
+      },
+      {
+        "mode": "full-raw",
+        "language": "en",
+        "kind": "unknown",
+        "samples": 0,
+        "answerable": 0,
+        "allRequiredInMemory": 0,
+        "allRequiredInPrompt": 0,
+        "oldWithoutCorrection": 0,
+        "baselineTruncated": 0,
+        "memoryTokens": null,
+        "promptTokens": null,
+        "syncMs": null,
+        "retrievalMs": null,
+        "generationMs": null
+      },
+      {
+        "mode": "full-raw",
+        "language": "ko",
+        "kind": "return",
+        "samples": 4,
+        "answerable": 4,
+        "allRequiredInMemory": 4,
+        "allRequiredInPrompt": 4,
+        "oldWithoutCorrection": 0,
+        "baselineTruncated": 0,
+        "memoryTokens": {
+          "n": 4,
+          "median": 397,
+          "min": 396,
+          "max": 398
+        },
+        "promptTokens": {
+          "n": 4,
+          "median": 4176,
+          "min": 4176,
+          "max": 4176
+        },
+        "syncMs": null,
+        "retrievalMs": null,
+        "generationMs": {
+          "n": 4,
+          "median": 1146.3578119999875,
+          "min": 1018.6334159999969,
+          "max": 1320.8868750000256
+        }
+      },
+      {
+        "mode": "full-raw",
+        "language": "ko",
+        "kind": "correction",
+        "samples": 0,
+        "answerable": 0,
+        "allRequiredInMemory": 0,
+        "allRequiredInPrompt": 0,
+        "oldWithoutCorrection": 0,
+        "baselineTruncated": 0,
+        "memoryTokens": null,
+        "promptTokens": null,
+        "syncMs": null,
+        "retrievalMs": null,
+        "generationMs": null
+      },
+      {
+        "mode": "full-raw",
+        "language": "ko",
+        "kind": "reference",
+        "samples": 0,
+        "answerable": 0,
+        "allRequiredInMemory": 0,
+        "allRequiredInPrompt": 0,
+        "oldWithoutCorrection": 0,
+        "baselineTruncated": 0,
+        "memoryTokens": null,
+        "promptTokens": null,
+        "syncMs": null,
+        "retrievalMs": null,
+        "generationMs": null
+      },
+      {
+        "mode": "full-raw",
+        "language": "ko",
+        "kind": "unknown",
+        "samples": 0,
+        "answerable": 0,
+        "allRequiredInMemory": 0,
+        "allRequiredInPrompt": 0,
+        "oldWithoutCorrection": 0,
+        "baselineTruncated": 0,
+        "memoryTokens": null,
+        "promptTokens": null,
+        "syncMs": null,
+        "retrievalMs": null,
+        "generationMs": null
+      },
+      {
+        "mode": "full-labelled",
+        "samples": 8,
+        "answerable": 8,
+        "allRequiredInMemory": 8,
+        "allRequiredInPrompt": 8,
+        "oldWithoutCorrection": 0,
+        "baselineTruncated": 0,
+        "memoryTokens": {
+          "n": 8,
+          "median": 381.5,
+          "min": 361,
+          "max": 398
+        },
+        "promptTokens": {
+          "n": 8,
+          "median": 3682,
+          "min": 3091,
+          "max": 4273
+        },
+        "syncMs": null,
+        "retrievalMs": null,
+        "generationMs": {
+          "n": 8,
+          "median": 1236.1516665000236,
+          "min": 928.4099580000038,
+          "max": 1496.7200409999932
+        }
+      },
+      {
+        "mode": "full-labelled",
+        "language": "en",
+        "kind": "return",
+        "samples": 4,
+        "answerable": 4,
+        "allRequiredInMemory": 4,
+        "allRequiredInPrompt": 4,
+        "oldWithoutCorrection": 0,
+        "baselineTruncated": 0,
+        "memoryTokens": {
+          "n": 4,
+          "median": 364,
+          "min": 361,
+          "max": 367
+        },
+        "promptTokens": {
+          "n": 4,
+          "median": 3094,
+          "min": 3091,
+          "max": 3097
+        },
+        "syncMs": null,
+        "retrievalMs": null,
+        "generationMs": {
+          "n": 4,
+          "median": 1117.6422290000119,
+          "min": 928.4099580000038,
+          "max": 1399.8976250000014
+        }
+      },
+      {
+        "mode": "full-labelled",
+        "language": "en",
+        "kind": "correction",
+        "samples": 0,
+        "answerable": 0,
+        "allRequiredInMemory": 0,
+        "allRequiredInPrompt": 0,
+        "oldWithoutCorrection": 0,
+        "baselineTruncated": 0,
+        "memoryTokens": null,
+        "promptTokens": null,
+        "syncMs": null,
+        "retrievalMs": null,
+        "generationMs": null
+      },
+      {
+        "mode": "full-labelled",
+        "language": "en",
+        "kind": "reference",
+        "samples": 0,
+        "answerable": 0,
+        "allRequiredInMemory": 0,
+        "allRequiredInPrompt": 0,
+        "oldWithoutCorrection": 0,
+        "baselineTruncated": 0,
+        "memoryTokens": null,
+        "promptTokens": null,
+        "syncMs": null,
+        "retrievalMs": null,
+        "generationMs": null
+      },
+      {
+        "mode": "full-labelled",
+        "language": "en",
+        "kind": "unknown",
+        "samples": 0,
+        "answerable": 0,
+        "allRequiredInMemory": 0,
+        "allRequiredInPrompt": 0,
+        "oldWithoutCorrection": 0,
+        "baselineTruncated": 0,
+        "memoryTokens": null,
+        "promptTokens": null,
+        "syncMs": null,
+        "retrievalMs": null,
+        "generationMs": null
+      },
+      {
+        "mode": "full-labelled",
+        "language": "ko",
+        "kind": "return",
+        "samples": 4,
+        "answerable": 4,
+        "allRequiredInMemory": 4,
+        "allRequiredInPrompt": 4,
+        "oldWithoutCorrection": 0,
+        "baselineTruncated": 0,
+        "memoryTokens": {
+          "n": 4,
+          "median": 397,
+          "min": 396,
+          "max": 398
+        },
+        "promptTokens": {
+          "n": 4,
+          "median": 4270,
+          "min": 4267,
+          "max": 4273
+        },
+        "syncMs": null,
+        "retrievalMs": null,
+        "generationMs": {
+          "n": 4,
+          "median": 1249.489187500003,
+          "min": 1194.4436660000065,
+          "max": 1496.7200409999932
+        }
+      },
+      {
+        "mode": "full-labelled",
+        "language": "ko",
+        "kind": "correction",
+        "samples": 0,
+        "answerable": 0,
+        "allRequiredInMemory": 0,
+        "allRequiredInPrompt": 0,
+        "oldWithoutCorrection": 0,
+        "baselineTruncated": 0,
+        "memoryTokens": null,
+        "promptTokens": null,
+        "syncMs": null,
+        "retrievalMs": null,
+        "generationMs": null
+      },
+      {
+        "mode": "full-labelled",
+        "language": "ko",
+        "kind": "reference",
+        "samples": 0,
+        "answerable": 0,
+        "allRequiredInMemory": 0,
+        "allRequiredInPrompt": 0,
+        "oldWithoutCorrection": 0,
+        "baselineTruncated": 0,
+        "memoryTokens": null,
+        "promptTokens": null,
+        "syncMs": null,
+        "retrievalMs": null,
+        "generationMs": null
+      },
+      {
+        "mode": "full-labelled",
+        "language": "ko",
+        "kind": "unknown",
+        "samples": 0,
+        "answerable": 0,
+        "allRequiredInMemory": 0,
+        "allRequiredInPrompt": 0,
+        "oldWithoutCorrection": 0,
+        "baselineTruncated": 0,
+        "memoryTokens": null,
+        "promptTokens": null,
+        "syncMs": null,
+        "retrievalMs": null,
+        "generationMs": null
+      },
+      {
+        "mode": "sparse-raw",
+        "samples": 8,
+        "answerable": 8,
+        "allRequiredInMemory": 8,
+        "allRequiredInPrompt": 8,
+        "oldWithoutCorrection": 0,
+        "baselineTruncated": 0,
+        "memoryTokens": {
+          "n": 8,
+          "median": 381.5,
+          "min": 361,
+          "max": 398
+        },
+        "promptTokens": {
+          "n": 8,
+          "median": 974.5,
+          "min": 852,
+          "max": 1101
+        },
+        "syncMs": null,
+        "retrievalMs": null,
+        "generationMs": {
+          "n": 8,
+          "median": 1177.6229584999965,
+          "min": 975.6342500000028,
+          "max": 1571.0127499999944
+        }
+      },
+      {
+        "mode": "sparse-raw",
+        "language": "en",
+        "kind": "return",
+        "samples": 4,
+        "answerable": 4,
+        "allRequiredInMemory": 4,
+        "allRequiredInPrompt": 4,
+        "oldWithoutCorrection": 0,
+        "baselineTruncated": 0,
+        "memoryTokens": {
+          "n": 4,
+          "median": 364,
+          "min": 361,
+          "max": 367
+        },
+        "promptTokens": {
+          "n": 4,
+          "median": 852,
+          "min": 852,
+          "max": 852
+        },
+        "syncMs": null,
+        "retrievalMs": null,
+        "generationMs": {
+          "n": 4,
+          "median": 1380.2053329999926,
+          "min": 975.6342500000028,
+          "max": 1571.0127499999944
+        }
+      },
+      {
+        "mode": "sparse-raw",
+        "language": "en",
+        "kind": "correction",
+        "samples": 0,
+        "answerable": 0,
+        "allRequiredInMemory": 0,
+        "allRequiredInPrompt": 0,
+        "oldWithoutCorrection": 0,
+        "baselineTruncated": 0,
+        "memoryTokens": null,
+        "promptTokens": null,
+        "syncMs": null,
+        "retrievalMs": null,
+        "generationMs": null
+      },
+      {
+        "mode": "sparse-raw",
+        "language": "en",
+        "kind": "reference",
+        "samples": 0,
+        "answerable": 0,
+        "allRequiredInMemory": 0,
+        "allRequiredInPrompt": 0,
+        "oldWithoutCorrection": 0,
+        "baselineTruncated": 0,
+        "memoryTokens": null,
+        "promptTokens": null,
+        "syncMs": null,
+        "retrievalMs": null,
+        "generationMs": null
+      },
+      {
+        "mode": "sparse-raw",
+        "language": "en",
+        "kind": "unknown",
+        "samples": 0,
+        "answerable": 0,
+        "allRequiredInMemory": 0,
+        "allRequiredInPrompt": 0,
+        "oldWithoutCorrection": 0,
+        "baselineTruncated": 0,
+        "memoryTokens": null,
+        "promptTokens": null,
+        "syncMs": null,
+        "retrievalMs": null,
+        "generationMs": null
+      },
+      {
+        "mode": "sparse-raw",
+        "language": "ko",
+        "kind": "return",
+        "samples": 4,
+        "answerable": 4,
+        "allRequiredInMemory": 4,
+        "allRequiredInPrompt": 4,
+        "oldWithoutCorrection": 0,
+        "baselineTruncated": 0,
+        "memoryTokens": {
+          "n": 4,
+          "median": 397,
+          "min": 396,
+          "max": 398
+        },
+        "promptTokens": {
+          "n": 4,
+          "median": 1099,
+          "min": 1097,
+          "max": 1101
+        },
+        "syncMs": null,
+        "retrievalMs": null,
+        "generationMs": {
+          "n": 4,
+          "median": 1138.554105000003,
+          "min": 1033.0105420000036,
+          "max": 1211.1339579999913
+        }
+      },
+      {
+        "mode": "sparse-raw",
+        "language": "ko",
+        "kind": "correction",
+        "samples": 0,
+        "answerable": 0,
+        "allRequiredInMemory": 0,
+        "allRequiredInPrompt": 0,
+        "oldWithoutCorrection": 0,
+        "baselineTruncated": 0,
+        "memoryTokens": null,
+        "promptTokens": null,
+        "syncMs": null,
+        "retrievalMs": null,
+        "generationMs": null
+      },
+      {
+        "mode": "sparse-raw",
+        "language": "ko",
+        "kind": "reference",
+        "samples": 0,
+        "answerable": 0,
+        "allRequiredInMemory": 0,
+        "allRequiredInPrompt": 0,
+        "oldWithoutCorrection": 0,
+        "baselineTruncated": 0,
+        "memoryTokens": null,
+        "promptTokens": null,
+        "syncMs": null,
+        "retrievalMs": null,
+        "generationMs": null
+      },
+      {
+        "mode": "sparse-raw",
+        "language": "ko",
+        "kind": "unknown",
+        "samples": 0,
+        "answerable": 0,
+        "allRequiredInMemory": 0,
+        "allRequiredInPrompt": 0,
+        "oldWithoutCorrection": 0,
+        "baselineTruncated": 0,
+        "memoryTokens": null,
+        "promptTokens": null,
+        "syncMs": null,
+        "retrievalMs": null,
+        "generationMs": null
+      },
+      {
+        "mode": "sparse-labelled",
+        "samples": 8,
+        "answerable": 8,
+        "allRequiredInMemory": 8,
+        "allRequiredInPrompt": 8,
+        "oldWithoutCorrection": 0,
+        "baselineTruncated": 0,
+        "memoryTokens": {
+          "n": 8,
+          "median": 381.5,
+          "min": 361,
+          "max": 398
+        },
+        "promptTokens": {
+          "n": 8,
+          "median": 1085,
+          "min": 972,
+          "max": 1194
+        },
+        "syncMs": null,
+        "retrievalMs": null,
+        "generationMs": {
+          "n": 8,
+          "median": 1275.1808745000017,
+          "min": 971.6582500000004,
+          "max": 1694.518374999985
+        }
+      },
+      {
+        "mode": "sparse-labelled",
+        "language": "en",
+        "kind": "return",
+        "samples": 4,
+        "answerable": 4,
+        "allRequiredInMemory": 4,
+        "allRequiredInPrompt": 4,
+        "oldWithoutCorrection": 0,
+        "baselineTruncated": 0,
+        "memoryTokens": {
+          "n": 4,
+          "median": 364,
+          "min": 361,
+          "max": 367
+        },
+        "promptTokens": {
+          "n": 4,
+          "median": 975,
+          "min": 972,
+          "max": 978
+        },
+        "syncMs": null,
+        "retrievalMs": null,
+        "generationMs": {
+          "n": 4,
+          "median": 1314.4401460000372,
+          "min": 971.6582500000004,
+          "max": 1694.518374999985
+        }
+      },
+      {
+        "mode": "sparse-labelled",
+        "language": "en",
+        "kind": "correction",
+        "samples": 0,
+        "answerable": 0,
+        "allRequiredInMemory": 0,
+        "allRequiredInPrompt": 0,
+        "oldWithoutCorrection": 0,
+        "baselineTruncated": 0,
+        "memoryTokens": null,
+        "promptTokens": null,
+        "syncMs": null,
+        "retrievalMs": null,
+        "generationMs": null
+      },
+      {
+        "mode": "sparse-labelled",
+        "language": "en",
+        "kind": "reference",
+        "samples": 0,
+        "answerable": 0,
+        "allRequiredInMemory": 0,
+        "allRequiredInPrompt": 0,
+        "oldWithoutCorrection": 0,
+        "baselineTruncated": 0,
+        "memoryTokens": null,
+        "promptTokens": null,
+        "syncMs": null,
+        "retrievalMs": null,
+        "generationMs": null
+      },
+      {
+        "mode": "sparse-labelled",
+        "language": "en",
+        "kind": "unknown",
+        "samples": 0,
+        "answerable": 0,
+        "allRequiredInMemory": 0,
+        "allRequiredInPrompt": 0,
+        "oldWithoutCorrection": 0,
+        "baselineTruncated": 0,
+        "memoryTokens": null,
+        "promptTokens": null,
+        "syncMs": null,
+        "retrievalMs": null,
+        "generationMs": null
+      },
+      {
+        "mode": "sparse-labelled",
+        "language": "ko",
+        "kind": "return",
+        "samples": 4,
+        "answerable": 4,
+        "allRequiredInMemory": 4,
+        "allRequiredInPrompt": 4,
+        "oldWithoutCorrection": 0,
+        "baselineTruncated": 0,
+        "memoryTokens": {
+          "n": 4,
+          "median": 397,
+          "min": 396,
+          "max": 398
+        },
+        "promptTokens": {
+          "n": 4,
+          "median": 1193,
+          "min": 1192,
+          "max": 1194
+        },
+        "syncMs": null,
+        "retrievalMs": null,
+        "generationMs": {
+          "n": 4,
+          "median": 1275.1808745000017,
+          "min": 1113.6641250000102,
+          "max": 1519.5699989999994
+        }
+      },
+      {
+        "mode": "sparse-labelled",
+        "language": "ko",
+        "kind": "correction",
+        "samples": 0,
+        "answerable": 0,
+        "allRequiredInMemory": 0,
+        "allRequiredInPrompt": 0,
+        "oldWithoutCorrection": 0,
+        "baselineTruncated": 0,
+        "memoryTokens": null,
+        "promptTokens": null,
+        "syncMs": null,
+        "retrievalMs": null,
+        "generationMs": null
+      },
+      {
+        "mode": "sparse-labelled",
+        "language": "ko",
+        "kind": "reference",
+        "samples": 0,
+        "answerable": 0,
+        "allRequiredInMemory": 0,
+        "allRequiredInPrompt": 0,
+        "oldWithoutCorrection": 0,
+        "baselineTruncated": 0,
+        "memoryTokens": null,
+        "promptTokens": null,
+        "syncMs": null,
+        "retrievalMs": null,
+        "generationMs": null
+      },
+      {
+        "mode": "sparse-labelled",
+        "language": "ko",
+        "kind": "unknown",
+        "samples": 0,
+        "answerable": 0,
+        "allRequiredInMemory": 0,
+        "allRequiredInPrompt": 0,
+        "oldWithoutCorrection": 0,
+        "baselineTruncated": 0,
+        "memoryTokens": null,
+        "promptTokens": null,
+        "syncMs": null,
+        "retrievalMs": null,
+        "generationMs": null
+      }
+    ],
+    "requestCounts": {
+      "setup POST /collections 201": 2,
+      "setup POST /collections/:collection/docs/upsert 202": 1,
+      "setup POST /collections/:collection/query 200": 2,
+      "setup POST /collections/:collection/docs/delete 202": 1,
+      "setup GET /collections/:collection 200": 1,
+      "setup DELETE /collections/:collection 200": 1,
+      "setup GET /collections/:collection 404": 1,
+      "cleanup GET /collections/:collection 200": 1,
+      "cleanup DELETE /collections/:collection 200": 1,
+      "cleanup GET /collections/:collection 404": 3
+    },
+    "providerUsage": {
+      "promptTokens": 74520,
+      "completionTokens": 717
+    },
+    "managedEmbeddingUsage": null,
+    "managedEmbeddingCost": null,
+    "semanticQualityGate": null,
+    "scoringStatus": "Pending blinded human semantic review; retrieval is not answer correctness"
+  },
+  "assessment": {
+    "reportHash": "26617ee1877d1319e1545e38d8a8092c12efaf68cdce518fa8d7ce3a5943e7c5",
+    "reviewer": "Codex provisional semantic review; randomized records, experiment objective known",
+    "reviewerType": "assistant",
+    "semanticQualityGate": null,
+    "provisionalAssistantGate": null,
+    "diagnosticOnly": true,
+    "paired": [
+      {
+        "case": "ko-assistant-pronoun",
+        "repetition": 1,
+        "from": "full-raw",
+        "to": "full-labelled",
+        "beforePassed": true,
+        "afterPassed": true,
+        "strictPassDelta": 0
+      },
+      {
+        "case": "en-assistant-pronoun",
+        "repetition": 2,
+        "from": "full-raw",
+        "to": "full-labelled",
+        "beforePassed": true,
+        "afterPassed": true,
+        "strictPassDelta": 0
+      },
+      {
+        "case": "en-user-pronoun",
+        "repetition": 2,
+        "from": "full-raw",
+        "to": "full-labelled",
+        "beforePassed": true,
+        "afterPassed": false,
+        "strictPassDelta": -1
+      },
+      {
+        "case": "ko-user-pronoun",
+        "repetition": 2,
+        "from": "full-raw",
+        "to": "full-labelled",
+        "beforePassed": true,
+        "afterPassed": false,
+        "strictPassDelta": -1
+      },
+      {
+        "case": "en-user-pronoun",
+        "repetition": 1,
+        "from": "full-raw",
+        "to": "full-labelled",
+        "beforePassed": true,
+        "afterPassed": false,
+        "strictPassDelta": -1
+      },
+      {
+        "case": "en-assistant-pronoun",
+        "repetition": 1,
+        "from": "full-raw",
+        "to": "full-labelled",
+        "beforePassed": true,
+        "afterPassed": true,
+        "strictPassDelta": 0
+      },
+      {
+        "case": "ko-user-pronoun",
+        "repetition": 1,
+        "from": "full-raw",
+        "to": "full-labelled",
+        "beforePassed": true,
+        "afterPassed": false,
+        "strictPassDelta": -1
+      },
+      {
+        "case": "ko-assistant-pronoun",
+        "repetition": 2,
+        "from": "full-raw",
+        "to": "full-labelled",
+        "beforePassed": true,
+        "afterPassed": true,
+        "strictPassDelta": 0
+      },
+      {
+        "case": "ko-assistant-pronoun",
+        "repetition": 1,
+        "from": "sparse-raw",
+        "to": "sparse-labelled",
+        "beforePassed": true,
+        "afterPassed": true,
+        "strictPassDelta": 0
+      },
+      {
+        "case": "ko-assistant-pronoun",
+        "repetition": 2,
+        "from": "sparse-raw",
+        "to": "sparse-labelled",
+        "beforePassed": true,
+        "afterPassed": true,
+        "strictPassDelta": 0
+      },
+      {
+        "case": "ko-user-pronoun",
+        "repetition": 2,
+        "from": "sparse-raw",
+        "to": "sparse-labelled",
+        "beforePassed": true,
+        "afterPassed": false,
+        "strictPassDelta": -1
+      },
+      {
+        "case": "en-assistant-pronoun",
+        "repetition": 2,
+        "from": "sparse-raw",
+        "to": "sparse-labelled",
+        "beforePassed": true,
+        "afterPassed": false,
+        "strictPassDelta": -1
+      },
+      {
+        "case": "en-user-pronoun",
+        "repetition": 2,
+        "from": "sparse-raw",
+        "to": "sparse-labelled",
+        "beforePassed": false,
+        "afterPassed": false,
+        "strictPassDelta": 0
+      },
+      {
+        "case": "en-assistant-pronoun",
+        "repetition": 1,
+        "from": "sparse-raw",
+        "to": "sparse-labelled",
+        "beforePassed": true,
+        "afterPassed": false,
+        "strictPassDelta": -1
+      },
+      {
+        "case": "en-user-pronoun",
+        "repetition": 1,
+        "from": "sparse-raw",
+        "to": "sparse-labelled",
+        "beforePassed": false,
+        "afterPassed": false,
+        "strictPassDelta": 0
+      },
+      {
+        "case": "ko-user-pronoun",
+        "repetition": 1,
+        "from": "sparse-raw",
+        "to": "sparse-labelled",
+        "beforePassed": true,
+        "afterPassed": false,
+        "strictPassDelta": -1
+      },
+      {
+        "case": "ko-assistant-pronoun",
+        "repetition": 1,
+        "from": "full-raw",
+        "to": "sparse-raw",
+        "beforePassed": true,
+        "afterPassed": true,
+        "strictPassDelta": 0
+      },
+      {
+        "case": "en-assistant-pronoun",
+        "repetition": 2,
+        "from": "full-raw",
+        "to": "sparse-raw",
+        "beforePassed": true,
+        "afterPassed": true,
+        "strictPassDelta": 0
+      },
+      {
+        "case": "en-user-pronoun",
+        "repetition": 2,
+        "from": "full-raw",
+        "to": "sparse-raw",
+        "beforePassed": true,
+        "afterPassed": false,
+        "strictPassDelta": -1
+      },
+      {
+        "case": "ko-user-pronoun",
+        "repetition": 2,
+        "from": "full-raw",
+        "to": "sparse-raw",
+        "beforePassed": true,
+        "afterPassed": true,
+        "strictPassDelta": 0
+      },
+      {
+        "case": "en-user-pronoun",
+        "repetition": 1,
+        "from": "full-raw",
+        "to": "sparse-raw",
+        "beforePassed": true,
+        "afterPassed": false,
+        "strictPassDelta": -1
+      },
+      {
+        "case": "en-assistant-pronoun",
+        "repetition": 1,
+        "from": "full-raw",
+        "to": "sparse-raw",
+        "beforePassed": true,
+        "afterPassed": true,
+        "strictPassDelta": 0
+      },
+      {
+        "case": "ko-user-pronoun",
+        "repetition": 1,
+        "from": "full-raw",
+        "to": "sparse-raw",
+        "beforePassed": true,
+        "afterPassed": true,
+        "strictPassDelta": 0
+      },
+      {
+        "case": "ko-assistant-pronoun",
+        "repetition": 2,
+        "from": "full-raw",
+        "to": "sparse-raw",
+        "beforePassed": true,
+        "afterPassed": true,
+        "strictPassDelta": 0
+      },
+      {
+        "case": "ko-assistant-pronoun",
+        "repetition": 1,
+        "from": "full-labelled",
+        "to": "sparse-labelled",
+        "beforePassed": true,
+        "afterPassed": true,
+        "strictPassDelta": 0
+      },
+      {
+        "case": "ko-user-pronoun",
+        "repetition": 2,
+        "from": "full-labelled",
+        "to": "sparse-labelled",
+        "beforePassed": false,
+        "afterPassed": false,
+        "strictPassDelta": 0
+      },
+      {
+        "case": "ko-assistant-pronoun",
+        "repetition": 2,
+        "from": "full-labelled",
+        "to": "sparse-labelled",
+        "beforePassed": true,
+        "afterPassed": true,
+        "strictPassDelta": 0
+      },
+      {
+        "case": "en-user-pronoun",
+        "repetition": 1,
+        "from": "full-labelled",
+        "to": "sparse-labelled",
+        "beforePassed": false,
+        "afterPassed": false,
+        "strictPassDelta": 0
+      },
+      {
+        "case": "en-assistant-pronoun",
+        "repetition": 2,
+        "from": "full-labelled",
+        "to": "sparse-labelled",
+        "beforePassed": true,
+        "afterPassed": false,
+        "strictPassDelta": -1
+      },
+      {
+        "case": "en-user-pronoun",
+        "repetition": 2,
+        "from": "full-labelled",
+        "to": "sparse-labelled",
+        "beforePassed": false,
+        "afterPassed": false,
+        "strictPassDelta": 0
+      },
+      {
+        "case": "ko-user-pronoun",
+        "repetition": 1,
+        "from": "full-labelled",
+        "to": "sparse-labelled",
+        "beforePassed": false,
+        "afterPassed": false,
+        "strictPassDelta": 0
+      },
+      {
+        "case": "en-assistant-pronoun",
+        "repetition": 1,
+        "from": "full-labelled",
+        "to": "sparse-labelled",
+        "beforePassed": true,
+        "afterPassed": false,
+        "strictPassDelta": -1
+      }
+    ],
+    "groups": [
+      {
+        "mode": "full-raw",
+        "language": null,
+        "kind": null,
+        "samples": 8,
+        "passed": 8,
+        "outcomes": {
+          "correct": 8,
+          "partial": 0,
+          "incorrect": 0,
+          "abstained": 0,
+          "unknown-handled": 0
+        },
+        "unsupportedAssertions": 0
+      },
+      {
+        "mode": "full-raw",
+        "language": "en",
+        "kind": "return",
+        "samples": 4,
+        "passed": 4,
+        "outcomes": {
+          "correct": 4,
+          "partial": 0,
+          "incorrect": 0,
+          "abstained": 0,
+          "unknown-handled": 0
+        },
+        "unsupportedAssertions": 0
+      },
+      {
+        "mode": "full-raw",
+        "language": "en",
+        "kind": "correction",
+        "samples": 0,
+        "passed": 0,
+        "outcomes": {
+          "correct": 0,
+          "partial": 0,
+          "incorrect": 0,
+          "abstained": 0,
+          "unknown-handled": 0
+        },
+        "unsupportedAssertions": 0
+      },
+      {
+        "mode": "full-raw",
+        "language": "en",
+        "kind": "reference",
+        "samples": 0,
+        "passed": 0,
+        "outcomes": {
+          "correct": 0,
+          "partial": 0,
+          "incorrect": 0,
+          "abstained": 0,
+          "unknown-handled": 0
+        },
+        "unsupportedAssertions": 0
+      },
+      {
+        "mode": "full-raw",
+        "language": "en",
+        "kind": "unknown",
+        "samples": 0,
+        "passed": 0,
+        "outcomes": {
+          "correct": 0,
+          "partial": 0,
+          "incorrect": 0,
+          "abstained": 0,
+          "unknown-handled": 0
+        },
+        "unsupportedAssertions": 0
+      },
+      {
+        "mode": "full-raw",
+        "language": "ko",
+        "kind": "return",
+        "samples": 4,
+        "passed": 4,
+        "outcomes": {
+          "correct": 4,
+          "partial": 0,
+          "incorrect": 0,
+          "abstained": 0,
+          "unknown-handled": 0
+        },
+        "unsupportedAssertions": 0
+      },
+      {
+        "mode": "full-raw",
+        "language": "ko",
+        "kind": "correction",
+        "samples": 0,
+        "passed": 0,
+        "outcomes": {
+          "correct": 0,
+          "partial": 0,
+          "incorrect": 0,
+          "abstained": 0,
+          "unknown-handled": 0
+        },
+        "unsupportedAssertions": 0
+      },
+      {
+        "mode": "full-raw",
+        "language": "ko",
+        "kind": "reference",
+        "samples": 0,
+        "passed": 0,
+        "outcomes": {
+          "correct": 0,
+          "partial": 0,
+          "incorrect": 0,
+          "abstained": 0,
+          "unknown-handled": 0
+        },
+        "unsupportedAssertions": 0
+      },
+      {
+        "mode": "full-raw",
+        "language": "ko",
+        "kind": "unknown",
+        "samples": 0,
+        "passed": 0,
+        "outcomes": {
+          "correct": 0,
+          "partial": 0,
+          "incorrect": 0,
+          "abstained": 0,
+          "unknown-handled": 0
+        },
+        "unsupportedAssertions": 0
+      },
+      {
+        "mode": "full-labelled",
+        "language": null,
+        "kind": null,
+        "samples": 8,
+        "passed": 4,
+        "outcomes": {
+          "correct": 4,
+          "partial": 0,
+          "incorrect": 4,
+          "abstained": 0,
+          "unknown-handled": 0
+        },
+        "unsupportedAssertions": 4
+      },
+      {
+        "mode": "full-labelled",
+        "language": "en",
+        "kind": "return",
+        "samples": 4,
+        "passed": 2,
+        "outcomes": {
+          "correct": 2,
+          "partial": 0,
+          "incorrect": 2,
+          "abstained": 0,
+          "unknown-handled": 0
+        },
+        "unsupportedAssertions": 2
+      },
+      {
+        "mode": "full-labelled",
+        "language": "en",
+        "kind": "correction",
+        "samples": 0,
+        "passed": 0,
+        "outcomes": {
+          "correct": 0,
+          "partial": 0,
+          "incorrect": 0,
+          "abstained": 0,
+          "unknown-handled": 0
+        },
+        "unsupportedAssertions": 0
+      },
+      {
+        "mode": "full-labelled",
+        "language": "en",
+        "kind": "reference",
+        "samples": 0,
+        "passed": 0,
+        "outcomes": {
+          "correct": 0,
+          "partial": 0,
+          "incorrect": 0,
+          "abstained": 0,
+          "unknown-handled": 0
+        },
+        "unsupportedAssertions": 0
+      },
+      {
+        "mode": "full-labelled",
+        "language": "en",
+        "kind": "unknown",
+        "samples": 0,
+        "passed": 0,
+        "outcomes": {
+          "correct": 0,
+          "partial": 0,
+          "incorrect": 0,
+          "abstained": 0,
+          "unknown-handled": 0
+        },
+        "unsupportedAssertions": 0
+      },
+      {
+        "mode": "full-labelled",
+        "language": "ko",
+        "kind": "return",
+        "samples": 4,
+        "passed": 2,
+        "outcomes": {
+          "correct": 2,
+          "partial": 0,
+          "incorrect": 2,
+          "abstained": 0,
+          "unknown-handled": 0
+        },
+        "unsupportedAssertions": 2
+      },
+      {
+        "mode": "full-labelled",
+        "language": "ko",
+        "kind": "correction",
+        "samples": 0,
+        "passed": 0,
+        "outcomes": {
+          "correct": 0,
+          "partial": 0,
+          "incorrect": 0,
+          "abstained": 0,
+          "unknown-handled": 0
+        },
+        "unsupportedAssertions": 0
+      },
+      {
+        "mode": "full-labelled",
+        "language": "ko",
+        "kind": "reference",
+        "samples": 0,
+        "passed": 0,
+        "outcomes": {
+          "correct": 0,
+          "partial": 0,
+          "incorrect": 0,
+          "abstained": 0,
+          "unknown-handled": 0
+        },
+        "unsupportedAssertions": 0
+      },
+      {
+        "mode": "full-labelled",
+        "language": "ko",
+        "kind": "unknown",
+        "samples": 0,
+        "passed": 0,
+        "outcomes": {
+          "correct": 0,
+          "partial": 0,
+          "incorrect": 0,
+          "abstained": 0,
+          "unknown-handled": 0
+        },
+        "unsupportedAssertions": 0
+      },
+      {
+        "mode": "sparse-raw",
+        "language": null,
+        "kind": null,
+        "samples": 8,
+        "passed": 6,
+        "outcomes": {
+          "correct": 6,
+          "partial": 0,
+          "incorrect": 2,
+          "abstained": 0,
+          "unknown-handled": 0
+        },
+        "unsupportedAssertions": 2
+      },
+      {
+        "mode": "sparse-raw",
+        "language": "en",
+        "kind": "return",
+        "samples": 4,
+        "passed": 2,
+        "outcomes": {
+          "correct": 2,
+          "partial": 0,
+          "incorrect": 2,
+          "abstained": 0,
+          "unknown-handled": 0
+        },
+        "unsupportedAssertions": 2
+      },
+      {
+        "mode": "sparse-raw",
+        "language": "en",
+        "kind": "correction",
+        "samples": 0,
+        "passed": 0,
+        "outcomes": {
+          "correct": 0,
+          "partial": 0,
+          "incorrect": 0,
+          "abstained": 0,
+          "unknown-handled": 0
+        },
+        "unsupportedAssertions": 0
+      },
+      {
+        "mode": "sparse-raw",
+        "language": "en",
+        "kind": "reference",
+        "samples": 0,
+        "passed": 0,
+        "outcomes": {
+          "correct": 0,
+          "partial": 0,
+          "incorrect": 0,
+          "abstained": 0,
+          "unknown-handled": 0
+        },
+        "unsupportedAssertions": 0
+      },
+      {
+        "mode": "sparse-raw",
+        "language": "en",
+        "kind": "unknown",
+        "samples": 0,
+        "passed": 0,
+        "outcomes": {
+          "correct": 0,
+          "partial": 0,
+          "incorrect": 0,
+          "abstained": 0,
+          "unknown-handled": 0
+        },
+        "unsupportedAssertions": 0
+      },
+      {
+        "mode": "sparse-raw",
+        "language": "ko",
+        "kind": "return",
+        "samples": 4,
+        "passed": 4,
+        "outcomes": {
+          "correct": 4,
+          "partial": 0,
+          "incorrect": 0,
+          "abstained": 0,
+          "unknown-handled": 0
+        },
+        "unsupportedAssertions": 0
+      },
+      {
+        "mode": "sparse-raw",
+        "language": "ko",
+        "kind": "correction",
+        "samples": 0,
+        "passed": 0,
+        "outcomes": {
+          "correct": 0,
+          "partial": 0,
+          "incorrect": 0,
+          "abstained": 0,
+          "unknown-handled": 0
+        },
+        "unsupportedAssertions": 0
+      },
+      {
+        "mode": "sparse-raw",
+        "language": "ko",
+        "kind": "reference",
+        "samples": 0,
+        "passed": 0,
+        "outcomes": {
+          "correct": 0,
+          "partial": 0,
+          "incorrect": 0,
+          "abstained": 0,
+          "unknown-handled": 0
+        },
+        "unsupportedAssertions": 0
+      },
+      {
+        "mode": "sparse-raw",
+        "language": "ko",
+        "kind": "unknown",
+        "samples": 0,
+        "passed": 0,
+        "outcomes": {
+          "correct": 0,
+          "partial": 0,
+          "incorrect": 0,
+          "abstained": 0,
+          "unknown-handled": 0
+        },
+        "unsupportedAssertions": 0
+      },
+      {
+        "mode": "sparse-labelled",
+        "language": null,
+        "kind": null,
+        "samples": 8,
+        "passed": 2,
+        "outcomes": {
+          "correct": 2,
+          "partial": 0,
+          "incorrect": 6,
+          "abstained": 0,
+          "unknown-handled": 0
+        },
+        "unsupportedAssertions": 6
+      },
+      {
+        "mode": "sparse-labelled",
+        "language": "en",
+        "kind": "return",
+        "samples": 4,
+        "passed": 0,
+        "outcomes": {
+          "correct": 0,
+          "partial": 0,
+          "incorrect": 4,
+          "abstained": 0,
+          "unknown-handled": 0
+        },
+        "unsupportedAssertions": 4
+      },
+      {
+        "mode": "sparse-labelled",
+        "language": "en",
+        "kind": "correction",
+        "samples": 0,
+        "passed": 0,
+        "outcomes": {
+          "correct": 0,
+          "partial": 0,
+          "incorrect": 0,
+          "abstained": 0,
+          "unknown-handled": 0
+        },
+        "unsupportedAssertions": 0
+      },
+      {
+        "mode": "sparse-labelled",
+        "language": "en",
+        "kind": "reference",
+        "samples": 0,
+        "passed": 0,
+        "outcomes": {
+          "correct": 0,
+          "partial": 0,
+          "incorrect": 0,
+          "abstained": 0,
+          "unknown-handled": 0
+        },
+        "unsupportedAssertions": 0
+      },
+      {
+        "mode": "sparse-labelled",
+        "language": "en",
+        "kind": "unknown",
+        "samples": 0,
+        "passed": 0,
+        "outcomes": {
+          "correct": 0,
+          "partial": 0,
+          "incorrect": 0,
+          "abstained": 0,
+          "unknown-handled": 0
+        },
+        "unsupportedAssertions": 0
+      },
+      {
+        "mode": "sparse-labelled",
+        "language": "ko",
+        "kind": "return",
+        "samples": 4,
+        "passed": 2,
+        "outcomes": {
+          "correct": 2,
+          "partial": 0,
+          "incorrect": 2,
+          "abstained": 0,
+          "unknown-handled": 0
+        },
+        "unsupportedAssertions": 2
+      },
+      {
+        "mode": "sparse-labelled",
+        "language": "ko",
+        "kind": "correction",
+        "samples": 0,
+        "passed": 0,
+        "outcomes": {
+          "correct": 0,
+          "partial": 0,
+          "incorrect": 0,
+          "abstained": 0,
+          "unknown-handled": 0
+        },
+        "unsupportedAssertions": 0
+      },
+      {
+        "mode": "sparse-labelled",
+        "language": "ko",
+        "kind": "reference",
+        "samples": 0,
+        "passed": 0,
+        "outcomes": {
+          "correct": 0,
+          "partial": 0,
+          "incorrect": 0,
+          "abstained": 0,
+          "unknown-handled": 0
+        },
+        "unsupportedAssertions": 0
+      },
+      {
+        "mode": "sparse-labelled",
+        "language": "ko",
+        "kind": "unknown",
+        "samples": 0,
+        "passed": 0,
+        "outcomes": {
+          "correct": 0,
+          "partial": 0,
+          "incorrect": 0,
+          "abstained": 0,
+          "unknown-handled": 0
+        },
+        "unsupportedAssertions": 0
+      }
+    ],
+    "rows": [
+      {
+        "id": "en-assistant-pronoun/r1/full-labelled",
+        "case": "en-assistant-pronoun",
+        "language": "en",
+        "kind": "return",
+        "mode": "full-labelled",
+        "repetition": 1,
+        "outcome": "correct",
+        "unsupportedAssertion": false,
+        "rationale": "You correctly addresses the user as the actor; the brass umbrella stand beside the east doorway is correct."
+      },
+      {
+        "id": "en-assistant-pronoun/r1/full-raw",
+        "case": "en-assistant-pronoun",
+        "language": "en",
+        "kind": "return",
+        "mode": "full-raw",
+        "repetition": 1,
+        "outcome": "correct",
+        "unsupportedAssertion": false,
+        "rationale": "You correctly addresses the user as the actor; the brass umbrella stand beside the east doorway is correct."
+      },
+      {
+        "id": "en-assistant-pronoun/r1/sparse-labelled",
+        "case": "en-assistant-pronoun",
+        "language": "en",
+        "kind": "return",
+        "mode": "sparse-labelled",
+        "repetition": 1,
+        "outcome": "incorrect",
+        "unsupportedAssertion": true,
+        "rationale": "I claims the assistant put the map away, although the assistant source reports the user doing so. Location is correct."
+      },
+      {
+        "id": "en-assistant-pronoun/r1/sparse-raw",
+        "case": "en-assistant-pronoun",
+        "language": "en",
+        "kind": "return",
+        "mode": "sparse-raw",
+        "repetition": 1,
+        "outcome": "correct",
+        "unsupportedAssertion": false,
+        "rationale": "You correctly addresses the user as the actor; the brass umbrella stand beside the east doorway is correct."
+      },
+      {
+        "id": "en-assistant-pronoun/r2/full-labelled",
+        "case": "en-assistant-pronoun",
+        "language": "en",
+        "kind": "return",
+        "mode": "full-labelled",
+        "repetition": 2,
+        "outcome": "correct",
+        "unsupportedAssertion": false,
+        "rationale": "You correctly addresses the user as the actor; the brass umbrella stand beside the east doorway is correct."
+      },
+      {
+        "id": "en-assistant-pronoun/r2/full-raw",
+        "case": "en-assistant-pronoun",
+        "language": "en",
+        "kind": "return",
+        "mode": "full-raw",
+        "repetition": 2,
+        "outcome": "correct",
+        "unsupportedAssertion": false,
+        "rationale": "You correctly addresses the user as the actor; the brass umbrella stand beside the east doorway is correct."
+      },
+      {
+        "id": "en-assistant-pronoun/r2/sparse-labelled",
+        "case": "en-assistant-pronoun",
+        "language": "en",
+        "kind": "return",
+        "mode": "sparse-labelled",
+        "repetition": 2,
+        "outcome": "incorrect",
+        "unsupportedAssertion": true,
+        "rationale": "I claims the assistant put the map away, although the assistant source reports the user doing so. Location is correct."
+      },
+      {
+        "id": "en-assistant-pronoun/r2/sparse-raw",
+        "case": "en-assistant-pronoun",
+        "language": "en",
+        "kind": "return",
+        "mode": "sparse-raw",
+        "repetition": 2,
+        "outcome": "correct",
+        "unsupportedAssertion": false,
+        "rationale": "You correctly addresses the user as the actor; the brass umbrella stand beside the east doorway is correct."
+      },
+      {
+        "id": "en-user-pronoun/r1/full-labelled",
+        "case": "en-user-pronoun",
+        "language": "en",
+        "kind": "return",
+        "mode": "full-labelled",
+        "repetition": 1,
+        "outcome": "incorrect",
+        "unsupportedAssertion": true,
+        "rationale": "You assigns map placement to the user, although the user source reports the assistant placing it. Location is correct."
+      },
+      {
+        "id": "en-user-pronoun/r1/full-raw",
+        "case": "en-user-pronoun",
+        "language": "en",
+        "kind": "return",
+        "mode": "full-raw",
+        "repetition": 1,
+        "outcome": "correct",
+        "unsupportedAssertion": false,
+        "rationale": "I correctly refers to the assistant as the actor; the brass umbrella stand beside the east doorway is correct."
+      },
+      {
+        "id": "en-user-pronoun/r1/sparse-labelled",
+        "case": "en-user-pronoun",
+        "language": "en",
+        "kind": "return",
+        "mode": "sparse-labelled",
+        "repetition": 1,
+        "outcome": "incorrect",
+        "unsupportedAssertion": true,
+        "rationale": "You assigns map placement to the user, although the user source reports the assistant placing it. Location is correct."
+      },
+      {
+        "id": "en-user-pronoun/r1/sparse-raw",
+        "case": "en-user-pronoun",
+        "language": "en",
+        "kind": "return",
+        "mode": "sparse-raw",
+        "repetition": 1,
+        "outcome": "incorrect",
+        "unsupportedAssertion": true,
+        "rationale": "You assigns map placement to the user, although the user source reports the assistant placing it. Location is correct."
+      },
+      {
+        "id": "en-user-pronoun/r2/full-labelled",
+        "case": "en-user-pronoun",
+        "language": "en",
+        "kind": "return",
+        "mode": "full-labelled",
+        "repetition": 2,
+        "outcome": "incorrect",
+        "unsupportedAssertion": true,
+        "rationale": "You assigns map placement to the user, although the user source reports the assistant placing it. Location is correct."
+      },
+      {
+        "id": "en-user-pronoun/r2/full-raw",
+        "case": "en-user-pronoun",
+        "language": "en",
+        "kind": "return",
+        "mode": "full-raw",
+        "repetition": 2,
+        "outcome": "correct",
+        "unsupportedAssertion": false,
+        "rationale": "I correctly refers to the assistant as the actor; the brass umbrella stand beside the east doorway is correct."
+      },
+      {
+        "id": "en-user-pronoun/r2/sparse-labelled",
+        "case": "en-user-pronoun",
+        "language": "en",
+        "kind": "return",
+        "mode": "sparse-labelled",
+        "repetition": 2,
+        "outcome": "incorrect",
+        "unsupportedAssertion": true,
+        "rationale": "You assigns map placement to the user, although the user source reports the assistant placing it. Location is correct."
+      },
+      {
+        "id": "en-user-pronoun/r2/sparse-raw",
+        "case": "en-user-pronoun",
+        "language": "en",
+        "kind": "return",
+        "mode": "sparse-raw",
+        "repetition": 2,
+        "outcome": "incorrect",
+        "unsupportedAssertion": true,
+        "rationale": "You assigns map placement to the user, although the user source reports the assistant placing it. Location is correct."
+      },
+      {
+        "id": "ko-assistant-pronoun/r1/full-labelled",
+        "case": "ko-assistant-pronoun",
+        "language": "ko",
+        "kind": "return",
+        "mode": "full-labelled",
+        "repetition": 1,
+        "outcome": "correct",
+        "unsupportedAssertion": false,
+        "rationale": "네가 correctly addresses the user as the actor; the bamboo basket below the north window is correct."
+      },
+      {
+        "id": "ko-assistant-pronoun/r1/full-raw",
+        "case": "ko-assistant-pronoun",
+        "language": "ko",
+        "kind": "return",
+        "mode": "full-raw",
+        "repetition": 1,
+        "outcome": "correct",
+        "unsupportedAssertion": false,
+        "rationale": "네가 correctly addresses the user as the actor; the bamboo basket below the north window is correct."
+      },
+      {
+        "id": "ko-assistant-pronoun/r1/sparse-labelled",
+        "case": "ko-assistant-pronoun",
+        "language": "ko",
+        "kind": "return",
+        "mode": "sparse-labelled",
+        "repetition": 1,
+        "outcome": "correct",
+        "unsupportedAssertion": false,
+        "rationale": "네가 correctly addresses the user as the actor; the bamboo basket below the north window is correct."
+      },
+      {
+        "id": "ko-assistant-pronoun/r1/sparse-raw",
+        "case": "ko-assistant-pronoun",
+        "language": "ko",
+        "kind": "return",
+        "mode": "sparse-raw",
+        "repetition": 1,
+        "outcome": "correct",
+        "unsupportedAssertion": false,
+        "rationale": "네가 correctly addresses the user as the actor; the bamboo basket below the north window is correct."
+      },
+      {
+        "id": "ko-assistant-pronoun/r2/full-labelled",
+        "case": "ko-assistant-pronoun",
+        "language": "ko",
+        "kind": "return",
+        "mode": "full-labelled",
+        "repetition": 2,
+        "outcome": "correct",
+        "unsupportedAssertion": false,
+        "rationale": "네가 correctly addresses the user as the actor; the bamboo basket below the north window is correct."
+      },
+      {
+        "id": "ko-assistant-pronoun/r2/full-raw",
+        "case": "ko-assistant-pronoun",
+        "language": "ko",
+        "kind": "return",
+        "mode": "full-raw",
+        "repetition": 2,
+        "outcome": "correct",
+        "unsupportedAssertion": false,
+        "rationale": "네가 correctly addresses the user as the actor; the bamboo basket below the north window is correct."
+      },
+      {
+        "id": "ko-assistant-pronoun/r2/sparse-labelled",
+        "case": "ko-assistant-pronoun",
+        "language": "ko",
+        "kind": "return",
+        "mode": "sparse-labelled",
+        "repetition": 2,
+        "outcome": "correct",
+        "unsupportedAssertion": false,
+        "rationale": "네가 correctly addresses the user as the actor; the bamboo basket below the north window is correct."
+      },
+      {
+        "id": "ko-assistant-pronoun/r2/sparse-raw",
+        "case": "ko-assistant-pronoun",
+        "language": "ko",
+        "kind": "return",
+        "mode": "sparse-raw",
+        "repetition": 2,
+        "outcome": "correct",
+        "unsupportedAssertion": false,
+        "rationale": "네가 correctly addresses the user as the actor; the bamboo basket below the north window is correct."
+      },
+      {
+        "id": "ko-user-pronoun/r1/full-labelled",
+        "case": "ko-user-pronoun",
+        "language": "ko",
+        "kind": "return",
+        "mode": "full-labelled",
+        "repetition": 1,
+        "outcome": "incorrect",
+        "unsupportedAssertion": true,
+        "rationale": "네가 assigns the action to the user, but the user source reports that the assistant put the map away. Location is correct."
+      },
+      {
+        "id": "ko-user-pronoun/r1/full-raw",
+        "case": "ko-user-pronoun",
+        "language": "ko",
+        "kind": "return",
+        "mode": "full-raw",
+        "repetition": 1,
+        "outcome": "correct",
+        "unsupportedAssertion": false,
+        "rationale": "제가 correctly refers to the assistant as the actor; the bamboo basket below the north window is correct."
+      },
+      {
+        "id": "ko-user-pronoun/r1/sparse-labelled",
+        "case": "ko-user-pronoun",
+        "language": "ko",
+        "kind": "return",
+        "mode": "sparse-labelled",
+        "repetition": 1,
+        "outcome": "incorrect",
+        "unsupportedAssertion": true,
+        "rationale": "네가 assigns the action to the user, but the user source reports that the assistant put the map away. Location is correct."
+      },
+      {
+        "id": "ko-user-pronoun/r1/sparse-raw",
+        "case": "ko-user-pronoun",
+        "language": "ko",
+        "kind": "return",
+        "mode": "sparse-raw",
+        "repetition": 1,
+        "outcome": "correct",
+        "unsupportedAssertion": false,
+        "rationale": "제가 correctly refers to the assistant as the actor; the bamboo basket below the north window is correct."
+      },
+      {
+        "id": "ko-user-pronoun/r2/full-labelled",
+        "case": "ko-user-pronoun",
+        "language": "ko",
+        "kind": "return",
+        "mode": "full-labelled",
+        "repetition": 2,
+        "outcome": "incorrect",
+        "unsupportedAssertion": true,
+        "rationale": "Both actors are reversed: 네가 assigns map placement to the user and 나는 assigns packaging observation to the assistant; the user source says the opposite. Location is correct."
+      },
+      {
+        "id": "ko-user-pronoun/r2/full-raw",
+        "case": "ko-user-pronoun",
+        "language": "ko",
+        "kind": "return",
+        "mode": "full-raw",
+        "repetition": 2,
+        "outcome": "correct",
+        "unsupportedAssertion": false,
+        "rationale": "제가 correctly refers to the assistant as the actor; the bamboo basket below the north window is correct."
+      },
+      {
+        "id": "ko-user-pronoun/r2/sparse-labelled",
+        "case": "ko-user-pronoun",
+        "language": "ko",
+        "kind": "return",
+        "mode": "sparse-labelled",
+        "repetition": 2,
+        "outcome": "incorrect",
+        "unsupportedAssertion": true,
+        "rationale": "네가 assigns the action to the user, but the user source reports that the assistant put the map away. Location is correct."
+      },
+      {
+        "id": "ko-user-pronoun/r2/sparse-raw",
+        "case": "ko-user-pronoun",
+        "language": "ko",
+        "kind": "return",
+        "mode": "sparse-raw",
+        "repetition": 2,
+        "outcome": "correct",
+        "unsupportedAssertion": false,
+        "rationale": "제가 correctly refers to the assistant as the actor; the bamboo basket below the north window is correct."
+      }
+    ]
+  },
+  "historicalReferenceChecks": [
+    {
+      "sample": "en-user-pronoun/r1/full-raw",
+      "historicalSample": "en-user-pronoun/r1/off",
+      "exactPromptAndOptions": true
+    },
+    {
+      "sample": "en-user-pronoun/r1/sparse-labelled",
+      "historicalSample": "en-user-pronoun/r1/on",
+      "exactPromptAndOptions": true
+    },
+    {
+      "sample": "en-assistant-pronoun/r1/sparse-labelled",
+      "historicalSample": "en-assistant-pronoun/r1/on",
+      "exactPromptAndOptions": true
+    },
+    {
+      "sample": "en-assistant-pronoun/r1/full-raw",
+      "historicalSample": "en-assistant-pronoun/r1/off",
+      "exactPromptAndOptions": true
+    },
+    {
+      "sample": "ko-user-pronoun/r1/sparse-labelled",
+      "historicalSample": "ko-user-pronoun/r1/on",
+      "exactPromptAndOptions": true
+    },
+    {
+      "sample": "ko-user-pronoun/r1/full-raw",
+      "historicalSample": "ko-user-pronoun/r1/off",
+      "exactPromptAndOptions": true
+    },
+    {
+      "sample": "ko-assistant-pronoun/r1/sparse-labelled",
+      "historicalSample": "ko-assistant-pronoun/r1/on",
+      "exactPromptAndOptions": true
+    },
+    {
+      "sample": "ko-assistant-pronoun/r1/full-raw",
+      "historicalSample": "ko-assistant-pronoun/r1/off",
+      "exactPromptAndOptions": true
+    },
+    {
+      "sample": "en-user-pronoun/r2/sparse-labelled",
+      "historicalSample": "en-user-pronoun/r1/on",
+      "exactPromptAndOptions": true
+    },
+    {
+      "sample": "en-user-pronoun/r2/full-raw",
+      "historicalSample": "en-user-pronoun/r1/off",
+      "exactPromptAndOptions": true
+    },
+    {
+      "sample": "en-assistant-pronoun/r2/sparse-labelled",
+      "historicalSample": "en-assistant-pronoun/r1/on",
+      "exactPromptAndOptions": true
+    },
+    {
+      "sample": "en-assistant-pronoun/r2/full-raw",
+      "historicalSample": "en-assistant-pronoun/r1/off",
+      "exactPromptAndOptions": true
+    },
+    {
+      "sample": "ko-user-pronoun/r2/sparse-labelled",
+      "historicalSample": "ko-user-pronoun/r1/on",
+      "exactPromptAndOptions": true
+    },
+    {
+      "sample": "ko-user-pronoun/r2/full-raw",
+      "historicalSample": "ko-user-pronoun/r1/off",
+      "exactPromptAndOptions": true
+    },
+    {
+      "sample": "ko-assistant-pronoun/r2/full-raw",
+      "historicalSample": "ko-assistant-pronoun/r1/off",
+      "exactPromptAndOptions": true
+    },
+    {
+      "sample": "ko-assistant-pronoun/r2/sparse-labelled",
+      "historicalSample": "ko-assistant-pronoun/r1/on",
+      "exactPromptAndOptions": true
+    }
+  ],
+  "rows": [
+    {
+      "id": "en-user-pronoun/r1/full-raw",
+      "case": "en-user-pronoun",
+      "repetition": 1,
+      "mode": "full-raw",
+      "index": 0,
+      "language": "en",
+      "kind": "return",
+      "chatId": "ablation-0-en-user-pronoun-r1-full-raw",
+      "sourceHash": "d34d82519e6ab214574d4c2045ace1cd4da058be8aa5cc7f0474a03ea5183633",
+      "answer": "I put the rolled canal map in the brass umbrella stand beside the east doorway.",
+      "ablationEvidence": {
+        "replyIdentity": "Write SillyMemory E2E Mira's next reply in a fictional chat between SillyMemory E2E Mira and User.",
+        "sourceMessagesPresent": 64,
+        "requiredRoles": [
+          {
+            "message": 2,
+            "expectedRole": "user",
+            "actualRoles": [
+              "user"
+            ]
+          }
+        ],
+        "condition": "full-raw",
+        "conversationMessages": 65,
+        "labelledMessages": 0
+      },
+      "selectionHash": "8fa9b7713b8229c9765d54b85911e9d46f78b4ec27628c0dda073772dda8b5f0",
+      "memoryTokens": 361,
+      "sourceMessagesPresent": 64,
+      "requiredEvidence": [
+        {
+          "message": 2,
+          "inMemory": true,
+          "inPrompt": true,
+          "ranks": []
+        }
+      ],
+      "supersededEvidence": [],
+      "usage": {
+        "prompt_tokens": 2971,
+        "completion_tokens": 16,
+        "total_tokens": 2987,
+        "prompt_tokens_details": {
+          "cached_tokens": 2816,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "generationMs": 1982.1550819999993,
+      "promptSha256": "3e41c1c2c9cfb0bc5378ed769d968b073e0f7e0ecaa86eefcfdbddc90f09dcdb",
+      "sourceMessageIndices": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25,
+        26,
+        27,
+        28,
+        29,
+        30,
+        31,
+        32,
+        33,
+        34,
+        35,
+        36,
+        37,
+        38,
+        39,
+        40,
+        41,
+        42,
+        43,
+        44,
+        45,
+        46,
+        47,
+        48,
+        49,
+        50,
+        51,
+        52,
+        53,
+        54,
+        55,
+        56,
+        57,
+        58,
+        59,
+        60,
+        61,
+        62,
+        63
+      ],
+      "score": {
+        "id": "en-user-pronoun/r1/full-raw",
+        "case": "en-user-pronoun",
+        "language": "en",
+        "kind": "return",
+        "mode": "full-raw",
+        "repetition": 1,
+        "outcome": "correct",
+        "unsupportedAssertion": false,
+        "rationale": "I correctly refers to the assistant as the actor; the brass umbrella stand beside the east doorway is correct."
+      }
+    },
+    {
+      "id": "en-user-pronoun/r1/full-labelled",
+      "case": "en-user-pronoun",
+      "repetition": 1,
+      "mode": "full-labelled",
+      "index": 1,
+      "language": "en",
+      "kind": "return",
+      "chatId": "ablation-1-en-user-pronoun-r1-full-labelled",
+      "sourceHash": "d34d82519e6ab214574d4c2045ace1cd4da058be8aa5cc7f0474a03ea5183633",
+      "answer": "You put the rolled canal map in the brass umbrella stand beside the east doorway.",
+      "ablationEvidence": {
+        "replyIdentity": "Write SillyMemory E2E Mira's next reply in a fictional chat between SillyMemory E2E Mira and User.",
+        "sourceMessagesPresent": 64,
+        "requiredRoles": [
+          {
+            "message": 2,
+            "expectedRole": "user",
+            "actualRoles": [
+              "user"
+            ]
+          }
+        ],
+        "condition": "full-labelled",
+        "conversationMessages": 65,
+        "labelledMessages": 6
+      },
+      "selectionHash": "8fa9b7713b8229c9765d54b85911e9d46f78b4ec27628c0dda073772dda8b5f0",
+      "memoryTokens": 361,
+      "sourceMessagesPresent": 64,
+      "requiredEvidence": [
+        {
+          "message": 2,
+          "inMemory": true,
+          "inPrompt": true,
+          "ranks": []
+        }
+      ],
+      "supersededEvidence": [],
+      "usage": {
+        "prompt_tokens": 3091,
+        "completion_tokens": 16,
+        "total_tokens": 3107,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "generationMs": 1399.8976250000014,
+      "promptSha256": "747bcca744b6ec2e39f787516bbb4aa8ddc4b1b3e255f45a96c5fb64758c0045",
+      "sourceMessageIndices": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25,
+        26,
+        27,
+        28,
+        29,
+        30,
+        31,
+        32,
+        33,
+        34,
+        35,
+        36,
+        37,
+        38,
+        39,
+        40,
+        41,
+        42,
+        43,
+        44,
+        45,
+        46,
+        47,
+        48,
+        49,
+        50,
+        51,
+        52,
+        53,
+        54,
+        55,
+        56,
+        57,
+        58,
+        59,
+        60,
+        61,
+        62,
+        63
+      ],
+      "score": {
+        "id": "en-user-pronoun/r1/full-labelled",
+        "case": "en-user-pronoun",
+        "language": "en",
+        "kind": "return",
+        "mode": "full-labelled",
+        "repetition": 1,
+        "outcome": "incorrect",
+        "unsupportedAssertion": true,
+        "rationale": "You assigns map placement to the user, although the user source reports the assistant placing it. Location is correct."
+      }
+    },
+    {
+      "id": "en-user-pronoun/r1/sparse-raw",
+      "case": "en-user-pronoun",
+      "repetition": 1,
+      "mode": "sparse-raw",
+      "index": 2,
+      "language": "en",
+      "kind": "return",
+      "chatId": "ablation-2-en-user-pronoun-r1-sparse-raw",
+      "sourceHash": "d34d82519e6ab214574d4c2045ace1cd4da058be8aa5cc7f0474a03ea5183633",
+      "answer": "You put the rolled canal map in the brass umbrella stand beside the east doorway.",
+      "ablationEvidence": {
+        "replyIdentity": "Write SillyMemory E2E Mira's next reply in a fictional chat between SillyMemory E2E Mira and User.",
+        "sourceMessagesPresent": 17,
+        "requiredRoles": [
+          {
+            "message": 2,
+            "expectedRole": "user",
+            "actualRoles": [
+              "user"
+            ]
+          }
+        ],
+        "condition": "sparse-raw",
+        "conversationMessages": 18,
+        "labelledMessages": 0
+      },
+      "selectionHash": "8fa9b7713b8229c9765d54b85911e9d46f78b4ec27628c0dda073772dda8b5f0",
+      "memoryTokens": 361,
+      "sourceMessagesPresent": 17,
+      "requiredEvidence": [
+        {
+          "message": 2,
+          "inMemory": true,
+          "inPrompt": true,
+          "ranks": []
+        }
+      ],
+      "supersededEvidence": [],
+      "usage": {
+        "prompt_tokens": 852,
+        "completion_tokens": 16,
+        "total_tokens": 868,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "generationMs": 1334.7524989999984,
+      "promptSha256": "b98b0c552714e1bc624146aaa6ceef6178c18f6762cb3e6f1aed48ee857bf427",
+      "sourceMessageIndices": [
+        0,
+        2,
+        13,
+        28,
+        37,
+        47,
+        53,
+        54,
+        55,
+        56,
+        57,
+        58,
+        59,
+        60,
+        61,
+        62,
+        63
+      ],
+      "score": {
+        "id": "en-user-pronoun/r1/sparse-raw",
+        "case": "en-user-pronoun",
+        "language": "en",
+        "kind": "return",
+        "mode": "sparse-raw",
+        "repetition": 1,
+        "outcome": "incorrect",
+        "unsupportedAssertion": true,
+        "rationale": "You assigns map placement to the user, although the user source reports the assistant placing it. Location is correct."
+      }
+    },
+    {
+      "id": "en-user-pronoun/r1/sparse-labelled",
+      "case": "en-user-pronoun",
+      "repetition": 1,
+      "mode": "sparse-labelled",
+      "index": 3,
+      "language": "en",
+      "kind": "return",
+      "chatId": "ablation-3-en-user-pronoun-r1-sparse-labelled",
+      "sourceHash": "d34d82519e6ab214574d4c2045ace1cd4da058be8aa5cc7f0474a03ea5183633",
+      "answer": "You put the rolled canal map in the brass umbrella stand beside the east doorway.",
+      "ablationEvidence": {
+        "replyIdentity": "Write SillyMemory E2E Mira's next reply in a fictional chat between SillyMemory E2E Mira and User.",
+        "sourceMessagesPresent": 17,
+        "requiredRoles": [
+          {
+            "message": 2,
+            "expectedRole": "user",
+            "actualRoles": [
+              "user"
+            ]
+          }
+        ],
+        "condition": "sparse-labelled",
+        "conversationMessages": 18,
+        "labelledMessages": 6
+      },
+      "selectionHash": "8fa9b7713b8229c9765d54b85911e9d46f78b4ec27628c0dda073772dda8b5f0",
+      "memoryTokens": 361,
+      "sourceMessagesPresent": 17,
+      "requiredEvidence": [
+        {
+          "message": 2,
+          "inMemory": true,
+          "inPrompt": true,
+          "ranks": []
+        }
+      ],
+      "supersededEvidence": [],
+      "usage": {
+        "prompt_tokens": 972,
+        "completion_tokens": 16,
+        "total_tokens": 988,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "generationMs": 971.6582500000004,
+      "promptSha256": "090b9e2525428c98d1bd0baad0154717cae51502b799c1f279f1cb81eb420b44",
+      "sourceMessageIndices": [
+        0,
+        2,
+        13,
+        28,
+        37,
+        47,
+        53,
+        54,
+        55,
+        56,
+        57,
+        58,
+        59,
+        60,
+        61,
+        62,
+        63
+      ],
+      "score": {
+        "id": "en-user-pronoun/r1/sparse-labelled",
+        "case": "en-user-pronoun",
+        "language": "en",
+        "kind": "return",
+        "mode": "sparse-labelled",
+        "repetition": 1,
+        "outcome": "incorrect",
+        "unsupportedAssertion": true,
+        "rationale": "You assigns map placement to the user, although the user source reports the assistant placing it. Location is correct."
+      }
+    },
+    {
+      "id": "en-assistant-pronoun/r1/full-labelled",
+      "case": "en-assistant-pronoun",
+      "repetition": 1,
+      "mode": "full-labelled",
+      "index": 4,
+      "language": "en",
+      "kind": "return",
+      "chatId": "ablation-4-en-assistant-pronoun-r1-full-labelled",
+      "sourceHash": "bfe424f73c885499df8aadad759feae22bd247febbb13159e4348ffe4e36e41c",
+      "answer": "You put the rolled canal map in the brass umbrella stand beside the east doorway.",
+      "ablationEvidence": {
+        "replyIdentity": "Write SillyMemory E2E Mira's next reply in a fictional chat between SillyMemory E2E Mira and User.",
+        "sourceMessagesPresent": 64,
+        "requiredRoles": [
+          {
+            "message": 3,
+            "expectedRole": "assistant",
+            "actualRoles": [
+              "assistant"
+            ]
+          }
+        ],
+        "condition": "full-labelled",
+        "conversationMessages": 65,
+        "labelledMessages": 6
+      },
+      "selectionHash": "3ade07b7692c8c35de3c6befe1cbcacf898d9e91fb3017746a7a073c484e785f",
+      "memoryTokens": 367,
+      "sourceMessagesPresent": 64,
+      "requiredEvidence": [
+        {
+          "message": 3,
+          "inMemory": true,
+          "inPrompt": true,
+          "ranks": []
+        }
+      ],
+      "supersededEvidence": [],
+      "usage": {
+        "prompt_tokens": 3097,
+        "completion_tokens": 16,
+        "total_tokens": 3113,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "generationMs": 982.4370419999905,
+      "promptSha256": "4fd58984c79e9ad6e3d7765dd55f5be5f18fe8a18c247f89d4b96e441a3649b9",
+      "sourceMessageIndices": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25,
+        26,
+        27,
+        28,
+        29,
+        30,
+        31,
+        32,
+        33,
+        34,
+        35,
+        36,
+        37,
+        38,
+        39,
+        40,
+        41,
+        42,
+        43,
+        44,
+        45,
+        46,
+        47,
+        48,
+        49,
+        50,
+        51,
+        52,
+        53,
+        54,
+        55,
+        56,
+        57,
+        58,
+        59,
+        60,
+        61,
+        62,
+        63
+      ],
+      "score": {
+        "id": "en-assistant-pronoun/r1/full-labelled",
+        "case": "en-assistant-pronoun",
+        "language": "en",
+        "kind": "return",
+        "mode": "full-labelled",
+        "repetition": 1,
+        "outcome": "correct",
+        "unsupportedAssertion": false,
+        "rationale": "You correctly addresses the user as the actor; the brass umbrella stand beside the east doorway is correct."
+      }
+    },
+    {
+      "id": "en-assistant-pronoun/r1/sparse-raw",
+      "case": "en-assistant-pronoun",
+      "repetition": 1,
+      "mode": "sparse-raw",
+      "index": 5,
+      "language": "en",
+      "kind": "return",
+      "chatId": "ablation-5-en-assistant-pronoun-r1-sparse-raw",
+      "sourceHash": "bfe424f73c885499df8aadad759feae22bd247febbb13159e4348ffe4e36e41c",
+      "answer": "You put the rolled canal map in the brass umbrella stand beside the east doorway.",
+      "ablationEvidence": {
+        "replyIdentity": "Write SillyMemory E2E Mira's next reply in a fictional chat between SillyMemory E2E Mira and User.",
+        "sourceMessagesPresent": 17,
+        "requiredRoles": [
+          {
+            "message": 3,
+            "expectedRole": "assistant",
+            "actualRoles": [
+              "assistant"
+            ]
+          }
+        ],
+        "condition": "sparse-raw",
+        "conversationMessages": 18,
+        "labelledMessages": 0
+      },
+      "selectionHash": "3ade07b7692c8c35de3c6befe1cbcacf898d9e91fb3017746a7a073c484e785f",
+      "memoryTokens": 367,
+      "sourceMessagesPresent": 17,
+      "requiredEvidence": [
+        {
+          "message": 3,
+          "inMemory": true,
+          "inPrompt": true,
+          "ranks": []
+        }
+      ],
+      "supersededEvidence": [],
+      "usage": {
+        "prompt_tokens": 852,
+        "completion_tokens": 16,
+        "total_tokens": 868,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "generationMs": 975.6342500000028,
+      "promptSha256": "1b8d05952ccef55d82a6a53c60ad24960cd30368fce0ce7a0d180865b47823d1",
+      "sourceMessageIndices": [
+        0,
+        3,
+        13,
+        28,
+        37,
+        47,
+        53,
+        54,
+        55,
+        56,
+        57,
+        58,
+        59,
+        60,
+        61,
+        62,
+        63
+      ],
+      "score": {
+        "id": "en-assistant-pronoun/r1/sparse-raw",
+        "case": "en-assistant-pronoun",
+        "language": "en",
+        "kind": "return",
+        "mode": "sparse-raw",
+        "repetition": 1,
+        "outcome": "correct",
+        "unsupportedAssertion": false,
+        "rationale": "You correctly addresses the user as the actor; the brass umbrella stand beside the east doorway is correct."
+      }
+    },
+    {
+      "id": "en-assistant-pronoun/r1/sparse-labelled",
+      "case": "en-assistant-pronoun",
+      "repetition": 1,
+      "mode": "sparse-labelled",
+      "index": 6,
+      "language": "en",
+      "kind": "return",
+      "chatId": "ablation-6-en-assistant-pronoun-r1-sparse-labelled",
+      "sourceHash": "bfe424f73c885499df8aadad759feae22bd247febbb13159e4348ffe4e36e41c",
+      "answer": "I put the rolled canal map in the brass umbrella stand beside the east doorway.",
+      "ablationEvidence": {
+        "replyIdentity": "Write SillyMemory E2E Mira's next reply in a fictional chat between SillyMemory E2E Mira and User.",
+        "sourceMessagesPresent": 17,
+        "requiredRoles": [
+          {
+            "message": 3,
+            "expectedRole": "assistant",
+            "actualRoles": [
+              "assistant"
+            ]
+          }
+        ],
+        "condition": "sparse-labelled",
+        "conversationMessages": 18,
+        "labelledMessages": 6
+      },
+      "selectionHash": "3ade07b7692c8c35de3c6befe1cbcacf898d9e91fb3017746a7a073c484e785f",
+      "memoryTokens": 367,
+      "sourceMessagesPresent": 17,
+      "requiredEvidence": [
+        {
+          "message": 3,
+          "inMemory": true,
+          "inPrompt": true,
+          "ranks": []
+        }
+      ],
+      "supersededEvidence": [],
+      "usage": {
+        "prompt_tokens": 978,
+        "completion_tokens": 16,
+        "total_tokens": 994,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "generationMs": 1694.518374999985,
+      "promptSha256": "6122f4f1e5be9f3e08ab9f128529db385c3a240c0c4f5b1ee6faa5fc7038a3bb",
+      "sourceMessageIndices": [
+        0,
+        3,
+        13,
+        28,
+        37,
+        47,
+        53,
+        54,
+        55,
+        56,
+        57,
+        58,
+        59,
+        60,
+        61,
+        62,
+        63
+      ],
+      "score": {
+        "id": "en-assistant-pronoun/r1/sparse-labelled",
+        "case": "en-assistant-pronoun",
+        "language": "en",
+        "kind": "return",
+        "mode": "sparse-labelled",
+        "repetition": 1,
+        "outcome": "incorrect",
+        "unsupportedAssertion": true,
+        "rationale": "I claims the assistant put the map away, although the assistant source reports the user doing so. Location is correct."
+      }
+    },
+    {
+      "id": "en-assistant-pronoun/r1/full-raw",
+      "case": "en-assistant-pronoun",
+      "repetition": 1,
+      "mode": "full-raw",
+      "index": 7,
+      "language": "en",
+      "kind": "return",
+      "chatId": "ablation-7-en-assistant-pronoun-r1-full-raw",
+      "sourceHash": "bfe424f73c885499df8aadad759feae22bd247febbb13159e4348ffe4e36e41c",
+      "answer": "You put the rolled canal map in the brass umbrella stand beside the east doorway.",
+      "ablationEvidence": {
+        "replyIdentity": "Write SillyMemory E2E Mira's next reply in a fictional chat between SillyMemory E2E Mira and User.",
+        "sourceMessagesPresent": 64,
+        "requiredRoles": [
+          {
+            "message": 3,
+            "expectedRole": "assistant",
+            "actualRoles": [
+              "assistant"
+            ]
+          }
+        ],
+        "condition": "full-raw",
+        "conversationMessages": 65,
+        "labelledMessages": 0
+      },
+      "selectionHash": "3ade07b7692c8c35de3c6befe1cbcacf898d9e91fb3017746a7a073c484e785f",
+      "memoryTokens": 367,
+      "sourceMessagesPresent": 64,
+      "requiredEvidence": [
+        {
+          "message": 3,
+          "inMemory": true,
+          "inPrompt": true,
+          "ranks": []
+        }
+      ],
+      "supersededEvidence": [],
+      "usage": {
+        "prompt_tokens": 2971,
+        "completion_tokens": 16,
+        "total_tokens": 2987,
+        "prompt_tokens_details": {
+          "cached_tokens": 2816,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "generationMs": 1126.934374999997,
+      "promptSha256": "608afd5e4fa7c4d420f0ef555f530cbbcf2344907754d1c1ff3d6f8befc18dd9",
+      "sourceMessageIndices": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25,
+        26,
+        27,
+        28,
+        29,
+        30,
+        31,
+        32,
+        33,
+        34,
+        35,
+        36,
+        37,
+        38,
+        39,
+        40,
+        41,
+        42,
+        43,
+        44,
+        45,
+        46,
+        47,
+        48,
+        49,
+        50,
+        51,
+        52,
+        53,
+        54,
+        55,
+        56,
+        57,
+        58,
+        59,
+        60,
+        61,
+        62,
+        63
+      ],
+      "score": {
+        "id": "en-assistant-pronoun/r1/full-raw",
+        "case": "en-assistant-pronoun",
+        "language": "en",
+        "kind": "return",
+        "mode": "full-raw",
+        "repetition": 1,
+        "outcome": "correct",
+        "unsupportedAssertion": false,
+        "rationale": "You correctly addresses the user as the actor; the brass umbrella stand beside the east doorway is correct."
+      }
+    },
+    {
+      "id": "ko-user-pronoun/r1/sparse-raw",
+      "case": "ko-user-pronoun",
+      "repetition": 1,
+      "mode": "sparse-raw",
+      "index": 8,
+      "language": "ko",
+      "kind": "return",
+      "chatId": "ablation-8-ko-user-pronoun-r1-sparse-raw",
+      "sourceHash": "bde86fab87ae2121905aa256a0dd76493d6bbc78aebca341524c0d348cca4eec",
+      "answer": "아침에 제가 접이식 노선도를 북쪽 창문 아래의 대나무 바구니에 넣었어요.",
+      "ablationEvidence": {
+        "replyIdentity": "Write SillyMemory E2E Mira's next reply in a fictional chat between SillyMemory E2E Mira and User.",
+        "sourceMessagesPresent": 16,
+        "requiredRoles": [
+          {
+            "message": 2,
+            "expectedRole": "user",
+            "actualRoles": [
+              "user"
+            ]
+          }
+        ],
+        "condition": "sparse-raw",
+        "conversationMessages": 17,
+        "labelledMessages": 0
+      },
+      "selectionHash": "2600c9a5beb76931374f7381bfbcc88b0062841ec2c67e2b81f166ec6de6982b",
+      "memoryTokens": 396,
+      "sourceMessagesPresent": 16,
+      "requiredEvidence": [
+        {
+          "message": 2,
+          "inMemory": true,
+          "inPrompt": true,
+          "ranks": []
+        }
+      ],
+      "supersededEvidence": [],
+      "usage": {
+        "prompt_tokens": 1101,
+        "completion_tokens": 27,
+        "total_tokens": 1128,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "generationMs": 1132.9962510000041,
+      "promptSha256": "2e014333e45bf0c456efc171bd98077106ca93d7124a915eb11eb088829e4195",
+      "sourceMessageIndices": [
+        0,
+        2,
+        34,
+        37,
+        44,
+        53,
+        54,
+        55,
+        56,
+        57,
+        58,
+        59,
+        60,
+        61,
+        62,
+        63
+      ],
+      "score": {
+        "id": "ko-user-pronoun/r1/sparse-raw",
+        "case": "ko-user-pronoun",
+        "language": "ko",
+        "kind": "return",
+        "mode": "sparse-raw",
+        "repetition": 1,
+        "outcome": "correct",
+        "unsupportedAssertion": false,
+        "rationale": "제가 correctly refers to the assistant as the actor; the bamboo basket below the north window is correct."
+      }
+    },
+    {
+      "id": "ko-user-pronoun/r1/sparse-labelled",
+      "case": "ko-user-pronoun",
+      "repetition": 1,
+      "mode": "sparse-labelled",
+      "index": 9,
+      "language": "ko",
+      "kind": "return",
+      "chatId": "ablation-9-ko-user-pronoun-r1-sparse-labelled",
+      "sourceHash": "bde86fab87ae2121905aa256a0dd76493d6bbc78aebca341524c0d348cca4eec",
+      "answer": "아침에 네가 접이식 노선도를 북쪽 창문 아래의 대나무 바구니에 넣었어요.",
+      "ablationEvidence": {
+        "replyIdentity": "Write SillyMemory E2E Mira's next reply in a fictional chat between SillyMemory E2E Mira and User.",
+        "sourceMessagesPresent": 16,
+        "requiredRoles": [
+          {
+            "message": 2,
+            "expectedRole": "user",
+            "actualRoles": [
+              "user"
+            ]
+          }
+        ],
+        "condition": "sparse-labelled",
+        "conversationMessages": 17,
+        "labelledMessages": 5
+      },
+      "selectionHash": "2600c9a5beb76931374f7381bfbcc88b0062841ec2c67e2b81f166ec6de6982b",
+      "memoryTokens": 396,
+      "sourceMessagesPresent": 16,
+      "requiredEvidence": [
+        {
+          "message": 2,
+          "inMemory": true,
+          "inPrompt": true,
+          "ranks": []
+        }
+      ],
+      "supersededEvidence": [],
+      "usage": {
+        "prompt_tokens": 1192,
+        "completion_tokens": 28,
+        "total_tokens": 1220,
+        "prompt_tokens_details": {
+          "cached_tokens": 1024,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "generationMs": 1417.4609159999818,
+      "promptSha256": "c6508a9063d6d3237f22cbeccbaea781a2e32a5608069c5219c89716166ac993",
+      "sourceMessageIndices": [
+        0,
+        2,
+        34,
+        37,
+        44,
+        53,
+        54,
+        55,
+        56,
+        57,
+        58,
+        59,
+        60,
+        61,
+        62,
+        63
+      ],
+      "score": {
+        "id": "ko-user-pronoun/r1/sparse-labelled",
+        "case": "ko-user-pronoun",
+        "language": "ko",
+        "kind": "return",
+        "mode": "sparse-labelled",
+        "repetition": 1,
+        "outcome": "incorrect",
+        "unsupportedAssertion": true,
+        "rationale": "네가 assigns the action to the user, but the user source reports that the assistant put the map away. Location is correct."
+      }
+    },
+    {
+      "id": "ko-user-pronoun/r1/full-raw",
+      "case": "ko-user-pronoun",
+      "repetition": 1,
+      "mode": "full-raw",
+      "index": 10,
+      "language": "ko",
+      "kind": "return",
+      "chatId": "ablation-10-ko-user-pronoun-r1-full-raw",
+      "sourceHash": "bde86fab87ae2121905aa256a0dd76493d6bbc78aebca341524c0d348cca4eec",
+      "answer": "아침에 제가 접이식 노선도를 북쪽 창문 아래의 대나무 바구니에 넣었어요.",
+      "ablationEvidence": {
+        "replyIdentity": "Write SillyMemory E2E Mira's next reply in a fictional chat between SillyMemory E2E Mira and User.",
+        "sourceMessagesPresent": 64,
+        "requiredRoles": [
+          {
+            "message": 2,
+            "expectedRole": "user",
+            "actualRoles": [
+              "user"
+            ]
+          }
+        ],
+        "condition": "full-raw",
+        "conversationMessages": 65,
+        "labelledMessages": 0
+      },
+      "selectionHash": "2600c9a5beb76931374f7381bfbcc88b0062841ec2c67e2b81f166ec6de6982b",
+      "memoryTokens": 396,
+      "sourceMessagesPresent": 64,
+      "requiredEvidence": [
+        {
+          "message": 2,
+          "inMemory": true,
+          "inPrompt": true,
+          "ranks": []
+        }
+      ],
+      "supersededEvidence": [],
+      "usage": {
+        "prompt_tokens": 4176,
+        "completion_tokens": 27,
+        "total_tokens": 4203,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "generationMs": 1018.6334159999969,
+      "promptSha256": "c96bb127d664aeddd48231e041950467c0968393b40c87d51ea791568c582eaf",
+      "sourceMessageIndices": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25,
+        26,
+        27,
+        28,
+        29,
+        30,
+        31,
+        32,
+        33,
+        34,
+        35,
+        36,
+        37,
+        38,
+        39,
+        40,
+        41,
+        42,
+        43,
+        44,
+        45,
+        46,
+        47,
+        48,
+        49,
+        50,
+        51,
+        52,
+        53,
+        54,
+        55,
+        56,
+        57,
+        58,
+        59,
+        60,
+        61,
+        62,
+        63
+      ],
+      "score": {
+        "id": "ko-user-pronoun/r1/full-raw",
+        "case": "ko-user-pronoun",
+        "language": "ko",
+        "kind": "return",
+        "mode": "full-raw",
+        "repetition": 1,
+        "outcome": "correct",
+        "unsupportedAssertion": false,
+        "rationale": "제가 correctly refers to the assistant as the actor; the bamboo basket below the north window is correct."
+      }
+    },
+    {
+      "id": "ko-user-pronoun/r1/full-labelled",
+      "case": "ko-user-pronoun",
+      "repetition": 1,
+      "mode": "full-labelled",
+      "index": 11,
+      "language": "ko",
+      "kind": "return",
+      "chatId": "ablation-11-ko-user-pronoun-r1-full-labelled",
+      "sourceHash": "bde86fab87ae2121905aa256a0dd76493d6bbc78aebca341524c0d348cca4eec",
+      "answer": "아침에 네가 접이식 노선도를 북쪽 창문 아래의 대나무 바구니에 넣었어요.",
+      "ablationEvidence": {
+        "replyIdentity": "Write SillyMemory E2E Mira's next reply in a fictional chat between SillyMemory E2E Mira and User.",
+        "sourceMessagesPresent": 64,
+        "requiredRoles": [
+          {
+            "message": 2,
+            "expectedRole": "user",
+            "actualRoles": [
+              "user"
+            ]
+          }
+        ],
+        "condition": "full-labelled",
+        "conversationMessages": 65,
+        "labelledMessages": 5
+      },
+      "selectionHash": "2600c9a5beb76931374f7381bfbcc88b0062841ec2c67e2b81f166ec6de6982b",
+      "memoryTokens": 396,
+      "sourceMessagesPresent": 64,
+      "requiredEvidence": [
+        {
+          "message": 2,
+          "inMemory": true,
+          "inPrompt": true,
+          "ranks": []
+        }
+      ],
+      "supersededEvidence": [],
+      "usage": {
+        "prompt_tokens": 4267,
+        "completion_tokens": 28,
+        "total_tokens": 4295,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "generationMs": 1194.4436660000065,
+      "promptSha256": "d36560b8cf651cc71e87dc14847590075ea92818bc6b75eac2af9ba316ed5c03",
+      "sourceMessageIndices": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25,
+        26,
+        27,
+        28,
+        29,
+        30,
+        31,
+        32,
+        33,
+        34,
+        35,
+        36,
+        37,
+        38,
+        39,
+        40,
+        41,
+        42,
+        43,
+        44,
+        45,
+        46,
+        47,
+        48,
+        49,
+        50,
+        51,
+        52,
+        53,
+        54,
+        55,
+        56,
+        57,
+        58,
+        59,
+        60,
+        61,
+        62,
+        63
+      ],
+      "score": {
+        "id": "ko-user-pronoun/r1/full-labelled",
+        "case": "ko-user-pronoun",
+        "language": "ko",
+        "kind": "return",
+        "mode": "full-labelled",
+        "repetition": 1,
+        "outcome": "incorrect",
+        "unsupportedAssertion": true,
+        "rationale": "네가 assigns the action to the user, but the user source reports that the assistant put the map away. Location is correct."
+      }
+    },
+    {
+      "id": "ko-assistant-pronoun/r1/sparse-labelled",
+      "case": "ko-assistant-pronoun",
+      "repetition": 1,
+      "mode": "sparse-labelled",
+      "index": 12,
+      "language": "ko",
+      "kind": "return",
+      "chatId": "ablation-12-ko-assistant-pronoun-r1-sparse-labelled",
+      "sourceHash": "6255eb0e1a84f1a68c0635cd354660f9542db19dcc03dbd576cb13f4dac77a78",
+      "answer": "아침에 네가 접이식 노선도를 북쪽 창문 아래의 대나무 바구니에 넣었어.",
+      "ablationEvidence": {
+        "replyIdentity": "Write SillyMemory E2E Mira's next reply in a fictional chat between SillyMemory E2E Mira and User.",
+        "sourceMessagesPresent": 16,
+        "requiredRoles": [
+          {
+            "message": 3,
+            "expectedRole": "assistant",
+            "actualRoles": [
+              "assistant"
+            ]
+          }
+        ],
+        "condition": "sparse-labelled",
+        "conversationMessages": 17,
+        "labelledMessages": 5
+      },
+      "selectionHash": "f31760d24a78656bf70255f46165b1526db0208cea0cad651f51381c983b5af8",
+      "memoryTokens": 398,
+      "sourceMessagesPresent": 16,
+      "requiredEvidence": [
+        {
+          "message": 3,
+          "inMemory": true,
+          "inPrompt": true,
+          "ranks": []
+        }
+      ],
+      "supersededEvidence": [],
+      "usage": {
+        "prompt_tokens": 1194,
+        "completion_tokens": 28,
+        "total_tokens": 1222,
+        "prompt_tokens_details": {
+          "cached_tokens": 1024,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "generationMs": 1519.5699989999994,
+      "promptSha256": "8d1833387a791fca1e6646bd5c530185d0fd819511f9bce9d55a20d58eb2d06e",
+      "sourceMessageIndices": [
+        0,
+        3,
+        30,
+        37,
+        44,
+        53,
+        54,
+        55,
+        56,
+        57,
+        58,
+        59,
+        60,
+        61,
+        62,
+        63
+      ],
+      "score": {
+        "id": "ko-assistant-pronoun/r1/sparse-labelled",
+        "case": "ko-assistant-pronoun",
+        "language": "ko",
+        "kind": "return",
+        "mode": "sparse-labelled",
+        "repetition": 1,
+        "outcome": "correct",
+        "unsupportedAssertion": false,
+        "rationale": "네가 correctly addresses the user as the actor; the bamboo basket below the north window is correct."
+      }
+    },
+    {
+      "id": "ko-assistant-pronoun/r1/full-raw",
+      "case": "ko-assistant-pronoun",
+      "repetition": 1,
+      "mode": "full-raw",
+      "index": 13,
+      "language": "ko",
+      "kind": "return",
+      "chatId": "ablation-13-ko-assistant-pronoun-r1-full-raw",
+      "sourceHash": "6255eb0e1a84f1a68c0635cd354660f9542db19dcc03dbd576cb13f4dac77a78",
+      "answer": "아침에 네가 접이식 노선도를 북쪽 창문 아래의 대나무 바구니에 넣었어.",
+      "ablationEvidence": {
+        "replyIdentity": "Write SillyMemory E2E Mira's next reply in a fictional chat between SillyMemory E2E Mira and User.",
+        "sourceMessagesPresent": 64,
+        "requiredRoles": [
+          {
+            "message": 3,
+            "expectedRole": "assistant",
+            "actualRoles": [
+              "assistant"
+            ]
+          }
+        ],
+        "condition": "full-raw",
+        "conversationMessages": 65,
+        "labelledMessages": 0
+      },
+      "selectionHash": "f31760d24a78656bf70255f46165b1526db0208cea0cad651f51381c983b5af8",
+      "memoryTokens": 398,
+      "sourceMessagesPresent": 64,
+      "requiredEvidence": [
+        {
+          "message": 3,
+          "inMemory": true,
+          "inPrompt": true,
+          "ranks": []
+        }
+      ],
+      "supersededEvidence": [],
+      "usage": {
+        "prompt_tokens": 4176,
+        "completion_tokens": 28,
+        "total_tokens": 4204,
+        "prompt_tokens_details": {
+          "cached_tokens": 3968,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "generationMs": 1232.4482080000162,
+      "promptSha256": "f824599a66b4c24370d3256a1048c6eaf4b2a2f06e3eaf7a6e10bed9bf369a54",
+      "sourceMessageIndices": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25,
+        26,
+        27,
+        28,
+        29,
+        30,
+        31,
+        32,
+        33,
+        34,
+        35,
+        36,
+        37,
+        38,
+        39,
+        40,
+        41,
+        42,
+        43,
+        44,
+        45,
+        46,
+        47,
+        48,
+        49,
+        50,
+        51,
+        52,
+        53,
+        54,
+        55,
+        56,
+        57,
+        58,
+        59,
+        60,
+        61,
+        62,
+        63
+      ],
+      "score": {
+        "id": "ko-assistant-pronoun/r1/full-raw",
+        "case": "ko-assistant-pronoun",
+        "language": "ko",
+        "kind": "return",
+        "mode": "full-raw",
+        "repetition": 1,
+        "outcome": "correct",
+        "unsupportedAssertion": false,
+        "rationale": "네가 correctly addresses the user as the actor; the bamboo basket below the north window is correct."
+      }
+    },
+    {
+      "id": "ko-assistant-pronoun/r1/full-labelled",
+      "case": "ko-assistant-pronoun",
+      "repetition": 1,
+      "mode": "full-labelled",
+      "index": 14,
+      "language": "ko",
+      "kind": "return",
+      "chatId": "ablation-14-ko-assistant-pronoun-r1-full-labelled",
+      "sourceHash": "6255eb0e1a84f1a68c0635cd354660f9542db19dcc03dbd576cb13f4dac77a78",
+      "answer": "아침에 네가 접이식 노선도를 북쪽 창문 아래의 대나무 바구니에 넣었어.",
+      "ablationEvidence": {
+        "replyIdentity": "Write SillyMemory E2E Mira's next reply in a fictional chat between SillyMemory E2E Mira and User.",
+        "sourceMessagesPresent": 64,
+        "requiredRoles": [
+          {
+            "message": 3,
+            "expectedRole": "assistant",
+            "actualRoles": [
+              "assistant"
+            ]
+          }
+        ],
+        "condition": "full-labelled",
+        "conversationMessages": 65,
+        "labelledMessages": 5
+      },
+      "selectionHash": "f31760d24a78656bf70255f46165b1526db0208cea0cad651f51381c983b5af8",
+      "memoryTokens": 398,
+      "sourceMessagesPresent": 64,
+      "requiredEvidence": [
+        {
+          "message": 3,
+          "inMemory": true,
+          "inPrompt": true,
+          "ranks": []
+        }
+      ],
+      "supersededEvidence": [],
+      "usage": {
+        "prompt_tokens": 4273,
+        "completion_tokens": 28,
+        "total_tokens": 4301,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "generationMs": 1219.4559170000139,
+      "promptSha256": "75a724e7b9a95c361bad9012f93bb2af64b84d2af5737e1f38d9812b72b98afe",
+      "sourceMessageIndices": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25,
+        26,
+        27,
+        28,
+        29,
+        30,
+        31,
+        32,
+        33,
+        34,
+        35,
+        36,
+        37,
+        38,
+        39,
+        40,
+        41,
+        42,
+        43,
+        44,
+        45,
+        46,
+        47,
+        48,
+        49,
+        50,
+        51,
+        52,
+        53,
+        54,
+        55,
+        56,
+        57,
+        58,
+        59,
+        60,
+        61,
+        62,
+        63
+      ],
+      "score": {
+        "id": "ko-assistant-pronoun/r1/full-labelled",
+        "case": "ko-assistant-pronoun",
+        "language": "ko",
+        "kind": "return",
+        "mode": "full-labelled",
+        "repetition": 1,
+        "outcome": "correct",
+        "unsupportedAssertion": false,
+        "rationale": "네가 correctly addresses the user as the actor; the bamboo basket below the north window is correct."
+      }
+    },
+    {
+      "id": "ko-assistant-pronoun/r1/sparse-raw",
+      "case": "ko-assistant-pronoun",
+      "repetition": 1,
+      "mode": "sparse-raw",
+      "index": 15,
+      "language": "ko",
+      "kind": "return",
+      "chatId": "ablation-15-ko-assistant-pronoun-r1-sparse-raw",
+      "sourceHash": "6255eb0e1a84f1a68c0635cd354660f9542db19dcc03dbd576cb13f4dac77a78",
+      "answer": "아침에 네가 접이식 노선도를 북쪽 창문 아래의 대나무 바구니에 넣었어요.",
+      "ablationEvidence": {
+        "replyIdentity": "Write SillyMemory E2E Mira's next reply in a fictional chat between SillyMemory E2E Mira and User.",
+        "sourceMessagesPresent": 16,
+        "requiredRoles": [
+          {
+            "message": 3,
+            "expectedRole": "assistant",
+            "actualRoles": [
+              "assistant"
+            ]
+          }
+        ],
+        "condition": "sparse-raw",
+        "conversationMessages": 17,
+        "labelledMessages": 0
+      },
+      "selectionHash": "f31760d24a78656bf70255f46165b1526db0208cea0cad651f51381c983b5af8",
+      "memoryTokens": 398,
+      "sourceMessagesPresent": 16,
+      "requiredEvidence": [
+        {
+          "message": 3,
+          "inMemory": true,
+          "inPrompt": true,
+          "ranks": []
+        }
+      ],
+      "supersededEvidence": [],
+      "usage": {
+        "prompt_tokens": 1097,
+        "completion_tokens": 28,
+        "total_tokens": 1125,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "generationMs": 1144.1119590000017,
+      "promptSha256": "6747e953d545831665870ec40cce80fe9eeb3eb672270be6ec659af5612d37bd",
+      "sourceMessageIndices": [
+        0,
+        3,
+        30,
+        37,
+        44,
+        53,
+        54,
+        55,
+        56,
+        57,
+        58,
+        59,
+        60,
+        61,
+        62,
+        63
+      ],
+      "score": {
+        "id": "ko-assistant-pronoun/r1/sparse-raw",
+        "case": "ko-assistant-pronoun",
+        "language": "ko",
+        "kind": "return",
+        "mode": "sparse-raw",
+        "repetition": 1,
+        "outcome": "correct",
+        "unsupportedAssertion": false,
+        "rationale": "네가 correctly addresses the user as the actor; the bamboo basket below the north window is correct."
+      }
+    },
+    {
+      "id": "en-user-pronoun/r2/full-labelled",
+      "case": "en-user-pronoun",
+      "repetition": 2,
+      "mode": "full-labelled",
+      "index": 16,
+      "language": "en",
+      "kind": "return",
+      "chatId": "ablation-16-en-user-pronoun-r2-full-labelled",
+      "sourceHash": "d34d82519e6ab214574d4c2045ace1cd4da058be8aa5cc7f0474a03ea5183633",
+      "answer": "You put the rolled canal map in the brass umbrella stand beside the east doorway.",
+      "ablationEvidence": {
+        "replyIdentity": "Write SillyMemory E2E Mira's next reply in a fictional chat between SillyMemory E2E Mira and User.",
+        "sourceMessagesPresent": 64,
+        "requiredRoles": [
+          {
+            "message": 2,
+            "expectedRole": "user",
+            "actualRoles": [
+              "user"
+            ]
+          }
+        ],
+        "condition": "full-labelled",
+        "conversationMessages": 65,
+        "labelledMessages": 6
+      },
+      "selectionHash": "8fa9b7713b8229c9765d54b85911e9d46f78b4ec27628c0dda073772dda8b5f0",
+      "memoryTokens": 361,
+      "sourceMessagesPresent": 64,
+      "requiredEvidence": [
+        {
+          "message": 2,
+          "inMemory": true,
+          "inPrompt": true,
+          "ranks": []
+        }
+      ],
+      "supersededEvidence": [],
+      "usage": {
+        "prompt_tokens": 3091,
+        "completion_tokens": 16,
+        "total_tokens": 3107,
+        "prompt_tokens_details": {
+          "cached_tokens": 2944,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "generationMs": 928.4099580000038,
+      "promptSha256": "747bcca744b6ec2e39f787516bbb4aa8ddc4b1b3e255f45a96c5fb64758c0045",
+      "sourceMessageIndices": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25,
+        26,
+        27,
+        28,
+        29,
+        30,
+        31,
+        32,
+        33,
+        34,
+        35,
+        36,
+        37,
+        38,
+        39,
+        40,
+        41,
+        42,
+        43,
+        44,
+        45,
+        46,
+        47,
+        48,
+        49,
+        50,
+        51,
+        52,
+        53,
+        54,
+        55,
+        56,
+        57,
+        58,
+        59,
+        60,
+        61,
+        62,
+        63
+      ],
+      "score": {
+        "id": "en-user-pronoun/r2/full-labelled",
+        "case": "en-user-pronoun",
+        "language": "en",
+        "kind": "return",
+        "mode": "full-labelled",
+        "repetition": 2,
+        "outcome": "incorrect",
+        "unsupportedAssertion": true,
+        "rationale": "You assigns map placement to the user, although the user source reports the assistant placing it. Location is correct."
+      }
+    },
+    {
+      "id": "en-user-pronoun/r2/sparse-raw",
+      "case": "en-user-pronoun",
+      "repetition": 2,
+      "mode": "sparse-raw",
+      "index": 17,
+      "language": "en",
+      "kind": "return",
+      "chatId": "ablation-17-en-user-pronoun-r2-sparse-raw",
+      "sourceHash": "d34d82519e6ab214574d4c2045ace1cd4da058be8aa5cc7f0474a03ea5183633",
+      "answer": "You put the rolled canal map in the brass umbrella stand beside the east doorway.",
+      "ablationEvidence": {
+        "replyIdentity": "Write SillyMemory E2E Mira's next reply in a fictional chat between SillyMemory E2E Mira and User.",
+        "sourceMessagesPresent": 17,
+        "requiredRoles": [
+          {
+            "message": 2,
+            "expectedRole": "user",
+            "actualRoles": [
+              "user"
+            ]
+          }
+        ],
+        "condition": "sparse-raw",
+        "conversationMessages": 18,
+        "labelledMessages": 0
+      },
+      "selectionHash": "8fa9b7713b8229c9765d54b85911e9d46f78b4ec27628c0dda073772dda8b5f0",
+      "memoryTokens": 361,
+      "sourceMessagesPresent": 17,
+      "requiredEvidence": [
+        {
+          "message": 2,
+          "inMemory": true,
+          "inPrompt": true,
+          "ranks": []
+        }
+      ],
+      "supersededEvidence": [],
+      "usage": {
+        "prompt_tokens": 852,
+        "completion_tokens": 16,
+        "total_tokens": 868,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "generationMs": 1425.6581669999869,
+      "promptSha256": "b98b0c552714e1bc624146aaa6ceef6178c18f6762cb3e6f1aed48ee857bf427",
+      "sourceMessageIndices": [
+        0,
+        2,
+        13,
+        28,
+        37,
+        47,
+        53,
+        54,
+        55,
+        56,
+        57,
+        58,
+        59,
+        60,
+        61,
+        62,
+        63
+      ],
+      "score": {
+        "id": "en-user-pronoun/r2/sparse-raw",
+        "case": "en-user-pronoun",
+        "language": "en",
+        "kind": "return",
+        "mode": "sparse-raw",
+        "repetition": 2,
+        "outcome": "incorrect",
+        "unsupportedAssertion": true,
+        "rationale": "You assigns map placement to the user, although the user source reports the assistant placing it. Location is correct."
+      }
+    },
+    {
+      "id": "en-user-pronoun/r2/sparse-labelled",
+      "case": "en-user-pronoun",
+      "repetition": 2,
+      "mode": "sparse-labelled",
+      "index": 18,
+      "language": "en",
+      "kind": "return",
+      "chatId": "ablation-18-en-user-pronoun-r2-sparse-labelled",
+      "sourceHash": "d34d82519e6ab214574d4c2045ace1cd4da058be8aa5cc7f0474a03ea5183633",
+      "answer": "You put the rolled canal map in the brass umbrella stand beside the east doorway.",
+      "ablationEvidence": {
+        "replyIdentity": "Write SillyMemory E2E Mira's next reply in a fictional chat between SillyMemory E2E Mira and User.",
+        "sourceMessagesPresent": 17,
+        "requiredRoles": [
+          {
+            "message": 2,
+            "expectedRole": "user",
+            "actualRoles": [
+              "user"
+            ]
+          }
+        ],
+        "condition": "sparse-labelled",
+        "conversationMessages": 18,
+        "labelledMessages": 6
+      },
+      "selectionHash": "8fa9b7713b8229c9765d54b85911e9d46f78b4ec27628c0dda073772dda8b5f0",
+      "memoryTokens": 361,
+      "sourceMessagesPresent": 17,
+      "requiredEvidence": [
+        {
+          "message": 2,
+          "inMemory": true,
+          "inPrompt": true,
+          "ranks": []
+        }
+      ],
+      "supersededEvidence": [],
+      "usage": {
+        "prompt_tokens": 972,
+        "completion_tokens": 16,
+        "total_tokens": 988,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "generationMs": 1632.9549170000246,
+      "promptSha256": "090b9e2525428c98d1bd0baad0154717cae51502b799c1f279f1cb81eb420b44",
+      "sourceMessageIndices": [
+        0,
+        2,
+        13,
+        28,
+        37,
+        47,
+        53,
+        54,
+        55,
+        56,
+        57,
+        58,
+        59,
+        60,
+        61,
+        62,
+        63
+      ],
+      "score": {
+        "id": "en-user-pronoun/r2/sparse-labelled",
+        "case": "en-user-pronoun",
+        "language": "en",
+        "kind": "return",
+        "mode": "sparse-labelled",
+        "repetition": 2,
+        "outcome": "incorrect",
+        "unsupportedAssertion": true,
+        "rationale": "You assigns map placement to the user, although the user source reports the assistant placing it. Location is correct."
+      }
+    },
+    {
+      "id": "en-user-pronoun/r2/full-raw",
+      "case": "en-user-pronoun",
+      "repetition": 2,
+      "mode": "full-raw",
+      "index": 19,
+      "language": "en",
+      "kind": "return",
+      "chatId": "ablation-19-en-user-pronoun-r2-full-raw",
+      "sourceHash": "d34d82519e6ab214574d4c2045ace1cd4da058be8aa5cc7f0474a03ea5183633",
+      "answer": "I put the rolled canal map in the brass umbrella stand beside the east doorway.",
+      "ablationEvidence": {
+        "replyIdentity": "Write SillyMemory E2E Mira's next reply in a fictional chat between SillyMemory E2E Mira and User.",
+        "sourceMessagesPresent": 64,
+        "requiredRoles": [
+          {
+            "message": 2,
+            "expectedRole": "user",
+            "actualRoles": [
+              "user"
+            ]
+          }
+        ],
+        "condition": "full-raw",
+        "conversationMessages": 65,
+        "labelledMessages": 0
+      },
+      "selectionHash": "8fa9b7713b8229c9765d54b85911e9d46f78b4ec27628c0dda073772dda8b5f0",
+      "memoryTokens": 361,
+      "sourceMessagesPresent": 64,
+      "requiredEvidence": [
+        {
+          "message": 2,
+          "inMemory": true,
+          "inPrompt": true,
+          "ranks": []
+        }
+      ],
+      "supersededEvidence": [],
+      "usage": {
+        "prompt_tokens": 2971,
+        "completion_tokens": 16,
+        "total_tokens": 2987,
+        "prompt_tokens_details": {
+          "cached_tokens": 2816,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "generationMs": 1205.1765000000014,
+      "promptSha256": "3e41c1c2c9cfb0bc5378ed769d968b073e0f7e0ecaa86eefcfdbddc90f09dcdb",
+      "sourceMessageIndices": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25,
+        26,
+        27,
+        28,
+        29,
+        30,
+        31,
+        32,
+        33,
+        34,
+        35,
+        36,
+        37,
+        38,
+        39,
+        40,
+        41,
+        42,
+        43,
+        44,
+        45,
+        46,
+        47,
+        48,
+        49,
+        50,
+        51,
+        52,
+        53,
+        54,
+        55,
+        56,
+        57,
+        58,
+        59,
+        60,
+        61,
+        62,
+        63
+      ],
+      "score": {
+        "id": "en-user-pronoun/r2/full-raw",
+        "case": "en-user-pronoun",
+        "language": "en",
+        "kind": "return",
+        "mode": "full-raw",
+        "repetition": 2,
+        "outcome": "correct",
+        "unsupportedAssertion": false,
+        "rationale": "I correctly refers to the assistant as the actor; the brass umbrella stand beside the east doorway is correct."
+      }
+    },
+    {
+      "id": "en-assistant-pronoun/r2/sparse-raw",
+      "case": "en-assistant-pronoun",
+      "repetition": 2,
+      "mode": "sparse-raw",
+      "index": 20,
+      "language": "en",
+      "kind": "return",
+      "chatId": "ablation-20-en-assistant-pronoun-r2-sparse-raw",
+      "sourceHash": "bfe424f73c885499df8aadad759feae22bd247febbb13159e4348ffe4e36e41c",
+      "answer": "You put the rolled canal map in the brass umbrella stand beside the east doorway.",
+      "ablationEvidence": {
+        "replyIdentity": "Write SillyMemory E2E Mira's next reply in a fictional chat between SillyMemory E2E Mira and User.",
+        "sourceMessagesPresent": 17,
+        "requiredRoles": [
+          {
+            "message": 3,
+            "expectedRole": "assistant",
+            "actualRoles": [
+              "assistant"
+            ]
+          }
+        ],
+        "condition": "sparse-raw",
+        "conversationMessages": 18,
+        "labelledMessages": 0
+      },
+      "selectionHash": "3ade07b7692c8c35de3c6befe1cbcacf898d9e91fb3017746a7a073c484e785f",
+      "memoryTokens": 367,
+      "sourceMessagesPresent": 17,
+      "requiredEvidence": [
+        {
+          "message": 3,
+          "inMemory": true,
+          "inPrompt": true,
+          "ranks": []
+        }
+      ],
+      "supersededEvidence": [],
+      "usage": {
+        "prompt_tokens": 852,
+        "completion_tokens": 16,
+        "total_tokens": 868,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "generationMs": 1571.0127499999944,
+      "promptSha256": "1b8d05952ccef55d82a6a53c60ad24960cd30368fce0ce7a0d180865b47823d1",
+      "sourceMessageIndices": [
+        0,
+        3,
+        13,
+        28,
+        37,
+        47,
+        53,
+        54,
+        55,
+        56,
+        57,
+        58,
+        59,
+        60,
+        61,
+        62,
+        63
+      ],
+      "score": {
+        "id": "en-assistant-pronoun/r2/sparse-raw",
+        "case": "en-assistant-pronoun",
+        "language": "en",
+        "kind": "return",
+        "mode": "sparse-raw",
+        "repetition": 2,
+        "outcome": "correct",
+        "unsupportedAssertion": false,
+        "rationale": "You correctly addresses the user as the actor; the brass umbrella stand beside the east doorway is correct."
+      }
+    },
+    {
+      "id": "en-assistant-pronoun/r2/sparse-labelled",
+      "case": "en-assistant-pronoun",
+      "repetition": 2,
+      "mode": "sparse-labelled",
+      "index": 21,
+      "language": "en",
+      "kind": "return",
+      "chatId": "ablation-21-en-assistant-pronoun-r2-sparse-labelled",
+      "sourceHash": "bfe424f73c885499df8aadad759feae22bd247febbb13159e4348ffe4e36e41c",
+      "answer": "I put the rolled canal map in the brass umbrella stand beside the east doorway.",
+      "ablationEvidence": {
+        "replyIdentity": "Write SillyMemory E2E Mira's next reply in a fictional chat between SillyMemory E2E Mira and User.",
+        "sourceMessagesPresent": 17,
+        "requiredRoles": [
+          {
+            "message": 3,
+            "expectedRole": "assistant",
+            "actualRoles": [
+              "assistant"
+            ]
+          }
+        ],
+        "condition": "sparse-labelled",
+        "conversationMessages": 18,
+        "labelledMessages": 6
+      },
+      "selectionHash": "3ade07b7692c8c35de3c6befe1cbcacf898d9e91fb3017746a7a073c484e785f",
+      "memoryTokens": 367,
+      "sourceMessagesPresent": 17,
+      "requiredEvidence": [
+        {
+          "message": 3,
+          "inMemory": true,
+          "inPrompt": true,
+          "ranks": []
+        }
+      ],
+      "supersededEvidence": [],
+      "usage": {
+        "prompt_tokens": 978,
+        "completion_tokens": 16,
+        "total_tokens": 994,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "generationMs": 995.9253750000498,
+      "promptSha256": "6122f4f1e5be9f3e08ab9f128529db385c3a240c0c4f5b1ee6faa5fc7038a3bb",
+      "sourceMessageIndices": [
+        0,
+        3,
+        13,
+        28,
+        37,
+        47,
+        53,
+        54,
+        55,
+        56,
+        57,
+        58,
+        59,
+        60,
+        61,
+        62,
+        63
+      ],
+      "score": {
+        "id": "en-assistant-pronoun/r2/sparse-labelled",
+        "case": "en-assistant-pronoun",
+        "language": "en",
+        "kind": "return",
+        "mode": "sparse-labelled",
+        "repetition": 2,
+        "outcome": "incorrect",
+        "unsupportedAssertion": true,
+        "rationale": "I claims the assistant put the map away, although the assistant source reports the user doing so. Location is correct."
+      }
+    },
+    {
+      "id": "en-assistant-pronoun/r2/full-raw",
+      "case": "en-assistant-pronoun",
+      "repetition": 2,
+      "mode": "full-raw",
+      "index": 22,
+      "language": "en",
+      "kind": "return",
+      "chatId": "ablation-22-en-assistant-pronoun-r2-full-raw",
+      "sourceHash": "bfe424f73c885499df8aadad759feae22bd247febbb13159e4348ffe4e36e41c",
+      "answer": "You put the rolled canal map in the brass umbrella stand beside the east doorway.",
+      "ablationEvidence": {
+        "replyIdentity": "Write SillyMemory E2E Mira's next reply in a fictional chat between SillyMemory E2E Mira and User.",
+        "sourceMessagesPresent": 64,
+        "requiredRoles": [
+          {
+            "message": 3,
+            "expectedRole": "assistant",
+            "actualRoles": [
+              "assistant"
+            ]
+          }
+        ],
+        "condition": "full-raw",
+        "conversationMessages": 65,
+        "labelledMessages": 0
+      },
+      "selectionHash": "3ade07b7692c8c35de3c6befe1cbcacf898d9e91fb3017746a7a073c484e785f",
+      "memoryTokens": 367,
+      "sourceMessagesPresent": 64,
+      "requiredEvidence": [
+        {
+          "message": 3,
+          "inMemory": true,
+          "inPrompt": true,
+          "ranks": []
+        }
+      ],
+      "supersededEvidence": [],
+      "usage": {
+        "prompt_tokens": 2971,
+        "completion_tokens": 16,
+        "total_tokens": 2987,
+        "prompt_tokens_details": {
+          "cached_tokens": 2816,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "generationMs": 1118.632833999989,
+      "promptSha256": "608afd5e4fa7c4d420f0ef555f530cbbcf2344907754d1c1ff3d6f8befc18dd9",
+      "sourceMessageIndices": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25,
+        26,
+        27,
+        28,
+        29,
+        30,
+        31,
+        32,
+        33,
+        34,
+        35,
+        36,
+        37,
+        38,
+        39,
+        40,
+        41,
+        42,
+        43,
+        44,
+        45,
+        46,
+        47,
+        48,
+        49,
+        50,
+        51,
+        52,
+        53,
+        54,
+        55,
+        56,
+        57,
+        58,
+        59,
+        60,
+        61,
+        62,
+        63
+      ],
+      "score": {
+        "id": "en-assistant-pronoun/r2/full-raw",
+        "case": "en-assistant-pronoun",
+        "language": "en",
+        "kind": "return",
+        "mode": "full-raw",
+        "repetition": 2,
+        "outcome": "correct",
+        "unsupportedAssertion": false,
+        "rationale": "You correctly addresses the user as the actor; the brass umbrella stand beside the east doorway is correct."
+      }
+    },
+    {
+      "id": "en-assistant-pronoun/r2/full-labelled",
+      "case": "en-assistant-pronoun",
+      "repetition": 2,
+      "mode": "full-labelled",
+      "index": 23,
+      "language": "en",
+      "kind": "return",
+      "chatId": "ablation-23-en-assistant-pronoun-r2-full-labelled",
+      "sourceHash": "bfe424f73c885499df8aadad759feae22bd247febbb13159e4348ffe4e36e41c",
+      "answer": "You put the rolled canal map in the brass umbrella stand beside the east doorway.",
+      "ablationEvidence": {
+        "replyIdentity": "Write SillyMemory E2E Mira's next reply in a fictional chat between SillyMemory E2E Mira and User.",
+        "sourceMessagesPresent": 64,
+        "requiredRoles": [
+          {
+            "message": 3,
+            "expectedRole": "assistant",
+            "actualRoles": [
+              "assistant"
+            ]
+          }
+        ],
+        "condition": "full-labelled",
+        "conversationMessages": 65,
+        "labelledMessages": 6
+      },
+      "selectionHash": "3ade07b7692c8c35de3c6befe1cbcacf898d9e91fb3017746a7a073c484e785f",
+      "memoryTokens": 367,
+      "sourceMessagesPresent": 64,
+      "requiredEvidence": [
+        {
+          "message": 3,
+          "inMemory": true,
+          "inPrompt": true,
+          "ranks": []
+        }
+      ],
+      "supersededEvidence": [],
+      "usage": {
+        "prompt_tokens": 3097,
+        "completion_tokens": 16,
+        "total_tokens": 3113,
+        "prompt_tokens_details": {
+          "cached_tokens": 2944,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "generationMs": 1252.8474160000333,
+      "promptSha256": "4fd58984c79e9ad6e3d7765dd55f5be5f18fe8a18c247f89d4b96e441a3649b9",
+      "sourceMessageIndices": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25,
+        26,
+        27,
+        28,
+        29,
+        30,
+        31,
+        32,
+        33,
+        34,
+        35,
+        36,
+        37,
+        38,
+        39,
+        40,
+        41,
+        42,
+        43,
+        44,
+        45,
+        46,
+        47,
+        48,
+        49,
+        50,
+        51,
+        52,
+        53,
+        54,
+        55,
+        56,
+        57,
+        58,
+        59,
+        60,
+        61,
+        62,
+        63
+      ],
+      "score": {
+        "id": "en-assistant-pronoun/r2/full-labelled",
+        "case": "en-assistant-pronoun",
+        "language": "en",
+        "kind": "return",
+        "mode": "full-labelled",
+        "repetition": 2,
+        "outcome": "correct",
+        "unsupportedAssertion": false,
+        "rationale": "You correctly addresses the user as the actor; the brass umbrella stand beside the east doorway is correct."
+      }
+    },
+    {
+      "id": "ko-user-pronoun/r2/sparse-labelled",
+      "case": "ko-user-pronoun",
+      "repetition": 2,
+      "mode": "sparse-labelled",
+      "index": 24,
+      "language": "ko",
+      "kind": "return",
+      "chatId": "ablation-24-ko-user-pronoun-r2-sparse-labelled",
+      "sourceHash": "bde86fab87ae2121905aa256a0dd76493d6bbc78aebca341524c0d348cca4eec",
+      "answer": "아침에 네가 접이식 노선도를 북쪽 창문 아래의 대나무 바구니에 넣었어요.",
+      "ablationEvidence": {
+        "replyIdentity": "Write SillyMemory E2E Mira's next reply in a fictional chat between SillyMemory E2E Mira and User.",
+        "sourceMessagesPresent": 16,
+        "requiredRoles": [
+          {
+            "message": 2,
+            "expectedRole": "user",
+            "actualRoles": [
+              "user"
+            ]
+          }
+        ],
+        "condition": "sparse-labelled",
+        "conversationMessages": 17,
+        "labelledMessages": 5
+      },
+      "selectionHash": "2600c9a5beb76931374f7381bfbcc88b0062841ec2c67e2b81f166ec6de6982b",
+      "memoryTokens": 396,
+      "sourceMessagesPresent": 16,
+      "requiredEvidence": [
+        {
+          "message": 2,
+          "inMemory": true,
+          "inPrompt": true,
+          "ranks": []
+        }
+      ],
+      "supersededEvidence": [],
+      "usage": {
+        "prompt_tokens": 1192,
+        "completion_tokens": 28,
+        "total_tokens": 1220,
+        "prompt_tokens_details": {
+          "cached_tokens": 1024,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "generationMs": 1132.9008330000215,
+      "promptSha256": "c6508a9063d6d3237f22cbeccbaea781a2e32a5608069c5219c89716166ac993",
+      "sourceMessageIndices": [
+        0,
+        2,
+        34,
+        37,
+        44,
+        53,
+        54,
+        55,
+        56,
+        57,
+        58,
+        59,
+        60,
+        61,
+        62,
+        63
+      ],
+      "score": {
+        "id": "ko-user-pronoun/r2/sparse-labelled",
+        "case": "ko-user-pronoun",
+        "language": "ko",
+        "kind": "return",
+        "mode": "sparse-labelled",
+        "repetition": 2,
+        "outcome": "incorrect",
+        "unsupportedAssertion": true,
+        "rationale": "네가 assigns the action to the user, but the user source reports that the assistant put the map away. Location is correct."
+      }
+    },
+    {
+      "id": "ko-user-pronoun/r2/full-raw",
+      "case": "ko-user-pronoun",
+      "repetition": 2,
+      "mode": "full-raw",
+      "index": 25,
+      "language": "ko",
+      "kind": "return",
+      "chatId": "ablation-25-ko-user-pronoun-r2-full-raw",
+      "sourceHash": "bde86fab87ae2121905aa256a0dd76493d6bbc78aebca341524c0d348cca4eec",
+      "answer": "아침에 제가 접이식 노선도를 북쪽 창문 아래의 대나무 바구니에 넣었어요.",
+      "ablationEvidence": {
+        "replyIdentity": "Write SillyMemory E2E Mira's next reply in a fictional chat between SillyMemory E2E Mira and User.",
+        "sourceMessagesPresent": 64,
+        "requiredRoles": [
+          {
+            "message": 2,
+            "expectedRole": "user",
+            "actualRoles": [
+              "user"
+            ]
+          }
+        ],
+        "condition": "full-raw",
+        "conversationMessages": 65,
+        "labelledMessages": 0
+      },
+      "selectionHash": "2600c9a5beb76931374f7381bfbcc88b0062841ec2c67e2b81f166ec6de6982b",
+      "memoryTokens": 396,
+      "sourceMessagesPresent": 64,
+      "requiredEvidence": [
+        {
+          "message": 2,
+          "inMemory": true,
+          "inPrompt": true,
+          "ranks": []
+        }
+      ],
+      "supersededEvidence": [],
+      "usage": {
+        "prompt_tokens": 4176,
+        "completion_tokens": 27,
+        "total_tokens": 4203,
+        "prompt_tokens_details": {
+          "cached_tokens": 3968,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "generationMs": 1320.8868750000256,
+      "promptSha256": "c96bb127d664aeddd48231e041950467c0968393b40c87d51ea791568c582eaf",
+      "sourceMessageIndices": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25,
+        26,
+        27,
+        28,
+        29,
+        30,
+        31,
+        32,
+        33,
+        34,
+        35,
+        36,
+        37,
+        38,
+        39,
+        40,
+        41,
+        42,
+        43,
+        44,
+        45,
+        46,
+        47,
+        48,
+        49,
+        50,
+        51,
+        52,
+        53,
+        54,
+        55,
+        56,
+        57,
+        58,
+        59,
+        60,
+        61,
+        62,
+        63
+      ],
+      "score": {
+        "id": "ko-user-pronoun/r2/full-raw",
+        "case": "ko-user-pronoun",
+        "language": "ko",
+        "kind": "return",
+        "mode": "full-raw",
+        "repetition": 2,
+        "outcome": "correct",
+        "unsupportedAssertion": false,
+        "rationale": "제가 correctly refers to the assistant as the actor; the bamboo basket below the north window is correct."
+      }
+    },
+    {
+      "id": "ko-user-pronoun/r2/full-labelled",
+      "case": "ko-user-pronoun",
+      "repetition": 2,
+      "mode": "full-labelled",
+      "index": 26,
+      "language": "ko",
+      "kind": "return",
+      "chatId": "ablation-26-ko-user-pronoun-r2-full-labelled",
+      "sourceHash": "bde86fab87ae2121905aa256a0dd76493d6bbc78aebca341524c0d348cca4eec",
+      "answer": "아침에 네가 접이식 노선도를 북쪽 창문 아래의 대나무 바구니에 넣었고, 나는 옆에서 빈 포장지를 정리하며 그 모습을 봤어요.",
+      "ablationEvidence": {
+        "replyIdentity": "Write SillyMemory E2E Mira's next reply in a fictional chat between SillyMemory E2E Mira and User.",
+        "sourceMessagesPresent": 64,
+        "requiredRoles": [
+          {
+            "message": 2,
+            "expectedRole": "user",
+            "actualRoles": [
+              "user"
+            ]
+          }
+        ],
+        "condition": "full-labelled",
+        "conversationMessages": 65,
+        "labelledMessages": 5
+      },
+      "selectionHash": "2600c9a5beb76931374f7381bfbcc88b0062841ec2c67e2b81f166ec6de6982b",
+      "memoryTokens": 396,
+      "sourceMessagesPresent": 64,
+      "requiredEvidence": [
+        {
+          "message": 2,
+          "inMemory": true,
+          "inPrompt": true,
+          "ranks": []
+        }
+      ],
+      "supersededEvidence": [],
+      "usage": {
+        "prompt_tokens": 4267,
+        "completion_tokens": 45,
+        "total_tokens": 4312,
+        "prompt_tokens_details": {
+          "cached_tokens": 4096,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "generationMs": 1279.5224579999922,
+      "promptSha256": "d36560b8cf651cc71e87dc14847590075ea92818bc6b75eac2af9ba316ed5c03",
+      "sourceMessageIndices": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25,
+        26,
+        27,
+        28,
+        29,
+        30,
+        31,
+        32,
+        33,
+        34,
+        35,
+        36,
+        37,
+        38,
+        39,
+        40,
+        41,
+        42,
+        43,
+        44,
+        45,
+        46,
+        47,
+        48,
+        49,
+        50,
+        51,
+        52,
+        53,
+        54,
+        55,
+        56,
+        57,
+        58,
+        59,
+        60,
+        61,
+        62,
+        63
+      ],
+      "score": {
+        "id": "ko-user-pronoun/r2/full-labelled",
+        "case": "ko-user-pronoun",
+        "language": "ko",
+        "kind": "return",
+        "mode": "full-labelled",
+        "repetition": 2,
+        "outcome": "incorrect",
+        "unsupportedAssertion": true,
+        "rationale": "Both actors are reversed: 네가 assigns map placement to the user and 나는 assigns packaging observation to the assistant; the user source says the opposite. Location is correct."
+      }
+    },
+    {
+      "id": "ko-user-pronoun/r2/sparse-raw",
+      "case": "ko-user-pronoun",
+      "repetition": 2,
+      "mode": "sparse-raw",
+      "index": 27,
+      "language": "ko",
+      "kind": "return",
+      "chatId": "ablation-27-ko-user-pronoun-r2-sparse-raw",
+      "sourceHash": "bde86fab87ae2121905aa256a0dd76493d6bbc78aebca341524c0d348cca4eec",
+      "answer": "아침에 제가 접이식 노선도를 북쪽 창문 아래의 대나무 바구니에 넣었어요.",
+      "ablationEvidence": {
+        "replyIdentity": "Write SillyMemory E2E Mira's next reply in a fictional chat between SillyMemory E2E Mira and User.",
+        "sourceMessagesPresent": 16,
+        "requiredRoles": [
+          {
+            "message": 2,
+            "expectedRole": "user",
+            "actualRoles": [
+              "user"
+            ]
+          }
+        ],
+        "condition": "sparse-raw",
+        "conversationMessages": 17,
+        "labelledMessages": 0
+      },
+      "selectionHash": "2600c9a5beb76931374f7381bfbcc88b0062841ec2c67e2b81f166ec6de6982b",
+      "memoryTokens": 396,
+      "sourceMessagesPresent": 16,
+      "requiredEvidence": [
+        {
+          "message": 2,
+          "inMemory": true,
+          "inPrompt": true,
+          "ranks": []
+        }
+      ],
+      "supersededEvidence": [],
+      "usage": {
+        "prompt_tokens": 1101,
+        "completion_tokens": 27,
+        "total_tokens": 1128,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "generationMs": 1033.0105420000036,
+      "promptSha256": "2e014333e45bf0c456efc171bd98077106ca93d7124a915eb11eb088829e4195",
+      "sourceMessageIndices": [
+        0,
+        2,
+        34,
+        37,
+        44,
+        53,
+        54,
+        55,
+        56,
+        57,
+        58,
+        59,
+        60,
+        61,
+        62,
+        63
+      ],
+      "score": {
+        "id": "ko-user-pronoun/r2/sparse-raw",
+        "case": "ko-user-pronoun",
+        "language": "ko",
+        "kind": "return",
+        "mode": "sparse-raw",
+        "repetition": 2,
+        "outcome": "correct",
+        "unsupportedAssertion": false,
+        "rationale": "제가 correctly refers to the assistant as the actor; the bamboo basket below the north window is correct."
+      }
+    },
+    {
+      "id": "ko-assistant-pronoun/r2/full-raw",
+      "case": "ko-assistant-pronoun",
+      "repetition": 2,
+      "mode": "full-raw",
+      "index": 28,
+      "language": "ko",
+      "kind": "return",
+      "chatId": "ablation-28-ko-assistant-pronoun-r2-full-raw",
+      "sourceHash": "6255eb0e1a84f1a68c0635cd354660f9542db19dcc03dbd576cb13f4dac77a78",
+      "answer": "아침에 네가 접이식 노선도를 북쪽 창문 아래의 대나무 바구니에 넣었어.",
+      "ablationEvidence": {
+        "replyIdentity": "Write SillyMemory E2E Mira's next reply in a fictional chat between SillyMemory E2E Mira and User.",
+        "sourceMessagesPresent": 64,
+        "requiredRoles": [
+          {
+            "message": 3,
+            "expectedRole": "assistant",
+            "actualRoles": [
+              "assistant"
+            ]
+          }
+        ],
+        "condition": "full-raw",
+        "conversationMessages": 65,
+        "labelledMessages": 0
+      },
+      "selectionHash": "f31760d24a78656bf70255f46165b1526db0208cea0cad651f51381c983b5af8",
+      "memoryTokens": 398,
+      "sourceMessagesPresent": 64,
+      "requiredEvidence": [
+        {
+          "message": 3,
+          "inMemory": true,
+          "inPrompt": true,
+          "ranks": []
+        }
+      ],
+      "supersededEvidence": [],
+      "usage": {
+        "prompt_tokens": 4176,
+        "completion_tokens": 28,
+        "total_tokens": 4204,
+        "prompt_tokens_details": {
+          "cached_tokens": 3968,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "generationMs": 1060.2674159999588,
+      "promptSha256": "f824599a66b4c24370d3256a1048c6eaf4b2a2f06e3eaf7a6e10bed9bf369a54",
+      "sourceMessageIndices": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25,
+        26,
+        27,
+        28,
+        29,
+        30,
+        31,
+        32,
+        33,
+        34,
+        35,
+        36,
+        37,
+        38,
+        39,
+        40,
+        41,
+        42,
+        43,
+        44,
+        45,
+        46,
+        47,
+        48,
+        49,
+        50,
+        51,
+        52,
+        53,
+        54,
+        55,
+        56,
+        57,
+        58,
+        59,
+        60,
+        61,
+        62,
+        63
+      ],
+      "score": {
+        "id": "ko-assistant-pronoun/r2/full-raw",
+        "case": "ko-assistant-pronoun",
+        "language": "ko",
+        "kind": "return",
+        "mode": "full-raw",
+        "repetition": 2,
+        "outcome": "correct",
+        "unsupportedAssertion": false,
+        "rationale": "네가 correctly addresses the user as the actor; the bamboo basket below the north window is correct."
+      }
+    },
+    {
+      "id": "ko-assistant-pronoun/r2/full-labelled",
+      "case": "ko-assistant-pronoun",
+      "repetition": 2,
+      "mode": "full-labelled",
+      "index": 29,
+      "language": "ko",
+      "kind": "return",
+      "chatId": "ablation-29-ko-assistant-pronoun-r2-full-labelled",
+      "sourceHash": "6255eb0e1a84f1a68c0635cd354660f9542db19dcc03dbd576cb13f4dac77a78",
+      "answer": "아침에 네가 접이식 노선도를 북쪽 창문 아래의 대나무 바구니에 넣었어.",
+      "ablationEvidence": {
+        "replyIdentity": "Write SillyMemory E2E Mira's next reply in a fictional chat between SillyMemory E2E Mira and User.",
+        "sourceMessagesPresent": 64,
+        "requiredRoles": [
+          {
+            "message": 3,
+            "expectedRole": "assistant",
+            "actualRoles": [
+              "assistant"
+            ]
+          }
+        ],
+        "condition": "full-labelled",
+        "conversationMessages": 65,
+        "labelledMessages": 5
+      },
+      "selectionHash": "f31760d24a78656bf70255f46165b1526db0208cea0cad651f51381c983b5af8",
+      "memoryTokens": 398,
+      "sourceMessagesPresent": 64,
+      "requiredEvidence": [
+        {
+          "message": 3,
+          "inMemory": true,
+          "inPrompt": true,
+          "ranks": []
+        }
+      ],
+      "supersededEvidence": [],
+      "usage": {
+        "prompt_tokens": 4273,
+        "completion_tokens": 28,
+        "total_tokens": 4301,
+        "prompt_tokens_details": {
+          "cached_tokens": 4096,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "generationMs": 1496.7200409999932,
+      "promptSha256": "75a724e7b9a95c361bad9012f93bb2af64b84d2af5737e1f38d9812b72b98afe",
+      "sourceMessageIndices": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25,
+        26,
+        27,
+        28,
+        29,
+        30,
+        31,
+        32,
+        33,
+        34,
+        35,
+        36,
+        37,
+        38,
+        39,
+        40,
+        41,
+        42,
+        43,
+        44,
+        45,
+        46,
+        47,
+        48,
+        49,
+        50,
+        51,
+        52,
+        53,
+        54,
+        55,
+        56,
+        57,
+        58,
+        59,
+        60,
+        61,
+        62,
+        63
+      ],
+      "score": {
+        "id": "ko-assistant-pronoun/r2/full-labelled",
+        "case": "ko-assistant-pronoun",
+        "language": "ko",
+        "kind": "return",
+        "mode": "full-labelled",
+        "repetition": 2,
+        "outcome": "correct",
+        "unsupportedAssertion": false,
+        "rationale": "네가 correctly addresses the user as the actor; the bamboo basket below the north window is correct."
+      }
+    },
+    {
+      "id": "ko-assistant-pronoun/r2/sparse-raw",
+      "case": "ko-assistant-pronoun",
+      "repetition": 2,
+      "mode": "sparse-raw",
+      "index": 30,
+      "language": "ko",
+      "kind": "return",
+      "chatId": "ablation-30-ko-assistant-pronoun-r2-sparse-raw",
+      "sourceHash": "6255eb0e1a84f1a68c0635cd354660f9542db19dcc03dbd576cb13f4dac77a78",
+      "answer": "아침에 네가 접이식 노선도를 북쪽 창문 아래의 대나무 바구니에 넣었어요.",
+      "ablationEvidence": {
+        "replyIdentity": "Write SillyMemory E2E Mira's next reply in a fictional chat between SillyMemory E2E Mira and User.",
+        "sourceMessagesPresent": 16,
+        "requiredRoles": [
+          {
+            "message": 3,
+            "expectedRole": "assistant",
+            "actualRoles": [
+              "assistant"
+            ]
+          }
+        ],
+        "condition": "sparse-raw",
+        "conversationMessages": 17,
+        "labelledMessages": 0
+      },
+      "selectionHash": "f31760d24a78656bf70255f46165b1526db0208cea0cad651f51381c983b5af8",
+      "memoryTokens": 398,
+      "sourceMessagesPresent": 16,
+      "requiredEvidence": [
+        {
+          "message": 3,
+          "inMemory": true,
+          "inPrompt": true,
+          "ranks": []
+        }
+      ],
+      "supersededEvidence": [],
+      "usage": {
+        "prompt_tokens": 1097,
+        "completion_tokens": 28,
+        "total_tokens": 1125,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "generationMs": 1211.1339579999913,
+      "promptSha256": "6747e953d545831665870ec40cce80fe9eeb3eb672270be6ec659af5612d37bd",
+      "sourceMessageIndices": [
+        0,
+        3,
+        30,
+        37,
+        44,
+        53,
+        54,
+        55,
+        56,
+        57,
+        58,
+        59,
+        60,
+        61,
+        62,
+        63
+      ],
+      "score": {
+        "id": "ko-assistant-pronoun/r2/sparse-raw",
+        "case": "ko-assistant-pronoun",
+        "language": "ko",
+        "kind": "return",
+        "mode": "sparse-raw",
+        "repetition": 2,
+        "outcome": "correct",
+        "unsupportedAssertion": false,
+        "rationale": "네가 correctly addresses the user as the actor; the bamboo basket below the north window is correct."
+      }
+    },
+    {
+      "id": "ko-assistant-pronoun/r2/sparse-labelled",
+      "case": "ko-assistant-pronoun",
+      "repetition": 2,
+      "mode": "sparse-labelled",
+      "index": 31,
+      "language": "ko",
+      "kind": "return",
+      "chatId": "ablation-31-ko-assistant-pronoun-r2-sparse-labelled",
+      "sourceHash": "6255eb0e1a84f1a68c0635cd354660f9542db19dcc03dbd576cb13f4dac77a78",
+      "answer": "아침에 네가 접이식 노선도를 북쪽 창문 아래의 대나무 바구니에 넣었어.",
+      "ablationEvidence": {
+        "replyIdentity": "Write SillyMemory E2E Mira's next reply in a fictional chat between SillyMemory E2E Mira and User.",
+        "sourceMessagesPresent": 16,
+        "requiredRoles": [
+          {
+            "message": 3,
+            "expectedRole": "assistant",
+            "actualRoles": [
+              "assistant"
+            ]
+          }
+        ],
+        "condition": "sparse-labelled",
+        "conversationMessages": 17,
+        "labelledMessages": 5
+      },
+      "selectionHash": "f31760d24a78656bf70255f46165b1526db0208cea0cad651f51381c983b5af8",
+      "memoryTokens": 398,
+      "sourceMessagesPresent": 16,
+      "requiredEvidence": [
+        {
+          "message": 3,
+          "inMemory": true,
+          "inPrompt": true,
+          "ranks": []
+        }
+      ],
+      "supersededEvidence": [],
+      "usage": {
+        "prompt_tokens": 1194,
+        "completion_tokens": 28,
+        "total_tokens": 1222,
+        "prompt_tokens_details": {
+          "cached_tokens": 1024,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "generationMs": 1113.6641250000102,
+      "promptSha256": "8d1833387a791fca1e6646bd5c530185d0fd819511f9bce9d55a20d58eb2d06e",
+      "sourceMessageIndices": [
+        0,
+        3,
+        30,
+        37,
+        44,
+        53,
+        54,
+        55,
+        56,
+        57,
+        58,
+        59,
+        60,
+        61,
+        62,
+        63
+      ],
+      "score": {
+        "id": "ko-assistant-pronoun/r2/sparse-labelled",
+        "case": "ko-assistant-pronoun",
+        "language": "ko",
+        "kind": "return",
+        "mode": "sparse-labelled",
+        "repetition": 2,
+        "outcome": "correct",
+        "unsupportedAssertion": false,
+        "rationale": "네가 correctly addresses the user as the actor; the bamboo basket below the north window is correct."
+      }
+    }
+  ]
+}

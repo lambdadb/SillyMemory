@@ -63,6 +63,12 @@ The appropriate next control is to hold the selected source set/roles/order fixe
 and separate labels from surrounding-context removal before proposing a runtime
 change. Do not repeat prompt wording tweaks until these same cases pass.
 
+The [completed label/context ablation](actor-ablation-results.md) now separates
+those factors with frozen selections: full-raw 8/8, full-labelled 4/8,
+sparse-raw 6/8 and sparse-labelled 2/8 provisional strict passes. Both labels and
+surrounding-context removal contributed in these cases; label removal alone left
+two errors. This follow-up did not change the runtime.
+
 Earlier [native-role trials](speaker-attribution-results.md) had failures in both
 modes on a different corpus; that observation remains valid for those trials.
 It cannot explain away the new six off-correct/on-wrong pairs. Conversely, the
