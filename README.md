@@ -62,7 +62,7 @@ or undo remote data changes.
 - Send messages normally. Message generation, edits, selected swipes, deletion, chat changes, and reload/re-enable trigger reconciliation. Click **Sync this chat** to retry after a network failure. For authentication errors, re-enter the key using **Use key for this session** first; for rate limits or timeouts, wait before retrying. Successful batches are skipped within the session. A lost response can require an idempotent re-upsert, and reload conservatively rechecks current records after key re-entry and re-enabling memory. Progress is not saved across reloads.
 - Only older plain-text messages are embedded. Recent messages stay in the generation array. Files, media, and tool messages are not indexed; group chats and chats with system tool invocations are bypassed.
 - Character avatar identity, chat filename (including native branch filenames), and installation owner identity define a strict hashed scope. A native branch gets its own index; inherited chat text is reindexed there.
-- Before generation, the extension synchronizes current source text and retrieves matching chunks with `knn.queryText`: the latest user message is searched alone, and separately with the preceding two messages as context. Explicit **Continue** generation instead anchors on the latest message being extended; regenerate and swipe still use the user question. It interleaves the two result lists, validates every result against current local text and IDs, and token-counts the complete injected string using the host tokenizer. Macro braces and legacy macro markers are shown with fullwidth delimiters so recalled dialogue stays literal during host prompt assembly.
+- Before generation, the extension synchronizes current source text and retrieves matching chunks with `knn.queryText`: the latest user message and the preceding nonempty user message are searched independently. A first user turn has only one query; generic assistant acknowledgments are not concatenated into the topic query. Explicit **Continue** generation instead anchors on the latest message being extended; regenerate and swipe still use the user question. It interleaves the two result lists, validates every result against current local text and IDs, and token-counts the complete injected string using the host tokenizer. Macro braces and legacy macro markers are shown with fullwidth delimiters so recalled dialogue stays literal during host prompt assembly.
 - If at least one valid passage fits, older eligible full messages are removed from the ephemeral prompt array and the selected passages are injected. Source chat messages on disk are not modified. If nothing fits or an operation fails, the original prompt remains. A mid-request chat change aborts that generation; generate again in the new chat.
 - **Last injected memory** shows the source message numbers, speakers, passages, and token count. A separate total model prompt budget remains SillyTavern's responsibility; oversized recent history may still be truncated by the host.
 - **Disable** stops synchronization/retrieval and clears the injection. It retains remote data. **Forget key** also disables memory. Reload starts disabled and requires key re-entry.
@@ -194,6 +194,11 @@ frozen 32-answer test with measured context overflow. See [its results](docs/lon
 and [offline human-review workflow](docs/human-review.md). Generate a local review
 form with `node scripts/natural-review.mjs blind-review.json --output review.html`;
 it provides no automatic grades and sends no data over the network.
+
+The [prior-user query comparison and follow-up](docs/context-selection-results.md)
+records the v3 selection fix, its fixed-budget evidence and remaining limits.
+Run `SM_ARTIFACT_TAG=next-selection node scripts/live-smoke.mjs --selection` for
+the search-only comparison; the live runner also accepts `SM_ENV_FILE`.
 
 See [architecture](docs/architecture.md), [pinned contracts](docs/contracts.md), and [validation and remaining checks](docs/validation.md).
 

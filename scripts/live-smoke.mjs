@@ -16,6 +16,7 @@ const selectionMode = process.argv.includes('--selection');
 const faultMode = process.argv.includes('--faults');
 const contextMode = process.argv.includes('--context');
 const probeMode = process.argv.includes('--probe');
+if (selectionMode && (probeMode || contextMode || faultMode)) throw new Error('--selection cannot be combined with other live modes.');
 const probeBatchSize = Number(process.env.SM_PROBE_BATCH_SIZE || 1);
 const probeTimeoutMs = Number(process.env.SM_PROBE_TIMEOUT_MS || 15000);
 const probeQuery = process.env.SM_PROBE_QUERY === '1';
@@ -31,6 +32,9 @@ const credentials = { endpoint: variables.LAMBDADB_BASE_URL, project: variables.
 if (!Object.values(credentials).every(v => typeof v === 'string' && v.length)) throw new Error('Missing required LambdaDB environment variables.');
 if (execFileSync('git', ['-C', source, 'rev-parse', 'HEAD'], { encoding: 'utf8' }).trim() !== revision) throw new Error('Unexpected SillyTavern revision.');
 if (await realpath(path.join(source, 'public/scripts/extensions/third-party/sillymemory')) !== root) throw new Error('Install this checkout as the pinned host extension symlink before live testing.');
+const sourceFiles = ['src/client.js', 'src/gate.js', 'src/memory.js', 'scripts/live-smoke.mjs', 'scripts/live-fault-scenarios.mjs', 'scripts/context-retrieval.mjs', 'scripts/comparison-fixture.mjs', 'scripts/selection-diagnostic.mjs', 'scripts/natural-dialogue.mjs', 'docs/context-selection-evaluation.md', ...['natural-dialogue-v1', 'speaker-native-v1', 'long-dialogue-v1'].map(v => `tests/fixtures/${v}.json`)];
+const sourceHashes = async () => Object.fromEntries(await Promise.all(sourceFiles.map(async file => [file, createHash('sha256').update(await readFile(path.join(root, file))).digest('hex')])));
+const initialSourceSha256 = await sourceHashes();
 const work = await mkdtemp(path.join(tmpdir(), 'sillymemory-live-'));
 const artifacts = path.join(root, 'artifacts'); await mkdir(artifacts, { recursive: true });
 const owner = randomUUID().replaceAll('-', '');
@@ -42,7 +46,7 @@ await writeFile(pendingPath, JSON.stringify({ owner, gateCollection, memoryColle
 const port = Number(process.env.ST_LIVE_PORT || 18127), url = `http://127.0.0.1:${port}`;
 let server, browser, page, stage = 'startup', failure = false, cleanupComplete = false;
 const checks = [], responses = [];
-const report = { time: new Date().toISOString(), sillyTavern: revision, upstream: 'Live LambdaDB through real browser and built-in proxy', checks, responses };
+const report = { time: new Date().toISOString(), sillyTavern: revision, upstream: 'Live LambdaDB through real browser and built-in proxy', checks, responses, initialSourceSha256 };
 const record = name => { checks.push(name); console.log(`PASS ${name}`); };
 async function run(name, fn, arg) {
     stage = name;
@@ -202,9 +206,9 @@ try {
             } catch { failure = true; report.reloadFailure = true; }
         }
     }
-    report.cleanupComplete = cleanupComplete; report.passed = !failure && cleanupComplete;
-    report.sourceSha256 = {};
-    for (const file of ['src/client.js', 'src/gate.js', 'src/memory.js', 'scripts/live-smoke.mjs', 'scripts/live-fault-scenarios.mjs', 'scripts/context-retrieval.mjs', 'scripts/comparison-fixture.mjs', 'scripts/selection-diagnostic.mjs', 'scripts/natural-dialogue.mjs', 'docs/context-selection-evaluation.md', ...['natural-dialogue-v1', 'speaker-native-v1', 'long-dialogue-v1'].map(v => `tests/fixtures/${v}.json`)]) report.sourceSha256[file] = createHash('sha256').update(await readFile(path.join(root, file))).digest('hex');
+    report.sourceSha256 = await sourceHashes();
+    report.sourceUnchanged = Object.entries(initialSourceSha256).every(([file, digest]) => report.sourceSha256[file] === digest);
+    report.cleanupComplete = cleanupComplete; report.passed = !failure && cleanupComplete && report.sourceUnchanged;
     // Defense in depth: fail rather than write any known credential into a report.
     const output = JSON.stringify(report, null, 2);
     if (output.includes(credentials.key)) throw new Error('Report redaction guard failed');

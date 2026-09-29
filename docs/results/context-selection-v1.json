@@ -1,0 +1,4667 @@
+{
+  "description": "Development query comparison on known synthetic cohorts; source selection only, not answer correctness.",
+  "rawReportSha256": "c1e888d40a0eb9b74ec4846327f11f4970f02f29b7238742907fb6ae9e8af7cd",
+  "frozenComparisonCommit": "00e4707",
+  "sillyTavern": "06bde939fb1e9c4c8d8641d810f0a916b5bce127",
+  "sourceSha256": {
+    "src/client.js": "a808537f640d51e7b893d422a8c288f647d12641de2a785c4098afc681239da8",
+    "src/gate.js": "c1e5afada320e822a535ff4b464d6e565cfadbf56aabc78b1ba6f667bf4b78bf",
+    "src/memory.js": "291c665c34c84cf18166dcc97c87b7908676ab1378bf95e8c30fa0612189a537",
+    "scripts/live-smoke.mjs": "af97412b3a915dfc42b303d859a951ea3fb354b8cd08aef7bbf7c61eef94c252",
+    "scripts/live-fault-scenarios.mjs": "4656adacc864da5053d848096e2954cad46305f869030b257464fc04dc506ce3",
+    "scripts/context-retrieval.mjs": "9937191273c70c785cfb801a9945461d4f7ab4839446a194f49a885c06cd8038",
+    "scripts/comparison-fixture.mjs": "da9363e925d7776c8bf09af9ccb3f5615ffffceb5791d7081ffa1d0c27e5cc2d",
+    "scripts/selection-diagnostic.mjs": "0f64edb1e05eed8d9ba08f5b49971d435ff30dd24f5943491a80287bb54440b4",
+    "scripts/natural-dialogue.mjs": "c5e6fee7413024a33eee5bd129c5ab5f7cb541e487cb8986857e0409def874e8",
+    "docs/context-selection-evaluation.md": "bbb2947efc881be956b38040fae179fd584de2280f2255a5fca795685c939ea3",
+    "tests/fixtures/natural-dialogue-v1.json": "1570ba3031329e44a592f70c694278ddeb6171977ac0125daeae8cc94974608f",
+    "tests/fixtures/speaker-native-v1.json": "129f10d42ac30cb54c19a49989e76b8973ecf98260e0f0e150bf607a12666826",
+    "tests/fixtures/long-dialogue-v1.json": "3c5e6506b01711f1f4e5041c7ac14aa1073ae85fa71f26bf9092d2f7219053b7"
+  },
+  "sourceMatchesFrozenCommit": true,
+  "passed": true,
+  "cleanupComplete": true,
+  "checks": [
+    "pinned host and extension loaded",
+    "session credentials initialized without persistence",
+    "invalid key is rejected through the real proxy",
+    "live managed embedding transport gate and cleanup",
+    "dedicated live memory collection created",
+    "live recall obeys local source and token budget",
+    "live chat branch and character isolation",
+    "live edit and swipe remove obsolete documents",
+    "live deletion reconciles after engine reload",
+    "OpenAI host tokenizer configured without a generation connection",
+    "natural-dialogue-v1/en-observatory-return: shared-candidate selection comparison",
+    "natural-dialogue-v1/en-observatory-correction: shared-candidate selection comparison",
+    "natural-dialogue-v1/en-observatory-reference: shared-candidate selection comparison",
+    "natural-dialogue-v1/en-observatory-unknown: shared-candidate selection comparison",
+    "natural-dialogue-v1/ko-observatory-return: shared-candidate selection comparison",
+    "natural-dialogue-v1/ko-observatory-correction: shared-candidate selection comparison",
+    "natural-dialogue-v1/ko-observatory-reference: shared-candidate selection comparison",
+    "natural-dialogue-v1/ko-observatory-unknown: shared-candidate selection comparison",
+    "natural-dialogue-v1/en-workshop-return: shared-candidate selection comparison",
+    "natural-dialogue-v1/en-workshop-correction: shared-candidate selection comparison",
+    "natural-dialogue-v1/en-workshop-reference: shared-candidate selection comparison",
+    "natural-dialogue-v1/en-workshop-unknown: shared-candidate selection comparison",
+    "natural-dialogue-v1/ko-workshop-return: shared-candidate selection comparison",
+    "natural-dialogue-v1/ko-workshop-correction: shared-candidate selection comparison",
+    "natural-dialogue-v1/ko-workshop-reference: shared-candidate selection comparison",
+    "natural-dialogue-v1/ko-workshop-unknown: shared-candidate selection comparison",
+    "speaker-native-v1/en-workshop-return: shared-candidate selection comparison",
+    "speaker-native-v1/en-observatory-correction: shared-candidate selection comparison",
+    "speaker-native-v1/en-notebook-user: shared-candidate selection comparison",
+    "speaker-native-v1/en-notebook-assistant: shared-candidate selection comparison",
+    "speaker-native-v1/ko-notebook-user: shared-candidate selection comparison",
+    "speaker-native-v1/ko-notebook-assistant: shared-candidate selection comparison",
+    "speaker-native-v1/en-reported-other-actor: shared-candidate selection comparison",
+    "speaker-native-v1/ko-reported-other-actor: shared-candidate selection comparison",
+    "long-dialogue-v1/en-long-return: shared-candidate selection comparison",
+    "long-dialogue-v1/en-long-correction: shared-candidate selection comparison",
+    "long-dialogue-v1/en-long-reference: shared-candidate selection comparison",
+    "long-dialogue-v1/en-long-unknown: shared-candidate selection comparison",
+    "long-dialogue-v1/ko-long-return: shared-candidate selection comparison",
+    "long-dialogue-v1/ko-long-correction: shared-candidate selection comparison",
+    "long-dialogue-v1/ko-long-reference: shared-candidate selection comparison",
+    "long-dialogue-v1/ko-long-unknown: shared-candidate selection comparison",
+    "real key is absent from browser storage and host settings",
+    "all owned live test collections deleted and confirmed absent",
+    "browser reload drops the key and disables extension memory"
+  ],
+  "responses": [
+    {
+      "stage": "invalid key is rejected through the real proxy",
+      "status": 400
+    },
+    {
+      "stage": "live managed embedding transport gate and cleanup",
+      "status": 201
+    },
+    {
+      "stage": "live managed embedding transport gate and cleanup",
+      "status": 202
+    },
+    {
+      "stage": "live managed embedding transport gate and cleanup",
+      "status": 200
+    },
+    {
+      "stage": "live managed embedding transport gate and cleanup",
+      "status": 202
+    },
+    {
+      "stage": "live managed embedding transport gate and cleanup",
+      "status": 200
+    },
+    {
+      "stage": "live managed embedding transport gate and cleanup",
+      "status": 200
+    },
+    {
+      "stage": "live managed embedding transport gate and cleanup",
+      "status": 200
+    },
+    {
+      "stage": "live managed embedding transport gate and cleanup",
+      "status": 404
+    },
+    {
+      "stage": "dedicated live memory collection created",
+      "status": 201
+    },
+    {
+      "stage": "dedicated live memory collection created",
+      "status": 200
+    },
+    {
+      "stage": "dedicated live memory collection created",
+      "status": 202
+    },
+    {
+      "stage": "live recall obeys local source and token budget",
+      "status": 200
+    },
+    {
+      "stage": "live recall obeys local source and token budget",
+      "status": 200
+    },
+    {
+      "stage": "live recall obeys local source and token budget",
+      "status": 200
+    },
+    {
+      "stage": "live chat branch and character isolation",
+      "status": 200
+    },
+    {
+      "stage": "live chat branch and character isolation",
+      "status": 202
+    },
+    {
+      "stage": "live chat branch and character isolation",
+      "status": 200
+    },
+    {
+      "stage": "live chat branch and character isolation",
+      "status": 202
+    },
+    {
+      "stage": "live chat branch and character isolation",
+      "status": 200
+    },
+    {
+      "stage": "live chat branch and character isolation",
+      "status": 200
+    },
+    {
+      "stage": "live chat branch and character isolation",
+      "status": 200
+    },
+    {
+      "stage": "live edit and swipe remove obsolete documents",
+      "status": 200
+    },
+    {
+      "stage": "live edit and swipe remove obsolete documents",
+      "status": 202
+    },
+    {
+      "stage": "live edit and swipe remove obsolete documents",
+      "status": 202
+    },
+    {
+      "stage": "live edit and swipe remove obsolete documents",
+      "status": 200
+    },
+    {
+      "stage": "live deletion reconciles after engine reload",
+      "status": 200
+    },
+    {
+      "stage": "live deletion reconciles after engine reload",
+      "status": 202
+    },
+    {
+      "stage": "live deletion reconciles after engine reload",
+      "status": 202
+    },
+    {
+      "stage": "live deletion reconciles after engine reload",
+      "status": 200
+    },
+    {
+      "stage": "natural-dialogue-v1/en-observatory-return: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "natural-dialogue-v1/en-observatory-return: shared-candidate selection comparison",
+      "status": 202
+    },
+    {
+      "stage": "natural-dialogue-v1/en-observatory-return: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "natural-dialogue-v1/en-observatory-return: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "natural-dialogue-v1/en-observatory-return: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "natural-dialogue-v1/en-observatory-return: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "natural-dialogue-v1/en-observatory-return: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "natural-dialogue-v1/en-observatory-correction: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "natural-dialogue-v1/en-observatory-correction: shared-candidate selection comparison",
+      "status": 202
+    },
+    {
+      "stage": "natural-dialogue-v1/en-observatory-correction: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "natural-dialogue-v1/en-observatory-correction: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "natural-dialogue-v1/en-observatory-correction: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "natural-dialogue-v1/en-observatory-correction: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "natural-dialogue-v1/en-observatory-correction: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "natural-dialogue-v1/en-observatory-reference: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "natural-dialogue-v1/en-observatory-reference: shared-candidate selection comparison",
+      "status": 202
+    },
+    {
+      "stage": "natural-dialogue-v1/en-observatory-reference: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "natural-dialogue-v1/en-observatory-reference: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "natural-dialogue-v1/en-observatory-reference: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "natural-dialogue-v1/en-observatory-reference: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "natural-dialogue-v1/en-observatory-reference: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "natural-dialogue-v1/en-observatory-unknown: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "natural-dialogue-v1/en-observatory-unknown: shared-candidate selection comparison",
+      "status": 202
+    },
+    {
+      "stage": "natural-dialogue-v1/en-observatory-unknown: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "natural-dialogue-v1/en-observatory-unknown: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "natural-dialogue-v1/en-observatory-unknown: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "natural-dialogue-v1/en-observatory-unknown: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "natural-dialogue-v1/en-observatory-unknown: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "natural-dialogue-v1/ko-observatory-return: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "natural-dialogue-v1/ko-observatory-return: shared-candidate selection comparison",
+      "status": 202
+    },
+    {
+      "stage": "natural-dialogue-v1/ko-observatory-return: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "natural-dialogue-v1/ko-observatory-return: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "natural-dialogue-v1/ko-observatory-return: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "natural-dialogue-v1/ko-observatory-return: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "natural-dialogue-v1/ko-observatory-return: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "natural-dialogue-v1/ko-observatory-correction: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "natural-dialogue-v1/ko-observatory-correction: shared-candidate selection comparison",
+      "status": 202
+    },
+    {
+      "stage": "natural-dialogue-v1/ko-observatory-correction: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "natural-dialogue-v1/ko-observatory-correction: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "natural-dialogue-v1/ko-observatory-correction: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "natural-dialogue-v1/ko-observatory-correction: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "natural-dialogue-v1/ko-observatory-correction: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "natural-dialogue-v1/ko-observatory-reference: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "natural-dialogue-v1/ko-observatory-reference: shared-candidate selection comparison",
+      "status": 202
+    },
+    {
+      "stage": "natural-dialogue-v1/ko-observatory-reference: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "natural-dialogue-v1/ko-observatory-reference: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "natural-dialogue-v1/ko-observatory-reference: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "natural-dialogue-v1/ko-observatory-reference: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "natural-dialogue-v1/ko-observatory-reference: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "natural-dialogue-v1/ko-observatory-unknown: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "natural-dialogue-v1/ko-observatory-unknown: shared-candidate selection comparison",
+      "status": 202
+    },
+    {
+      "stage": "natural-dialogue-v1/ko-observatory-unknown: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "natural-dialogue-v1/ko-observatory-unknown: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "natural-dialogue-v1/ko-observatory-unknown: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "natural-dialogue-v1/ko-observatory-unknown: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "natural-dialogue-v1/ko-observatory-unknown: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "natural-dialogue-v1/en-workshop-return: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "natural-dialogue-v1/en-workshop-return: shared-candidate selection comparison",
+      "status": 202
+    },
+    {
+      "stage": "natural-dialogue-v1/en-workshop-return: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "natural-dialogue-v1/en-workshop-return: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "natural-dialogue-v1/en-workshop-return: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "natural-dialogue-v1/en-workshop-return: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "natural-dialogue-v1/en-workshop-return: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "natural-dialogue-v1/en-workshop-correction: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "natural-dialogue-v1/en-workshop-correction: shared-candidate selection comparison",
+      "status": 202
+    },
+    {
+      "stage": "natural-dialogue-v1/en-workshop-correction: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "natural-dialogue-v1/en-workshop-correction: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "natural-dialogue-v1/en-workshop-correction: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "natural-dialogue-v1/en-workshop-correction: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "natural-dialogue-v1/en-workshop-correction: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "natural-dialogue-v1/en-workshop-reference: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "natural-dialogue-v1/en-workshop-reference: shared-candidate selection comparison",
+      "status": 202
+    },
+    {
+      "stage": "natural-dialogue-v1/en-workshop-reference: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "natural-dialogue-v1/en-workshop-reference: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "natural-dialogue-v1/en-workshop-reference: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "natural-dialogue-v1/en-workshop-reference: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "natural-dialogue-v1/en-workshop-reference: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "natural-dialogue-v1/en-workshop-unknown: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "natural-dialogue-v1/en-workshop-unknown: shared-candidate selection comparison",
+      "status": 202
+    },
+    {
+      "stage": "natural-dialogue-v1/en-workshop-unknown: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "natural-dialogue-v1/en-workshop-unknown: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "natural-dialogue-v1/en-workshop-unknown: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "natural-dialogue-v1/en-workshop-unknown: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "natural-dialogue-v1/en-workshop-unknown: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "natural-dialogue-v1/ko-workshop-return: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "natural-dialogue-v1/ko-workshop-return: shared-candidate selection comparison",
+      "status": 202
+    },
+    {
+      "stage": "natural-dialogue-v1/ko-workshop-return: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "natural-dialogue-v1/ko-workshop-return: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "natural-dialogue-v1/ko-workshop-return: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "natural-dialogue-v1/ko-workshop-return: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "natural-dialogue-v1/ko-workshop-return: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "natural-dialogue-v1/ko-workshop-correction: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "natural-dialogue-v1/ko-workshop-correction: shared-candidate selection comparison",
+      "status": 202
+    },
+    {
+      "stage": "natural-dialogue-v1/ko-workshop-correction: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "natural-dialogue-v1/ko-workshop-correction: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "natural-dialogue-v1/ko-workshop-correction: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "natural-dialogue-v1/ko-workshop-correction: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "natural-dialogue-v1/ko-workshop-correction: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "natural-dialogue-v1/ko-workshop-reference: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "natural-dialogue-v1/ko-workshop-reference: shared-candidate selection comparison",
+      "status": 202
+    },
+    {
+      "stage": "natural-dialogue-v1/ko-workshop-reference: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "natural-dialogue-v1/ko-workshop-reference: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "natural-dialogue-v1/ko-workshop-reference: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "natural-dialogue-v1/ko-workshop-reference: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "natural-dialogue-v1/ko-workshop-reference: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "natural-dialogue-v1/ko-workshop-unknown: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "natural-dialogue-v1/ko-workshop-unknown: shared-candidate selection comparison",
+      "status": 202
+    },
+    {
+      "stage": "natural-dialogue-v1/ko-workshop-unknown: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "natural-dialogue-v1/ko-workshop-unknown: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "natural-dialogue-v1/ko-workshop-unknown: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "natural-dialogue-v1/ko-workshop-unknown: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "natural-dialogue-v1/ko-workshop-unknown: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "speaker-native-v1/en-workshop-return: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "speaker-native-v1/en-workshop-return: shared-candidate selection comparison",
+      "status": 202
+    },
+    {
+      "stage": "speaker-native-v1/en-workshop-return: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "speaker-native-v1/en-workshop-return: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "speaker-native-v1/en-workshop-return: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "speaker-native-v1/en-workshop-return: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "speaker-native-v1/en-workshop-return: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "speaker-native-v1/en-observatory-correction: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "speaker-native-v1/en-observatory-correction: shared-candidate selection comparison",
+      "status": 202
+    },
+    {
+      "stage": "speaker-native-v1/en-observatory-correction: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "speaker-native-v1/en-observatory-correction: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "speaker-native-v1/en-observatory-correction: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "speaker-native-v1/en-observatory-correction: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "speaker-native-v1/en-observatory-correction: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "speaker-native-v1/en-notebook-user: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "speaker-native-v1/en-notebook-user: shared-candidate selection comparison",
+      "status": 202
+    },
+    {
+      "stage": "speaker-native-v1/en-notebook-user: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "speaker-native-v1/en-notebook-user: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "speaker-native-v1/en-notebook-user: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "speaker-native-v1/en-notebook-user: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "speaker-native-v1/en-notebook-user: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "speaker-native-v1/en-notebook-assistant: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "speaker-native-v1/en-notebook-assistant: shared-candidate selection comparison",
+      "status": 202
+    },
+    {
+      "stage": "speaker-native-v1/en-notebook-assistant: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "speaker-native-v1/en-notebook-assistant: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "speaker-native-v1/en-notebook-assistant: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "speaker-native-v1/en-notebook-assistant: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "speaker-native-v1/en-notebook-assistant: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "speaker-native-v1/ko-notebook-user: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "speaker-native-v1/ko-notebook-user: shared-candidate selection comparison",
+      "status": 202
+    },
+    {
+      "stage": "speaker-native-v1/ko-notebook-user: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "speaker-native-v1/ko-notebook-user: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "speaker-native-v1/ko-notebook-user: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "speaker-native-v1/ko-notebook-user: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "speaker-native-v1/ko-notebook-user: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "speaker-native-v1/ko-notebook-assistant: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "speaker-native-v1/ko-notebook-assistant: shared-candidate selection comparison",
+      "status": 202
+    },
+    {
+      "stage": "speaker-native-v1/ko-notebook-assistant: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "speaker-native-v1/ko-notebook-assistant: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "speaker-native-v1/ko-notebook-assistant: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "speaker-native-v1/ko-notebook-assistant: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "speaker-native-v1/ko-notebook-assistant: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "speaker-native-v1/en-reported-other-actor: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "speaker-native-v1/en-reported-other-actor: shared-candidate selection comparison",
+      "status": 202
+    },
+    {
+      "stage": "speaker-native-v1/en-reported-other-actor: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "speaker-native-v1/en-reported-other-actor: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "speaker-native-v1/en-reported-other-actor: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "speaker-native-v1/en-reported-other-actor: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "speaker-native-v1/en-reported-other-actor: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "speaker-native-v1/ko-reported-other-actor: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "speaker-native-v1/ko-reported-other-actor: shared-candidate selection comparison",
+      "status": 202
+    },
+    {
+      "stage": "speaker-native-v1/ko-reported-other-actor: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "speaker-native-v1/ko-reported-other-actor: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "speaker-native-v1/ko-reported-other-actor: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "speaker-native-v1/ko-reported-other-actor: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "speaker-native-v1/ko-reported-other-actor: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "long-dialogue-v1/en-long-return: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "long-dialogue-v1/en-long-return: shared-candidate selection comparison",
+      "status": 202
+    },
+    {
+      "stage": "long-dialogue-v1/en-long-return: shared-candidate selection comparison",
+      "status": 202
+    },
+    {
+      "stage": "long-dialogue-v1/en-long-return: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "long-dialogue-v1/en-long-return: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "long-dialogue-v1/en-long-return: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "long-dialogue-v1/en-long-return: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "long-dialogue-v1/en-long-return: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "long-dialogue-v1/en-long-correction: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "long-dialogue-v1/en-long-correction: shared-candidate selection comparison",
+      "status": 202
+    },
+    {
+      "stage": "long-dialogue-v1/en-long-correction: shared-candidate selection comparison",
+      "status": 202
+    },
+    {
+      "stage": "long-dialogue-v1/en-long-correction: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "long-dialogue-v1/en-long-correction: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "long-dialogue-v1/en-long-correction: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "long-dialogue-v1/en-long-correction: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "long-dialogue-v1/en-long-correction: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "long-dialogue-v1/en-long-reference: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "long-dialogue-v1/en-long-reference: shared-candidate selection comparison",
+      "status": 202
+    },
+    {
+      "stage": "long-dialogue-v1/en-long-reference: shared-candidate selection comparison",
+      "status": 202
+    },
+    {
+      "stage": "long-dialogue-v1/en-long-reference: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "long-dialogue-v1/en-long-reference: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "long-dialogue-v1/en-long-reference: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "long-dialogue-v1/en-long-reference: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "long-dialogue-v1/en-long-reference: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "long-dialogue-v1/en-long-unknown: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "long-dialogue-v1/en-long-unknown: shared-candidate selection comparison",
+      "status": 202
+    },
+    {
+      "stage": "long-dialogue-v1/en-long-unknown: shared-candidate selection comparison",
+      "status": 202
+    },
+    {
+      "stage": "long-dialogue-v1/en-long-unknown: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "long-dialogue-v1/en-long-unknown: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "long-dialogue-v1/en-long-unknown: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "long-dialogue-v1/en-long-unknown: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "long-dialogue-v1/en-long-unknown: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "long-dialogue-v1/ko-long-return: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "long-dialogue-v1/ko-long-return: shared-candidate selection comparison",
+      "status": 202
+    },
+    {
+      "stage": "long-dialogue-v1/ko-long-return: shared-candidate selection comparison",
+      "status": 202
+    },
+    {
+      "stage": "long-dialogue-v1/ko-long-return: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "long-dialogue-v1/ko-long-return: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "long-dialogue-v1/ko-long-return: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "long-dialogue-v1/ko-long-return: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "long-dialogue-v1/ko-long-return: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "long-dialogue-v1/ko-long-correction: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "long-dialogue-v1/ko-long-correction: shared-candidate selection comparison",
+      "status": 202
+    },
+    {
+      "stage": "long-dialogue-v1/ko-long-correction: shared-candidate selection comparison",
+      "status": 202
+    },
+    {
+      "stage": "long-dialogue-v1/ko-long-correction: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "long-dialogue-v1/ko-long-correction: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "long-dialogue-v1/ko-long-correction: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "long-dialogue-v1/ko-long-correction: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "long-dialogue-v1/ko-long-correction: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "long-dialogue-v1/ko-long-reference: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "long-dialogue-v1/ko-long-reference: shared-candidate selection comparison",
+      "status": 202
+    },
+    {
+      "stage": "long-dialogue-v1/ko-long-reference: shared-candidate selection comparison",
+      "status": 202
+    },
+    {
+      "stage": "long-dialogue-v1/ko-long-reference: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "long-dialogue-v1/ko-long-reference: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "long-dialogue-v1/ko-long-reference: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "long-dialogue-v1/ko-long-reference: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "long-dialogue-v1/ko-long-reference: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "long-dialogue-v1/ko-long-unknown: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "long-dialogue-v1/ko-long-unknown: shared-candidate selection comparison",
+      "status": 202
+    },
+    {
+      "stage": "long-dialogue-v1/ko-long-unknown: shared-candidate selection comparison",
+      "status": 202
+    },
+    {
+      "stage": "long-dialogue-v1/ko-long-unknown: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "long-dialogue-v1/ko-long-unknown: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "long-dialogue-v1/ko-long-unknown: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "long-dialogue-v1/ko-long-unknown: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "long-dialogue-v1/ko-long-unknown: shared-candidate selection comparison",
+      "status": 200
+    },
+    {
+      "stage": "all owned live test collections deleted and confirmed absent",
+      "status": 200
+    },
+    {
+      "stage": "all owned live test collections deleted and confirmed absent",
+      "status": 200
+    },
+    {
+      "stage": "all owned live test collections deleted and confirmed absent",
+      "status": 404
+    },
+    {
+      "stage": "all owned live test collections deleted and confirmed absent",
+      "status": 404
+    }
+  ],
+  "fixtures": {
+    "natural-dialogue-v1": "17fa71452939ed093a5e16e67973a17380e806eade85ebe9754ff0a904e0555e",
+    "speaker-native-v1": "dd1ee3d4c69bf49e558f1c2f74caf2f7ff002390038388b9affb4e36809b2b1a",
+    "long-dialogue-v1": "12ec656eb1909a9452dcafc6fb6ed7445d4aaaef0a75e333cb6a9914f7f3dbfb"
+  },
+  "variants": {
+    "baseline": {
+      "requiredSources": 26,
+      "selected": 25,
+      "losses": []
+    },
+    "context-only": {
+      "requiredSources": 26,
+      "selected": 25,
+      "losses": []
+    },
+    "prior-user": {
+      "requiredSources": 26,
+      "selected": 26,
+      "losses": []
+    }
+  },
+  "rows": [
+    {
+      "fixture": "natural-dialogue-v1",
+      "case": "en-observatory-return",
+      "kind": "return",
+      "budget": 800,
+      "variants": {
+        "baseline": {
+          "queries": [
+            "Where did we agree to meet for the observatory trip?",
+            "Where did we agree to meet for the observatory trip?\nAll right, I'll clear a space on the table so we can see what is still missing.\nThat can wait until tomorrow. I should finish packing for tonight first."
+          ],
+          "selected": [
+            0,
+            2,
+            4,
+            15,
+            12,
+            9,
+            1,
+            19,
+            5,
+            8,
+            16,
+            14,
+            13,
+            6,
+            3,
+            7,
+            18,
+            11,
+            10,
+            20,
+            17
+          ],
+          "tokens": 748,
+          "evidence": [
+            {
+              "message": 2,
+              "ranks": [
+                2,
+                12
+              ],
+              "selected": true
+            }
+          ]
+        },
+        "context-only": {
+          "queries": [
+            "Where did we agree to meet for the observatory trip?",
+            "All right, I'll clear a space on the table so we can see what is still missing.\nThat can wait until tomorrow. I should finish packing for tonight first."
+          ],
+          "selected": [
+            0,
+            19,
+            2,
+            4,
+            15,
+            12,
+            5,
+            1,
+            9,
+            13,
+            8,
+            7,
+            16,
+            14,
+            10,
+            18,
+            6,
+            3,
+            11,
+            20,
+            17
+          ],
+          "tokens": 748,
+          "evidence": [
+            {
+              "message": 2,
+              "ranks": [
+                2,
+                17
+              ],
+              "selected": true
+            }
+          ]
+        },
+        "prior-user": {
+          "queries": [
+            "Where did we agree to meet for the observatory trip?",
+            "That can wait until tomorrow. I should finish packing for tonight first."
+          ],
+          "selected": [
+            0,
+            19,
+            2,
+            15,
+            4,
+            7,
+            12,
+            1,
+            9,
+            5,
+            8,
+            13,
+            16,
+            14,
+            6,
+            3,
+            18,
+            11,
+            10,
+            17,
+            20
+          ],
+          "tokens": 748,
+          "evidence": [
+            {
+              "message": 2,
+              "ranks": [
+                2,
+                20
+              ],
+              "selected": true
+            }
+          ]
+        }
+      }
+    },
+    {
+      "fixture": "natural-dialogue-v1",
+      "case": "en-observatory-correction",
+      "kind": "correction",
+      "budget": 800,
+      "variants": {
+        "baseline": {
+          "queries": [
+            "What time should we use for the return ferry now?",
+            "What time should we use for the return ferry now?\nAll right, I'll clear a space on the table so we can see what is still missing.\nThat can wait until tomorrow. I should finish packing for tonight first."
+          ],
+          "selected": [
+            14,
+            8,
+            9,
+            1,
+            15,
+            19,
+            2,
+            13,
+            16,
+            4,
+            0,
+            5,
+            7,
+            6,
+            3,
+            18,
+            10,
+            12,
+            11,
+            20,
+            17
+          ],
+          "tokens": 748,
+          "evidence": [
+            {
+              "message": 14,
+              "ranks": [
+                1,
+                2
+              ],
+              "selected": true
+            }
+          ]
+        },
+        "context-only": {
+          "queries": [
+            "What time should we use for the return ferry now?",
+            "All right, I'll clear a space on the table so we can see what is still missing.\nThat can wait until tomorrow. I should finish packing for tonight first."
+          ],
+          "selected": [
+            14,
+            19,
+            8,
+            4,
+            9,
+            15,
+            1,
+            5,
+            2,
+            13,
+            0,
+            16,
+            7,
+            10,
+            6,
+            18,
+            3,
+            11,
+            12,
+            20,
+            17
+          ],
+          "tokens": 748,
+          "evidence": [
+            {
+              "message": 14,
+              "ranks": [
+                1,
+                19
+              ],
+              "selected": true
+            }
+          ]
+        },
+        "prior-user": {
+          "queries": [
+            "What time should we use for the return ferry now?",
+            "That can wait until tomorrow. I should finish packing for tonight first."
+          ],
+          "selected": [
+            14,
+            19,
+            8,
+            15,
+            9,
+            7,
+            1,
+            0,
+            2,
+            4,
+            13,
+            5,
+            16,
+            6,
+            3,
+            18,
+            10,
+            12,
+            11,
+            17,
+            20
+          ],
+          "tokens": 748,
+          "evidence": [
+            {
+              "message": 14,
+              "ranks": [
+                1,
+                18
+              ],
+              "selected": true
+            }
+          ]
+        }
+      }
+    },
+    {
+      "fixture": "natural-dialogue-v1",
+      "case": "en-observatory-reference",
+      "kind": "reference",
+      "budget": 800,
+      "variants": {
+        "baseline": {
+          "queries": [
+            "Where did I put that one?",
+            "Where did I put that one?\nRight, the larger case rather than the binocular bag.\nWe still need the red-strapped telescope case for tonight."
+          ],
+          "selected": [
+            4,
+            22,
+            5,
+            12,
+            11,
+            0,
+            10,
+            15,
+            13,
+            21,
+            9,
+            1,
+            17,
+            18,
+            6,
+            16,
+            7,
+            19,
+            2,
+            14,
+            8,
+            20
+          ],
+          "tokens": 785,
+          "evidence": [
+            {
+              "message": 4,
+              "ranks": [
+                1,
+                1
+              ],
+              "selected": true
+            }
+          ]
+        },
+        "context-only": {
+          "queries": [
+            "Where did I put that one?",
+            "Right, the larger case rather than the binocular bag.\nWe still need the red-strapped telescope case for tonight."
+          ],
+          "selected": [
+            4,
+            22,
+            5,
+            12,
+            0,
+            11,
+            15,
+            10,
+            13,
+            21,
+            9,
+            1,
+            17,
+            6,
+            16,
+            18,
+            8,
+            19,
+            7,
+            2,
+            14,
+            20
+          ],
+          "tokens": 785,
+          "evidence": [
+            {
+              "message": 4,
+              "ranks": [
+                1,
+                1
+              ],
+              "selected": true
+            }
+          ]
+        },
+        "prior-user": {
+          "queries": [
+            "Where did I put that one?",
+            "We still need the red-strapped telescope case for tonight."
+          ],
+          "selected": [
+            4,
+            22,
+            0,
+            12,
+            15,
+            11,
+            21,
+            10,
+            5,
+            13,
+            9,
+            16,
+            17,
+            8,
+            1,
+            18,
+            19,
+            7,
+            6,
+            2,
+            14,
+            20
+          ],
+          "tokens": 785,
+          "evidence": [
+            {
+              "message": 4,
+              "ranks": [
+                1,
+                1
+              ],
+              "selected": true
+            }
+          ]
+        }
+      }
+    },
+    {
+      "fixture": "natural-dialogue-v1",
+      "case": "en-observatory-unknown",
+      "kind": "unknown",
+      "budget": 800,
+      "variants": {
+        "baseline": {
+          "queries": [
+            "How much is an admission ticket for the observatory?",
+            "How much is an admission ticket for the observatory?\nAll right, I'll clear a space on the table so we can see what is still missing.\nThat can wait until tomorrow. I should finish packing for tonight first."
+          ],
+          "selected": [
+            0,
+            4,
+            2,
+            15,
+            9,
+            6,
+            5,
+            19,
+            14,
+            1,
+            12,
+            16,
+            13,
+            8,
+            3,
+            20,
+            10,
+            7,
+            11,
+            17,
+            18
+          ],
+          "tokens": 748,
+          "evidence": []
+        },
+        "context-only": {
+          "queries": [
+            "How much is an admission ticket for the observatory?",
+            "All right, I'll clear a space on the table so we can see what is still missing.\nThat can wait until tomorrow. I should finish packing for tonight first."
+          ],
+          "selected": [
+            0,
+            19,
+            4,
+            2,
+            15,
+            9,
+            5,
+            6,
+            13,
+            14,
+            12,
+            7,
+            1,
+            8,
+            10,
+            18,
+            3,
+            16,
+            20,
+            11,
+            17
+          ],
+          "tokens": 748,
+          "evidence": []
+        },
+        "prior-user": {
+          "queries": [
+            "How much is an admission ticket for the observatory?",
+            "That can wait until tomorrow. I should finish packing for tonight first."
+          ],
+          "selected": [
+            0,
+            19,
+            4,
+            15,
+            2,
+            7,
+            9,
+            1,
+            6,
+            14,
+            5,
+            12,
+            13,
+            8,
+            16,
+            3,
+            20,
+            18,
+            10,
+            11,
+            17
+          ],
+          "tokens": 748,
+          "evidence": []
+        }
+      }
+    },
+    {
+      "fixture": "natural-dialogue-v1",
+      "case": "ko-observatory-return",
+      "kind": "return",
+      "budget": 800,
+      "variants": {
+        "baseline": {
+          "queries": [
+            "천문대 갈 때 우리 어디서 만나기로 했지?",
+            "천문대 갈 때 우리 어디서 만나기로 했지?\n좋아. 식탁 위를 비워 둘 테니 가져갈 것들을 펼쳐 보자.\n그건 내일 하고 오늘 외출 준비부터 마저 해야겠다."
+          ],
+          "selected": [
+            2,
+            0,
+            1,
+            14,
+            19,
+            9,
+            7,
+            3,
+            18,
+            6,
+            12,
+            5,
+            15,
+            20,
+            8,
+            13,
+            17,
+            10,
+            16
+          ],
+          "tokens": 792,
+          "evidence": [
+            {
+              "message": 2,
+              "ranks": [
+                1,
+                2
+              ],
+              "selected": true
+            }
+          ]
+        },
+        "context-only": {
+          "queries": [
+            "천문대 갈 때 우리 어디서 만나기로 했지?",
+            "좋아. 식탁 위를 비워 둘 테니 가져갈 것들을 펼쳐 보자.\n그건 내일 하고 오늘 외출 준비부터 마저 해야겠다."
+          ],
+          "selected": [
+            2,
+            7,
+            0,
+            13,
+            1,
+            19,
+            14,
+            12,
+            9,
+            18,
+            3,
+            15,
+            6,
+            5,
+            11,
+            20,
+            10,
+            8,
+            16
+          ],
+          "tokens": 794,
+          "evidence": [
+            {
+              "message": 2,
+              "ranks": [
+                1,
+                16
+              ],
+              "selected": true
+            }
+          ]
+        },
+        "prior-user": {
+          "queries": [
+            "천문대 갈 때 우리 어디서 만나기로 했지?",
+            "그건 내일 하고 오늘 외출 준비부터 마저 해야겠다."
+          ],
+          "selected": [
+            2,
+            18,
+            0,
+            19,
+            1,
+            15,
+            14,
+            10,
+            9,
+            7,
+            3,
+            6,
+            11,
+            5,
+            20,
+            8,
+            13,
+            16,
+            17
+          ],
+          "tokens": 795,
+          "evidence": [
+            {
+              "message": 2,
+              "ranks": [
+                1,
+                12
+              ],
+              "selected": true
+            }
+          ]
+        }
+      }
+    },
+    {
+      "fixture": "natural-dialogue-v1",
+      "case": "ko-observatory-correction",
+      "kind": "correction",
+      "budget": 800,
+      "variants": {
+        "baseline": {
+          "queries": [
+            "돌아오는 마을버스 시간은 최종적으로 몇 시로 생각하면 돼?",
+            "돌아오는 마을버스 시간은 최종적으로 몇 시로 생각하면 돼?\n좋아. 식탁 위를 비워 둘 테니 가져갈 것들을 펼쳐 보자.\n그건 내일 하고 오늘 외출 준비부터 마저 해야겠다."
+          ],
+          "selected": [
+            8,
+            14,
+            16,
+            19,
+            5,
+            18,
+            7,
+            1,
+            9,
+            12,
+            15,
+            6,
+            3,
+            17,
+            13,
+            11,
+            2,
+            10,
+            0
+          ],
+          "tokens": 799,
+          "evidence": [
+            {
+              "message": 14,
+              "ranks": [
+                2,
+                2
+              ],
+              "selected": true
+            }
+          ]
+        },
+        "context-only": {
+          "queries": [
+            "돌아오는 마을버스 시간은 최종적으로 몇 시로 생각하면 돼?",
+            "좋아. 식탁 위를 비워 둘 테니 가져갈 것들을 펼쳐 보자.\n그건 내일 하고 오늘 외출 준비부터 마저 해야겠다."
+          ],
+          "selected": [
+            8,
+            7,
+            14,
+            13,
+            16,
+            19,
+            5,
+            12,
+            18,
+            1,
+            15,
+            9,
+            11,
+            6,
+            3,
+            17,
+            10,
+            4
+          ],
+          "tokens": 784,
+          "evidence": [
+            {
+              "message": 14,
+              "ranks": [
+                2,
+                17
+              ],
+              "selected": true
+            }
+          ]
+        },
+        "prior-user": {
+          "queries": [
+            "돌아오는 마을버스 시간은 최종적으로 몇 시로 생각하면 돼?",
+            "그건 내일 하고 오늘 외출 준비부터 마저 해야겠다."
+          ],
+          "selected": [
+            8,
+            18,
+            14,
+            19,
+            16,
+            15,
+            5,
+            10,
+            7,
+            1,
+            0,
+            9,
+            11,
+            6,
+            3,
+            17,
+            2,
+            13,
+            12
+          ],
+          "tokens": 799,
+          "evidence": [
+            {
+              "message": 14,
+              "ranks": [
+                2,
+                15
+              ],
+              "selected": true
+            }
+          ]
+        }
+      }
+    },
+    {
+      "fixture": "natural-dialogue-v1",
+      "case": "ko-observatory-reference",
+      "kind": "reference",
+      "budget": 800,
+      "variants": {
+        "baseline": {
+          "queries": [
+            "그건 내가 어디에 넣어 뒀더라?",
+            "그건 내가 어디에 넣어 뒀더라?\n맞아. 검은 카메라 가방 말고 그 관측 장비를 가져가자.\n노란 손잡이가 달린 관측 가방도 챙겨야겠어."
+          ],
+          "selected": [
+            5,
+            4,
+            1,
+            10,
+            15,
+            7,
+            20,
+            12,
+            6,
+            19,
+            14,
+            11,
+            21,
+            13,
+            9,
+            2,
+            18,
+            17
+          ],
+          "tokens": 788,
+          "evidence": [
+            {
+              "message": 4,
+              "ranks": [
+                14,
+                1
+              ],
+              "selected": true
+            }
+          ]
+        },
+        "context-only": {
+          "queries": [
+            "그건 내가 어디에 넣어 뒀더라?",
+            "맞아. 검은 카메라 가방 말고 그 관측 장비를 가져가자.\n노란 손잡이가 달린 관측 가방도 챙겨야겠어."
+          ],
+          "selected": [
+            5,
+            4,
+            1,
+            10,
+            19,
+            7,
+            12,
+            15,
+            21,
+            20,
+            6,
+            13,
+            14,
+            2,
+            11,
+            9,
+            18,
+            3
+          ],
+          "tokens": 784,
+          "evidence": [
+            {
+              "message": 4,
+              "ranks": [
+                14,
+                1
+              ],
+              "selected": true
+            }
+          ]
+        },
+        "prior-user": {
+          "queries": [
+            "그건 내가 어디에 넣어 뒀더라?",
+            "노란 손잡이가 달린 관측 가방도 챙겨야겠어."
+          ],
+          "selected": [
+            5,
+            4,
+            1,
+            9,
+            10,
+            21,
+            7,
+            13,
+            15,
+            12,
+            20,
+            6,
+            14,
+            3,
+            11,
+            19,
+            2,
+            0
+          ],
+          "tokens": 779,
+          "evidence": [
+            {
+              "message": 4,
+              "ranks": [
+                14,
+                1
+              ],
+              "selected": true
+            }
+          ]
+        }
+      }
+    },
+    {
+      "fixture": "natural-dialogue-v1",
+      "case": "ko-observatory-unknown",
+      "kind": "unknown",
+      "budget": 800,
+      "variants": {
+        "baseline": {
+          "queries": [
+            "천문대 입장권은 한 사람에 얼마라고 했어?",
+            "천문대 입장권은 한 사람에 얼마라고 했어?\n좋아. 식탁 위를 비워 둘 테니 가져갈 것들을 펼쳐 보자.\n그건 내일 하고 오늘 외출 준비부터 마저 해야겠다."
+          ],
+          "selected": [
+            2,
+            0,
+            1,
+            12,
+            9,
+            7,
+            4,
+            19,
+            17,
+            18,
+            3,
+            6,
+            15,
+            13,
+            11,
+            20,
+            14,
+            10
+          ],
+          "tokens": 781,
+          "evidence": []
+        },
+        "context-only": {
+          "queries": [
+            "천문대 입장권은 한 사람에 얼마라고 했어?",
+            "좋아. 식탁 위를 비워 둘 테니 가져갈 것들을 펼쳐 보자.\n그건 내일 하고 오늘 외출 준비부터 마저 해야겠다."
+          ],
+          "selected": [
+            2,
+            7,
+            0,
+            13,
+            1,
+            19,
+            9,
+            12,
+            4,
+            18,
+            17,
+            15,
+            3,
+            11,
+            5,
+            6,
+            10,
+            20,
+            16
+          ],
+          "tokens": 787,
+          "evidence": []
+        },
+        "prior-user": {
+          "queries": [
+            "천문대 입장권은 한 사람에 얼마라고 했어?",
+            "그건 내일 하고 오늘 외출 준비부터 마저 해야겠다."
+          ],
+          "selected": [
+            2,
+            18,
+            0,
+            19,
+            1,
+            15,
+            9,
+            10,
+            4,
+            7,
+            17,
+            12,
+            11,
+            3,
+            5,
+            6,
+            8,
+            20,
+            16
+          ],
+          "tokens": 792,
+          "evidence": []
+        }
+      }
+    },
+    {
+      "fixture": "natural-dialogue-v1",
+      "case": "en-workshop-return",
+      "kind": "return",
+      "budget": 800,
+      "variants": {
+        "baseline": {
+          "queries": [
+            "Where should I look for the spare studio key?",
+            "Where should I look for the spare studio key?\nI'll fetch a bucket while you clear the ledge. There are pots behind the curtain.\nThat reminds me to clean the front windows before everyone arrives."
+          ],
+          "selected": [
+            2,
+            0,
+            3,
+            10,
+            15,
+            19,
+            9,
+            7,
+            5,
+            18,
+            11,
+            8,
+            20,
+            16,
+            6,
+            14,
+            1,
+            17,
+            13,
+            12,
+            4
+          ],
+          "tokens": 717,
+          "evidence": [
+            {
+              "message": 2,
+              "ranks": [
+                1,
+                1
+              ],
+              "selected": true
+            }
+          ]
+        },
+        "context-only": {
+          "queries": [
+            "Where should I look for the spare studio key?",
+            "I'll fetch a bucket while you clear the ledge. There are pots behind the curtain.\nThat reminds me to clean the front windows before everyone arrives."
+          ],
+          "selected": [
+            2,
+            15,
+            0,
+            3,
+            10,
+            7,
+            19,
+            9,
+            8,
+            5,
+            18,
+            11,
+            6,
+            20,
+            16,
+            14,
+            1,
+            17,
+            13,
+            12,
+            4
+          ],
+          "tokens": 717,
+          "evidence": [
+            {
+              "message": 2,
+              "ranks": [
+                1,
+                9
+              ],
+              "selected": true
+            }
+          ]
+        },
+        "prior-user": {
+          "queries": [
+            "Where should I look for the spare studio key?",
+            "That reminds me to clean the front windows before everyone arrives."
+          ],
+          "selected": [
+            2,
+            3,
+            0,
+            15,
+            19,
+            10,
+            7,
+            9,
+            18,
+            5,
+            8,
+            20,
+            11,
+            6,
+            1,
+            16,
+            17,
+            13,
+            14,
+            12,
+            4
+          ],
+          "tokens": 717,
+          "evidence": [
+            {
+              "message": 2,
+              "ranks": [
+                1,
+                15
+              ],
+              "selected": true
+            }
+          ]
+        }
+      }
+    },
+    {
+      "fixture": "natural-dialogue-v1",
+      "case": "en-workshop-correction",
+      "kind": "correction",
+      "budget": 800,
+      "variants": {
+        "baseline": {
+          "queries": [
+            "Which day are the borrowed frames actually arriving?",
+            "Which day are the borrowed frames actually arriving?\nI'll fetch a bucket while you clear the ledge. There are pots behind the curtain.\nThat reminds me to clean the front windows before everyone arrives."
+          ],
+          "selected": [
+            8,
+            14,
+            15,
+            18,
+            11,
+            0,
+            9,
+            3,
+            7,
+            20,
+            5,
+            19,
+            2,
+            13,
+            1,
+            16,
+            6,
+            10,
+            17,
+            4,
+            12
+          ],
+          "tokens": 717,
+          "evidence": [
+            {
+              "message": 14,
+              "ranks": [
+                2,
+                3
+              ],
+              "selected": true
+            }
+          ]
+        },
+        "context-only": {
+          "queries": [
+            "Which day are the borrowed frames actually arriving?",
+            "I'll fetch a bucket while you clear the ledge. There are pots behind the curtain.\nThat reminds me to clean the front windows before everyone arrives."
+          ],
+          "selected": [
+            8,
+            15,
+            14,
+            3,
+            18,
+            0,
+            11,
+            7,
+            19,
+            9,
+            20,
+            5,
+            2,
+            6,
+            16,
+            13,
+            1,
+            10,
+            17,
+            12,
+            4
+          ],
+          "tokens": 717,
+          "evidence": [
+            {
+              "message": 14,
+              "ranks": [
+                2,
+                21
+              ],
+              "selected": true
+            }
+          ]
+        },
+        "prior-user": {
+          "queries": [
+            "Which day are the borrowed frames actually arriving?",
+            "That reminds me to clean the front windows before everyone arrives."
+          ],
+          "selected": [
+            8,
+            3,
+            14,
+            15,
+            18,
+            19,
+            11,
+            7,
+            0,
+            9,
+            20,
+            5,
+            6,
+            2,
+            1,
+            13,
+            17,
+            16,
+            10,
+            4,
+            12
+          ],
+          "tokens": 717,
+          "evidence": [
+            {
+              "message": 14,
+              "ranks": [
+                2,
+                18
+              ],
+              "selected": true
+            }
+          ]
+        }
+      }
+    },
+    {
+      "fixture": "natural-dialogue-v1",
+      "case": "en-workshop-reference",
+      "kind": "reference",
+      "budget": 800,
+      "variants": {
+        "baseline": {
+          "queries": [
+            "What ingredient must we keep out of their food?",
+            "What ingredient must we keep out of their food?\nLet's check that guest's request before we set out another plate.\nRowan just asked whether there will be a snack they can eat."
+          ],
+          "selected": [
+            4,
+            5,
+            13,
+            6,
+            19,
+            18,
+            7,
+            21,
+            22,
+            1,
+            11,
+            3,
+            12,
+            16,
+            20,
+            17,
+            15,
+            10,
+            9,
+            0,
+            2,
+            8,
+            14
+          ],
+          "tokens": 782,
+          "evidence": [
+            {
+              "message": 4,
+              "ranks": [
+                1,
+                1
+              ],
+              "selected": true
+            }
+          ]
+        },
+        "context-only": {
+          "queries": [
+            "What ingredient must we keep out of their food?",
+            "Let's check that guest's request before we set out another plate.\nRowan just asked whether there will be a snack they can eat."
+          ],
+          "selected": [
+            4,
+            5,
+            13,
+            18,
+            19,
+            6,
+            7,
+            1,
+            21,
+            15,
+            22,
+            3,
+            11,
+            20,
+            12,
+            16,
+            17,
+            9,
+            10,
+            0,
+            8,
+            2,
+            14
+          ],
+          "tokens": 782,
+          "evidence": [
+            {
+              "message": 4,
+              "ranks": [
+                1,
+                1
+              ],
+              "selected": true
+            }
+          ]
+        },
+        "prior-user": {
+          "queries": [
+            "What ingredient must we keep out of their food?",
+            "Rowan just asked whether there will be a snack they can eat."
+          ],
+          "selected": [
+            4,
+            5,
+            18,
+            13,
+            11,
+            19,
+            16,
+            6,
+            7,
+            21,
+            22,
+            1,
+            20,
+            12,
+            9,
+            3,
+            8,
+            17,
+            10,
+            15,
+            0,
+            2,
+            14
+          ],
+          "tokens": 782,
+          "evidence": [
+            {
+              "message": 4,
+              "ranks": [
+                1,
+                1
+              ],
+              "selected": true
+            }
+          ]
+        }
+      }
+    },
+    {
+      "fixture": "natural-dialogue-v1",
+      "case": "en-workshop-unknown",
+      "kind": "unknown",
+      "budget": 800,
+      "variants": {
+        "baseline": {
+          "queries": [
+            "What did the courier quote us for delivering the frames?",
+            "What did the courier quote us for delivering the frames?\nI'll fetch a bucket while you clear the ledge. There are pots behind the curtain.\nThat reminds me to clean the front windows before everyone arrives."
+          ],
+          "selected": [
+            14,
+            8,
+            9,
+            15,
+            0,
+            11,
+            3,
+            10,
+            19,
+            2,
+            18,
+            13,
+            7,
+            5,
+            20,
+            6,
+            1,
+            16,
+            17,
+            4,
+            12
+          ],
+          "tokens": 717,
+          "evidence": []
+        },
+        "context-only": {
+          "queries": [
+            "What did the courier quote us for delivering the frames?",
+            "I'll fetch a bucket while you clear the ledge. There are pots behind the curtain.\nThat reminds me to clean the front windows before everyone arrives."
+          ],
+          "selected": [
+            14,
+            15,
+            8,
+            3,
+            9,
+            0,
+            7,
+            19,
+            11,
+            10,
+            18,
+            2,
+            13,
+            6,
+            16,
+            5,
+            20,
+            1,
+            17,
+            12,
+            4
+          ],
+          "tokens": 717,
+          "evidence": []
+        },
+        "prior-user": {
+          "queries": [
+            "What did the courier quote us for delivering the frames?",
+            "That reminds me to clean the front windows before everyone arrives."
+          ],
+          "selected": [
+            14,
+            3,
+            8,
+            15,
+            9,
+            19,
+            7,
+            0,
+            11,
+            18,
+            10,
+            2,
+            20,
+            6,
+            13,
+            1,
+            5,
+            17,
+            16,
+            4,
+            12
+          ],
+          "tokens": 717,
+          "evidence": []
+        }
+      }
+    },
+    {
+      "fixture": "natural-dialogue-v1",
+      "case": "ko-workshop-return",
+      "kind": "return",
+      "budget": 800,
+      "variants": {
+        "baseline": {
+          "queries": [
+            "공방 보조 열쇠 어디에 두었다고 했지?",
+            "공방 보조 열쇠 어디에 두었다고 했지?\n내가 물통을 가져올게. 너는 커튼 뒤 화분을 잠깐 옮겨 줘.\n그 전에 앞 유리창부터 닦아야겠어. 손자국이 꽤 많이 남았네."
+          ],
+          "selected": [
+            2,
+            9,
+            19,
+            17,
+            11,
+            7,
+            20,
+            16,
+            8,
+            10,
+            3,
+            5,
+            15,
+            18,
+            13,
+            1,
+            0,
+            4
+          ],
+          "tokens": 767,
+          "evidence": [
+            {
+              "message": 2,
+              "ranks": [
+                1,
+                1
+              ],
+              "selected": true
+            }
+          ]
+        },
+        "context-only": {
+          "queries": [
+            "공방 보조 열쇠 어디에 두었다고 했지?",
+            "내가 물통을 가져올게. 너는 커튼 뒤 화분을 잠깐 옮겨 줘.\n그 전에 앞 유리창부터 닦아야겠어. 손자국이 꽤 많이 남았네."
+          ],
+          "selected": [
+            2,
+            19,
+            9,
+            17,
+            8,
+            7,
+            11,
+            20,
+            18,
+            16,
+            5,
+            10,
+            1,
+            15,
+            3,
+            13,
+            0,
+            4
+          ],
+          "tokens": 767,
+          "evidence": [
+            {
+              "message": 2,
+              "ranks": [
+                1,
+                2
+              ],
+              "selected": true
+            }
+          ]
+        },
+        "prior-user": {
+          "queries": [
+            "공방 보조 열쇠 어디에 두었다고 했지?",
+            "그 전에 앞 유리창부터 닦아야겠어. 손자국이 꽤 많이 남았네."
+          ],
+          "selected": [
+            2,
+            11,
+            9,
+            19,
+            17,
+            7,
+            5,
+            20,
+            1,
+            16,
+            10,
+            13,
+            15,
+            4,
+            8,
+            18,
+            3,
+            0
+          ],
+          "tokens": 767,
+          "evidence": [
+            {
+              "message": 2,
+              "ranks": [
+                1,
+                6
+              ],
+              "selected": true
+            }
+          ]
+        }
+      }
+    },
+    {
+      "fixture": "natural-dialogue-v1",
+      "case": "ko-workshop-correction",
+      "kind": "correction",
+      "budget": 800,
+      "variants": {
+        "baseline": {
+          "queries": [
+            "빌린 액자는 최종적으로 무슨 요일에 도착하는 거야?",
+            "빌린 액자는 최종적으로 무슨 요일에 도착하는 거야?\n내가 물통을 가져올게. 너는 커튼 뒤 화분을 잠깐 옮겨 줘.\n그 전에 앞 유리창부터 닦아야겠어. 손자국이 꽤 많이 남았네."
+          ],
+          "selected": [
+            8,
+            14,
+            19,
+            18,
+            15,
+            5,
+            16,
+            3,
+            0,
+            11,
+            4,
+            2,
+            17,
+            10,
+            1,
+            20,
+            9,
+            7
+          ],
+          "tokens": 775,
+          "evidence": [
+            {
+              "message": 14,
+              "ranks": [
+                2,
+                5
+              ],
+              "selected": true
+            }
+          ]
+        },
+        "context-only": {
+          "queries": [
+            "빌린 액자는 최종적으로 무슨 요일에 도착하는 거야?",
+            "내가 물통을 가져올게. 너는 커튼 뒤 화분을 잠깐 옮겨 줘.\n그 전에 앞 유리창부터 닦아야겠어. 손자국이 꽤 많이 남았네."
+          ],
+          "selected": [
+            8,
+            19,
+            14,
+            2,
+            18,
+            15,
+            11,
+            5,
+            16,
+            3,
+            1,
+            0,
+            9,
+            4,
+            17,
+            10,
+            13,
+            7
+          ],
+          "tokens": 783,
+          "evidence": [
+            {
+              "message": 14,
+              "ranks": [
+                2,
+                20
+              ],
+              "selected": true
+            }
+          ]
+        },
+        "prior-user": {
+          "queries": [
+            "빌린 액자는 최종적으로 무슨 요일에 도착하는 거야?",
+            "그 전에 앞 유리창부터 닦아야겠어. 손자국이 꽤 많이 남았네."
+          ],
+          "selected": [
+            8,
+            11,
+            14,
+            19,
+            18,
+            9,
+            15,
+            5,
+            1,
+            16,
+            2,
+            3,
+            10,
+            0,
+            13,
+            4,
+            7,
+            17
+          ],
+          "tokens": 783,
+          "evidence": [
+            {
+              "message": 14,
+              "ranks": [
+                2,
+                21
+              ],
+              "selected": true
+            }
+          ]
+        }
+      }
+    },
+    {
+      "fixture": "natural-dialogue-v1",
+      "case": "ko-workshop-reference",
+      "kind": "reference",
+      "budget": 800,
+      "variants": {
+        "baseline": {
+          "queries": [
+            "그 사람 간식에서는 어떤 재료를 빼야 하지?",
+            "그 사람 간식에서는 어떤 재료를 빼야 하지?\n새 접시를 꺼내기 전에 그 손님의 요청부터 확인하자.\n민서가 자기도 먹을 간식이 있는지 물어왔어."
+          ],
+          "selected": [
+            4,
+            5,
+            18,
+            19,
+            1,
+            0,
+            11,
+            13,
+            10,
+            9,
+            3,
+            22,
+            8,
+            12,
+            21,
+            2,
+            15,
+            7
+          ],
+          "tokens": 771,
+          "evidence": [
+            {
+              "message": 4,
+              "ranks": [
+                1,
+                1
+              ],
+              "selected": true
+            }
+          ]
+        },
+        "context-only": {
+          "queries": [
+            "그 사람 간식에서는 어떤 재료를 빼야 하지?",
+            "새 접시를 꺼내기 전에 그 손님의 요청부터 확인하자.\n민서가 자기도 먹을 간식이 있는지 물어왔어."
+          ],
+          "selected": [
+            4,
+            5,
+            18,
+            1,
+            19,
+            22,
+            0,
+            13,
+            11,
+            9,
+            10,
+            3,
+            8,
+            12,
+            21,
+            20,
+            2,
+            15
+          ],
+          "tokens": 767,
+          "evidence": [
+            {
+              "message": 4,
+              "ranks": [
+                1,
+                1
+              ],
+              "selected": true
+            }
+          ]
+        },
+        "prior-user": {
+          "queries": [
+            "그 사람 간식에서는 어떤 재료를 빼야 하지?",
+            "민서가 자기도 먹을 간식이 있는지 물어왔어."
+          ],
+          "selected": [
+            4,
+            5,
+            1,
+            18,
+            19,
+            11,
+            0,
+            3,
+            13,
+            9,
+            6,
+            8,
+            20,
+            12,
+            21,
+            15,
+            17,
+            2
+          ],
+          "tokens": 770,
+          "evidence": [
+            {
+              "message": 4,
+              "ranks": [
+                1,
+                1
+              ],
+              "selected": true
+            }
+          ]
+        }
+      }
+    },
+    {
+      "fixture": "natural-dialogue-v1",
+      "case": "ko-workshop-unknown",
+      "kind": "unknown",
+      "budget": 800,
+      "variants": {
+        "baseline": {
+          "queries": [
+            "액자 배송비가 얼마라고 안내받았지?",
+            "액자 배송비가 얼마라고 안내받았지?\n내가 물통을 가져올게. 너는 커튼 뒤 화분을 잠깐 옮겨 줘.\n그 전에 앞 유리창부터 닦아야겠어. 손자국이 꽤 많이 남았네."
+          ],
+          "selected": [
+            14,
+            8,
+            16,
+            3,
+            15,
+            5,
+            2,
+            11,
+            17,
+            10,
+            18,
+            19,
+            9,
+            0,
+            13,
+            7,
+            20,
+            4
+          ],
+          "tokens": 781,
+          "evidence": []
+        },
+        "context-only": {
+          "queries": [
+            "액자 배송비가 얼마라고 안내받았지?",
+            "내가 물통을 가져올게. 너는 커튼 뒤 화분을 잠깐 옮겨 줘.\n그 전에 앞 유리창부터 닦아야겠어. 손자국이 꽤 많이 남았네."
+          ],
+          "selected": [
+            14,
+            19,
+            8,
+            2,
+            16,
+            3,
+            11,
+            15,
+            18,
+            5,
+            17,
+            1,
+            9,
+            10,
+            0,
+            13,
+            7,
+            20
+          ],
+          "tokens": 764,
+          "evidence": []
+        },
+        "prior-user": {
+          "queries": [
+            "액자 배송비가 얼마라고 안내받았지?",
+            "그 전에 앞 유리창부터 닦아야겠어. 손자국이 꽤 많이 남았네."
+          ],
+          "selected": [
+            14,
+            11,
+            8,
+            19,
+            16,
+            9,
+            3,
+            5,
+            15,
+            1,
+            2,
+            17,
+            10,
+            13,
+            7,
+            18,
+            4,
+            0
+          ],
+          "tokens": 783,
+          "evidence": []
+        }
+      }
+    },
+    {
+      "fixture": "speaker-native-v1",
+      "case": "en-workshop-return",
+      "kind": "return",
+      "budget": 800,
+      "variants": {
+        "baseline": {
+          "queries": [
+            "Where should I look for the spare studio key?",
+            "Where should I look for the spare studio key?\nI'll fetch a bucket while you clear the ledge. There are pots behind the curtain.\nThat reminds me to clean the front windows before everyone arrives."
+          ],
+          "selected": [
+            2,
+            0,
+            3,
+            10,
+            15,
+            19,
+            9,
+            7,
+            5,
+            18,
+            11,
+            8,
+            20,
+            16,
+            6,
+            14,
+            1,
+            17,
+            13,
+            12,
+            4
+          ],
+          "tokens": 717,
+          "evidence": [
+            {
+              "message": 2,
+              "ranks": [
+                1,
+                1
+              ],
+              "selected": true
+            }
+          ]
+        },
+        "context-only": {
+          "queries": [
+            "Where should I look for the spare studio key?",
+            "I'll fetch a bucket while you clear the ledge. There are pots behind the curtain.\nThat reminds me to clean the front windows before everyone arrives."
+          ],
+          "selected": [
+            2,
+            15,
+            0,
+            3,
+            10,
+            7,
+            19,
+            9,
+            8,
+            5,
+            18,
+            11,
+            6,
+            20,
+            16,
+            14,
+            1,
+            17,
+            13,
+            12,
+            4
+          ],
+          "tokens": 717,
+          "evidence": [
+            {
+              "message": 2,
+              "ranks": [
+                1,
+                9
+              ],
+              "selected": true
+            }
+          ]
+        },
+        "prior-user": {
+          "queries": [
+            "Where should I look for the spare studio key?",
+            "That reminds me to clean the front windows before everyone arrives."
+          ],
+          "selected": [
+            2,
+            3,
+            0,
+            15,
+            19,
+            10,
+            7,
+            9,
+            18,
+            5,
+            8,
+            20,
+            11,
+            6,
+            1,
+            16,
+            17,
+            13,
+            14,
+            12,
+            4
+          ],
+          "tokens": 717,
+          "evidence": [
+            {
+              "message": 2,
+              "ranks": [
+                1,
+                15
+              ],
+              "selected": true
+            }
+          ]
+        }
+      }
+    },
+    {
+      "fixture": "speaker-native-v1",
+      "case": "en-observatory-correction",
+      "kind": "correction",
+      "budget": 800,
+      "variants": {
+        "baseline": {
+          "queries": [
+            "What time should we use for the return ferry now?",
+            "What time should we use for the return ferry now?\nAll right, I'll clear a space on the table so we can see what is still missing.\nThat can wait until tomorrow. I should finish packing for tonight first."
+          ],
+          "selected": [
+            14,
+            8,
+            9,
+            1,
+            15,
+            19,
+            2,
+            13,
+            16,
+            4,
+            0,
+            5,
+            7,
+            6,
+            3,
+            18,
+            10,
+            12,
+            11,
+            20,
+            17
+          ],
+          "tokens": 748,
+          "evidence": [
+            {
+              "message": 14,
+              "ranks": [
+                1,
+                2
+              ],
+              "selected": true
+            }
+          ]
+        },
+        "context-only": {
+          "queries": [
+            "What time should we use for the return ferry now?",
+            "All right, I'll clear a space on the table so we can see what is still missing.\nThat can wait until tomorrow. I should finish packing for tonight first."
+          ],
+          "selected": [
+            14,
+            19,
+            8,
+            4,
+            9,
+            15,
+            1,
+            5,
+            2,
+            13,
+            0,
+            16,
+            7,
+            10,
+            6,
+            18,
+            3,
+            11,
+            12,
+            20,
+            17
+          ],
+          "tokens": 748,
+          "evidence": [
+            {
+              "message": 14,
+              "ranks": [
+                1,
+                19
+              ],
+              "selected": true
+            }
+          ]
+        },
+        "prior-user": {
+          "queries": [
+            "What time should we use for the return ferry now?",
+            "That can wait until tomorrow. I should finish packing for tonight first."
+          ],
+          "selected": [
+            14,
+            19,
+            8,
+            15,
+            9,
+            7,
+            1,
+            0,
+            2,
+            4,
+            13,
+            5,
+            16,
+            6,
+            3,
+            18,
+            10,
+            12,
+            11,
+            17,
+            20
+          ],
+          "tokens": 748,
+          "evidence": [
+            {
+              "message": 14,
+              "ranks": [
+                1,
+                18
+              ],
+              "selected": true
+            }
+          ]
+        }
+      }
+    },
+    {
+      "fixture": "speaker-native-v1",
+      "case": "en-notebook-user",
+      "kind": "return",
+      "budget": 800,
+      "variants": {
+        "baseline": {
+          "queries": [
+            "Who put the amber notebook away, and where is it?",
+            "Who put the amber notebook away, and where is it?\nGo ahead with your question.\nI would like to check something from earlier."
+          ],
+          "selected": [
+            2,
+            8,
+            20,
+            12,
+            11,
+            6,
+            10,
+            19,
+            0,
+            5,
+            4,
+            7,
+            14,
+            3,
+            15,
+            13,
+            17,
+            1,
+            18,
+            16,
+            9
+          ],
+          "tokens": 577,
+          "evidence": [
+            {
+              "message": 2,
+              "ranks": [
+                1,
+                1
+              ],
+              "selected": true
+            }
+          ]
+        },
+        "context-only": {
+          "queries": [
+            "Who put the amber notebook away, and where is it?",
+            "Go ahead with your question.\nI would like to check something from earlier."
+          ],
+          "selected": [
+            2,
+            20,
+            8,
+            12,
+            6,
+            11,
+            0,
+            10,
+            19,
+            15,
+            5,
+            4,
+            7,
+            14,
+            18,
+            3,
+            13,
+            1,
+            17,
+            9,
+            16
+          ],
+          "tokens": 577,
+          "evidence": [
+            {
+              "message": 2,
+              "ranks": [
+                1,
+                6
+              ],
+              "selected": true
+            }
+          ]
+        },
+        "prior-user": {
+          "queries": [
+            "Who put the amber notebook away, and where is it?",
+            "I would like to check something from earlier."
+          ],
+          "selected": [
+            2,
+            20,
+            8,
+            12,
+            11,
+            15,
+            6,
+            0,
+            10,
+            19,
+            14,
+            5,
+            4,
+            7,
+            3,
+            9,
+            13,
+            18,
+            1,
+            17,
+            16
+          ],
+          "tokens": 577,
+          "evidence": [
+            {
+              "message": 2,
+              "ranks": [
+                1,
+                5
+              ],
+              "selected": true
+            }
+          ]
+        }
+      }
+    },
+    {
+      "fixture": "speaker-native-v1",
+      "case": "en-notebook-assistant",
+      "kind": "return",
+      "budget": 800,
+      "variants": {
+        "baseline": {
+          "queries": [
+            "Who put the amber notebook away, and where is it?",
+            "Who put the amber notebook away, and where is it?\nGo ahead with your question.\nI would like to check something from earlier."
+          ],
+          "selected": [
+            3,
+            8,
+            20,
+            12,
+            11,
+            10,
+            6,
+            19,
+            0,
+            5,
+            4,
+            7,
+            14,
+            2,
+            15,
+            13,
+            17,
+            1,
+            18,
+            16,
+            9
+          ],
+          "tokens": 577,
+          "evidence": [
+            {
+              "message": 3,
+              "ranks": [
+                1,
+                1
+              ],
+              "selected": true
+            }
+          ]
+        },
+        "context-only": {
+          "queries": [
+            "Who put the amber notebook away, and where is it?",
+            "Go ahead with your question.\nI would like to check something from earlier."
+          ],
+          "selected": [
+            3,
+            20,
+            8,
+            12,
+            6,
+            11,
+            0,
+            10,
+            19,
+            15,
+            5,
+            4,
+            7,
+            14,
+            18,
+            2,
+            13,
+            1,
+            17,
+            9,
+            16
+          ],
+          "tokens": 577,
+          "evidence": [
+            {
+              "message": 3,
+              "ranks": [
+                1,
+                6
+              ],
+              "selected": true
+            }
+          ]
+        },
+        "prior-user": {
+          "queries": [
+            "Who put the amber notebook away, and where is it?",
+            "I would like to check something from earlier."
+          ],
+          "selected": [
+            3,
+            20,
+            8,
+            12,
+            11,
+            15,
+            10,
+            0,
+            6,
+            19,
+            14,
+            5,
+            4,
+            7,
+            2,
+            9,
+            13,
+            18,
+            1,
+            17,
+            16
+          ],
+          "tokens": 577,
+          "evidence": [
+            {
+              "message": 3,
+              "ranks": [
+                1,
+                5
+              ],
+              "selected": true
+            }
+          ]
+        }
+      }
+    },
+    {
+      "fixture": "speaker-native-v1",
+      "case": "ko-notebook-user",
+      "kind": "return",
+      "budget": 800,
+      "variants": {
+        "baseline": {
+          "queries": [
+            "청록색 수첩은 누가 어디에 넣었나요?",
+            "청록색 수첩은 누가 어디에 넣었나요?\n궁금한 내용을 물어보세요.\n앞서 나눴던 이야기 중 하나를 확인하고 싶어요."
+          ],
+          "selected": [
+            2,
+            5,
+            17,
+            4,
+            20,
+            19,
+            14,
+            8,
+            6,
+            3,
+            10,
+            15,
+            18,
+            16,
+            11,
+            1,
+            13,
+            0,
+            12,
+            9,
+            7
+          ],
+          "tokens": 715,
+          "evidence": [
+            {
+              "message": 2,
+              "ranks": [
+                1,
+                1
+              ],
+              "selected": true
+            }
+          ]
+        },
+        "context-only": {
+          "queries": [
+            "청록색 수첩은 누가 어디에 넣었나요?",
+            "궁금한 내용을 물어보세요.\n앞서 나눴던 이야기 중 하나를 확인하고 싶어요."
+          ],
+          "selected": [
+            2,
+            20,
+            5,
+            17,
+            8,
+            4,
+            14,
+            19,
+            16,
+            18,
+            6,
+            15,
+            3,
+            10,
+            11,
+            1,
+            0,
+            13,
+            7,
+            12,
+            9
+          ],
+          "tokens": 715,
+          "evidence": [
+            {
+              "message": 2,
+              "ranks": [
+                1,
+                8
+              ],
+              "selected": true
+            }
+          ]
+        },
+        "prior-user": {
+          "queries": [
+            "청록색 수첩은 누가 어디에 넣었나요?",
+            "앞서 나눴던 이야기 중 하나를 확인하고 싶어요."
+          ],
+          "selected": [
+            2,
+            20,
+            5,
+            8,
+            17,
+            19,
+            4,
+            14,
+            10,
+            18,
+            6,
+            3,
+            11,
+            16,
+            0,
+            1,
+            15,
+            7,
+            13,
+            12,
+            9
+          ],
+          "tokens": 715,
+          "evidence": [
+            {
+              "message": 2,
+              "ranks": [
+                1,
+                5
+              ],
+              "selected": true
+            }
+          ]
+        }
+      }
+    },
+    {
+      "fixture": "speaker-native-v1",
+      "case": "ko-notebook-assistant",
+      "kind": "return",
+      "budget": 800,
+      "variants": {
+        "baseline": {
+          "queries": [
+            "청록색 수첩은 누가 어디에 넣었나요?",
+            "청록색 수첩은 누가 어디에 넣었나요?\n궁금한 내용을 물어보세요.\n앞서 나눴던 이야기 중 하나를 확인하고 싶어요."
+          ],
+          "selected": [
+            3,
+            5,
+            17,
+            4,
+            20,
+            19,
+            14,
+            8,
+            6,
+            2,
+            10,
+            15,
+            18,
+            16,
+            11,
+            1,
+            13,
+            0,
+            12,
+            9,
+            7
+          ],
+          "tokens": 715,
+          "evidence": [
+            {
+              "message": 3,
+              "ranks": [
+                1,
+                1
+              ],
+              "selected": true
+            }
+          ]
+        },
+        "context-only": {
+          "queries": [
+            "청록색 수첩은 누가 어디에 넣었나요?",
+            "궁금한 내용을 물어보세요.\n앞서 나눴던 이야기 중 하나를 확인하고 싶어요."
+          ],
+          "selected": [
+            3,
+            20,
+            5,
+            17,
+            8,
+            4,
+            14,
+            19,
+            16,
+            18,
+            6,
+            15,
+            2,
+            10,
+            11,
+            1,
+            0,
+            13,
+            7,
+            12,
+            9
+          ],
+          "tokens": 715,
+          "evidence": [
+            {
+              "message": 3,
+              "ranks": [
+                1,
+                8
+              ],
+              "selected": true
+            }
+          ]
+        },
+        "prior-user": {
+          "queries": [
+            "청록색 수첩은 누가 어디에 넣었나요?",
+            "앞서 나눴던 이야기 중 하나를 확인하고 싶어요."
+          ],
+          "selected": [
+            3,
+            20,
+            5,
+            8,
+            17,
+            19,
+            4,
+            14,
+            10,
+            18,
+            6,
+            2,
+            11,
+            16,
+            0,
+            1,
+            15,
+            7,
+            13,
+            12,
+            9
+          ],
+          "tokens": 715,
+          "evidence": [
+            {
+              "message": 3,
+              "ranks": [
+                1,
+                5
+              ],
+              "selected": true
+            }
+          ]
+        }
+      }
+    },
+    {
+      "fixture": "speaker-native-v1",
+      "case": "en-reported-other-actor",
+      "kind": "return",
+      "budget": 800,
+      "variants": {
+        "baseline": {
+          "queries": [
+            "Who put the violet folder away, and where is it?",
+            "Who put the violet folder away, and where is it?\nGo ahead with your question.\nI would like to check something from earlier."
+          ],
+          "selected": [
+            2,
+            14,
+            20,
+            4,
+            8,
+            11,
+            5,
+            6,
+            12,
+            19,
+            7,
+            0,
+            15,
+            10,
+            13,
+            9,
+            3,
+            1,
+            18,
+            16,
+            17
+          ],
+          "tokens": 578,
+          "evidence": [
+            {
+              "message": 2,
+              "ranks": [
+                1,
+                1
+              ],
+              "selected": true
+            }
+          ]
+        },
+        "context-only": {
+          "queries": [
+            "Who put the violet folder away, and where is it?",
+            "Go ahead with your question.\nI would like to check something from earlier."
+          ],
+          "selected": [
+            2,
+            20,
+            14,
+            8,
+            4,
+            6,
+            0,
+            5,
+            11,
+            12,
+            15,
+            10,
+            19,
+            7,
+            18,
+            13,
+            1,
+            9,
+            17,
+            3,
+            16
+          ],
+          "tokens": 578,
+          "evidence": [
+            {
+              "message": 2,
+              "ranks": [
+                1,
+                6
+              ],
+              "selected": true
+            }
+          ]
+        },
+        "prior-user": {
+          "queries": [
+            "Who put the violet folder away, and where is it?",
+            "I would like to check something from earlier."
+          ],
+          "selected": [
+            2,
+            20,
+            14,
+            8,
+            4,
+            11,
+            15,
+            5,
+            0,
+            6,
+            12,
+            19,
+            7,
+            10,
+            13,
+            9,
+            18,
+            17,
+            3,
+            16,
+            1
+          ],
+          "tokens": 578,
+          "evidence": [
+            {
+              "message": 2,
+              "ranks": [
+                1,
+                13
+              ],
+              "selected": true
+            }
+          ]
+        }
+      }
+    },
+    {
+      "fixture": "speaker-native-v1",
+      "case": "ko-reported-other-actor",
+      "kind": "return",
+      "budget": 800,
+      "variants": {
+        "baseline": {
+          "queries": [
+            "주황색 파일은 누가 어디에 넣었나요?",
+            "주황색 파일은 누가 어디에 넣었나요?\n궁금한 내용을 물어보세요.\n앞서 나눴던 이야기 중 하나를 확인하고 싶어요."
+          ],
+          "selected": [
+            3,
+            5,
+            4,
+            20,
+            14,
+            8,
+            11,
+            18,
+            19,
+            1,
+            10,
+            16,
+            13,
+            15,
+            17,
+            6,
+            9,
+            0,
+            2,
+            12,
+            7
+          ],
+          "tokens": 722,
+          "evidence": [
+            {
+              "message": 3,
+              "ranks": [
+                1,
+                1
+              ],
+              "selected": true
+            }
+          ]
+        },
+        "context-only": {
+          "queries": [
+            "주황색 파일은 누가 어디에 넣었나요?",
+            "궁금한 내용을 물어보세요.\n앞서 나눴던 이야기 중 하나를 확인하고 싶어요."
+          ],
+          "selected": [
+            3,
+            20,
+            5,
+            17,
+            4,
+            8,
+            14,
+            19,
+            11,
+            16,
+            18,
+            1,
+            15,
+            10,
+            13,
+            0,
+            2,
+            6,
+            9,
+            7,
+            12
+          ],
+          "tokens": 722,
+          "evidence": [
+            {
+              "message": 3,
+              "ranks": [
+                1,
+                7
+              ],
+              "selected": true
+            }
+          ]
+        },
+        "prior-user": {
+          "queries": [
+            "주황색 파일은 누가 어디에 넣었나요?",
+            "앞서 나눴던 이야기 중 하나를 확인하고 싶어요."
+          ],
+          "selected": [
+            3,
+            20,
+            5,
+            8,
+            4,
+            19,
+            14,
+            10,
+            11,
+            17,
+            18,
+            1,
+            16,
+            0,
+            13,
+            2,
+            15,
+            6,
+            7,
+            9,
+            12
+          ],
+          "tokens": 722,
+          "evidence": [
+            {
+              "message": 3,
+              "ranks": [
+                1,
+                7
+              ],
+              "selected": true
+            }
+          ]
+        }
+      }
+    },
+    {
+      "fixture": "long-dialogue-v1",
+      "case": "en-long-return",
+      "kind": "return",
+      "budget": 400,
+      "variants": {
+        "baseline": {
+          "queries": [
+            "Who put the rolled canal map away, and where is it?",
+            "Who put the rolled canal map away, and where is it?\nGo ahead with the earlier questions. I will use what we actually established in the conversation, and if something was left unspecified I will say so instead of inventing a detail to make the plan sound complete.\nAfter that walk-through I would like to revisit a few things we discussed much earlier. We have changed subjects several times, and I want to be sure I am relying on the final information rather than a half-remembered suggestion."
+          ],
+          "selected": [
+            3,
+            2,
+            0,
+            5,
+            28,
+            29
+          ],
+          "tokens": 351,
+          "evidence": [
+            {
+              "message": 3,
+              "ranks": [
+                1,
+                1
+              ],
+              "selected": true
+            }
+          ]
+        },
+        "context-only": {
+          "queries": [
+            "Who put the rolled canal map away, and where is it?",
+            "Go ahead with the earlier questions. I will use what we actually established in the conversation, and if something was left unspecified I will say so instead of inventing a detail to make the plan sound complete.\nAfter that walk-through I would like to revisit a few things we discussed much earlier. We have changed subjects several times, and I want to be sure I am relying on the final information rather than a half-remembered suggestion."
+          ],
+          "selected": [
+            3,
+            23,
+            2,
+            0,
+            29,
+            28
+          ],
+          "tokens": 352,
+          "evidence": [
+            {
+              "message": 3,
+              "ranks": [
+                1,
+                25
+              ],
+              "selected": true
+            }
+          ]
+        },
+        "prior-user": {
+          "queries": [
+            "Who put the rolled canal map away, and where is it?",
+            "After that walk-through I would like to revisit a few things we discussed much earlier. We have changed subjects several times, and I want to be sure I am relying on the final information rather than a half-remembered suggestion."
+          ],
+          "selected": [
+            3,
+            13,
+            2,
+            37,
+            0,
+            47
+          ],
+          "tokens": 348,
+          "evidence": [
+            {
+              "message": 3,
+              "ranks": [
+                1,
+                27
+              ],
+              "selected": true
+            }
+          ]
+        }
+      }
+    },
+    {
+      "fixture": "long-dialogue-v1",
+      "case": "en-long-correction",
+      "kind": "correction",
+      "budget": 400,
+      "variants": {
+        "baseline": {
+          "queries": [
+            "What is the final Sunday departure time for the harbour launch?",
+            "What is the final Sunday departure time for the harbour launch?\nGo ahead with the earlier questions. I will use what we actually established in the conversation, and if something was left unspecified I will say so instead of inventing a detail to make the plan sound complete.\nAfter that walk-through I would like to revisit a few things we discussed much earlier. We have changed subjects several times, and I want to be sure I am relying on the final information rather than a half-remembered suggestion."
+          ],
+          "selected": [
+            4,
+            20,
+            21,
+            2,
+            5,
+            8
+          ],
+          "tokens": 368,
+          "evidence": [
+            {
+              "message": 20,
+              "ranks": [
+                2,
+                2
+              ],
+              "selected": true
+            }
+          ]
+        },
+        "context-only": {
+          "queries": [
+            "What is the final Sunday departure time for the harbour launch?",
+            "Go ahead with the earlier questions. I will use what we actually established in the conversation, and if something was left unspecified I will say so instead of inventing a detail to make the plan sound complete.\nAfter that walk-through I would like to revisit a few things we discussed much earlier. We have changed subjects several times, and I want to be sure I am relying on the final information rather than a half-remembered suggestion."
+          ],
+          "selected": [
+            4,
+            23,
+            20,
+            2,
+            21,
+            29
+          ],
+          "tokens": 369,
+          "evidence": [
+            {
+              "message": 20,
+              "ranks": [
+                2,
+                0
+              ],
+              "selected": true
+            }
+          ]
+        },
+        "prior-user": {
+          "queries": [
+            "What is the final Sunday departure time for the harbour launch?",
+            "After that walk-through I would like to revisit a few things we discussed much earlier. We have changed subjects several times, and I want to be sure I am relying on the final information rather than a half-remembered suggestion."
+          ],
+          "selected": [
+            4,
+            13,
+            20,
+            37,
+            21,
+            47
+          ],
+          "tokens": 369,
+          "evidence": [
+            {
+              "message": 20,
+              "ranks": [
+                2,
+                0
+              ],
+              "selected": true
+            }
+          ]
+        }
+      }
+    },
+    {
+      "fixture": "long-dialogue-v1",
+      "case": "en-long-reference",
+      "kind": "reference",
+      "budget": 400,
+      "variants": {
+        "baseline": {
+          "queries": [
+            "Who is bringing it, and when?",
+            "Who is bringing it, and when?\nAll right, what would you like to check about that item?\nLet us return to the green cloth banner for the reading room."
+          ],
+          "selected": [
+            8,
+            4,
+            51,
+            15,
+            47,
+            32
+          ],
+          "tokens": 368,
+          "evidence": [
+            {
+              "message": 8,
+              "ranks": [
+                1,
+                1
+              ],
+              "selected": true
+            }
+          ]
+        },
+        "context-only": {
+          "queries": [
+            "Who is bringing it, and when?",
+            "All right, what would you like to check about that item?\nLet us return to the green cloth banner for the reading room."
+          ],
+          "selected": [
+            8,
+            47,
+            4,
+            51,
+            15,
+            2
+          ],
+          "tokens": 364,
+          "evidence": [
+            {
+              "message": 8,
+              "ranks": [
+                1,
+                5
+              ],
+              "selected": true
+            }
+          ]
+        },
+        "prior-user": {
+          "queries": [
+            "Who is bringing it, and when?",
+            "Let us return to the green cloth banner for the reading room."
+          ],
+          "selected": [
+            8,
+            4,
+            6,
+            15,
+            18,
+            32
+          ],
+          "tokens": 365,
+          "evidence": [
+            {
+              "message": 8,
+              "ranks": [
+                1,
+                1
+              ],
+              "selected": true
+            }
+          ]
+        }
+      }
+    },
+    {
+      "fixture": "long-dialogue-v1",
+      "case": "en-long-unknown",
+      "kind": "unknown",
+      "budget": 400,
+      "variants": {
+        "baseline": {
+          "queries": [
+            "What is the exact admission price for the history weekend?",
+            "What is the exact admission price for the history weekend?\nGo ahead with the earlier questions. I will use what we actually established in the conversation, and if something was left unspecified I will say so instead of inventing a detail to make the plan sound complete.\nAfter that walk-through I would like to revisit a few things we discussed much earlier. We have changed subjects several times, and I want to be sure I am relying on the final information rather than a half-remembered suggestion."
+          ],
+          "selected": [
+            0,
+            13,
+            28,
+            4,
+            37,
+            18
+          ],
+          "tokens": 358,
+          "evidence": []
+        },
+        "context-only": {
+          "queries": [
+            "What is the exact admission price for the history weekend?",
+            "Go ahead with the earlier questions. I will use what we actually established in the conversation, and if something was left unspecified I will say so instead of inventing a detail to make the plan sound complete.\nAfter that walk-through I would like to revisit a few things we discussed much earlier. We have changed subjects several times, and I want to be sure I am relying on the final information rather than a half-remembered suggestion."
+          ],
+          "selected": [
+            0,
+            23,
+            28,
+            2,
+            4,
+            29
+          ],
+          "tokens": 360,
+          "evidence": []
+        },
+        "prior-user": {
+          "queries": [
+            "What is the exact admission price for the history weekend?",
+            "After that walk-through I would like to revisit a few things we discussed much earlier. We have changed subjects several times, and I want to be sure I am relying on the final information rather than a half-remembered suggestion."
+          ],
+          "selected": [
+            0,
+            13,
+            28,
+            37,
+            4,
+            47
+          ],
+          "tokens": 360,
+          "evidence": []
+        }
+      }
+    },
+    {
+      "fixture": "long-dialogue-v1",
+      "case": "ko-long-return",
+      "kind": "return",
+      "budget": 400,
+      "variants": {
+        "baseline": {
+          "queries": [
+            "접이식 노선도는 누가 어디에 넣었나요?",
+            "접이식 노선도는 누가 어디에 넣었나요?\n궁금한 것을 물어보세요. 이 대화에서 실제로 확인한 내용을 바탕으로 답하고, 끝내 정해지지 않은 정보라면 빈칸을 임의로 채우지 않고 아직 알 수 없다고 말씀드릴게요.\n동선을 확인하고 나니 앞서 나눴던 이야기 몇 가지를 다시 확인하고 싶어요. 중간에 주제가 여러 번 바뀌어서 처음 제안했던 내용과 나중에 확정한 내용을 혼동하지 않으려 해요."
+          ],
+          "selected": [
+            2,
+            44,
+            0,
+            34,
+            30
+          ],
+          "tokens": 398,
+          "evidence": [
+            {
+              "message": 2,
+              "ranks": [
+                1,
+                1
+              ],
+              "selected": true
+            }
+          ]
+        },
+        "context-only": {
+          "queries": [
+            "접이식 노선도는 누가 어디에 넣었나요?",
+            "궁금한 것을 물어보세요. 이 대화에서 실제로 확인한 내용을 바탕으로 답하고, 끝내 정해지지 않은 정보라면 빈칸을 임의로 채우지 않고 아직 알 수 없다고 말씀드릴게요.\n동선을 확인하고 나니 앞서 나눴던 이야기 몇 가지를 다시 확인하고 싶어요. 중간에 주제가 여러 번 바뀌어서 처음 제안했던 내용과 나중에 확정한 내용을 혼동하지 않으려 해요."
+          ],
+          "selected": [
+            2,
+            37,
+            44,
+            29,
+            5
+          ],
+          "tokens": 400,
+          "evidence": [
+            {
+              "message": 2,
+              "ranks": [
+                1,
+                20
+              ],
+              "selected": true
+            }
+          ]
+        },
+        "prior-user": {
+          "queries": [
+            "접이식 노선도는 누가 어디에 넣었나요?",
+            "동선을 확인하고 나니 앞서 나눴던 이야기 몇 가지를 다시 확인하고 싶어요. 중간에 주제가 여러 번 바뀌어서 처음 제안했던 내용과 나중에 확정한 내용을 혼동하지 않으려 해요."
+          ],
+          "selected": [
+            2,
+            37,
+            44,
+            0,
+            30
+          ],
+          "tokens": 398,
+          "evidence": [
+            {
+              "message": 2,
+              "ranks": [
+                1,
+                10
+              ],
+              "selected": true
+            }
+          ]
+        }
+      }
+    },
+    {
+      "fixture": "long-dialogue-v1",
+      "case": "ko-long-correction",
+      "kind": "correction",
+      "budget": 400,
+      "variants": {
+        "baseline": {
+          "queries": [
+            "일요일 해설 산책은 최종적으로 몇 시에 시작하나요?",
+            "일요일 해설 산책은 최종적으로 몇 시에 시작하나요?\n궁금한 것을 물어보세요. 이 대화에서 실제로 확인한 내용을 바탕으로 답하고, 끝내 정해지지 않은 정보라면 빈칸을 임의로 채우지 않고 아직 알 수 없다고 말씀드릴게요.\n동선을 확인하고 나니 앞서 나눴던 이야기 몇 가지를 다시 확인하고 싶어요. 중간에 주제가 여러 번 바뀌어서 처음 제안했던 내용과 나중에 확정한 내용을 혼동하지 않으려 해요."
+          ],
+          "selected": [
+            4,
+            20,
+            5,
+            0,
+            30
+          ],
+          "tokens": 398,
+          "evidence": [
+            {
+              "message": 20,
+              "ranks": [
+                2,
+                2
+              ],
+              "selected": true
+            }
+          ]
+        },
+        "context-only": {
+          "queries": [
+            "일요일 해설 산책은 최종적으로 몇 시에 시작하나요?",
+            "궁금한 것을 물어보세요. 이 대화에서 실제로 확인한 내용을 바탕으로 답하고, 끝내 정해지지 않은 정보라면 빈칸을 임의로 채우지 않고 아직 알 수 없다고 말씀드릴게요.\n동선을 확인하고 나니 앞서 나눴던 이야기 몇 가지를 다시 확인하고 싶어요. 중간에 주제가 여러 번 바뀌어서 처음 제안했던 내용과 나중에 확정한 내용을 혼동하지 않으려 해요."
+          ],
+          "selected": [
+            4,
+            37,
+            20,
+            29,
+            30
+          ],
+          "tokens": 400,
+          "evidence": [
+            {
+              "message": 20,
+              "ranks": [
+                2,
+                19
+              ],
+              "selected": true
+            }
+          ]
+        },
+        "prior-user": {
+          "queries": [
+            "일요일 해설 산책은 최종적으로 몇 시에 시작하나요?",
+            "동선을 확인하고 나니 앞서 나눴던 이야기 몇 가지를 다시 확인하고 싶어요. 중간에 주제가 여러 번 바뀌어서 처음 제안했던 내용과 나중에 확정한 내용을 혼동하지 않으려 해요."
+          ],
+          "selected": [
+            4,
+            37,
+            20,
+            0,
+            30
+          ],
+          "tokens": 400,
+          "evidence": [
+            {
+              "message": 20,
+              "ranks": [
+                2,
+                17
+              ],
+              "selected": true
+            }
+          ]
+        }
+      }
+    },
+    {
+      "fixture": "long-dialogue-v1",
+      "case": "ko-long-reference",
+      "kind": "reference",
+      "budget": 400,
+      "variants": {
+        "baseline": {
+          "queries": [
+            "그건 누가 언제 가져오기로 했죠?",
+            "그건 누가 언제 가져오기로 했죠?\n네, 그 물건에 대해 무엇을 확인하고 싶으세요?\n전시실에 걸 자주색 천 현수막 이야기를 다시 해요."
+          ],
+          "selected": [
+            39,
+            3,
+            1,
+            16,
+            38
+          ],
+          "tokens": 399,
+          "evidence": [
+            {
+              "message": 8,
+              "ranks": [
+                7,
+                4
+              ],
+              "selected": false
+            }
+          ]
+        },
+        "context-only": {
+          "queries": [
+            "그건 누가 언제 가져오기로 했죠?",
+            "네, 그 물건에 대해 무엇을 확인하고 싶으세요?\n전시실에 걸 자주색 천 현수막 이야기를 다시 해요."
+          ],
+          "selected": [
+            39,
+            3,
+            1,
+            16,
+            17
+          ],
+          "tokens": 394,
+          "evidence": [
+            {
+              "message": 8,
+              "ranks": [
+                7,
+                14
+              ],
+              "selected": false
+            }
+          ]
+        },
+        "prior-user": {
+          "queries": [
+            "그건 누가 언제 가져오기로 했죠?",
+            "전시실에 걸 자주색 천 현수막 이야기를 다시 해요."
+          ],
+          "selected": [
+            39,
+            6,
+            1,
+            8
+          ],
+          "tokens": 330,
+          "evidence": [
+            {
+              "message": 8,
+              "ranks": [
+                7,
+                2
+              ],
+              "selected": true
+            }
+          ]
+        }
+      }
+    },
+    {
+      "fixture": "long-dialogue-v1",
+      "case": "ko-long-unknown",
+      "kind": "unknown",
+      "budget": 400,
+      "variants": {
+        "baseline": {
+          "queries": [
+            "주말 철도 기록 모임의 정확한 입장료는 얼마인가요?",
+            "주말 철도 기록 모임의 정확한 입장료는 얼마인가요?\n궁금한 것을 물어보세요. 이 대화에서 실제로 확인한 내용을 바탕으로 답하고, 끝내 정해지지 않은 정보라면 빈칸을 임의로 채우지 않고 아직 알 수 없다고 말씀드릴게요.\n동선을 확인하고 나니 앞서 나눴던 이야기 몇 가지를 다시 확인하고 싶어요. 중간에 주제가 여러 번 바뀌어서 처음 제안했던 내용과 나중에 확정한 내용을 혼동하지 않으려 해요."
+          ],
+          "selected": [
+            0,
+            13,
+            31,
+            34,
+            17
+          ],
+          "tokens": 393,
+          "evidence": []
+        },
+        "context-only": {
+          "queries": [
+            "주말 철도 기록 모임의 정확한 입장료는 얼마인가요?",
+            "궁금한 것을 물어보세요. 이 대화에서 실제로 확인한 내용을 바탕으로 답하고, 끝내 정해지지 않은 정보라면 빈칸을 임의로 채우지 않고 아직 알 수 없다고 말씀드릴게요.\n동선을 확인하고 나니 앞서 나눴던 이야기 몇 가지를 다시 확인하고 싶어요. 중간에 주제가 여러 번 바뀌어서 처음 제안했던 내용과 나중에 확정한 내용을 혼동하지 않으려 해요."
+          ],
+          "selected": [
+            0,
+            37,
+            13,
+            29,
+            34
+          ],
+          "tokens": 395,
+          "evidence": []
+        },
+        "prior-user": {
+          "queries": [
+            "주말 철도 기록 모임의 정확한 입장료는 얼마인가요?",
+            "동선을 확인하고 나니 앞서 나눴던 이야기 몇 가지를 다시 확인하고 싶어요. 중간에 주제가 여러 번 바뀌어서 처음 제안했던 내용과 나중에 확정한 내용을 혼동하지 않으려 해요."
+          ],
+          "selected": [
+            0,
+            37,
+            13,
+            34,
+            31
+          ],
+          "tokens": 393,
+          "evidence": []
+        }
+      }
+    }
+  ],
+  "generationCalls": 0
+}

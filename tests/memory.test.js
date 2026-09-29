@@ -156,13 +156,13 @@ test('query anchors on the latest user; contextual retrieval stays separate from
         { user: true, text: 'Where did she put it?' },
         { user: false, text: 'Incorrect previous answer during swipe or regenerate' },
     ];
-    assert.deepEqual(retrievalQueries({ messages }), ['Where did she put it?', 'Where did she put it?\nMira stored a travel document.\nOld unrelated topic']);
+    assert.deepEqual(retrievalQueries({ messages }), ['Where did she put it?', 'Old unrelated topic']);
     assert.deepEqual(retrievalQueries({ messages: messages.slice(0, -1) }), retrievalQueries({ messages }));
     assert.deepEqual(retrievalQueries({ messages: [{ user: true, text: '  Question  ' }] }), ['Question']);
     assert.deepEqual(retrievalQueries({ messages: [{ user: false, text: 'Opening scene' }] }), ['Opening scene']);
     assert.deepEqual(retrievalQueries({ messages: [{ user: true, text: '  ' }] }), []);
-    const long = retrievalQueries({ messages: [{ text: 'context' }, { user: true, text: 'x'.repeat(7000) }] });
-    assert.deepEqual(long, ['x'.repeat(6000)]);
+    const long = retrievalQueries({ messages: [{ user: true, text: 'context' }, { user: true, text: 'x'.repeat(7000) }] });
+    assert.deepEqual(long, ['x'.repeat(6000), 'context']);
 });
 test('rank interleaving keeps question and contextual top hits inside a bounded selection', async () => {
     const { docs } = await documents(snapshot(), owner, config);
@@ -329,4 +329,33 @@ test('native excerpt order follows source and chunk order without changing retri
     assert(selected.messages[0].mes.includes('passage 1]'));
     assert(selected.messages[1].mes.includes('passage 2]'));
     assert.deepEqual(selected.messages.map(m => m.is_user), [true, true, false]);
+});
+
+
+test('reference retrieval keeps the prior user topic separate from generic acknowledgments and questions', () => {
+    const messages = [
+        { user: true, text: 'An older unrelated topic' },
+        { user: true, text: '전시실에 걸 자주색 천 현수막 이야기를 다시 해요.' },
+        { user: false, text: '네, 그 물건에 대해 무엇을 확인하고 싶으세요?' },
+        { user: true, text: '  ' },
+        { user: true, text: '그건 누가 언제 가져오기로 했죠?' },
+        { user: false, text: 'An incorrect answer to be replaced' },
+    ];
+    for (const type of ['normal', 'regenerate', 'swipe']) {
+        assert.deepEqual(retrievalQueries({ messages }, type), [messages[4].text, messages[1].text]);
+    }
+    assert.deepEqual(retrievalQueries({ messages }, 'continue'), [messages[5].text, messages[4].text]);
+});
+
+test('prior-user queries are bounded, deduplicated, and absent without a previous user turn', () => {
+    assert.deepEqual(retrievalQueries({ messages: [
+        { user: false, text: 'An assistant introduction' }, { user: true, text: 'A first question' },
+    ] }), ['A first question']);
+    assert.deepEqual(retrievalQueries({ messages: [
+        { user: true, text: 'Repeated topic' }, { user: false, text: 'A reply' }, { user: true, text: ' Repeated topic ' },
+    ] }), ['Repeated topic']);
+    const long = retrievalQueries({ messages: [
+        { user: true, text: 'y'.repeat(7000) }, { user: false, text: 'A reply' }, { user: true, text: 'x'.repeat(7000) },
+    ] });
+    assert.deepEqual(long, ['x'.repeat(6000), 'y'.repeat(6000)]);
 });

@@ -4,16 +4,23 @@ The original fixed comparison scored 6/18 with SillyMemory. A subsequent vector 
 
 ## Policy
 
-The current `latest-user-or-continuation-plus-context-v2` policy preserves the
-normal/swipe/regenerate behavior below. For explicit `continue` requests only,
-it searches the latest non-empty message being extended instead of the earlier
-user topic, with the same separate contextual query. This fixes the observed
-assistant-topic shift; it does not interpret arbitrary references or use retained
-answers to steer their own replacement. See [the fixed six-case protocol and
-results](recall-challenges.md). Historical v1 evidence below retains its original
-source hashes and is not a v2 benchmark.
+The current `latest-anchor-plus-prior-user-v3` policy searches the latest
+non-empty user message on its own and the preceding non-empty user message
+separately. Generic assistant acknowledgments and the question are not appended
+to that prior topic. Without an earlier user message there is only one query;
+assistant-only topic setup before a first user turn has no second-query coverage.
+This remains a heuristic: a prior user turn may be unrelated to the new question.
+See the [controlled comparison](context-selection-evaluation.md) and
+[results](context-selection-results.md) for its bounded evidence.
 
-Search the latest non-empty user message on its own. Separately search that message followed by the preceding two non-empty messages, newest first. Ignore assistant messages after the user anchor so a previous answer cannot steer its own swipe/regeneration. If there is no user message, use the latest non-empty message. Bound each query to 6,000 UTF-16 code units and remove duplicate query strings.
+Explicit `continue` anchors on the latest non-empty message being extended,
+including assistant text, and independently searches the preceding user turn.
+Regenerate/swipe exclude retained answers after the user anchor. Without any
+non-empty user message, use the latest non-empty message. Bound each query to
+6,000 UTF-16 code units and remove duplicate strings.
+
+The historical v2 continuation fix and [six-case results](recall-challenges.md)
+remain unchanged below. Historical v1/v2 evidence is not a v3 benchmark.
 
 Run at most two scoped managed `knn.queryText` requests concurrently, 30 candidates each. Interleave their ranks, starting with the question-only result, then validate against the exact current local source and deduplicate. The existing complete-passage selector counts the full wrapper against the same configured budget. Source isolation, synchronization journals and prompt mutation rules stay as described in [architecture](architecture.md).
 
