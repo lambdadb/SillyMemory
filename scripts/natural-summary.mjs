@@ -57,6 +57,10 @@ export function summarizeNatural(report) {
                 assert(attempt.retryWaitMs >= NATURAL_RETRY.baseDelayMs * 2 ** j && attempt.retryWaitMs <= NATURAL_RETRY.maxDelayMs, 'Invalid retry delay');
             }
         }
+        if (fixture.version === 'long-dialogue-v1') {
+            assert(row.sourceTokens > fixture.settings.context, 'Long source must exceed host context');
+            if (row.mode === 'off') assert(row.baselineTruncated && Number.isInteger(row.sourceMessagesPresent) && row.sourceMessagesPresent >= 0 && row.sourceMessagesPresent < item.input.source.length, 'Long baseline must prove actual truncation');
+        }
         assert.equal(generation.finishReason, 'stop');
         assert.equal(generation.providerAnswer.trim(), row.answer.trim(), 'Provider answer mismatch');
         assert.equal(generation.answer.trim(), row.answer.trim(), 'Saved host answer mismatch');

@@ -213,3 +213,37 @@ test('native speaker evaluation includes reported actions without confusing spea
     assert.equal(summarizeNatural(report).samples, 32);
     assert.equal(blindNaturalReview(report).packet.records.length, 32);
 });
+
+test('long dialogue summary requires measured source overflow and actual baseline truncation', () => {
+    const report = reportFixture('long-dialogue-v1');
+    for (const row of report.evaluation.rows) Object.assign(row, { sourceTokens: 3000, sourceMessagesPresent: 12, baselineTruncated: row.mode === 'off' });
+    assert.equal(summarizeNatural(report).samples, 32);
+    for (const mutate of [
+        r => { r.hostContextTokens = 8192; },
+        r => { r.evaluation.rows[0].sourceTokens = 2048; },
+        r => { r.evaluation.rows.find(x => x.mode === 'off').baselineTruncated = false; },
+        r => { r.evaluation.rows.find(x => x.mode === 'off').sourceMessagesPresent = 64; },
+    ]) { const changed = structuredClone(report); mutate(changed); assert.throws(() => summarizeNatural(changed)); }
+    const { packet, key } = blindNaturalReview(report);
+    assert.equal(packet.records.length, 32);
+    packet.reviewer = 'Synthetic long-dialogue annotation'; packet.reviewerType = 'assistant';
+    for (const record of packet.records) Object.assign(record, { outcome: record.rubric.requiredEvidence.length ? 'correct' : 'unknown-handled', unsupportedAssertion: false, rationale: 'Test annotation only.' });
+    const scores = scoreNaturalAnnotations(report, packet, key);
+    assert.equal(scores.semanticQualityGate, null);
+    assert.deepEqual(scores.pairedSummary, { improved: 0, tied: 16, regressed: 0 });
+});
+
+test('long-dialogue frozen plan pins the smaller context and refuses modified source or budget', async () => {
+    const dir = await mkdtemp(path.join(tmpdir(), 'sm-long-plan-'));
+    try {
+        const filename = path.join(dir, 'plan.json');
+        const run = spawnSync(process.execPath, [fileURLToPath(new URL('../scripts/natural-dialogue.mjs', import.meta.url)), '--output', filename, '--fixture', 'long-dialogue-v1'], { encoding: 'utf8' });
+        assert.equal(run.status, 0, run.stderr);
+        const original = JSON.parse(await readFile(filename));
+        assert.equal((await verifyNaturalPlan(filename)).plan.settings.context, 2048);
+        for (const mutate of [p => { p.settings.budget = 800; }, p => { p.cases[0].input.source[0].mes = 'edited'; }]) {
+            const changed = structuredClone(original); mutate(changed); await writeFile(filename, JSON.stringify(changed));
+            await assert.rejects(verifyNaturalPlan(filename));
+        }
+    } finally { await rm(dir, { recursive: true, force: true }); }
+});
