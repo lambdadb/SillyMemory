@@ -15,6 +15,7 @@ export function fixtureFiles(version = 'natural-dialogue-v1') {
         'speaker-attribution-v1': ['docs/speaker-attribution-evaluation.md', 'docs/speaker-attribution-perspective-v2.md'],
         'speaker-native-v1': ['docs/speaker-native-evaluation.md'],
         'long-dialogue-v1': ['docs/long-dialogue-evaluation.md'],
+        'actor-perspective-v1': ['docs/actor-perspective-evaluation.md', 'scripts/actor-perspective.mjs'],
     };
     assert(Object.hasOwn(protocols, version), 'Unknown evaluation fixture');
     return [`tests/fixtures/${version}.json`, ...protocols[version]];

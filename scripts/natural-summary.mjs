@@ -1,5 +1,6 @@
 // Integrity/measurement summary and blinded human-review packet; no lexical grading.
 import assert from 'node:assert/strict';
+import { actorPromptEvidence } from './actor-perspective.mjs';
 import { randomUUID } from 'node:crypto';
 import { readFileSync, realpathSync } from 'node:fs';
 import { mkdir, writeFile } from 'node:fs/promises';
@@ -60,6 +61,9 @@ export function summarizeNatural(report) {
         if (fixture.version === 'long-dialogue-v1') {
             assert(row.sourceTokens > fixture.settings.context, 'Long source must exceed host context');
             if (row.mode === 'off') assert(row.baselineTruncated && Number.isInteger(row.sourceMessagesPresent) && row.sourceMessagesPresent >= 0 && row.sourceMessagesPresent < item.input.source.length, 'Long baseline must prove actual truncation');
+        }
+        if (fixture.version === 'actor-perspective-v1') {
+            assert.deepEqual(row.actorEvidence, actorPromptEvidence(item, row.mode, generation.messages), 'Actor prompt evidence changed');
         }
         assert.equal(generation.finishReason, 'stop');
         assert.equal(generation.providerAnswer.trim(), row.answer.trim(), 'Provider answer mismatch');
