@@ -15,7 +15,8 @@ test('assistant-topic boundary fixtures keep targets old and distinguish a first
         assert.equal(queries[0], messages.at(-1).text);
         if (item.kind === 'first-user') {
             assert(messages.slice(0, -1).every(m => !m.user));
-            assert.equal(queries.length, 1);
+            assert.equal(queries.length, 2);
+            assert.equal(queries[1], messages.at(-2).text);
         } else {
             assert(messages.slice(0, -1).some(m => m.user));
             assert.equal(queries.length, 2);

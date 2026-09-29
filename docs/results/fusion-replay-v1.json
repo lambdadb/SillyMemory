@@ -1,0 +1,61 @@
+{
+  "kind": "development replay, no new service calls or held-out evidence",
+  "sourceReportSha256": "b08d7dac176c88a6af9fd566c068f023cfc032fdb47e7bad0f6cc0b61e633ac8",
+  "results": {
+    "baseline": {
+      "selectedCount": 30,
+      "failures": [
+        "boundaries/ko-first-user",
+        "boundaries/ko-assistant-topic"
+      ]
+    },
+    "sum-0": {
+      "selectedCount": 28,
+      "failures": [
+        "long-dialogue-v1/en-long-correction",
+        "long-dialogue-v1/ko-long-correction",
+        "long-dialogue-v1/ko-long-reference",
+        "boundaries/ko-assistant-topic"
+      ]
+    },
+    "sum-60": {
+      "selectedCount": 23,
+      "failures": [
+        "long-dialogue-v1/en-long-return",
+        "long-dialogue-v1/en-long-correction",
+        "long-dialogue-v1/en-long-reference",
+        "long-dialogue-v1/ko-long-return",
+        "long-dialogue-v1/ko-long-correction",
+        "long-dialogue-v1/ko-long-reference",
+        "boundaries/en-assistant-topic",
+        "boundaries/ko-assistant-topic",
+        "boundaries/ko-explicit-switch"
+      ]
+    },
+    "max-context-0": {
+      "selectedCount": 31,
+      "failures": [
+        "long-dialogue-v1/ko-long-correction"
+      ]
+    },
+    "max-context-density": {
+      "selectedCount": 28,
+      "failures": [
+        "long-dialogue-v1/en-long-correction",
+        "long-dialogue-v1/ko-long-correction",
+        "long-dialogue-v1/ko-long-reference",
+        "boundaries/ko-assistant-topic"
+      ]
+    },
+    "sum-density": {
+      "selectedCount": 28,
+      "failures": [
+        "long-dialogue-v1/en-long-correction",
+        "long-dialogue-v1/ko-long-correction",
+        "long-dialogue-v1/ko-long-reference",
+        "boundaries/ko-assistant-topic"
+      ]
+    }
+  },
+  "rawReplaySha256": "0916297d6b25f9b15204c0428a46eee56372192d2b4eba859a603459df5d14e6"
+}

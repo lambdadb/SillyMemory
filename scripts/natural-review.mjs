@@ -24,9 +24,10 @@ export function validateReviewPacket(packet) {
         assert(typeof record.rubric.answerRule === 'string');
         for (const [field, keys] of [['requiredEvidence', ['message', 'quote', 'meaning']], ['supersededEvidence', ['message', 'quote']]]) {
             for (const ref of record.rubric[field]) {
-                exactKeys(ref, keys); assert(Number.isInteger(ref.message) && ref.message >= 0 && ref.message < record.source.length);
+                const allowed = field === 'requiredEvidence' && !Object.hasOwn(ref, 'meaning') ? ['message', 'quote'] : keys;
+                exactKeys(ref, allowed); assert(Number.isInteger(ref.message) && ref.message >= 0 && ref.message < record.source.length);
                 assert(typeof ref.quote === 'string' && record.source[ref.message].text.includes(ref.quote));
-                if (field === 'requiredEvidence') assert(typeof ref.meaning === 'string');
+                if (field === 'requiredEvidence' && Object.hasOwn(ref, 'meaning')) assert(typeof ref.meaning === 'string');
             }
         }
         assert([null, 'correct', 'partial', 'incorrect', 'abstained', 'unknown-handled'].includes(record.outcome));

@@ -13,6 +13,7 @@ const root = fileURLToPath(new URL('../', import.meta.url));
 export const hash = value => createHash('sha256').update(JSON.stringify(value)).digest('hex');
 export function fixtureFiles(version = 'natural-dialogue-v1') {
     const protocols = {
+        'assistant-fallback-v1': ['docs/assistant-fallback-generation.md'],
         'natural-dialogue-v1': ['docs/natural-dialogue-evaluation.md'],
         'speaker-attribution-v1': ['docs/speaker-attribution-evaluation.md', 'docs/speaker-attribution-perspective-v2.md'],
         'speaker-native-v1': ['docs/speaker-native-evaluation.md'],
