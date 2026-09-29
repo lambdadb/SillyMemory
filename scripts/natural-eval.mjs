@@ -1,5 +1,6 @@
 // Real-host adapter. Oracle data stays in Node, outside the browser/model input.
 import assert from 'node:assert/strict';
+import { runActorAblation } from './actor-ablation-eval.mjs';
 import { actorPromptEvidence } from './actor-perspective.mjs';
 import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
@@ -20,6 +21,7 @@ export async function verifyNaturalPlan(filename) {
 }
 
 export async function runNaturalDialogue({ page, field, openSettings, waitStatus, generate, assert: check, setStage, result, frozen, checkpoint }) {
+    if (frozen.plan.version === 'actor-ablation-v1') return runActorAblation({ page, field, openSettings, generate, assert: check, setStage, result, frozen, checkpoint });
     const { plan } = frozen, cases = new Map(plan.cases.map(item => [item.id, item]));
     Object.assign(result, { version: plan.version, planSha256: frozen.sha256, fixtureHash: plan.audit.fixtureHash, settings: plan.settings, generation: plan.generation, plannedSamples: plan.schedule.length, rows: [], preparation: [], complete: false });
     async function enable(value) {

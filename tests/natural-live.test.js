@@ -10,6 +10,36 @@ import { NATURAL_RETRY } from '../scripts/provider-retry.mjs';
 import { verifyNaturalPlan } from '../scripts/natural-eval.mjs';
 import { hash, loadNaturalFixture, naturalCases, naturalSchedule } from '../scripts/natural-dialogue.mjs';
 import { summarizeNatural, blindNaturalReview, scoreNaturalAnnotations } from '../scripts/natural-summary.mjs';
+import { ablationHistory, ablationPromptEvidence } from '../scripts/actor-ablation.mjs';
+
+test('ablation summary rechecks actual prompts and reports four contrasts without a release gate', () => {
+    const fixture = loadNaturalFixture('actor-ablation-v1'), report = reportFixture(fixture.version);
+    const cases = new Map(naturalCases(fixture).map(c => [c.id, c]));
+    for (const [i, row] of report.evaluation.rows.entries()) {
+        const item = cases.get(row.case), selection = fixture.ablation.selections[row.case];
+        const messages = ["Write SillyMemory E2E Mira's next reply in a fictional chat between SillyMemory E2E Mira and User.", fixture.generation.instruction, '[Start a new Chat]'].map(content => ({ role: 'system', content })).concat(ablationHistory(item, fixture, row.mode).map(m => ({ role: m.is_user ? 'user' : 'assistant', content: m.mes })));
+        report.generations[i].messages = messages;
+        Object.assign(row, { selectionHash: hash(selection), memoryTokens: selection.labelledTokens, ablationEvidence: ablationPromptEvidence(item, fixture, row.mode, messages) });
+    }
+    const summary = summarizeNatural(report);
+    assert.equal(summary.groups.filter(g => !g.language).length, 4);
+    for (const mutate of [
+        r => { r.generations[0].messages.splice(5, 1); },
+        r => { r.evaluation.rows[0].selectionHash = 'changed'; },
+        r => { r.evaluation.rows[0].ablationEvidence.labelledMessages++; },
+        r => { r.evaluation.rows[0].memoryTokens--; },
+    ]) { const bad = structuredClone(report); mutate(bad); assert.throws(() => summarizeNatural(bad)); }
+    const { packet, key } = blindNaturalReview(report);
+    const ids = new Map(key.records.map(k => [k.reviewId, k.sampleId]));
+    packet.reviewer = 'Synthetic annotations only'; packet.reviewerType = 'assistant';
+    for (const record of packet.records) Object.assign(record, { outcome: ids.get(record.reviewId).endsWith('labelled') ? 'incorrect' : 'correct', unsupportedAssertion: false, rationale: 'Test contrast only.' });
+    const score = scoreNaturalAnnotations(report, packet, key);
+    assert.equal(score.semanticQualityGate, null); assert.equal(score.provisionalAssistantGate, null);
+    assert.equal(score.diagnosticOnly, true); assert.equal(score.paired.length, 32);
+    assert.equal(score.paired.filter(p => p.strictPassDelta === -1).length, 16);
+    assert.equal(score.paired.filter(p => p.strictPassDelta === 0).length, 16);
+    assert.deepEqual(score.groups.filter(g => !g.language).map(g => g.passed), [8, 0, 8, 0]);
+});
 
 function reportFixture(version) {
     const fixture = loadNaturalFixture(version), cases = new Map(naturalCases(fixture).map(c => [c.id, c]));

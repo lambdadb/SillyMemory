@@ -1,5 +1,6 @@
 // Offline corpus/schedule preparation only. This module makes no service calls.
 import assert from 'node:assert/strict';
+import { ablationSchedule } from './actor-ablation.mjs';
 import { createHash } from 'node:crypto';
 import { readFileSync, realpathSync } from 'node:fs';
 import { mkdir, writeFile } from 'node:fs/promises';
@@ -15,6 +16,7 @@ export function fixtureFiles(version = 'natural-dialogue-v1') {
         'speaker-attribution-v1': ['docs/speaker-attribution-evaluation.md', 'docs/speaker-attribution-perspective-v2.md'],
         'speaker-native-v1': ['docs/speaker-native-evaluation.md'],
         'long-dialogue-v1': ['docs/long-dialogue-evaluation.md'],
+        'actor-ablation-v1': ['docs/actor-ablation-evaluation.md', 'scripts/actor-ablation.mjs', 'scripts/actor-ablation-eval.mjs', 'scripts/actor-perspective.mjs'],
         'actor-perspective-v1': ['docs/actor-perspective-evaluation.md', 'scripts/actor-perspective.mjs'],
     };
     assert(Object.hasOwn(protocols, version), 'Unknown evaluation fixture');
@@ -54,6 +56,7 @@ export function naturalCases(fixture = loadNaturalFixture()) {
 
 export function naturalSchedule(fixture = loadNaturalFixture()) {
     const cases = naturalCases(fixture);
+    if (fixture.version === 'actor-ablation-v1') return ablationSchedule(cases, fixture.settings.repetitions);
     return Array.from({ length: fixture.settings.repetitions }, (_, repetition) => cases.flatMap((item, i) =>
         ((i + repetition) % 2 ? ['on', 'off'] : ['off', 'on']).map(mode => ({
             id: `${item.id}/r${repetition + 1}/${mode}`, case: item.id, repetition: repetition + 1, mode,

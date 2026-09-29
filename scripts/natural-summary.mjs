@@ -1,5 +1,6 @@
 // Integrity/measurement summary and blinded human-review packet; no lexical grading.
 import assert from 'node:assert/strict';
+import { ABLATION_MODES, ablationPromptEvidence } from './actor-ablation.mjs';
 import { actorPromptEvidence } from './actor-perspective.mjs';
 import { randomUUID } from 'node:crypto';
 import { readFileSync, realpathSync } from 'node:fs';
@@ -65,6 +66,11 @@ export function summarizeNatural(report) {
         if (fixture.version === 'actor-perspective-v1') {
             assert.deepEqual(row.actorEvidence, actorPromptEvidence(item, row.mode, generation.messages), 'Actor prompt evidence changed');
         }
+        if (fixture.version === 'actor-ablation-v1') {
+            assert.deepEqual(row.ablationEvidence, ablationPromptEvidence(item, fixture, row.mode, generation.messages));
+            assert.equal(row.selectionHash, hash(fixture.ablation.selections[item.id]), 'Frozen selection changed');
+            assert.equal(row.memoryTokens, fixture.ablation.selections[item.id].labelledTokens);
+        }
         assert.equal(generation.finishReason, 'stop');
         assert.equal(generation.providerAnswer.trim(), row.answer.trim(), 'Provider answer mismatch');
         assert.equal(generation.answer.trim(), row.answer.trim(), 'Saved host answer mismatch');
@@ -78,7 +84,7 @@ export function summarizeNatural(report) {
     if (report.providerSpacing) assert(/^[a-f0-9]{64}$/.test(report.initialSourceSha256['scripts/provider-spacing.mjs']), 'Missing spacing source identity');
     const metrics = rows => ({ samples: rows.length, answerable: rows.filter(row => row.kind !== 'unknown').length, allRequiredInMemory: rows.filter(row => row.requiredEvidence.length && row.requiredEvidence.every(e => e.inMemory)).length, allRequiredInPrompt: rows.filter(row => row.requiredEvidence.length && row.requiredEvidence.every(e => e.inPrompt)).length, oldWithoutCorrection: rows.filter(row => row.kind === 'correction' && row.supersededEvidence.some(e => e.inMemory) && !row.requiredEvidence.every(e => e.inMemory)).length, baselineTruncated: rows.filter(row => row.baselineTruncated).length, memoryTokens: distribution(rows.map(row => row.memoryTokens)), promptTokens: distribution(rows.map(row => row.usage?.prompt_tokens)), syncMs: distribution(rows.map(row => row.syncMs)), retrievalMs: distribution(rows.map(row => row.retrievalMs)), generationMs: distribution(rows.map(row => row.generationMs)) });
     const groups = [];
-    for (const mode of ['off', 'on']) {
+    for (const mode of (evaluation.version === 'actor-ablation-v1' ? ABLATION_MODES : ['off', 'on'])) {
         groups.push({ mode, ...metrics(evaluation.rows.filter(row => row.mode === mode)) });
         for (const language of ['en', 'ko']) for (const kind of ['return', 'correction', 'reference', 'unknown']) groups.push({ mode, language, kind, ...metrics(evaluation.rows.filter(row => row.mode === mode && row.language === language && row.kind === kind)) });
     }
@@ -138,9 +144,19 @@ export function scoreNaturalAnnotations(report, packet, key) {
     });
     const pass = r => ['correct', 'unknown-handled'].includes(r.outcome) && !r.unsupportedAssertion;
     const groups = [];
-    for (const mode of ['off', 'on']) for (const language of [null, 'en', 'ko']) for (const kind of language ? ['return', 'correction', 'reference', 'unknown'] : [null]) {
+    for (const mode of (report.evaluation.version === 'actor-ablation-v1' ? ABLATION_MODES : ['off', 'on'])) for (const language of [null, 'en', 'ko']) for (const kind of language ? ['return', 'correction', 'reference', 'unknown'] : [null]) {
         const rows = scored.filter(r => r.mode === mode && (!language || r.language === language) && (!kind || r.kind === kind));
         groups.push({ mode, language, kind, samples: rows.length, passed: rows.filter(pass).length, outcomes: Object.fromEntries(['correct', 'partial', 'incorrect', 'abstained', 'unknown-handled'].map(outcome => [outcome, rows.filter(r => r.outcome === outcome).length])), unsupportedAssertions: rows.filter(r => r.unsupportedAssertion).length });
+    }
+    if (report.evaluation.version === 'actor-ablation-v1') {
+        const contrasts = [['full-raw', 'full-labelled'], ['sparse-raw', 'sparse-labelled'], ['full-raw', 'sparse-raw'], ['full-labelled', 'sparse-labelled']];
+        const paired = contrasts.flatMap(([from, to]) => scored.filter(row => row.mode === from).map(before => {
+            const after = scored.find(row => row.case === before.case && row.repetition === before.repetition && row.mode === to);
+            assert(after, 'Missing ablation pair');
+            const strictPassDelta = Number(pass(after)) - Number(pass(before));
+            return { case: before.case, repetition: before.repetition, from, to, beforePassed: pass(before), afterPassed: pass(after), strictPassDelta };
+        }));
+        return { reportHash: summary.reportHash, reviewer: packet.reviewer, reviewerType: packet.reviewerType, semanticQualityGate: null, provisionalAssistantGate: null, diagnosticOnly: true, paired, groups, rows: scored.sort((a, b) => a.id.localeCompare(b.id)) };
     }
     const byId = new Map(scored.map(row => [row.id, row]));
     const paired = schedule.filter(sample => sample.mode === 'off').map(sample => {
