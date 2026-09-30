@@ -1,6 +1,8 @@
 import test from 'node:test';
+import { readFileSync } from 'node:fs';
+import { sha } from '../scripts/semantic-long.mjs';
 import assert from 'node:assert/strict';
-import { createDirectAdapter, directProtocol, inspectVectors } from '../scripts/semantic-direct.mjs';
+import { createDirectAdapter, directProtocol, directFiles, inspectVectors, verifyDirectEvidence } from '../scripts/semantic-direct.mjs';
 import { schema } from '../src/client.js';
 const vector = n => Array(1536).fill(n);
 const payload = count => ({ model: directProtocol.model, data: Array.from({ length: count }, (_, index) => ({ index, embedding: vector(index) })).reverse(), usage: { prompt_tokens: count, total_tokens: count } });
@@ -61,4 +63,24 @@ test('provider errors and cancellation do not retry or return transformed data',
     assert.equal(calls, 1);
     await assert.rejects(transform('/collections/owned/docs/upsert', { docs: [{ text: 'input' }] }, { signal: controller.signal }));
     assert.equal(calls, 1);
+});
+
+
+test('direct evidence rejects provider failures, deadline expansion, unfinished database legs and changed sources', () => {
+    const hashes = Object.fromEntries(directFiles.map(file => [file, sha(readFileSync(new URL(`../${file}`, import.meta.url)))]));
+    const report = {
+        embeddingMode: 'direct-experimental', directProtocol, initialSourceSha256: hashes, sourceSha256: { ...hashes },
+        directEmbeddings: [{ valid: true, preserved: true, providerStatus: 200, inputCount: 50, requestIndex: 0, embeddingMs: 300 }],
+        lambdaRequests: [{ status: 202, elapsedMs: 700, databaseMs: 400 }],
+    };
+    verifyDirectEvidence(report);
+    for (const mutate of [
+        r => { r.directProtocol.requestDeadlineMs = 30000; },
+        r => { r.directEmbeddings[0].providerStatus = 500; },
+        r => { r.directEmbeddings[0].inputCount = 51; },
+        r => { r.directEmbeddings[0].preserved = false; },
+        r => { r.lambdaRequests[0].elapsedMs = 15001; },
+        r => { delete r.lambdaRequests[0].databaseMs; },
+        r => { r.sourceSha256[directFiles[0]] = 'changed'; },
+    ]) { const changed = structuredClone(report); mutate(changed); assert.throws(() => verifyDirectEvidence(changed)); }
 });
