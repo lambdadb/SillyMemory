@@ -4,14 +4,17 @@ import { readFileSync } from 'node:fs';
 import { sha } from '../scripts/semantic-long.mjs';
 import { bundlePlan, summarizeBundles } from '../scripts/context-bundle-replay.mjs';
 import { inspectBundleRow } from '../scripts/context-bundle-inspect.mjs';
+import { recordedSource } from '../scripts/recorded-source.mjs';
 const read = file => readFileSync(new URL(`../docs/results/${file}`, import.meta.url));
 const report = JSON.parse(read('context-bundle-replay-v1.json'));
 
 test('recorded replay retains frozen inputs, complete rows and all source-retention regressions', () => {
     const planBytes = read('context-bundle-plan-v1.json');
-    assert.deepEqual(bundlePlan(), JSON.parse(planBytes));
+    const historical = JSON.parse(planBytes), reconstructed = bundlePlan();
+    for (const file of Object.keys(reconstructed.sourceSha256)) reconstructed.sourceSha256[file] = sha(recordedSource(file, historical.sourceSha256[file]));
+    assert.deepEqual(reconstructed, historical);
     assert.equal(report.planSha256, sha(planBytes));
-    assert.deepEqual(report.sourceSha256, bundlePlan().sourceSha256);
+    assert.deepEqual(report.sourceSha256, historical.sourceSha256);
     assert.equal(report.complete, true); assert.equal(report.serviceCalls, 0);
     assert.equal(report.runtimeChanged, false); assert.equal(report.answerQuality, null);
     assert.equal(report.reproducedLegacy, 218); assert.equal(report.reproducedSemantic, 32);

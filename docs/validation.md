@@ -1130,3 +1130,27 @@ boundaries remain in the committed report; no runtime allocation change was made
 197 local unit/report tests pass, plus syntax and release checks. Emulator owned
 data cleanup and synthetic key-storage checks passed. Final managed-path live
 validation, semantic quality/human review and public promotion remain separate.
+
+## Final prompt verification and overflow handling — 2026-09-30
+
+The product now checks its prepared memory and verifiable recent messages against
+the assembled Chat Completion prompt. Missing/changed content stops generation
+by default before the completion request; a persisted warning-only option lets
+the user explicitly proceed. The panel separates preparation from final-host
+inclusion. This changes user behavior rather than only recording another audit.
+See [behavior and limits](prompt-delivery.md).
+
+The actual pinned-host/Chromium runner completed 11 scenarios plus an explicit
+same-chat recovery: five pressure cases made zero completion requests, six
+ordinary/warning/disabled cases completed, and one manual retry after increasing
+context completed without duplicating the question or changing preceding source.
+Streaming, swipe, regenerate, no search hits, continuation uncertainty and reload
+were covered. All generation locks/UI were released. A separate existing browser
+suite passed 22 checks with no page errors and no remaining owned collections.
+Upstreams were local emulators; no new live embedding/model evidence is claimed.
+
+Unit/report regressions cover role/content matching, duplicate messages, macros,
+stale/dry-run checks, historical source integrity and the saved host evidence.
+Prior report hashes and outcomes remain unchanged; archived source snapshots let
+their checks survive the runtime change without presenting them as new validation.
+No main promotion or release was performed.

@@ -8,7 +8,6 @@ import { loadLong, validateLong, longSchedule, semanticPromptEvidence, hostSourc
 import { verifyDirectEvidence } from './semantic-direct.mjs';
 import { NATURAL_RETRY } from './provider-retry.mjs';
 import { summarizeProviderSpacing } from './provider-spacing.mjs';
-import { recordedSource } from './recorded-source.mjs';
 // Counts literal source occurrences, not unique messages: repeated synthetic filler
 // can occur several times. The live adapter uses this same definition.
 export function verifySourcePresence(row, source, prompt) {
@@ -27,7 +26,7 @@ export function summarizeSemantic(report) {
     assert.deepEqual(evaluation.settings,fixture.settings);assert.deepEqual(evaluation.generation,fixture.generation);
     assert.equal(report.sillyTavern,'06bde939fb1e9c4c8d8641d810f0a916b5bce127');
     assert.equal(report.hostContextTokens,fixture.settings.context);assert.equal(report.model,fixture.generation.model);
-    for(const file of sourceFiles){assert(/^[a-f0-9]{64}$/.test(report.initialSourceSha256?.[file]),`Missing input hash: ${file}`);assert.equal(report.sourceSha256[file],report.initialSourceSha256[file],`Input changed: ${file}`);recordedSource(file,report.sourceSha256[file]);}
+    for(const file of sourceFiles){assert(/^[a-f0-9]{64}$/.test(report.initialSourceSha256?.[file]),`Missing input hash: ${file}`);assert.equal(report.sourceSha256[file],report.initialSourceSha256[file],`Input changed: ${file}`);assert.equal(sha(readFileSync(new URL(`../${file}`,import.meta.url))),report.sourceSha256[file],`Use recorded revision: ${file}`);}
     assert.equal(evaluation.rows.length,schedule.length);assert.equal(report.generations.length,schedule.length);
     assert.equal(new Set(evaluation.rows.map(row=>row.chatId)).size,schedule.length);
     if(report.transportProtocol)assert.deepEqual(report.transportProtocol,NATURAL_RETRY);
