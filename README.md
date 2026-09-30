@@ -234,6 +234,9 @@ See its [results and generation commands](docs/assistant-fallback-results.md).
 The [context-turn protocol](docs/context-turn-evaluation.md) runs with
 `SM_ARTIFACT_TAG=next-turn node scripts/live-smoke.mjs --context-turn`.
 See its [results and amended generation commands](docs/context-turn-results.md).
+The subsequent [fixed-budget passage-selection replay](docs/budget-selection-results.md)
+compares five offline candidates; all regress on an existing selected source,
+so runtime selection remains unchanged.
 
 The [context candidate protocol](docs/context-candidate-evaluation.md) compares
 the current labelled selector, label removal, and label removal plus adjacent-turn
