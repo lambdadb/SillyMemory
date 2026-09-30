@@ -5,6 +5,8 @@ import { createHash } from 'node:crypto';
 // Exact historical producer snapshots, not a bypass for changed/unknown inputs.
 // The runtime adapter changed after these cohorts; do not relabel their evidence.
 const snapshots = {
+    'scripts/semantic-long.mjs:3e063de5f400d3c6dd4b010d6751385a3b2fb42d45b89a656fc204d00cc355a5': 'tests/fixtures/semantic-long-before-recall-guide-v1.txt',
+    'scripts/semantic-long.mjs:cf00bafebe290bc7d96524a50f72b9c0b7b30649bba54bee6b813374fb66502a': 'tests/fixtures/semantic-long-before-packing-v1.txt',
     'src/memory.js:f88515cf16bf8344961591d8b1b2a2ba1804fdd43ff667fb8c3896fa42af792c': 'tests/fixtures/memory-before-packing-v1.txt',
     'index.js:e02dbd971a7864a58bbb87394b29391bb05ac6f10073668cd4da30c90cb7f301': 'tests/fixtures/index-before-delivery-v1.txt',
     'scripts/semantic-results.mjs:a28b5ecafcd8b0b9a0bac385a36cb9bb21e6da66db224295e2b8edb30e203edd': 'tests/fixtures/semantic-results-direct-v1.txt',

@@ -1,0 +1,2936 @@
+{
+  "version": "semantic-long-v1",
+  "reportSha256": "29905fe63d8a398292ffc64c443e5fb292922f38feff91a7b37049f174a57d6e",
+  "reviewer": "Codex assistant; inspected all 64 answers and the fixed source/rubric; not independent or blinded",
+  "reviewerType": "assistant",
+  "rows": [
+    {
+      "id": "00ed18d4-7704-4682-b4af-4bbc9d428439",
+      "question": "What rental price did we agree for the brass sextant?",
+      "source": [
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "The brass sextant is in the east cabinet. I have not asked its owner about rental terms."
+        },
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "The cabinet key hangs beside the tide chart."
+        }
+      ],
+      "expected": {
+        "type": "abstain",
+        "answerRule": "Abstain: no rental price has been discussed or agreed.",
+        "forbiddenClaims": [
+          "Any invented price or currency.",
+          "Treating the cabinet location as a rental agreement."
+        ]
+      },
+      "evidence": [],
+      "answer": "We have not yet discussed or agreed on any rental price for the brass sextant.",
+      "grade": "abstained",
+      "rationale": "Correctly states that no rental price was discussed or agreed, without inventing a price."
+    },
+    {
+      "id": "0206aedb-093a-4842-8a86-b52b469260ec",
+      "question": "Which locker is reserved for Keiko, and until when?",
+      "source": [
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "The numbered locker beside the mural is called Harbor Six. The mural shows a sailboat."
+        },
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "It is reserved for Keiko until noon. The corridor lights turn on automatically."
+        }
+      ],
+      "expected": {
+        "type": "answer",
+        "answerRule": "Harbor Six, the numbered locker beside the mural, is reserved for Keiko until noon.",
+        "forbiddenClaims": [
+          "Inventing a different locker name.",
+          "Treating It as the mural."
+        ]
+      },
+      "evidence": [
+        {
+          "id": "reservation",
+          "kind": "answer",
+          "message": 1,
+          "start": 0,
+          "end": 36,
+          "quote": "It is reserved for Keiko until noon.",
+          "reason": "Reservation has a pronoun subject."
+        },
+        {
+          "id": "antecedent",
+          "kind": "reference",
+          "message": 0,
+          "start": 0,
+          "end": 58,
+          "quote": "The numbered locker beside the mural is called Harbor Six.",
+          "reason": "Resolves It to the named locker, not a guessed item."
+        }
+      ],
+      "answer": "The conversation does not mention which locker is reserved for Keiko or the reservation period.",
+      "grade": "abstained",
+      "rationale": "The answer states that the requested information is absent from the available conversation; it supplies no fabricated fact."
+    },
+    {
+      "id": "02789d95-e0d1-47d7-aa04-97245d989a1c",
+      "question": "남쪽 통로를 써도 되나요? 열리지 않으면 어디에서 기다려야 하나요?",
+      "source": [
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "남쪽 통로를 이용해도 돼요. 단, 정원 관리인이 차단문을 열었을 때만 가능하며 아니면 북쪽 온실에서 기다려요. 온실 지붕은 지난달에 칠했어요."
+        },
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "출입 조건을 적어 둘게요."
+        }
+      ],
+      "expected": {
+        "type": "answer",
+        "answerRule": "관리인이 차단문을 열었을 때만 남쪽 통로를 쓰고 아니면 북쪽 온실에서 기다린다.",
+        "forbiddenClaims": [
+          "조건 없이 남쪽 통로를 이용한다.",
+          "북쪽 온실 이외의 대기 장소를 만든다."
+        ]
+      },
+      "evidence": [
+        {
+          "id": "ramp",
+          "kind": "answer",
+          "message": 0,
+          "start": 0,
+          "end": 15,
+          "quote": "남쪽 통로를 이용해도 돼요.",
+          "reason": "Proposed route."
+        },
+        {
+          "id": "condition",
+          "kind": "qualification",
+          "message": 0,
+          "start": 16,
+          "end": 61,
+          "quote": "단, 정원 관리인이 차단문을 열었을 때만 가능하며 아니면 북쪽 온실에서 기다려요.",
+          "reason": "Mandatory condition and fallback."
+        }
+      ],
+      "answer": "대화에서 남쪽 통로 사용 여부나 대기 장소에 관한 내용은 언급되지 않았어요. 따라서 남쪽 통로를 써도 되는지, 열리지 않을 때 어디에서 기다려야 하는지는 알려진 바가 없어요.",
+      "grade": "abstained",
+      "rationale": "The answer states that the requested information is absent from the available conversation; it supplies no fabricated fact."
+    },
+    {
+      "id": "04417b7e-94ed-4581-a2b2-675c1cbb4f12",
+      "question": "보라색 나침반 대여료는 얼마로 합의했죠?",
+      "source": [
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "보라색 나침반은 북쪽 진열장에 있어요. 주인에게 대여 조건은 아직 묻지 않았어요."
+        },
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "진열장 열쇠는 식물 도감 옆에 걸려 있어요."
+        }
+      ],
+      "expected": {
+        "type": "abstain",
+        "answerRule": "대여료를 논의하거나 합의한 기록이 없으므로 모른다고 답한다.",
+        "forbiddenClaims": [
+          "금액이나 통화를 만들어낸다.",
+          "보관 위치를 대여 합의로 취급한다."
+        ]
+      },
+      "evidence": [],
+      "answer": "보라색 나침반 대여료에 관한 합의 내용은 아직 대화에서 언급되지 않았어요. 주인에게 대여 조건을 묻는 것도 아직 하지 않았다고 하셨으니, 관련 정보가 없어요.",
+      "grade": "abstained",
+      "rationale": "Correctly states that no rental price was discussed or agreed, without inventing a price."
+    },
+    {
+      "id": "05c8b637-7212-46d8-8b92-6e3915c83bf5",
+      "question": "Which item am I collecting and when, and which item are you collecting and when?",
+      "source": [
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "I will collect the indigo parcel on Friday. My bicycle has a new basket."
+        },
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "I will collect the silver case on Sunday. I put a blank checklist on the desk."
+        }
+      ],
+      "expected": {
+        "type": "answer",
+        "answerRule": "The user collects the indigo parcel on Friday; SillyMemory E2E Mira collects the silver case on Sunday.",
+        "forbiddenClaims": [
+          "Swapping User and SillyMemory E2E Mira.",
+          "Assigning both items to the same person."
+        ]
+      },
+      "evidence": [
+        {
+          "id": "user-task",
+          "kind": "answer",
+          "message": 0,
+          "start": 0,
+          "end": 43,
+          "quote": "I will collect the indigo parcel on Friday.",
+          "reason": "First person belongs to the user role."
+        },
+        {
+          "id": "assistant-task",
+          "kind": "answer",
+          "message": 1,
+          "start": 0,
+          "end": 41,
+          "quote": "I will collect the silver case on Sunday.",
+          "reason": "First person belongs to Lina, not the user."
+        }
+      ],
+      "answer": "You are collecting the indigo parcel on Friday. I am collecting the silver case on Sunday.",
+      "grade": "correct",
+      "rationale": "The answer satisfies the source-backed rule: The user collects the indigo parcel on Friday; SillyMemory E2E Mira collects the silver case on Sunday. It makes none of the forbidden claims."
+    },
+    {
+      "id": "0bf63e08-3fc0-4bc6-b76c-9053d819a6d6",
+      "question": "Who collects the amber crate, when, and is the leaflet statement correct?",
+      "source": [
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "The leaflet says, \"Owen will collect the amber crate.\""
+        },
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "That leaflet statement is false. Priya will collect the amber crate on Monday. The crate has a narrow leather strap."
+        }
+      ],
+      "expected": {
+        "type": "answer",
+        "answerRule": "Priya collects the amber crate on Monday; the leaflet claim about Owen is false.",
+        "forbiddenClaims": [
+          "Assigning the crate to Owen.",
+          "Treating the leaflet as current truth."
+        ]
+      },
+      "evidence": [
+        {
+          "id": "collector",
+          "kind": "answer",
+          "message": 1,
+          "start": 33,
+          "end": 78,
+          "quote": "Priya will collect the amber crate on Monday.",
+          "reason": "Current collector, not the quoted obsolete actor."
+        },
+        {
+          "id": "deny-leaflet",
+          "kind": "negation",
+          "message": 1,
+          "start": 0,
+          "end": 32,
+          "quote": "That leaflet statement is false.",
+          "reason": "Explicit denial must survive extraction."
+        },
+        {
+          "id": "leaflet-reference",
+          "kind": "reference",
+          "message": 0,
+          "start": 0,
+          "end": 54,
+          "quote": "The leaflet says, \"Owen will collect the amber crate.\"",
+          "reason": "Identifies what the anaphoric denial refers to."
+        }
+      ],
+      "answer": "Priya will collect the amber crate on Monday, and the crate has a narrow leather strap. The leaflet statement that \"Owen will collect the amber crate\" is false.",
+      "grade": "correct",
+      "rationale": "The answer satisfies the source-backed rule: Priya collects the amber crate on Monday; the leaflet claim about Owen is false. It makes none of the forbidden claims."
+    },
+    {
+      "id": "115171c5-fc6f-4b77-9ee6-b1cda9e258d5",
+      "question": "정원 안내 모임의 최종 시각은 언제이며 예전 시간도 가능한가요?",
+      "source": [
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "초안에는 정원 안내 모임이 오전 11시 10분이라고 적혀 있어요."
+        },
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "정원 안내 모임은 최종적으로 오후 1시 40분에 시작해요. 예전 오전 11시 10분 일정은 취소됐으며 선택할 수 없어요. 게시판 테두리는 새 나무로 바꿨어요."
+        }
+      ],
+      "expected": {
+        "type": "answer",
+        "answerRule": "오후 1시 40분이 최종이며 오전 11시 10분은 취소되어 불가능하다.",
+        "forbiddenClaims": [
+          "오전 11시 10분도 가능하다고 한다.",
+          "두 시각을 모두 현재 일정으로 제시한다."
+        ]
+      },
+      "evidence": [
+        {
+          "id": "final-time",
+          "kind": "answer",
+          "message": 1,
+          "start": 0,
+          "end": 32,
+          "quote": "정원 안내 모임은 최종적으로 오후 1시 40분에 시작해요.",
+          "reason": "Current final time."
+        },
+        {
+          "id": "cancel-old",
+          "kind": "correction",
+          "message": 1,
+          "start": 33,
+          "end": 67,
+          "quote": "예전 오전 11시 10분 일정은 취소됐으며 선택할 수 없어요.",
+          "reason": "Explicitly disallows the superseded option."
+        }
+      ],
+      "answer": "정원 안내 모임의 최종 시각은 오후 1시 40분이며, 예전 오전 11시 10분 일정은 취소되어 선택할 수 없어요.",
+      "grade": "correct",
+      "rationale": "The answer satisfies the source-backed rule: 오후 1시 40분이 최종이며 오전 11시 10분은 취소되어 불가능하다. It makes none of the forbidden claims."
+    },
+    {
+      "id": "275d113d-7164-4830-9f44-8adaf2e30692",
+      "question": "호박색 상자는 누가 언제 수거하며 안내지 내용은 맞나요?",
+      "source": [
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "안내지에는 \"태오가 호박색 상자를 수거한다\"라고 적혀 있어요."
+        },
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "그 안내지 내용은 사실이 아니에요. 유리가 월요일에 호박색 상자를 수거해요. 상자에는 가는 가죽 끈이 달려 있어요."
+        }
+      ],
+      "expected": {
+        "type": "answer",
+        "answerRule": "유리가 월요일에 수거하며 태오가 수거한다는 안내지 내용은 틀리다.",
+        "forbiddenClaims": [
+          "태오에게 수거를 맡긴다.",
+          "안내지를 현재 사실로 인정한다."
+        ]
+      },
+      "evidence": [
+        {
+          "id": "collector",
+          "kind": "answer",
+          "message": 1,
+          "start": 20,
+          "end": 42,
+          "quote": "유리가 월요일에 호박색 상자를 수거해요.",
+          "reason": "Actual collector."
+        },
+        {
+          "id": "deny-leaflet",
+          "kind": "negation",
+          "message": 1,
+          "start": 0,
+          "end": 19,
+          "quote": "그 안내지 내용은 사실이 아니에요.",
+          "reason": "Negation changes whether the quotation is true."
+        },
+        {
+          "id": "leaflet-reference",
+          "kind": "reference",
+          "message": 0,
+          "start": 0,
+          "end": 34,
+          "quote": "안내지에는 \"태오가 호박색 상자를 수거한다\"라고 적혀 있어요.",
+          "reason": "Identifies the denied statement."
+        }
+      ],
+      "answer": "죄송하지만, 지금까지 대화에서는 호박색 상자나 그 수거 시기, 안내지 내용에 관한 정보가 언급되지 않았어요. 따라서 그 부분에 대해 알려드릴 수 있는 내용이 없어요.",
+      "grade": "abstained",
+      "rationale": "The answer states that the requested information is absent from the available conversation; it supplies no fabricated fact."
+    },
+    {
+      "id": "289eca59-3171-4a5e-af24-9a5423c86eef",
+      "question": "제가 언제 무엇을 받기로 했고, 당신은 언제 무엇을 받기로 했죠?",
+      "source": [
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "저는 금요일에 청록색 보따리를 받을게요. 자전거 바구니를 새로 달았어요."
+        },
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "저는 일요일에 흰색 서류함을 받을게요. 책상에는 빈 점검표를 뒀어요."
+        }
+      ],
+      "expected": {
+        "type": "answer",
+        "answerRule": "사용자는 금요일에 청록색 보따리를, SillyMemory E2E Mira은 일요일에 흰색 서류함을 받는다.",
+        "forbiddenClaims": [
+          "사용자와 SillyMemory E2E Mira의 역할을 뒤바꾼다.",
+          "두 물건을 같은 사람이 받는다고 한다."
+        ]
+      },
+      "evidence": [
+        {
+          "id": "user-task",
+          "kind": "answer",
+          "message": 0,
+          "start": 0,
+          "end": 22,
+          "quote": "저는 금요일에 청록색 보따리를 받을게요.",
+          "reason": "User first person."
+        },
+        {
+          "id": "assistant-task",
+          "kind": "answer",
+          "message": 1,
+          "start": 0,
+          "end": 21,
+          "quote": "저는 일요일에 흰색 서류함을 받을게요.",
+          "reason": "Assistant first person."
+        }
+      ],
+      "answer": "당신은 금요일에 청록색 보따리를 받기로 했고, 저는 일요일에 흰색 서류함을 받기로 했어요.",
+      "grade": "correct",
+      "rationale": "The answer satisfies the source-backed rule: 사용자는 금요일에 청록색 보따리를, SillyMemory E2E Mira은 일요일에 흰색 서류함을 받는다. It makes none of the forbidden claims."
+    },
+    {
+      "id": "2948f1c2-8f52-422e-83e1-fa1857ce4b9a",
+      "question": "Which item am I collecting and when, and which item are you collecting and when?",
+      "source": [
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "I will collect the indigo parcel on Friday. My bicycle has a new basket."
+        },
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "I will collect the silver case on Sunday. I put a blank checklist on the desk."
+        }
+      ],
+      "expected": {
+        "type": "answer",
+        "answerRule": "The user collects the indigo parcel on Friday; SillyMemory E2E Mira collects the silver case on Sunday.",
+        "forbiddenClaims": [
+          "Swapping User and SillyMemory E2E Mira.",
+          "Assigning both items to the same person."
+        ]
+      },
+      "evidence": [
+        {
+          "id": "user-task",
+          "kind": "answer",
+          "message": 0,
+          "start": 0,
+          "end": 43,
+          "quote": "I will collect the indigo parcel on Friday.",
+          "reason": "First person belongs to the user role."
+        },
+        {
+          "id": "assistant-task",
+          "kind": "answer",
+          "message": 1,
+          "start": 0,
+          "end": 41,
+          "quote": "I will collect the silver case on Sunday.",
+          "reason": "First person belongs to Lina, not the user."
+        }
+      ],
+      "answer": "There is no information in our conversation about which parcel or case you or I are collecting, or when those collections are scheduled. If you want, we can start planning those details now.",
+      "grade": "abstained",
+      "rationale": "The answer states that the requested information is absent from the available conversation; it supplies no fabricated fact."
+    },
+    {
+      "id": "2958c16a-d729-47fd-96cb-f8743c4830fe",
+      "question": "Who promised to return the jade whistle, and when?",
+      "source": [
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "The handwritten note is signed by Farah. Its envelope has no stamp."
+        },
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "\"I will return the jade whistle on Tuesday.\" That is copied from the signed note, not my own promise."
+        }
+      ],
+      "expected": {
+        "type": "answer",
+        "answerRule": "Farah promised to return the jade whistle on Tuesday; SillyMemory E2E Mira is quoting the note.",
+        "forbiddenClaims": [
+          "Saying SillyMemory E2E Mira or the user made the promise.",
+          "Changing Tuesday."
+        ]
+      },
+      "evidence": [
+        {
+          "id": "promise",
+          "kind": "answer",
+          "message": 1,
+          "start": 0,
+          "end": 44,
+          "quote": "\"I will return the jade whistle on Tuesday.\"",
+          "reason": "The promise text is quoted first person."
+        },
+        {
+          "id": "signature",
+          "kind": "attribution",
+          "message": 0,
+          "start": 0,
+          "end": 40,
+          "quote": "The handwritten note is signed by Farah.",
+          "reason": "Identifies the quoted speaker."
+        },
+        {
+          "id": "quote-status",
+          "kind": "attribution",
+          "message": 1,
+          "start": 45,
+          "end": 101,
+          "quote": "That is copied from the signed note, not my own promise.",
+          "reason": "Prevents assigning the quotation to the assistant."
+        }
+      ],
+      "answer": "The conversation does not mention anyone promising to return the jade whistle or specify when that would happen.",
+      "grade": "abstained",
+      "rationale": "The answer states that the requested information is absent from the available conversation; it supplies no fabricated fact."
+    },
+    {
+      "id": "296f3c1f-c34a-4f76-b4e6-27a557562b00",
+      "question": "정원 안내 모임의 최종 시각은 언제이며 예전 시간도 가능한가요?",
+      "source": [
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "초안에는 정원 안내 모임이 오전 11시 10분이라고 적혀 있어요."
+        },
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "정원 안내 모임은 최종적으로 오후 1시 40분에 시작해요. 예전 오전 11시 10분 일정은 취소됐으며 선택할 수 없어요. 게시판 테두리는 새 나무로 바꿨어요."
+        }
+      ],
+      "expected": {
+        "type": "answer",
+        "answerRule": "오후 1시 40분이 최종이며 오전 11시 10분은 취소되어 불가능하다.",
+        "forbiddenClaims": [
+          "오전 11시 10분도 가능하다고 한다.",
+          "두 시각을 모두 현재 일정으로 제시한다."
+        ]
+      },
+      "evidence": [
+        {
+          "id": "final-time",
+          "kind": "answer",
+          "message": 1,
+          "start": 0,
+          "end": 32,
+          "quote": "정원 안내 모임은 최종적으로 오후 1시 40분에 시작해요.",
+          "reason": "Current final time."
+        },
+        {
+          "id": "cancel-old",
+          "kind": "correction",
+          "message": 1,
+          "start": 33,
+          "end": 67,
+          "quote": "예전 오전 11시 10분 일정은 취소됐으며 선택할 수 없어요.",
+          "reason": "Explicitly disallows the superseded option."
+        }
+      ],
+      "answer": "죄송하지만, 지금까지 대화에서는 정원 안내 모임의 최종 시각이나 이전 시간에 관한 정보가 언급되지 않았어요. 따라서 그 내용을 알려드릴 수 없어요.",
+      "grade": "abstained",
+      "rationale": "The answer states that the requested information is absent from the available conversation; it supplies no fabricated fact."
+    },
+    {
+      "id": "2a5edd20-d0d2-45c6-9a4a-d44ef48124e3",
+      "question": "Can we use the east ramp, and what should we do if it is not opened?",
+      "source": [
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "We can use the east ramp. Only if the harbor marshal opens its barrier; otherwise wait at the west shed. The shed roof was repainted last month."
+        },
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "I have noted the access instructions."
+        }
+      ],
+      "expected": {
+        "type": "answer",
+        "answerRule": "Use the east ramp only when the marshal opens its barrier; otherwise wait at the west shed.",
+        "forbiddenClaims": [
+          "Unconditional access to the ramp.",
+          "Waiting at the east ramp instead of the west shed."
+        ]
+      },
+      "evidence": [
+        {
+          "id": "ramp",
+          "kind": "answer",
+          "message": 0,
+          "start": 0,
+          "end": 25,
+          "quote": "We can use the east ramp.",
+          "reason": "Proposed route."
+        },
+        {
+          "id": "condition",
+          "kind": "qualification",
+          "message": 0,
+          "start": 26,
+          "end": 104,
+          "quote": "Only if the harbor marshal opens its barrier; otherwise wait at the west shed.",
+          "reason": "Necessary condition and fallback; the first sentence alone overstates permission."
+        }
+      ],
+      "answer": "Yes, we can use the east ramp only if the harbor marshal opens its barrier; otherwise, we should wait at the west shed.",
+      "grade": "correct",
+      "rationale": "The answer satisfies the source-backed rule: Use the east ramp only when the marshal opens its barrier; otherwise wait at the west shed. It makes none of the forbidden claims."
+    },
+    {
+      "id": "303fe44b-389e-4730-8b0e-26aafc1582a3",
+      "question": "Who brings the copper compass, and when?",
+      "source": [
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "The dock office needs a fresh coat of paint. Nadia will bring the copper compass on Thursday morning. The windows were washed yesterday."
+        },
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "I will keep space on the workbench."
+        }
+      ],
+      "expected": {
+        "type": "answer",
+        "answerRule": "Nadia brings the copper compass on Thursday morning.",
+        "forbiddenClaims": [
+          "Assigning delivery to SillyMemory E2E Mira or User.",
+          "Changing Thursday morning."
+        ]
+      },
+      "evidence": [
+        {
+          "id": "delivery",
+          "kind": "answer",
+          "message": 0,
+          "start": 45,
+          "end": 101,
+          "quote": "Nadia will bring the copper compass on Thursday morning.",
+          "reason": "Contains actor, object and time; the paint/windows are unrelated."
+        }
+      ],
+      "answer": "The conversation does not include any information about who brings the copper compass or when it will be delivered.",
+      "grade": "abstained",
+      "rationale": "The answer states that the requested information is absent from the available conversation; it supplies no fabricated fact."
+    },
+    {
+      "id": "37b51276-53a4-4aa9-975e-412de615d394",
+      "question": "Can we use the east ramp, and what should we do if it is not opened?",
+      "source": [
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "We can use the east ramp. Only if the harbor marshal opens its barrier; otherwise wait at the west shed. The shed roof was repainted last month."
+        },
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "I have noted the access instructions."
+        }
+      ],
+      "expected": {
+        "type": "answer",
+        "answerRule": "Use the east ramp only when the marshal opens its barrier; otherwise wait at the west shed.",
+        "forbiddenClaims": [
+          "Unconditional access to the ramp.",
+          "Waiting at the east ramp instead of the west shed."
+        ]
+      },
+      "evidence": [
+        {
+          "id": "ramp",
+          "kind": "answer",
+          "message": 0,
+          "start": 0,
+          "end": 25,
+          "quote": "We can use the east ramp.",
+          "reason": "Proposed route."
+        },
+        {
+          "id": "condition",
+          "kind": "qualification",
+          "message": 0,
+          "start": 26,
+          "end": 104,
+          "quote": "Only if the harbor marshal opens its barrier; otherwise wait at the west shed.",
+          "reason": "Necessary condition and fallback; the first sentence alone overstates permission."
+        }
+      ],
+      "answer": "The conversation does not include any information about using the east ramp or what to do if it is not opened. I cannot provide instructions on that based on our earlier discussion.",
+      "grade": "abstained",
+      "rationale": "The answer states that the requested information is absent from the available conversation; it supplies no fabricated fact."
+    },
+    {
+      "id": "3806bb57-a55d-4499-8415-2d8ddac6c0ca",
+      "question": "산호색 호루라기를 누가 언제 돌려주겠다고 했나요?",
+      "source": [
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "손편지에는 해솔의 서명이 있어요. 봉투에는 우표가 없어요."
+        },
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "\"제가 수요일에 산호색 호루라기를 돌려드릴게요.\" 이것은 서명된 편지에서 옮긴 말이며 제가 한 약속은 아니에요."
+        }
+      ],
+      "expected": {
+        "type": "answer",
+        "answerRule": "해솔이 수요일에 산호색 호루라기를 돌려주겠다고 했으며 SillyMemory E2E Mira은 인용했다.",
+        "forbiddenClaims": [
+          "SillyMemory E2E Mira 또는 사용자가 약속했다고 한다.",
+          "수요일을 바꾼다."
+        ]
+      },
+      "evidence": [
+        {
+          "id": "promise",
+          "kind": "answer",
+          "message": 1,
+          "start": 0,
+          "end": 27,
+          "quote": "\"제가 수요일에 산호색 호루라기를 돌려드릴게요.\"",
+          "reason": "Quoted first-person promise."
+        },
+        {
+          "id": "signature",
+          "kind": "attribution",
+          "message": 0,
+          "start": 0,
+          "end": 18,
+          "quote": "손편지에는 해솔의 서명이 있어요.",
+          "reason": "Identifies the author of the quote."
+        },
+        {
+          "id": "quote-status",
+          "kind": "attribution",
+          "message": 1,
+          "start": 28,
+          "end": 62,
+          "quote": "이것은 서명된 편지에서 옮긴 말이며 제가 한 약속은 아니에요.",
+          "reason": "Distinguishes quotation author from assistant speaker."
+        }
+      ],
+      "answer": "죄송하지만, 이 대화에서는 산호색 호루라기를 누가 언제 돌려주겠다고 한 내용이 없어요.",
+      "grade": "abstained",
+      "rationale": "The answer states that the requested information is absent from the available conversation; it supplies no fabricated fact."
+    },
+    {
+      "id": "393e387e-a77a-47fa-8ea6-032f872400c5",
+      "question": "What is the final ferry briefing time, and is the old slot still available?",
+      "source": [
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "The draft ferry briefing is at 09:20."
+        },
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "The final ferry briefing starts at 10:45. The earlier 09:20 slot is canceled and is not an alternative. The noticeboard has a new wooden frame."
+        }
+      ],
+      "expected": {
+        "type": "answer",
+        "answerRule": "10:45 is final; 09:20 is canceled, not a second option.",
+        "forbiddenClaims": [
+          "Offering 09:20 as a valid alternative.",
+          "Presenting both times as current."
+        ]
+      },
+      "evidence": [
+        {
+          "id": "final-time",
+          "kind": "answer",
+          "message": 1,
+          "start": 0,
+          "end": 41,
+          "quote": "The final ferry briefing starts at 10:45.",
+          "reason": "Names the current final time."
+        },
+        {
+          "id": "cancel-old",
+          "kind": "correction",
+          "message": 1,
+          "start": 42,
+          "end": 103,
+          "quote": "The earlier 09:20 slot is canceled and is not an alternative.",
+          "reason": "The question explicitly asks whether the old slot remains available."
+        }
+      ],
+      "answer": "The conversation does not include any information about the final ferry briefing time or the availability of the old slot. I cannot provide those details based on our earlier discussion.",
+      "grade": "abstained",
+      "rationale": "The answer states that the requested information is absent from the available conversation; it supplies no fabricated fact."
+    },
+    {
+      "id": "3de01b0b-8bfb-4096-a6e1-f1c4761e85b9",
+      "question": "Which item am I collecting and when, and which item are you collecting and when?",
+      "source": [
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "I will collect the indigo parcel on Friday. My bicycle has a new basket."
+        },
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "I will collect the silver case on Sunday. I put a blank checklist on the desk."
+        }
+      ],
+      "expected": {
+        "type": "answer",
+        "answerRule": "The user collects the indigo parcel on Friday; SillyMemory E2E Mira collects the silver case on Sunday.",
+        "forbiddenClaims": [
+          "Swapping User and SillyMemory E2E Mira.",
+          "Assigning both items to the same person."
+        ]
+      },
+      "evidence": [
+        {
+          "id": "user-task",
+          "kind": "answer",
+          "message": 0,
+          "start": 0,
+          "end": 43,
+          "quote": "I will collect the indigo parcel on Friday.",
+          "reason": "First person belongs to the user role."
+        },
+        {
+          "id": "assistant-task",
+          "kind": "answer",
+          "message": 1,
+          "start": 0,
+          "end": 41,
+          "quote": "I will collect the silver case on Sunday.",
+          "reason": "First person belongs to Lina, not the user."
+        }
+      ],
+      "answer": "You will collect the indigo parcel on Friday. I will collect the silver case on Sunday.",
+      "grade": "correct",
+      "rationale": "The answer satisfies the source-backed rule: The user collects the indigo parcel on Friday; SillyMemory E2E Mira collects the silver case on Sunday. It makes none of the forbidden claims."
+    },
+    {
+      "id": "40fa4841-4da7-41c5-b850-1d95c7fa227c",
+      "question": "예린에게 어느 보관함을 언제까지 배정했나요?",
+      "source": [
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "분수 옆의 번호 달린 보관함은 정원 일곱이라고 불러요. 분수 조명은 초록색이에요."
+        },
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "그것은 예린에게 오후 4시까지 배정돼 있어요. 복도 불은 자동으로 켜져요."
+        }
+      ],
+      "expected": {
+        "type": "answer",
+        "answerRule": "분수 옆 정원 일곱 보관함을 예린에게 오후 4시까지 배정했다.",
+        "forbiddenClaims": [
+          "보관함 이름을 만들어낸다.",
+          "그것을 분수로 해석한다."
+        ]
+      },
+      "evidence": [
+        {
+          "id": "reservation",
+          "kind": "answer",
+          "message": 1,
+          "start": 0,
+          "end": 25,
+          "quote": "그것은 예린에게 오후 4시까지 배정돼 있어요.",
+          "reason": "Pronoun-subject reservation."
+        },
+        {
+          "id": "antecedent",
+          "kind": "reference",
+          "message": 0,
+          "start": 0,
+          "end": 30,
+          "quote": "분수 옆의 번호 달린 보관함은 정원 일곱이라고 불러요.",
+          "reason": "Identifies the pronoun subject."
+        }
+      ],
+      "answer": "예린에게 분수 옆의 번호 달린 보관함, 즉 정원 일곱이 오후 4시까지 배정돼 있어요.",
+      "grade": "correct",
+      "rationale": "The answer satisfies the source-backed rule: 분수 옆 정원 일곱 보관함을 예린에게 오후 4시까지 배정했다. It makes none of the forbidden claims."
+    },
+    {
+      "id": "4225ad50-464e-4a1d-b05e-57e16257112e",
+      "question": "Who promised to return the jade whistle, and when?",
+      "source": [
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "The handwritten note is signed by Farah. Its envelope has no stamp."
+        },
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "\"I will return the jade whistle on Tuesday.\" That is copied from the signed note, not my own promise."
+        }
+      ],
+      "expected": {
+        "type": "answer",
+        "answerRule": "Farah promised to return the jade whistle on Tuesday; SillyMemory E2E Mira is quoting the note.",
+        "forbiddenClaims": [
+          "Saying SillyMemory E2E Mira or the user made the promise.",
+          "Changing Tuesday."
+        ]
+      },
+      "evidence": [
+        {
+          "id": "promise",
+          "kind": "answer",
+          "message": 1,
+          "start": 0,
+          "end": 44,
+          "quote": "\"I will return the jade whistle on Tuesday.\"",
+          "reason": "The promise text is quoted first person."
+        },
+        {
+          "id": "signature",
+          "kind": "attribution",
+          "message": 0,
+          "start": 0,
+          "end": 40,
+          "quote": "The handwritten note is signed by Farah.",
+          "reason": "Identifies the quoted speaker."
+        },
+        {
+          "id": "quote-status",
+          "kind": "attribution",
+          "message": 1,
+          "start": 45,
+          "end": 101,
+          "quote": "That is copied from the signed note, not my own promise.",
+          "reason": "Prevents assigning the quotation to the assistant."
+        }
+      ],
+      "answer": "The conversation does not mention anyone promising to return the jade whistle or specify when that would happen.",
+      "grade": "abstained",
+      "rationale": "The answer states that the requested information is absent from the available conversation; it supplies no fabricated fact."
+    },
+    {
+      "id": "439dafc9-8dd4-4ba5-9cb3-be4724a2e033",
+      "question": "남쪽 통로를 써도 되나요? 열리지 않으면 어디에서 기다려야 하나요?",
+      "source": [
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "남쪽 통로를 이용해도 돼요. 단, 정원 관리인이 차단문을 열었을 때만 가능하며 아니면 북쪽 온실에서 기다려요. 온실 지붕은 지난달에 칠했어요."
+        },
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "출입 조건을 적어 둘게요."
+        }
+      ],
+      "expected": {
+        "type": "answer",
+        "answerRule": "관리인이 차단문을 열었을 때만 남쪽 통로를 쓰고 아니면 북쪽 온실에서 기다린다.",
+        "forbiddenClaims": [
+          "조건 없이 남쪽 통로를 이용한다.",
+          "북쪽 온실 이외의 대기 장소를 만든다."
+        ]
+      },
+      "evidence": [
+        {
+          "id": "ramp",
+          "kind": "answer",
+          "message": 0,
+          "start": 0,
+          "end": 15,
+          "quote": "남쪽 통로를 이용해도 돼요.",
+          "reason": "Proposed route."
+        },
+        {
+          "id": "condition",
+          "kind": "qualification",
+          "message": 0,
+          "start": 16,
+          "end": 61,
+          "quote": "단, 정원 관리인이 차단문을 열었을 때만 가능하며 아니면 북쪽 온실에서 기다려요.",
+          "reason": "Mandatory condition and fallback."
+        }
+      ],
+      "answer": "남쪽 통로는 정원 관리인이 차단문을 열었을 때만 이용할 수 있어요. 만약 차단문이 열리지 않으면 북쪽 온실에서 기다리면 돼요.",
+      "grade": "correct",
+      "rationale": "The answer satisfies the source-backed rule: 관리인이 차단문을 열었을 때만 남쪽 통로를 쓰고 아니면 북쪽 온실에서 기다린다. It makes none of the forbidden claims."
+    },
+    {
+      "id": "48ed0acb-722c-484b-bccb-9b12b6b74cfe",
+      "question": "옥색 망원경은 누가 언제 가져오나요?",
+      "source": [
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "정원 사무실의 벽지는 새로 붙였어요. 다은이 옥색 망원경을 화요일 오후에 가져와요. 화분은 어제 물을 줬어요."
+        },
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "작업대에 자리를 비워 둘게요."
+        }
+      ],
+      "expected": {
+        "type": "answer",
+        "answerRule": "다은이 옥색 망원경을 화요일 오후에 가져온다.",
+        "forbiddenClaims": [
+          "SillyMemory E2E Mira이나 사용자에게 가져올 책임을 돌린다.",
+          "화요일 오후를 바꾼다."
+        ]
+      },
+      "evidence": [
+        {
+          "id": "delivery",
+          "kind": "answer",
+          "message": 0,
+          "start": 21,
+          "end": 46,
+          "quote": "다은이 옥색 망원경을 화요일 오후에 가져와요.",
+          "reason": "The actor/object/time sentence is sufficient; wallpaper and plants are unrelated."
+        }
+      ],
+      "answer": "다은이가 화요일 오후에 옥색 망원경을 가져와요.",
+      "grade": "correct",
+      "rationale": "The answer satisfies the source-backed rule: 다은이 옥색 망원경을 화요일 오후에 가져온다. It makes none of the forbidden claims."
+    },
+    {
+      "id": "4a8f1f2e-b39a-46c8-a3f8-4a62034bc0e4",
+      "question": "보라색 나침반 대여료는 얼마로 합의했죠?",
+      "source": [
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "보라색 나침반은 북쪽 진열장에 있어요. 주인에게 대여 조건은 아직 묻지 않았어요."
+        },
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "진열장 열쇠는 식물 도감 옆에 걸려 있어요."
+        }
+      ],
+      "expected": {
+        "type": "abstain",
+        "answerRule": "대여료를 논의하거나 합의한 기록이 없으므로 모른다고 답한다.",
+        "forbiddenClaims": [
+          "금액이나 통화를 만들어낸다.",
+          "보관 위치를 대여 합의로 취급한다."
+        ]
+      },
+      "evidence": [],
+      "answer": "죄송하지만, 이번 대화에서는 보라색 나침반 대여료에 관한 내용이 언급되지 않았어요. 따라서 대여료 합의에 대한 정보는 없어요.",
+      "grade": "abstained",
+      "rationale": "The answer states that the requested information is absent from the available conversation; it supplies no fabricated fact."
+    },
+    {
+      "id": "504cb0e7-cdcf-475a-8648-f251692c1e6f",
+      "question": "예린에게 어느 보관함을 언제까지 배정했나요?",
+      "source": [
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "분수 옆의 번호 달린 보관함은 정원 일곱이라고 불러요. 분수 조명은 초록색이에요."
+        },
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "그것은 예린에게 오후 4시까지 배정돼 있어요. 복도 불은 자동으로 켜져요."
+        }
+      ],
+      "expected": {
+        "type": "answer",
+        "answerRule": "분수 옆 정원 일곱 보관함을 예린에게 오후 4시까지 배정했다.",
+        "forbiddenClaims": [
+          "보관함 이름을 만들어낸다.",
+          "그것을 분수로 해석한다."
+        ]
+      },
+      "evidence": [
+        {
+          "id": "reservation",
+          "kind": "answer",
+          "message": 1,
+          "start": 0,
+          "end": 25,
+          "quote": "그것은 예린에게 오후 4시까지 배정돼 있어요.",
+          "reason": "Pronoun-subject reservation."
+        },
+        {
+          "id": "antecedent",
+          "kind": "reference",
+          "message": 0,
+          "start": 0,
+          "end": 30,
+          "quote": "분수 옆의 번호 달린 보관함은 정원 일곱이라고 불러요.",
+          "reason": "Identifies the pronoun subject."
+        }
+      ],
+      "answer": "죄송하지만, 이번 대화에서는 예린에게 보관함을 언제까지 배정했다는 내용이 언급되지 않았어요.",
+      "grade": "abstained",
+      "rationale": "The answer states that the requested information is absent from the available conversation; it supplies no fabricated fact."
+    },
+    {
+      "id": "50c462ec-da0a-4050-877d-6961919aa6c3",
+      "question": "Which locker is reserved for Keiko, and until when?",
+      "source": [
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "The numbered locker beside the mural is called Harbor Six. The mural shows a sailboat."
+        },
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "It is reserved for Keiko until noon. The corridor lights turn on automatically."
+        }
+      ],
+      "expected": {
+        "type": "answer",
+        "answerRule": "Harbor Six, the numbered locker beside the mural, is reserved for Keiko until noon.",
+        "forbiddenClaims": [
+          "Inventing a different locker name.",
+          "Treating It as the mural."
+        ]
+      },
+      "evidence": [
+        {
+          "id": "reservation",
+          "kind": "answer",
+          "message": 1,
+          "start": 0,
+          "end": 36,
+          "quote": "It is reserved for Keiko until noon.",
+          "reason": "Reservation has a pronoun subject."
+        },
+        {
+          "id": "antecedent",
+          "kind": "reference",
+          "message": 0,
+          "start": 0,
+          "end": 58,
+          "quote": "The numbered locker beside the mural is called Harbor Six.",
+          "reason": "Resolves It to the named locker, not a guessed item."
+        }
+      ],
+      "answer": "The locker called Harbor Six, which is the numbered locker beside the mural showing a sailboat, is reserved for Keiko until noon.",
+      "grade": "correct",
+      "rationale": "The answer satisfies the source-backed rule: Harbor Six, the numbered locker beside the mural, is reserved for Keiko until noon. It makes none of the forbidden claims."
+    },
+    {
+      "id": "59c1db9d-fc79-4331-a21d-83a849de0191",
+      "question": "호박색 상자는 누가 언제 수거하며 안내지 내용은 맞나요?",
+      "source": [
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "안내지에는 \"태오가 호박색 상자를 수거한다\"라고 적혀 있어요."
+        },
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "그 안내지 내용은 사실이 아니에요. 유리가 월요일에 호박색 상자를 수거해요. 상자에는 가는 가죽 끈이 달려 있어요."
+        }
+      ],
+      "expected": {
+        "type": "answer",
+        "answerRule": "유리가 월요일에 수거하며 태오가 수거한다는 안내지 내용은 틀리다.",
+        "forbiddenClaims": [
+          "태오에게 수거를 맡긴다.",
+          "안내지를 현재 사실로 인정한다."
+        ]
+      },
+      "evidence": [
+        {
+          "id": "collector",
+          "kind": "answer",
+          "message": 1,
+          "start": 20,
+          "end": 42,
+          "quote": "유리가 월요일에 호박색 상자를 수거해요.",
+          "reason": "Actual collector."
+        },
+        {
+          "id": "deny-leaflet",
+          "kind": "negation",
+          "message": 1,
+          "start": 0,
+          "end": 19,
+          "quote": "그 안내지 내용은 사실이 아니에요.",
+          "reason": "Negation changes whether the quotation is true."
+        },
+        {
+          "id": "leaflet-reference",
+          "kind": "reference",
+          "message": 0,
+          "start": 0,
+          "end": 34,
+          "quote": "안내지에는 \"태오가 호박색 상자를 수거한다\"라고 적혀 있어요.",
+          "reason": "Identifies the denied statement."
+        }
+      ],
+      "answer": "안내지에 적힌 \"태오가 호박색 상자를 수거한다\"는 내용은 사실이 아니에요. 실제로는 유리가 월요일에 호박색 상자를 수거해요.",
+      "grade": "correct",
+      "rationale": "The answer satisfies the source-backed rule: 유리가 월요일에 수거하며 태오가 수거한다는 안내지 내용은 틀리다. It makes none of the forbidden claims."
+    },
+    {
+      "id": "5dbe647f-ca14-4bba-b64f-95235e77d235",
+      "question": "옥색 망원경은 누가 언제 가져오나요?",
+      "source": [
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "정원 사무실의 벽지는 새로 붙였어요. 다은이 옥색 망원경을 화요일 오후에 가져와요. 화분은 어제 물을 줬어요."
+        },
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "작업대에 자리를 비워 둘게요."
+        }
+      ],
+      "expected": {
+        "type": "answer",
+        "answerRule": "다은이 옥색 망원경을 화요일 오후에 가져온다.",
+        "forbiddenClaims": [
+          "SillyMemory E2E Mira이나 사용자에게 가져올 책임을 돌린다.",
+          "화요일 오후를 바꾼다."
+        ]
+      },
+      "evidence": [
+        {
+          "id": "delivery",
+          "kind": "answer",
+          "message": 0,
+          "start": 21,
+          "end": 46,
+          "quote": "다은이 옥색 망원경을 화요일 오후에 가져와요.",
+          "reason": "The actor/object/time sentence is sufficient; wallpaper and plants are unrelated."
+        }
+      ],
+      "answer": "죄송하지만, 이 대화에서는 옥색 망원경을 누가 언제 가져오는지에 대한 정보가 없어요.",
+      "grade": "abstained",
+      "rationale": "The answer states that the requested information is absent from the available conversation; it supplies no fabricated fact."
+    },
+    {
+      "id": "65d2d6ad-8b3b-4d8b-9e5e-727747b16018",
+      "question": "Which locker is reserved for Keiko, and until when?",
+      "source": [
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "The numbered locker beside the mural is called Harbor Six. The mural shows a sailboat."
+        },
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "It is reserved for Keiko until noon. The corridor lights turn on automatically."
+        }
+      ],
+      "expected": {
+        "type": "answer",
+        "answerRule": "Harbor Six, the numbered locker beside the mural, is reserved for Keiko until noon.",
+        "forbiddenClaims": [
+          "Inventing a different locker name.",
+          "Treating It as the mural."
+        ]
+      },
+      "evidence": [
+        {
+          "id": "reservation",
+          "kind": "answer",
+          "message": 1,
+          "start": 0,
+          "end": 36,
+          "quote": "It is reserved for Keiko until noon.",
+          "reason": "Reservation has a pronoun subject."
+        },
+        {
+          "id": "antecedent",
+          "kind": "reference",
+          "message": 0,
+          "start": 0,
+          "end": 58,
+          "quote": "The numbered locker beside the mural is called Harbor Six.",
+          "reason": "Resolves It to the named locker, not a guessed item."
+        }
+      ],
+      "answer": "The locker called Harbor Six, which is the numbered locker beside the mural showing a sailboat, is reserved for Keiko until noon.",
+      "grade": "correct",
+      "rationale": "The answer satisfies the source-backed rule: Harbor Six, the numbered locker beside the mural, is reserved for Keiko until noon. It makes none of the forbidden claims."
+    },
+    {
+      "id": "67f7c4c0-5613-4c74-b30b-e685a33a1d7e",
+      "question": "What is the final ferry briefing time, and is the old slot still available?",
+      "source": [
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "The draft ferry briefing is at 09:20."
+        },
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "The final ferry briefing starts at 10:45. The earlier 09:20 slot is canceled and is not an alternative. The noticeboard has a new wooden frame."
+        }
+      ],
+      "expected": {
+        "type": "answer",
+        "answerRule": "10:45 is final; 09:20 is canceled, not a second option.",
+        "forbiddenClaims": [
+          "Offering 09:20 as a valid alternative.",
+          "Presenting both times as current."
+        ]
+      },
+      "evidence": [
+        {
+          "id": "final-time",
+          "kind": "answer",
+          "message": 1,
+          "start": 0,
+          "end": 41,
+          "quote": "The final ferry briefing starts at 10:45.",
+          "reason": "Names the current final time."
+        },
+        {
+          "id": "cancel-old",
+          "kind": "correction",
+          "message": 1,
+          "start": 42,
+          "end": 103,
+          "quote": "The earlier 09:20 slot is canceled and is not an alternative.",
+          "reason": "The question explicitly asks whether the old slot remains available."
+        }
+      ],
+      "answer": "The final ferry briefing starts at 10:45. The earlier 09:20 slot is canceled and is not an alternative.",
+      "grade": "correct",
+      "rationale": "The answer satisfies the source-backed rule: 10:45 is final; 09:20 is canceled, not a second option. It makes none of the forbidden claims."
+    },
+    {
+      "id": "68ba49bb-95d3-461b-afe1-16e075548f1f",
+      "question": "제가 언제 무엇을 받기로 했고, 당신은 언제 무엇을 받기로 했죠?",
+      "source": [
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "저는 금요일에 청록색 보따리를 받을게요. 자전거 바구니를 새로 달았어요."
+        },
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "저는 일요일에 흰색 서류함을 받을게요. 책상에는 빈 점검표를 뒀어요."
+        }
+      ],
+      "expected": {
+        "type": "answer",
+        "answerRule": "사용자는 금요일에 청록색 보따리를, SillyMemory E2E Mira은 일요일에 흰색 서류함을 받는다.",
+        "forbiddenClaims": [
+          "사용자와 SillyMemory E2E Mira의 역할을 뒤바꾼다.",
+          "두 물건을 같은 사람이 받는다고 한다."
+        ]
+      },
+      "evidence": [
+        {
+          "id": "user-task",
+          "kind": "answer",
+          "message": 0,
+          "start": 0,
+          "end": 22,
+          "quote": "저는 금요일에 청록색 보따리를 받을게요.",
+          "reason": "User first person."
+        },
+        {
+          "id": "assistant-task",
+          "kind": "answer",
+          "message": 1,
+          "start": 0,
+          "end": 21,
+          "quote": "저는 일요일에 흰색 서류함을 받을게요.",
+          "reason": "Assistant first person."
+        }
+      ],
+      "answer": "죄송하지만, 이 대화에서는 보따리와 서류함을 언제 받기로 했다는 내용이 언급되지 않았어요. 따라서 그 약속에 관한 정보는 제공할 수 없어요.",
+      "grade": "abstained",
+      "rationale": "The answer states that the requested information is absent from the available conversation; it supplies no fabricated fact."
+    },
+    {
+      "id": "6966d356-37a8-49fe-8774-46f1080566d3",
+      "question": "정원 안내 모임의 최종 시각은 언제이며 예전 시간도 가능한가요?",
+      "source": [
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "초안에는 정원 안내 모임이 오전 11시 10분이라고 적혀 있어요."
+        },
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "정원 안내 모임은 최종적으로 오후 1시 40분에 시작해요. 예전 오전 11시 10분 일정은 취소됐으며 선택할 수 없어요. 게시판 테두리는 새 나무로 바꿨어요."
+        }
+      ],
+      "expected": {
+        "type": "answer",
+        "answerRule": "오후 1시 40분이 최종이며 오전 11시 10분은 취소되어 불가능하다.",
+        "forbiddenClaims": [
+          "오전 11시 10분도 가능하다고 한다.",
+          "두 시각을 모두 현재 일정으로 제시한다."
+        ]
+      },
+      "evidence": [
+        {
+          "id": "final-time",
+          "kind": "answer",
+          "message": 1,
+          "start": 0,
+          "end": 32,
+          "quote": "정원 안내 모임은 최종적으로 오후 1시 40분에 시작해요.",
+          "reason": "Current final time."
+        },
+        {
+          "id": "cancel-old",
+          "kind": "correction",
+          "message": 1,
+          "start": 33,
+          "end": 67,
+          "quote": "예전 오전 11시 10분 일정은 취소됐으며 선택할 수 없어요.",
+          "reason": "Explicitly disallows the superseded option."
+        }
+      ],
+      "answer": "죄송하지만, 지금까지 대화에서는 정원 안내 모임의 최종 시각이나 이전 시간에 관한 정보가 언급되지 않았어요. 따라서 그 일정에 대해 알려드릴 수 있는 내용이 없어요.",
+      "grade": "abstained",
+      "rationale": "The answer states that the requested information is absent from the available conversation; it supplies no fabricated fact."
+    },
+    {
+      "id": "6f64a433-9cd3-4c40-adb2-85d6f8fbb27f",
+      "question": "예린에게 어느 보관함을 언제까지 배정했나요?",
+      "source": [
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "분수 옆의 번호 달린 보관함은 정원 일곱이라고 불러요. 분수 조명은 초록색이에요."
+        },
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "그것은 예린에게 오후 4시까지 배정돼 있어요. 복도 불은 자동으로 켜져요."
+        }
+      ],
+      "expected": {
+        "type": "answer",
+        "answerRule": "분수 옆 정원 일곱 보관함을 예린에게 오후 4시까지 배정했다.",
+        "forbiddenClaims": [
+          "보관함 이름을 만들어낸다.",
+          "그것을 분수로 해석한다."
+        ]
+      },
+      "evidence": [
+        {
+          "id": "reservation",
+          "kind": "answer",
+          "message": 1,
+          "start": 0,
+          "end": 25,
+          "quote": "그것은 예린에게 오후 4시까지 배정돼 있어요.",
+          "reason": "Pronoun-subject reservation."
+        },
+        {
+          "id": "antecedent",
+          "kind": "reference",
+          "message": 0,
+          "start": 0,
+          "end": 30,
+          "quote": "분수 옆의 번호 달린 보관함은 정원 일곱이라고 불러요.",
+          "reason": "Identifies the pronoun subject."
+        }
+      ],
+      "answer": "죄송하지만, 예린에게 어느 보관함을 언제까지 배정했는지에 대한 정보는 지금까지 대화에서 언급되지 않았어요.",
+      "grade": "abstained",
+      "rationale": "The answer states that the requested information is absent from the available conversation; it supplies no fabricated fact."
+    },
+    {
+      "id": "73cfb099-c9ac-45a1-a87b-f3621a690e8a",
+      "question": "옥색 망원경은 누가 언제 가져오나요?",
+      "source": [
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "정원 사무실의 벽지는 새로 붙였어요. 다은이 옥색 망원경을 화요일 오후에 가져와요. 화분은 어제 물을 줬어요."
+        },
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "작업대에 자리를 비워 둘게요."
+        }
+      ],
+      "expected": {
+        "type": "answer",
+        "answerRule": "다은이 옥색 망원경을 화요일 오후에 가져온다.",
+        "forbiddenClaims": [
+          "SillyMemory E2E Mira이나 사용자에게 가져올 책임을 돌린다.",
+          "화요일 오후를 바꾼다."
+        ]
+      },
+      "evidence": [
+        {
+          "id": "delivery",
+          "kind": "answer",
+          "message": 0,
+          "start": 21,
+          "end": 46,
+          "quote": "다은이 옥색 망원경을 화요일 오후에 가져와요.",
+          "reason": "The actor/object/time sentence is sufficient; wallpaper and plants are unrelated."
+        }
+      ],
+      "answer": "다은이가 화요일 오후에 옥색 망원경을 가져와요.",
+      "grade": "correct",
+      "rationale": "The answer satisfies the source-backed rule: 다은이 옥색 망원경을 화요일 오후에 가져온다. It makes none of the forbidden claims."
+    },
+    {
+      "id": "79fd115b-cbd1-42bd-b903-0dff57016428",
+      "question": "What rental price did we agree for the brass sextant?",
+      "source": [
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "The brass sextant is in the east cabinet. I have not asked its owner about rental terms."
+        },
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "The cabinet key hangs beside the tide chart."
+        }
+      ],
+      "expected": {
+        "type": "abstain",
+        "answerRule": "Abstain: no rental price has been discussed or agreed.",
+        "forbiddenClaims": [
+          "Any invented price or currency.",
+          "Treating the cabinet location as a rental agreement."
+        ]
+      },
+      "evidence": [],
+      "answer": "The rental price for the brass sextant was not mentioned in our conversation.",
+      "grade": "abstained",
+      "rationale": "The answer states that the requested information is absent from the available conversation; it supplies no fabricated fact."
+    },
+    {
+      "id": "7b3d24ed-1f67-4aec-a512-2822f0b743bc",
+      "question": "제가 언제 무엇을 받기로 했고, 당신은 언제 무엇을 받기로 했죠?",
+      "source": [
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "저는 금요일에 청록색 보따리를 받을게요. 자전거 바구니를 새로 달았어요."
+        },
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "저는 일요일에 흰색 서류함을 받을게요. 책상에는 빈 점검표를 뒀어요."
+        }
+      ],
+      "expected": {
+        "type": "answer",
+        "answerRule": "사용자는 금요일에 청록색 보따리를, SillyMemory E2E Mira은 일요일에 흰색 서류함을 받는다.",
+        "forbiddenClaims": [
+          "사용자와 SillyMemory E2E Mira의 역할을 뒤바꾼다.",
+          "두 물건을 같은 사람이 받는다고 한다."
+        ]
+      },
+      "evidence": [
+        {
+          "id": "user-task",
+          "kind": "answer",
+          "message": 0,
+          "start": 0,
+          "end": 22,
+          "quote": "저는 금요일에 청록색 보따리를 받을게요.",
+          "reason": "User first person."
+        },
+        {
+          "id": "assistant-task",
+          "kind": "answer",
+          "message": 1,
+          "start": 0,
+          "end": 21,
+          "quote": "저는 일요일에 흰색 서류함을 받을게요.",
+          "reason": "Assistant first person."
+        }
+      ],
+      "answer": "죄송하지만, 이 대화에서는 보따리와 서류함을 받기로 한 구체적인 일정이나 약속에 대한 내용이 언급되지 않았어요. 따라서 언제 무엇을 받기로 했는지에 대한 정보는 제공할 수 없어요.",
+      "grade": "abstained",
+      "rationale": "The answer states that the requested information is absent from the available conversation; it supplies no fabricated fact."
+    },
+    {
+      "id": "8104ae20-84a8-41e6-a0d1-e4b498199894",
+      "question": "Who collects the amber crate, when, and is the leaflet statement correct?",
+      "source": [
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "The leaflet says, \"Owen will collect the amber crate.\""
+        },
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "That leaflet statement is false. Priya will collect the amber crate on Monday. The crate has a narrow leather strap."
+        }
+      ],
+      "expected": {
+        "type": "answer",
+        "answerRule": "Priya collects the amber crate on Monday; the leaflet claim about Owen is false.",
+        "forbiddenClaims": [
+          "Assigning the crate to Owen.",
+          "Treating the leaflet as current truth."
+        ]
+      },
+      "evidence": [
+        {
+          "id": "collector",
+          "kind": "answer",
+          "message": 1,
+          "start": 33,
+          "end": 78,
+          "quote": "Priya will collect the amber crate on Monday.",
+          "reason": "Current collector, not the quoted obsolete actor."
+        },
+        {
+          "id": "deny-leaflet",
+          "kind": "negation",
+          "message": 1,
+          "start": 0,
+          "end": 32,
+          "quote": "That leaflet statement is false.",
+          "reason": "Explicit denial must survive extraction."
+        },
+        {
+          "id": "leaflet-reference",
+          "kind": "reference",
+          "message": 0,
+          "start": 0,
+          "end": 54,
+          "quote": "The leaflet says, \"Owen will collect the amber crate.\"",
+          "reason": "Identifies what the anaphoric denial refers to."
+        }
+      ],
+      "answer": "The conversation does not include any information about who collects the amber crate, when it is collected, or whether the leaflet statement is correct.",
+      "grade": "abstained",
+      "rationale": "The answer states that the requested information is absent from the available conversation; it supplies no fabricated fact."
+    },
+    {
+      "id": "82dcd46e-16a2-4add-b77b-212aacb9b15a",
+      "question": "산호색 호루라기를 누가 언제 돌려주겠다고 했나요?",
+      "source": [
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "손편지에는 해솔의 서명이 있어요. 봉투에는 우표가 없어요."
+        },
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "\"제가 수요일에 산호색 호루라기를 돌려드릴게요.\" 이것은 서명된 편지에서 옮긴 말이며 제가 한 약속은 아니에요."
+        }
+      ],
+      "expected": {
+        "type": "answer",
+        "answerRule": "해솔이 수요일에 산호색 호루라기를 돌려주겠다고 했으며 SillyMemory E2E Mira은 인용했다.",
+        "forbiddenClaims": [
+          "SillyMemory E2E Mira 또는 사용자가 약속했다고 한다.",
+          "수요일을 바꾼다."
+        ]
+      },
+      "evidence": [
+        {
+          "id": "promise",
+          "kind": "answer",
+          "message": 1,
+          "start": 0,
+          "end": 27,
+          "quote": "\"제가 수요일에 산호색 호루라기를 돌려드릴게요.\"",
+          "reason": "Quoted first-person promise."
+        },
+        {
+          "id": "signature",
+          "kind": "attribution",
+          "message": 0,
+          "start": 0,
+          "end": 18,
+          "quote": "손편지에는 해솔의 서명이 있어요.",
+          "reason": "Identifies the author of the quote."
+        },
+        {
+          "id": "quote-status",
+          "kind": "attribution",
+          "message": 1,
+          "start": 28,
+          "end": 62,
+          "quote": "이것은 서명된 편지에서 옮긴 말이며 제가 한 약속은 아니에요.",
+          "reason": "Distinguishes quotation author from assistant speaker."
+        }
+      ],
+      "answer": "죄송하지만, 이 대화에서는 산호색 호루라기를 누가 언제 돌려주겠다고 한 내용이 없습니다.",
+      "grade": "abstained",
+      "rationale": "The answer states that the requested information is absent from the available conversation; it supplies no fabricated fact."
+    },
+    {
+      "id": "84a648cc-3b4b-49aa-8ae3-43267b1c8a27",
+      "question": "호박색 상자는 누가 언제 수거하며 안내지 내용은 맞나요?",
+      "source": [
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "안내지에는 \"태오가 호박색 상자를 수거한다\"라고 적혀 있어요."
+        },
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "그 안내지 내용은 사실이 아니에요. 유리가 월요일에 호박색 상자를 수거해요. 상자에는 가는 가죽 끈이 달려 있어요."
+        }
+      ],
+      "expected": {
+        "type": "answer",
+        "answerRule": "유리가 월요일에 수거하며 태오가 수거한다는 안내지 내용은 틀리다.",
+        "forbiddenClaims": [
+          "태오에게 수거를 맡긴다.",
+          "안내지를 현재 사실로 인정한다."
+        ]
+      },
+      "evidence": [
+        {
+          "id": "collector",
+          "kind": "answer",
+          "message": 1,
+          "start": 20,
+          "end": 42,
+          "quote": "유리가 월요일에 호박색 상자를 수거해요.",
+          "reason": "Actual collector."
+        },
+        {
+          "id": "deny-leaflet",
+          "kind": "negation",
+          "message": 1,
+          "start": 0,
+          "end": 19,
+          "quote": "그 안내지 내용은 사실이 아니에요.",
+          "reason": "Negation changes whether the quotation is true."
+        },
+        {
+          "id": "leaflet-reference",
+          "kind": "reference",
+          "message": 0,
+          "start": 0,
+          "end": 34,
+          "quote": "안내지에는 \"태오가 호박색 상자를 수거한다\"라고 적혀 있어요.",
+          "reason": "Identifies the denied statement."
+        }
+      ],
+      "answer": "죄송하지만, 지금까지 대화에서는 호박색 상자나 그 수거 시기, 안내지 내용에 관한 정보가 언급되지 않았어요. 따라서 그 부분에 대해 알려드릴 수 있는 내용이 없어요.",
+      "grade": "abstained",
+      "rationale": "The answer states that the requested information is absent from the available conversation; it supplies no fabricated fact."
+    },
+    {
+      "id": "8717df5f-be46-4bcc-b9f4-d8e85edb0b7d",
+      "question": "What rental price did we agree for the brass sextant?",
+      "source": [
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "The brass sextant is in the east cabinet. I have not asked its owner about rental terms."
+        },
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "The cabinet key hangs beside the tide chart."
+        }
+      ],
+      "expected": {
+        "type": "abstain",
+        "answerRule": "Abstain: no rental price has been discussed or agreed.",
+        "forbiddenClaims": [
+          "Any invented price or currency.",
+          "Treating the cabinet location as a rental agreement."
+        ]
+      },
+      "evidence": [],
+      "answer": "We have not agreed on any rental price for the brass sextant yet, as you mentioned you have not asked its owner about rental terms.",
+      "grade": "abstained",
+      "rationale": "Correctly states that no rental price was discussed or agreed, without inventing a price."
+    },
+    {
+      "id": "8a4bd1b1-3a6f-4a3b-8fa8-778d6e1837fd",
+      "question": "Who brings the copper compass, and when?",
+      "source": [
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "The dock office needs a fresh coat of paint. Nadia will bring the copper compass on Thursday morning. The windows were washed yesterday."
+        },
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "I will keep space on the workbench."
+        }
+      ],
+      "expected": {
+        "type": "answer",
+        "answerRule": "Nadia brings the copper compass on Thursday morning.",
+        "forbiddenClaims": [
+          "Assigning delivery to SillyMemory E2E Mira or User.",
+          "Changing Thursday morning."
+        ]
+      },
+      "evidence": [
+        {
+          "id": "delivery",
+          "kind": "answer",
+          "message": 0,
+          "start": 45,
+          "end": 101,
+          "quote": "Nadia will bring the copper compass on Thursday morning.",
+          "reason": "Contains actor, object and time; the paint/windows are unrelated."
+        }
+      ],
+      "answer": "The conversation does not include any information about who brings the copper compass or when it will be delivered.",
+      "grade": "abstained",
+      "rationale": "The answer states that the requested information is absent from the available conversation; it supplies no fabricated fact."
+    },
+    {
+      "id": "926142da-936a-44c9-8264-43e257ad1375",
+      "question": "옥색 망원경은 누가 언제 가져오나요?",
+      "source": [
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "정원 사무실의 벽지는 새로 붙였어요. 다은이 옥색 망원경을 화요일 오후에 가져와요. 화분은 어제 물을 줬어요."
+        },
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "작업대에 자리를 비워 둘게요."
+        }
+      ],
+      "expected": {
+        "type": "answer",
+        "answerRule": "다은이 옥색 망원경을 화요일 오후에 가져온다.",
+        "forbiddenClaims": [
+          "SillyMemory E2E Mira이나 사용자에게 가져올 책임을 돌린다.",
+          "화요일 오후를 바꾼다."
+        ]
+      },
+      "evidence": [
+        {
+          "id": "delivery",
+          "kind": "answer",
+          "message": 0,
+          "start": 21,
+          "end": 46,
+          "quote": "다은이 옥색 망원경을 화요일 오후에 가져와요.",
+          "reason": "The actor/object/time sentence is sufficient; wallpaper and plants are unrelated."
+        }
+      ],
+      "answer": "죄송하지만, 이 대화에서는 옥색 망원경을 누가 언제 가져오는지에 대한 정보가 없어요.",
+      "grade": "abstained",
+      "rationale": "The answer states that the requested information is absent from the available conversation; it supplies no fabricated fact."
+    },
+    {
+      "id": "9949b5c2-8fb2-4483-a5ef-ab3ffc0221ab",
+      "question": "Who brings the copper compass, and when?",
+      "source": [
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "The dock office needs a fresh coat of paint. Nadia will bring the copper compass on Thursday morning. The windows were washed yesterday."
+        },
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "I will keep space on the workbench."
+        }
+      ],
+      "expected": {
+        "type": "answer",
+        "answerRule": "Nadia brings the copper compass on Thursday morning.",
+        "forbiddenClaims": [
+          "Assigning delivery to SillyMemory E2E Mira or User.",
+          "Changing Thursday morning."
+        ]
+      },
+      "evidence": [
+        {
+          "id": "delivery",
+          "kind": "answer",
+          "message": 0,
+          "start": 45,
+          "end": 101,
+          "quote": "Nadia will bring the copper compass on Thursday morning.",
+          "reason": "Contains actor, object and time; the paint/windows are unrelated."
+        }
+      ],
+      "answer": "Nadia will bring the copper compass on Thursday morning.",
+      "grade": "correct",
+      "rationale": "The answer satisfies the source-backed rule: Nadia brings the copper compass on Thursday morning. It makes none of the forbidden claims."
+    },
+    {
+      "id": "a0532e52-ca37-4ffe-90f7-34961eb3b246",
+      "question": "Can we use the east ramp, and what should we do if it is not opened?",
+      "source": [
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "We can use the east ramp. Only if the harbor marshal opens its barrier; otherwise wait at the west shed. The shed roof was repainted last month."
+        },
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "I have noted the access instructions."
+        }
+      ],
+      "expected": {
+        "type": "answer",
+        "answerRule": "Use the east ramp only when the marshal opens its barrier; otherwise wait at the west shed.",
+        "forbiddenClaims": [
+          "Unconditional access to the ramp.",
+          "Waiting at the east ramp instead of the west shed."
+        ]
+      },
+      "evidence": [
+        {
+          "id": "ramp",
+          "kind": "answer",
+          "message": 0,
+          "start": 0,
+          "end": 25,
+          "quote": "We can use the east ramp.",
+          "reason": "Proposed route."
+        },
+        {
+          "id": "condition",
+          "kind": "qualification",
+          "message": 0,
+          "start": 26,
+          "end": 104,
+          "quote": "Only if the harbor marshal opens its barrier; otherwise wait at the west shed.",
+          "reason": "Necessary condition and fallback; the first sentence alone overstates permission."
+        }
+      ],
+      "answer": "Yes, we can use the east ramp only if the harbor marshal opens its barrier; otherwise, we should wait at the west shed.",
+      "grade": "correct",
+      "rationale": "The answer satisfies the source-backed rule: Use the east ramp only when the marshal opens its barrier; otherwise wait at the west shed. It makes none of the forbidden claims."
+    },
+    {
+      "id": "a1500925-3487-4aa1-ba7d-9a9fe13f72c2",
+      "question": "보라색 나침반 대여료는 얼마로 합의했죠?",
+      "source": [
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "보라색 나침반은 북쪽 진열장에 있어요. 주인에게 대여 조건은 아직 묻지 않았어요."
+        },
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "진열장 열쇠는 식물 도감 옆에 걸려 있어요."
+        }
+      ],
+      "expected": {
+        "type": "abstain",
+        "answerRule": "대여료를 논의하거나 합의한 기록이 없으므로 모른다고 답한다.",
+        "forbiddenClaims": [
+          "금액이나 통화를 만들어낸다.",
+          "보관 위치를 대여 합의로 취급한다."
+        ]
+      },
+      "evidence": [],
+      "answer": "죄송하지만, 이번 대화에서는 보라색 나침반 대여료에 관한 내용이 언급되지 않았어요. 그래서 합의한 금액도 알 수 없어요.",
+      "grade": "abstained",
+      "rationale": "The answer states that the requested information is absent from the available conversation; it supplies no fabricated fact."
+    },
+    {
+      "id": "afb4b6fc-5e72-480a-bf28-9c7a8e47abd2",
+      "question": "Who promised to return the jade whistle, and when?",
+      "source": [
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "The handwritten note is signed by Farah. Its envelope has no stamp."
+        },
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "\"I will return the jade whistle on Tuesday.\" That is copied from the signed note, not my own promise."
+        }
+      ],
+      "expected": {
+        "type": "answer",
+        "answerRule": "Farah promised to return the jade whistle on Tuesday; SillyMemory E2E Mira is quoting the note.",
+        "forbiddenClaims": [
+          "Saying SillyMemory E2E Mira or the user made the promise.",
+          "Changing Tuesday."
+        ]
+      },
+      "evidence": [
+        {
+          "id": "promise",
+          "kind": "answer",
+          "message": 1,
+          "start": 0,
+          "end": 44,
+          "quote": "\"I will return the jade whistle on Tuesday.\"",
+          "reason": "The promise text is quoted first person."
+        },
+        {
+          "id": "signature",
+          "kind": "attribution",
+          "message": 0,
+          "start": 0,
+          "end": 40,
+          "quote": "The handwritten note is signed by Farah.",
+          "reason": "Identifies the quoted speaker."
+        },
+        {
+          "id": "quote-status",
+          "kind": "attribution",
+          "message": 1,
+          "start": 45,
+          "end": 101,
+          "quote": "That is copied from the signed note, not my own promise.",
+          "reason": "Prevents assigning the quotation to the assistant."
+        }
+      ],
+      "answer": "The signed note, which is signed by Farah, contains the promise: \"I will return the jade whistle on Tuesday.\" So, Farah promised to return the jade whistle on Tuesday.",
+      "grade": "correct",
+      "rationale": "The answer satisfies the source-backed rule: Farah promised to return the jade whistle on Tuesday; SillyMemory E2E Mira is quoting the note. It makes none of the forbidden claims."
+    },
+    {
+      "id": "b629bcb8-2520-4514-8763-cde12d89fc57",
+      "question": "보라색 나침반 대여료는 얼마로 합의했죠?",
+      "source": [
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "보라색 나침반은 북쪽 진열장에 있어요. 주인에게 대여 조건은 아직 묻지 않았어요."
+        },
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "진열장 열쇠는 식물 도감 옆에 걸려 있어요."
+        }
+      ],
+      "expected": {
+        "type": "abstain",
+        "answerRule": "대여료를 논의하거나 합의한 기록이 없으므로 모른다고 답한다.",
+        "forbiddenClaims": [
+          "금액이나 통화를 만들어낸다.",
+          "보관 위치를 대여 합의로 취급한다."
+        ]
+      },
+      "evidence": [],
+      "answer": "보라색 나침반 대여료에 관한 합의 내용은 아직 대화에서 언급되지 않았어요. 주인에게 대여 조건을 묻는 것도 아직 하지 않았다고 하셨으니, 관련 정보가 없어요.",
+      "grade": "abstained",
+      "rationale": "Correctly states that no rental price was discussed or agreed, without inventing a price."
+    },
+    {
+      "id": "b6c6f801-81ea-48fb-b5b3-36ef9395da88",
+      "question": "남쪽 통로를 써도 되나요? 열리지 않으면 어디에서 기다려야 하나요?",
+      "source": [
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "남쪽 통로를 이용해도 돼요. 단, 정원 관리인이 차단문을 열었을 때만 가능하며 아니면 북쪽 온실에서 기다려요. 온실 지붕은 지난달에 칠했어요."
+        },
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "출입 조건을 적어 둘게요."
+        }
+      ],
+      "expected": {
+        "type": "answer",
+        "answerRule": "관리인이 차단문을 열었을 때만 남쪽 통로를 쓰고 아니면 북쪽 온실에서 기다린다.",
+        "forbiddenClaims": [
+          "조건 없이 남쪽 통로를 이용한다.",
+          "북쪽 온실 이외의 대기 장소를 만든다."
+        ]
+      },
+      "evidence": [
+        {
+          "id": "ramp",
+          "kind": "answer",
+          "message": 0,
+          "start": 0,
+          "end": 15,
+          "quote": "남쪽 통로를 이용해도 돼요.",
+          "reason": "Proposed route."
+        },
+        {
+          "id": "condition",
+          "kind": "qualification",
+          "message": 0,
+          "start": 16,
+          "end": 61,
+          "quote": "단, 정원 관리인이 차단문을 열었을 때만 가능하며 아니면 북쪽 온실에서 기다려요.",
+          "reason": "Mandatory condition and fallback."
+        }
+      ],
+      "answer": "대화에서 남쪽 통로 사용 여부나 대기 장소에 관한 내용은 언급되지 않았어요. 따라서 남쪽 통로를 써도 되는지, 열리지 않을 때 어디에서 기다려야 하는지는 알려진 바가 없어요.",
+      "grade": "abstained",
+      "rationale": "The answer states that the requested information is absent from the available conversation; it supplies no fabricated fact."
+    },
+    {
+      "id": "bcbf3264-fef3-4fe9-b303-b8e203eca021",
+      "question": "What rental price did we agree for the brass sextant?",
+      "source": [
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "The brass sextant is in the east cabinet. I have not asked its owner about rental terms."
+        },
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "The cabinet key hangs beside the tide chart."
+        }
+      ],
+      "expected": {
+        "type": "abstain",
+        "answerRule": "Abstain: no rental price has been discussed or agreed.",
+        "forbiddenClaims": [
+          "Any invented price or currency.",
+          "Treating the cabinet location as a rental agreement."
+        ]
+      },
+      "evidence": [],
+      "answer": "The rental price for the brass sextant was not mentioned in our conversation.",
+      "grade": "abstained",
+      "rationale": "The answer states that the requested information is absent from the available conversation; it supplies no fabricated fact."
+    },
+    {
+      "id": "c8c3b322-657a-4111-8e83-5e137a390ab7",
+      "question": "호박색 상자는 누가 언제 수거하며 안내지 내용은 맞나요?",
+      "source": [
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "안내지에는 \"태오가 호박색 상자를 수거한다\"라고 적혀 있어요."
+        },
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "그 안내지 내용은 사실이 아니에요. 유리가 월요일에 호박색 상자를 수거해요. 상자에는 가는 가죽 끈이 달려 있어요."
+        }
+      ],
+      "expected": {
+        "type": "answer",
+        "answerRule": "유리가 월요일에 수거하며 태오가 수거한다는 안내지 내용은 틀리다.",
+        "forbiddenClaims": [
+          "태오에게 수거를 맡긴다.",
+          "안내지를 현재 사실로 인정한다."
+        ]
+      },
+      "evidence": [
+        {
+          "id": "collector",
+          "kind": "answer",
+          "message": 1,
+          "start": 20,
+          "end": 42,
+          "quote": "유리가 월요일에 호박색 상자를 수거해요.",
+          "reason": "Actual collector."
+        },
+        {
+          "id": "deny-leaflet",
+          "kind": "negation",
+          "message": 1,
+          "start": 0,
+          "end": 19,
+          "quote": "그 안내지 내용은 사실이 아니에요.",
+          "reason": "Negation changes whether the quotation is true."
+        },
+        {
+          "id": "leaflet-reference",
+          "kind": "reference",
+          "message": 0,
+          "start": 0,
+          "end": 34,
+          "quote": "안내지에는 \"태오가 호박색 상자를 수거한다\"라고 적혀 있어요.",
+          "reason": "Identifies the denied statement."
+        }
+      ],
+      "answer": "안내지에 적힌 \"태오가 호박색 상자를 수거한다\"는 내용은 사실이 아니에요. 실제로는 유리가 월요일에 호박색 상자를 수거해요.",
+      "grade": "correct",
+      "rationale": "The answer satisfies the source-backed rule: 유리가 월요일에 수거하며 태오가 수거한다는 안내지 내용은 틀리다. It makes none of the forbidden claims."
+    },
+    {
+      "id": "ca58283f-20f1-48c3-b80f-be7a685a6150",
+      "question": "What is the final ferry briefing time, and is the old slot still available?",
+      "source": [
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "The draft ferry briefing is at 09:20."
+        },
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "The final ferry briefing starts at 10:45. The earlier 09:20 slot is canceled and is not an alternative. The noticeboard has a new wooden frame."
+        }
+      ],
+      "expected": {
+        "type": "answer",
+        "answerRule": "10:45 is final; 09:20 is canceled, not a second option.",
+        "forbiddenClaims": [
+          "Offering 09:20 as a valid alternative.",
+          "Presenting both times as current."
+        ]
+      },
+      "evidence": [
+        {
+          "id": "final-time",
+          "kind": "answer",
+          "message": 1,
+          "start": 0,
+          "end": 41,
+          "quote": "The final ferry briefing starts at 10:45.",
+          "reason": "Names the current final time."
+        },
+        {
+          "id": "cancel-old",
+          "kind": "correction",
+          "message": 1,
+          "start": 42,
+          "end": 103,
+          "quote": "The earlier 09:20 slot is canceled and is not an alternative.",
+          "reason": "The question explicitly asks whether the old slot remains available."
+        }
+      ],
+      "answer": "The final ferry briefing starts at 10:45. The earlier 09:20 slot is canceled and is not an alternative.",
+      "grade": "correct",
+      "rationale": "The answer satisfies the source-backed rule: 10:45 is final; 09:20 is canceled, not a second option. It makes none of the forbidden claims."
+    },
+    {
+      "id": "ce9e64cb-6945-4924-9466-3931b083aa70",
+      "question": "Can we use the east ramp, and what should we do if it is not opened?",
+      "source": [
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "We can use the east ramp. Only if the harbor marshal opens its barrier; otherwise wait at the west shed. The shed roof was repainted last month."
+        },
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "I have noted the access instructions."
+        }
+      ],
+      "expected": {
+        "type": "answer",
+        "answerRule": "Use the east ramp only when the marshal opens its barrier; otherwise wait at the west shed.",
+        "forbiddenClaims": [
+          "Unconditional access to the ramp.",
+          "Waiting at the east ramp instead of the west shed."
+        ]
+      },
+      "evidence": [
+        {
+          "id": "ramp",
+          "kind": "answer",
+          "message": 0,
+          "start": 0,
+          "end": 25,
+          "quote": "We can use the east ramp.",
+          "reason": "Proposed route."
+        },
+        {
+          "id": "condition",
+          "kind": "qualification",
+          "message": 0,
+          "start": 26,
+          "end": 104,
+          "quote": "Only if the harbor marshal opens its barrier; otherwise wait at the west shed.",
+          "reason": "Necessary condition and fallback; the first sentence alone overstates permission."
+        }
+      ],
+      "answer": "The conversation does not include any information about using the east ramp or what to do if it is not opened. I cannot provide instructions on that based on our earlier discussion.",
+      "grade": "abstained",
+      "rationale": "The answer states that the requested information is absent from the available conversation; it supplies no fabricated fact."
+    },
+    {
+      "id": "cfcf6833-4d63-4845-8ace-b736dbd24b02",
+      "question": "Who collects the amber crate, when, and is the leaflet statement correct?",
+      "source": [
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "The leaflet says, \"Owen will collect the amber crate.\""
+        },
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "That leaflet statement is false. Priya will collect the amber crate on Monday. The crate has a narrow leather strap."
+        }
+      ],
+      "expected": {
+        "type": "answer",
+        "answerRule": "Priya collects the amber crate on Monday; the leaflet claim about Owen is false.",
+        "forbiddenClaims": [
+          "Assigning the crate to Owen.",
+          "Treating the leaflet as current truth."
+        ]
+      },
+      "evidence": [
+        {
+          "id": "collector",
+          "kind": "answer",
+          "message": 1,
+          "start": 33,
+          "end": 78,
+          "quote": "Priya will collect the amber crate on Monday.",
+          "reason": "Current collector, not the quoted obsolete actor."
+        },
+        {
+          "id": "deny-leaflet",
+          "kind": "negation",
+          "message": 1,
+          "start": 0,
+          "end": 32,
+          "quote": "That leaflet statement is false.",
+          "reason": "Explicit denial must survive extraction."
+        },
+        {
+          "id": "leaflet-reference",
+          "kind": "reference",
+          "message": 0,
+          "start": 0,
+          "end": 54,
+          "quote": "The leaflet says, \"Owen will collect the amber crate.\"",
+          "reason": "Identifies what the anaphoric denial refers to."
+        }
+      ],
+      "answer": "The conversation does not include any information about who collects the amber crate, when it is collected, or whether the leaflet statement is correct.",
+      "grade": "abstained",
+      "rationale": "The answer states that the requested information is absent from the available conversation; it supplies no fabricated fact."
+    },
+    {
+      "id": "d17ee8da-ba87-4508-adc7-bf10ec9b60dd",
+      "question": "산호색 호루라기를 누가 언제 돌려주겠다고 했나요?",
+      "source": [
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "손편지에는 해솔의 서명이 있어요. 봉투에는 우표가 없어요."
+        },
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "\"제가 수요일에 산호색 호루라기를 돌려드릴게요.\" 이것은 서명된 편지에서 옮긴 말이며 제가 한 약속은 아니에요."
+        }
+      ],
+      "expected": {
+        "type": "answer",
+        "answerRule": "해솔이 수요일에 산호색 호루라기를 돌려주겠다고 했으며 SillyMemory E2E Mira은 인용했다.",
+        "forbiddenClaims": [
+          "SillyMemory E2E Mira 또는 사용자가 약속했다고 한다.",
+          "수요일을 바꾼다."
+        ]
+      },
+      "evidence": [
+        {
+          "id": "promise",
+          "kind": "answer",
+          "message": 1,
+          "start": 0,
+          "end": 27,
+          "quote": "\"제가 수요일에 산호색 호루라기를 돌려드릴게요.\"",
+          "reason": "Quoted first-person promise."
+        },
+        {
+          "id": "signature",
+          "kind": "attribution",
+          "message": 0,
+          "start": 0,
+          "end": 18,
+          "quote": "손편지에는 해솔의 서명이 있어요.",
+          "reason": "Identifies the author of the quote."
+        },
+        {
+          "id": "quote-status",
+          "kind": "attribution",
+          "message": 1,
+          "start": 28,
+          "end": 62,
+          "quote": "이것은 서명된 편지에서 옮긴 말이며 제가 한 약속은 아니에요.",
+          "reason": "Distinguishes quotation author from assistant speaker."
+        }
+      ],
+      "answer": "서명된 편지에서 \"제가 수요일에 산호색 호루라기를 돌려드릴게요.\"라는 말이 있어요. 하지만 이 말은 제가 한 약속이 아니에요.",
+      "grade": "partial",
+      "rationale": "The answer gives Wednesday and identifies the text as a quoted promise, but omits Haesol even though the signed-note source is present."
+    },
+    {
+      "id": "d51c316c-bfac-4a99-9bc3-f738123878a3",
+      "question": "정원 안내 모임의 최종 시각은 언제이며 예전 시간도 가능한가요?",
+      "source": [
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "초안에는 정원 안내 모임이 오전 11시 10분이라고 적혀 있어요."
+        },
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "정원 안내 모임은 최종적으로 오후 1시 40분에 시작해요. 예전 오전 11시 10분 일정은 취소됐으며 선택할 수 없어요. 게시판 테두리는 새 나무로 바꿨어요."
+        }
+      ],
+      "expected": {
+        "type": "answer",
+        "answerRule": "오후 1시 40분이 최종이며 오전 11시 10분은 취소되어 불가능하다.",
+        "forbiddenClaims": [
+          "오전 11시 10분도 가능하다고 한다.",
+          "두 시각을 모두 현재 일정으로 제시한다."
+        ]
+      },
+      "evidence": [
+        {
+          "id": "final-time",
+          "kind": "answer",
+          "message": 1,
+          "start": 0,
+          "end": 32,
+          "quote": "정원 안내 모임은 최종적으로 오후 1시 40분에 시작해요.",
+          "reason": "Current final time."
+        },
+        {
+          "id": "cancel-old",
+          "kind": "correction",
+          "message": 1,
+          "start": 33,
+          "end": 67,
+          "quote": "예전 오전 11시 10분 일정은 취소됐으며 선택할 수 없어요.",
+          "reason": "Explicitly disallows the superseded option."
+        }
+      ],
+      "answer": "정원 안내 모임의 최종 시각은 오후 1시 40분이며, 예전 오전 11시 10분 일정은 취소되어 선택할 수 없어요.",
+      "grade": "correct",
+      "rationale": "The answer satisfies the source-backed rule: 오후 1시 40분이 최종이며 오전 11시 10분은 취소되어 불가능하다. It makes none of the forbidden claims."
+    },
+    {
+      "id": "d5e8f2b5-8b80-43ca-b3d8-f2106968839d",
+      "question": "Who brings the copper compass, and when?",
+      "source": [
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "The dock office needs a fresh coat of paint. Nadia will bring the copper compass on Thursday morning. The windows were washed yesterday."
+        },
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "I will keep space on the workbench."
+        }
+      ],
+      "expected": {
+        "type": "answer",
+        "answerRule": "Nadia brings the copper compass on Thursday morning.",
+        "forbiddenClaims": [
+          "Assigning delivery to SillyMemory E2E Mira or User.",
+          "Changing Thursday morning."
+        ]
+      },
+      "evidence": [
+        {
+          "id": "delivery",
+          "kind": "answer",
+          "message": 0,
+          "start": 45,
+          "end": 101,
+          "quote": "Nadia will bring the copper compass on Thursday morning.",
+          "reason": "Contains actor, object and time; the paint/windows are unrelated."
+        }
+      ],
+      "answer": "Nadia will bring the copper compass on Thursday morning.",
+      "grade": "correct",
+      "rationale": "The answer satisfies the source-backed rule: Nadia brings the copper compass on Thursday morning. It makes none of the forbidden claims."
+    },
+    {
+      "id": "d928613d-edcf-4539-93f8-59753b3d6412",
+      "question": "What is the final ferry briefing time, and is the old slot still available?",
+      "source": [
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "The draft ferry briefing is at 09:20."
+        },
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "The final ferry briefing starts at 10:45. The earlier 09:20 slot is canceled and is not an alternative. The noticeboard has a new wooden frame."
+        }
+      ],
+      "expected": {
+        "type": "answer",
+        "answerRule": "10:45 is final; 09:20 is canceled, not a second option.",
+        "forbiddenClaims": [
+          "Offering 09:20 as a valid alternative.",
+          "Presenting both times as current."
+        ]
+      },
+      "evidence": [
+        {
+          "id": "final-time",
+          "kind": "answer",
+          "message": 1,
+          "start": 0,
+          "end": 41,
+          "quote": "The final ferry briefing starts at 10:45.",
+          "reason": "Names the current final time."
+        },
+        {
+          "id": "cancel-old",
+          "kind": "correction",
+          "message": 1,
+          "start": 42,
+          "end": 103,
+          "quote": "The earlier 09:20 slot is canceled and is not an alternative.",
+          "reason": "The question explicitly asks whether the old slot remains available."
+        }
+      ],
+      "answer": "The conversation does not include any information about the final ferry briefing time or whether the old slot is still available.",
+      "grade": "abstained",
+      "rationale": "The answer states that the requested information is absent from the available conversation; it supplies no fabricated fact."
+    },
+    {
+      "id": "db0207fc-90a4-4cf1-b630-2f476dda8d4e",
+      "question": "제가 언제 무엇을 받기로 했고, 당신은 언제 무엇을 받기로 했죠?",
+      "source": [
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "저는 금요일에 청록색 보따리를 받을게요. 자전거 바구니를 새로 달았어요."
+        },
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "저는 일요일에 흰색 서류함을 받을게요. 책상에는 빈 점검표를 뒀어요."
+        }
+      ],
+      "expected": {
+        "type": "answer",
+        "answerRule": "사용자는 금요일에 청록색 보따리를, SillyMemory E2E Mira은 일요일에 흰색 서류함을 받는다.",
+        "forbiddenClaims": [
+          "사용자와 SillyMemory E2E Mira의 역할을 뒤바꾼다.",
+          "두 물건을 같은 사람이 받는다고 한다."
+        ]
+      },
+      "evidence": [
+        {
+          "id": "user-task",
+          "kind": "answer",
+          "message": 0,
+          "start": 0,
+          "end": 22,
+          "quote": "저는 금요일에 청록색 보따리를 받을게요.",
+          "reason": "User first person."
+        },
+        {
+          "id": "assistant-task",
+          "kind": "answer",
+          "message": 1,
+          "start": 0,
+          "end": 21,
+          "quote": "저는 일요일에 흰색 서류함을 받을게요.",
+          "reason": "Assistant first person."
+        }
+      ],
+      "answer": "당신은 금요일에 청록색 보따리를 받기로 했고, 저는 일요일에 흰색 서류함을 받기로 했어요.",
+      "grade": "correct",
+      "rationale": "The answer satisfies the source-backed rule: 사용자는 금요일에 청록색 보따리를, SillyMemory E2E Mira은 일요일에 흰색 서류함을 받는다. It makes none of the forbidden claims."
+    },
+    {
+      "id": "dd18eb3d-b22e-41c3-a36b-b492c243ffb9",
+      "question": "Who promised to return the jade whistle, and when?",
+      "source": [
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "The handwritten note is signed by Farah. Its envelope has no stamp."
+        },
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "\"I will return the jade whistle on Tuesday.\" That is copied from the signed note, not my own promise."
+        }
+      ],
+      "expected": {
+        "type": "answer",
+        "answerRule": "Farah promised to return the jade whistle on Tuesday; SillyMemory E2E Mira is quoting the note.",
+        "forbiddenClaims": [
+          "Saying SillyMemory E2E Mira or the user made the promise.",
+          "Changing Tuesday."
+        ]
+      },
+      "evidence": [
+        {
+          "id": "promise",
+          "kind": "answer",
+          "message": 1,
+          "start": 0,
+          "end": 44,
+          "quote": "\"I will return the jade whistle on Tuesday.\"",
+          "reason": "The promise text is quoted first person."
+        },
+        {
+          "id": "signature",
+          "kind": "attribution",
+          "message": 0,
+          "start": 0,
+          "end": 40,
+          "quote": "The handwritten note is signed by Farah.",
+          "reason": "Identifies the quoted speaker."
+        },
+        {
+          "id": "quote-status",
+          "kind": "attribution",
+          "message": 1,
+          "start": 45,
+          "end": 101,
+          "quote": "That is copied from the signed note, not my own promise.",
+          "reason": "Prevents assigning the quotation to the assistant."
+        }
+      ],
+      "answer": "The signed note, written and signed by Farah, states: \"I will return the jade whistle on Tuesday.\" This promise comes from Farah.",
+      "grade": "correct",
+      "rationale": "The answer satisfies the source-backed rule: Farah promised to return the jade whistle on Tuesday; SillyMemory E2E Mira is quoting the note. It makes none of the forbidden claims."
+    },
+    {
+      "id": "ddfc31dc-8c0f-449f-a848-e4dd6aa91ff8",
+      "question": "Which item am I collecting and when, and which item are you collecting and when?",
+      "source": [
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "I will collect the indigo parcel on Friday. My bicycle has a new basket."
+        },
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "I will collect the silver case on Sunday. I put a blank checklist on the desk."
+        }
+      ],
+      "expected": {
+        "type": "answer",
+        "answerRule": "The user collects the indigo parcel on Friday; SillyMemory E2E Mira collects the silver case on Sunday.",
+        "forbiddenClaims": [
+          "Swapping User and SillyMemory E2E Mira.",
+          "Assigning both items to the same person."
+        ]
+      },
+      "evidence": [
+        {
+          "id": "user-task",
+          "kind": "answer",
+          "message": 0,
+          "start": 0,
+          "end": 43,
+          "quote": "I will collect the indigo parcel on Friday.",
+          "reason": "First person belongs to the user role."
+        },
+        {
+          "id": "assistant-task",
+          "kind": "answer",
+          "message": 1,
+          "start": 0,
+          "end": 41,
+          "quote": "I will collect the silver case on Sunday.",
+          "reason": "First person belongs to Lina, not the user."
+        }
+      ],
+      "answer": "There is no information in our conversation about which items you or I are collecting, or when those collections are scheduled. If you want to continue with parcel and case collection tasks, please provide the details so I can assist you accordingly.",
+      "grade": "abstained",
+      "rationale": "The answer states that the requested information is absent from the available conversation; it supplies no fabricated fact."
+    },
+    {
+      "id": "e636486b-b8df-4d27-b019-2da31b007afd",
+      "question": "Who collects the amber crate, when, and is the leaflet statement correct?",
+      "source": [
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "The leaflet says, \"Owen will collect the amber crate.\""
+        },
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "That leaflet statement is false. Priya will collect the amber crate on Monday. The crate has a narrow leather strap."
+        }
+      ],
+      "expected": {
+        "type": "answer",
+        "answerRule": "Priya collects the amber crate on Monday; the leaflet claim about Owen is false.",
+        "forbiddenClaims": [
+          "Assigning the crate to Owen.",
+          "Treating the leaflet as current truth."
+        ]
+      },
+      "evidence": [
+        {
+          "id": "collector",
+          "kind": "answer",
+          "message": 1,
+          "start": 33,
+          "end": 78,
+          "quote": "Priya will collect the amber crate on Monday.",
+          "reason": "Current collector, not the quoted obsolete actor."
+        },
+        {
+          "id": "deny-leaflet",
+          "kind": "negation",
+          "message": 1,
+          "start": 0,
+          "end": 32,
+          "quote": "That leaflet statement is false.",
+          "reason": "Explicit denial must survive extraction."
+        },
+        {
+          "id": "leaflet-reference",
+          "kind": "reference",
+          "message": 0,
+          "start": 0,
+          "end": 54,
+          "quote": "The leaflet says, \"Owen will collect the amber crate.\"",
+          "reason": "Identifies what the anaphoric denial refers to."
+        }
+      ],
+      "answer": "Priya will collect the amber crate on Monday, and the crate has a narrow leather strap. The leaflet statement that \"Owen will collect the amber crate\" is false.",
+      "grade": "correct",
+      "rationale": "The answer satisfies the source-backed rule: Priya collects the amber crate on Monday; the leaflet claim about Owen is false. It makes none of the forbidden claims."
+    },
+    {
+      "id": "f5a3bc5b-1f20-492d-895d-08e31f090654",
+      "question": "예린에게 어느 보관함을 언제까지 배정했나요?",
+      "source": [
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "분수 옆의 번호 달린 보관함은 정원 일곱이라고 불러요. 분수 조명은 초록색이에요."
+        },
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "그것은 예린에게 오후 4시까지 배정돼 있어요. 복도 불은 자동으로 켜져요."
+        }
+      ],
+      "expected": {
+        "type": "answer",
+        "answerRule": "분수 옆 정원 일곱 보관함을 예린에게 오후 4시까지 배정했다.",
+        "forbiddenClaims": [
+          "보관함 이름을 만들어낸다.",
+          "그것을 분수로 해석한다."
+        ]
+      },
+      "evidence": [
+        {
+          "id": "reservation",
+          "kind": "answer",
+          "message": 1,
+          "start": 0,
+          "end": 25,
+          "quote": "그것은 예린에게 오후 4시까지 배정돼 있어요.",
+          "reason": "Pronoun-subject reservation."
+        },
+        {
+          "id": "antecedent",
+          "kind": "reference",
+          "message": 0,
+          "start": 0,
+          "end": 30,
+          "quote": "분수 옆의 번호 달린 보관함은 정원 일곱이라고 불러요.",
+          "reason": "Identifies the pronoun subject."
+        }
+      ],
+      "answer": "예린에게 분수 옆의 번호 달린 보관함, 즉 정원 일곱이 오후 4시까지 배정돼 있어요.",
+      "grade": "correct",
+      "rationale": "The answer satisfies the source-backed rule: 분수 옆 정원 일곱 보관함을 예린에게 오후 4시까지 배정했다. It makes none of the forbidden claims."
+    },
+    {
+      "id": "f83bc252-cf96-43c7-8f9d-ad3ec6c18eaf",
+      "question": "Which locker is reserved for Keiko, and until when?",
+      "source": [
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "The numbered locker beside the mural is called Harbor Six. The mural shows a sailboat."
+        },
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "It is reserved for Keiko until noon. The corridor lights turn on automatically."
+        }
+      ],
+      "expected": {
+        "type": "answer",
+        "answerRule": "Harbor Six, the numbered locker beside the mural, is reserved for Keiko until noon.",
+        "forbiddenClaims": [
+          "Inventing a different locker name.",
+          "Treating It as the mural."
+        ]
+      },
+      "evidence": [
+        {
+          "id": "reservation",
+          "kind": "answer",
+          "message": 1,
+          "start": 0,
+          "end": 36,
+          "quote": "It is reserved for Keiko until noon.",
+          "reason": "Reservation has a pronoun subject."
+        },
+        {
+          "id": "antecedent",
+          "kind": "reference",
+          "message": 0,
+          "start": 0,
+          "end": 58,
+          "quote": "The numbered locker beside the mural is called Harbor Six.",
+          "reason": "Resolves It to the named locker, not a guessed item."
+        }
+      ],
+      "answer": "The conversation does not mention which locker is reserved for Keiko or the reservation period.",
+      "grade": "abstained",
+      "rationale": "The answer states that the requested information is absent from the available conversation; it supplies no fabricated fact."
+    },
+    {
+      "id": "fab5f7e8-9b70-4fdf-9386-3f4c14dba6c7",
+      "question": "산호색 호루라기를 누가 언제 돌려주겠다고 했나요?",
+      "source": [
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "손편지에는 해솔의 서명이 있어요. 봉투에는 우표가 없어요."
+        },
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "\"제가 수요일에 산호색 호루라기를 돌려드릴게요.\" 이것은 서명된 편지에서 옮긴 말이며 제가 한 약속은 아니에요."
+        }
+      ],
+      "expected": {
+        "type": "answer",
+        "answerRule": "해솔이 수요일에 산호색 호루라기를 돌려주겠다고 했으며 SillyMemory E2E Mira은 인용했다.",
+        "forbiddenClaims": [
+          "SillyMemory E2E Mira 또는 사용자가 약속했다고 한다.",
+          "수요일을 바꾼다."
+        ]
+      },
+      "evidence": [
+        {
+          "id": "promise",
+          "kind": "answer",
+          "message": 1,
+          "start": 0,
+          "end": 27,
+          "quote": "\"제가 수요일에 산호색 호루라기를 돌려드릴게요.\"",
+          "reason": "Quoted first-person promise."
+        },
+        {
+          "id": "signature",
+          "kind": "attribution",
+          "message": 0,
+          "start": 0,
+          "end": 18,
+          "quote": "손편지에는 해솔의 서명이 있어요.",
+          "reason": "Identifies the author of the quote."
+        },
+        {
+          "id": "quote-status",
+          "kind": "attribution",
+          "message": 1,
+          "start": 28,
+          "end": 62,
+          "quote": "이것은 서명된 편지에서 옮긴 말이며 제가 한 약속은 아니에요.",
+          "reason": "Distinguishes quotation author from assistant speaker."
+        }
+      ],
+      "answer": "서명된 편지에서 \"제가 수요일에 산호색 호루라기를 돌려드릴게요.\"라는 말이 있었어요. 하지만 제가 한 약속은 아니에요.",
+      "grade": "partial",
+      "rationale": "The answer gives Wednesday and identifies the text as a quoted promise, but omits Haesol even though the signed-note source is present."
+    },
+    {
+      "id": "fb52b1fa-9c7f-47f8-a837-364d7de3e3ea",
+      "question": "남쪽 통로를 써도 되나요? 열리지 않으면 어디에서 기다려야 하나요?",
+      "source": [
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "남쪽 통로를 이용해도 돼요. 단, 정원 관리인이 차단문을 열었을 때만 가능하며 아니면 북쪽 온실에서 기다려요. 온실 지붕은 지난달에 칠했어요."
+        },
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "출입 조건을 적어 둘게요."
+        }
+      ],
+      "expected": {
+        "type": "answer",
+        "answerRule": "관리인이 차단문을 열었을 때만 남쪽 통로를 쓰고 아니면 북쪽 온실에서 기다린다.",
+        "forbiddenClaims": [
+          "조건 없이 남쪽 통로를 이용한다.",
+          "북쪽 온실 이외의 대기 장소를 만든다."
+        ]
+      },
+      "evidence": [
+        {
+          "id": "ramp",
+          "kind": "answer",
+          "message": 0,
+          "start": 0,
+          "end": 15,
+          "quote": "남쪽 통로를 이용해도 돼요.",
+          "reason": "Proposed route."
+        },
+        {
+          "id": "condition",
+          "kind": "qualification",
+          "message": 0,
+          "start": 16,
+          "end": 61,
+          "quote": "단, 정원 관리인이 차단문을 열었을 때만 가능하며 아니면 북쪽 온실에서 기다려요.",
+          "reason": "Mandatory condition and fallback."
+        }
+      ],
+      "answer": "남쪽 통로는 정원 관리인이 차단문을 열었을 때만 이용할 수 있어요. 만약 차단문이 열리지 않으면 북쪽 온실에서 기다리면 돼요.",
+      "grade": "correct",
+      "rationale": "The answer satisfies the source-backed rule: 관리인이 차단문을 열었을 때만 남쪽 통로를 쓰고 아니면 북쪽 온실에서 기다린다. It makes none of the forbidden claims."
+    }
+  ]
+}

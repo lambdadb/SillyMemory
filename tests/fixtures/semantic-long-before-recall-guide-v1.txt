@@ -47,23 +47,21 @@ export function pinnedCounter(host) {
     const encoder=require('tiktoken').encoding_for_model('gpt-4o');
     return {count:text=>text?encoder.encode(text).length+6:0,close:()=>encoder.free()};
 }
-export function buildLongPlan(count, caseIds) {
+export function buildLongPlan(count) {
     const fixture=validateLong(loadLong());
-    if (caseIds) assert(Array.isArray(caseIds) && caseIds.length && new Set(caseIds).size === caseIds.length && caseIds.every(id => fixture.cases.some(item => item.id === id)), 'Unknown or duplicate focused case');
-    const cases = fixture.cases.filter(item => !caseIds || caseIds.includes(item.id));
-    const preflight=cases.map(item=>{
+    const preflight=fixture.cases.map(item=>{
         const sourceTokens=count(item.messages.map(m=>m.text).join('\n'));
         const recentTokens=count([...item.messages.slice(-(fixture.settings.recent-1)).map(m=>m.text),item.question].join('\n'));
         assert(sourceTokens>fixture.settings.context,`${item.id}: insufficient overflow`);
         assert(recentTokens+fixture.settings.effectiveBudget+150<fixture.settings.context-fixture.settings.maxOutputTokens,`${item.id}: recent history cannot fit with memory and prompt reserve`);
         return {id:item.id,sourceTokens,recentTokens,effectiveBudget:fixture.settings.effectiveBudget};
     });
-    return {version:fixture.version,settings:fixture.settings,generation:fixture.generation,cases,schedule:longSchedule(fixture).filter(sample => !caseIds || caseIds.includes(sample.case)),...(caseIds ? { caseIds: cases.map(item => item.id) } : {}),fixtureSha256:sha(JSON.stringify(fixture)),sourceSha256:sourceHashes(),preflight,results:null};
+    return {version:fixture.version,settings:fixture.settings,generation:fixture.generation,cases:fixture.cases,schedule:longSchedule(fixture),fixtureSha256:sha(JSON.stringify(fixture)),sourceSha256:sourceHashes(),preflight,results:null};
 }
 export async function verifySemanticPlan(filename) {
     assert(filename,'SM_NATURAL_PLAN must identify the frozen semantic plan');
     const bytes=readFileSync(filename),plan=JSON.parse(bytes),counter=pinnedCounter(process.env.ST_SOURCE);
-    try{assert.deepEqual(plan,buildLongPlan(counter.count,plan.caseIds),'Frozen plan or current inputs changed');}finally{counter.close();}
+    try{assert.deepEqual(plan,buildLongPlan(counter.count),'Frozen plan or current inputs changed');}finally{counter.close();}
     return {plan,sha256:sha(bytes)};
 }
 // Convert validated current local chunks to literal source coordinates, then
@@ -92,7 +90,7 @@ export function semanticPromptEvidence(item,passages,outgoing) {
     return {memory:evidenceCoverage(item,memory),prompt:evidenceCoverage(item,delivered)};
 }
 if(process.argv[1]&&import.meta.url===pathToFileURL(process.argv[1]).href){
-    const [output,...caseIds]=process.argv.slice(2);assert(output,'Usage: ST_SOURCE=/pinned/host node scripts/semantic-long.mjs new-plan.json [case-id ...]');
-    const counter=pinnedCounter(process.env.ST_SOURCE);let plan;try{plan=buildLongPlan(counter.count,caseIds.length?caseIds:undefined);}finally{counter.close();}
+    const [output]=process.argv.slice(2);assert(output&&process.argv.length===3,'Usage: ST_SOURCE=/pinned/host node scripts/semantic-long.mjs new-plan.json');
+    const counter=pinnedCounter(process.env.ST_SOURCE);let plan;try{plan=buildLongPlan(counter.count);}finally{counter.close();}
     writeFileSync(output,JSON.stringify(plan,null,2)+'\n',{flag:'wx'});console.log(JSON.stringify({output,samples:plan.schedule.length,preflight:plan.preflight}));
 }
