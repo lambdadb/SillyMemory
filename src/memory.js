@@ -35,10 +35,11 @@ export function retrievalQueries(snapshot, type = 'normal') {
     const primary = messages[anchor].text.trim().slice(0, 6000);
     // Keep the prior user context unless a newer assistant turn has a stronger
     // lexical connection to earlier history. Missing user context keeps the
-    // assistant fallback; a retained answer after the anchor is never eligible.
+    // assistant fallback, but file/media/tool turns cannot be context candidates.
+    // A retained answer after the anchor is never eligible.
     const prior = messages.slice(0, anchor);
     const user = prior.findLastIndex(m => m.user && m.text.trim());
-    const assistant = prior.findLastIndex(m => !m.user && m.text.trim());
+    const assistant = prior.findLastIndex(m => !m.user && m.eligible !== false && m.text.trim());
     const context = prior[user < 0 || preferAssistantContext(prior, user, assistant) ? assistant : user];
     const contextual = context?.text.trim().slice(0, 6000);
     return [...new Set([primary, contextual].filter(Boolean))];

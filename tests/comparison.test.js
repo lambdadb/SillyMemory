@@ -34,7 +34,7 @@ function evidence() {
         for (const text of ['identical source restored', 'source preserved', 'recent messages retained', 'provider usage including cache available', 'full baseline fits without injection', 'native memory disabled', 'memory budget respected', 'native query completed without SillyMemory']) checks.push(`${name}: ${text}`);
         return { messages: [], comparison: row, upstreamStatus: 200, finishReason: 'stop', providerAnswer: 'UNKNOWN', answer: 'UNKNOWN', requestOptions: { model: 'gpt-4.1-mini-2025-04-14', temperature: 0 }, providerUsage: { prompt_tokens: 100, prompt_tokens_details: { cached_tokens: 0 }, completion_tokens: 2 }, generationMs: 20, responseMs: 10 };
     });
-    return { cleanupComplete: true, nativeCleanupComplete: true, evaluation: { version, nativeSettings, rows: generations.map(g => g.comparison) }, model: 'gpt-4.1-mini-2025-04-14', sillyTavern: '06bde939fb1e9c4c8d8641d810f0a916b5bce127', hostContextTokens: 32768, maxOutputTokens: 256, sourceSha256: Object.fromEntries(['index.js','src/client.js','src/gate.js','src/memory.js','scripts/generation-smoke.mjs','scripts/comparison-eval.mjs','scripts/comparison-fixture.mjs','scripts/korean-fixture.mjs'].map(p => [p, 'test-only-hash'])), checks, generations };
+    return { cleanupComplete: true, nativeCleanupComplete: true, evaluation: { version, nativeSettings, rows: generations.map(g => g.comparison) }, model: 'gpt-4.1-mini-2025-04-14', sillyTavern: '06bde939fb1e9c4c8d8641d810f0a916b5bce127', hostContextTokens: 32768, maxOutputTokens: 256, sourceSha256: Object.fromEntries(['index.js','src/client.js','src/gate.js','src/memory.js','src/context.js','scripts/generation-smoke.mjs','scripts/comparison-eval.mjs','scripts/comparison-fixture.mjs','scripts/korean-fixture.mjs'].map(p => [p, 'test-only-hash'])), checks, generations };
 }
 test('summary rejects incomplete, duplicated, mixed, or unverified evidence', () => {
     const report = evidence();
@@ -89,4 +89,17 @@ test('comparison evidence recognizes native-role excerpts and checks every captu
     const g = { messages: [{ role: 'user', content: text }, { role: 'assistant', content: second }], memoryInspection: `70 / 800 tokens\n\n${text}\n${second}` };
     assert.deepEqual(injectionEvidence(g, 'sillymemory'), { injected: true, memoryTokens: 70 });
     g.messages.pop(); assert.throws(() => injectionEvidence(g, 'sillymemory'), /does not match/);
+});
+
+test('comparison aggregation binds the context-selection module across resumed segments', () => {
+    const first = evidence(), resumed = evidence();
+    first.generations = first.generations.slice(0, 18);
+    resumed.generations = resumed.generations.slice(18);
+    for (const report of [first, resumed]) report.evaluation.rows = report.generations.map(g => g.comparison);
+    const segments = [{report:first}, {report:resumed}];
+    assert.equal(summarize(segments).complete, true);
+    resumed.sourceSha256['src/context.js'] = 'different-context-policy';
+    assert.throws(() => summarize(segments), /Mixed source versions/);
+    delete resumed.sourceSha256['src/context.js'];
+    assert.throws(() => summarize(segments), /Missing source hash: src\/context.js/);
 });

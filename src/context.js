@@ -10,7 +10,7 @@ function grams(text) {
 }
 
 export function preferAssistantContext(messages, user, assistant) {
-    if (user < 0 || assistant <= user) return false;
+    if (user < 0 || assistant <= user || messages[assistant].eligible === false) return false;
     // Both context candidates and the generation anchor stay outside the corpus.
     const corpus = messages.slice(0, user).filter(m => m.eligible !== false && m.text.trim()).slice(-256).map(m => grams(m.text)).filter(g => g.size);
     if (corpus.length) {

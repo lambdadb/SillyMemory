@@ -194,9 +194,34 @@ cleanup file. The shared-query search mode compares frozen v4/candidates on
 either runtime; a new result is a separate service observation. Do not combine
 historical and current reports as if they were one experiment.
 
-Replay the recorded generation misses without service calls:
+Replay the recorded generation misses without service calls from a separate
+checkout at `f047410e6fd9b98301dcaeddb083d262c42997a4`. The strict replay binds
+the original runtime hashes and intentionally rejects a later modified runtime:
 
 ```sh
 ST_SOURCE=/pinned/host node scripts/context-turn-budget-replay.mjs \
   docs/results/context-turn-generation-v1.json artifacts/turn-replay-next.json
 ```
+
+## PR review corrections
+
+The live search/generation and 188-check recovery evidence above belongs to the
+pre-review runtime at `f047410`. Review subsequently identified two valid gaps:
+
+- Korean, comparison and challenge/held-out report aggregators now require and
+  compare `src/context.js` hashes. Missing or changed hashes reject aggregation;
+  the Korean CLI also rejects matching segments whose hash differs from the
+  current checkout. Historical pre-module reports require their recorded revision.
+- Ineligible assistant turns carrying file/media/tool metadata are excluded from
+  contextual candidate selection and from the missing-user assistant fallback.
+  The scoring helper also rejects an ineligible candidate directly. Primary
+  anchoring is unchanged.
+
+141 unit tests pass on Node 20.12.0 and 24.15.0, including captured metadata cases,
+all four generation anchors, the fallback path and segment-hash rejection.
+The original 62-case frozen-query parity tests still pass. Runtime/tool syntax
+and release metadata checks pass. The corrected runtime passed all 22 real-host
+plus emulated-LambdaDB browser checks, with no page errors or remaining collections;
+see [the review validation report](results/context-turn-review-browser-v1.json).
+No new live LambdaDB or generation calls were made for these corrections. Earlier
+provider results are historical evidence, not a fresh run of the corrected hashes.

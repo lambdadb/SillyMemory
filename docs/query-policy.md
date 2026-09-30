@@ -6,9 +6,12 @@ The original fixed comparison scored 6/18 with SillyMemory. A subsequent vector 
 
 The current `latest-anchor-with-context-selection-v5` policy searches the latest
 non-empty user message independently. Its second query normally uses the prior
-non-empty user turn. If a newer assistant turn, strictly before the anchor, has
-more than 1.25 times that user's lexical similarity to earlier history, use the
-assistant turn instead. Missing user context retains v4's assistant fallback.
+non-empty user turn. If a newer eligible assistant turn, strictly before the
+anchor, has more than 1.25 times that user's lexical similarity to earlier history, use the
+assistant turn instead. Missing user context retains the assistant fallback using
+the last eligible nonempty turn.
+Assistant turns carrying file, media or tool metadata cannot supply the second
+query, whether selected by scoring or by the missing-user fallback.
 
 The comparison uses distinct Unicode word trigrams, NFKC/lowercase normalization
 and smoothed inverse-document-frequency weighted cosine similarity. Each score

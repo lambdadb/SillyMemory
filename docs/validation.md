@@ -1095,3 +1095,18 @@ search, generation or ANN recall evidence. No settings were tuned after the run.
 checks. Real-host/emulated-LambdaDB recovery passes 188 checks with zero page
 errors and no remaining collections. The code and all positive/negative evidence
 are ready for review on develop; no main promotion or release was performed.
+
+
+### PR #22 review corrections
+
+Required context-module source hashes now prevent Korean/comparison/challenge
+summaries from pooling incompatible segments. Ineligible file/media/tool
+assistant turns cannot be selected as secondary query context, including the
+missing-user fallback. Both reviewer cases have regression coverage.
+
+141 unit tests pass on Node 20.12.0/24.15.0; syntax and release checks pass.
+The corrected runtime also passes 22 pinned-host/emulator checks with zero page
+errors and zero remaining collections. The [report](results/context-turn-review-browser-v1.json)
+records the corrected source hashes. The earlier 64-answer live generation and
+188-check recovery reports remain unchanged at their original revision; no new
+paid provider evaluation was run for this review fix.

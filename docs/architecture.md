@@ -25,9 +25,10 @@ Queries use the default `main` Branch with `consistentRead: true`, not versionin
 The `latest-anchor-with-context-selection-v5` query policy normally anchors on the
 last non-empty user message (or the last non-empty message if no user exists).
 The second query normally uses the preceding non-empty user turn. A newer
-assistant turn strictly before the anchor replaces it only when its maximum
-lexical similarity to earlier eligible history exceeds the user's by a factor
-of 1.25. With no prior user, keep the preceding assistant fallback. The local
+eligible assistant turn strictly before the anchor replaces it only when its
+maximum lexical similarity to earlier eligible history exceeds the user's by a factor
+of 1.25. With no prior user, keep the preceding eligible assistant fallback.
+Assistant file/media/tool turns cannot become the second query. The local
 comparison uses word trigrams and smoothed IDF-weighted cosine on at most 256
 eligible messages before both candidates; no additional service call is made.
 This is a bounded heuristic, not semantic reference resolution. Each text/query

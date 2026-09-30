@@ -93,3 +93,23 @@ test('adoption rejects individual source regressions and follows the frozen cand
     assert.equal(contextTurnDecision(changed), null);
     assert.equal(contextTurnDecision(rows.filter(r => r.case !== 'boundaries/ko-assistant-topic')), null);
 });
+
+test('captured file, media and tool assistant turns cannot supply the contextual query', async () => {
+    const { capture, retrievalQueries } = await import('../src/memory.js');
+    const { preferAssistantContext } = await import('../src/context.js');
+    const captureChat = chat => capture({chat,characterId:0,characters:[{avatar:'test.png'}],getCurrentChatId:()=> 'special-context'});
+    for (const extra of [{file:{name:'synthetic.txt'}}, {media:[{url:'synthetic'}]}, {tool_invocations:[{name:'synthetic'}]}]) {
+        const message = (mes, is_user, extra = {}) => ({mes,is_user,extra});
+        const snapshot = captureChat([message('Lantern repair history',false), message('Unrelated schedule',true), message('Lantern repair history',false,extra), message('Who brings it?',true)]);
+        assert.equal(snapshot.messages[2].eligible,false);
+        assert.equal(preferAssistantContext(snapshot.messages,1,2),false);
+        for (const type of ['normal','regenerate','swipe','continue']) assert.deepEqual(retrievalQueries(snapshot,type),['Who brings it?','Unrelated schedule']);
+        snapshot.messages[2].eligible=true;
+        assert.deepEqual(retrievalQueries(snapshot),['Who brings it?','Lantern repair history']);
+        // The no-prior-user fallback must obey the same eligibility rule.
+        const fallback = captureChat([message('Plain introduction',false),message('Special introduction',false,extra),message('First question',true)]);
+        assert.deepEqual(retrievalQueries(fallback),['First question','Plain introduction']);
+        fallback.messages.shift();
+        assert.deepEqual(retrievalQueries(fallback),['First question']);
+    }
+});
