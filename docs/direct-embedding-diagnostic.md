@@ -41,6 +41,31 @@ describes array input, per-input vectors and the default dimensions. The product
 runtime remains unchanged; this diagnostic uses an explicitly authorized direct
 API call from Node, not browser CORS or persistent key storage.
 
+## Product requirement and temporary experiment boundary
+
+Confirmed on 2026-09-30: the final product must use LambdaDB managed embeddings
+with ordinary upserts and `knn.queryText`. Users must not need a separate embedding
+provider account, API key, or model configuration. This requirement concerns
+memory embeddings; the existing conversation-generation provider is separate.
+
+Direct embeddings are a temporary diagnostic and evaluation path only. They must
+not become the product default, an automatic runtime fallback, or an additional
+settings requirement. Preserve the UI extension, built-in proxy, and session-only
+LambdaDB key design.
+
+A proposed full-cohort direct-embedding experiment would preserve the existing
+runtime's actual upsert batch contents, order and sizes (including partial and
+incremental batches), retrieval filters, prompt budgets and generation schedule.
+Only the embedding execution and corresponding vector write/query representation
+would change. Record embedding, database and total latency separately without
+silently expanding the end-to-end deadline. This adapter is not implemented or
+validated by the single-input diagnostic above.
+
+Keep any direct-path cohort and its protocol separate from managed-path results.
+Even a complete direct-path run would not establish managed-path recovery or
+release readiness. The final managed-embedding path must be revalidated before
+public promotion; retain the earlier incomplete attempts as evidence.
+
 ## Observed result — 2026-09-30
 
 The [complete direct-call report](results/direct-embedding-v1.json) records all ten
