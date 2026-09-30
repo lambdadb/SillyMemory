@@ -347,7 +347,7 @@ test('reference retrieval keeps the prior user topic separate from generic ackno
     assert.deepEqual(retrievalQueries({ messages }, 'continue'), [messages[5].text, messages[4].text]);
 });
 
-test('prior-user queries stay bounded and use assistant context only without a previous user turn', () => {
+test('prior-user queries stay bounded and preserve fallback when there is no reference corpus', () => {
     assert.deepEqual(retrievalQueries({ messages: [
         { user: false, text: 'An assistant introduction' }, { user: true, text: 'A first question' },
     ] }), ['A first question', 'An assistant introduction']);
@@ -373,4 +373,31 @@ test('assistant-only fallback cancels its other query and exposes no partial mem
     await assert.rejects(s.engine.retrieve(snap, config, text => text.length), /assistant context query failed/);
     assert.deepEqual(queries, ['First user question', snap.messages[5].text]);
     assert.equal(aborted, true);
+});
+
+test('selected assistant context still cancels sibling failures and rejects results after source invalidation', async () => {
+    const snap = snapshot();
+    snap.messages.push({ ...snap.messages[0], index: 6, text: 'An unrelated schedule', user: true });
+    snap.messages.push({ ...snap.messages[0], index: 7, text: 'Return to the blue compass under the tree', user: false });
+    snap.messages.push({ ...snap.messages[0], index: 8, text: 'Where is it?', user: true });
+    assert.deepEqual(retrievalQueries(snap), ['Where is it?', snap.messages[7].text]);
+    const failing = setup(); let siblingAborted = false;
+    failing.client.search = async (_, owner, scope, query, signal) => {
+        if (query !== snap.messages[7].text) return new Promise((resolve, reject) => signal.addEventListener('abort', () => { siblingAborted = true; reject(signal.reason); }, { once: true }));
+        throw new Error('selected assistant search failed');
+    };
+    await assert.rejects(failing.engine.retrieve(snap, config, text => text.length), /selected assistant search failed/);
+    assert.equal(siblingAborted, true);
+    const late = setup(), queries = [], signals = [], resolvers = []; let start;
+    const started = new Promise(resolve => { start = resolve; });
+    late.client.search = async (_, owner, scope, query, signal) => {
+        queries.push(query); signals.push(signal);
+        return new Promise(resolve => { resolvers.push(resolve); if (queries.length === 2) start(); });
+    };
+    const pending = late.engine.retrieve(snap, config, text => text.length / 4);
+    await started; late.engine.invalidate();
+    assert(signals.every(signal => signal.aborted));
+    resolvers.forEach(resolve => resolve([...late.remote.values()]));
+    assert.equal(await pending, null);
+    assert.deepEqual(queries, retrievalQueries(snap));
 });

@@ -1,3 +1,5 @@
+import { preferAssistantContext } from './context.js';
+
 export const DEFAULTS = Object.freeze({ recent: 12, budget: 800, chunkChars: 800 });
 export function options(value = {}) {
     const integer = (x, fallback, min, max) => Number.isInteger(Number(x)) ? Math.min(max, Math.max(min, Number(x))) : fallback;
@@ -20,7 +22,7 @@ export function capture(context) {
     return { character: avatar, chat: context.getCurrentChatId(), messages };
 }
 export function fingerprint(snapshot) { return JSON.stringify(snapshot); }
-export const RETRIEVAL_POLICY = 'latest-anchor-with-assistant-fallback-v4';
+export const RETRIEVAL_POLICY = 'latest-anchor-with-context-selection-v5';
 export function retrievalQueries(snapshot, type = 'normal') {
     const messages = snapshot.messages;
     // Swipe/regenerate may retain an assistant answer in the source. Anchor on
@@ -31,12 +33,14 @@ export function retrievalQueries(snapshot, type = 'normal') {
     if (anchor < 0) anchor = messages.findLastIndex(m => m.text.trim());
     if (anchor < 0) return [];
     const primary = messages[anchor].text.trim().slice(0, 6000);
-    // Search the prior user topic independently: generic questions and assistant
-    // acknowledgments can dilute its embedding when concatenated together.
-    // An imported assistant-only history has no preceding user topic. Use its
-    // last assistant turn only in that case, never the answer after the anchor.
+    // Keep the prior user context unless a newer assistant turn has a stronger
+    // lexical connection to earlier history. Missing user context keeps the
+    // assistant fallback, but file/media/tool turns cannot be context candidates.
+    // A retained answer after the anchor is never eligible.
     const prior = messages.slice(0, anchor);
-    const context = prior.findLast(m => m.user && m.text.trim()) ?? prior.findLast(m => !m.user && m.text.trim());
+    const user = prior.findLastIndex(m => m.user && m.text.trim());
+    const assistant = prior.findLastIndex(m => !m.user && m.eligible !== false && m.text.trim());
+    const context = prior[user < 0 || preferAssistantContext(prior, user, assistant) ? assistant : user];
     const contextual = context?.text.trim().slice(0, 6000);
     return [...new Set([primary, contextual].filter(Boolean))];
 }

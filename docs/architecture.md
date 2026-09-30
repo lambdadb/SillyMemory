@@ -22,7 +22,21 @@ No chat text or API key is persisted in the journal. If local storage fails, rem
 
 Queries use the default `main` Branch with `consistentRead: true`, not versioning Tags/Aliases. Managed embedding `knn.queryText` uses an owner/scope prefilter. Remote hits are ranking signals: only exact current IDs, ownership, scope, revision, and source text are accepted; injection uses the locally reconstructed text. This prevents eventual-index lag, deleted records, malicious remote text changes, and sibling-chat results from resurrecting stale content.
 
-The `latest-anchor-with-assistant-fallback-v4` query policy normally anchors on the last non-empty user message (or the last non-empty message if no user message exists). It submits that message alone and a separate query containing only the preceding non-empty user message. If no earlier non-empty user turn exists, the second query uses the preceding non-empty assistant turn instead; if neither exists, it submits only the anchor. Context is always strictly before the anchor. This avoids diluting a user topic with a generic question and assistant acknowledgment; it is not semantic reference resolution. Each query is capped at 6,000 UTF-16 code units; identical query strings collapse to one request. Assistant answers after the anchor are excluded, including a retained answer during regenerate/swipe. For an explicit host `continue` generation, the anchor is instead the latest non-empty message being extended, including assistant text. Regenerate and swipe retain the user anchor. See the [continuation and overflow evaluation](recall-challenges.md) and [assistant-only fallback results](assistant-fallback-results.md).
+The `latest-anchor-with-context-selection-v5` query policy normally anchors on the
+last non-empty user message (or the last non-empty message if no user exists).
+The second query normally uses the preceding non-empty user turn. A newer
+eligible assistant turn strictly before the anchor replaces it only when its
+maximum lexical similarity to earlier eligible history exceeds the user's by a factor
+of 1.25. With no prior user, keep the preceding eligible assistant fallback.
+Assistant file/media/tool turns cannot become the second query. The local
+comparison uses word trigrams and smoothed IDF-weighted cosine on at most 256
+eligible messages before both candidates; no additional service call is made.
+This is a bounded heuristic, not semantic reference resolution. Each text/query
+is capped at 6,000 UTF-16 code units; duplicate queries collapse to one request.
+Regenerate/swipe exclude retained answers after the user anchor. Explicit host
+`continue` anchors on the latest non-empty message being extended and applies
+the same context rule before that anchor. See the [query policy](query-policy.md)
+and [context-turn results and limitations](context-turn-results.md).
 
 The distinct queries run concurrently, each requesting 30 candidates with the same scope filter. Candidate ranks are interleaved, question first, then context. Scores from separate queries are not added or compared. Current-source validation precedes deduplication; whole passages are accepted while the complete wrapper stays inside the same token budget. This reserves early selection opportunities for the question and the contextual reference without guaranteeing equal token shares. One query failure cancels the sibling and rejects the entire retrieval; the existing full-prompt fallback applies. Two requests can increase managed embedding/query usage and latency compared with the original single query.
 

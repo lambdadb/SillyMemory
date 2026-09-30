@@ -13,6 +13,8 @@ const root = fileURLToPath(new URL('../', import.meta.url));
 export const hash = value => createHash('sha256').update(JSON.stringify(value)).digest('hex');
 export function fixtureFiles(version = 'natural-dialogue-v1') {
     const protocols = {
+        'context-turn-generation-v1': ['docs/context-turn-generation.md', 'docs/context-turn-evaluation.md'],
+        'context-turn-v1': ['docs/context-turn-evaluation.md'],
         'assistant-fallback-v1': ['docs/assistant-fallback-generation.md'],
         'natural-dialogue-v1': ['docs/natural-dialogue-evaluation.md'],
         'speaker-attribution-v1': ['docs/speaker-attribution-evaluation.md', 'docs/speaker-attribution-perspective-v2.md'],
@@ -89,7 +91,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(realpathSync(process.ar
     const args = process.argv.slice(2);
     assert([2, 4].includes(args.length) && args[0] === '--output' && args[1] && (args.length === 2 || args[2] === '--fixture'), 'Usage: node scripts/natural-dialogue.mjs --output artifacts/unique-plan.json [--fixture version]');
     const fixture = loadNaturalFixture(args[3]), audit = await auditNaturalDialogue(fixture);
-    const sourceFiles = ['index.js', 'src/client.js', 'src/gate.js', 'src/memory.js', 'src/status.js', 'scripts/natural-dialogue.mjs', ...fixtureFiles(fixture.version)];
+    const sourceFiles = ['index.js', 'src/client.js', 'src/gate.js', 'src/memory.js', 'src/context.js', 'src/status.js', 'scripts/natural-dialogue.mjs', ...fixtureFiles(fixture.version)];
     const sourceSha256 = Object.fromEntries(sourceFiles.map(file => [file, createHash('sha256').update(readFileSync(path.join(root, file))).digest('hex')]));
     const plan = { version: fixture.version, settings: fixture.settings, generation: fixture.generation, sourceSha256, audit, cases: naturalCases(fixture), schedule: naturalSchedule(fixture), results: null };
     const output = path.resolve(args[1]); await mkdir(path.dirname(output), { recursive: true });

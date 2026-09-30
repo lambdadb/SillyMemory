@@ -2,14 +2,15 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { assistantTopicQueries } from '../scripts/assistant-topic-policy.mjs';
 import { assistantTopicCases, candidateDecision } from '../scripts/assistant-topic-diagnostic.mjs';
-import { documents, retrievalQueries } from '../src/memory.js';
+import { assistantFallbackQueries } from '../scripts/assistant-fallback-policy.mjs';
+import { documents } from '../src/memory.js';
 
 const snapshot = (...messages) => ({ messages: messages.map(([user, text]) => ({ user, text })) });
 test('assistant context stays before the generation anchor and preserves v3', () => {
     const s = snapshot([true, 'previous user topic'], [false, 'assistant topic'], [true, 'question'], [false, 'replaced answer']);
     for (const type of ['normal', 'regenerate', 'swipe']) {
         const queries = assistantTopicQueries(s, type);
-        assert.deepEqual(queries.baseline, retrievalQueries(s, type));
+        assert.deepEqual(queries.baseline, assistantFallbackQueries(s, type));
         assert.deepEqual(queries['user-first'], ['question', 'previous user topic', 'assistant topic']);
         assert.deepEqual(queries['assistant-first'], ['question', 'assistant topic', 'previous user topic']);
     }
@@ -35,7 +36,7 @@ test('fixed cohort preserves all 32 regression and six boundary source targets',
         const { docs } = await documents(item.snapshot, 'assistant-test-owner', item.config);
         for (const ref of item.evidence) assert(docs.some(d => d.message === ref.message && d.text.includes(ref.quote)));
         const queries = assistantTopicQueries(item.snapshot);
-        assert.deepEqual(item.kind === 'first-user' ? queries['user-first'] : queries.baseline, retrievalQueries(item.snapshot));
+        assert.deepEqual(item.kind === 'first-user' ? queries['user-first'] : queries.baseline, assistantFallbackQueries(item.snapshot));
         assert(Object.values(queries).every(q => q.length <= 3));
     }
 });

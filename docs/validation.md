@@ -1064,3 +1064,49 @@ does not supersede prior actor failures or constitute stable-release readiness.
 LambdaDB passes 188 recovery checks, including two crashes/restarts and 24 mutation
 cycles. Search-only, emulator, generated-answer and provisional semantic evidence
 are recorded separately. No main promotion or release was performed.
+
+
+## Context-turn selection — 2026-09-30
+
+The [v5 selection change](context-turn-results.md) replaces the prior-user query
+with a newer assistant turn only when its local lexical match to earlier history
+exceeds the user's by a factor of 1.25. The frozen 62-case shared-query comparison
+selected 54/54 required sources versus v4's 53/54, with no baseline-selected loss.
+The new 14-case corpus was already 12/12 under v4, so it is regression coverage
+rather than a new comparative gain. All 74 live checks and owned cleanup passed.
+
+Actual SillyTavern generation completed 64 answers and 773 integrity checks with
+64 first-attempt provider successes. Context was 1,536, recent 8, configured memory
+400 and effective memory 320 (one quarter of the host's 1,280 prompt tokens).
+Memory delivered 26/28 required on-mode sources; the historical Korean target was
+excluded twice. Provisional strict scores were off 4/32 and on 28/32; two further
+Korean paraphrase answers were partial despite receiving the correct source.
+The assistant gate is false and the independent human gate remains unset. The
+failure was not retried or removed. Frozen hashes, keys and owned/native cleanup
+passed; all off prompts were actually truncated.
+
+A post-result offline replay exactly reproduces all 32 on-mode selections.
+For the Korean historical miss, raising the budget alone or filtering to the
+earlier recent window alone does not recover the target; combining both does
+on recorded hits. This is a budget/eligible-source diagnostic, not new live
+search, generation or ANN recall evidence. No settings were tuned after the run.
+
+137 unit tests pass on Node 20.12.0/24.15.0, plus runtime/tool syntax and release
+checks. Real-host/emulated-LambdaDB recovery passes 188 checks with zero page
+errors and no remaining collections. The code and all positive/negative evidence
+are ready for review on develop; no main promotion or release was performed.
+
+
+### PR #22 review corrections
+
+Required context-module source hashes now prevent Korean/comparison/challenge
+summaries from pooling incompatible segments. Ineligible file/media/tool
+assistant turns cannot be selected as secondary query context, including the
+missing-user fallback. Both reviewer cases have regression coverage.
+
+141 unit tests pass on Node 20.12.0/24.15.0; syntax and release checks pass.
+The corrected runtime also passes 22 pinned-host/emulator checks with zero page
+errors and zero remaining collections. The [report](results/context-turn-review-browser-v1.json)
+records the corrected source hashes. The earlier 64-answer live generation and
+188-check recovery reports remain unchanged at their original revision; no new
+paid provider evaluation was run for this review fix.
