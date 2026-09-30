@@ -1110,3 +1110,23 @@ errors and zero remaining collections. The [report](results/context-turn-review-
 records the corrected source hashes. The earlier 64-answer live generation and
 188-check recovery reports remain unchanged at their original revision; no new
 paid provider evaluation was run for this review fix.
+
+## Native prompt capacity audit — 2026-09-30
+
+The [capacity protocol](prompt-capacity-evaluation.md) and
+[results](prompt-capacity-results.md) separate the extension's memory allocation
+from final host packing. Six normal generations ran in the pinned SillyTavern
+and Chromium with real proxy traffic, local LambdaDB/completion emulators and
+synthetic content only. This is actual-host integration with emulated upstreams,
+not live managed embeddings, model inference or provider token-usage evidence.
+
+All six native token ledgers closed, and final host messages exactly matched the
+received completion payloads. The long-recent-history case retained three
+excerpts and four recent messages at the hook but sent zero excerpts and two
+recent messages. Short versus long system instructions left 886 versus 175
+tokens with the same 1,280 hook capacity and 320 memory cap. These negative
+boundaries remain in the committed report; no runtime allocation change was made.
+
+197 local unit/report tests pass, plus syntax and release checks. Emulator owned
+data cleanup and synthetic key-storage checks passed. Final managed-path live
+validation, semantic quality/human review and public promotion remain separate.
