@@ -1,0 +1,57 @@
+{
+  "version": "semantic-three-modes-v1",
+  "groups": [
+    {
+      "mode": "off",
+      "samples": 32,
+      "known": 28,
+      "completeInMemory": 0,
+      "completeInPrompt": 0,
+      "medianPromptTokens": 1234,
+      "medianCachedTokens": 1024,
+      "medianGenerationMs": 1309.3214170001447,
+      "medianSyncMs": 5.12716650000948,
+      "maxMemoryTokens": 0
+    },
+    {
+      "mode": "vectors",
+      "samples": 32,
+      "known": 28,
+      "completeInMemory": 14,
+      "completeInPrompt": 14,
+      "medianPromptTokens": 1225.5,
+      "medianCachedTokens": 512,
+      "medianGenerationMs": 1474.539145000017,
+      "medianSyncMs": 1132.9967079999915,
+      "maxMemoryTokens": 117
+    },
+    {
+      "mode": "on",
+      "samples": 32,
+      "known": 28,
+      "completeInMemory": 28,
+      "completeInPrompt": 28,
+      "medianPromptTokens": 690.5,
+      "medianCachedTokens": 0,
+      "medianGenerationMs": 2147.973979000002,
+      "medianSyncMs": 1673.339187000005,
+      "maxMemoryTokens": 319
+    }
+  ],
+  "providerCalls": 96,
+  "retries": 0,
+  "spacing": {
+    "verified": true,
+    "evidence": "monotonic upstream-send timestamps",
+    "minimumIntervalMs": 15000,
+    "minimumObservedIntervalMs": 15000.148415999996,
+    "gapsBelowMinimum": 0
+  },
+  "checks": 1286,
+  "lambdaFailures": 0,
+  "nativeEmbeddingCalls": 128,
+  "nativeEmbeddingTokens": 20100,
+  "cleanupComplete": true,
+  "answerQuality": null,
+  "totalCost": null
+}

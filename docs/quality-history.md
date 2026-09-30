@@ -2,13 +2,17 @@
 
 These records preceded the 0.2.0 candidate. Their limitations and evidence
 boundaries remain applicable; the current results are in
-[managed recall validation](managed-packed-results.md).
+[managed recall validation](managed-packed-results.md) and the subsequent
+[equal-context three-mode comparison](three-mode-results.md) and its
+[native Insert# sensitivity follow-up](native-tuning-results.md).
 
 Development now includes [repeated passage packing](repeated-passage-packing.md):
 identical selected excerpts share one body with all selected source positions,
 freeing budget for distinct retrieved context without evicting existing sources.
 This recovers the missing signature in both recorded Korean quotation failures;
-actual-host tests verify delivery, while live answer-quality effects remain unmeasured.
+at that milestone, actual-host tests verified delivery only. The subsequent
+managed run delivered all required evidence but still omitted the author in both
+Korean quotation answers (provisional 30/32).
 
 **Validation status:** experimental. Unit/CI coverage is separate from host and provider validation; see the [latest capacity audit](prompt-capacity-results.md). The prior 48-answer [candidate comparison](context-candidate-results.md) scored current labels 9/16, label removal 10/16 and label removal plus adjacent turns 11/16 provisionally. On the new controls, however, scores regressed from current 7/8 to 4/8 and 6/8; the original English user-report failure remained. Both candidates stay test-only. This was a frozen-seed prompt experiment with generation-time retrieval disabled, not a runtime fix or retrieval benchmark. Independent human review is pending.
 

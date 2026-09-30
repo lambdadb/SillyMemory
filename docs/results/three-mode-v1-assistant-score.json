@@ -1,0 +1,1024 @@
+{
+  "version": "semantic-three-modes-v1",
+  "groups": [
+    {
+      "mode": "off",
+      "samples": 32,
+      "known": 28,
+      "completeInMemory": 0,
+      "completeInPrompt": 0,
+      "medianPromptTokens": 1234,
+      "medianCachedTokens": 1024,
+      "medianGenerationMs": 1309.3214170001447,
+      "medianSyncMs": 5.12716650000948,
+      "maxMemoryTokens": 0,
+      "strictPasses": 4
+    },
+    {
+      "mode": "vectors",
+      "samples": 32,
+      "known": 28,
+      "completeInMemory": 14,
+      "completeInPrompt": 14,
+      "medianPromptTokens": 1225.5,
+      "medianCachedTokens": 512,
+      "medianGenerationMs": 1474.539145000017,
+      "medianSyncMs": 1132.9967079999915,
+      "maxMemoryTokens": 117,
+      "strictPasses": 18
+    },
+    {
+      "mode": "on",
+      "samples": 32,
+      "known": 28,
+      "completeInMemory": 28,
+      "completeInPrompt": 28,
+      "medianPromptTokens": 690.5,
+      "medianCachedTokens": 0,
+      "medianGenerationMs": 2147.973979000002,
+      "medianSyncMs": 1673.339187000005,
+      "maxMemoryTokens": 319,
+      "strictPasses": 30
+    }
+  ],
+  "providerCalls": 96,
+  "retries": 0,
+  "spacing": {
+    "verified": true,
+    "evidence": "monotonic upstream-send timestamps",
+    "minimumIntervalMs": 15000,
+    "minimumObservedIntervalMs": 15000.148415999996,
+    "gapsBelowMinimum": 0
+  },
+  "checks": 1286,
+  "lambdaFailures": 0,
+  "nativeEmbeddingCalls": 128,
+  "nativeEmbeddingTokens": 20100,
+  "cleanupComplete": true,
+  "answerQuality": null,
+  "totalCost": null,
+  "provisional": true,
+  "reviewer": "Coding assistant; provisional, not independent or blinded",
+  "rows": [
+    {
+      "id": "long-en-minimal-fact/r1/off",
+      "case": "long-en-minimal-fact",
+      "repetition": 1,
+      "mode": "off",
+      "unknown": false,
+      "grade": "abstained",
+      "rationale": "Explicitly says the required information is unavailable; the known-answer question remains unanswered.",
+      "strictPass": false
+    },
+    {
+      "id": "long-en-minimal-fact/r1/on",
+      "case": "long-en-minimal-fact",
+      "repetition": 1,
+      "mode": "on",
+      "unknown": false,
+      "grade": "correct",
+      "rationale": "Names the stated person and the complete stated delivery time.",
+      "strictPass": true
+    },
+    {
+      "id": "long-en-minimal-fact/r1/vectors",
+      "case": "long-en-minimal-fact",
+      "repetition": 1,
+      "mode": "vectors",
+      "unknown": false,
+      "grade": "correct",
+      "rationale": "Names the stated person and the complete stated delivery time.",
+      "strictPass": true
+    },
+    {
+      "id": "long-ko-minimal-fact/r1/on",
+      "case": "long-ko-minimal-fact",
+      "repetition": 1,
+      "mode": "on",
+      "unknown": false,
+      "grade": "correct",
+      "rationale": "Names the stated person and the complete stated delivery time.",
+      "strictPass": true
+    },
+    {
+      "id": "long-ko-minimal-fact/r1/vectors",
+      "case": "long-ko-minimal-fact",
+      "repetition": 1,
+      "mode": "vectors",
+      "unknown": false,
+      "grade": "correct",
+      "rationale": "Names the stated person and the complete stated delivery time.",
+      "strictPass": true
+    },
+    {
+      "id": "long-ko-minimal-fact/r1/off",
+      "case": "long-ko-minimal-fact",
+      "repetition": 1,
+      "mode": "off",
+      "unknown": false,
+      "grade": "abstained",
+      "rationale": "Explicitly says the required information is unavailable; the known-answer question remains unanswered.",
+      "strictPass": false
+    },
+    {
+      "id": "long-en-correction/r1/vectors",
+      "case": "long-en-correction",
+      "repetition": 1,
+      "mode": "vectors",
+      "unknown": false,
+      "grade": "correct",
+      "rationale": "Gives the final time and explicitly rejects the canceled earlier slot.",
+      "strictPass": true
+    },
+    {
+      "id": "long-en-correction/r1/off",
+      "case": "long-en-correction",
+      "repetition": 1,
+      "mode": "off",
+      "unknown": false,
+      "grade": "abstained",
+      "rationale": "Explicitly says the required information is unavailable; the known-answer question remains unanswered.",
+      "strictPass": false
+    },
+    {
+      "id": "long-en-correction/r1/on",
+      "case": "long-en-correction",
+      "repetition": 1,
+      "mode": "on",
+      "unknown": false,
+      "grade": "correct",
+      "rationale": "Gives the final time and explicitly rejects the canceled earlier slot.",
+      "strictPass": true
+    },
+    {
+      "id": "long-ko-correction/r1/off",
+      "case": "long-ko-correction",
+      "repetition": 1,
+      "mode": "off",
+      "unknown": false,
+      "grade": "abstained",
+      "rationale": "Explicitly says the required information is unavailable; the known-answer question remains unanswered.",
+      "strictPass": false
+    },
+    {
+      "id": "long-ko-correction/r1/vectors",
+      "case": "long-ko-correction",
+      "repetition": 1,
+      "mode": "vectors",
+      "unknown": false,
+      "grade": "correct",
+      "rationale": "Gives the final time and explicitly rejects the canceled earlier slot.",
+      "strictPass": true
+    },
+    {
+      "id": "long-ko-correction/r1/on",
+      "case": "long-ko-correction",
+      "repetition": 1,
+      "mode": "on",
+      "unknown": false,
+      "grade": "correct",
+      "rationale": "Gives the final time and explicitly rejects the canceled earlier slot.",
+      "strictPass": true
+    },
+    {
+      "id": "long-en-negation/r1/vectors",
+      "case": "long-en-negation",
+      "repetition": 1,
+      "mode": "vectors",
+      "unknown": false,
+      "grade": "correct",
+      "rationale": "Names the corrected collector and day and rejects the false leaflet.",
+      "strictPass": true
+    },
+    {
+      "id": "long-en-negation/r1/on",
+      "case": "long-en-negation",
+      "repetition": 1,
+      "mode": "on",
+      "unknown": false,
+      "grade": "correct",
+      "rationale": "Names the corrected collector and day and rejects the false leaflet.",
+      "strictPass": true
+    },
+    {
+      "id": "long-en-negation/r1/off",
+      "case": "long-en-negation",
+      "repetition": 1,
+      "mode": "off",
+      "unknown": false,
+      "grade": "abstained",
+      "rationale": "Explicitly says the required information is unavailable; the known-answer question remains unanswered.",
+      "strictPass": false
+    },
+    {
+      "id": "long-ko-negation/r1/on",
+      "case": "long-ko-negation",
+      "repetition": 1,
+      "mode": "on",
+      "unknown": false,
+      "grade": "correct",
+      "rationale": "Names the corrected collector and day and rejects the false leaflet.",
+      "strictPass": true
+    },
+    {
+      "id": "long-ko-negation/r1/off",
+      "case": "long-ko-negation",
+      "repetition": 1,
+      "mode": "off",
+      "unknown": false,
+      "grade": "abstained",
+      "rationale": "Explicitly says the required information is unavailable; the known-answer question remains unanswered.",
+      "strictPass": false
+    },
+    {
+      "id": "long-ko-negation/r1/vectors",
+      "case": "long-ko-negation",
+      "repetition": 1,
+      "mode": "vectors",
+      "unknown": false,
+      "grade": "incorrect",
+      "rationale": "Repeats the false leaflet assigning collection to Taeo and omits the correction to Yuri on Monday.",
+      "strictPass": false
+    },
+    {
+      "id": "long-en-condition/r1/off",
+      "case": "long-en-condition",
+      "repetition": 1,
+      "mode": "off",
+      "unknown": false,
+      "grade": "abstained",
+      "rationale": "Explicitly says the required information is unavailable; the known-answer question remains unanswered.",
+      "strictPass": false
+    },
+    {
+      "id": "long-en-condition/r1/on",
+      "case": "long-en-condition",
+      "repetition": 1,
+      "mode": "on",
+      "unknown": false,
+      "grade": "correct",
+      "rationale": "Retains the access condition and the specified alternate waiting place.",
+      "strictPass": true
+    },
+    {
+      "id": "long-en-condition/r1/vectors",
+      "case": "long-en-condition",
+      "repetition": 1,
+      "mode": "vectors",
+      "unknown": false,
+      "grade": "correct",
+      "rationale": "Retains the access condition and the specified alternate waiting place.",
+      "strictPass": true
+    },
+    {
+      "id": "long-ko-condition/r1/on",
+      "case": "long-ko-condition",
+      "repetition": 1,
+      "mode": "on",
+      "unknown": false,
+      "grade": "correct",
+      "rationale": "Retains the access condition and the specified alternate waiting place.",
+      "strictPass": true
+    },
+    {
+      "id": "long-ko-condition/r1/vectors",
+      "case": "long-ko-condition",
+      "repetition": 1,
+      "mode": "vectors",
+      "unknown": false,
+      "grade": "correct",
+      "rationale": "Retains the access condition and the specified alternate waiting place.",
+      "strictPass": true
+    },
+    {
+      "id": "long-ko-condition/r1/off",
+      "case": "long-ko-condition",
+      "repetition": 1,
+      "mode": "off",
+      "unknown": false,
+      "grade": "abstained",
+      "rationale": "Explicitly says the required information is unavailable; the known-answer question remains unanswered.",
+      "strictPass": false
+    },
+    {
+      "id": "long-en-speaker/r1/vectors",
+      "case": "long-en-speaker",
+      "repetition": 1,
+      "mode": "vectors",
+      "unknown": false,
+      "grade": "incorrect",
+      "rationale": "Assigns the assistant silver case to the user and denies the assistant assignment; the required user indigo parcel is missing.",
+      "strictPass": false
+    },
+    {
+      "id": "long-en-speaker/r1/off",
+      "case": "long-en-speaker",
+      "repetition": 1,
+      "mode": "off",
+      "unknown": false,
+      "grade": "abstained",
+      "rationale": "Explicitly says the required information is unavailable; the known-answer question remains unanswered.",
+      "strictPass": false
+    },
+    {
+      "id": "long-en-speaker/r1/on",
+      "case": "long-en-speaker",
+      "repetition": 1,
+      "mode": "on",
+      "unknown": false,
+      "grade": "correct",
+      "rationale": "Keeps the user and assistant assignments distinct, with both items and dates.",
+      "strictPass": true
+    },
+    {
+      "id": "long-ko-speaker/r1/off",
+      "case": "long-ko-speaker",
+      "repetition": 1,
+      "mode": "off",
+      "unknown": false,
+      "grade": "abstained",
+      "rationale": "Explicitly says the required information is unavailable; the known-answer question remains unanswered.",
+      "strictPass": false
+    },
+    {
+      "id": "long-ko-speaker/r1/vectors",
+      "case": "long-ko-speaker",
+      "repetition": 1,
+      "mode": "vectors",
+      "unknown": false,
+      "grade": "abstained",
+      "rationale": "Says no collection assignments exist, although both are stated in the source.",
+      "strictPass": false
+    },
+    {
+      "id": "long-ko-speaker/r1/on",
+      "case": "long-ko-speaker",
+      "repetition": 1,
+      "mode": "on",
+      "unknown": false,
+      "grade": "correct",
+      "rationale": "Keeps the user Friday teal parcel and assistant Sunday white case assignments distinct.",
+      "strictPass": true
+    },
+    {
+      "id": "long-en-reference/r1/vectors",
+      "case": "long-en-reference",
+      "repetition": 1,
+      "mode": "vectors",
+      "unknown": false,
+      "grade": "partial",
+      "rationale": "Retains noon but omits the required Harbor Six locker identity and location.",
+      "strictPass": false
+    },
+    {
+      "id": "long-en-reference/r1/on",
+      "case": "long-en-reference",
+      "repetition": 1,
+      "mode": "on",
+      "unknown": false,
+      "grade": "correct",
+      "rationale": "Connects the named locker to the recipient and retains the correct reservation deadline.",
+      "strictPass": true
+    },
+    {
+      "id": "long-en-reference/r1/off",
+      "case": "long-en-reference",
+      "repetition": 1,
+      "mode": "off",
+      "unknown": false,
+      "grade": "abstained",
+      "rationale": "Explicitly lacks the known source facts, leaving the question unanswered.",
+      "strictPass": false
+    },
+    {
+      "id": "long-ko-reference/r1/on",
+      "case": "long-ko-reference",
+      "repetition": 1,
+      "mode": "on",
+      "unknown": false,
+      "grade": "correct",
+      "rationale": "Connects the named locker to the recipient and retains the correct reservation deadline.",
+      "strictPass": true
+    },
+    {
+      "id": "long-ko-reference/r1/off",
+      "case": "long-ko-reference",
+      "repetition": 1,
+      "mode": "off",
+      "unknown": false,
+      "grade": "abstained",
+      "rationale": "Explicitly lacks the known source facts, leaving the question unanswered.",
+      "strictPass": false
+    },
+    {
+      "id": "long-ko-reference/r1/vectors",
+      "case": "long-ko-reference",
+      "repetition": 1,
+      "mode": "vectors",
+      "unknown": false,
+      "grade": "abstained",
+      "rationale": "Says the allocation was not discussed instead of giving Garden Seven and 4 p.m.",
+      "strictPass": false
+    },
+    {
+      "id": "long-en-quotation/r1/off",
+      "case": "long-en-quotation",
+      "repetition": 1,
+      "mode": "off",
+      "unknown": false,
+      "grade": "abstained",
+      "rationale": "Explicitly lacks the known source facts, leaving the question unanswered.",
+      "strictPass": false
+    },
+    {
+      "id": "long-en-quotation/r1/on",
+      "case": "long-en-quotation",
+      "repetition": 1,
+      "mode": "on",
+      "unknown": false,
+      "grade": "correct",
+      "rationale": "Attributes the quoted promise to Farah and retains Tuesday, without assigning it to the assistant.",
+      "strictPass": true
+    },
+    {
+      "id": "long-en-quotation/r1/vectors",
+      "case": "long-en-quotation",
+      "repetition": 1,
+      "mode": "vectors",
+      "unknown": false,
+      "grade": "partial",
+      "rationale": "Preserves the quoted return day and denies the assistant made the promise, but omits the required signed-note author.",
+      "strictPass": false
+    },
+    {
+      "id": "long-ko-quotation/r1/on",
+      "case": "long-ko-quotation",
+      "repetition": 1,
+      "mode": "on",
+      "unknown": false,
+      "grade": "partial",
+      "rationale": "Preserves the quoted return day and denies the assistant made the promise, but omits the required signed-note author.",
+      "strictPass": false
+    },
+    {
+      "id": "long-ko-quotation/r1/vectors",
+      "case": "long-ko-quotation",
+      "repetition": 1,
+      "mode": "vectors",
+      "unknown": false,
+      "grade": "partial",
+      "rationale": "Preserves the quoted return day and denies the assistant made the promise, but omits the required signed-note author.",
+      "strictPass": false
+    },
+    {
+      "id": "long-ko-quotation/r1/off",
+      "case": "long-ko-quotation",
+      "repetition": 1,
+      "mode": "off",
+      "unknown": false,
+      "grade": "abstained",
+      "rationale": "Does not answer the known promise question because the supporting source is unavailable.",
+      "strictPass": false
+    },
+    {
+      "id": "long-en-unknown/r1/vectors",
+      "case": "long-en-unknown",
+      "repetition": 1,
+      "mode": "vectors",
+      "unknown": true,
+      "grade": "abstained",
+      "rationale": "Correctly says no rental price was discussed or agreed and invents no amount or currency.",
+      "strictPass": true
+    },
+    {
+      "id": "long-en-unknown/r1/off",
+      "case": "long-en-unknown",
+      "repetition": 1,
+      "mode": "off",
+      "unknown": true,
+      "grade": "abstained",
+      "rationale": "Correctly says no rental price was discussed or agreed and invents no amount or currency.",
+      "strictPass": true
+    },
+    {
+      "id": "long-en-unknown/r1/on",
+      "case": "long-en-unknown",
+      "repetition": 1,
+      "mode": "on",
+      "unknown": true,
+      "grade": "abstained",
+      "rationale": "Correctly says no rental price was discussed or agreed and invents no amount or currency.",
+      "strictPass": true
+    },
+    {
+      "id": "long-ko-unknown/r1/off",
+      "case": "long-ko-unknown",
+      "repetition": 1,
+      "mode": "off",
+      "unknown": true,
+      "grade": "abstained",
+      "rationale": "Correctly says no rental price was discussed or agreed and invents no amount or currency.",
+      "strictPass": true
+    },
+    {
+      "id": "long-ko-unknown/r1/vectors",
+      "case": "long-ko-unknown",
+      "repetition": 1,
+      "mode": "vectors",
+      "unknown": true,
+      "grade": "abstained",
+      "rationale": "Correctly says no rental price was discussed or agreed and invents no amount or currency.",
+      "strictPass": true
+    },
+    {
+      "id": "long-ko-unknown/r1/on",
+      "case": "long-ko-unknown",
+      "repetition": 1,
+      "mode": "on",
+      "unknown": true,
+      "grade": "abstained",
+      "rationale": "Correctly says no rental price was discussed or agreed and invents no amount or currency.",
+      "strictPass": true
+    },
+    {
+      "id": "long-en-minimal-fact/r2/off",
+      "case": "long-en-minimal-fact",
+      "repetition": 2,
+      "mode": "off",
+      "unknown": false,
+      "grade": "abstained",
+      "rationale": "Explicitly lacks the known delivery facts and leaves the question unanswered.",
+      "strictPass": false
+    },
+    {
+      "id": "long-en-minimal-fact/r2/vectors",
+      "case": "long-en-minimal-fact",
+      "repetition": 2,
+      "mode": "vectors",
+      "unknown": false,
+      "grade": "correct",
+      "rationale": "Names the stated person and complete stated delivery time.",
+      "strictPass": true
+    },
+    {
+      "id": "long-en-minimal-fact/r2/on",
+      "case": "long-en-minimal-fact",
+      "repetition": 2,
+      "mode": "on",
+      "unknown": false,
+      "grade": "correct",
+      "rationale": "Names the stated person and complete stated delivery time.",
+      "strictPass": true
+    },
+    {
+      "id": "long-ko-minimal-fact/r2/vectors",
+      "case": "long-ko-minimal-fact",
+      "repetition": 2,
+      "mode": "vectors",
+      "unknown": false,
+      "grade": "correct",
+      "rationale": "Names the stated person and complete stated delivery time.",
+      "strictPass": true
+    },
+    {
+      "id": "long-ko-minimal-fact/r2/on",
+      "case": "long-ko-minimal-fact",
+      "repetition": 2,
+      "mode": "on",
+      "unknown": false,
+      "grade": "correct",
+      "rationale": "Names the stated person and complete stated delivery time.",
+      "strictPass": true
+    },
+    {
+      "id": "long-ko-minimal-fact/r2/off",
+      "case": "long-ko-minimal-fact",
+      "repetition": 2,
+      "mode": "off",
+      "unknown": false,
+      "grade": "abstained",
+      "rationale": "Explicitly lacks the known delivery facts and leaves the question unanswered.",
+      "strictPass": false
+    },
+    {
+      "id": "long-en-correction/r2/on",
+      "case": "long-en-correction",
+      "repetition": 2,
+      "mode": "on",
+      "unknown": false,
+      "grade": "correct",
+      "rationale": "Gives the final time and explicitly rejects the canceled earlier slot.",
+      "strictPass": true
+    },
+    {
+      "id": "long-en-correction/r2/off",
+      "case": "long-en-correction",
+      "repetition": 2,
+      "mode": "off",
+      "unknown": false,
+      "grade": "abstained",
+      "rationale": "Does not provide the final time or cancellation fact stated in the source.",
+      "strictPass": false
+    },
+    {
+      "id": "long-en-correction/r2/vectors",
+      "case": "long-en-correction",
+      "repetition": 2,
+      "mode": "vectors",
+      "unknown": false,
+      "grade": "correct",
+      "rationale": "Gives the final time and explicitly rejects the canceled earlier slot.",
+      "strictPass": true
+    },
+    {
+      "id": "long-ko-correction/r2/off",
+      "case": "long-ko-correction",
+      "repetition": 2,
+      "mode": "off",
+      "unknown": false,
+      "grade": "abstained",
+      "rationale": "Does not provide the final time or cancellation fact stated in the source.",
+      "strictPass": false
+    },
+    {
+      "id": "long-ko-correction/r2/on",
+      "case": "long-ko-correction",
+      "repetition": 2,
+      "mode": "on",
+      "unknown": false,
+      "grade": "correct",
+      "rationale": "Gives the final time and explicitly rejects the canceled earlier slot.",
+      "strictPass": true
+    },
+    {
+      "id": "long-ko-correction/r2/vectors",
+      "case": "long-ko-correction",
+      "repetition": 2,
+      "mode": "vectors",
+      "unknown": false,
+      "grade": "correct",
+      "rationale": "Gives the final time and explicitly rejects the canceled earlier slot.",
+      "strictPass": true
+    },
+    {
+      "id": "long-en-negation/r2/on",
+      "case": "long-en-negation",
+      "repetition": 2,
+      "mode": "on",
+      "unknown": false,
+      "grade": "correct",
+      "rationale": "Names Priya and Monday and explicitly rejects the incorrect Owen leaflet.",
+      "strictPass": true
+    },
+    {
+      "id": "long-en-negation/r2/vectors",
+      "case": "long-en-negation",
+      "repetition": 2,
+      "mode": "vectors",
+      "unknown": false,
+      "grade": "correct",
+      "rationale": "Retains the corrected collector and day and explicitly rejects the false leaflet.",
+      "strictPass": true
+    },
+    {
+      "id": "long-en-negation/r2/off",
+      "case": "long-en-negation",
+      "repetition": 2,
+      "mode": "off",
+      "unknown": false,
+      "grade": "abstained",
+      "rationale": "States the needed instructions or collection facts are unavailable instead of answering the known question.",
+      "strictPass": false
+    },
+    {
+      "id": "long-ko-negation/r2/vectors",
+      "case": "long-ko-negation",
+      "repetition": 2,
+      "mode": "vectors",
+      "unknown": false,
+      "grade": "incorrect",
+      "rationale": "Repeats the false Taeo leaflet and omits the corrected Yuri/Monday assignment.",
+      "strictPass": false
+    },
+    {
+      "id": "long-ko-negation/r2/off",
+      "case": "long-ko-negation",
+      "repetition": 2,
+      "mode": "off",
+      "unknown": false,
+      "grade": "abstained",
+      "rationale": "States the needed instructions or collection facts are unavailable instead of answering the known question.",
+      "strictPass": false
+    },
+    {
+      "id": "long-ko-negation/r2/on",
+      "case": "long-ko-negation",
+      "repetition": 2,
+      "mode": "on",
+      "unknown": false,
+      "grade": "correct",
+      "rationale": "Retains the corrected collector and day and explicitly rejects the false leaflet.",
+      "strictPass": true
+    },
+    {
+      "id": "long-en-condition/r2/off",
+      "case": "long-en-condition",
+      "repetition": 2,
+      "mode": "off",
+      "unknown": false,
+      "grade": "abstained",
+      "rationale": "States the needed instructions or collection facts are unavailable instead of answering the known question.",
+      "strictPass": false
+    },
+    {
+      "id": "long-en-condition/r2/vectors",
+      "case": "long-en-condition",
+      "repetition": 2,
+      "mode": "vectors",
+      "unknown": false,
+      "grade": "correct",
+      "rationale": "Retains the gate-opening condition and the specified alternative waiting location.",
+      "strictPass": true
+    },
+    {
+      "id": "long-en-condition/r2/on",
+      "case": "long-en-condition",
+      "repetition": 2,
+      "mode": "on",
+      "unknown": false,
+      "grade": "correct",
+      "rationale": "Retains the gate-opening condition and the specified alternative waiting location.",
+      "strictPass": true
+    },
+    {
+      "id": "long-ko-condition/r2/vectors",
+      "case": "long-ko-condition",
+      "repetition": 2,
+      "mode": "vectors",
+      "unknown": false,
+      "grade": "correct",
+      "rationale": "Retains the gate-opening condition and the specified alternative waiting location.",
+      "strictPass": true
+    },
+    {
+      "id": "long-ko-condition/r2/on",
+      "case": "long-ko-condition",
+      "repetition": 2,
+      "mode": "on",
+      "unknown": false,
+      "grade": "correct",
+      "rationale": "Retains the gate-opening condition and the specified alternative waiting location.",
+      "strictPass": true
+    },
+    {
+      "id": "long-ko-condition/r2/off",
+      "case": "long-ko-condition",
+      "repetition": 2,
+      "mode": "off",
+      "unknown": false,
+      "grade": "abstained",
+      "rationale": "Explicitly lacks the known instructions or assignments, leaving the question unanswered.",
+      "strictPass": false
+    },
+    {
+      "id": "long-en-speaker/r2/on",
+      "case": "long-en-speaker",
+      "repetition": 2,
+      "mode": "on",
+      "unknown": false,
+      "grade": "correct",
+      "rationale": "Keeps the user Friday indigo parcel and assistant Sunday silver case assignments distinct.",
+      "strictPass": true
+    },
+    {
+      "id": "long-en-speaker/r2/off",
+      "case": "long-en-speaker",
+      "repetition": 2,
+      "mode": "off",
+      "unknown": false,
+      "grade": "abstained",
+      "rationale": "Explicitly lacks the known instructions or assignments, leaving the question unanswered.",
+      "strictPass": false
+    },
+    {
+      "id": "long-en-speaker/r2/vectors",
+      "case": "long-en-speaker",
+      "repetition": 2,
+      "mode": "vectors",
+      "unknown": false,
+      "grade": "incorrect",
+      "rationale": "Assigns the assistant Sunday silver case to the user and omits the user Friday indigo parcel.",
+      "strictPass": false
+    },
+    {
+      "id": "long-ko-speaker/r2/off",
+      "case": "long-ko-speaker",
+      "repetition": 2,
+      "mode": "off",
+      "unknown": false,
+      "grade": "abstained",
+      "rationale": "States the known assignment or reservation information is absent and leaves the question unanswered.",
+      "strictPass": false
+    },
+    {
+      "id": "long-ko-speaker/r2/on",
+      "case": "long-ko-speaker",
+      "repetition": 2,
+      "mode": "on",
+      "unknown": false,
+      "grade": "correct",
+      "rationale": "Correctly separates the user Friday teal parcel from the assistant Sunday white case.",
+      "strictPass": true
+    },
+    {
+      "id": "long-ko-speaker/r2/vectors",
+      "case": "long-ko-speaker",
+      "repetition": 2,
+      "mode": "vectors",
+      "unknown": false,
+      "grade": "abstained",
+      "rationale": "States the known assignment or reservation information is absent and leaves the question unanswered.",
+      "strictPass": false
+    },
+    {
+      "id": "long-en-reference/r2/on",
+      "case": "long-en-reference",
+      "repetition": 2,
+      "mode": "on",
+      "unknown": false,
+      "grade": "correct",
+      "rationale": "Connects Harbor Six beside the mural to Keiko and retains the noon deadline.",
+      "strictPass": true
+    },
+    {
+      "id": "long-en-reference/r2/vectors",
+      "case": "long-en-reference",
+      "repetition": 2,
+      "mode": "vectors",
+      "unknown": false,
+      "grade": "incorrect",
+      "rationale": "Omits Harbor Six and its mural location, and substitutes an unsupported locker description based on corridor lighting; only noon is retained.",
+      "strictPass": false
+    },
+    {
+      "id": "long-en-reference/r2/off",
+      "case": "long-en-reference",
+      "repetition": 2,
+      "mode": "off",
+      "unknown": false,
+      "grade": "abstained",
+      "rationale": "States the known assignment or reservation information is absent and leaves the question unanswered.",
+      "strictPass": false
+    },
+    {
+      "id": "long-ko-reference/r2/vectors",
+      "case": "long-ko-reference",
+      "repetition": 2,
+      "mode": "vectors",
+      "unknown": false,
+      "grade": "abstained",
+      "rationale": "Does not provide the known reservation or promise information from the source.",
+      "strictPass": false
+    },
+    {
+      "id": "long-ko-reference/r2/off",
+      "case": "long-ko-reference",
+      "repetition": 2,
+      "mode": "off",
+      "unknown": false,
+      "grade": "abstained",
+      "rationale": "Does not provide the known reservation or promise information from the source.",
+      "strictPass": false
+    },
+    {
+      "id": "long-ko-reference/r2/on",
+      "case": "long-ko-reference",
+      "repetition": 2,
+      "mode": "on",
+      "unknown": false,
+      "grade": "correct",
+      "rationale": "Names Garden Seven beside the fountain and retains Yerin and the 4 p.m. deadline.",
+      "strictPass": true
+    },
+    {
+      "id": "long-en-quotation/r2/off",
+      "case": "long-en-quotation",
+      "repetition": 2,
+      "mode": "off",
+      "unknown": false,
+      "grade": "abstained",
+      "rationale": "Does not provide the known reservation or promise information from the source.",
+      "strictPass": false
+    },
+    {
+      "id": "long-en-quotation/r2/vectors",
+      "case": "long-en-quotation",
+      "repetition": 2,
+      "mode": "vectors",
+      "unknown": false,
+      "grade": "partial",
+      "rationale": "Retains the return day and quotation status but omits the required signed-note author.",
+      "strictPass": false
+    },
+    {
+      "id": "long-en-quotation/r2/on",
+      "case": "long-en-quotation",
+      "repetition": 2,
+      "mode": "on",
+      "unknown": false,
+      "grade": "correct",
+      "rationale": "Identifies Farah as the signed-note author making the Tuesday return promise.",
+      "strictPass": true
+    },
+    {
+      "id": "long-ko-quotation/r2/vectors",
+      "case": "long-ko-quotation",
+      "repetition": 2,
+      "mode": "vectors",
+      "unknown": false,
+      "grade": "partial",
+      "rationale": "Retains the return day and quotation status but omits the required signed-note author.",
+      "strictPass": false
+    },
+    {
+      "id": "long-ko-quotation/r2/on",
+      "case": "long-ko-quotation",
+      "repetition": 2,
+      "mode": "on",
+      "unknown": false,
+      "grade": "partial",
+      "rationale": "Retains Wednesday and quotation status but omits Haesol even though the signature was delivered.",
+      "strictPass": false
+    },
+    {
+      "id": "long-ko-quotation/r2/off",
+      "case": "long-ko-quotation",
+      "repetition": 2,
+      "mode": "off",
+      "unknown": false,
+      "grade": "abstained",
+      "rationale": "Does not provide the author or day of the known return promise.",
+      "strictPass": false
+    },
+    {
+      "id": "long-en-unknown/r2/on",
+      "case": "long-en-unknown",
+      "repetition": 2,
+      "mode": "on",
+      "unknown": true,
+      "grade": "abstained",
+      "rationale": "Correctly says no rental price was discussed or agreed, without inventing an amount or currency.",
+      "strictPass": true
+    },
+    {
+      "id": "long-en-unknown/r2/off",
+      "case": "long-en-unknown",
+      "repetition": 2,
+      "mode": "off",
+      "unknown": true,
+      "grade": "abstained",
+      "rationale": "Correctly says no rental price was discussed or agreed, without inventing an amount or currency.",
+      "strictPass": true
+    },
+    {
+      "id": "long-en-unknown/r2/vectors",
+      "case": "long-en-unknown",
+      "repetition": 2,
+      "mode": "vectors",
+      "unknown": true,
+      "grade": "abstained",
+      "rationale": "Correctly says no rental price was discussed or agreed, without inventing an amount or currency.",
+      "strictPass": true
+    },
+    {
+      "id": "long-ko-unknown/r2/off",
+      "case": "long-ko-unknown",
+      "repetition": 2,
+      "mode": "off",
+      "unknown": true,
+      "grade": "abstained",
+      "rationale": "Correctly says no rental price was discussed or agreed, without inventing an amount or currency.",
+      "strictPass": true
+    },
+    {
+      "id": "long-ko-unknown/r2/on",
+      "case": "long-ko-unknown",
+      "repetition": 2,
+      "mode": "on",
+      "unknown": true,
+      "grade": "abstained",
+      "rationale": "Correctly says no rental price was discussed or agreed, without inventing an amount or currency.",
+      "strictPass": true
+    },
+    {
+      "id": "long-ko-unknown/r2/vectors",
+      "case": "long-ko-unknown",
+      "repetition": 2,
+      "mode": "vectors",
+      "unknown": true,
+      "grade": "abstained",
+      "rationale": "Correctly says no rental price was agreed because terms have not been discussed, without inventing an amount.",
+      "strictPass": true
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "scripts/generation-smoke.mjs:f08e8a3ffb992e393b5433722a62a127cd170c53cca6051c9556f0bd2c0a4028": "tests/fixtures/native-tuning-producers/f08e8a3ffb992e393b5433722a62a127cd170c53cca6051c9556f0bd2c0a4028.txt",
+  "scripts/semantic-live.mjs:db8661c235faf6afd0c7812ae170f449f36b72b605cd611252eb4bb27b23eb71": "tests/fixtures/native-tuning-producers/db8661c235faf6afd0c7812ae170f449f36b72b605cd611252eb4bb27b23eb71.txt",
+  "scripts/three-mode-plan.mjs:0400aa0916e2f18ddb8479e4d0bf50dade36a4971d8f9466609d1dfd950dca17": "tests/fixtures/native-tuning-producers/0400aa0916e2f18ddb8479e4d0bf50dade36a4971d8f9466609d1dfd950dca17.txt",
+  "scripts/three-mode-results.mjs:641d260a78e8ffaa049a5094843033f6cb1b48df1506a280c895c97b753d90d2": "tests/fixtures/native-tuning-producers/641d260a78e8ffaa049a5094843033f6cb1b48df1506a280c895c97b753d90d2.txt"
+}
