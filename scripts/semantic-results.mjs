@@ -1,0 +1,65 @@
+// Revalidate actual-host evidence; never infer answer quality from quote matching.
+import assert from 'node:assert/strict';
+import { readFileSync, mkdirSync, writeFileSync } from 'node:fs';
+import { randomUUID } from 'node:crypto';
+import { pathToFileURL } from 'node:url';
+import path from 'node:path';
+import { loadLong, validateLong, longSchedule, semanticPromptEvidence, hostSource, sourceFiles, sha } from './semantic-long.mjs';
+import { NATURAL_RETRY } from './provider-retry.mjs';
+import { summarizeProviderSpacing } from './provider-spacing.mjs';
+export function summarizeSemantic(report) {
+    assert(report.passed&&!report.failure&&!report.incomplete&&report.cleanupComplete&&report.nativeCleanupComplete,'Complete successful integrity and cleanup required');
+    const fixture=validateLong(loadLong()),schedule=longSchedule(fixture),evaluation=report.evaluation;
+    assert.equal(evaluation.version,fixture.version);assert(evaluation.complete);
+    assert.equal(evaluation.fixtureSha256,sha(JSON.stringify(fixture)));
+    assert.deepEqual(evaluation.settings,fixture.settings);assert.deepEqual(evaluation.generation,fixture.generation);
+    assert.equal(report.sillyTavern,'06bde939fb1e9c4c8d8641d810f0a916b5bce127');
+    assert.equal(report.hostContextTokens,fixture.settings.context);assert.equal(report.model,fixture.generation.model);
+    for(const file of sourceFiles){assert(/^[a-f0-9]{64}$/.test(report.initialSourceSha256?.[file]),`Missing input hash: ${file}`);assert.equal(report.sourceSha256[file],report.initialSourceSha256[file],`Input changed: ${file}`);assert.equal(sha(readFileSync(new URL(`../${file}`,import.meta.url))),report.sourceSha256[file],`Use recorded revision: ${file}`);}
+    assert.equal(evaluation.rows.length,schedule.length);assert.equal(report.generations.length,schedule.length);
+    assert.equal(new Set(evaluation.rows.map(row=>row.chatId)).size,schedule.length);
+    if(report.transportProtocol)assert.deepEqual(report.transportProtocol,NATURAL_RETRY);
+    let calls=0;
+    for(const [index,sample]of schedule.entries()){
+        const row=evaluation.rows[index],generation=report.generations[index],item=fixture.cases.find(c=>c.id===sample.case);
+        for(const key of ['id','case','repetition','mode'])assert.equal(row[key],sample[key]);
+        assert.equal(row.index,index);assert.equal(row.language,item.language);assert.equal(row.shape,item.shape);
+        assert.equal(generation.semanticSampleId,row.id);assert.equal(generation.upstreamStatus,200);assert.equal(generation.finishReason,'stop');
+        assert.equal(generation.providerAnswer.trim(),row.answer.trim());assert.equal(generation.answer.trim(),row.answer.trim());
+        assert.equal(generation.model,fixture.generation.model);assert.equal(generation.requestOptions.temperature,0);assert.equal(generation.maxOutputTokens,256);
+        const attempts=generation.attempts;assert(attempts.length>=1&&attempts.length<=(report.transportProtocol?3:1));calls+=attempts.length;
+        assert.equal(attempts.at(-1).status,200);
+        if(report.transportProtocol)for(const [i,attempt]of attempts.entries()){
+            assert(!attempt.failure);assert.equal(attempt.number,i+1);assert(/^[a-f0-9]{64}$/.test(attempt.requestSha256));assert.equal(attempt.requestSha256,attempts[0].requestSha256);
+            if(i<attempts.length-1){assert(NATURAL_RETRY.statuses.includes(attempt.status));assert(attempt.retryWaitMs>=NATURAL_RETRY.baseDelayMs*2**i&&attempt.retryWaitMs<=NATURAL_RETRY.maxDelayMs);}
+        }
+        assert(row.sourceTokens>fixture.settings.context);assert(Number.isFinite(row.memoryTokens)&&row.memoryTokens>=0&&row.memoryTokens<=fixture.settings.effectiveBudget);
+        const source=hostSource(item);assert.equal(row.sourceHash,sha(JSON.stringify(source.map(m=>({text:m.mes,user:m.is_user,name:m.name})))));
+        assert.deepEqual(row.coverage,semanticPromptEvidence(item,row.passages,generation.messages));
+        const prompt=generation.messages.map(m=>typeof m.content==='string'?m.content:JSON.stringify(m.content)).join('\n');
+        assert(prompt.includes(item.question)&&prompt.includes(fixture.generation.instruction));
+        assert(source.slice(-(fixture.settings.recent-1)).every(m=>prompt.includes(m.mes.trim())));
+        if(row.mode==='off'){assert.equal(row.memoryTokens,0);assert.equal(row.passages.length,0);assert.equal(row.effectiveBudget,null);assert(row.sourceMessagesPresent<source.length);}
+        else assert.equal(row.effectiveBudget,320);
+    }
+    assert.equal(calls,report.providerCalls);assert(calls<=schedule.length+(report.transportProtocol?8:0));
+    const spacing=summarizeProviderSpacing(report.generations,report.providerSpacing);assert(spacing.verified);
+    assert(Array.isArray(report.lambdaRequests)&&report.lambdaRequests.length>0);assert(report.lambdaRequests.every(r=>r.status||r.failed));
+    const groups=['off','on'].map(mode=>{const rows=evaluation.rows.filter(r=>r.mode===mode),known=rows.filter(r=>r.coverage.prompt.completeEvidence!==null);return {mode,samples:rows.length,known:known.length,completeInMemory:known.filter(r=>r.coverage.memory.completeEvidence).length,completeInPrompt:known.filter(r=>r.coverage.prompt.completeEvidence).length,answerUnitsInPrompt:known.reduce((n,r)=>n+r.coverage.prompt.answerSpans.covered,0),contextUnitsInPrompt:known.reduce((n,r)=>n+r.coverage.prompt.mandatoryContext.covered,0),unknown:rows.length-known.length,maxMemoryTokens:Math.max(...rows.map(r=>r.memoryTokens))};});
+    return {version:fixture.version,kind:'Actual SillyTavern, live managed search and generation; source delivery only, answers ungraded',groups,providerCalls:calls,retries:calls-schedule.length,spacing,checks:report.checks.length,lambdaResponses:report.lambdaRequests.length,cleanupComplete:true,answerQuality:null,independentHumanReview:null};
+}
+export function semanticReviewPacket(report) {
+    const summary=summarizeSemantic(report),fixture=loadLong(),key=[];
+    const rows=report.evaluation.rows.map(row=>{
+        const item=fixture.cases.find(c=>c.id===row.case),id=randomUUID();key.push({id,sample:row.id});
+        return {id,question:item.question,source:item.messages.slice(0,2),expected:item.expected,evidence:item.evidence,answer:row.answer,grade:null,rationale:null};
+    }); // Random UUID ordering below, not mode or sample order.
+    rows.sort((a,b)=>a.id.localeCompare(b.id));
+    return {summary,key,packet:{version:fixture.version,reportSha256:sha(JSON.stringify(report)),reviewer:null,reviewerType:null,rows}};
+}
+if(process.argv[1]&&import.meta.url===pathToFileURL(process.argv[1]).href){
+    const [input,directory]=process.argv.slice(2);assert(input&&directory&&process.argv.length===4,'Usage: node scripts/semantic-results.mjs report.json new-output-directory');
+    const report=JSON.parse(readFileSync(input)),output=semanticReviewPacket(report);mkdirSync(directory);
+    for(const [name,value]of Object.entries(output))writeFileSync(path.join(directory,`${name}.json`),JSON.stringify(value,null,2)+'\n',{flag:'wx'});
+    console.log(JSON.stringify({directory,summary:output.summary}));
+}
