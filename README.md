@@ -240,6 +240,9 @@ so runtime selection remains unchanged.
 The [sentence excerpt follow-up](docs/sentence-passage-results.md) also retains
 production behavior: neither fixed candidate preserves all existing required
 quotes, and partial parent matches are recorded separately from full coverage.
+A [proposed semantic evidence contract](docs/semantic-evidence-contract.md) now
+separates answer-bearing spans from mandatory context in 16 fresh short cases.
+Its audit validates the evaluator; candidate quality and human review remain unset.
 
 The [context candidate protocol](docs/context-candidate-evaluation.md) compares
 the current labelled selector, label removal, and label removal plus adjacent-turn
