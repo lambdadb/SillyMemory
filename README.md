@@ -237,6 +237,9 @@ See its [results and amended generation commands](docs/context-turn-results.md).
 The subsequent [fixed-budget passage-selection replay](docs/budget-selection-results.md)
 compares five offline candidates; all regress on an existing selected source,
 so runtime selection remains unchanged.
+The [sentence excerpt follow-up](docs/sentence-passage-results.md) also retains
+production behavior: neither fixed candidate preserves all existing required
+quotes, and partial parent matches are recorded separately from full coverage.
 
 The [context candidate protocol](docs/context-candidate-evaluation.md) compares
 the current labelled selector, label removal, and label removal plus adjacent-turn
