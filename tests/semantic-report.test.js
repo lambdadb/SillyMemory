@@ -33,7 +33,7 @@ test('recorded partial run retains exact outgoing evidence, every provider answe
     for (const report of reports) {
         for (const file of sourceFiles) {
             assert.equal(report.initialSourceSha256[file], report.sourceSha256[file]);
-            const recordedSource = file === 'scripts/semantic-results.mjs' ? 'tests/fixtures/semantic-results-v1.txt' : file;
+            const recordedSource = file === 'scripts/semantic-results.mjs' ? 'tests/fixtures/semantic-results-v1.txt' : file === 'scripts/generation-smoke.mjs' ? 'tests/fixtures/generation-smoke-semantic-managed-v1.txt' : file;
             assert.equal(report.sourceSha256[file], sha(readFileSync(new URL(`../${recordedSource}`, import.meta.url))));
         }
         const failures = report.lambdaRequests.filter(r => r.failed);
