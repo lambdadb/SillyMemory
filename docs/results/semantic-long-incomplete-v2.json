@@ -1,0 +1,158 @@
+{
+  "time": "2026-09-30T05:09:03.558Z",
+  "sillyTavern": "06bde939fb1e9c4c8d8641d810f0a916b5bce127",
+  "lambdaDB": "live",
+  "generator": "live compatible model",
+  "model": "gpt-4.1-mini-2025-04-14",
+  "generationIntervalMs": 15000,
+  "maxOutputTokens": 256,
+  "reasoningEffort": "",
+  "excludedParameters": [],
+  "hostContextTokens": 1536,
+  "embeddings": [],
+  "vectorQueries": [],
+  "lambdaRequests": [
+    {
+      "stage": "UI LambdaDB setup",
+      "method": "POST",
+      "path": "/collections",
+      "status": 201,
+      "elapsedMs": 119.54387499999939
+    },
+    {
+      "stage": "UI LambdaDB setup",
+      "method": "POST",
+      "path": "/collections/smtest_ae2406b7423342e991f307cd2013f339/docs/upsert",
+      "status": 202,
+      "elapsedMs": 1136.1602920000005
+    },
+    {
+      "stage": "UI LambdaDB setup",
+      "method": "POST",
+      "path": "/collections/smtest_ae2406b7423342e991f307cd2013f339/query",
+      "failed": true,
+      "elapsedMs": 15003.143
+    },
+    {
+      "stage": "UI LambdaDB setup",
+      "method": "GET",
+      "path": "/collections/smtest_ae2406b7423342e991f307cd2013f339",
+      "status": 200,
+      "elapsedMs": 57.28870900000038
+    },
+    {
+      "stage": "UI LambdaDB setup",
+      "method": "DELETE",
+      "path": "/collections/smtest_ae2406b7423342e991f307cd2013f339",
+      "status": 200,
+      "elapsedMs": 79.37154199999713
+    },
+    {
+      "stage": "UI LambdaDB setup",
+      "method": "GET",
+      "path": "/collections/smtest_ae2406b7423342e991f307cd2013f339",
+      "status": 404,
+      "elapsedMs": 49.12916600000244
+    },
+    {
+      "stage": "cleanup",
+      "method": "GET",
+      "path": "/collections/smtest_ae2406b7423342e991f307cd2013f339",
+      "status": 404,
+      "elapsedMs": 59.651499999992666
+    }
+  ],
+  "transportProtocol": {
+    "version": "natural-transport-retry-v1",
+    "statuses": [
+      500,
+      502,
+      503,
+      504
+    ],
+    "maxRetriesPerSample": 2,
+    "maxRetriesPerRun": 8,
+    "maxCalls": 72,
+    "baseDelayMs": 15000,
+    "jitterMs": 1000,
+    "maxDelayMs": 60000,
+    "attemptTimeoutMs": 90000,
+    "sampleDeadlineMs": 180000
+  },
+  "providerSpacing": {
+    "version": "provider-start-spacing-v1",
+    "minimumIntervalMs": 15000
+  },
+  "initialSourceSha256": {
+    "index.js": "e02dbd971a7864a58bbb87394b29391bb05ac6f10073668cd4da30c90cb7f301",
+    "src/client.js": "a808537f640d51e7b893d422a8c288f647d12641de2a785c4098afc681239da8",
+    "src/gate.js": "c1e5afada320e822a535ff4b464d6e565cfadbf56aabc78b1ba6f667bf4b78bf",
+    "src/memory.js": "f88515cf16bf8344961591d8b1b2a2ba1804fdd43ff667fb8c3896fa42af792c",
+    "src/context.js": "8a8c674a9986796d9eb6a6c1e6bfe3f4247196780f48c8ded4edc423384aecde",
+    "src/status.js": "b9a826cfd393cc58bdcd64fcef698bc35f20a23f60a24f9e314b45919052d6f6",
+    "scripts/generation-smoke.mjs": "d213e045a00dee7db1d8c9cb75b00a9d6e28b26b8d6a920b44d1669285443eb7",
+    "scripts/provider-spacing.mjs": "8e50762dcef277dc8d959d237fe6c59c20ac7f41349a32f0cb59ffb55ceac0d3",
+    "scripts/generation-cleanup.mjs": "3765a872a7a6a848c2d401636c81c010fbf19ecc720ca2c706ee34a4fad7680c",
+    "scripts/natural-eval.mjs": "2ed459ae10f0d916a6d838e8cc0cb53872483003650b6b57dea99f1d8efe199e",
+    "scripts/natural-dialogue.mjs": "e25fad68a96e68d51840367a1337eeba6ea16108fb9b1eef5acd692889370abc",
+    "tests/fixtures/semantic-long-v1.json": "d790ff6320aeb8d2eec89b2288079396657e9c82cb6076f9b20a4e27f4ebdb13",
+    "tests/fixtures/semantic-evidence-v1.json": "9fcc88096c804e323f68de2abd66a57da177822e4872fef8d5c1afa684209460",
+    "scripts/semantic-evidence.mjs": "e089ce776ab5aa98cbe0c2c77907e5ca2f687b042fc13f177e632380908212c2",
+    "scripts/semantic-long.mjs": "cf00bafebe290bc7d96524a50f72b9c0b7b30649bba54bee6b813374fb66502a",
+    "scripts/semantic-live.mjs": "6829b5c15c0f80d8ed3ba3686b11773c5fd5ed460578f54038faa0abed24ec48",
+    "scripts/semantic-results.mjs": "f18992a036cb76a2945874ffd0f8f855509af1bd701aca0fd9f3fe96d9864565",
+    "docs/semantic-long-evaluation.md": "aebb4b601ee0fad43bec96ecc24cc161559e84744f5bae508e7ee1db8dc1b49e",
+    "scripts/provider-retry.mjs": "97a7fa4669dbbae764eda7528da0532158de450ad884ae825eb02b8d97d32bc1",
+    "docs/natural-dialogue-retry.md": "70c82de2a312d0d33eaab92ede40be824039bae00f284dae0caca30875fee82c",
+    "scripts/natural-summary.mjs": "d51f723f95233d2d22fe952c551d4fc8e3782ffa210fae6b7b4cc161b70ca77d",
+    "scripts/natural-score.mjs": "6041936b22f8b3dcc2ebb27b1fa02c48cc5dbded4976260a82f067d874782ec3"
+  },
+  "managedEmbeddingUsage": null,
+  "managedEmbeddingCost": null,
+  "semanticScores": null,
+  "nativeCleanupComplete": true,
+  "providerCalls": 0,
+  "checks": [
+    "fixed model is available; no substitution",
+    "real host connected to the selected completion endpoint"
+  ],
+  "failure": {
+    "stage": "UI LambdaDB setup",
+    "reason": "Host/browser step did not complete"
+  },
+  "events": [],
+  "generations": [],
+  "cleanupComplete": true,
+  "sourceSha256": {
+    "index.js": "e02dbd971a7864a58bbb87394b29391bb05ac6f10073668cd4da30c90cb7f301",
+    "src/client.js": "a808537f640d51e7b893d422a8c288f647d12641de2a785c4098afc681239da8",
+    "src/gate.js": "c1e5afada320e822a535ff4b464d6e565cfadbf56aabc78b1ba6f667bf4b78bf",
+    "src/memory.js": "f88515cf16bf8344961591d8b1b2a2ba1804fdd43ff667fb8c3896fa42af792c",
+    "src/context.js": "8a8c674a9986796d9eb6a6c1e6bfe3f4247196780f48c8ded4edc423384aecde",
+    "src/status.js": "b9a826cfd393cc58bdcd64fcef698bc35f20a23f60a24f9e314b45919052d6f6",
+    "scripts/generation-smoke.mjs": "d213e045a00dee7db1d8c9cb75b00a9d6e28b26b8d6a920b44d1669285443eb7",
+    "scripts/provider-spacing.mjs": "8e50762dcef277dc8d959d237fe6c59c20ac7f41349a32f0cb59ffb55ceac0d3",
+    "scripts/generation-cleanup.mjs": "3765a872a7a6a848c2d401636c81c010fbf19ecc720ca2c706ee34a4fad7680c",
+    "scripts/korean-eval.mjs": "b47d0040a3d8004b8450731fbe0acd27c6ce6696c5e80340dcd77f78745806da",
+    "scripts/korean-fixture.mjs": "a436d4fd0ee1521a51db590b3d7affce883db3f88179bb8fdf5af137d26e79d6",
+    "scripts/comparison-fixture.mjs": "da9363e925d7776c8bf09af9ccb3f5615ffffceb5791d7081ffa1d0c27e5cc2d",
+    "scripts/comparison-eval.mjs": "9b9b4c08c1a78c8c16a81906d328f40cb797084e7ffd134a293edf0a93062e14",
+    "scripts/challenge-eval.mjs": "ffa315ead230ac5235cc995ce2c4571136111bab5bb197f4d113ec0111ddb402",
+    "scripts/recall-challenges.mjs": "c0d45b713bf40fe4130f924b85728fe9d0775d1e01a163a168ef50e86b27c551",
+    "scripts/heldout-fixture.mjs": "9aeb8483a20f120ed89abdff50b25e0b0e03b04d5e2332d8e276f4d9e0999c67",
+    "scripts/natural-eval.mjs": "2ed459ae10f0d916a6d838e8cc0cb53872483003650b6b57dea99f1d8efe199e",
+    "scripts/natural-dialogue.mjs": "e25fad68a96e68d51840367a1337eeba6ea16108fb9b1eef5acd692889370abc",
+    "tests/fixtures/semantic-long-v1.json": "d790ff6320aeb8d2eec89b2288079396657e9c82cb6076f9b20a4e27f4ebdb13",
+    "tests/fixtures/semantic-evidence-v1.json": "9fcc88096c804e323f68de2abd66a57da177822e4872fef8d5c1afa684209460",
+    "scripts/semantic-evidence.mjs": "e089ce776ab5aa98cbe0c2c77907e5ca2f687b042fc13f177e632380908212c2",
+    "scripts/semantic-long.mjs": "cf00bafebe290bc7d96524a50f72b9c0b7b30649bba54bee6b813374fb66502a",
+    "scripts/semantic-live.mjs": "6829b5c15c0f80d8ed3ba3686b11773c5fd5ed460578f54038faa0abed24ec48",
+    "scripts/semantic-results.mjs": "f18992a036cb76a2945874ffd0f8f855509af1bd701aca0fd9f3fe96d9864565",
+    "docs/semantic-long-evaluation.md": "aebb4b601ee0fad43bec96ecc24cc161559e84744f5bae508e7ee1db8dc1b49e",
+    "scripts/provider-retry.mjs": "97a7fa4669dbbae764eda7528da0532158de450ad884ae825eb02b8d97d32bc1",
+    "docs/natural-dialogue-retry.md": "70c82de2a312d0d33eaab92ede40be824039bae00f284dae0caca30875fee82c",
+    "scripts/natural-summary.mjs": "d51f723f95233d2d22fe952c551d4fc8e3782ffa210fae6b7b4cc161b70ca77d",
+    "scripts/natural-score.mjs": "6041936b22f8b3dcc2ebb27b1fa02c48cc5dbded4976260a82f067d874782ec3"
+  },
+  "passed": false
+}
