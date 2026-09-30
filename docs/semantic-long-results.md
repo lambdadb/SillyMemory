@@ -151,3 +151,15 @@ Do not increase production timeouts or adopt retrieval changes merely to obtain
 a green experiment. A separately scoped latency diagnosis can distinguish the
 query/embedding service path from generation, without changing LambdaDB. Main,
 release version and the public installation baseline are unchanged.
+
+
+## Separate temporary direct-path completion
+
+The maintainer authorized a diagnostic cohort preserving actual runtime upsert
+batches while supplying vectors computed directly in the Node harness. The
+[direct-path result](semantic-direct-results.md) completed all 64 answers, final
+credential audit and owned cleanup. It retains the same product runtime,
+generation settings and budgets. Its provisional answer grades and remaining
+Korean quotation failure are reported separately. It does not replace the managed
+failures above or establish managed-path recovery. The final product requirement
+remains managed embeddings without a separate user-configured embedding provider.

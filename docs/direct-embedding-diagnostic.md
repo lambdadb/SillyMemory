@@ -53,13 +53,14 @@ not become the product default, an automatic runtime fallback, or an additional
 settings requirement. Preserve the UI extension, built-in proxy, and session-only
 LambdaDB key design.
 
-A proposed full-cohort direct-embedding experiment would preserve the existing
-runtime's actual upsert batch contents, order and sizes (including partial and
+The separate [full-cohort direct experiment](semantic-direct-evaluation.md)
+preserves the runtime's actual upsert batch contents, order and sizes (including partial and
 incremental batches), retrieval filters, prompt budgets and generation schedule.
 Only the embedding execution and corresponding vector write/query representation
-would change. Record embedding, database and total latency separately without
-silently expanding the end-to-end deadline. This adapter is not implemented or
-validated by the single-input diagnostic above.
+change. Record embedding, database and total latency separately without
+silently expanding the end-to-end deadline. The single-input diagnostic above
+does not validate that adapter; its implementation and full-cohort results are
+recorded [separately](semantic-direct-results.md).
 
 Keep any direct-path cohort and its protocol separate from managed-path results.
 Even a complete direct-path run would not establish managed-path recovery or
