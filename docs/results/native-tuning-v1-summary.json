@@ -1,0 +1,45 @@
+{
+  "version": "native-insert-tuning-v1",
+  "groups": [
+    {
+      "mode": "insert-3",
+      "samples": 32,
+      "known": 28,
+      "completeInMemory": 14,
+      "completeInPrompt": 14,
+      "medianPromptTokens": 1225.5,
+      "medianCachedTokens": 1024,
+      "medianGenerationMs": 1542.1274580000318,
+      "medianSyncMs": 976.6420000000217,
+      "maxMemoryTokens": 117
+    },
+    {
+      "mode": "insert-10",
+      "samples": 32,
+      "known": 28,
+      "completeInMemory": 28,
+      "completeInPrompt": 28,
+      "medianPromptTokens": 1232.5,
+      "medianCachedTokens": 0,
+      "medianGenerationMs": 1510.841874500009,
+      "medianSyncMs": 945.9930205000564,
+      "maxMemoryTokens": 472
+    }
+  ],
+  "providerCalls": 64,
+  "retries": 0,
+  "spacing": {
+    "verified": true,
+    "evidence": "monotonic upstream-send timestamps",
+    "minimumIntervalMs": 15000,
+    "minimumObservedIntervalMs": 15000.013957999996,
+    "gapsBelowMinimum": 0
+  },
+  "checks": 774,
+  "lambdaFailures": 0,
+  "nativeEmbeddingCalls": 256,
+  "nativeEmbeddingTokens": 40200,
+  "cleanupComplete": true,
+  "answerQuality": null,
+  "totalCost": null
+}

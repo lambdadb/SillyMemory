@@ -1,7 +1,6 @@
 // Fixed equal-context comparison; native Vector Storage retains its own prompt policy.
 import assert from 'node:assert/strict';
-import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
-import { dirname } from 'node:path';
+import { readFileSync, writeFileSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 import { buildLongPlan, pinnedCounter, sha, sourceFiles } from './semantic-long.mjs';
 import { nativeSettings } from './comparison-fixture.mjs';
@@ -29,5 +28,5 @@ export async function verifyThreeModePlan(filename) {
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
     const [output] = process.argv.slice(2); assert(output && process.argv.length === 3);
     const counter = pinnedCounter(process.env.ST_SOURCE);
-    try { const plan = buildThreeModePlan(counter.count); mkdirSync(dirname(output), { recursive: true }); writeFileSync(output, JSON.stringify(plan, null, 2) + '\n', { flag: 'wx' }); console.log(JSON.stringify({ output, samples: plan.schedule.length })); } finally { counter.close(); }
+    try { const plan = buildThreeModePlan(counter.count); writeFileSync(output, JSON.stringify(plan, null, 2) + '\n', { flag: 'wx' }); console.log(JSON.stringify({ output, samples: plan.schedule.length })); } finally { counter.close(); }
 }

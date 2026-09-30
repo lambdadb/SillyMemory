@@ -3,7 +3,8 @@
 These records preceded the 0.2.0 candidate. Their limitations and evidence
 boundaries remain applicable; the current results are in
 [managed recall validation](managed-packed-results.md) and the subsequent
-[equal-context three-mode comparison](three-mode-results.md).
+[equal-context three-mode comparison](three-mode-results.md) and its
+[native Insert# sensitivity follow-up](native-tuning-results.md).
 
 Development now includes [repeated passage packing](repeated-passage-packing.md):
 identical selected excerpts share one body with all selected source positions,

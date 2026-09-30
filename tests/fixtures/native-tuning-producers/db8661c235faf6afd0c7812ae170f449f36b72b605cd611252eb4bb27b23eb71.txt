@@ -28,10 +28,6 @@ export async function runSemanticDialogue({page,field,openSettings,waitStatus,ge
         check(sha(JSON.stringify(before.source))===sourceHash,`${sample.id}: exact source restored`);
         check(before.tokens>plan.settings.context,`${sample.id}: actual host source exceeds context`);
         const syncStarted=performance.now();await enable(sample.mode==='on');
-        if (sample.insert !== undefined) await page.evaluate(insert => {
-            $('#vectors_insert').val(insert).trigger('input');
-            if (SillyTavern.getContext().extensionSettings.vectors.insert !== insert) throw new Error('Native Insert# setting did not apply');
-        }, sample.insert);
         const nativeIndex = sample.mode === 'vectors' ? await indexNative(page) : null;
         result.preparation.push({id:sample.id,sourceTokens:before.tokens,syncMs:performance.now()-syncStarted,...(nativeIndex ? { nativeIndex } : {})});
         await page.evaluate(()=>{globalThis.semanticRetrieval=null;globalThis.semanticQueries=[];});
@@ -60,14 +56,13 @@ export async function runSemanticDialogue({page,field,openSettings,waitStatus,ge
             } else check(!native.text && vectorQueries.length === queryStart, `${sample.id}: native memory disabled`);
         }
         const coverage=sample.mode === 'vectors' ? nativePromptEvidence(item,nativePrompt,prompt) : semanticPromptEvidence(item,passages,prompt);check(true,`${sample.id}: outgoing roles source headers and evidence verified`);
-        const recentPreserved = source.slice(-(plan.settings.recent-1)).every(m=>promptText.includes(m.mes.trim()));
-        check((sample.insert !== undefined || recentPreserved)&&promptText.includes(item.question),`${sample.id}: question retained and recent-history status recorded`);
+        check(source.slice(-(plan.settings.recent-1)).every(m=>promptText.includes(m.mes.trim()))&&promptText.includes(item.question),`${sample.id}: recent history and question retained`);
         check(promptText.includes(plan.generation.instruction),`${sample.id}: fixed instruction retained`);
         check(output.request.requestOptions.temperature===plan.generation.temperature&&output.request.maxOutputTokens===plan.settings.maxOutputTokens&&output.request.model===plan.generation.model,`${sample.id}: fixed generation settings`);
         const sourceMessagesPresent=source.filter(m=>promptText.includes(m.mes.trim())).length;
         if(sample.mode==='off')check(sourceMessagesPresent<source.length,`${sample.id}: baseline actually truncated`);
         assert.equal(coverage.memory.answerQuality,null);
-        result.rows.push({...sample,index,language:item.language,shape:item.shape,chatId,sourceHash,sourceTokens:before.tokens,sourceMessagesPresent,answer:output.last,passages,memoryTokens:sample.mode === 'vectors' ? nativeTokens : selected?.tokens||0,effectiveBudget:telemetry.retrieval?.config.budget??null,coverage,queries:telemetry.queries,usage:output.request.providerUsage??null,...(plan.nativeSettings ? { nativePrompt, nativeQuery } : {}),...(sample.insert !== undefined ? { recentPreserved } : {})});
+        result.rows.push({...sample,index,language:item.language,shape:item.shape,chatId,sourceHash,sourceTokens:before.tokens,sourceMessagesPresent,answer:output.last,passages,memoryTokens:sample.mode === 'vectors' ? nativeTokens : selected?.tokens||0,effectiveBudget:telemetry.retrieval?.config.budget??null,coverage,queries:telemetry.queries,usage:output.request.providerUsage??null,...(plan.nativeSettings ? { nativePrompt, nativeQuery } : {})});
         output.request.semanticSampleId=sample.id;await checkpoint();console.log(`RESULT ${sample.id}: integrity passed; answer quality ungraded`);
     }
     result.complete=result.rows.length===plan.schedule.length;

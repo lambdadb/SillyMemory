@@ -5,6 +5,7 @@ import { createHash } from 'node:crypto';
 // Exact historical producer snapshots, not a bypass for changed/unknown inputs.
 // The runtime adapter changed after these cohorts; do not relabel their evidence.
 const snapshots = {
+    ...JSON.parse(readFileSync(new URL('../tests/fixtures/native-tuning-producers/registry.json', import.meta.url))),
     'scripts/three-mode-results.mjs:57ab34c8233ff2a2b4159fcd2831f896a5869e8c6fcfb7a824ea19a1863e5ff7': 'tests/fixtures/three-mode-results-producer-v1.txt',
     ...JSON.parse(readFileSync(new URL('../tests/fixtures/pre-three-mode-producers/registry.json', import.meta.url))),
     ...JSON.parse(readFileSync(new URL('../tests/fixtures/recall-pilot-producers/registry.json', import.meta.url))),

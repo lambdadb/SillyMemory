@@ -1,7 +1,12 @@
 # Three-mode long-dialogue results — 2026-10-01
 
-The complete equal-context comparison favors SillyMemory on these fixed synthetic
-cases: provisional strict passes were **30/32**, versus **18/32** with built-in
+This initial equal-context comparison uses native Insert# 3. Read the
+[subsequent Insert# 3 versus 10 sensitivity study](native-tuning-results.md) before
+interpreting its quality gap: increasing the native retrieval count recovers
+missing evidence and substantially improves answers.
+
+In the initial configuration, SillyMemory provisional strict passes were
+**30/32**, versus **18/32** with built-in
 Vector Storage and **4/32** without memory. SillyMemory also used fewer input
 tokens, but had higher generation latency. This is evidence for the tested
 configuration, not universal superiority or a total-cost claim.
@@ -80,7 +85,8 @@ The native settings are declared, not optimized against these answers: protect 8
 query 2, insert 3, threshold 0.25, chunk 400, original template/position/depth.
 SillyMemory retrieves up to two sets of 30 candidates and applies its own source
 validation, context selection and budget packing. Increasing native Insert# could
-change its recall and prompt composition; that configuration is **not tested here**.
+change its recall and prompt composition; the subsequent
+[native tuning study](native-tuning-results.md) tests that change separately.
 No settings were changed after seeing answers. These results therefore compare
 product policies in one configuration, not storage engines, ANN algorithms or
 an optimized native baseline. Both paths use the same embedding model name but
@@ -106,7 +112,8 @@ queries, missing cleanup and rewritten provider answers or review annotations.
 Run `npm test` to revalidate the retained evidence without paid provider calls.
 For a new live cohort, follow the frozen protocol with fresh output paths.
 
-The measured advantage is bounded long-context recall with fewer input tokens,
-with additional latency and external-service requirements. Keep the native
-configuration limitation and Korean attribution failure visible. This work does
+The initial measured advantage combines bounded long-context recall and fewer
+input tokens, with additional latency and external-service requirements. The
+native tuning follow-up narrows the recall claim; retain both that result and
+the Korean attribution failure when assessing the product. This work does
 not change product runtime, promote `develop` to `main`, or publish a release.
