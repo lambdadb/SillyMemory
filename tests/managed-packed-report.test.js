@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { summarizeSemantic } from '../scripts/semantic-results.mjs';
 import { scoreSemantic } from '../scripts/semantic-score.mjs';
+import { verifyRecallPilot } from '../scripts/recall-pilot-results.mjs';
 
 const read = file => JSON.parse(readFileSync(new URL(`../docs/results/${file}.json`, import.meta.url)));
 test('complete managed recall keeps full source coverage separate from remaining answer failures', () => {
@@ -31,6 +32,9 @@ test('rejected guidance pilots retain the tested runtime and never become produc
     assert.match(report.decision, /Rejected/); assert.equal(report.provisional, true);
     assert.equal(report.pilots.length, 3);
     for (const pilot of report.pilots) {
+        const raw = read(`recall-guide-pilot-v${pilot.attempt}-raw`);
+        const plan = readFileSync(new URL(`../docs/results/recall-guide-pilot-v${pilot.attempt}-plan.json`, import.meta.url));
+        assert.equal(verifyRecallPilot(raw, plan, pilot).samples, 4);
         assert(pilot.passedIntegrity && pilot.cleanupComplete);
         assert.equal(pilot.embeddingMode, 'managed'); assert.equal(pilot.providerCalls, 4);
         assert.equal(pilot.rows.length, 4);
@@ -43,6 +47,20 @@ test('rejected guidance pilots retain the tested runtime and never become produc
         }
     }
     assert(!readFileSync(new URL('../index.js', import.meta.url), 'utf8').includes('preparedGuidance'));
+});
+
+test('pilot verification rejects altered prompts, missing cleanup, and unarchived producer hashes', () => {
+    const pilot = read('recall-guide-pilots-v1').pilots[0];
+    const plan = readFileSync(new URL('../docs/results/recall-guide-pilot-v1-plan.json', import.meta.url));
+    for (const change of [
+        raw => { raw.generations[0].messages = []; },
+        raw => { raw.lambdaRequests = raw.lambdaRequests.filter(r => r.status !== 404); },
+        raw => { raw.generations[0].providerAnswer = 'changed'; },
+        raw => { raw.sourceSha256['scripts/semantic-live.mjs'] = '0'.repeat(64); },
+    ]) {
+        const raw = read('recall-guide-pilot-v1-raw'); change(raw);
+        assert.throws(() => verifyRecallPilot(raw, plan, pilot));
+    }
 });
 
 test('candidate installation evidence covers a real version update and published-tag rollback', () => {

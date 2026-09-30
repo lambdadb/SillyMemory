@@ -66,6 +66,18 @@ memory-on totals were 305, 308 and 314 tokens respectively.
 
 All [12 pilot responses and instruction texts](results/recall-guide-pilots-v1.json)
 are retained with producer hashes, provisional grades and cleanup status.
+The complete raw reports and frozen plans are retained for
+[pilot 1](results/recall-guide-pilot-v1-raw.json),
+[pilot 2](results/recall-guide-pilot-v2-raw.json), and
+[pilot 3](results/recall-guide-pilot-v3-raw.json).
+Every recorded producer hash resolves to current or archived exact bytes.
+The offline verifier checks the focused schedule, source passages against captured
+prompts, provider answers, request settings, spacing, and deletion followed by
+HTTP 404 for both owned collections before comparing the derived fields with
+the pilot summary. It rejects missing evidence even when summary booleans remain
+true. Token totals remain recorded host measurements; semantic grades remain
+provisional annotations. These checks do not turn rejected pilots into full-cohort
+quality passes.
 The first variant passed one of two on-mode answers; the second continued to
 hedge the supplied identity; the third said it could not identify the promiser.
 Each pilot completed transport and cleanup, but none reliably met the unchanged
