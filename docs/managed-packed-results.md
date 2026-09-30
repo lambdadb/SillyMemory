@@ -147,3 +147,8 @@ an existing report. Final success requires a complete cohort, unchanged source
 hashes, intact recent history, verified provenance, normal provider completion,
 keys absent from persisted settings and confirmed owned remote cleanup. Review
 annotations remain separate from these transport/integrity checks.
+
+For a focused diagnostic, append existing case IDs when creating the plan (for
+example, `node scripts/semantic-long.mjs artifacts/target-plan.json long-ko-quotation`).
+The source, question, settings and pair order stay fixed. A focused report cannot
+pass the full 64-answer summarizer and must not be presented as a complete cohort.
