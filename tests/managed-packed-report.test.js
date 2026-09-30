@@ -44,3 +44,14 @@ test('rejected guidance pilots retain the tested runtime and never become produc
     }
     assert(!readFileSync(new URL('../index.js', import.meta.url), 'utf8').includes('preparedGuidance'));
 });
+
+test('candidate installation evidence covers a real version update and published-tag rollback', () => {
+    const report = read('install-0.2.0-v1');
+    assert.equal(report.passed, true); assert.equal(report.checks.length, 20);
+    assert.equal(report.initialVersion, '0.1.0'); assert.equal(report.updatedVersion, '0.2.0');
+    assert.equal(report.rollbackTag, 'v0.1.0'); assert.equal(report.rollbackSha, report.mainSha);
+    assert.notEqual(report.updateSha, report.mainSha);
+    assert.equal(report.localProfileRemoved, true); assert.equal(report.proxyRequests, 0);
+    assert.deepEqual(report.pageErrors, []);
+    assert.deepEqual(report.api, [{ operation: 'install', status: 200 }, { operation: 'update', status: 200 }]);
+});

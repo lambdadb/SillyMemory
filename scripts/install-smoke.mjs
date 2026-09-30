@@ -42,6 +42,11 @@ try {
     let ready = false;
     for (let i = 0; i < 90; i++) { assert(server.exitCode === null, 'Host exited'); try { if ((await fetch(url)).ok) { ready = true; break; } } catch {} await new Promise(r => setTimeout(r, 500)); }
     assert(ready, 'Host startup timeout');
+    // The host default automatically polls remote Horde. Installation requires
+    // no model connection; keep this profile offline, as in the live harness.
+    const profilePath = path.join(work, 'data/default-user/settings.json');
+    const profile = JSON.parse(await readFile(profilePath, 'utf8'));
+    profile.main_api = 'openai'; await writeFile(profilePath, JSON.stringify(profile));
     browser = await chromium.launch(); page = await browser.newPage({ viewport: { width: 1440, height: 1100 } }); page.setDefaultTimeout(30000);
     page.on('pageerror', error => report.pageErrors.push(error.message));
     await page.route('**/proxy/**', route => { report.proxyRequests++; return route.abort(); });
@@ -92,7 +97,12 @@ try {
     const response = await updateResponse; assert(response.ok(), 'Update API failed');
     check('real UI update pulls the candidate from GitHub', git(installed, 'rev-parse', 'HEAD') === updateSha && !(await response.json()).isUpToDate);
     await page.reload(); await page.locator('#sillymemory').waitFor({ state: 'attached', timeout: 45000 }); await settings();
-    check('update reload preserves ownership and nonsecret configuration', await page.evaluate(saved => { const owner = SillyTavern.getContext().extensionSettings.sillymemory.owner; return owner === saved.owner && localStorage.getItem(`sillymemory:state:${owner}`) === saved.state; }, saved));
+    const upgraded = await page.evaluate(() => { const owner = SillyTavern.getContext().extensionSettings.sillymemory.owner; return { owner, state: JSON.parse(localStorage.getItem(`sillymemory:state:${owner}`)) }; });
+    assert.equal(upgraded.owner, saved.owner);
+    // The candidate adds one documented default. Compare values, not the old
+    // serialized bytes, while still rejecting any lost or changed prior field.
+    assert.deepEqual(upgraded.state, { ...JSON.parse(saved.state), stopOnLoss: true });
+    check('update reload preserves ownership and prior settings, adding only the documented default', true);
     check('update reload clears the session key and leaves memory disabled', await field('key').inputValue() === '' && !await field('enabled').isChecked());
     check('updated controls retain configured budget and recent messages', await field('recent').inputValue() === '14' && await field('budget').inputValue() === '600');
     check('0.1.0 upgrades enable the missing-context stop by default', await field('stopOnLoss').isChecked());

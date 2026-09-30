@@ -83,6 +83,32 @@ semantic quality gate remains unmet (30/32). This is not approval to publish or
 a claim that the requested attribution problem has been completely solved.
 Main promotion and pre-release publication require review of that remaining issue.
 
+## Git installation, update and rollback
+
+The [actual-host installation report](results/install-0.2.0-v1.json) passes
+20 checks. The pinned host installed public `main` 0.1.0 at
+`b55b78f28feb769683da723206bf3b37c83ec04b`, then its real Update UI pulled the
+candidate branch at `b63cdeeae8ed8bc2180ce52a75117986239cee98` (0.2.0).
+It retained ownership and every existing nonsecret setting, added only the
+new `stopOnLoss: true` default, cleared the key and started memory disabled.
+An explicit warning-only preference survived reload. The manager displayed
+0.2.0, rollback to published tag `v0.1.0` preserved ownership/budget, and returning
+to the candidate restored 0.2.0. There were zero proxy requests or uncaught page
+errors, and the temporary profile was removed.
+
+The initial local attempt compared serialized settings byte-for-byte and rejected
+the legitimate new default; the check now requires all existing values unchanged
+and exactly the documented addition. A second attempt reached rollback but
+recorded two unclassified JSON-response page errors. The installation profile now
+uses disconnected OpenAI instead of the host's automatic default Horde polling;
+the completed attempt has no page errors. This is test isolation, not a product
+network-error fix. Earlier failed attempts remain in ignored local artifacts.
+
+The candidate's product JavaScript is identical to PR #30. Subsequent report and
+test-harness commits do not change the runtime or manifest exercised by this
+installation run. The full managed run preceded the version bump; its runtime
+hashes match the candidate's product modules.
+
 ## Interpretation
 
 Answer annotations by the coding assistant are provisional, not independent
