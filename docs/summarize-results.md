@@ -2,7 +2,7 @@
 
 This actual-host comparison evaluates SillyTavern's built-in Summarize extension
 against a concurrent memory-off control. Earlier Vector Storage and
-SillyMemory results are separately dated references.
+SillyMemory results are references from separate runs.
 
 ## What ran
 
@@ -81,7 +81,7 @@ Korean leaflet correction were partial; Korean speaker assignment was incorrect.
 For context only, the earlier [tuned native-vector cohort](native-tuning-results.md)
 passed 29/32 with median input 1,232.5, and the earlier
 [SillyMemory cohort](three-mode-results.md) passed 30/32 with median input 690.5.
-Those have two repetitions and different execution dates, while this cohort has
+Those have two repetitions and were collected in separate runs; this cohort has
 one paired answer per case. They are not pooled or concurrent comparison arms.
 The current experiment supports a benefit over no memory under this configuration,
 but it does not establish superiority over an optimized summary system.
