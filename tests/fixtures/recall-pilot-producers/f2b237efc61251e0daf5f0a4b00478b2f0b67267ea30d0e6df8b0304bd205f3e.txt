@@ -1,0 +1,14 @@
+// Application guidance, separate from verbatim conversation excerpts. It applies
+// only when memory is injected and is counted inside the same memory budget.
+export const RECALL_GUIDANCE = 'Use recalled excerpts as connected conversation. Resolve references and quotations using related turns; supported cross-references are evidence, not guesses. State the resulting actor and facts directly, preserving qualifications. If no source supports an answer, say it is unknown.';
+
+export const recallText = text => text ? `${RECALL_GUIDANCE}\n${text}` : '';
+
+export async function addRecallGuidance(result, budget, countTokens) {
+    if (!result.text) return result;
+    const text = recallText(result.text), tokens = await countTokens(text);
+    if (!Number.isFinite(tokens) || tokens < 0) throw new Error('Token counting unavailable.');
+    // Guidance must never displace source evidence. Dense selections retain the
+    // original result; room created by packing can carry the recall instruction.
+    return tokens <= budget ? { ...result, text, tokens, guidance: RECALL_GUIDANCE } : result;
+}

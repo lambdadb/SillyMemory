@@ -13,7 +13,8 @@ export const semanticFiles = ['tests/fixtures/semantic-long-v1.json','tests/fixt
 export const sha = bytes => createHash('sha256').update(bytes).digest('hex');
 export const loadLong = () => JSON.parse(readFileSync(new URL('../tests/fixtures/semantic-long-v1.json', import.meta.url)));
 export const sourceFiles = ['index.js','src/client.js','src/gate.js','src/memory.js','src/context.js','src/status.js','scripts/generation-smoke.mjs','scripts/generation-cleanup.mjs','scripts/provider-retry.mjs','scripts/provider-spacing.mjs',...semanticFiles];
-export const sourceHashes = () => Object.fromEntries(sourceFiles.map(file=>[file,sha(readFileSync(new URL(`../${file}`,import.meta.url)))]));
+export const guidanceFiles = ['src/recall.js', 'src/delivery.js'];
+export const sourceHashes = () => Object.fromEntries([...sourceFiles, ...guidanceFiles].map(file=>[file,sha(readFileSync(new URL(`../${file}`,import.meta.url)))]));
 export function longSchedule(fixture) {
     return Array.from({length:fixture.settings.repetitions},(_,r)=>fixture.cases.flatMap((item,i)=>( (i+r)%2 ? ['on','off']:['off','on']).map(mode=>({id:`${item.id}/r${r+1}/${mode}`,case:item.id,repetition:r+1,mode})))).flat();
 }

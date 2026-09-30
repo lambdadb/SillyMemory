@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { loadLong, validateLong, longSchedule, semanticPromptEvidence, hostSource } from '../scripts/semantic-long.mjs';
-import { capture, documents, memoryMessages } from '../src/memory.js';
+import { loadLong, validateLong, longSchedule, semanticPromptEvidence, hostSource, buildLongPlan } from '../scripts/semantic-long.mjs';
+import { capture, documents, memoryMessages, packedMemoryMessages } from '../src/memory.js';
 const fixture=loadLong();
 async function docsFor(item){const chat=hostSource(item);chat.push({mes:item.question,name:'User',is_user:true});return (await documents(capture({chat,characterId:0,characters:[{avatar:'synthetic.png'}],getCurrentChatId:()=>item.id}),'test-owner',{recent:8,chunkChars:800})).docs;}
 const outgoing=docs=>memoryMessages(docs).map(m=>({role:m.is_user?'user':'assistant',content:m.mes}));
@@ -29,4 +29,33 @@ test('source chunk changes, role swaps and removed qualifiers cannot produce a c
     const changed=structuredClone(docs);changed[0].text='Invented statement';assert.throws(()=>semanticPromptEvidence(item,changed,outgoing(changed)),/chunk changed/);
     const wrong=structuredClone(docs);wrong[0].speaker='Another actor';assert.throws(()=>semanticPromptEvidence(item,wrong,outgoing(wrong)));
     const partial=docs.filter(d=>d.message===1);assert.equal(semanticPromptEvidence(item,partial,outgoing(partial)).prompt.completeEvidence,false);
+});
+
+test('packed evidence requires all repeat coordinates and rejects altered attribution or role', async () => {
+    const item=fixture.cases.find(c=>c.id==='long-ko-quotation');
+    const docs=(await docsFor(item)).filter(d=>[0,1,2,42].includes(d.message));
+    const prompt=packedMemoryMessages(docs).map(m=>({role:m.is_user?'user':'assistant',content:m.mes}));
+    assert.equal(prompt.length,3);
+    assert.equal(semanticPromptEvidence(item,docs,prompt).prompt.completeEvidence,true);
+    const repeated=prompt.findIndex(m=>m.content.includes('message:passage 3:1, 43:1]'));
+    for(const label of ['message:passage 3:1]', 'message:passage 13:1, 43:1]']){
+        const altered=structuredClone(prompt);
+        altered[repeated].content=altered[repeated].content.replace('message:passage 3:1, 43:1]',label);
+        assert.throws(()=>semanticPromptEvidence(item,docs,altered),/missing/);
+    }
+    const wrong=structuredClone(prompt);wrong[repeated].role='assistant';
+    assert.throws(()=>semanticPromptEvidence(item,docs,wrong),/role changed/);
+    assert.throws(()=>semanticPromptEvidence(item,docs,prompt.filter(m=>!m.content.includes('해솔'))),/missing/);
+});
+
+test('focused pilot plans keep the original question, rubric, settings and pair order', () => {
+    const count = text => text.length / 2;
+    const full = buildLongPlan(count), focused = buildLongPlan(count, ['long-ko-quotation']);
+    assert.deepEqual(focused.schedule, full.schedule.filter(row => row.case === 'long-ko-quotation'));
+    assert.equal(focused.schedule.length, 4);
+    assert.deepEqual(focused.cases, full.cases.filter(item => item.id === 'long-ko-quotation'));
+    assert.deepEqual(focused.generation, full.generation);
+    assert.deepEqual(focused.settings, full.settings);
+    assert.throws(() => buildLongPlan(count, ['unknown']), /Unknown/);
+    assert.throws(() => buildLongPlan(count, ['long-ko-quotation', 'long-ko-quotation']), /duplicate/);
 });

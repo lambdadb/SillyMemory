@@ -42,6 +42,11 @@ try {
     let ready = false;
     for (let i = 0; i < 90; i++) { assert(server.exitCode === null, 'Host exited'); try { if ((await fetch(url)).ok) { ready = true; break; } } catch {} await new Promise(r => setTimeout(r, 500)); }
     assert(ready, 'Host startup timeout');
+    // The host default automatically polls remote Horde. Installation requires
+    // no model connection; keep this profile offline, as in the live harness.
+    const profilePath = path.join(work, 'data/default-user/settings.json');
+    const profile = JSON.parse(await readFile(profilePath, 'utf8'));
+    profile.main_api = 'openai'; await writeFile(profilePath, JSON.stringify(profile));
     browser = await chromium.launch(); page = await browser.newPage({ viewport: { width: 1440, height: 1100 } }); page.setDefaultTimeout(30000);
     page.on('pageerror', error => report.pageErrors.push(error.message));
     await page.route('**/proxy/**', route => { report.proxyRequests++; return route.abort(); });
@@ -57,6 +62,7 @@ try {
     check('user-scoped installation is a real Git checkout, not a symlink', !(await lstat(installed)).isSymbolicLink() && git(installed, 'remote', 'get-url', 'origin').replace(/\/$/, '') === repository);
     check('installed directory preserves the requested repository spelling', (await readdir(path.dirname(installed))).includes(installFolder));
     report.initialVersion = JSON.parse(await readFile(path.join(installed, 'manifest.json'), 'utf8')).version;
+    report.rollbackTag = `v${report.initialVersion}`;
     const field = name => page.locator(`#sillymemory [data-sm="${name}"]`);
     async function settings() {
         if (!await field('endpoint').isVisible()) {
@@ -76,6 +82,9 @@ try {
     // GitHub main is never changed. The actual update still uses the host UI + git pull.
     git(installed, 'remote', 'set-branches', '--add', 'origin', updateBranch);
     git(installed, 'fetch', '--unshallow', 'origin');
+    git(installed, 'fetch', 'origin', 'tag', report.rollbackTag);
+    report.rollbackSha = git(installed, 'rev-parse', `${report.rollbackTag}^{commit}`);
+    check('published baseline tag matches the installed main revision', report.rollbackSha === mainSha);
     const updateBase = git(installed, 'merge-base', mainSha, updateSha);
     check('test update base has exactly the installed main tree', git(installed, 'rev-parse', `${updateBase}^{tree}`) === git(installed, 'rev-parse', `${mainSha}^{tree}`));
     report.updateBase = updateBase;
@@ -88,9 +97,20 @@ try {
     const response = await updateResponse; assert(response.ok(), 'Update API failed');
     check('real UI update pulls the candidate from GitHub', git(installed, 'rev-parse', 'HEAD') === updateSha && !(await response.json()).isUpToDate);
     await page.reload(); await page.locator('#sillymemory').waitFor({ state: 'attached', timeout: 45000 }); await settings();
-    check('update reload preserves ownership and nonsecret configuration', await page.evaluate(saved => { const owner = SillyTavern.getContext().extensionSettings.sillymemory.owner; return owner === saved.owner && localStorage.getItem(`sillymemory:state:${owner}`) === saved.state; }, saved));
+    const upgraded = await page.evaluate(() => { const owner = SillyTavern.getContext().extensionSettings.sillymemory.owner; return { owner, state: JSON.parse(localStorage.getItem(`sillymemory:state:${owner}`)) }; });
+    assert.equal(upgraded.owner, saved.owner);
+    // The candidate adds one documented default. Compare values, not the old
+    // serialized bytes, while still rejecting any lost or changed prior field.
+    assert.deepEqual(upgraded.state, { ...JSON.parse(saved.state), stopOnLoss: true });
+    check('update reload preserves ownership and prior settings, adding only the documented default', true);
     check('update reload clears the session key and leaves memory disabled', await field('key').inputValue() === '' && !await field('enabled').isChecked());
     check('updated controls retain configured budget and recent messages', await field('recent').inputValue() === '14' && await field('budget').inputValue() === '600');
+    check('0.1.0 upgrades enable the missing-context stop by default', await field('stopOnLoss').isChecked());
+    await field('stopOnLoss').uncheck();
+    // Flush the real host save path before reloading the isolated profile.
+    await page.evaluate(async () => { const { saveSettings } = await import('/script.js'); await saveSettings(); });
+    await page.reload(); await page.locator('#sillymemory').waitFor({ state: 'attached' }); await settings();
+    check('explicit warning-only preference survives reload', !await field('stopOnLoss').isChecked());
     check('updated settings link to the canonical source and license', await page.locator('#sillymemory a', { hasText: 'Source' }).getAttribute('href') === repository && await page.locator('#sillymemory a', { hasText: 'AGPL-3.0-only' }).getAttribute('href') === `${repository}/blob/main/LICENSE`);
     const candidate = JSON.parse(await readFile(path.join(installed, 'manifest.json'), 'utf8'));
     check('candidate manifest version agrees with package version', candidate.version === JSON.parse(await readFile(path.join(installed, 'package.json'), 'utf8')).version);
@@ -100,10 +120,10 @@ try {
     await page.waitForFunction(() => [...document.querySelectorAll('dialog[open]')].some(d => d.querySelector('.extensions_info') && Number(getComputedStyle(d).opacity) === 1));
     check('extension manager displays the candidate version', (await page.locator('.extensions_info .extension_block').filter({ hasText: 'SillyMemory' }).innerText()).includes(candidate.version));
     await page.screenshot({ path: path.join(artifacts, `${artifactTag}.png`) });
-    // Exercise detached-commit rollback in the disposable clone. Public tags do not exist yet.
-    git(installed, 'switch', '--detach', mainSha);
+    // Exercise the published baseline tag only in the disposable clone.
+    git(installed, 'switch', '--detach', report.rollbackTag);
     await page.reload(); await page.locator('#sillymemory').waitFor({ state: 'attached', timeout: 45000 }); await settings();
-    check('commit rollback loads the previous build without changing owned settings', git(installed, 'rev-parse', 'HEAD') === mainSha && await field('budget').inputValue() === '600' && await page.evaluate(owner => SillyTavern.getContext().extensionSettings.sillymemory.owner === owner, saved.owner));
+    check('published-tag rollback loads the previous version without changing owned settings', git(installed, 'rev-parse', 'HEAD') === report.rollbackSha && JSON.parse(await readFile(path.join(installed, 'manifest.json'), 'utf8')).version === report.initialVersion && await field('budget').inputValue() === '600' && await page.evaluate(owner => SillyTavern.getContext().extensionSettings.sillymemory.owner === owner, saved.owner));
     git(installed, 'switch', updateBranch);
     await page.reload(); await page.locator('#sillymemory').waitFor({ state: 'attached', timeout: 45000 });
     check('returning to the test branch restores the candidate', git(installed, 'rev-parse', 'HEAD') === updateSha);

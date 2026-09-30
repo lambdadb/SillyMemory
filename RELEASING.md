@@ -6,10 +6,11 @@ Release or highest version tag. Keep `main` at reviewed release boundaries.
 `develop` integrates ongoing work. Merge `develop` into `main` with a merge
 commit to preserve long-lived branch ancestry.
 
-The first release is **0.1.0**, marked experimental. Its prepared publication
-notes are in [docs/releases/0.1.0.md](docs/releases/0.1.0.md). A dated changelog
-entry is preparation metadata, not proof of publication or authorization to
-publish. No release tag or GitHub Release is created by the validation workflow.
+The published pre-release is **0.1.0**. The next development candidate is
+**0.2.0**, with [candidate notes](docs/releases/0.2.0.md) and an `Unreleased`
+changelog entry. Review its managed-path results and known attribution limitation
+before choosing a promotion date. Version preparation does not authorize a main
+merge, tag or GitHub Release; publication remains a separate approval.
 
 ## Version and changelog rules
 
@@ -65,19 +66,19 @@ After approval, in a clean checkout synchronized with the reviewed remote main:
 git fetch origin --tags
 git switch main
 git merge --ff-only origin/main
-npm run check:release -- --tag v0.1.0
+npm run check:release -- --tag v0.2.0
 # Confirm HEAD is the approved main commit before creating the tag.
-git tag -a v0.1.0 -m 'SillyMemory 0.1.0 (experimental)'
-git push origin refs/tags/v0.1.0
+git tag -a v0.2.0 -m 'SillyMemory 0.2.0 (experimental)'
+git push origin refs/tags/v0.2.0
 ```
 
 Use the actual approved version in these commands. The tag CI checks metadata,
 the dated changelog, tests and whether the tagged commit is contained in
 `origin/main`. Wait for it to pass before publishing the GitHub Release at that
-existing tag. Mark the first 0.1.0 release as **pre-release**, describing it as
+existing tag. Mark the experimental 0.2.0 release as **pre-release**, describing it as
 experimental and linking the installation guide. Use a reviewed release-notes
-file with `gh release create v0.1.0 --verify-tag --prerelease --title
-'SillyMemory 0.1.0 (experimental)' --notes-file docs/releases/0.1.0.md`.
+file with `gh release create v0.2.0 --verify-tag --prerelease --title
+'SillyMemory 0.2.0 (experimental)' --notes-file docs/releases/0.2.0.md`.
 
 Tags and Releases are not published automatically. CI detects mistakes after a
 push; it is not a server-side prohibition on changing branches or tags. Branch
