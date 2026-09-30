@@ -1,0 +1,258 @@
+[
+  {
+    "id": "998fa6d5-d19e-476d-addd-545fc25df075",
+    "sample": "long-en-minimal-fact/r1/off"
+  },
+  {
+    "id": "f3e98863-0414-40d4-a561-c4bacb386486",
+    "sample": "long-en-minimal-fact/r1/on"
+  },
+  {
+    "id": "30ca6770-53ed-4f61-a770-da1ecc1e588b",
+    "sample": "long-ko-minimal-fact/r1/on"
+  },
+  {
+    "id": "c9e71927-d5b9-4f9b-af69-7ddf0a4d49f0",
+    "sample": "long-ko-minimal-fact/r1/off"
+  },
+  {
+    "id": "743da753-21d6-424a-8e0f-3c90347ded07",
+    "sample": "long-en-correction/r1/off"
+  },
+  {
+    "id": "0431df12-3503-45e7-98c9-e206eb0d82ff",
+    "sample": "long-en-correction/r1/on"
+  },
+  {
+    "id": "e354a841-d8fe-486d-8834-ae443af75973",
+    "sample": "long-ko-correction/r1/on"
+  },
+  {
+    "id": "3136af3e-b288-431f-9fdf-2c7546b1e8ab",
+    "sample": "long-ko-correction/r1/off"
+  },
+  {
+    "id": "8d59a781-3af8-4ea8-aad0-606fce97666a",
+    "sample": "long-en-negation/r1/off"
+  },
+  {
+    "id": "d6690c15-b1b7-40e2-8f1c-a3bdf0df4a32",
+    "sample": "long-en-negation/r1/on"
+  },
+  {
+    "id": "313ca277-4030-4b1d-ab53-38686180f252",
+    "sample": "long-ko-negation/r1/on"
+  },
+  {
+    "id": "ffa49d3a-87fb-47f7-a6a0-a8e09e750785",
+    "sample": "long-ko-negation/r1/off"
+  },
+  {
+    "id": "430dbe60-3bf2-45ee-acc5-3f06f347d4a3",
+    "sample": "long-en-condition/r1/off"
+  },
+  {
+    "id": "43baf6da-f89c-4fe5-be3b-c5e93954739b",
+    "sample": "long-en-condition/r1/on"
+  },
+  {
+    "id": "781e5182-85a4-4620-9a3d-4615b2450e29",
+    "sample": "long-ko-condition/r1/on"
+  },
+  {
+    "id": "c34ff149-4ecb-458f-828e-5a211375e122",
+    "sample": "long-ko-condition/r1/off"
+  },
+  {
+    "id": "fbd8387d-3933-4d8a-9f77-ce00b0fc09bd",
+    "sample": "long-en-speaker/r1/off"
+  },
+  {
+    "id": "26d2de71-4d05-4532-a4e9-63962331ed48",
+    "sample": "long-en-speaker/r1/on"
+  },
+  {
+    "id": "3a3f376c-0853-45eb-926a-1d71c0b57af8",
+    "sample": "long-ko-speaker/r1/on"
+  },
+  {
+    "id": "67fe90bf-8491-4abc-bcbc-639a86b2625f",
+    "sample": "long-ko-speaker/r1/off"
+  },
+  {
+    "id": "1c4a4f9b-babf-40cb-81b2-1c217241cc80",
+    "sample": "long-en-reference/r1/off"
+  },
+  {
+    "id": "ecd45d28-4974-4f20-957a-e7ec50432651",
+    "sample": "long-en-reference/r1/on"
+  },
+  {
+    "id": "5d3e536a-8e36-4b02-9ede-9c436b594a7e",
+    "sample": "long-ko-reference/r1/on"
+  },
+  {
+    "id": "72ba7ebc-1a5e-4f57-ba0f-21ae9ae7a346",
+    "sample": "long-ko-reference/r1/off"
+  },
+  {
+    "id": "d7209108-c9ab-4436-8b77-a3a07b509f3c",
+    "sample": "long-en-quotation/r1/off"
+  },
+  {
+    "id": "a664aa5f-7a41-4a41-8e51-92fe0611e784",
+    "sample": "long-en-quotation/r1/on"
+  },
+  {
+    "id": "f96a3b71-68c4-4899-a994-c970db58a76e",
+    "sample": "long-ko-quotation/r1/on"
+  },
+  {
+    "id": "6c4aa859-4f64-404d-9422-fcd32d9a35e4",
+    "sample": "long-ko-quotation/r1/off"
+  },
+  {
+    "id": "fd1556e5-699f-4e10-99c6-0e7201b7ee3f",
+    "sample": "long-en-unknown/r1/off"
+  },
+  {
+    "id": "23add367-6d73-4265-8cdc-717207113090",
+    "sample": "long-en-unknown/r1/on"
+  },
+  {
+    "id": "5d44795f-fe32-4bc2-a1de-89056352dc21",
+    "sample": "long-ko-unknown/r1/on"
+  },
+  {
+    "id": "783658de-1e0d-4c91-a1ac-1236786a0e42",
+    "sample": "long-ko-unknown/r1/off"
+  },
+  {
+    "id": "91ca90de-1607-4106-93c8-a4a04b25dfe3",
+    "sample": "long-en-minimal-fact/r2/on"
+  },
+  {
+    "id": "054f44a2-2328-4348-9a7a-5d891f5cda18",
+    "sample": "long-en-minimal-fact/r2/off"
+  },
+  {
+    "id": "2b4a33b3-49db-43aa-8341-1d835609ee4a",
+    "sample": "long-ko-minimal-fact/r2/off"
+  },
+  {
+    "id": "0a497e2e-a0f2-413e-9d14-93043ba77d9f",
+    "sample": "long-ko-minimal-fact/r2/on"
+  },
+  {
+    "id": "f74fade1-de37-481d-9a7d-9cf1f27fd94a",
+    "sample": "long-en-correction/r2/on"
+  },
+  {
+    "id": "e18e7876-aaa5-40bb-8587-eb37fe80007d",
+    "sample": "long-en-correction/r2/off"
+  },
+  {
+    "id": "2f9bcb4e-a9eb-4a52-83d1-5ba103eb9a58",
+    "sample": "long-ko-correction/r2/off"
+  },
+  {
+    "id": "8f420ff0-66a9-4365-a28c-8351ad28d717",
+    "sample": "long-ko-correction/r2/on"
+  },
+  {
+    "id": "32584e1f-fb23-4b7b-b7fc-b7e3e510b42a",
+    "sample": "long-en-negation/r2/on"
+  },
+  {
+    "id": "93386656-1bfd-4d3b-8871-f6cdc92ee1da",
+    "sample": "long-en-negation/r2/off"
+  },
+  {
+    "id": "10488814-6ad6-4482-9e42-b2f60e740127",
+    "sample": "long-ko-negation/r2/off"
+  },
+  {
+    "id": "3cb1d3c1-88c2-4053-8d49-8b77c67ea9d0",
+    "sample": "long-ko-negation/r2/on"
+  },
+  {
+    "id": "82985575-39f6-40c6-94d7-3844e4baf19c",
+    "sample": "long-en-condition/r2/on"
+  },
+  {
+    "id": "ac3a2cf3-97ba-47ee-9da7-760654058b88",
+    "sample": "long-en-condition/r2/off"
+  },
+  {
+    "id": "1c2746bd-7522-415f-923a-c0ad7fe5c1cf",
+    "sample": "long-ko-condition/r2/off"
+  },
+  {
+    "id": "e7866693-3365-449b-a399-0c41b3ac10ed",
+    "sample": "long-ko-condition/r2/on"
+  },
+  {
+    "id": "613d47aa-5c53-4f60-b238-0959176fb22a",
+    "sample": "long-en-speaker/r2/on"
+  },
+  {
+    "id": "aeaac336-326b-4001-85d9-cca1190b89ab",
+    "sample": "long-en-speaker/r2/off"
+  },
+  {
+    "id": "e63be41f-22e6-4ca2-86fd-c8eb2a5aefb2",
+    "sample": "long-ko-speaker/r2/off"
+  },
+  {
+    "id": "b2a3da12-aec0-4da5-ae58-7513fa651cd1",
+    "sample": "long-ko-speaker/r2/on"
+  },
+  {
+    "id": "f380e0a3-e30c-4e62-9138-73dbbc7891c0",
+    "sample": "long-en-reference/r2/on"
+  },
+  {
+    "id": "550c90bd-f039-401c-ac8d-11327366d72c",
+    "sample": "long-en-reference/r2/off"
+  },
+  {
+    "id": "a1bfad1c-1c8c-4459-8c5d-6776964e3aca",
+    "sample": "long-ko-reference/r2/off"
+  },
+  {
+    "id": "f2fba157-bf94-411e-b536-304a1279d3db",
+    "sample": "long-ko-reference/r2/on"
+  },
+  {
+    "id": "abb2dd1b-c153-48d5-be98-9c464b37893e",
+    "sample": "long-en-quotation/r2/on"
+  },
+  {
+    "id": "289a1b16-b15d-443f-a6c6-a736cc66d899",
+    "sample": "long-en-quotation/r2/off"
+  },
+  {
+    "id": "24b610e7-3aac-477d-af8a-05470507d550",
+    "sample": "long-ko-quotation/r2/off"
+  },
+  {
+    "id": "5886d215-d0f4-42f2-9ac4-32584116341f",
+    "sample": "long-ko-quotation/r2/on"
+  },
+  {
+    "id": "b491017c-e5e0-43bd-8aa3-2d5be478c9df",
+    "sample": "long-en-unknown/r2/on"
+  },
+  {
+    "id": "14847e05-a8c0-43a7-b2bc-997fbf80689f",
+    "sample": "long-en-unknown/r2/off"
+  },
+  {
+    "id": "8b47e55a-e5a9-484b-b388-8b8be98d4e8e",
+    "sample": "long-ko-unknown/r2/off"
+  },
+  {
+    "id": "91f620ad-5fc9-48bb-b2f8-a6e863c27795",
+    "sample": "long-ko-unknown/r2/on"
+  }
+]
