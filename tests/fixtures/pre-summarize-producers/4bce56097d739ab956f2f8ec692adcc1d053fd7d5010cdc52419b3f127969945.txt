@@ -30,7 +30,6 @@ const source = process.env.ST_SOURCE || '/tmp/sillymemory-st-source';
 const revision = '06bde939fb1e9c4c8d8641d810f0a916b5bce127';
 const env = parseEnv(await readFile(process.env.SM_ENV_FILE || path.join(root, '.env.local'), 'utf8'));
 const summarizeMode = process.argv.includes('--summarize');
-if(summarizeMode && ['--semantic','--natural','--native-tuning','--three-modes','--direct-embeddings','--comparison','--korean-eval','--challenges','--heldout'].some(flag=>process.argv.includes(flag))) throw new Error('Choose --summarize without another evaluation mode');
 const nativeTuning = process.argv.includes('--native-tuning');
 const threeModes = process.argv.includes('--three-modes') || nativeTuning;
 const semantic = process.argv.includes('--semantic') || threeModes || summarizeMode;
@@ -91,9 +90,6 @@ const pending = { collections: [], connectionHash: createHash('sha256').update(J
 await writeFile(pendingPath, JSON.stringify(pending), { flag: 'wx' });
 const work = await mkdtemp(path.join(tmpdir(), 'sillymemory-generation-'));
 const checks = [], generations = [], embeddings = [], vectorQueries = [], lambdaRequests = [];
-const resumeReport=frozenNatural?.resumeReport;
-if(resumeReport){generations.push(...structuredClone(resumeReport.generations));retryBudget.calls=resumeReport.providerCalls;retryBudget.retries=resumeReport.providerCalls-resumeReport.generations.length;}
-const resumedEvidence=()=>resumeReport?{resume:{...frozenNatural.plan.resume,generations:resumeReport.generations.length,providerCalls:resumeReport.providerCalls}}:{};
 const directEmbeddings = [];
 const directEvidence = () => ({ embeddingMode: summarizeMode ? 'none' : nativeTuning ? 'native-openai' : directEmbeddingsMode ? 'direct-experimental' : 'managed', ...(directEmbeddingsMode ? { directProtocol, directEmbeddings } : {}) });
 const transformDirect = directEmbeddingsMode ? createDirectAdapter({ key: env.LLM_API_KEY, rows: directEmbeddings, stage: () => stage }) : null;
@@ -102,10 +98,10 @@ const redact = value => { let output = JSON.stringify(value, null, 2); for (cons
 async function checkpointNatural() {
     if (!natural) return;
     const temporary = `${reportPath}.tmp`;
-    await writeFile(temporary, redact({ passed: false, incomplete: true, ...directEvidence(), evaluation, generations, providerCalls, ...resumedEvidence(), lambdaRequests, transportProtocol: retryTransient ? transportProtocol : null, providerSpacing: PROVIDER_SPACING, sourceSha256: naturalSourceSha256 }));
+    await writeFile(temporary, redact({ passed: false, incomplete: true, ...directEvidence(), evaluation, generations, providerCalls, lambdaRequests, transportProtocol: retryTransient ? transportProtocol : null, providerSpacing: PROVIDER_SPACING, sourceSha256: naturalSourceSha256 }));
     await rename(temporary, reportPath);
 }
-let nativeCleanupComplete = !nativeComparison, providerCalls = resumeReport?.providerCalls || 0;
+let nativeCleanupComplete = !nativeComparison, providerCalls = 0;
 let nativeCleanup = [];
 let stage = 'startup', failRetrieval = false, server, browser, page, failure, cleanupComplete = false;
 const assert = (condition, name) => { if (!condition) throw new Error(name); checks.push(name); console.log(`PASS ${name}`); };
@@ -470,10 +466,10 @@ try {
     for (const file of ['index.js','src/client.js','src/gate.js','src/memory.js', 'src/context.js','src/status.js','scripts/generation-smoke.mjs','scripts/provider-spacing.mjs','scripts/generation-cleanup.mjs','scripts/korean-eval.mjs','scripts/korean-fixture.mjs','scripts/comparison-fixture.mjs','scripts/comparison-eval.mjs','scripts/challenge-eval.mjs','scripts/recall-challenges.mjs','scripts/heldout-fixture.mjs', ...(natural ? ['scripts/natural-eval.mjs', 'scripts/natural-dialogue.mjs', ...(semantic ? [...semanticFiles, ...(summarizeMode ? summaryFiles : nativeTuning ? tuningFiles : threeModes ? threeModeFiles : []), ...(directEmbeddingsMode ? directFiles : [])] : fixtureFiles(frozenNatural?.plan.version)), ...(retryTransient ? ['scripts/provider-retry.mjs', 'docs/natural-dialogue-retry.md', 'scripts/natural-summary.mjs', 'scripts/natural-score.mjs'] : [])] : [])]) sourceSha256[file] = createHash('sha256').update(await readFile(path.join(root, file))).digest('hex');
     if (natural && Object.entries(naturalSourceSha256).some(([file, digest]) => sourceSha256[file] !== digest)) failure ||= { stage: 'source identity', reason: 'Source changed during execution' };
     if (natural && !failure) {
-        try { assert(summarizeProviderSpacing(resumeReport ? generations.slice(resumeReport.generations.length) : generations, PROVIDER_SPACING).verified, 'actual provider starts respect the 15-second interval'); }
+        try { assert(summarizeProviderSpacing(generations, PROVIDER_SPACING).verified, 'actual provider starts respect the 15-second interval'); }
         catch (error) { failure = { stage: 'provider spacing', reason: error.message }; }
     }
-    const report = { ...directEvidence(), ...resumedEvidence(), time:new Date().toISOString(), sillyTavern:revision, lambdaDB:summarizeMode ? 'unused' : 'live', generator:liveModel?'live compatible model':'deterministic test fixture, not a real LLM', model, generationIntervalMs, maxOutputTokens, reasoningEffort, excludedParameters, hostContextTokens, evaluation, embeddings, vectorQueries, ...(natural ? { lambdaRequests, transportProtocol: retryTransient ? transportProtocol : null, providerSpacing: PROVIDER_SPACING, initialSourceSha256: naturalSourceSha256, managedEmbeddingUsage: null, managedEmbeddingCost: null, semanticScores: null } : {}), nativeCleanupComplete, ...(threeModes ? { nativeCleanup } : {}), providerCalls, checks, failure, events, generations, cleanupComplete, sourceSha256, passed:!failure&&cleanupComplete&&nativeCleanupComplete };
+    const report = { ...directEvidence(), time:new Date().toISOString(), sillyTavern:revision, lambdaDB:summarizeMode ? 'unused' : 'live', generator:liveModel?'live compatible model':'deterministic test fixture, not a real LLM', model, generationIntervalMs, maxOutputTokens, reasoningEffort, excludedParameters, hostContextTokens, evaluation, embeddings, vectorQueries, ...(natural ? { lambdaRequests, transportProtocol: retryTransient ? transportProtocol : null, providerSpacing: PROVIDER_SPACING, initialSourceSha256: naturalSourceSha256, managedEmbeddingUsage: null, managedEmbeddingCost: null, semanticScores: null } : {}), nativeCleanupComplete, ...(threeModes ? { nativeCleanup } : {}), providerCalls, checks, failure, events, generations, cleanupComplete, sourceSha256, passed:!failure&&cleanupComplete&&nativeCleanupComplete };
     let output = JSON.stringify(report,null,2);
     for (const value of [credentials.key,env.LLM_API_KEY,credentials.endpoint,credentials.project,env.LLM_BASE_URL].filter(Boolean)) output=output.replaceAll(value,'[REDACTED]');
     await writeFile(reportPath,output);

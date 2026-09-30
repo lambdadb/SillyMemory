@@ -1,0 +1,318 @@
+{
+  "version": "native-summarize-v2",
+  "groups": [
+    {
+      "mode": "off",
+      "samples": 16,
+      "medianPromptTokens": 1234,
+      "medianCachedTokens": 1024,
+      "medianGenerationMs": 1346.4291035000642,
+      "medianSummaryTokens": 0,
+      "recentPreserved": 16,
+      "strictPasses": 2
+    },
+    {
+      "mode": "summary",
+      "samples": 16,
+      "medianPromptTokens": 1235,
+      "medianCachedTokens": 0,
+      "medianGenerationMs": 1254.931333500077,
+      "medianSummaryTokens": 121.5,
+      "recentPreserved": 16,
+      "strictPasses": 10
+    }
+  ],
+  "summaryCalls": 69,
+  "summaryInputTokens": 58694,
+  "summaryOutputTokens": 9176,
+  "summaryCachedTokens": 0,
+  "summaryCallsPerCase": [
+    {
+      "case": "long-en-minimal-fact",
+      "calls": 4
+    },
+    {
+      "case": "long-ko-minimal-fact",
+      "calls": 4
+    },
+    {
+      "case": "long-en-correction",
+      "calls": 4
+    },
+    {
+      "case": "long-ko-correction",
+      "calls": 4
+    },
+    {
+      "case": "long-en-negation",
+      "calls": 4
+    },
+    {
+      "case": "long-ko-negation",
+      "calls": 5
+    },
+    {
+      "case": "long-en-condition",
+      "calls": 4
+    },
+    {
+      "case": "long-ko-condition",
+      "calls": 5
+    },
+    {
+      "case": "long-en-speaker",
+      "calls": 4
+    },
+    {
+      "case": "long-ko-speaker",
+      "calls": 5
+    },
+    {
+      "case": "long-en-reference",
+      "calls": 4
+    },
+    {
+      "case": "long-ko-reference",
+      "calls": 5
+    },
+    {
+      "case": "long-en-quotation",
+      "calls": 4
+    },
+    {
+      "case": "long-ko-quotation",
+      "calls": 4
+    },
+    {
+      "case": "long-en-unknown",
+      "calls": 4
+    },
+    {
+      "case": "long-ko-unknown",
+      "calls": 5
+    }
+  ],
+  "summaryTruncations": 0,
+  "medianSummaryBuildMs": 8712.797542500055,
+  "providerCalls": 101,
+  "retries": 0,
+  "spacing": {
+    "verified": true,
+    "segments": [
+      {
+        "verified": true,
+        "evidence": "monotonic upstream-send timestamps",
+        "minimumIntervalMs": 15000,
+        "minimumObservedIntervalMs": 15000.04466700001,
+        "gapsBelowMinimum": 0
+      },
+      {
+        "verified": true,
+        "evidence": "monotonic upstream-send timestamps",
+        "minimumIntervalMs": 15000,
+        "minimumObservedIntervalMs": 15000.040500000003,
+        "gapsBelowMinimum": 0
+      }
+    ],
+    "restartBoundaryMs": 171156,
+    "restartEvidence": "wall-clock lower bound from prior report completion to next bridge entry; separate process clocks"
+  },
+  "cleanupComplete": true,
+  "answerQuality": null,
+  "provisional": true,
+  "reviewer": "Coding assistant; all answers and final summaries read against original rubrics; provisional, not independent or blinded",
+  "rows": [
+    {
+      "id": "long-en-minimal-fact/off",
+      "mode": "off",
+      "grade": "abstained",
+      "strictPass": false
+    },
+    {
+      "id": "long-en-minimal-fact/summary",
+      "mode": "summary",
+      "grade": "correct",
+      "strictPass": true
+    },
+    {
+      "id": "long-ko-minimal-fact/summary",
+      "mode": "summary",
+      "grade": "abstained",
+      "strictPass": false
+    },
+    {
+      "id": "long-ko-minimal-fact/off",
+      "mode": "off",
+      "grade": "abstained",
+      "strictPass": false
+    },
+    {
+      "id": "long-en-correction/off",
+      "mode": "off",
+      "grade": "abstained",
+      "strictPass": false
+    },
+    {
+      "id": "long-en-correction/summary",
+      "mode": "summary",
+      "grade": "correct",
+      "strictPass": true
+    },
+    {
+      "id": "long-ko-correction/summary",
+      "mode": "summary",
+      "grade": "correct",
+      "strictPass": true
+    },
+    {
+      "id": "long-ko-correction/off",
+      "mode": "off",
+      "grade": "abstained",
+      "strictPass": false
+    },
+    {
+      "id": "long-en-negation/off",
+      "mode": "off",
+      "grade": "abstained",
+      "strictPass": false
+    },
+    {
+      "id": "long-en-negation/summary",
+      "mode": "summary",
+      "grade": "correct",
+      "strictPass": true
+    },
+    {
+      "id": "long-ko-negation/summary",
+      "mode": "summary",
+      "grade": "partial",
+      "strictPass": false
+    },
+    {
+      "id": "long-ko-negation/off",
+      "mode": "off",
+      "grade": "abstained",
+      "strictPass": false
+    },
+    {
+      "id": "long-en-condition/off",
+      "mode": "off",
+      "grade": "abstained",
+      "strictPass": false
+    },
+    {
+      "id": "long-en-condition/summary",
+      "mode": "summary",
+      "grade": "correct",
+      "strictPass": true
+    },
+    {
+      "id": "long-ko-condition/summary",
+      "mode": "summary",
+      "grade": "correct",
+      "strictPass": true
+    },
+    {
+      "id": "long-ko-condition/off",
+      "mode": "off",
+      "grade": "abstained",
+      "strictPass": false
+    },
+    {
+      "id": "long-en-speaker/off",
+      "mode": "off",
+      "grade": "abstained",
+      "strictPass": false
+    },
+    {
+      "id": "long-en-speaker/summary",
+      "mode": "summary",
+      "grade": "partial",
+      "strictPass": false
+    },
+    {
+      "id": "long-ko-speaker/summary",
+      "mode": "summary",
+      "grade": "incorrect",
+      "strictPass": false
+    },
+    {
+      "id": "long-ko-speaker/off",
+      "mode": "off",
+      "grade": "abstained",
+      "strictPass": false
+    },
+    {
+      "id": "long-en-reference/off",
+      "mode": "off",
+      "grade": "abstained",
+      "strictPass": false
+    },
+    {
+      "id": "long-en-reference/summary",
+      "mode": "summary",
+      "grade": "correct",
+      "strictPass": true
+    },
+    {
+      "id": "long-ko-reference/summary",
+      "mode": "summary",
+      "grade": "abstained",
+      "strictPass": false
+    },
+    {
+      "id": "long-ko-reference/off",
+      "mode": "off",
+      "grade": "abstained",
+      "strictPass": false
+    },
+    {
+      "id": "long-en-quotation/off",
+      "mode": "off",
+      "grade": "abstained",
+      "strictPass": false
+    },
+    {
+      "id": "long-en-quotation/summary",
+      "mode": "summary",
+      "grade": "correct",
+      "strictPass": true
+    },
+    {
+      "id": "long-ko-quotation/summary",
+      "mode": "summary",
+      "grade": "abstained",
+      "strictPass": false
+    },
+    {
+      "id": "long-ko-quotation/off",
+      "mode": "off",
+      "grade": "abstained",
+      "strictPass": false
+    },
+    {
+      "id": "long-en-unknown/off",
+      "mode": "off",
+      "grade": "abstained",
+      "strictPass": true
+    },
+    {
+      "id": "long-en-unknown/summary",
+      "mode": "summary",
+      "grade": "abstained",
+      "strictPass": true
+    },
+    {
+      "id": "long-ko-unknown/summary",
+      "mode": "summary",
+      "grade": "abstained",
+      "strictPass": true
+    },
+    {
+      "id": "long-ko-unknown/off",
+      "mode": "off",
+      "grade": "abstained",
+      "strictPass": true
+    }
+  ]
+}

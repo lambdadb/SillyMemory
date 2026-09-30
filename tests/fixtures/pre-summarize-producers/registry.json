@@ -1,0 +1,8 @@
+{
+  "scripts/generation-smoke.mjs:fe0a6216f6c2d1d42e35bda327752b75649139a29ff83db5635cf48359ad0ac9": "tests/fixtures/pre-summarize-producers/fe0a6216f6c2d1d42e35bda327752b75649139a29ff83db5635cf48359ad0ac9.txt",
+  "scripts/generation-smoke.mjs:4bce56097d739ab956f2f8ec692adcc1d053fd7d5010cdc52419b3f127969945": "tests/fixtures/pre-summarize-producers/4bce56097d739ab956f2f8ec692adcc1d053fd7d5010cdc52419b3f127969945.txt",
+  "scripts/provider-retry.mjs:885703e3bdca7f405aad32fd5f07351aab9c4d4680e67f144b061d06b518c606": "tests/fixtures/pre-summarize-producers/885703e3bdca7f405aad32fd5f07351aab9c4d4680e67f144b061d06b518c606.txt",
+  "scripts/summarize-plan.mjs:4c5a2a605d97c0a31e7bd473ba891969316b722b3a2e18bcd9030e91d67f523e": "tests/fixtures/pre-summarize-producers/4c5a2a605d97c0a31e7bd473ba891969316b722b3a2e18bcd9030e91d67f523e.txt",
+  "scripts/summarize-live.mjs:fae06fc0a48923da76aa3fc18cb0a39a1ffc7428526edaab59481e18bc707bdd": "tests/fixtures/pre-summarize-producers/fae06fc0a48923da76aa3fc18cb0a39a1ffc7428526edaab59481e18bc707bdd.txt",
+  "docs/summarize-evaluation.md:711c06a30aeeda2da705ef9e41ccdc9c50d9f99237cb53441d3e22ffa3b4c34e": "tests/fixtures/pre-summarize-producers/711c06a30aeeda2da705ef9e41ccdc9c50d9f99237cb53441d3e22ffa3b4c34e.txt"
+}
