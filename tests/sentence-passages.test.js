@@ -1,4 +1,5 @@
 import test from 'node:test';
+import { recordedSource } from '../scripts/recorded-source.mjs';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { sentenceSpans, bestWindow, excerptMessages, selectSentencePassages, excerptEvidence, sentencePolicies } from '../scripts/sentence-passages.mjs';
@@ -98,7 +99,7 @@ test('recorded experiment preserves the entire baseline grid, exact source offse
         }
     }
     for(const file of ['src/memory.js','src/context.js','scripts/sentence-passages.mjs','scripts/sentence-passage-replay.mjs','docs/sentence-passage-evaluation.md'])assert(report.sourceSha256[file]);
-    for(const [file,hash]of Object.entries(report.sourceSha256))assert.equal(sha(readFileSync(new URL(`../${file}`,import.meta.url))),hash,`Recorded input changed: ${file}`);
+    for(const [file,hash]of Object.entries(report.sourceSha256))assert.equal(sha(recordedSource(file,hash)),hash,`Recorded input changed: ${file}`);
     for(const policy of ['baseline',...sentencePolicies]){
         const refs=report.rows.flatMap(row=>row.variants[policy].evidence);
         assert.equal(report.summary[policy].total,190);

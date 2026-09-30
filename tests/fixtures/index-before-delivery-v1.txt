@@ -2,7 +2,6 @@ import { LambdaClient, ConnectionError, connectionConfig } from './src/client.js
 import { runTransportGate } from './src/gate.js';
 import { MemoryEngine, Journal, capture, fingerprint, options } from './src/memory.js';
 import { OperationStatus, failureText } from './src/status.js';
-import { PromptDelivery, expectedMessages, deliverySummary } from './src/delivery.js';
 
 const context = () => SillyTavern.getContext();
 const uuid = () => crypto.randomUUID().replaceAll('-', '');
@@ -11,13 +10,12 @@ let sessionReady = false;
 let promptSequence = 0;
 let retrievalSequence = 0, retrievalOperation;
 let statusView;
-const delivery = new PromptDelivery();
 const element = name => root.querySelector(`[data-sm="${name}"]`);
 const status = text => statusView.show(text);
 function clearInjection() {
     context().setExtensionPrompt('sillymemory', '', 1, 0, false, 0);
 }
-function invalidate() { promptSequence++; engine?.invalidate(); clearInjection(); delivery.clear(); }
+function invalidate() { promptSequence++; engine?.invalidate(); clearInjection(); }
 function persist() { localStorage.setItem(stateKey, JSON.stringify(state)); }
 function makeEngine() {
     engine = state.collection && client ? new MemoryEngine({ client, owner, collection: state.collection,
@@ -63,7 +61,7 @@ globalThis.sillymemory_intercept = async (chat, contextSize, abort, type) => {
     // Quiet prompts cancel older reads/injection while preserving source sync.
     if (type === 'quiet') {
         retrievalOperation?.finish('Memory retrieval skipped for quiet generation.');
-        retrievalSequence++; engine?.cancelReads(); clearInjection(); delivery.clear(); return;
+        retrievalSequence++; engine?.cancelReads(); clearInjection(); return;
     }
     invalidate();
     const sequence = promptSequence;
@@ -81,12 +79,6 @@ globalThis.sillymemory_intercept = async (chat, contextSize, abort, type) => {
     const valid = () => retrieval === retrievalSequence && unchangedPrompt();
     const operation = statusView.start(() => retrieval === retrievalSequence && sourceValid());
     retrievalOperation = operation;
-    const trackDelivery = messages => {
-        const names = { user: context().name1, character: context().name2 };
-        delivery.begin({ memory: expectedMessages(messages, names), recent: expectedMessages(chat.slice(-config.recent), { ...names, continuation: type === 'continue' }) }, sourceValid);
-        element('delivery').textContent = 'Memory prepared; waiting for the final host prompt. Delivery is not yet verified.';
-    };
-    trackDelivery([]);
     try {
         // The extension budget includes its complete wrapper; SillyTavern still manages
         // total prompt overhead, character instructions, and final model context limits.
@@ -114,8 +106,7 @@ globalThis.sillymemory_intercept = async (chat, contextSize, abort, type) => {
             if (eligible.has(chat[i].index)) chat.splice(i, 1, ...(recalled.get(chat[i].index) || []));
         }
         element('inspection').textContent = `${result.tokens} / ${config.budget} tokens\n\n${result.text}`;
-        trackDelivery(result.messages);
-        operation.finish(`Prepared ${result.passages.length} passages (${result.tokens} tokens); awaiting final prompt verification.`);
+        operation.finish(`Injected ${result.passages.length} passages (${result.tokens} tokens); kept the recent ${config.recent} messages.`);
     } catch (e) {
         if (!valid()) { operation.finish('Memory operation canceled because the prompt changed. Generate again.'); abort(true); return; }
         if (operation.current()) fail(e, operation);
@@ -140,7 +131,7 @@ async function initialize() {
         if (JSON.parse(stored.settings).extension_settings?.sillymemory?.owner !== owner) throw new Error('Installation identity was not persisted.');
     }
     stateKey = `sillymemory:state:${owner}`;
-    state = { endpoint: '', project: '', enabled: false, recent: 12, budget: 800, stopOnLoss: true, ...JSON.parse(localStorage.getItem(stateKey) || '{}') };
+    state = { endpoint: '', project: '', enabled: false, recent: 12, budget: 800, ...JSON.parse(localStorage.getItem(stateKey) || '{}') };
     const folder = new URL('.', import.meta.url).pathname.split('/scripts/extensions/')[1].replace(/\/$/, '');
     const html = await ctx.renderExtensionTemplateAsync(folder, 'settings');
     document.querySelector('#extensions_settings2').insertAdjacentHTML('beforeend', html);
@@ -153,8 +144,6 @@ async function initialize() {
         else bar.removeAttribute('value');
     });
     for (const name of ['endpoint', 'project', 'recent', 'budget']) element(name).value = state[name];
-    element('stopOnLoss').checked = state.stopOnLoss !== false;
-    element('stopOnLoss').onchange = () => { state.stopOnLoss = element('stopOnLoss').checked; persist(); };
     element('enabled').checked = false; state.enabled = false; persist();
     if (!navigator.locks) { status('This browser needs Web Locks support (localhost or HTTPS) to use SillyMemory safely.'); return; }
     // One live instance per account/browser, preventing cross-tab write/delete races.
@@ -178,8 +167,6 @@ async function initialize() {
         state.enabled = false; element('enabled').checked = false; persist(); invalidate();
         status('Forgetting key: waiting for earlier writes to finish…');
         await engine?.queue.catch(() => {}); client?.forget(); client = undefined; engine = undefined;
-        element('delivery').textContent = 'Key forgotten. No pending prompt verification.';
-        element('inspection').textContent = 'No memory prepared.';
         element('key').value = ''; gatePassed = false; status('Key forgotten. Enter it again to reconnect.');
     });
     element('gate').onclick = () => action(async () => {
@@ -215,11 +202,7 @@ async function initialize() {
             } catch (error) { element('enabled').checked = false; throw error; }
             state.enabled = true; element('enabled').checked = true; persist(); schedule();
             status('Memory enabled. Current character chat will synchronize.');
-        } else {
-            status('Memory disabled. Remote data is retained until deleted.');
-            element('delivery').textContent = 'Memory disabled. No pending prompt verification.';
-            element('inspection').textContent = 'No memory prepared.';
-        }
+        } else status('Memory disabled. Remote data is retained until deleted.');
     });
     for (const name of ['recent', 'budget']) element(name).onchange = () => {
         state[name] = options({ ...state, [name]: element(name).value })[name]; element(name).value = state[name]; persist(); schedule();
@@ -231,30 +214,12 @@ async function initialize() {
         state.enabled = false; element('enabled').checked = false; persist(); invalidate();
         status('Deleting owned memory: waiting for earlier writes to finish…');
         await engine.deleteAll(); engine = undefined; delete state.collection; persist();
-        element('delivery').textContent = 'Owned memory deleted. No pending prompt verification.';
-        element('inspection').textContent = 'No memory prepared.';
         status('Owned remote memory collection is no longer accessible. Provider backup/retention policies still apply.');
     });
     const events = ctx.eventTypes;
-    ctx.eventSource.on(events.GENERATE_AFTER_DATA, (data, dryRun) => {
-        const finished = delivery.finish(context().mainApi === 'openai' ? data?.prompt : null, dryRun);
-        if (!finished) return;
-        const stop = state.stopOnLoss !== false;
-        // The host catches listener exceptions; use its cancellation API instead.
-        if (finished.lost && stop) ctx.stopGeneration();
-        element('delivery').textContent = deliverySummary(finished.result, stop);
-        if (finished.result) {
-            const included = finished.result.memory.filter(m => m.outcome === 'included');
-            const omitted = finished.result.memory.filter(m => m.outcome !== 'included');
-            element('inspection').textContent = `Memory in final host prompt (${included.length}/${finished.result.memory.length}):\n\n${included.map(m => m.content).join('\n\n') || 'None.'}${omitted.length ? `\n\nNot verified in final prompt:\n\n${omitted.map(m => m.content).join('\n\n')}` : ''}`;
-        }
-    });
     for (const name of ['CHAT_CHANGED', 'MESSAGE_SENT', 'MESSAGE_RECEIVED', 'MESSAGE_EDITED', 'MESSAGE_UPDATED', 'MESSAGE_SWIPED', 'MESSAGE_DELETED', 'GENERATION_ENDED', 'CHAT_RENAMED']) {
         if (events[name]) ctx.eventSource.on(events[name], () => {
-            if (name === 'CHAT_CHANGED') {
-                element('inspection').textContent = 'No memory injected in this chat.';
-                element('delivery').textContent = 'No prompt checked in this chat.';
-            }
+            if (name === 'CHAT_CHANGED') element('inspection').textContent = 'No memory injected in this chat.';
             schedule();
         });
     }

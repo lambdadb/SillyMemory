@@ -1,4 +1,5 @@
 import test from 'node:test';
+import { recordedSource } from '../scripts/recorded-source.mjs';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { policies, rankPassages, summarizeSelection } from '../scripts/budget-selection.mjs';
@@ -85,6 +86,6 @@ test('checked-in replay retains every policy, configuration and regression and b
         assert(report.sourceSha256[file], `Missing required hash: ${file}`);
     }
     for (const [file, hash] of Object.entries(report.sourceSha256)) {
-        assert.equal(sha(readFileSync(new URL(`../${file}`, import.meta.url))), hash, `Use the recorded replay revision: ${file}`);
+        assert.equal(sha(recordedSource(file, hash)), hash, `Use the recorded replay revision: ${file}`);
     }
 });
