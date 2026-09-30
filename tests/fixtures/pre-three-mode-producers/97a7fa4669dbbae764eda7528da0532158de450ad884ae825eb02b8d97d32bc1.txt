@@ -13,13 +13,12 @@ export function retryDelay(header, attempt, random = Math.random, wallNow = Date
     const hint = Number.isFinite(numeric) && numeric >= 0 ? numeric * 1000 : header ? Date.parse(header) - wallNow() : NaN;
     return Math.max(NATURAL_RETRY.baseDelayMs * 2 ** (attempt - 1), Number.isFinite(hint) ? hint : 0) + Math.floor(random() * NATURAL_RETRY.jitterMs);
 }
-export async function requestWithRetry({ body, send, budget, attempts, signal, maxCalls = NATURAL_RETRY.maxCalls, checkpoint = async () => {}, wait = (ms, signal) => delay(ms, undefined, { signal }), now = () => performance.now(), random = Math.random, wallNow = Date.now }) {
+export async function requestWithRetry({ body, send, budget, attempts, signal, checkpoint = async () => {}, wait = (ms, signal) => delay(ms, undefined, { signal }), now = () => performance.now(), random = Math.random, wallNow = Date.now }) {
     assert(typeof body === 'string', 'Retry requires one immutable serialized request');
-    assert(Number.isInteger(maxCalls) && maxCalls > 0 && maxCalls <= 104, 'Invalid generation call bound');
     const requestSha256 = createHash('sha256').update(body).digest('hex'), started = now();
     for (let index = 0; ; index++) {
         signal?.throwIfAborted();
-        assert(budget.calls < maxCalls, 'Generation call bound exceeded');
+        assert(budget.calls < NATURAL_RETRY.maxCalls, 'Generation call bound exceeded');
         if (index) { assert(budget.retries < NATURAL_RETRY.maxRetriesPerRun, 'Retry run bound exceeded'); budget.retries++; }
         const remaining = NATURAL_RETRY.sampleDeadlineMs - (now() - started);
         assert(remaining > 0, 'Sample transport deadline exceeded');
