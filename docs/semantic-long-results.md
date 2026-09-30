@@ -1,8 +1,9 @@
 # Semantic long-dialogue baseline attempts — 2026-09-30
 
 The new real-host adapter and offline review tools are implemented, but the
-planned 64-answer experiment is **incomplete**. Two attempts stopped on failed
-LambdaDB query requests near the existing 15-second client deadline. No
+planned 64-answer experiment is **incomplete**. Three attempts stopped on failed
+LambdaDB requests near the existing 15-second client deadline. Two additional
+single-document diagnostics observed managed-upsert HTTP 504 responses. No
 answer-quality score, successful full-cohort comparison, or release-readiness
 claim follows from these attempts. Runtime retrieval and timeouts are unchanged.
 
@@ -10,8 +11,8 @@ claim follows from these attempts. Runtime retrieval and timeouts are unchanged.
 
 The [protocol](semantic-long-evaluation.md), 16-case synthetic long fixture,
 adapter, source-delivery verifier and production source hashes were frozen at
-commit `4c7ac77` before the first provider call. Both attempts used that same plan
-and those unchanged inputs. The later annotation scorer was added separately;
+commit `4c7ac77` before the first provider call. The first two attempts used that same plan
+and those unchanged inputs; attempt v3 regenerated a byte-identical plan. The later annotation scorer was added separately;
 it did not control retrieval or generation. The original PR #25 semantic
 criteria remain assistant-authored and have no independent human approval.
 
@@ -51,7 +52,7 @@ counted as a successful memory-on sample.
 After preserving that failure and verifying cleanup, one fresh attempt used the
 same frozen plan. Its initial transport gate accepted upsert, then its query
 failed after 15,003 ms. The gate never passed, and the host wait ended without any
-generation call. No further live attempts were made. These timings are consistent
+generation call. A later attempt and diagnostics are recorded below. These timings are consistent
 with the client's fixed deadline, but the browser trace does not identify whether
 network, LambdaDB service latency, or an underlying embedding provider caused the
 stall. In particular, **there is no observed generation-model HTTP 500** here.
@@ -91,10 +92,56 @@ of incomplete reports by the successful-summary/review-packet path. Historical
 negative results and prior fixtures remain unchanged. These are unit/report
 replay checks, not substitutes for the incomplete live experiment.
 
+## Pre-merge follow-up
+
+The maintainer requested full-cohort completion before merging PR #26. It remains
+open and must not be treated as ready to merge based on unit checks alone.
+
+[Attempt v3](results/semantic-long-incomplete-v3.json) used the unchanged runtime,
+fixture and generation settings. Its initial managed upsert failed after
+15,002 ms, so it made **zero generation calls**. The owned transport-gate
+collection was deleted and confirmed absent. This run adds no answer-quality
+observations. Its raw SHA-256 is
+`18ca06b3dfb39a7d7fdbd7aca3ac2ac17662d3e42da9ce9e7bf814be14163ac3`.
+
+Two separate one-document browser/proxy diagnostics used the existing bounded
+probe with a **45-second diagnostic-only timeout**; production stays at 15 seconds.
+They do not count as the 64-answer cohort or successful product validation.
+
+| Diagnostic | Ordinary upsert | Ordinary scope query | Managed upsert |
+| --- | --- | --- | --- |
+| [v1](results/semantic-long-diagnostic-v1.json) | 202, 218 ms | 503, 120 ms | 504, 29,042 ms |
+| [v2](results/semantic-long-diagnostic-v2.json) | 202, 1,371 ms | 200, 117 ms | 504, 29,041 ms |
+
+The first ordinary query immediately followed fresh collection creation and is
+not a sustained-readiness test. The second confirms that ordinary storage/query
+can succeed while the managed path still fails. The two actual HTTP 504 responses
+show that increasing the browser deadline alone does not make the request
+succeed. They do **not** distinguish LambdaDB's managed ingestion path from its
+underlying embedding provider. No server, model, timeout or retry change was made
+to force a passing result. Neither probe reached managed queryText after the
+managed upsert failure.
+
+Both probes deleted their two owned collections, verified absence, checked the
+key was absent from browser storage/host settings, and confirmed reload clears
+session credentials. Those independent probe checks do not retroactively fill in
+the generation runs' skipped final credential audits. All five collections
+created during this follow-up were cleaned up. Total generation calls across
+all three attempts remain eleven; there were no extra generation retries.
+
+The PR review also identified that the offline verifier trusted
+`sourceMessagesPresent`. It now independently recomputes literal source presence
+from the captured outgoing prompt, requires matching row metadata, and rejects
+an off prompt containing the entire source. A regression covers both forged
+counts and a complete prompt with truthful metadata. The original verifier is
+preserved as `tests/fixtures/semantic-results-v1.txt` solely to validate historical
+report hashes; it is not an execution fallback. A future run must freeze a new
+plan containing the corrected verifier. Historical failures remain unchanged.
+
 ## Continue from here
 
 Use the [reproduction commands](semantic-long-running.md) after the query path is
-stable, with a new artifact tag and plan filename. Preserve both failed attempts;
+stable, with a new artifact tag and plan filename. Preserve all failed attempts;
 do not append a successful suffix and describe it as one uninterrupted run.
 A complete run must finish all 64 scheduled answers, source/prompt checks,
 credential-persistence audit and owned cleanup before creating the separate

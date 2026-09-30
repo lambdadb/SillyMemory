@@ -1,0 +1,158 @@
+{
+  "time": "2026-09-30T05:20:57.149Z",
+  "sillyTavern": "06bde939fb1e9c4c8d8641d810f0a916b5bce127",
+  "upstream": "Live LambdaDB through real browser and built-in proxy",
+  "checks": [
+    "pinned host and extension loaded",
+    "session credentials initialized without persistence",
+    "invalid key is rejected through the real proxy",
+    "bounded managed versus unmanaged upsert probe completed",
+    "real key is absent from browser storage and host settings",
+    "all owned live test collections deleted and confirmed absent",
+    "browser reload drops the key and disables extension memory"
+  ],
+  "responses": [
+    {
+      "stage": "invalid key is rejected through the real proxy",
+      "status": 400
+    },
+    {
+      "stage": "bounded managed versus unmanaged upsert probe completed",
+      "status": 201
+    },
+    {
+      "stage": "bounded managed versus unmanaged upsert probe completed",
+      "status": 202
+    },
+    {
+      "stage": "bounded managed versus unmanaged upsert probe completed",
+      "status": 200
+    },
+    {
+      "stage": "bounded managed versus unmanaged upsert probe completed",
+      "status": 201
+    },
+    {
+      "stage": "bounded managed versus unmanaged upsert probe completed",
+      "status": 504
+    },
+    {
+      "stage": "all owned live test collections deleted and confirmed absent",
+      "status": 200
+    },
+    {
+      "stage": "all owned live test collections deleted and confirmed absent",
+      "status": 200
+    },
+    {
+      "stage": "all owned live test collections deleted and confirmed absent",
+      "status": 404
+    },
+    {
+      "stage": "all owned live test collections deleted and confirmed absent",
+      "status": 200
+    },
+    {
+      "stage": "all owned live test collections deleted and confirmed absent",
+      "status": 200
+    },
+    {
+      "stage": "all owned live test collections deleted and confirmed absent",
+      "status": 404
+    }
+  ],
+  "initialSourceSha256": {
+    "scripts/context-turn-policy.mjs": "9a1838813bcb244e4443e0f0cf8d7c56439573afc41dcf77b639006bc63fc5d5",
+    "scripts/context-turn-cases.mjs": "5fe1c119ace54c36c09cb7e605d6e2154f4e18d2da4be89c56cc37ec4f673259",
+    "scripts/context-turn-diagnostic.mjs": "e16b276dd585cac89067a834765155062ad1648aa0ca852dde00caa06aa9b7c9",
+    "docs/context-turn-evaluation.md": "ed77a168a1738e6cc49994790d57c16943667c6365a04fdd7dae0c4074b2372c",
+    "tests/fixtures/context-turn-v1.json": "7e68b9425c308a94854b349853d4f1a0e9a7bf7cd8685d42335c451a346a1fe7",
+    "scripts/assistant-fallback-policy.mjs": "d79a4aaa67aa814e2c9b346e0522cb5f86b01b32d6a0551e3b9b26d60481e2ed",
+    "scripts/assistant-fallback-cases.mjs": "c19d6a67d4ed999bae2223e18ae537b232cdef1defac12cd15735356633612de",
+    "scripts/assistant-fallback-diagnostic.mjs": "00612f8382f952aa6c6f068723565d3d7de396c3b7012531d8cf17ea24199f40",
+    "docs/assistant-fallback-evaluation.md": "b090f5cd0ab14663741c4d61a638db9e610f38df908feea2a05e8c00831aa1c1",
+    "scripts/assistant-topic-diagnostic.mjs": "d3766bcab91c5847bf9544f75077feb907db9ffba19f93d82cdeae2531e294ac",
+    "scripts/assistant-topic-policy.mjs": "2c7c58aed05fbad45250234031a2f7f102021398ae2c2bfb464235508b3c1c77",
+    "docs/assistant-topic-evaluation.md": "d37933199b303bb21531539d75896fe5411c3207515e84d6ab591cfddb1af320",
+    "scripts/context-edges.mjs": "0279861ae1251e4cb9de957e1e48170df6073ac803abb6717372699120ad9683",
+    "docs/context-edge-evaluation.md": "7ec50149198bb89f83929f44086c69ec444ff8e2b4bb663f41974d654033a376",
+    "src/client.js": "a808537f640d51e7b893d422a8c288f647d12641de2a785c4098afc681239da8",
+    "src/gate.js": "c1e5afada320e822a535ff4b464d6e565cfadbf56aabc78b1ba6f667bf4b78bf",
+    "src/memory.js": "f88515cf16bf8344961591d8b1b2a2ba1804fdd43ff667fb8c3896fa42af792c",
+    "src/context.js": "8a8c674a9986796d9eb6a6c1e6bfe3f4247196780f48c8ded4edc423384aecde",
+    "scripts/live-smoke.mjs": "8baa56682421060bda9f80aa87e5624804d3cc8e33e33311ac3925d2ef9eba95",
+    "scripts/live-fault-scenarios.mjs": "4656adacc864da5053d848096e2954cad46305f869030b257464fc04dc506ce3",
+    "scripts/context-retrieval.mjs": "9937191273c70c785cfb801a9945461d4f7ab4839446a194f49a885c06cd8038",
+    "scripts/comparison-fixture.mjs": "da9363e925d7776c8bf09af9ccb3f5615ffffceb5791d7081ffa1d0c27e5cc2d",
+    "scripts/selection-diagnostic.mjs": "0f64edb1e05eed8d9ba08f5b49971d435ff30dd24f5943491a80287bb54440b4",
+    "scripts/natural-dialogue.mjs": "e25fad68a96e68d51840367a1337eeba6ea16108fb9b1eef5acd692889370abc",
+    "docs/context-selection-evaluation.md": "bbb2947efc881be956b38040fae179fd584de2280f2255a5fca795685c939ea3",
+    "tests/fixtures/natural-dialogue-v1.json": "1570ba3031329e44a592f70c694278ddeb6171977ac0125daeae8cc94974608f",
+    "tests/fixtures/speaker-native-v1.json": "129f10d42ac30cb54c19a49989e76b8973ecf98260e0f0e150bf607a12666826",
+    "tests/fixtures/long-dialogue-v1.json": "3c5e6506b01711f1f4e5041c7ac14aa1073ae85fa71f26bf9092d2f7219053b7"
+  },
+  "probeConfiguration": {
+    "batchSize": 1,
+    "timeoutMs": 45000,
+    "query": true,
+    "runtimeDefaultTimeoutMs": 15000
+  },
+  "probe": [
+    {
+      "phase": "upsert",
+      "managed": false,
+      "documents": 1,
+      "completed": true,
+      "elapsedMs": 1370.6999998092651
+    },
+    {
+      "phase": "scope-query",
+      "managed": false,
+      "completed": true,
+      "returned": 1,
+      "elapsedMs": 116.69999980926514
+    },
+    {
+      "phase": "upsert",
+      "managed": true,
+      "documents": 1,
+      "completed": false,
+      "status": 504,
+      "elapsedMs": 29040.800000190735,
+      "reason": "Memory service returned HTTP 504."
+    }
+  ],
+  "sourceSha256": {
+    "scripts/context-turn-policy.mjs": "9a1838813bcb244e4443e0f0cf8d7c56439573afc41dcf77b639006bc63fc5d5",
+    "scripts/context-turn-cases.mjs": "5fe1c119ace54c36c09cb7e605d6e2154f4e18d2da4be89c56cc37ec4f673259",
+    "scripts/context-turn-diagnostic.mjs": "e16b276dd585cac89067a834765155062ad1648aa0ca852dde00caa06aa9b7c9",
+    "docs/context-turn-evaluation.md": "ed77a168a1738e6cc49994790d57c16943667c6365a04fdd7dae0c4074b2372c",
+    "tests/fixtures/context-turn-v1.json": "7e68b9425c308a94854b349853d4f1a0e9a7bf7cd8685d42335c451a346a1fe7",
+    "scripts/assistant-fallback-policy.mjs": "d79a4aaa67aa814e2c9b346e0522cb5f86b01b32d6a0551e3b9b26d60481e2ed",
+    "scripts/assistant-fallback-cases.mjs": "c19d6a67d4ed999bae2223e18ae537b232cdef1defac12cd15735356633612de",
+    "scripts/assistant-fallback-diagnostic.mjs": "00612f8382f952aa6c6f068723565d3d7de396c3b7012531d8cf17ea24199f40",
+    "docs/assistant-fallback-evaluation.md": "b090f5cd0ab14663741c4d61a638db9e610f38df908feea2a05e8c00831aa1c1",
+    "scripts/assistant-topic-diagnostic.mjs": "d3766bcab91c5847bf9544f75077feb907db9ffba19f93d82cdeae2531e294ac",
+    "scripts/assistant-topic-policy.mjs": "2c7c58aed05fbad45250234031a2f7f102021398ae2c2bfb464235508b3c1c77",
+    "docs/assistant-topic-evaluation.md": "d37933199b303bb21531539d75896fe5411c3207515e84d6ab591cfddb1af320",
+    "scripts/context-edges.mjs": "0279861ae1251e4cb9de957e1e48170df6073ac803abb6717372699120ad9683",
+    "docs/context-edge-evaluation.md": "7ec50149198bb89f83929f44086c69ec444ff8e2b4bb663f41974d654033a376",
+    "src/client.js": "a808537f640d51e7b893d422a8c288f647d12641de2a785c4098afc681239da8",
+    "src/gate.js": "c1e5afada320e822a535ff4b464d6e565cfadbf56aabc78b1ba6f667bf4b78bf",
+    "src/memory.js": "f88515cf16bf8344961591d8b1b2a2ba1804fdd43ff667fb8c3896fa42af792c",
+    "src/context.js": "8a8c674a9986796d9eb6a6c1e6bfe3f4247196780f48c8ded4edc423384aecde",
+    "scripts/live-smoke.mjs": "8baa56682421060bda9f80aa87e5624804d3cc8e33e33311ac3925d2ef9eba95",
+    "scripts/live-fault-scenarios.mjs": "4656adacc864da5053d848096e2954cad46305f869030b257464fc04dc506ce3",
+    "scripts/context-retrieval.mjs": "9937191273c70c785cfb801a9945461d4f7ab4839446a194f49a885c06cd8038",
+    "scripts/comparison-fixture.mjs": "da9363e925d7776c8bf09af9ccb3f5615ffffceb5791d7081ffa1d0c27e5cc2d",
+    "scripts/selection-diagnostic.mjs": "0f64edb1e05eed8d9ba08f5b49971d435ff30dd24f5943491a80287bb54440b4",
+    "scripts/natural-dialogue.mjs": "e25fad68a96e68d51840367a1337eeba6ea16108fb9b1eef5acd692889370abc",
+    "docs/context-selection-evaluation.md": "bbb2947efc881be956b38040fae179fd584de2280f2255a5fca795685c939ea3",
+    "tests/fixtures/natural-dialogue-v1.json": "1570ba3031329e44a592f70c694278ddeb6171977ac0125daeae8cc94974608f",
+    "tests/fixtures/speaker-native-v1.json": "129f10d42ac30cb54c19a49989e76b8973ecf98260e0f0e150bf607a12666826",
+    "tests/fixtures/long-dialogue-v1.json": "3c5e6506b01711f1f4e5041c7ac14aa1073ae85fa71f26bf9092d2f7219053b7"
+  },
+  "sourceUnchanged": true,
+  "cleanupComplete": true,
+  "passed": false
+}

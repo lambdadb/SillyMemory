@@ -64,3 +64,26 @@ remains unset until an independently documented review occurs.
 No runtime policy, release version or main installation baseline changes as a
 result of running this experiment. Semantic source delivery and generated-answer
 accuracy are different measurements; both have synthetic-data limitations.
+
+## Bounded diagnosis after a transport failure
+
+Before spending more generation calls, the existing probe can compare one
+ordinary document with one managed-embedding document through the real browser
+and built-in proxy:
+
+```sh
+ST_SOURCE=/path/to/pinned/SillyTavern \
+SM_ENV_FILE=/path/to/.env.local \
+SM_ARTIFACT_TAG=semantic-diagnostic-next \
+SM_PROBE_BATCH_SIZE=1 SM_PROBE_TIMEOUT_MS=45000 SM_PROBE_QUERY=1 \
+  node scripts/live-smoke.mjs --probe
+```
+
+The 45-second timeout belongs only to this diagnostic client. It does not change
+production's 15-second deadline, retry the generated-answer cohort, or establish
+that the product passes under its normal limits. Each probe owns and removes two
+collections. A scope query runs immediately after fresh creation, so a single
+503 is not proof of sustained service unavailability. Inspect each phase and
+cleanup in the emitted report; a completed probe procedure can still have
+`passed: false`. Do not retry the entire generation cohort until the normal
+managed transport path is healthy.
