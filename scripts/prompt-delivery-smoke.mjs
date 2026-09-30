@@ -11,6 +11,11 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { capacityPlan, capacityChat, capacityInstructions } from './prompt-capacity-cases.mjs';
+import { semanticBundleInputs } from './context-bundle-data.mjs';
+import { hostSource } from './semantic-long.mjs';
+
+const packingFixture = (await semanticBundleInputs()).find(input => input.id === 'semantic/long-ko-quotation/r1/on');
+assert.ok(packingFixture);
 
 const base = { enabled: true, context: 1536, output: 256, instructions: 1, recentRepeats: 1, stopOnLoss: true, type: 'normal' };
 const plan = { ...capacityPlan, cases: [
@@ -33,6 +38,7 @@ const output = path.resolve(process.argv[2] || path.join(root, 'artifacts/prompt
 assert.equal(execFileSync('git', ['-C', source, 'rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(), plan.host);
 assert.equal(await realpath(path.join(source, 'public/scripts/extensions/third-party/sillymemory')), root);
 const sourceFiles = ['index.js', 'manifest.json', 'src/client.js', 'src/context.js', 'src/gate.js', 'src/memory.js', 'src/status.js', 'scripts/prompt-delivery-smoke.mjs', 'src/delivery.js', 'settings.html', 'scripts/prompt-capacity-cases.mjs'];
+sourceFiles.push('scripts/context-bundle-data.mjs', 'scripts/semantic-long.mjs', 'tests/fixtures/semantic-long-v1.json', 'docs/results/semantic-direct-v1.json');
 const hostFiles = ['public/script.js', 'public/scripts/openai.js', 'public/scripts/PromptManager.js', 'public/scripts/tokenizers.js', 'src/endpoints/tokenizers.js', 'src/endpoints/backends/chat-completions.js', 'package-lock.json'];
 async function hashes() {
     return Object.fromEntries(await Promise.all(sourceFiles.map(async file => [file, createHash('sha256').update(await readFile(path.join(root, file))).digest('hex')])));
@@ -78,7 +84,17 @@ const remote = httpsServer({ key: await readFile(key), cert: await readFile(cert
             assert.ok(match);
             if (body.query.knn) assert.equal(typeof body.query.knn.queryText, 'string');
             // Fixed source order, deliberately no embeddings or ANN simulation.
-            const docs = body.query.knn && noHits ? [] : [...c.docs.values()].filter(d => d.owner === match[1] && d.scope === match[2]);
+            let docs = body.query.knn && noHits ? [] : [...c.docs.values()].filter(d => d.owner === match[1] && d.scope === match[2]);
+            if (body.query.knn && packing) {
+                const recorded = packingFixture.original.queries.find(query => query.query === body.query.knn.queryText);
+                assert.ok(recorded, 'Actual host query matches the recorded synthetic query');
+                docs = recorded.hits.map(hit => {
+                    const doc = docs.find(doc => doc.message === hit.message && doc.chunk === hit.chunk);
+                    assert.ok(doc, 'Recorded rank refers to a synchronized source');
+                    assert.equal(doc.text, hit.text);
+                    return doc;
+                });
+            }
             return send(res, 200, { docs: docs.map(doc => ({ collection: name, doc })), isDocsInline: true, total: docs.length, took: 1 });
         }
         throw new Error('Unexpected emulator operation');
@@ -93,7 +109,7 @@ const bridge = httpServer(async (req, res) => {
         send(res, 200, { id: 'local-capacity-fixture', choices: [{ index: 0, message: { role: 'assistant', content: 'LOCAL_FIXTURE_OK' }, finish_reason: 'stop' }] });
     } catch (error) { errors.push(error.message); send(res, 500); }
 });
-let server, browser, page, noHits = false;
+let server, browser, page, noHits = false, packing = false;
 const report = { ...frozen, evidence: 'Real SillyTavern/Chromium/proxy; emulated LambdaDB and generation; no live embeddings or model', rows };
 try {
     await new Promise(r => remote.listen(0, '127.0.0.1', r));
@@ -269,6 +285,38 @@ try {
     assert.equal(race.answer, 'LOCAL_FIXTURE_OK');
     assert.match(race.recovered, /^Final host prompt:/);
     report.overlap = { ...rejected, ...race, rejectedCompletionRequests: 0, recoveryCompletionRequests: 1 };
+    console.log('VERIFY repeated-passage-packing');
+    await field('enabled').uncheck();
+    for (const [name, value] of [['recent', 8], ['budget', 400]]) {
+        await field(name).fill(String(value)); await field(name).dispatchEvent('change');
+    }
+    const packingChat = hostSource(packingFixture.item);
+    await page.evaluate(async chat => {
+        const c = SillyTavern.getContext(), { oai_settings } = await import('/scripts/openai.js');
+        Object.assign(oai_settings, { openai_max_context: 1536, openai_max_tokens: 256, stream_openai: false });
+        c.chat.splice(0, c.chat.length, ...chat); await c.saveChat(); await c.reloadCurrentChat();
+    }, packingChat);
+    packing = true;
+    await field('enabled').check(); await waitStatus('synchronized');
+    const packingStart = generations.length;
+    const packed = await page.evaluate(async question => {
+        const c = SillyTavern.getContext();
+        document.querySelector('#send_textarea').value = question;
+        await c.generate('normal');
+        return { chat: c.chat.map(m => m.mes), delivery: document.querySelector('[data-sm="delivery"]').textContent };
+    }, packingFixture.item.question);
+    assert.equal(generations.length, packingStart + 1);
+    const packingRequest = generations.at(-1), excerpts = packingRequest.messages.filter(m => m.content.startsWith('[Past conversation excerpt:'));
+    assert.equal(excerpts.length, 4);
+    assert.match(packed.delivery, /4\/4 memory passages and 8\/8 recent messages verified/);
+    for (const index of [0, 1, 2, 27]) {
+        const original = packingFixture.item.messages[index];
+        assert(excerpts.some(m => m.role === original.role && m.content.endsWith(`\n${original.text}`)), 'Full source and native role reached the completion endpoint');
+    }
+    assert(excerpts.some(m => m.content.includes('identical text at message:passage 3:1, 43:1]')));
+    assert.deepEqual(packed.chat.slice(0, 60), packingChat.map(m => m.mes), 'Packing never changes stored history');
+    report.packing = { evidence: 'Actual host generation with recorded query ranks and a local completion fixture', case: packingFixture.item.id, configuredBudget: 400, effectiveBudget: 320, delivery: packed.delivery, request: packingRequest, storedHistoryUnchanged: true };
+    packing = false;
     await field('stopOnLoss').uncheck();
     await page.reload(); await page.locator('#sillymemory').waitFor({ state: 'attached' });
     assert.equal(await field('stopOnLoss').isChecked(), false, 'Warning preference survives reload');

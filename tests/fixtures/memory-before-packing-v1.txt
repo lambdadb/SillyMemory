@@ -103,57 +103,6 @@ export async function selectMemory(hits, expected, budget, countTokens) {
     return { text, tokens, passages: selected, messages: memoryMessages(selected) };
 }
 
-const repeatedKey = doc => JSON.stringify([doc.owner, doc.scope, doc.role, doc.speaker, doc.text]);
-
-// Preserve every selected source coordinate and full verbatim body. A repeated
-// excerpt is placed at its latest occurrence, with all occurrences named, so a
-// later repetition is not silently presented as an earlier, superseded state.
-export function packedMemoryMessages(passages) {
-    const groups = new Map();
-    for (const doc of [...passages].sort((a, b) => a.message - b.message || a.chunk - b.chunk)) {
-        const key = repeatedKey(doc), group = groups.get(key) || [];
-        group.push(doc); groups.set(key, group);
-    }
-    return [...groups.values()].map(group => {
-        const last = group.at(-1), message = memoryMessages([last])[0];
-        if (group.length > 1) {
-            message.mes = `[Past conversation excerpt: ${last.role} ${JSON.stringify(literal(last.speaker))}, identical text at message:passage ${group.map(doc => `${doc.message + 1}:${doc.chunk + 1}`).join(', ')}]\n${literal(last.text)}`;
-        }
-        return { message, chunk: last.chunk };
-    }).sort((a, b) => a.message.index - b.message.index || a.chunk - b.chunk).map(entry => entry.message);
-}
-
-export async function selectPackedMemory(hits, expected, budget, countTokens) {
-    // Establish the shipped whole-passage selection first. Packing may add
-    // sources but can never evict any passage that the baseline already kept.
-    const baseline = await selectMemory(hits, expected, budget, countTokens);
-    if (!baseline.passages.length) return baseline;
-    const selected = [...baseline.passages], content = new Set(selected.map(repeatedKey));
-    if (content.size === selected.length) return baseline;
-    const render = docs => {
-        const messages = packedMemoryMessages(docs);
-        return { messages, text: messages.map(message => message.mes).join('\n') };
-    };
-    const count = async text => {
-        const tokens = await countTokens(text);
-        if (!Number.isFinite(tokens) || tokens < 0) throw new Error('Token counting unavailable.');
-        return tokens;
-    };
-    let result = render(selected), tokens = await count(result.text);
-    if (tokens >= baseline.tokens) return baseline; // Short repetitions may cost more to label.
-    const valid = new Map(expected.map(doc => [doc.id, doc])), seen = new Set(selected.map(doc => doc.id));
-    for (const hit of hits) {
-        const doc = valid.get(hit?.id);
-        if (!doc || seen.has(doc.id) || ['scope', 'owner', 'revision', 'text'].some(key => hit[key] !== doc[key])) continue;
-        seen.add(doc.id);
-        // Spend the saved space on distinct content, not more repeat citations.
-        if (content.has(repeatedKey(doc))) continue;
-        const candidate = render([...selected, doc]), trial = await count(candidate.text);
-        if (trial <= budget) { selected.push(doc); content.add(repeatedKey(doc)); result = candidate; tokens = trial; }
-    }
-    return { ...result, tokens, passages: selected };
-}
-
 export class Journal {
     constructor(storage, namespace) { this.storage = storage; this.namespace = namespace; }
     key(scope) { return `sillymemory:journal:${this.namespace}:${scope}`; }
@@ -254,7 +203,7 @@ export class MemoryEngine {
         } finally { reads.abort(); }
         if (!current()) return null;
         progress({ phase: 'budgeting' });
-        const result = await selectPackedMemory(interleaveHits(results), prepared.docs, config.budget, countTokens);
+        const result = await selectMemory(interleaveHits(results), prepared.docs, config.budget, countTokens);
         return current() ? result : null;
     }
     async deleteAll() {
