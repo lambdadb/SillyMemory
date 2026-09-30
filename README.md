@@ -19,6 +19,11 @@ the author despite receiving the signature. This is synthetic regression evidenc
 not a general accuracy or availability guarantee. See the
 [historical quality context](docs/quality-history.md) for earlier limitations.
 
+The subsequent [equal-context three-mode comparison](docs/three-mode-results.md)
+records 96 actual-host answers, comparing plain SillyTavern, built-in Vector
+Storage and SillyMemory. It reports source delivery, provisional answer scores,
+input/cache tokens and latency separately, with explicit native-setting limits.
+
 ## Supported host
 
 The development baseline is **SillyTavern 1.19.0**, pinned to commit [`06bde939fb1e9c4c8d8641d810f0a916b5bce127`](https://github.com/SillyTavern/SillyTavern/tree/06bde939fb1e9c4c8d8641d810f0a916b5bce127). Other revisions are unverified. Use a browser with Web Crypto, Web Locks, and `AbortSignal.any` (the automated browser test uses Chromium). Serve SillyTavern on localhost or HTTPS. One active SillyMemory tab per SillyTavern account/browser profile is enforced with a Web Lock.
