@@ -1,0 +1,1738 @@
+{
+  "version": "semantic-evidence-v1",
+  "kind": "Offline annotation and evaluator contract audit; oracle-constructed excerpts, not retrieval results",
+  "integrityPassed": true,
+  "serviceCalls": 0,
+  "candidateEvaluated": false,
+  "answerQuality": null,
+  "humanReview": null,
+  "summary": {
+    "cases": 16,
+    "answerCases": 14,
+    "unknownCases": 2,
+    "requiredUnits": 30,
+    "omissionProbes": 30,
+    "contextDependentCases": 10
+  },
+  "rows": [
+    {
+      "id": "en-minimal-fact",
+      "language": "en",
+      "shape": "minimal-fact",
+      "sourceHash": "d47a72ba17fa4d5be0fbcb4b92072f6142ed1111b6a16cf15366fb8b6772d0a6",
+      "full": {
+        "caseId": "en-minimal-fact",
+        "sourceHash": "d47a72ba17fa4d5be0fbcb4b92072f6142ed1111b6a16cf15366fb8b6772d0a6",
+        "answerType": "answer",
+        "answerSpans": {
+          "covered": 1,
+          "total": 1
+        },
+        "mandatoryContext": {
+          "covered": 0,
+          "total": 0
+        },
+        "missing": [],
+        "units": [
+          {
+            "id": "delivery",
+            "kind": "answer",
+            "covered": true
+          }
+        ],
+        "completeEvidence": true,
+        "answerQuality": null
+      },
+      "minimal": {
+        "caseId": "en-minimal-fact",
+        "sourceHash": "d47a72ba17fa4d5be0fbcb4b92072f6142ed1111b6a16cf15366fb8b6772d0a6",
+        "answerType": "answer",
+        "answerSpans": {
+          "covered": 1,
+          "total": 1
+        },
+        "mandatoryContext": {
+          "covered": 0,
+          "total": 0
+        },
+        "missing": [],
+        "units": [
+          {
+            "id": "delivery",
+            "kind": "answer",
+            "covered": true
+          }
+        ],
+        "completeEvidence": true,
+        "answerQuality": null
+      },
+      "answerOnly": {
+        "caseId": "en-minimal-fact",
+        "sourceHash": "d47a72ba17fa4d5be0fbcb4b92072f6142ed1111b6a16cf15366fb8b6772d0a6",
+        "answerType": "answer",
+        "answerSpans": {
+          "covered": 1,
+          "total": 1
+        },
+        "mandatoryContext": {
+          "covered": 0,
+          "total": 0
+        },
+        "missing": [],
+        "units": [
+          {
+            "id": "delivery",
+            "kind": "answer",
+            "covered": true
+          }
+        ],
+        "completeEvidence": true,
+        "answerQuality": null
+      },
+      "omissionProbes": [
+        {
+          "omitted": "delivery",
+          "kind": "answer",
+          "missing": [
+            "delivery"
+          ],
+          "completeEvidence": false
+        }
+      ],
+      "answerQuality": null
+    },
+    {
+      "id": "ko-minimal-fact",
+      "language": "ko",
+      "shape": "minimal-fact",
+      "sourceHash": "18eec7693e4f35d960454487d59a8894f975fec0551aa0a177269f8ae1fbf332",
+      "full": {
+        "caseId": "ko-minimal-fact",
+        "sourceHash": "18eec7693e4f35d960454487d59a8894f975fec0551aa0a177269f8ae1fbf332",
+        "answerType": "answer",
+        "answerSpans": {
+          "covered": 1,
+          "total": 1
+        },
+        "mandatoryContext": {
+          "covered": 0,
+          "total": 0
+        },
+        "missing": [],
+        "units": [
+          {
+            "id": "delivery",
+            "kind": "answer",
+            "covered": true
+          }
+        ],
+        "completeEvidence": true,
+        "answerQuality": null
+      },
+      "minimal": {
+        "caseId": "ko-minimal-fact",
+        "sourceHash": "18eec7693e4f35d960454487d59a8894f975fec0551aa0a177269f8ae1fbf332",
+        "answerType": "answer",
+        "answerSpans": {
+          "covered": 1,
+          "total": 1
+        },
+        "mandatoryContext": {
+          "covered": 0,
+          "total": 0
+        },
+        "missing": [],
+        "units": [
+          {
+            "id": "delivery",
+            "kind": "answer",
+            "covered": true
+          }
+        ],
+        "completeEvidence": true,
+        "answerQuality": null
+      },
+      "answerOnly": {
+        "caseId": "ko-minimal-fact",
+        "sourceHash": "18eec7693e4f35d960454487d59a8894f975fec0551aa0a177269f8ae1fbf332",
+        "answerType": "answer",
+        "answerSpans": {
+          "covered": 1,
+          "total": 1
+        },
+        "mandatoryContext": {
+          "covered": 0,
+          "total": 0
+        },
+        "missing": [],
+        "units": [
+          {
+            "id": "delivery",
+            "kind": "answer",
+            "covered": true
+          }
+        ],
+        "completeEvidence": true,
+        "answerQuality": null
+      },
+      "omissionProbes": [
+        {
+          "omitted": "delivery",
+          "kind": "answer",
+          "missing": [
+            "delivery"
+          ],
+          "completeEvidence": false
+        }
+      ],
+      "answerQuality": null
+    },
+    {
+      "id": "en-correction",
+      "language": "en",
+      "shape": "correction",
+      "sourceHash": "248be20fdf0bf2097741a7c5a39c7eb08fb9ee5df0bfbbfb3cc14a50cddc421f",
+      "full": {
+        "caseId": "en-correction",
+        "sourceHash": "248be20fdf0bf2097741a7c5a39c7eb08fb9ee5df0bfbbfb3cc14a50cddc421f",
+        "answerType": "answer",
+        "answerSpans": {
+          "covered": 1,
+          "total": 1
+        },
+        "mandatoryContext": {
+          "covered": 1,
+          "total": 1
+        },
+        "missing": [],
+        "units": [
+          {
+            "id": "final-time",
+            "kind": "answer",
+            "covered": true
+          },
+          {
+            "id": "cancel-old",
+            "kind": "correction",
+            "covered": true
+          }
+        ],
+        "completeEvidence": true,
+        "answerQuality": null
+      },
+      "minimal": {
+        "caseId": "en-correction",
+        "sourceHash": "248be20fdf0bf2097741a7c5a39c7eb08fb9ee5df0bfbbfb3cc14a50cddc421f",
+        "answerType": "answer",
+        "answerSpans": {
+          "covered": 1,
+          "total": 1
+        },
+        "mandatoryContext": {
+          "covered": 1,
+          "total": 1
+        },
+        "missing": [],
+        "units": [
+          {
+            "id": "final-time",
+            "kind": "answer",
+            "covered": true
+          },
+          {
+            "id": "cancel-old",
+            "kind": "correction",
+            "covered": true
+          }
+        ],
+        "completeEvidence": true,
+        "answerQuality": null
+      },
+      "answerOnly": {
+        "caseId": "en-correction",
+        "sourceHash": "248be20fdf0bf2097741a7c5a39c7eb08fb9ee5df0bfbbfb3cc14a50cddc421f",
+        "answerType": "answer",
+        "answerSpans": {
+          "covered": 1,
+          "total": 1
+        },
+        "mandatoryContext": {
+          "covered": 0,
+          "total": 1
+        },
+        "missing": [
+          "cancel-old"
+        ],
+        "units": [
+          {
+            "id": "final-time",
+            "kind": "answer",
+            "covered": true
+          },
+          {
+            "id": "cancel-old",
+            "kind": "correction",
+            "covered": false
+          }
+        ],
+        "completeEvidence": false,
+        "answerQuality": null
+      },
+      "omissionProbes": [
+        {
+          "omitted": "final-time",
+          "kind": "answer",
+          "missing": [
+            "final-time"
+          ],
+          "completeEvidence": false
+        },
+        {
+          "omitted": "cancel-old",
+          "kind": "correction",
+          "missing": [
+            "cancel-old"
+          ],
+          "completeEvidence": false
+        }
+      ],
+      "answerQuality": null
+    },
+    {
+      "id": "ko-correction",
+      "language": "ko",
+      "shape": "correction",
+      "sourceHash": "5da245c2f489b5c25fbda1d9b6c4eea528399e6bbadebbce7f0e9ef32efefbbc",
+      "full": {
+        "caseId": "ko-correction",
+        "sourceHash": "5da245c2f489b5c25fbda1d9b6c4eea528399e6bbadebbce7f0e9ef32efefbbc",
+        "answerType": "answer",
+        "answerSpans": {
+          "covered": 1,
+          "total": 1
+        },
+        "mandatoryContext": {
+          "covered": 1,
+          "total": 1
+        },
+        "missing": [],
+        "units": [
+          {
+            "id": "final-time",
+            "kind": "answer",
+            "covered": true
+          },
+          {
+            "id": "cancel-old",
+            "kind": "correction",
+            "covered": true
+          }
+        ],
+        "completeEvidence": true,
+        "answerQuality": null
+      },
+      "minimal": {
+        "caseId": "ko-correction",
+        "sourceHash": "5da245c2f489b5c25fbda1d9b6c4eea528399e6bbadebbce7f0e9ef32efefbbc",
+        "answerType": "answer",
+        "answerSpans": {
+          "covered": 1,
+          "total": 1
+        },
+        "mandatoryContext": {
+          "covered": 1,
+          "total": 1
+        },
+        "missing": [],
+        "units": [
+          {
+            "id": "final-time",
+            "kind": "answer",
+            "covered": true
+          },
+          {
+            "id": "cancel-old",
+            "kind": "correction",
+            "covered": true
+          }
+        ],
+        "completeEvidence": true,
+        "answerQuality": null
+      },
+      "answerOnly": {
+        "caseId": "ko-correction",
+        "sourceHash": "5da245c2f489b5c25fbda1d9b6c4eea528399e6bbadebbce7f0e9ef32efefbbc",
+        "answerType": "answer",
+        "answerSpans": {
+          "covered": 1,
+          "total": 1
+        },
+        "mandatoryContext": {
+          "covered": 0,
+          "total": 1
+        },
+        "missing": [
+          "cancel-old"
+        ],
+        "units": [
+          {
+            "id": "final-time",
+            "kind": "answer",
+            "covered": true
+          },
+          {
+            "id": "cancel-old",
+            "kind": "correction",
+            "covered": false
+          }
+        ],
+        "completeEvidence": false,
+        "answerQuality": null
+      },
+      "omissionProbes": [
+        {
+          "omitted": "final-time",
+          "kind": "answer",
+          "missing": [
+            "final-time"
+          ],
+          "completeEvidence": false
+        },
+        {
+          "omitted": "cancel-old",
+          "kind": "correction",
+          "missing": [
+            "cancel-old"
+          ],
+          "completeEvidence": false
+        }
+      ],
+      "answerQuality": null
+    },
+    {
+      "id": "en-negation",
+      "language": "en",
+      "shape": "negation",
+      "sourceHash": "33bfd495349d577ee78d99e0f7d68816563ce7e0f8ca27a60034a593a7750e77",
+      "full": {
+        "caseId": "en-negation",
+        "sourceHash": "33bfd495349d577ee78d99e0f7d68816563ce7e0f8ca27a60034a593a7750e77",
+        "answerType": "answer",
+        "answerSpans": {
+          "covered": 1,
+          "total": 1
+        },
+        "mandatoryContext": {
+          "covered": 2,
+          "total": 2
+        },
+        "missing": [],
+        "units": [
+          {
+            "id": "collector",
+            "kind": "answer",
+            "covered": true
+          },
+          {
+            "id": "deny-leaflet",
+            "kind": "negation",
+            "covered": true
+          },
+          {
+            "id": "leaflet-reference",
+            "kind": "reference",
+            "covered": true
+          }
+        ],
+        "completeEvidence": true,
+        "answerQuality": null
+      },
+      "minimal": {
+        "caseId": "en-negation",
+        "sourceHash": "33bfd495349d577ee78d99e0f7d68816563ce7e0f8ca27a60034a593a7750e77",
+        "answerType": "answer",
+        "answerSpans": {
+          "covered": 1,
+          "total": 1
+        },
+        "mandatoryContext": {
+          "covered": 2,
+          "total": 2
+        },
+        "missing": [],
+        "units": [
+          {
+            "id": "collector",
+            "kind": "answer",
+            "covered": true
+          },
+          {
+            "id": "deny-leaflet",
+            "kind": "negation",
+            "covered": true
+          },
+          {
+            "id": "leaflet-reference",
+            "kind": "reference",
+            "covered": true
+          }
+        ],
+        "completeEvidence": true,
+        "answerQuality": null
+      },
+      "answerOnly": {
+        "caseId": "en-negation",
+        "sourceHash": "33bfd495349d577ee78d99e0f7d68816563ce7e0f8ca27a60034a593a7750e77",
+        "answerType": "answer",
+        "answerSpans": {
+          "covered": 1,
+          "total": 1
+        },
+        "mandatoryContext": {
+          "covered": 0,
+          "total": 2
+        },
+        "missing": [
+          "deny-leaflet",
+          "leaflet-reference"
+        ],
+        "units": [
+          {
+            "id": "collector",
+            "kind": "answer",
+            "covered": true
+          },
+          {
+            "id": "deny-leaflet",
+            "kind": "negation",
+            "covered": false
+          },
+          {
+            "id": "leaflet-reference",
+            "kind": "reference",
+            "covered": false
+          }
+        ],
+        "completeEvidence": false,
+        "answerQuality": null
+      },
+      "omissionProbes": [
+        {
+          "omitted": "collector",
+          "kind": "answer",
+          "missing": [
+            "collector"
+          ],
+          "completeEvidence": false
+        },
+        {
+          "omitted": "deny-leaflet",
+          "kind": "negation",
+          "missing": [
+            "deny-leaflet"
+          ],
+          "completeEvidence": false
+        },
+        {
+          "omitted": "leaflet-reference",
+          "kind": "reference",
+          "missing": [
+            "leaflet-reference"
+          ],
+          "completeEvidence": false
+        }
+      ],
+      "answerQuality": null
+    },
+    {
+      "id": "ko-negation",
+      "language": "ko",
+      "shape": "negation",
+      "sourceHash": "5c5b8fc3ccae4e89cde479167e781035051ece25e48d151ebd7ae5eedf20d6cc",
+      "full": {
+        "caseId": "ko-negation",
+        "sourceHash": "5c5b8fc3ccae4e89cde479167e781035051ece25e48d151ebd7ae5eedf20d6cc",
+        "answerType": "answer",
+        "answerSpans": {
+          "covered": 1,
+          "total": 1
+        },
+        "mandatoryContext": {
+          "covered": 2,
+          "total": 2
+        },
+        "missing": [],
+        "units": [
+          {
+            "id": "collector",
+            "kind": "answer",
+            "covered": true
+          },
+          {
+            "id": "deny-leaflet",
+            "kind": "negation",
+            "covered": true
+          },
+          {
+            "id": "leaflet-reference",
+            "kind": "reference",
+            "covered": true
+          }
+        ],
+        "completeEvidence": true,
+        "answerQuality": null
+      },
+      "minimal": {
+        "caseId": "ko-negation",
+        "sourceHash": "5c5b8fc3ccae4e89cde479167e781035051ece25e48d151ebd7ae5eedf20d6cc",
+        "answerType": "answer",
+        "answerSpans": {
+          "covered": 1,
+          "total": 1
+        },
+        "mandatoryContext": {
+          "covered": 2,
+          "total": 2
+        },
+        "missing": [],
+        "units": [
+          {
+            "id": "collector",
+            "kind": "answer",
+            "covered": true
+          },
+          {
+            "id": "deny-leaflet",
+            "kind": "negation",
+            "covered": true
+          },
+          {
+            "id": "leaflet-reference",
+            "kind": "reference",
+            "covered": true
+          }
+        ],
+        "completeEvidence": true,
+        "answerQuality": null
+      },
+      "answerOnly": {
+        "caseId": "ko-negation",
+        "sourceHash": "5c5b8fc3ccae4e89cde479167e781035051ece25e48d151ebd7ae5eedf20d6cc",
+        "answerType": "answer",
+        "answerSpans": {
+          "covered": 1,
+          "total": 1
+        },
+        "mandatoryContext": {
+          "covered": 0,
+          "total": 2
+        },
+        "missing": [
+          "deny-leaflet",
+          "leaflet-reference"
+        ],
+        "units": [
+          {
+            "id": "collector",
+            "kind": "answer",
+            "covered": true
+          },
+          {
+            "id": "deny-leaflet",
+            "kind": "negation",
+            "covered": false
+          },
+          {
+            "id": "leaflet-reference",
+            "kind": "reference",
+            "covered": false
+          }
+        ],
+        "completeEvidence": false,
+        "answerQuality": null
+      },
+      "omissionProbes": [
+        {
+          "omitted": "collector",
+          "kind": "answer",
+          "missing": [
+            "collector"
+          ],
+          "completeEvidence": false
+        },
+        {
+          "omitted": "deny-leaflet",
+          "kind": "negation",
+          "missing": [
+            "deny-leaflet"
+          ],
+          "completeEvidence": false
+        },
+        {
+          "omitted": "leaflet-reference",
+          "kind": "reference",
+          "missing": [
+            "leaflet-reference"
+          ],
+          "completeEvidence": false
+        }
+      ],
+      "answerQuality": null
+    },
+    {
+      "id": "en-condition",
+      "language": "en",
+      "shape": "condition",
+      "sourceHash": "bede38f4812d9bde3f37ad5d9d0e5400a1c6eee68e0febfdfaa76a07c38b4a02",
+      "full": {
+        "caseId": "en-condition",
+        "sourceHash": "bede38f4812d9bde3f37ad5d9d0e5400a1c6eee68e0febfdfaa76a07c38b4a02",
+        "answerType": "answer",
+        "answerSpans": {
+          "covered": 1,
+          "total": 1
+        },
+        "mandatoryContext": {
+          "covered": 1,
+          "total": 1
+        },
+        "missing": [],
+        "units": [
+          {
+            "id": "ramp",
+            "kind": "answer",
+            "covered": true
+          },
+          {
+            "id": "condition",
+            "kind": "qualification",
+            "covered": true
+          }
+        ],
+        "completeEvidence": true,
+        "answerQuality": null
+      },
+      "minimal": {
+        "caseId": "en-condition",
+        "sourceHash": "bede38f4812d9bde3f37ad5d9d0e5400a1c6eee68e0febfdfaa76a07c38b4a02",
+        "answerType": "answer",
+        "answerSpans": {
+          "covered": 1,
+          "total": 1
+        },
+        "mandatoryContext": {
+          "covered": 1,
+          "total": 1
+        },
+        "missing": [],
+        "units": [
+          {
+            "id": "ramp",
+            "kind": "answer",
+            "covered": true
+          },
+          {
+            "id": "condition",
+            "kind": "qualification",
+            "covered": true
+          }
+        ],
+        "completeEvidence": true,
+        "answerQuality": null
+      },
+      "answerOnly": {
+        "caseId": "en-condition",
+        "sourceHash": "bede38f4812d9bde3f37ad5d9d0e5400a1c6eee68e0febfdfaa76a07c38b4a02",
+        "answerType": "answer",
+        "answerSpans": {
+          "covered": 1,
+          "total": 1
+        },
+        "mandatoryContext": {
+          "covered": 0,
+          "total": 1
+        },
+        "missing": [
+          "condition"
+        ],
+        "units": [
+          {
+            "id": "ramp",
+            "kind": "answer",
+            "covered": true
+          },
+          {
+            "id": "condition",
+            "kind": "qualification",
+            "covered": false
+          }
+        ],
+        "completeEvidence": false,
+        "answerQuality": null
+      },
+      "omissionProbes": [
+        {
+          "omitted": "ramp",
+          "kind": "answer",
+          "missing": [
+            "ramp"
+          ],
+          "completeEvidence": false
+        },
+        {
+          "omitted": "condition",
+          "kind": "qualification",
+          "missing": [
+            "condition"
+          ],
+          "completeEvidence": false
+        }
+      ],
+      "answerQuality": null
+    },
+    {
+      "id": "ko-condition",
+      "language": "ko",
+      "shape": "condition",
+      "sourceHash": "4592f64127c8f7665261ae306baf8b82ffb56dea2f466a9937793882fe90f355",
+      "full": {
+        "caseId": "ko-condition",
+        "sourceHash": "4592f64127c8f7665261ae306baf8b82ffb56dea2f466a9937793882fe90f355",
+        "answerType": "answer",
+        "answerSpans": {
+          "covered": 1,
+          "total": 1
+        },
+        "mandatoryContext": {
+          "covered": 1,
+          "total": 1
+        },
+        "missing": [],
+        "units": [
+          {
+            "id": "ramp",
+            "kind": "answer",
+            "covered": true
+          },
+          {
+            "id": "condition",
+            "kind": "qualification",
+            "covered": true
+          }
+        ],
+        "completeEvidence": true,
+        "answerQuality": null
+      },
+      "minimal": {
+        "caseId": "ko-condition",
+        "sourceHash": "4592f64127c8f7665261ae306baf8b82ffb56dea2f466a9937793882fe90f355",
+        "answerType": "answer",
+        "answerSpans": {
+          "covered": 1,
+          "total": 1
+        },
+        "mandatoryContext": {
+          "covered": 1,
+          "total": 1
+        },
+        "missing": [],
+        "units": [
+          {
+            "id": "ramp",
+            "kind": "answer",
+            "covered": true
+          },
+          {
+            "id": "condition",
+            "kind": "qualification",
+            "covered": true
+          }
+        ],
+        "completeEvidence": true,
+        "answerQuality": null
+      },
+      "answerOnly": {
+        "caseId": "ko-condition",
+        "sourceHash": "4592f64127c8f7665261ae306baf8b82ffb56dea2f466a9937793882fe90f355",
+        "answerType": "answer",
+        "answerSpans": {
+          "covered": 1,
+          "total": 1
+        },
+        "mandatoryContext": {
+          "covered": 0,
+          "total": 1
+        },
+        "missing": [
+          "condition"
+        ],
+        "units": [
+          {
+            "id": "ramp",
+            "kind": "answer",
+            "covered": true
+          },
+          {
+            "id": "condition",
+            "kind": "qualification",
+            "covered": false
+          }
+        ],
+        "completeEvidence": false,
+        "answerQuality": null
+      },
+      "omissionProbes": [
+        {
+          "omitted": "ramp",
+          "kind": "answer",
+          "missing": [
+            "ramp"
+          ],
+          "completeEvidence": false
+        },
+        {
+          "omitted": "condition",
+          "kind": "qualification",
+          "missing": [
+            "condition"
+          ],
+          "completeEvidence": false
+        }
+      ],
+      "answerQuality": null
+    },
+    {
+      "id": "en-speaker",
+      "language": "en",
+      "shape": "speaker",
+      "sourceHash": "562998267b932eb82e3e1cb82630d217134f5c9bba5243aa66f94354141204d1",
+      "full": {
+        "caseId": "en-speaker",
+        "sourceHash": "562998267b932eb82e3e1cb82630d217134f5c9bba5243aa66f94354141204d1",
+        "answerType": "answer",
+        "answerSpans": {
+          "covered": 2,
+          "total": 2
+        },
+        "mandatoryContext": {
+          "covered": 0,
+          "total": 0
+        },
+        "missing": [],
+        "units": [
+          {
+            "id": "user-task",
+            "kind": "answer",
+            "covered": true
+          },
+          {
+            "id": "assistant-task",
+            "kind": "answer",
+            "covered": true
+          }
+        ],
+        "completeEvidence": true,
+        "answerQuality": null
+      },
+      "minimal": {
+        "caseId": "en-speaker",
+        "sourceHash": "562998267b932eb82e3e1cb82630d217134f5c9bba5243aa66f94354141204d1",
+        "answerType": "answer",
+        "answerSpans": {
+          "covered": 2,
+          "total": 2
+        },
+        "mandatoryContext": {
+          "covered": 0,
+          "total": 0
+        },
+        "missing": [],
+        "units": [
+          {
+            "id": "user-task",
+            "kind": "answer",
+            "covered": true
+          },
+          {
+            "id": "assistant-task",
+            "kind": "answer",
+            "covered": true
+          }
+        ],
+        "completeEvidence": true,
+        "answerQuality": null
+      },
+      "answerOnly": {
+        "caseId": "en-speaker",
+        "sourceHash": "562998267b932eb82e3e1cb82630d217134f5c9bba5243aa66f94354141204d1",
+        "answerType": "answer",
+        "answerSpans": {
+          "covered": 2,
+          "total": 2
+        },
+        "mandatoryContext": {
+          "covered": 0,
+          "total": 0
+        },
+        "missing": [],
+        "units": [
+          {
+            "id": "user-task",
+            "kind": "answer",
+            "covered": true
+          },
+          {
+            "id": "assistant-task",
+            "kind": "answer",
+            "covered": true
+          }
+        ],
+        "completeEvidence": true,
+        "answerQuality": null
+      },
+      "omissionProbes": [
+        {
+          "omitted": "user-task",
+          "kind": "answer",
+          "missing": [
+            "user-task"
+          ],
+          "completeEvidence": false
+        },
+        {
+          "omitted": "assistant-task",
+          "kind": "answer",
+          "missing": [
+            "assistant-task"
+          ],
+          "completeEvidence": false
+        }
+      ],
+      "answerQuality": null
+    },
+    {
+      "id": "ko-speaker",
+      "language": "ko",
+      "shape": "speaker",
+      "sourceHash": "8a7b58b8bac23dd42dfc21935c748c4d5199645381b225f1351ef03197aefb25",
+      "full": {
+        "caseId": "ko-speaker",
+        "sourceHash": "8a7b58b8bac23dd42dfc21935c748c4d5199645381b225f1351ef03197aefb25",
+        "answerType": "answer",
+        "answerSpans": {
+          "covered": 2,
+          "total": 2
+        },
+        "mandatoryContext": {
+          "covered": 0,
+          "total": 0
+        },
+        "missing": [],
+        "units": [
+          {
+            "id": "user-task",
+            "kind": "answer",
+            "covered": true
+          },
+          {
+            "id": "assistant-task",
+            "kind": "answer",
+            "covered": true
+          }
+        ],
+        "completeEvidence": true,
+        "answerQuality": null
+      },
+      "minimal": {
+        "caseId": "ko-speaker",
+        "sourceHash": "8a7b58b8bac23dd42dfc21935c748c4d5199645381b225f1351ef03197aefb25",
+        "answerType": "answer",
+        "answerSpans": {
+          "covered": 2,
+          "total": 2
+        },
+        "mandatoryContext": {
+          "covered": 0,
+          "total": 0
+        },
+        "missing": [],
+        "units": [
+          {
+            "id": "user-task",
+            "kind": "answer",
+            "covered": true
+          },
+          {
+            "id": "assistant-task",
+            "kind": "answer",
+            "covered": true
+          }
+        ],
+        "completeEvidence": true,
+        "answerQuality": null
+      },
+      "answerOnly": {
+        "caseId": "ko-speaker",
+        "sourceHash": "8a7b58b8bac23dd42dfc21935c748c4d5199645381b225f1351ef03197aefb25",
+        "answerType": "answer",
+        "answerSpans": {
+          "covered": 2,
+          "total": 2
+        },
+        "mandatoryContext": {
+          "covered": 0,
+          "total": 0
+        },
+        "missing": [],
+        "units": [
+          {
+            "id": "user-task",
+            "kind": "answer",
+            "covered": true
+          },
+          {
+            "id": "assistant-task",
+            "kind": "answer",
+            "covered": true
+          }
+        ],
+        "completeEvidence": true,
+        "answerQuality": null
+      },
+      "omissionProbes": [
+        {
+          "omitted": "user-task",
+          "kind": "answer",
+          "missing": [
+            "user-task"
+          ],
+          "completeEvidence": false
+        },
+        {
+          "omitted": "assistant-task",
+          "kind": "answer",
+          "missing": [
+            "assistant-task"
+          ],
+          "completeEvidence": false
+        }
+      ],
+      "answerQuality": null
+    },
+    {
+      "id": "en-reference",
+      "language": "en",
+      "shape": "reference",
+      "sourceHash": "bdc6a40f7414a8c1bedda454e2c6b0b859c9598b98329fa9d0932448641d40c4",
+      "full": {
+        "caseId": "en-reference",
+        "sourceHash": "bdc6a40f7414a8c1bedda454e2c6b0b859c9598b98329fa9d0932448641d40c4",
+        "answerType": "answer",
+        "answerSpans": {
+          "covered": 1,
+          "total": 1
+        },
+        "mandatoryContext": {
+          "covered": 1,
+          "total": 1
+        },
+        "missing": [],
+        "units": [
+          {
+            "id": "reservation",
+            "kind": "answer",
+            "covered": true
+          },
+          {
+            "id": "antecedent",
+            "kind": "reference",
+            "covered": true
+          }
+        ],
+        "completeEvidence": true,
+        "answerQuality": null
+      },
+      "minimal": {
+        "caseId": "en-reference",
+        "sourceHash": "bdc6a40f7414a8c1bedda454e2c6b0b859c9598b98329fa9d0932448641d40c4",
+        "answerType": "answer",
+        "answerSpans": {
+          "covered": 1,
+          "total": 1
+        },
+        "mandatoryContext": {
+          "covered": 1,
+          "total": 1
+        },
+        "missing": [],
+        "units": [
+          {
+            "id": "reservation",
+            "kind": "answer",
+            "covered": true
+          },
+          {
+            "id": "antecedent",
+            "kind": "reference",
+            "covered": true
+          }
+        ],
+        "completeEvidence": true,
+        "answerQuality": null
+      },
+      "answerOnly": {
+        "caseId": "en-reference",
+        "sourceHash": "bdc6a40f7414a8c1bedda454e2c6b0b859c9598b98329fa9d0932448641d40c4",
+        "answerType": "answer",
+        "answerSpans": {
+          "covered": 1,
+          "total": 1
+        },
+        "mandatoryContext": {
+          "covered": 0,
+          "total": 1
+        },
+        "missing": [
+          "antecedent"
+        ],
+        "units": [
+          {
+            "id": "reservation",
+            "kind": "answer",
+            "covered": true
+          },
+          {
+            "id": "antecedent",
+            "kind": "reference",
+            "covered": false
+          }
+        ],
+        "completeEvidence": false,
+        "answerQuality": null
+      },
+      "omissionProbes": [
+        {
+          "omitted": "reservation",
+          "kind": "answer",
+          "missing": [
+            "reservation"
+          ],
+          "completeEvidence": false
+        },
+        {
+          "omitted": "antecedent",
+          "kind": "reference",
+          "missing": [
+            "antecedent"
+          ],
+          "completeEvidence": false
+        }
+      ],
+      "answerQuality": null
+    },
+    {
+      "id": "ko-reference",
+      "language": "ko",
+      "shape": "reference",
+      "sourceHash": "9ca4921ac17426beb6077186288f756a28cf1e6a6648310c80b9084b223c18e8",
+      "full": {
+        "caseId": "ko-reference",
+        "sourceHash": "9ca4921ac17426beb6077186288f756a28cf1e6a6648310c80b9084b223c18e8",
+        "answerType": "answer",
+        "answerSpans": {
+          "covered": 1,
+          "total": 1
+        },
+        "mandatoryContext": {
+          "covered": 1,
+          "total": 1
+        },
+        "missing": [],
+        "units": [
+          {
+            "id": "reservation",
+            "kind": "answer",
+            "covered": true
+          },
+          {
+            "id": "antecedent",
+            "kind": "reference",
+            "covered": true
+          }
+        ],
+        "completeEvidence": true,
+        "answerQuality": null
+      },
+      "minimal": {
+        "caseId": "ko-reference",
+        "sourceHash": "9ca4921ac17426beb6077186288f756a28cf1e6a6648310c80b9084b223c18e8",
+        "answerType": "answer",
+        "answerSpans": {
+          "covered": 1,
+          "total": 1
+        },
+        "mandatoryContext": {
+          "covered": 1,
+          "total": 1
+        },
+        "missing": [],
+        "units": [
+          {
+            "id": "reservation",
+            "kind": "answer",
+            "covered": true
+          },
+          {
+            "id": "antecedent",
+            "kind": "reference",
+            "covered": true
+          }
+        ],
+        "completeEvidence": true,
+        "answerQuality": null
+      },
+      "answerOnly": {
+        "caseId": "ko-reference",
+        "sourceHash": "9ca4921ac17426beb6077186288f756a28cf1e6a6648310c80b9084b223c18e8",
+        "answerType": "answer",
+        "answerSpans": {
+          "covered": 1,
+          "total": 1
+        },
+        "mandatoryContext": {
+          "covered": 0,
+          "total": 1
+        },
+        "missing": [
+          "antecedent"
+        ],
+        "units": [
+          {
+            "id": "reservation",
+            "kind": "answer",
+            "covered": true
+          },
+          {
+            "id": "antecedent",
+            "kind": "reference",
+            "covered": false
+          }
+        ],
+        "completeEvidence": false,
+        "answerQuality": null
+      },
+      "omissionProbes": [
+        {
+          "omitted": "reservation",
+          "kind": "answer",
+          "missing": [
+            "reservation"
+          ],
+          "completeEvidence": false
+        },
+        {
+          "omitted": "antecedent",
+          "kind": "reference",
+          "missing": [
+            "antecedent"
+          ],
+          "completeEvidence": false
+        }
+      ],
+      "answerQuality": null
+    },
+    {
+      "id": "en-quotation",
+      "language": "en",
+      "shape": "quotation",
+      "sourceHash": "acbb8c568ea0165193b78be1bbe113035e4d0d5d0bed2b2fc5fe9d274a540b0c",
+      "full": {
+        "caseId": "en-quotation",
+        "sourceHash": "acbb8c568ea0165193b78be1bbe113035e4d0d5d0bed2b2fc5fe9d274a540b0c",
+        "answerType": "answer",
+        "answerSpans": {
+          "covered": 1,
+          "total": 1
+        },
+        "mandatoryContext": {
+          "covered": 2,
+          "total": 2
+        },
+        "missing": [],
+        "units": [
+          {
+            "id": "promise",
+            "kind": "answer",
+            "covered": true
+          },
+          {
+            "id": "signature",
+            "kind": "attribution",
+            "covered": true
+          },
+          {
+            "id": "quote-status",
+            "kind": "attribution",
+            "covered": true
+          }
+        ],
+        "completeEvidence": true,
+        "answerQuality": null
+      },
+      "minimal": {
+        "caseId": "en-quotation",
+        "sourceHash": "acbb8c568ea0165193b78be1bbe113035e4d0d5d0bed2b2fc5fe9d274a540b0c",
+        "answerType": "answer",
+        "answerSpans": {
+          "covered": 1,
+          "total": 1
+        },
+        "mandatoryContext": {
+          "covered": 2,
+          "total": 2
+        },
+        "missing": [],
+        "units": [
+          {
+            "id": "promise",
+            "kind": "answer",
+            "covered": true
+          },
+          {
+            "id": "signature",
+            "kind": "attribution",
+            "covered": true
+          },
+          {
+            "id": "quote-status",
+            "kind": "attribution",
+            "covered": true
+          }
+        ],
+        "completeEvidence": true,
+        "answerQuality": null
+      },
+      "answerOnly": {
+        "caseId": "en-quotation",
+        "sourceHash": "acbb8c568ea0165193b78be1bbe113035e4d0d5d0bed2b2fc5fe9d274a540b0c",
+        "answerType": "answer",
+        "answerSpans": {
+          "covered": 1,
+          "total": 1
+        },
+        "mandatoryContext": {
+          "covered": 0,
+          "total": 2
+        },
+        "missing": [
+          "signature",
+          "quote-status"
+        ],
+        "units": [
+          {
+            "id": "promise",
+            "kind": "answer",
+            "covered": true
+          },
+          {
+            "id": "signature",
+            "kind": "attribution",
+            "covered": false
+          },
+          {
+            "id": "quote-status",
+            "kind": "attribution",
+            "covered": false
+          }
+        ],
+        "completeEvidence": false,
+        "answerQuality": null
+      },
+      "omissionProbes": [
+        {
+          "omitted": "promise",
+          "kind": "answer",
+          "missing": [
+            "promise"
+          ],
+          "completeEvidence": false
+        },
+        {
+          "omitted": "signature",
+          "kind": "attribution",
+          "missing": [
+            "signature"
+          ],
+          "completeEvidence": false
+        },
+        {
+          "omitted": "quote-status",
+          "kind": "attribution",
+          "missing": [
+            "quote-status"
+          ],
+          "completeEvidence": false
+        }
+      ],
+      "answerQuality": null
+    },
+    {
+      "id": "ko-quotation",
+      "language": "ko",
+      "shape": "quotation",
+      "sourceHash": "30f8c3e55529276e4e9bc755d88e69fee9da7ac7f078155082cebe5b980e5550",
+      "full": {
+        "caseId": "ko-quotation",
+        "sourceHash": "30f8c3e55529276e4e9bc755d88e69fee9da7ac7f078155082cebe5b980e5550",
+        "answerType": "answer",
+        "answerSpans": {
+          "covered": 1,
+          "total": 1
+        },
+        "mandatoryContext": {
+          "covered": 2,
+          "total": 2
+        },
+        "missing": [],
+        "units": [
+          {
+            "id": "promise",
+            "kind": "answer",
+            "covered": true
+          },
+          {
+            "id": "signature",
+            "kind": "attribution",
+            "covered": true
+          },
+          {
+            "id": "quote-status",
+            "kind": "attribution",
+            "covered": true
+          }
+        ],
+        "completeEvidence": true,
+        "answerQuality": null
+      },
+      "minimal": {
+        "caseId": "ko-quotation",
+        "sourceHash": "30f8c3e55529276e4e9bc755d88e69fee9da7ac7f078155082cebe5b980e5550",
+        "answerType": "answer",
+        "answerSpans": {
+          "covered": 1,
+          "total": 1
+        },
+        "mandatoryContext": {
+          "covered": 2,
+          "total": 2
+        },
+        "missing": [],
+        "units": [
+          {
+            "id": "promise",
+            "kind": "answer",
+            "covered": true
+          },
+          {
+            "id": "signature",
+            "kind": "attribution",
+            "covered": true
+          },
+          {
+            "id": "quote-status",
+            "kind": "attribution",
+            "covered": true
+          }
+        ],
+        "completeEvidence": true,
+        "answerQuality": null
+      },
+      "answerOnly": {
+        "caseId": "ko-quotation",
+        "sourceHash": "30f8c3e55529276e4e9bc755d88e69fee9da7ac7f078155082cebe5b980e5550",
+        "answerType": "answer",
+        "answerSpans": {
+          "covered": 1,
+          "total": 1
+        },
+        "mandatoryContext": {
+          "covered": 0,
+          "total": 2
+        },
+        "missing": [
+          "signature",
+          "quote-status"
+        ],
+        "units": [
+          {
+            "id": "promise",
+            "kind": "answer",
+            "covered": true
+          },
+          {
+            "id": "signature",
+            "kind": "attribution",
+            "covered": false
+          },
+          {
+            "id": "quote-status",
+            "kind": "attribution",
+            "covered": false
+          }
+        ],
+        "completeEvidence": false,
+        "answerQuality": null
+      },
+      "omissionProbes": [
+        {
+          "omitted": "promise",
+          "kind": "answer",
+          "missing": [
+            "promise"
+          ],
+          "completeEvidence": false
+        },
+        {
+          "omitted": "signature",
+          "kind": "attribution",
+          "missing": [
+            "signature"
+          ],
+          "completeEvidence": false
+        },
+        {
+          "omitted": "quote-status",
+          "kind": "attribution",
+          "missing": [
+            "quote-status"
+          ],
+          "completeEvidence": false
+        }
+      ],
+      "answerQuality": null
+    },
+    {
+      "id": "en-unknown",
+      "language": "en",
+      "shape": "unknown",
+      "sourceHash": "2364315e30cc978ab882e9a869869a8b407ec46a66bbb66d456888baba8f0a58",
+      "full": {
+        "caseId": "en-unknown",
+        "sourceHash": "2364315e30cc978ab882e9a869869a8b407ec46a66bbb66d456888baba8f0a58",
+        "answerType": "abstain",
+        "answerSpans": {
+          "covered": 0,
+          "total": 0
+        },
+        "mandatoryContext": {
+          "covered": 0,
+          "total": 0
+        },
+        "missing": [],
+        "units": [],
+        "completeEvidence": null,
+        "answerQuality": null
+      },
+      "minimal": {
+        "caseId": "en-unknown",
+        "sourceHash": "2364315e30cc978ab882e9a869869a8b407ec46a66bbb66d456888baba8f0a58",
+        "answerType": "abstain",
+        "answerSpans": {
+          "covered": 0,
+          "total": 0
+        },
+        "mandatoryContext": {
+          "covered": 0,
+          "total": 0
+        },
+        "missing": [],
+        "units": [],
+        "completeEvidence": null,
+        "answerQuality": null
+      },
+      "answerOnly": {
+        "caseId": "en-unknown",
+        "sourceHash": "2364315e30cc978ab882e9a869869a8b407ec46a66bbb66d456888baba8f0a58",
+        "answerType": "abstain",
+        "answerSpans": {
+          "covered": 0,
+          "total": 0
+        },
+        "mandatoryContext": {
+          "covered": 0,
+          "total": 0
+        },
+        "missing": [],
+        "units": [],
+        "completeEvidence": null,
+        "answerQuality": null
+      },
+      "omissionProbes": [],
+      "answerQuality": null
+    },
+    {
+      "id": "ko-unknown",
+      "language": "ko",
+      "shape": "unknown",
+      "sourceHash": "a8fb7bf33e179261fa7429e29680666ed9bbdb21af6c3d73e7ff80a4c971a294",
+      "full": {
+        "caseId": "ko-unknown",
+        "sourceHash": "a8fb7bf33e179261fa7429e29680666ed9bbdb21af6c3d73e7ff80a4c971a294",
+        "answerType": "abstain",
+        "answerSpans": {
+          "covered": 0,
+          "total": 0
+        },
+        "mandatoryContext": {
+          "covered": 0,
+          "total": 0
+        },
+        "missing": [],
+        "units": [],
+        "completeEvidence": null,
+        "answerQuality": null
+      },
+      "minimal": {
+        "caseId": "ko-unknown",
+        "sourceHash": "a8fb7bf33e179261fa7429e29680666ed9bbdb21af6c3d73e7ff80a4c971a294",
+        "answerType": "abstain",
+        "answerSpans": {
+          "covered": 0,
+          "total": 0
+        },
+        "mandatoryContext": {
+          "covered": 0,
+          "total": 0
+        },
+        "missing": [],
+        "units": [],
+        "completeEvidence": null,
+        "answerQuality": null
+      },
+      "answerOnly": {
+        "caseId": "ko-unknown",
+        "sourceHash": "a8fb7bf33e179261fa7429e29680666ed9bbdb21af6c3d73e7ff80a4c971a294",
+        "answerType": "abstain",
+        "answerSpans": {
+          "covered": 0,
+          "total": 0
+        },
+        "mandatoryContext": {
+          "covered": 0,
+          "total": 0
+        },
+        "missing": [],
+        "units": [],
+        "completeEvidence": null,
+        "answerQuality": null
+      },
+      "omissionProbes": [],
+      "answerQuality": null
+    }
+  ],
+  "sourceSha256": {
+    "scripts/semantic-evidence.mjs": "e089ce776ab5aa98cbe0c2c77907e5ca2f687b042fc13f177e632380908212c2",
+    "tests/fixtures/semantic-evidence-v1.json": "9fcc88096c804e323f68de2abd66a57da177822e4872fef8d5c1afa684209460",
+    "docs/semantic-evidence-contract.md": "366b833af9236e8d76600105a6488d4bb63b3190e721dfb36712ab4bef496141"
+  }
+}
