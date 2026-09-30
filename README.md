@@ -243,6 +243,11 @@ quotes, and partial parent matches are recorded separately from full coverage.
 A [proposed semantic evidence contract](docs/semantic-evidence-contract.md) now
 separates answer-bearing spans from mandatory context in 16 fresh short cases.
 Its audit validates the evaluator; candidate quality and human review remain unset.
+The [long-dialogue direct-path cohort](docs/semantic-direct-results.md) subsequently
+completed 64 actual-host answers; its provisional grades do not establish managed
+transport recovery. The [context bundle follow-up](docs/context-bundle-results.md)
+adds selection diagnostics and two offline neighborhood candidates. Both recover
+the quotation gap but lose other required sources, so neither is adopted.
 
 The [context candidate protocol](docs/context-candidate-evaluation.md) compares
 the current labelled selector, label removal, and label removal plus adjacent-turn
