@@ -46,16 +46,18 @@ test('pending delivery ignores dry runs, rejects stale snapshots and consumes on
     assert.equal(tracker.finish([]).lost, true);
     assert.equal(tracker.finish([]), undefined);
     tracker.begin(input, () => current); current = false;
-    assert.equal(tracker.finish([]), undefined);
+    assert.deepEqual(tracker.finish([]), { canceled: true });
     tracker.begin(input, () => true); tracker.clear();
-    assert.equal(tracker.finish([]), undefined);
+    assert.equal(tracker.awaitingPrompt, true);
+    assert.deepEqual(tracker.finish([]), { canceled: true });
 });
 
-test('newer generation replaces pending evidence and unsupported formats stay unverified', () => {
+test('overlap cannot replace a ready prompt and unsupported formats stay unverified', () => {
     const tracker = new PromptDelivery();
     tracker.begin(expected([source('old')]), () => true);
-    tracker.begin(expected([source('new')]), () => true);
-    assert.equal(tracker.finish([{ role: 'assistant', content: 'new' }]).lost, false);
+    assert.equal(tracker.begin(expected([source('new')]), () => true), false);
+    assert.equal(tracker.finish([{ role: 'assistant', content: 'old' }]).lost, false);
+    assert.equal(tracker.awaitingPrompt, false);
     tracker.begin(expected([source('new')]), () => true);
     const result = tracker.finish('text completion');
     assert.equal(result.result, null); assert.equal(result.lost, false);

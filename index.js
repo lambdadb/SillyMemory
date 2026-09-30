@@ -60,6 +60,12 @@ async function action(job) {
 
 // Called with SillyTavern's ephemeral coreChat array. Never mutate source messages.
 globalThis.sillymemory_intercept = async (chat, contextSize, abort, type) => {
+    if (delivery.awaitingPrompt) {
+        // No final event will be emitted for this rejected interceptor. Keep the
+        // previous slot until its own non-dry-run final event has been consumed.
+        element('delivery').textContent = 'Another prompt is awaiting final verification. Wait and generate again. If prompt preparation failed, reload to reset it.';
+        abort(true); return;
+    }
     // Quiet prompts cancel older reads/injection while preserving source sync.
     if (type === 'quiet') {
         retrievalOperation?.finish('Memory retrieval skipped for quiet generation.');
@@ -81,18 +87,13 @@ globalThis.sillymemory_intercept = async (chat, contextSize, abort, type) => {
     const valid = () => retrieval === retrievalSequence && unchangedPrompt();
     const operation = statusView.start(() => retrieval === retrievalSequence && sourceValid());
     retrievalOperation = operation;
-    const trackDelivery = messages => {
-        const names = { user: context().name1, character: context().name2 };
-        delivery.begin({ memory: expectedMessages(messages, names), recent: expectedMessages(chat.slice(-config.recent), { ...names, continuation: type === 'continue' }) }, sourceValid);
-        element('delivery').textContent = 'Memory prepared; waiting for the final host prompt. Delivery is not yet verified.';
-    };
-    trackDelivery([]);
+    let preparedMessages = [], abandoned = false;
     try {
         // The extension budget includes its complete wrapper; SillyTavern still manages
         // total prompt overhead, character instructions, and final model context limits.
         config.budget = Math.min(config.budget, Math.max(0, Math.floor(contextSize / 4)));
         const result = await instance.retrieve(snapshot, config, text => context().getTokenCountAsync(text), unchangedPrompt, operation.update, type);
-        if (!valid()) { operation.finish('Memory operation canceled because the prompt changed. Generate again.'); abort(true); return; }
+        if (!valid()) { operation.finish('Memory operation canceled because the prompt changed. Generate again.'); abandoned = true; abort(true); return; }
         if (!result?.text) { operation.finish('No current matching memory fits the budget. Original prompt retained.'); return; }
         // Protect the most recent prompt messages, including during swipe/regenerate.
         const cutoff = chat.length - config.recent;
@@ -114,12 +115,19 @@ globalThis.sillymemory_intercept = async (chat, contextSize, abort, type) => {
             if (eligible.has(chat[i].index)) chat.splice(i, 1, ...(recalled.get(chat[i].index) || []));
         }
         element('inspection').textContent = `${result.tokens} / ${config.budget} tokens\n\n${result.text}`;
-        trackDelivery(result.messages);
+        preparedMessages = result.messages;
         operation.finish(`Prepared ${result.passages.length} passages (${result.tokens} tokens); awaiting final prompt verification.`);
     } catch (e) {
-        if (!valid()) { operation.finish('Memory operation canceled because the prompt changed. Generate again.'); abort(true); return; }
+        if (!valid()) { operation.finish('Memory operation canceled because the prompt changed. Generate again.'); abandoned = true; abort(true); return; }
         if (operation.current()) fail(e, operation);
     } finally {
+        // Reserve only after retrieval: superseded in-flight reads still abort
+        // through the existing validity check and never claim a final event.
+        if (!abandoned && sourceValid()) {
+            const names = { user: context().name1, character: context().name2 };
+            delivery.begin({ memory: expectedMessages(preparedMessages, names), recent: expectedMessages(chat.slice(-config.recent), { ...names, continuation: type === 'continue' }) }, sourceValid);
+            element('delivery').textContent = 'Memory prepared; waiting for the final host prompt. Delivery is not yet verified.';
+        }
         if (retrievalOperation === operation) retrievalOperation = undefined;
     }
 };
@@ -239,6 +247,12 @@ async function initialize() {
     ctx.eventSource.on(events.GENERATE_AFTER_DATA, (data, dryRun) => {
         const finished = delivery.finish(context().mainApi === 'openai' ? data?.prompt : null, dryRun);
         if (!finished) return;
+        if (finished.canceled) {
+            ctx.stopGeneration();
+            element('delivery').textContent = 'Generation stopped because the chat or memory settings changed during prompt preparation. Generate again.';
+            element('inspection').textContent = 'No current memory verified.';
+            return;
+        }
         const stop = state.stopOnLoss !== false;
         // The host catches listener exceptions; use its cancellation API instead.
         if (finished.lost && stop) ctx.stopGeneration();

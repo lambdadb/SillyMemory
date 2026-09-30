@@ -53,9 +53,16 @@ that transformation is intentional. Later listeners, provider-side transforms,
 message-merging presets, other prompt-rewriting extensions and provider receipt
 are not guaranteed by this boundary. This is not a token-usage estimator.
 
-Dry runs leave a pending check intact. New retrievals supersede old checks;
-chat edits/switches, disabling, forgetting the key and quiet generation invalidate
-pending checks. Chat changes and reload clear displayed evidence. Normal host
+Dry runs leave a pending check intact. New retrievals supersede in-flight reads.
+Once an interceptor finishes, it reserves the next final event: overlapping
+interceptors are aborted before they can proceed to prompt packing. The pinned
+host exposes no generation identity on the final event, so a FIFO queue cannot
+reliably correlate reordered events. Invalidating a ready prompt cancels its check
+but retains its reservation until that prompt's final event arrives; the stale
+generation is then stopped. A subsequent generation can proceed normally.
+If another extension aborts or throws during prompt preparation without emitting
+a final event, reload to release the reservation. No timeout silently reassigns
+an ambiguous late event. Chat changes and reload clear displayed evidence. Normal host
 generation completion does not erase the last check result. No prompt evidence
 or key is persisted by this feature.
 
@@ -106,3 +113,15 @@ report filename per run; its plan file prevents accidental evidence overwrite.
 This is host integration with emulated services. Managed-provider reliability,
 semantic answer quality and public release validation are separate; this change
 does not assert they have passed.
+
+### Review correction
+
+The [review regression](results/prompt-delivery-review-v1.json) holds an actual
+normal generation at `GENERATE_AFTER_DATA`, attempts another generation and then
+releases the old event. The overlapping generation emits no final event, neither
+stale/rejected request reaches the completion endpoint, and a manual retry is
+verified and completes. The full 11-scenario suite and same-chat recovery also
+pass. The [22-check browser rerun](results/prompt-delivery-review-browser-v1.json)
+retains latest-read-wins behavior during retrieval. That dispatcher-only suite
+now emits a synthetic final event to complete its lifecycle; full host packing
+and request assertions remain in the separate real-generation runner.

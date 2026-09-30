@@ -31,3 +31,14 @@ test('actual host evidence retains blocked requests, explicit warning and same-c
     assert.match(warning.delivery, /^Warning:.*0\/3 memory passages and 2\/4 recent/);
     assert.equal(warning.requests[0].messages.filter(m => m.content.startsWith('[Past conversation excerpt:')).length, 0);
 });
+
+test('actual host overlap aborts the second interceptor and preserves final-event ownership', () => {
+    const report = JSON.parse(readFileSync(new URL('../docs/results/prompt-delivery-review-v1.json', import.meta.url)));
+    assert.equal(report.passed, true);
+    assert.equal(report.remainingCollections, 0);
+    assert.equal(report.overlap.rejectedCompletionRequests, 0);
+    assert.equal(report.overlap.recoveryCompletionRequests, 1);
+    assert.equal(report.overlap.finalEvents, 2);
+    assert.match(report.overlap.canceled, /chat or memory settings changed/);
+    assert.match(report.overlap.recovered, /^Final host prompt:/);
+});

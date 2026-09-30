@@ -44,13 +44,24 @@ export function deliverySummary(result, stopOnLoss) {
 }
 
 export class PromptDelivery {
-    begin(expected, valid) { this.pending = { expected, valid }; }
-    clear() { this.pending = undefined; }
+    get awaitingPrompt() { return Boolean(this.pending); }
+    begin(expected, valid) {
+        // The pinned host's final event has no generation ID. Permit only one
+        // completed interceptor to advance into prompt packing at a time.
+        if (this.pending) return false;
+        this.pending = { expected, valid, canceled: false };
+        return true;
+    }
+    clear() {
+        // Invalidation cancels the check, not its ownership of the next final
+        // event. Otherwise a late event could consume a newer generation.
+        if (this.pending) this.pending.canceled = true;
+    }
     finish(prompt, dryRun = false) {
         if (dryRun || !this.pending) return undefined;
-        const { expected, valid } = this.pending;
-        this.clear();
-        if (!valid()) return undefined;
+        const { expected, valid, canceled } = this.pending;
+        this.pending = undefined;
+        if (canceled || !valid()) return { canceled: true };
         const result = inspectPrompt(expected, prompt);
         return { result, lost: Boolean(result && [...result.memory, ...result.recent].some(m => m.outcome === 'missing')) };
     }

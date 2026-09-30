@@ -224,6 +224,51 @@ try {
             rows.at(-1).manualRecovery = { ...recovered, request: generations.at(-1) };
         }
     }
+    await field('stopOnLoss').check();
+    await page.evaluate(async chat => {
+        const c = SillyTavern.getContext(), { oai_settings } = await import('/scripts/openai.js');
+        oai_settings.openai_max_context = 4096;
+        c.chat.splice(0, c.chat.length, ...chat); await c.saveChat(); await c.reloadCurrentChat();
+    }, capacityChat(1));
+    await field('enabled').check(); await waitStatus('synchronized');
+    const raceStart = generations.length;
+    await page.evaluate(() => {
+        const c = SillyTavern.getContext();
+        globalThis.deliveryRace = { finalEvents: 0 };
+        const gate = new Promise(resolve => { deliveryRace.release = resolve; });
+        const hold = async (_data, dryRun) => {
+            if (dryRun) return;
+            deliveryRace.finalEvents++;
+            if (deliveryRace.finalEvents === 1) { deliveryRace.held = true; await gate; }
+        };
+        deliveryRace.hold = hold;
+        c.eventSource.makeFirst(c.eventTypes.GENERATE_AFTER_DATA, hold);
+        document.querySelector('#send_textarea').value = 'OLDER QUESTION';
+        deliveryRace.older = c.generate('normal').catch(() => {});
+    });
+    await page.waitForFunction(() => globalThis.deliveryRace?.held === true);
+    const rejected = await page.evaluate(async () => {
+        document.querySelector('#send_textarea').value = 'NEWER QUESTION';
+        await SillyTavern.getContext().generate('normal');
+        return { finalEvents: deliveryRace.finalEvents, status: document.querySelector('[data-sm="delivery"]').textContent };
+    });
+    assert.equal(rejected.finalEvents, 1, 'Overlapping ready prompt never reaches final event');
+    assert.match(rejected.status, /Another prompt is awaiting/);
+    await page.evaluate(async () => { deliveryRace.release(); await deliveryRace.older; });
+    assert.equal(generations.length, raceStart, 'Neither the stale nor rejected request reaches completion endpoint');
+    const race = await page.evaluate(async () => {
+        const c = SillyTavern.getContext();
+        const canceled = document.querySelector('[data-sm="delivery"]').textContent;
+        await c.generate('regenerate');
+        c.eventSource.removeListener(c.eventTypes.GENERATE_AFTER_DATA, deliveryRace.hold);
+        return { canceled, finalEvents: deliveryRace.finalEvents, recovered: document.querySelector('[data-sm="delivery"]').textContent, answer: c.chat.at(-1).mes };
+    });
+    assert.match(race.canceled, /chat or memory settings changed/);
+    assert.equal(race.finalEvents, 2);
+    assert.equal(generations.length, raceStart + 1);
+    assert.equal(race.answer, 'LOCAL_FIXTURE_OK');
+    assert.match(race.recovered, /^Final host prompt:/);
+    report.overlap = { ...rejected, ...race, rejectedCompletionRequests: 0, recoveryCompletionRequests: 1 };
     await field('stopOnLoss').uncheck();
     await page.reload(); await page.locator('#sillymemory').waitFor({ state: 'attached' });
     assert.equal(await field('stopOnLoss').isChecked(), false, 'Warning preference survives reload');
