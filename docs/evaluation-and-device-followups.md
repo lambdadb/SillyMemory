@@ -63,6 +63,12 @@ truncation or missed triggers as results rather than silently retuning them.
 
 ## Larger-context evaluation proposal
 
+The [external benchmark selection record](benchmark-selection.md) prioritizes
+cleaned LongMemEval-S, then ConvoMem for full-context versus memory comparisons.
+It records adoption evidence, personalization/roleplay/scale alternatives and
+the data audit, leakage controls and protocol decisions required before a run.
+This is a selection decision, not a completed external benchmark.
+
 Distinguish model capability, the configured host limit, actual prompt occupancy
 and output reservation. GPT-4.1 mini, used in the existing experiment, supports
 about [1M context tokens](https://developers.openai.com/api/docs/models/gpt-4.1-mini).
@@ -179,8 +185,9 @@ and [Transformers pipeline](https://github.com/SillyTavern/SillyTavern/blob/06bd
 Product state/source validation: [adapter](../index.js),
 [memory engine](../src/memory.js) and [architecture](architecture.md).
 
-Prioritize freezing the larger-context protocol and default-behavior Summarize
-baseline together, then complete that comparison and report unfavorable outcomes
-as well as improvements. Keep local-embedding measurements as a distinct cohort.
+Prioritize the LongMemEval-S/ConvoMem data audit, then freeze the larger-context
+protocol and default-behavior Summarize baseline together. Complete that comparison
+and report unfavorable outcomes as well as improvements. Keep local-embedding
+measurements as a distinct cohort.
 Device continuity is a separate product follow-up, not a prerequisite for the
 evaluation or a feature delivered by this documentation change.
