@@ -12,14 +12,6 @@ Summarize Main API / Raw blocking, its unchanged default summarization prompt,
 a 100-word target and default summary injection template/position. Disable native
 Vector Storage and SillyMemory; no LambdaDB or embedding calls are permitted.
 
-For new runs, install native-vector route guards before host navigation and
-record/block embedding requests at the local bridge, including failed attempts.
-Block native indexing as well as queries to prevent server-side embedding calls.
-Any attempt fails the run; checkpoints and final reports retain the attempts and
-collector coverage. Empty arrays without collector coverage do not verify absence.
-The historical v1/v2 runs predate these guards; their embedding/vector absence is
-unverified, including when their samples are reused in an instrumented continuation.
-
 Import the source history and invoke the real `/summarize` command repeatedly
 until its source cursor covers index 58. The host always excludes the last
 message; index 59 remains recent raw context. Each invocation incorporates the

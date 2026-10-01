@@ -16,7 +16,6 @@ import { semanticFiles, verifySemanticPlan } from './semantic-long.mjs';
 import { createDirectAdapter, directFiles, directProtocol, verifyDirectPlan } from './semantic-direct.mjs';
 import { summaryFiles, summaryRetry, verifySummaryPlan } from './summarize-plan.mjs';
 import { runSummarize } from './summarize-live.mjs';
-import { createSummaryTrafficGuard } from './summary-traffic.mjs';
 import { tuningFiles, tuningRetry, verifyTuningPlan } from './native-tuning-plan.mjs';
 import { threeModeFiles, threeModeRetry, verifyThreeModePlan } from './three-mode-plan.mjs';
 import { purgeNativeCollections } from './three-mode-native.mjs';
@@ -103,16 +102,12 @@ const redact = value => { let output = JSON.stringify(value, null, 2); for (cons
 async function checkpointNatural() {
     if (!natural) return;
     const temporary = `${reportPath}.tmp`;
-    await writeFile(temporary, redact({ passed: false, incomplete: true, ...directEvidence(), evaluation, generations, providerCalls, ...resumedEvidence(), lambdaRequests, embeddings, vectorQueries, ...summaryTrafficEvidence(), transportProtocol: retryTransient ? transportProtocol : null, providerSpacing: PROVIDER_SPACING, sourceSha256: naturalSourceSha256 }));
+    await writeFile(temporary, redact({ passed: false, incomplete: true, ...directEvidence(), evaluation, generations, providerCalls, ...resumedEvidence(), lambdaRequests, transportProtocol: retryTransient ? transportProtocol : null, providerSpacing: PROVIDER_SPACING, sourceSha256: naturalSourceSha256 }));
     await rename(temporary, reportPath);
-    summaryTraffic?.assertClean();
 }
 let nativeCleanupComplete = !nativeComparison, providerCalls = resumeReport?.providerCalls || 0;
 let nativeCleanup = [];
 let stage = 'startup', failRetrieval = false, server, browser, page, failure, cleanupComplete = false;
-const summaryTraffic = summarizeMode ? createSummaryTrafficGuard({ embeddings, vectorQueries,
-    stage: () => stage, onViolation: reason => { failure ||= { stage, reason }; } }) : null;
-const summaryTrafficEvidence = () => summaryTraffic ? { nativeTrafficObservation: summaryTraffic.observation() } : {};
 const assert = (condition, name) => { if (!condition) throw new Error(name); checks.push(name); console.log(`PASS ${name}`); };
 const sendGeneration = createSpacedSender((body, signal) => {
     providerCalls++;
@@ -121,7 +116,6 @@ const sendGeneration = createSpacedSender((body, signal) => {
 // This loopback test bridge is not an extension component or server plugin.
 // Live provider keys remain in this process; the host only sees its local URL.
 const bridge = createServer(async (req, res) => {
-    if (summaryTraffic?.blockBridgeRequest(req, res)) return;
     if (req.url === '/v1/models') { res.writeHead(200, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ data: [{ id: model, object: 'model' }] })); return; }
     if (nativeComparison && req.url === '/v1/embeddings') {
         const entry = { stage, startedAt: Date.now() }; embeddings.push(entry);
@@ -140,7 +134,6 @@ const bridge = createServer(async (req, res) => {
     }
     if (req.url !== '/v1/chat/completions') { res.writeHead(404); res.end(); return; }
     try {
-        summaryTraffic?.assertClean();
         const buffers = []; for await (const b of req) buffers.push(b);
         const body = JSON.parse(Buffer.concat(buffers).toString());
         const entry = { stage, messages: body.messages, stream: body.stream, model, maxOutputTokens: body.max_tokens, reasoningEffort: body.reasoning_effort, startedAt: Date.now() };
@@ -325,7 +318,6 @@ try {
         }
         await route.continue();
     });
-    if (summaryTraffic) await summaryTraffic.installVectorRoutes(page);
     if (nativeComparison) await page.route('**/api/vector/query', async route => {
         const response = await route.fetch();
         const payload = await response.json();
@@ -481,7 +473,7 @@ try {
         try { assert(summarizeProviderSpacing(resumeReport ? generations.slice(resumeReport.generations.length) : generations, PROVIDER_SPACING).verified, 'actual provider starts respect the 15-second interval'); }
         catch (error) { failure = { stage: 'provider spacing', reason: error.message }; }
     }
-    const report = { ...directEvidence(), ...resumedEvidence(), ...summaryTrafficEvidence(), time:new Date().toISOString(), sillyTavern:revision, lambdaDB:summarizeMode ? 'unused' : 'live', generator:liveModel?'live compatible model':'deterministic test fixture, not a real LLM', model, generationIntervalMs, maxOutputTokens, reasoningEffort, excludedParameters, hostContextTokens, evaluation, embeddings, vectorQueries, ...(natural ? { lambdaRequests, transportProtocol: retryTransient ? transportProtocol : null, providerSpacing: PROVIDER_SPACING, initialSourceSha256: naturalSourceSha256, managedEmbeddingUsage: null, managedEmbeddingCost: null, semanticScores: null } : {}), nativeCleanupComplete, ...(threeModes ? { nativeCleanup } : {}), providerCalls, checks, failure, events, generations, cleanupComplete, sourceSha256, passed:!failure&&cleanupComplete&&nativeCleanupComplete };
+    const report = { ...directEvidence(), ...resumedEvidence(), time:new Date().toISOString(), sillyTavern:revision, lambdaDB:summarizeMode ? 'unused' : 'live', generator:liveModel?'live compatible model':'deterministic test fixture, not a real LLM', model, generationIntervalMs, maxOutputTokens, reasoningEffort, excludedParameters, hostContextTokens, evaluation, embeddings, vectorQueries, ...(natural ? { lambdaRequests, transportProtocol: retryTransient ? transportProtocol : null, providerSpacing: PROVIDER_SPACING, initialSourceSha256: naturalSourceSha256, managedEmbeddingUsage: null, managedEmbeddingCost: null, semanticScores: null } : {}), nativeCleanupComplete, ...(threeModes ? { nativeCleanup } : {}), providerCalls, checks, failure, events, generations, cleanupComplete, sourceSha256, passed:!failure&&cleanupComplete&&nativeCleanupComplete };
     let output = JSON.stringify(report,null,2);
     for (const value of [credentials.key,env.LLM_API_KEY,credentials.endpoint,credentials.project,env.LLM_BASE_URL].filter(Boolean)) output=output.replaceAll(value,'[REDACTED]');
     await writeFile(reportPath,output);

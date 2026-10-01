@@ -25,8 +25,11 @@ subsequent answer calls and its overhead is reported separately.
 This is manual catch-up of imported history using the native rolling-summary
 mechanism, not a test of automatic scheduling during interactive conversation.
 Automatic updates remain paused, so answer generation cannot modify the summary.
-Vector Storage and SillyMemory are disabled; LambdaDB and embedding APIs are not
-used. The model key stays in the local test bridge process.
+Vector Storage and SillyMemory were configured disabled. The LambdaDB proxy
+collector recorded no requests. Embedding and native-vector collectors were not
+installed in these historical runs, so their empty arrays do not establish that
+no embedding/vector attempts occurred. The model key stays in the local test
+bridge process.
 
 The initial run stopped at its four-summary-call per-case limit, after 34
 successful provider calls. The Korean negation case had reached only index 55.
@@ -64,8 +67,9 @@ not establish dollar cost, particularly with the observed cache differences.
 All **101 provider calls** completed successfully with **zero transient retries**.
 The one capacity-bound interruption is preserved as described above; it was not a
 provider error. Both disposable profiles were removed and their servers stopped;
-no LambdaDB collections were created and no embedding API calls were made. Persisted-key audits
-passed. Provider starts were at least 15 seconds apart within each process, and
+the LambdaDB proxy collector recorded no requests or collection creation.
+Embedding/vector absence remains unverified. Persisted-key audits passed.
+Provider starts were at least 15 seconds apart within each process, and
 the restart boundary's conservative wall-clock gap was 171.156 s. The final
 recent-turn role/order check passes on every answer, independently of substring
 coverage in the live capture.
@@ -135,10 +139,27 @@ Assistant grades are not blinded or independent human review.
 
 `npm test` revalidates all recorded producer hashes, the immutable plan, source
 cursors, exact previous-summary-plus-source requests, final summary injection,
-provider responses, usage and the absence of embedding/LambdaDB traffic. Mutation
-tests reject missing or reordered inputs, leaked questions, rewritten answers,
-missing summary delivery and altered annotations. Successful inaccurate answers
-or summaries are never retried.
+provider responses, usage and the empty LambdaDB proxy capture. Historical
+embedding/vector arrays are retained but their absence is not treated as verified.
+Derived summaries explicitly report `nativeTraffic.verified: false`. The raw
+reports, frozen plans, annotations and original producer snapshots are unchanged.
+Mutation tests reject missing or reordered inputs, leaked questions, rewritten
+answers, missing summary delivery and altered annotations. Successful inaccurate
+answers or summaries are never retried.
+
+The corrected runner records and blocks embedding attempts at the bridge and all
+native vector routes before forwarding, and fails the run even for failed or
+blocked attempts. Coverage is explicit in checkpoints and final reports; a new
+continuation cannot retroactively cover unobserved historical samples. This is a
+test-tooling correction, not a rerun of the 101-call live cohort.
+
+Local validation of the correction used the pinned host and Chromium to inject
+native query/insert requests and a local bridge embedding request. All three
+returned 403, were recorded and raised failure signals; no request was forwarded
+by the bridge. The disposable profile/server were removed. Reproduce with
+`ST_SOURCE=/pinned/host node scripts/summary-traffic-smoke.mjs`; the
+[fault-injection report](results/summarize-traffic-guard-smoke.json) is local
+browser/bridge evidence, not a paid provider or full generation rerun.
 
 The product remains experimental. This change adds test tooling and evidence;
 it does not change the installed extension, publish a release, or promote main.

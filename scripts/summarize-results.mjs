@@ -6,14 +6,17 @@ import {summaryVersion,summarySettings,summaryRetry,summaryFiles,loadSummaryResu
 import {recordedSource} from './recorded-source.mjs';
 import {median} from './three-mode-results.mjs';
 import {summarizeProviderSpacing} from './provider-spacing.mjs';
+import {summaryTrafficFile,validateSummaryTraffic} from './summary-traffic.mjs';
 export function summarizeNativeSummary(report) {
     assert(report.passed&&!report.failure&&!report.incomplete&&report.cleanupComplete&&report.nativeCleanupComplete);
     const f=loadLong(),e=report.evaluation;
     assert(e.complete);assert.equal(e.version,summaryVersion);assert.equal(e.fixtureSha256,sha(JSON.stringify(f)));
     assert.deepEqual(e.settings,f.settings);assert.deepEqual(e.generation,f.generation);assert.deepEqual(e.summarySettings,summarySettings);
     assert.equal(report.sillyTavern,semanticHost);assert.equal(report.hostContextTokens,1536);assert.equal(report.embeddingMode,'none');assert.equal(report.lambdaDB,'unused');
-    assert.deepEqual(report.lambdaRequests,[]);assert.deepEqual(report.embeddings,[]);assert.deepEqual(report.vectorQueries,[]);assert.deepEqual(report.transportProtocol,summaryRetry);
-    for(const file of summaryFiles) {assert.equal(report.initialSourceSha256[file],report.sourceSha256[file]);recordedSource(file,report.sourceSha256[file]);}
+    assert.deepEqual(report.lambdaRequests,[]);assert.deepEqual(report.transportProtocol,summaryRetry);
+    let nativeTraffic=validateSummaryTraffic(report);
+    const files=nativeTraffic.verified?summaryFiles:summaryFiles.filter(file=>file!==summaryTrafficFile);
+    for(const file of files) {assert.equal(report.initialSourceSha256[file],report.sourceSha256[file]);recordedSource(file,report.sourceSha256[file]);}
     for(const [file,hash]of Object.entries(report.sourceSha256))recordedSource(file,hash);
     assert.equal(e.preparation.length,16);assert.equal(e.rows.length,32);
     assert.equal(new Set([...e.preparation,...e.rows].map(row=>row.chatId)).size,48);
@@ -57,6 +60,7 @@ export function summarizeNativeSummary(report) {
     let spacing;
     if(report.resume){
         const initial=loadSummaryResume(report.resume.file);assert.equal(initial.sha256,report.resume.sha256);const old=initial.report,n=old.generations.length;
+        if(nativeTraffic.verified&&!validateSummaryTraffic(old).verified)nativeTraffic={verified:false,coverage:'current-process-only; resumed history unobserved'};
         assert.equal(report.resume.generations,n);assert.equal(report.resume.providerCalls,old.providerCalls);
         assert.deepEqual(report.generations.slice(0,n),old.generations);assert.deepEqual(e.rows.slice(0,old.evaluation.rows.length),old.evaluation.rows);
         for(const [i,p]of old.evaluation.preparation.entries()){assert.equal(e.preparation[i].case,p.case);assert.deepEqual(e.preparation[i].steps.slice(0,p.steps.length),p.steps);}
@@ -70,7 +74,7 @@ export function summarizeNativeSummary(report) {
         return {mode,samples:rows.length,medianPromptTokens:median(rows.map(r=>r.usage.prompt_tokens)),medianCachedTokens:median(rows.map(r=>r.usage.prompt_tokens_details.cached_tokens)),medianGenerationMs:median(rows.map(r=>report.generations[r.requestIndex].generationMs)),medianSummaryTokens:median(rows.map(r=>r.summaryTokens)),recentPreserved:rows.filter(r=>r.recentPreserved).length};
     });
     const summaries=report.generations.filter(g=>g.kind==='summary');
-    return {version:summaryVersion,groups,summaryCalls:summaries.length,summaryInputTokens:summaries.reduce((n,g)=>n+g.providerUsage.prompt_tokens,0),summaryOutputTokens:summaries.reduce((n,g)=>n+g.providerUsage.completion_tokens,0),summaryCachedTokens:summaries.reduce((n,g)=>n+(g.providerUsage.prompt_tokens_details.cached_tokens||0),0),summaryCallsPerCase:e.preparation.map(p=>({case:p.case,calls:p.steps.length})),summaryTruncations:summaries.filter(g=>g.finishReason==='length').length,medianSummaryBuildMs:median(e.preparation.map(p=>p.steps.reduce((n,s)=>n+report.generations[s.requestIndex].generationMs,0))),providerCalls:calls,retries:calls-report.generations.length,spacing,cleanupComplete:true,answerQuality:null};
+    return {version:summaryVersion,nativeTraffic,groups,summaryCalls:summaries.length,summaryInputTokens:summaries.reduce((n,g)=>n+g.providerUsage.prompt_tokens,0),summaryOutputTokens:summaries.reduce((n,g)=>n+g.providerUsage.completion_tokens,0),summaryCachedTokens:summaries.reduce((n,g)=>n+(g.providerUsage.prompt_tokens_details.cached_tokens||0),0),summaryCallsPerCase:e.preparation.map(p=>({case:p.case,calls:p.steps.length})),summaryTruncations:summaries.filter(g=>g.finishReason==='length').length,medianSummaryBuildMs:median(e.preparation.map(p=>p.steps.reduce((n,s)=>n+report.generations[s.requestIndex].generationMs,0))),providerCalls:calls,retries:calls-report.generations.length,spacing,cleanupComplete:true,answerQuality:null};
 }
 export function summaryReviewPacket(report) {
     const f=loadLong();return {version:summaryVersion,reportSha256:sha(JSON.stringify(report)),reviewerType:null,reviewer:null,rows:report.evaluation.rows.map(row=>{const item=f.cases.find(x=>x.id===row.case);return {id:row.id,source:item.messages.slice(0,2),question:item.question,expected:item.expected,summary:row.summary,answer:row.answer,grade:null,rationale:null};}),summaryFidelity:report.evaluation.preparation.map(p=>({case:p.case,summary:p.summary,grade:null,rationale:null}))};
@@ -78,7 +82,19 @@ export function summaryReviewPacket(report) {
 export function scoreNativeSummary(report,annotations) {
     const stats=summarizeNativeSummary(report),packet=summaryReviewPacket(report);assert.equal(annotations.version,packet.version);assert.equal(annotations.reportSha256,packet.reportSha256);assert(['assistant','human'].includes(annotations.reviewerType)&&annotations.reviewer);
     assert.equal(annotations.rows.length,32);assert.equal(annotations.summaryFidelity.length,16);
-    const rows=packet.rows.map((original,i)=>{const a=annotations.rows[i],{grade,rationale,...rest}=a;const {grade:_g,rationale:_r,...content}=original;assert.deepEqual(rest,content);assert(['correct','partial','incorrect','abstained'].includes(grade));assert(rationale?.trim());const unknown=original.expected.type==='abstain';if(unknown)assert(['abstained','incorrect'].includes(grade));return {id:a.id,mode:report.evaluation.rows[i].mode,grade,strictPass:grade===(unknown?'abstained':'correct')};});
+    const rows = packet.rows.map((original, i) => {
+        const annotation = annotations.rows[i];
+        const { grade, rationale, ...annotatedContent } = annotation;
+        const { grade: _grade, rationale: _rationale, ...originalContent } = original;
+        assert.deepEqual(annotatedContent, originalContent);
+        assert(['correct', 'partial', 'incorrect', 'abstained'].includes(grade));
+        assert(rationale?.trim());
+
+        const isUnknownControl = original.expected.type === 'abstain';
+        if (isUnknownControl) assert(['abstained', 'incorrect'].includes(grade));
+        const strictPass = grade === (isUnknownControl ? 'abstained' : 'correct');
+        return { id: annotation.id, mode: report.evaluation.rows[i].mode, grade, strictPass };
+    });
     for(const [i,a]of annotations.summaryFidelity.entries()) {const {grade,rationale,...rest}=a,{grade:_g,rationale:_r,...content}=packet.summaryFidelity[i];assert.deepEqual(rest,content);assert(['complete','partial','incorrect','unknown-control'].includes(grade)&&rationale?.trim());}
     return {...stats,provisional:annotations.reviewerType==='assistant',reviewer:annotations.reviewer,groups:stats.groups.map(g=>({...g,strictPasses:rows.filter(r=>r.mode===g.mode&&r.strictPass).length})),rows};
 }

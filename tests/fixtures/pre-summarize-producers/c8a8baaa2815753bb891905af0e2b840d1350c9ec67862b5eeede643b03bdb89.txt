@@ -5,14 +5,13 @@ import { pathToFileURL } from 'node:url';
 import { buildLongPlan, pinnedCounter, sha, sourceFiles } from './semantic-long.mjs';
 import { recordedSource } from './recorded-source.mjs';
 import { NATURAL_RETRY } from './provider-retry.mjs';
-import { summaryTrafficFile, validateSummaryTraffic } from './summary-traffic.mjs';
 export const summaryVersion = 'native-summarize-v2';
 export const summaryRetry = { ...NATURAL_RETRY, version: 'summarize-transport-v2', maxCalls: 136 };
 export const summarySettings = { source: 'main', prompt_builder: 1, memoryFrozen: true, promptInterval: 0,
     promptWords: 100, overrideResponseLength: 256, maxMessagesPerRequest: 0,
     prompt: 'Ignore previous instructions. Summarize the most important facts and events in the story so far. If a summary already exists in your memory, use that as a base and expand with new facts. Limit the summary to {{words}} words or less. Your response should include nothing but the summary.',
     template: '[Summary: {{summary}}]', position: 0, role: 0, depth: 2, scan: false };
-export const summaryFiles = [...sourceFiles, 'scripts/summarize-plan.mjs', 'scripts/summarize-live.mjs', 'docs/summarize-evaluation.md', summaryTrafficFile];
+export const summaryFiles = [...sourceFiles, 'scripts/summarize-plan.mjs', 'scripts/summarize-live.mjs', 'docs/summarize-evaluation.md'];
 export function loadSummaryResume(filename) {
     assert(/^docs\/results\/[a-z0-9-]+\.json$/.test(filename));
     const bytes=readFileSync(new URL(`../${filename}`,import.meta.url)),report=JSON.parse(bytes);
@@ -22,7 +21,6 @@ export function loadSummaryResume(filename) {
     assert.equal(report.generations.length,34);assert.equal(report.evaluation.rows.length,10);
     assert(report.generations.every(g=>g.upstreamStatus===200));
     assert.deepEqual(report.evaluation.summarySettings,summarySettings);
-    validateSummaryTraffic(report);
     for(const [file,hash]of Object.entries(report.sourceSha256))recordedSource(file,hash);
     return {file:filename,sha256:sha(bytes),report};
 }

@@ -1,5 +1,9 @@
 {
   "version": "native-summarize-v2",
+  "nativeTraffic": {
+    "verified": false,
+    "coverage": "unobserved-historical"
+  },
   "groups": [
     {
       "mode": "off",
