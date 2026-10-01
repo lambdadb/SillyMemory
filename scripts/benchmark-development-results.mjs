@@ -5,7 +5,6 @@ import { readFileSync, existsSync } from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { sha, readVerifiedFile } from './benchmark-audit.mjs';
-import { recordedSource } from './recorded-source.mjs';
 import { prepareDevelopmentCase } from './benchmark-development-input.mjs';
 import { validateObservation } from './benchmark-observation.mjs';
 export const producers = ['scripts/benchmark-development-preflight.mjs', 'scripts/benchmark-development-input.mjs',
@@ -17,7 +16,8 @@ export function validateDevelopmentReport(report, plan) {
     assert(report.passed && report.cleanup); assert.equal(report.failure, undefined); assert.deepEqual(report.errors, []);
     assert.equal(report.hostRevision, plan.hostRevision); assert.equal(report.sourceSha256, plan.sourceSha256);
     assert.deepEqual(Object.keys(report.sourceSha256ByFile || {}).sort(), [...producers].sort(), 'Complete producer map required');
-    for (const file of producers) recordedSource(file, report.sourceSha256ByFile[file]);
+    // Validate new runs against this checkout. Historical runs use their archived revision.
+    for (const file of producers) assert.equal(sha(readFileSync(new URL(`../${file}`, import.meta.url))), report.sourceSha256ByFile[file], `Producer changed: ${file}`);
     assert.deepEqual(report.nativeBarriers.map(b => b.stage), plan.tasks.filter(t => t.mode === 'vectors').map(t => t.id));
     assert(report.nativeBarriers.every(b => b.disabled && b.pending === 0 && b.settleMs === 1500 && b.elapsedMs < 30000));
     assert.equal(report.traffic.hostBlocked, 0); assert.equal(report.traffic.browserBlocked, 0);

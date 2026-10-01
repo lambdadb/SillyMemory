@@ -66,3 +66,50 @@ behavior and relevant failure cases; do not present local checks as deployed pro
 
 Development documents are English. Keep implementation and development records in
 this repository. Do not change LambdaDB or add a server plugin as part of the MVP.
+
+## Experiment lifecycle and retention
+
+Before adding a benchmark or extending its harness, state the product question,
+which observation will support a decision, the authorized input/cost/time bounds,
+and the stopping condition. Prefer existing runners. Add infrastructure only when
+it is necessary to complete that evaluation or has a concrete recurring use.
+
+A normal experiment change includes the needed harness changes, the bounded run,
+analysis of positive/negative results, limitations, and verified owned-data cleanup.
+Do not split preparation, retry handling, another preflight, and each intermediate
+result into successive PRs by default. If a real external blocker prevents the run,
+record the exact blocker and retained evidence. A separately reviewable safety fix
+or reusable regression can justify an earlier PR; state why it must land separately
+and what observation is still missing. Do not describe such a PR as completed
+quality evaluation or require repeated approvals for already authorized work.
+
+Retention rules:
+
+| Material | Retention |
+| --- | --- |
+| Product/runtime fixes and meaningful regressions | Keep in normal source and CI. |
+| Reusable evaluation entry points, scoring, input splits, settings and seed/version locks | Keep the minimal maintained implementation. |
+| Method, aggregate results, failures that affect interpretation, limitations and next decision | Keep concise repository documentation. |
+| Full prompts/responses, large run reports, intermediate failures and logs | Keep under ignored `artifacts/` or an explicitly published artifact location, subject to data licenses and secret/privacy rules. |
+| Historical producer source, local patches and one-off recovery scripts | Archive with the run when needed for reproduction; remove inactive copies and compatibility branches from maintained code. |
+
+Before removing tracked run material, preserve and verify the original bytes in an
+archive. Record the producing/revalidation revision, required patch if the tree
+was dirty, input/settings locks, file/archive checksums and how to retrieve it.
+Say when an archive is local-only and unavailable in a fresh clone. A checksum or
+commit ID alone is not a promise that a downloadable archive exists. Do not upload
+private checkpoints or change publication/release scope merely to archive a run.
+Never discard unresolved cleanup/ownership records while remote resources remain.
+
+CI should check current invariants with small synthetic fixtures. Validate a
+historical run with its recorded revision and artifact bundle rather than copying
+old implementations into fixtures after every edit or supporting every old report
+in the latest validator. Label synthetic fixtures as unit evidence, never as an
+actual host/provider run. Report product regressions, harness tests, actual-host
+fixtures and paid-provider quality results separately; a larger test count does
+not establish product improvement.
+
+At completion, remove temporary branches of logic and unused tooling, preserve the
+concise decision record, and identify any genuinely reusable follow-up. Apply this
+policy to new work and touched experiment areas; do not rewrite existing Git
+history or mass-migrate unrelated experiments solely for stylistic consistency.

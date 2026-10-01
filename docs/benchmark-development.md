@@ -7,7 +7,7 @@ host workload; it does not yet supply new paid quality results.
 
 ## Recorded host-fixture result — 2026-10-01
 
-The [public execution report](benchmarks/development-preflight-v1.json) records
+The [retained result summary](benchmarks/development-preflight-summary-v1.json) records
 **70/70 passing slots**, 706 automatic local summaries, and 777 local completion
 responses (70 answers + 706 summaries + one separate synthetic import probe).
 All fixture stores and the disposable host/profile were cleaned up. External
@@ -21,8 +21,7 @@ All 14 SillyMemory traces have complete delivery of their prepared memory within
 the 800-token memory budget. Selection remains governed by the product policy.
 
 The instrumented attempt first stopped after 63 retained rows because a delayed
-native vector request crossed into the next summary arm. The unchanged
-[interrupted report](benchmarks/development-preflight-interrupted-v1.json) records
+native vector request crossed into the next summary arm. The archived interrupted report records
 723 local completions and that error; it is not counted as a passing run. The
 request was rejected before the fixture accessed its body or mutated its index.
 Its full observations remain in the ignored checkpoint.
@@ -39,12 +38,12 @@ extension. The complete local-fixture rerun checks all
 and completed before transition (including the previously failing case). This
 is actual-host/local-fixture evidence for the drain path; it does not establish
 paid-provider timing behavior or repeat any paid pilot answer. The interrupted
-producer snapshots are retained for audit.
+producer snapshots are retained inside the archive for audit.
 
 The offline observation validator rechecks all 70 saved host observations,
 outgoing request hashes and response receipts without another provider call.
-Private source/prompt checkpoints stay under ignored `artifacts/`; only the
-source-coordinate/hash report is committed. All 273 unit tests, runtime/tool syntax
+Private source/prompt checkpoints and full reports stay under ignored `artifacts/`;
+only a concise result record and archive/file hashes are committed. All 273 unit tests, runtime/tool syntax
 checks and release metadata checks passed.
 Unit and process-reopen tests remain separate evidence from this
 actual-host/local-fixture execution.
@@ -108,9 +107,8 @@ validation. Completed responses can be read after reopening without dispatching
 again. Request hashes, frozen plan/producer bindings and receipt hashes must match.
 The observation is cloned on entry, and validators receive a separate clone, so
 caller changes or mutating/failed validators cannot overwrite raw evidence.
-The historical checkpoint producer is retained in
-`tests/fixtures/development-checkpoint-producer-v1.txt`; the existing host reports
-keep their original hashes. The mutation fix is verified by regression tests and
+The historical checkpoint producer is retained inside the source archive; the
+archived host reports keep their original hashes. The mutation fix is verified by regression tests and
 offline revalidation, without repeating the 70-slot host run. Both new mutation
 regressions and the full 275-test suite pass.
 Unknown delivery remains pending and is **not automatically resent**. Limits are
@@ -128,14 +126,14 @@ longer running, preserve the directory, and investigate pending delivery. There 
 no automatic stale-lock removal or claim of exactly-once remote execution.
 
 The exact observation-validator producer used during the fixture is retained in
-`tests/fixtures/development-observation-producer-v1.txt`. The current read-only
+the source archive. The current read-only
 validator resolves valid-hit coordinates from the current local document instead
 of trusting remote metadata. Offline revalidation checks that this clarification
 does not change the recorded fixture coordinates.
 
 A test-only observer records the unchanged runtime's query results, current local
-documents and selected memory. The public report exposes source coordinates and
-hashes, not raw histories. It distinguishes:
+documents and selected memory. The generated report exposes source coordinates and
+hashes, not raw histories; it is a run artifact, not a required CI fixture. It distinguishes:
 
 - returned hits and hits matching the current local document;
 - unique valid candidates and selected source passages;
@@ -164,7 +162,7 @@ summaries do not measure real summary length, fidelity, provider usage or cost.
 ST_SOURCE=/tmp/sillymemory-st-source node scripts/benchmark-development-preflight.mjs \
   /absolute/path/to/benchmark-audit-cache artifacts/development-preflight.json
 
-# Public report checks, including exact producer hashes and the full matrix.
+# New-run report checks against the exact current producer files and full matrix.
 node scripts/benchmark-development-results.mjs artifacts/development-preflight.json
 
 # Revalidate retained observations without a host or any provider calls.
@@ -176,7 +174,54 @@ Use a fresh output path for a new host execution; the preflight refuses overwrit
 Neither command reads `.env.local`. Browser and host traffic are restricted to
 loopback. The host profile/worktree and both local fixture stores are disposable.
 Offline revalidation does not rerun generation or embeddings. It requires the
-private checkpoint and dataset cache, while the public report can be checked in CI.
+private checkpoint and dataset cache. CI checks the current validator with compact
+synthetic cases, not a complete historical run. Use the archived revision for old
+reports; the current validator intentionally rejects changed producer hashes.
+
+## Archive and maintenance boundary — 2026-10-02
+
+PR #38 originally included two full reports (80,172 lines) and three historical
+producer copies. Those files are now removed from the active tree. Their exact
+bytes and the tracked source at commit
+`c86d7fdab01eed4b2d3206cf75911908ca7ebd40` are preserved in
+`artifacts/archive/pr38-c86d7fd/source.tar.gz`. The
+[small manifest](benchmarks/development-preflight-summary-v1.json) records the
+archive/file hashes, success and failure separately, and the source revision.
+That revision contains the report producers or their original historical snapshots,
+as well as the subsequent observation-mutation fix used for revalidation.
+
+This archive is **local-only**; it is not published and is not available in a fresh
+clone. It contains only the tracked source tree, not `.env.local`, the dataset,
+private checkpoints or `node_modules`. Dataset access remains subject to the
+source license. The existing private checkpoints are retained separately under
+ignored `artifacts/`. No Git history was rewritten and no remote data was deleted.
+
+Before removing the active-tree copies, the archive was extracted and the original
+report revalidated using its archived validator: 70/70 observations and 777 local
+response receipts checked, zero new provider calls. File checksums and the failed
+run's producer hashes were checked separately. This was offline revalidation, not
+a repeated host or paid run. To inspect the original report, extract the archive
+outside the maintained source tree, then run its validator there:
+
+```sh
+# First compare the archive SHA-256 with the committed manifest.
+shasum -a 256 /path/to/source.tar.gz
+mkdir /path/to/inspection
+tar -xzf /path/to/source.tar.gz -C /path/to/inspection
+cd /path/to/inspection
+node scripts/benchmark-development-results.mjs \
+  docs/benchmarks/development-preflight-v1.json
+# Optional: append absolute private-checkpoint and dataset-cache directories.
+```
+
+The frozen development plan, current preflight/observation tools and meaningful
+regressions remain reusable. Current CI uses a compact generated synthetic report;
+it no longer depends on these old report files or their three producer snapshots.
+Older experiments outside this PR are unchanged. The pending provider-ledger work
+will be incorporated into the actual bounded executor and evaluated with its run,
+not published as another standalone preparation PR. Complete that evaluation and
+analysis before expanding the harness further unless a concrete blocker requires
+an independently useful fix. See the [retention policy](../CONTRIBUTING.md#experiment-lifecycle-and-retention).
 
 ## Remaining sequence
 

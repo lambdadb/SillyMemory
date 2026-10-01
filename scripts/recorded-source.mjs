@@ -5,9 +5,6 @@ import { createHash } from 'node:crypto';
 // Exact historical producer snapshots, not a bypass for changed/unknown inputs.
 // The runtime adapter changed after these cohorts; do not relabel their evidence.
 const snapshots = {
-    'scripts/benchmark-checkpoint.mjs:78807e9a90bcaec0f1932d0ae7c45f0917e4f4f0b6d0b4780fe2a2e81aa72009': 'tests/fixtures/development-checkpoint-producer-v1.txt',
-    'scripts/benchmark-development-preflight.mjs:8055ecde60462115e7b9f5c2014f920e6a84c1e991440f983ba70393a8fbf0a6': 'tests/fixtures/development-preflight-before-barrier-v1.txt',
-    'scripts/benchmark-observation.mjs:cfc47e5525a3ee86b345c8c0c38423cbb442533eba1c90079dc157ded78ca657': 'tests/fixtures/development-observation-producer-v1.txt',
     ...JSON.parse(readFileSync(new URL('../tests/fixtures/live-pilot-producers/registry.json', import.meta.url))),
     ...JSON.parse(readFileSync(new URL('../tests/fixtures/pre-summarize-producers/registry.json', import.meta.url))),
     ...JSON.parse(readFileSync(new URL('../tests/fixtures/native-tuning-producers/registry.json', import.meta.url))),
