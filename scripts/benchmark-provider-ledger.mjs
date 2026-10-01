@@ -53,7 +53,8 @@ export async function openProviderLedger(directory, plan, { binding, send, count
             assert.equal(task.mode, 'summary');
             assert(ordinal < plan.cases.find(c => c.id === task.caseId).automaticSummaryCallCap, 'Summary call cap');
         } else assert.equal(ordinal, 0);
-        assert(Object.keys(body).every(key => ['model', 'messages', 'temperature', 'max_tokens', 'stream'].includes(key)), 'Unsupported completion options');
+        assert(Object.keys(body).every(key => ['model', 'messages', 'temperature', 'max_tokens', 'stream', 'presence_penalty', 'frequency_penalty', 'top_p'].includes(key)), 'Unsupported completion options');
+        assert.equal(body.presence_penalty ?? 0, 0); assert.equal(body.frequency_penalty ?? 0, 0); assert.equal(body.top_p ?? 1, 1);
         const model = kind === 'judge' ? plan.judge : plan.generator;
         assert.equal(body.model, model.model); assert.equal(body.temperature, 0);
         assert.equal(body.max_tokens, model.maxOutputTokens); assert.equal(body.stream ?? false, false);

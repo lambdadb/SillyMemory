@@ -280,3 +280,11 @@ test('closed instances cannot dispatch without a writer lock and active requests
     assert.throws(() => ledger.invoke(off.id, 'judge', 0, body('judge')), /ledger is closed/);
     await ledger.close();
 }));
+test('pinned host sampling defaults are forwarded exactly and changes are rejected', () => fixture(async ({ open }) => {
+    let sent; const ledger = await open(async ({ body }) => { sent = body; return response(); });
+    const request = { ...body(), presence_penalty: 0, frequency_penalty: 0, top_p: 1 };
+    await ledger.invoke(off.id, 'answer', 0, request); assert.deepEqual(sent, request);
+    for (const [key, value] of [['presence_penalty', 1], ['frequency_penalty', 1], ['top_p', .5]]) {
+        assert.throws(() => ledger.invoke(off.id, 'judge', 0, { ...body('judge'), [key]: value }));
+    }
+}));

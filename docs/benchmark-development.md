@@ -226,9 +226,8 @@ an independently useful fix. See the [retention policy](../CONTRIBUTING.md#exper
 ## Provider transport checkpoint — local validation
 
 `scripts/benchmark-provider-ledger.mjs` adds the provider transport needed by the
-future development executor. It is a library, not a paid-run CLI, and is not yet
-connected to the host runner. Product code, managed embeddings and the frozen
-workload are unchanged. The complete suite passes **303 tests**, including 28 new
+development executor (`scripts/benchmark-development-live.mjs`). Product code, managed embeddings and the frozen
+workload are unchanged. The complete suite passes **305 tests**, including 29 provider-ledger and one live zero-hit regression alongside the earlier
 ledger tests. Runtime/tool syntax and release checks pass. This stage makes no
 new paid calls and adds no answer-quality results.
 
@@ -278,9 +277,42 @@ checked using a synthetic header secret, not a real key.
 node --test tests/benchmark-provider-ledger.test.js
 ```
 
-Host task recovery, native-index replay ordering, LambdaDB request reservations
-and owned-resource cleanup remain to be connected and fault-tested before the
-62-answer paid expansion. The ledger alone does not establish those guarantees.
+The executor uses the same pinned host and native vector backend as the pilot.
+It validates all eight pilot rows, input hashes, product source hashes and host
+settings before reuse. It reserves LambdaDB requests/writes and records ownership
+before forwarding through the built-in CORS proxy. Remote deletion checks owner
+metadata and confirms inaccessibility. Private observations live in file-backed
+receipts; a saved answer/observation bypasses indexing and generation on resume.
+Native embeddings and summaries replay only exact request matches. Unknown
+transport delivery fails closed; a stale writer lock requires investigation.
+
+An actual-host/local-service run covered one development case across all five
+conditions. It first interrupted after saving the plain answer observation, cleaned
+up, then resumed to 5/5 rows without another answer dispatch for that slot. Native
+Vector Storage used its real local backend with synthetic vectors. Remote fixtures,
+native indexes and disposable profiles were cleaned up. Source and full run files
+remain under ignored `artifacts/development-runner-fixture-v1*`. A later small edit
+makes summary records idempotent, keeps unsuccessful generation observations out
+of the reusable-answer slot, and clarifies fixture labels; unit checks pass, but
+that edit is not a repeated full host fixture run. None of these fixture answers
+are paid quality evidence. Zero-hit live retrieval is retained as an outcome,
+while selected-but-undelivered memory still fails validation.
+
+```sh
+# Same output path resumes only with identical input/settings/source bindings.
+ST_SOURCE=/absolute/path/to/pinned-SillyTavern node scripts/benchmark-development-live.mjs \
+  /absolute/path/to/audit-cache artifacts/development-live-v1.json \
+  /absolute/path/to/sillymemory/.env.local
+
+# No credentials or external providers: one case, all five conditions.
+ST_SOURCE=/absolute/path/to/pinned-SillyTavern node scripts/benchmark-development-live.mjs \
+  /absolute/path/to/audit-cache artifacts/development-fixture.json --fixture --stop-after-observation
+# Repeat without --stop-after-observation to exercise saved-observation recovery.
+```
+
+Paid execution and quality analysis are recorded below when complete or externally
+blocked. Do not interpret the fixture or the local integration commit as completion
+of the 62-answer paid comparison.
 
 ## Remaining sequence
 

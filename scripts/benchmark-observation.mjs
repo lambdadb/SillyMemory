@@ -26,7 +26,7 @@ export function retrievalDiagnostics(trace, request) {
     preparedMessages: messages.length, deliveredMessages: delivered.length, memoryTokens: trace.result.tokens, memoryBudget: trace.budget,
     interpretation: 'Valid but unselected includes whole-passage budget/packing policy; not a measured ANN miss or semantic recall score.' };
 }
-export function validateObservation(item, context, mode, saved, maxOutputTokens) {
+export function validateObservation(item, context, mode, saved, maxOutputTokens, { requirePreparedMemory = true } = {}) {
     const { observation, request } = saved;
     assert.equal(saved.successfulCompletions, 1, 'One completion per answer');
     assert.equal(observation.snapshotCount, 1, 'One non-dry-run prompt snapshot');
@@ -46,7 +46,7 @@ export function validateObservation(item, context, mode, saved, maxOutputTokens)
     if (mode === 'sillymemory') {
         assert.match(observation.delivery, /^Final host prompt:/);
         retrieval = retrievalDiagnostics(observation.retrieval, request);
-        assert(retrieval.preparedMessages > 0, 'No prepared memory in fixture');
+        if (requirePreparedMemory) assert(retrieval.preparedMessages > 0, 'No prepared memory in fixture');
         assert.equal(retrieval.deliveredMessages, retrieval.preparedMessages, 'Prepared memory missing from final prompt');
     }
     return { ...coverage, retrieval };
