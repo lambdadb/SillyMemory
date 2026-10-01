@@ -28,6 +28,10 @@ whether increasing the built-in retrieval count closes that quality gap.
 The [built-in Summarize comparison](docs/summarize-results.md) measures rolling
 summary fidelity, answer quality and summary-generation overhead separately.
 
+The [external benchmark data audit](docs/benchmark-data-audit.md) records pinned
+LongMemEval-S and ConvoMem schemas, local token estimates, question selection and
+the bounded next pilot design. It contains no new model-quality results.
+
 ## Supported host
 
 The development baseline is **SillyTavern 1.19.0**, pinned to commit [`06bde939fb1e9c4c8d8641d810f0a916b5bce127`](https://github.com/SillyTavern/SillyTavern/tree/06bde939fb1e9c4c8d8641d810f0a916b5bce127). Other revisions are unverified. Use a browser with Web Crypto, Web Locks, and `AbortSignal.any` (the automated browser test uses Chromium). Serve SillyTavern on localhost or HTTPS. One active SillyMemory tab per SillyTavern account/browser profile is enforced with a Web Lock.

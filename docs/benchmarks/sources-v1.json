@@ -1,0 +1,1319 @@
+{
+  "version": "external-benchmark-sources-v1",
+  "selection": "LongMemEval-S all 500; ConvoMem first/middle/last file among files <=32 MB in six declared evidence-count strata; structural audit, not representative sampling",
+  "datasets": {
+    "longmemeval": {
+      "repository": "xiaowu0162/longmemeval-cleaned",
+      "revision": "98d7416c24c778c2fee6e6f3006e7a073259d48f",
+      "cardLicense": "mit"
+    },
+    "convomem": {
+      "repository": "Salesforce/ConvoMem",
+      "revision": "e3e9b39115b02346824c70d349350de738f8be41",
+      "cardLicense": "cc-by-nc-4.0",
+      "datasetInfoLicense": "Apache-2.0",
+      "licenseStatus": "conflicting metadata; usage not cleared by this audit"
+    }
+  },
+  "convomemInventory": [
+    {
+      "path": "core_benchmark/pre_mixed_testcases/user_evidence/3_evidence/batched_000.json",
+      "bytes": 6371687,
+      "selected": true
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/user_evidence/3_evidence/batched_001.json",
+      "bytes": 6310954,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/user_evidence/3_evidence/batched_002.json",
+      "bytes": 6414957,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/user_evidence/3_evidence/batched_003.json",
+      "bytes": 6158890,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/user_evidence/3_evidence/batched_004.json",
+      "bytes": 6448611,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/user_evidence/3_evidence/batched_005.json",
+      "bytes": 6591942,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/user_evidence/3_evidence/batched_006.json",
+      "bytes": 6163969,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/user_evidence/3_evidence/batched_007.json",
+      "bytes": 5869445,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/user_evidence/3_evidence/batched_008.json",
+      "bytes": 6427345,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/user_evidence/3_evidence/batched_009.json",
+      "bytes": 6486975,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/user_evidence/3_evidence/batched_010.json",
+      "bytes": 7468731,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/user_evidence/3_evidence/batched_011.json",
+      "bytes": 8390027,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/user_evidence/3_evidence/batched_012.json",
+      "bytes": 8186540,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/user_evidence/3_evidence/batched_013.json",
+      "bytes": 8671187,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/user_evidence/3_evidence/batched_014.json",
+      "bytes": 8223408,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/user_evidence/3_evidence/batched_015.json",
+      "bytes": 8256660,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/user_evidence/3_evidence/batched_016.json",
+      "bytes": 8493341,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/user_evidence/3_evidence/batched_017.json",
+      "bytes": 8641368,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/user_evidence/3_evidence/batched_018.json",
+      "bytes": 8141972,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/user_evidence/3_evidence/batched_019.json",
+      "bytes": 8638266,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/user_evidence/3_evidence/batched_020.json",
+      "bytes": 9219834,
+      "selected": true
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/user_evidence/3_evidence/batched_021.json",
+      "bytes": 10705868,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/user_evidence/3_evidence/batched_022.json",
+      "bytes": 10084575,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/user_evidence/3_evidence/batched_023.json",
+      "bytes": 10244612,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/user_evidence/3_evidence/batched_024.json",
+      "bytes": 10223062,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/user_evidence/3_evidence/batched_025.json",
+      "bytes": 10275272,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/user_evidence/3_evidence/batched_026.json",
+      "bytes": 10424441,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/user_evidence/3_evidence/batched_027.json",
+      "bytes": 10576716,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/user_evidence/3_evidence/batched_028.json",
+      "bytes": 10344423,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/user_evidence/3_evidence/batched_029.json",
+      "bytes": 10583481,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/user_evidence/3_evidence/batched_030.json",
+      "bytes": 10349211,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/user_evidence/3_evidence/batched_031.json",
+      "bytes": 12406574,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/user_evidence/3_evidence/batched_032.json",
+      "bytes": 12947922,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/user_evidence/3_evidence/batched_033.json",
+      "bytes": 12151249,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/user_evidence/3_evidence/batched_034.json",
+      "bytes": 13184397,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/user_evidence/3_evidence/batched_035.json",
+      "bytes": 12634489,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/user_evidence/3_evidence/batched_036.json",
+      "bytes": 21044419,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/user_evidence/3_evidence/batched_037.json",
+      "bytes": 20969155,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/user_evidence/3_evidence/batched_038.json",
+      "bytes": 21080901,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/user_evidence/3_evidence/batched_039.json",
+      "bytes": 32253287,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/user_evidence/3_evidence/batched_040.json",
+      "bytes": 42528132,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/user_evidence/3_evidence/batched_041.json",
+      "bytes": 60270833,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/user_evidence/3_evidence/batched_042.json",
+      "bytes": 105351759,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/user_evidence/3_evidence/batched_043.json",
+      "bytes": 273256351,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/user_evidence/3_evidence/batched_044.json",
+      "bytes": 29713854,
+      "selected": true
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/assistant_facts_evidence/3_evidence/batched_000.json",
+      "bytes": 6030847,
+      "selected": true
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/assistant_facts_evidence/3_evidence/batched_001.json",
+      "bytes": 6016913,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/assistant_facts_evidence/3_evidence/batched_002.json",
+      "bytes": 8484224,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/assistant_facts_evidence/3_evidence/batched_003.json",
+      "bytes": 9488166,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/assistant_facts_evidence/3_evidence/batched_004.json",
+      "bytes": 10896430,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/assistant_facts_evidence/3_evidence/batched_005.json",
+      "bytes": 13412597,
+      "selected": true
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/assistant_facts_evidence/3_evidence/batched_006.json",
+      "bytes": 13027114,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/assistant_facts_evidence/3_evidence/batched_007.json",
+      "bytes": 12022703,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/assistant_facts_evidence/3_evidence/batched_008.json",
+      "bytes": 20970529,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/assistant_facts_evidence/3_evidence/batched_009.json",
+      "bytes": 106821067,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/assistant_facts_evidence/3_evidence/batched_010.json",
+      "bytes": 12904824,
+      "selected": true
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/changing_evidence/3_evidence/batched_000.json",
+      "bytes": 12344540,
+      "selected": true
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/changing_evidence/3_evidence/batched_001.json",
+      "bytes": 12261855,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/changing_evidence/3_evidence/batched_002.json",
+      "bytes": 12670568,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/changing_evidence/3_evidence/batched_003.json",
+      "bytes": 12457255,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/changing_evidence/3_evidence/batched_004.json",
+      "bytes": 12044510,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/changing_evidence/3_evidence/batched_005.json",
+      "bytes": 12566174,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/changing_evidence/3_evidence/batched_006.json",
+      "bytes": 12413175,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/changing_evidence/3_evidence/batched_007.json",
+      "bytes": 12397919,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/changing_evidence/3_evidence/batched_008.json",
+      "bytes": 12515786,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/changing_evidence/3_evidence/batched_009.json",
+      "bytes": 12345675,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/changing_evidence/3_evidence/batched_010.json",
+      "bytes": 12430180,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/changing_evidence/3_evidence/batched_011.json",
+      "bytes": 13243013,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/changing_evidence/3_evidence/batched_012.json",
+      "bytes": 15599431,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/changing_evidence/3_evidence/batched_013.json",
+      "bytes": 16013732,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/changing_evidence/3_evidence/batched_014.json",
+      "bytes": 15383117,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/changing_evidence/3_evidence/batched_015.json",
+      "bytes": 15474254,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/changing_evidence/3_evidence/batched_016.json",
+      "bytes": 15786030,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/changing_evidence/3_evidence/batched_017.json",
+      "bytes": 15864708,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/changing_evidence/3_evidence/batched_018.json",
+      "bytes": 15496750,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/changing_evidence/3_evidence/batched_019.json",
+      "bytes": 16011894,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/changing_evidence/3_evidence/batched_020.json",
+      "bytes": 15806110,
+      "selected": true
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/changing_evidence/3_evidence/batched_021.json",
+      "bytes": 15624992,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/changing_evidence/3_evidence/batched_022.json",
+      "bytes": 15907322,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/changing_evidence/3_evidence/batched_023.json",
+      "bytes": 17685245,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/changing_evidence/3_evidence/batched_024.json",
+      "bytes": 18965863,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/changing_evidence/3_evidence/batched_025.json",
+      "bytes": 18855967,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/changing_evidence/3_evidence/batched_026.json",
+      "bytes": 19121117,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/changing_evidence/3_evidence/batched_027.json",
+      "bytes": 18840865,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/changing_evidence/3_evidence/batched_028.json",
+      "bytes": 18890325,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/changing_evidence/3_evidence/batched_029.json",
+      "bytes": 19068235,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/changing_evidence/3_evidence/batched_030.json",
+      "bytes": 18906591,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/changing_evidence/3_evidence/batched_031.json",
+      "bytes": 19147937,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/changing_evidence/3_evidence/batched_032.json",
+      "bytes": 19122996,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/changing_evidence/3_evidence/batched_033.json",
+      "bytes": 18868137,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/changing_evidence/3_evidence/batched_034.json",
+      "bytes": 19088433,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/changing_evidence/3_evidence/batched_035.json",
+      "bytes": 24665785,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/changing_evidence/3_evidence/batched_036.json",
+      "bytes": 24887443,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/changing_evidence/3_evidence/batched_037.json",
+      "bytes": 24684743,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/changing_evidence/3_evidence/batched_038.json",
+      "bytes": 24608591,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/changing_evidence/3_evidence/batched_039.json",
+      "bytes": 24613215,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/changing_evidence/3_evidence/batched_040.json",
+      "bytes": 26477419,
+      "selected": true
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/changing_evidence/3_evidence/batched_041.json",
+      "bytes": 40112845,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/changing_evidence/3_evidence/batched_042.json",
+      "bytes": 39867339,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/changing_evidence/3_evidence/batched_043.json",
+      "bytes": 40914731,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/changing_evidence/3_evidence/batched_044.json",
+      "bytes": 48689292,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/changing_evidence/3_evidence/batched_045.json",
+      "bytes": 80932200,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/changing_evidence/3_evidence/batched_046.json",
+      "bytes": 92438718,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/changing_evidence/3_evidence/batched_047.json",
+      "bytes": 130761935,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/changing_evidence/3_evidence/batched_048.json",
+      "bytes": 234120594,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/changing_evidence/3_evidence/batched_049.json",
+      "bytes": 628709968,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/abstention_evidence/2_evidence/batched_000.json",
+      "bytes": 6312566,
+      "selected": true
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/abstention_evidence/2_evidence/batched_001.json",
+      "bytes": 6267291,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/abstention_evidence/2_evidence/batched_002.json",
+      "bytes": 6296395,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/abstention_evidence/2_evidence/batched_003.json",
+      "bytes": 6181124,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/abstention_evidence/2_evidence/batched_004.json",
+      "bytes": 6213389,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/abstention_evidence/2_evidence/batched_005.json",
+      "bytes": 6299617,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/abstention_evidence/2_evidence/batched_006.json",
+      "bytes": 6330602,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/abstention_evidence/2_evidence/batched_007.json",
+      "bytes": 6367043,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/abstention_evidence/2_evidence/batched_008.json",
+      "bytes": 6308067,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/abstention_evidence/2_evidence/batched_009.json",
+      "bytes": 6292269,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/abstention_evidence/2_evidence/batched_010.json",
+      "bytes": 6272552,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/abstention_evidence/2_evidence/batched_011.json",
+      "bytes": 6269556,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/abstention_evidence/2_evidence/batched_012.json",
+      "bytes": 6261437,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/abstention_evidence/2_evidence/batched_013.json",
+      "bytes": 8180790,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/abstention_evidence/2_evidence/batched_014.json",
+      "bytes": 8429202,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/abstention_evidence/2_evidence/batched_015.json",
+      "bytes": 8480444,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/abstention_evidence/2_evidence/batched_016.json",
+      "bytes": 8388904,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/abstention_evidence/2_evidence/batched_017.json",
+      "bytes": 8353583,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/abstention_evidence/2_evidence/batched_018.json",
+      "bytes": 8495702,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/abstention_evidence/2_evidence/batched_019.json",
+      "bytes": 8417950,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/abstention_evidence/2_evidence/batched_020.json",
+      "bytes": 8374931,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/abstention_evidence/2_evidence/batched_021.json",
+      "bytes": 8490482,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/abstention_evidence/2_evidence/batched_022.json",
+      "bytes": 8422439,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/abstention_evidence/2_evidence/batched_023.json",
+      "bytes": 8498591,
+      "selected": true
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/abstention_evidence/2_evidence/batched_024.json",
+      "bytes": 8427294,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/abstention_evidence/2_evidence/batched_025.json",
+      "bytes": 8443946,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/abstention_evidence/2_evidence/batched_026.json",
+      "bytes": 11557210,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/abstention_evidence/2_evidence/batched_027.json",
+      "bytes": 12483479,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/abstention_evidence/2_evidence/batched_028.json",
+      "bytes": 12636875,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/abstention_evidence/2_evidence/batched_029.json",
+      "bytes": 12599514,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/abstention_evidence/2_evidence/batched_030.json",
+      "bytes": 12551757,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/abstention_evidence/2_evidence/batched_031.json",
+      "bytes": 12547454,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/abstention_evidence/2_evidence/batched_032.json",
+      "bytes": 12900867,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/abstention_evidence/2_evidence/batched_033.json",
+      "bytes": 14713344,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/abstention_evidence/2_evidence/batched_034.json",
+      "bytes": 14603255,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/abstention_evidence/2_evidence/batched_035.json",
+      "bytes": 14799498,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/abstention_evidence/2_evidence/batched_036.json",
+      "bytes": 14792130,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/abstention_evidence/2_evidence/batched_037.json",
+      "bytes": 14809984,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/abstention_evidence/2_evidence/batched_038.json",
+      "bytes": 14635829,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/abstention_evidence/2_evidence/batched_039.json",
+      "bytes": 17452226,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/abstention_evidence/2_evidence/batched_040.json",
+      "bytes": 18707028,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/abstention_evidence/2_evidence/batched_041.json",
+      "bytes": 18862260,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/abstention_evidence/2_evidence/batched_042.json",
+      "bytes": 18864994,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/abstention_evidence/2_evidence/batched_043.json",
+      "bytes": 22144747,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/abstention_evidence/2_evidence/batched_044.json",
+      "bytes": 31397140,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/abstention_evidence/2_evidence/batched_045.json",
+      "bytes": 31354261,
+      "selected": true
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/abstention_evidence/2_evidence/batched_046.json",
+      "bytes": 51340615,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/abstention_evidence/2_evidence/batched_047.json",
+      "bytes": 73013287,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/abstention_evidence/2_evidence/batched_048.json",
+      "bytes": 121991804,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/abstention_evidence/2_evidence/batched_049.json",
+      "bytes": 456547185,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/preference_evidence/2_evidence/batched_000.json",
+      "bytes": 1422168,
+      "selected": true
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/preference_evidence/2_evidence/batched_001.json",
+      "bytes": 1401125,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/preference_evidence/2_evidence/batched_002.json",
+      "bytes": 1814572,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/preference_evidence/2_evidence/batched_003.json",
+      "bytes": 1875367,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/preference_evidence/2_evidence/batched_004.json",
+      "bytes": 2699156,
+      "selected": true
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/preference_evidence/2_evidence/batched_005.json",
+      "bytes": 3210151,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/preference_evidence/2_evidence/batched_006.json",
+      "bytes": 4216801,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/preference_evidence/2_evidence/batched_007.json",
+      "bytes": 39499523,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/preference_evidence/2_evidence/batched_008.json",
+      "bytes": 139751873,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/preference_evidence/2_evidence/batched_009.json",
+      "bytes": 7951337,
+      "selected": true
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/implicit_connection_evidence/2_evidence/batched_000.json",
+      "bytes": 5757584,
+      "selected": true
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/implicit_connection_evidence/2_evidence/batched_001.json",
+      "bytes": 5789998,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/implicit_connection_evidence/2_evidence/batched_002.json",
+      "bytes": 5822208,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/implicit_connection_evidence/2_evidence/batched_003.json",
+      "bytes": 5714361,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/implicit_connection_evidence/2_evidence/batched_004.json",
+      "bytes": 5688851,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/implicit_connection_evidence/2_evidence/batched_005.json",
+      "bytes": 5709702,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/implicit_connection_evidence/2_evidence/batched_006.json",
+      "bytes": 5761934,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/implicit_connection_evidence/2_evidence/batched_007.json",
+      "bytes": 5692769,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/implicit_connection_evidence/2_evidence/batched_008.json",
+      "bytes": 5693334,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/implicit_connection_evidence/2_evidence/batched_009.json",
+      "bytes": 5817870,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/implicit_connection_evidence/2_evidence/batched_010.json",
+      "bytes": 5786782,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/implicit_connection_evidence/2_evidence/batched_011.json",
+      "bytes": 5731431,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/implicit_connection_evidence/2_evidence/batched_012.json",
+      "bytes": 5755631,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/implicit_connection_evidence/2_evidence/batched_013.json",
+      "bytes": 7400142,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/implicit_connection_evidence/2_evidence/batched_014.json",
+      "bytes": 7659270,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/implicit_connection_evidence/2_evidence/batched_015.json",
+      "bytes": 7554134,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/implicit_connection_evidence/2_evidence/batched_016.json",
+      "bytes": 7627135,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/implicit_connection_evidence/2_evidence/batched_017.json",
+      "bytes": 7612669,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/implicit_connection_evidence/2_evidence/batched_018.json",
+      "bytes": 7665877,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/implicit_connection_evidence/2_evidence/batched_019.json",
+      "bytes": 7526402,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/implicit_connection_evidence/2_evidence/batched_020.json",
+      "bytes": 7642913,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/implicit_connection_evidence/2_evidence/batched_021.json",
+      "bytes": 7576717,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/implicit_connection_evidence/2_evidence/batched_022.json",
+      "bytes": 7593705,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/implicit_connection_evidence/2_evidence/batched_023.json",
+      "bytes": 7660442,
+      "selected": true
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/implicit_connection_evidence/2_evidence/batched_024.json",
+      "bytes": 7615784,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/implicit_connection_evidence/2_evidence/batched_025.json",
+      "bytes": 7549353,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/implicit_connection_evidence/2_evidence/batched_026.json",
+      "bytes": 10851793,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/implicit_connection_evidence/2_evidence/batched_027.json",
+      "bytes": 11424339,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/implicit_connection_evidence/2_evidence/batched_028.json",
+      "bytes": 11548862,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/implicit_connection_evidence/2_evidence/batched_029.json",
+      "bytes": 11451645,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/implicit_connection_evidence/2_evidence/batched_030.json",
+      "bytes": 11474668,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/implicit_connection_evidence/2_evidence/batched_031.json",
+      "bytes": 11431099,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/implicit_connection_evidence/2_evidence/batched_032.json",
+      "bytes": 12125664,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/implicit_connection_evidence/2_evidence/batched_033.json",
+      "bytes": 13309987,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/implicit_connection_evidence/2_evidence/batched_034.json",
+      "bytes": 13170001,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/implicit_connection_evidence/2_evidence/batched_035.json",
+      "bytes": 13403120,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/implicit_connection_evidence/2_evidence/batched_036.json",
+      "bytes": 13429396,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/implicit_connection_evidence/2_evidence/batched_037.json",
+      "bytes": 13338365,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/implicit_connection_evidence/2_evidence/batched_038.json",
+      "bytes": 13388928,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/implicit_connection_evidence/2_evidence/batched_039.json",
+      "bytes": 16091315,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/implicit_connection_evidence/2_evidence/batched_040.json",
+      "bytes": 17134436,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/implicit_connection_evidence/2_evidence/batched_041.json",
+      "bytes": 17298507,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/implicit_connection_evidence/2_evidence/batched_042.json",
+      "bytes": 17365036,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/implicit_connection_evidence/2_evidence/batched_043.json",
+      "bytes": 21721787,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/implicit_connection_evidence/2_evidence/batched_044.json",
+      "bytes": 28604595,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/implicit_connection_evidence/2_evidence/batched_045.json",
+      "bytes": 28745163,
+      "selected": true
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/implicit_connection_evidence/2_evidence/batched_046.json",
+      "bytes": 50908473,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/implicit_connection_evidence/2_evidence/batched_047.json",
+      "bytes": 70668351,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/implicit_connection_evidence/2_evidence/batched_048.json",
+      "bytes": 123084909,
+      "selected": false
+    },
+    {
+      "path": "core_benchmark/pre_mixed_testcases/implicit_connection_evidence/2_evidence/batched_049.json",
+      "bytes": 390834286,
+      "selected": false
+    }
+  ],
+  "files": [
+    {
+      "dataset": "longmemeval",
+      "category": "all",
+      "localName": "longmemeval_s_cleaned.json",
+      "path": "longmemeval_s_cleaned.json",
+      "url": "https://huggingface.co/datasets/xiaowu0162/longmemeval-cleaned/resolve/98d7416c24c778c2fee6e6f3006e7a073259d48f/longmemeval_s_cleaned.json",
+      "bytes": 277383467,
+      "sha256": "d6f21ea9d60a0d56f34a05b609c79c88a451d2ae03597821ea3d5a9678c3a442"
+    },
+    {
+      "dataset": "convomem",
+      "category": "user_evidence",
+      "evidenceCount": 3,
+      "path": "core_benchmark/pre_mixed_testcases/user_evidence/3_evidence/batched_000.json",
+      "localName": "convomem-user_evidence-3-batched_000.json",
+      "url": "https://huggingface.co/datasets/Salesforce/ConvoMem/resolve/e3e9b39115b02346824c70d349350de738f8be41/core_benchmark/pre_mixed_testcases/user_evidence/3_evidence/batched_000.json",
+      "bytes": 6371687,
+      "sha256": "90f15885d9b2701a1d7710cd116a072e4c413cc7625bd26c061977f02b7bcad4"
+    },
+    {
+      "dataset": "convomem",
+      "category": "user_evidence",
+      "evidenceCount": 3,
+      "path": "core_benchmark/pre_mixed_testcases/user_evidence/3_evidence/batched_020.json",
+      "localName": "convomem-user_evidence-3-batched_020.json",
+      "url": "https://huggingface.co/datasets/Salesforce/ConvoMem/resolve/e3e9b39115b02346824c70d349350de738f8be41/core_benchmark/pre_mixed_testcases/user_evidence/3_evidence/batched_020.json",
+      "bytes": 9219834,
+      "sha256": "5d37214f1d67b454d580a2b8768ad52695696b9bb5e0907936d7b501bad76625"
+    },
+    {
+      "dataset": "convomem",
+      "category": "user_evidence",
+      "evidenceCount": 3,
+      "path": "core_benchmark/pre_mixed_testcases/user_evidence/3_evidence/batched_044.json",
+      "localName": "convomem-user_evidence-3-batched_044.json",
+      "url": "https://huggingface.co/datasets/Salesforce/ConvoMem/resolve/e3e9b39115b02346824c70d349350de738f8be41/core_benchmark/pre_mixed_testcases/user_evidence/3_evidence/batched_044.json",
+      "bytes": 29713854,
+      "sha256": "a21aab4e50b45a4bb2e6c19f98be9733999837de76defa231f5a1869e51e8ad4"
+    },
+    {
+      "dataset": "convomem",
+      "category": "assistant_facts_evidence",
+      "evidenceCount": 3,
+      "path": "core_benchmark/pre_mixed_testcases/assistant_facts_evidence/3_evidence/batched_000.json",
+      "localName": "convomem-assistant_facts_evidence-3-batched_000.json",
+      "url": "https://huggingface.co/datasets/Salesforce/ConvoMem/resolve/e3e9b39115b02346824c70d349350de738f8be41/core_benchmark/pre_mixed_testcases/assistant_facts_evidence/3_evidence/batched_000.json",
+      "bytes": 6030847,
+      "sha256": "935ef0f8fbe93099df80e2823fb35bfd13f8c154804b959717cdbb43450b1c3d"
+    },
+    {
+      "dataset": "convomem",
+      "category": "assistant_facts_evidence",
+      "evidenceCount": 3,
+      "path": "core_benchmark/pre_mixed_testcases/assistant_facts_evidence/3_evidence/batched_005.json",
+      "localName": "convomem-assistant_facts_evidence-3-batched_005.json",
+      "url": "https://huggingface.co/datasets/Salesforce/ConvoMem/resolve/e3e9b39115b02346824c70d349350de738f8be41/core_benchmark/pre_mixed_testcases/assistant_facts_evidence/3_evidence/batched_005.json",
+      "bytes": 13412597,
+      "sha256": "2ad082f18d1bdb11654e166350296c5367c957ee0f96d9dd0f5224c53ce638bb"
+    },
+    {
+      "dataset": "convomem",
+      "category": "assistant_facts_evidence",
+      "evidenceCount": 3,
+      "path": "core_benchmark/pre_mixed_testcases/assistant_facts_evidence/3_evidence/batched_010.json",
+      "localName": "convomem-assistant_facts_evidence-3-batched_010.json",
+      "url": "https://huggingface.co/datasets/Salesforce/ConvoMem/resolve/e3e9b39115b02346824c70d349350de738f8be41/core_benchmark/pre_mixed_testcases/assistant_facts_evidence/3_evidence/batched_010.json",
+      "bytes": 12904824,
+      "sha256": "d82b639f2884873731301c79e031261e498bc142758e50796868a81e2b87cb07"
+    },
+    {
+      "dataset": "convomem",
+      "category": "changing_evidence",
+      "evidenceCount": 3,
+      "path": "core_benchmark/pre_mixed_testcases/changing_evidence/3_evidence/batched_000.json",
+      "localName": "convomem-changing_evidence-3-batched_000.json",
+      "url": "https://huggingface.co/datasets/Salesforce/ConvoMem/resolve/e3e9b39115b02346824c70d349350de738f8be41/core_benchmark/pre_mixed_testcases/changing_evidence/3_evidence/batched_000.json",
+      "bytes": 12344540,
+      "sha256": "068dbf298b137141ef2eb0fc079a7bd29b950275c8183ddfa0068ff7539998aa"
+    },
+    {
+      "dataset": "convomem",
+      "category": "changing_evidence",
+      "evidenceCount": 3,
+      "path": "core_benchmark/pre_mixed_testcases/changing_evidence/3_evidence/batched_020.json",
+      "localName": "convomem-changing_evidence-3-batched_020.json",
+      "url": "https://huggingface.co/datasets/Salesforce/ConvoMem/resolve/e3e9b39115b02346824c70d349350de738f8be41/core_benchmark/pre_mixed_testcases/changing_evidence/3_evidence/batched_020.json",
+      "bytes": 15806110,
+      "sha256": "3e587ee631113b76ec057c8bcaee1c0113e3fbf238a21c4dc3cb5d43285f47f2"
+    },
+    {
+      "dataset": "convomem",
+      "category": "changing_evidence",
+      "evidenceCount": 3,
+      "path": "core_benchmark/pre_mixed_testcases/changing_evidence/3_evidence/batched_040.json",
+      "localName": "convomem-changing_evidence-3-batched_040.json",
+      "url": "https://huggingface.co/datasets/Salesforce/ConvoMem/resolve/e3e9b39115b02346824c70d349350de738f8be41/core_benchmark/pre_mixed_testcases/changing_evidence/3_evidence/batched_040.json",
+      "bytes": 26477419,
+      "sha256": "7778aa248cc2295bddd4bb2886aa0dba6deee040f10be8c77f24ff05497fc0f3"
+    },
+    {
+      "dataset": "convomem",
+      "category": "abstention_evidence",
+      "evidenceCount": 2,
+      "path": "core_benchmark/pre_mixed_testcases/abstention_evidence/2_evidence/batched_000.json",
+      "localName": "convomem-abstention_evidence-2-batched_000.json",
+      "url": "https://huggingface.co/datasets/Salesforce/ConvoMem/resolve/e3e9b39115b02346824c70d349350de738f8be41/core_benchmark/pre_mixed_testcases/abstention_evidence/2_evidence/batched_000.json",
+      "bytes": 6312566,
+      "sha256": "8b1ac49ce0c3d2afee0cd40170efb942fca5d34c6635dcd4a70ea0851aa1d890"
+    },
+    {
+      "dataset": "convomem",
+      "category": "abstention_evidence",
+      "evidenceCount": 2,
+      "path": "core_benchmark/pre_mixed_testcases/abstention_evidence/2_evidence/batched_023.json",
+      "localName": "convomem-abstention_evidence-2-batched_023.json",
+      "url": "https://huggingface.co/datasets/Salesforce/ConvoMem/resolve/e3e9b39115b02346824c70d349350de738f8be41/core_benchmark/pre_mixed_testcases/abstention_evidence/2_evidence/batched_023.json",
+      "bytes": 8498591,
+      "sha256": "059cc4a7a4a4b10309aabf0e48e23f62e13305a0654d78cecb40941bdc3f092e"
+    },
+    {
+      "dataset": "convomem",
+      "category": "abstention_evidence",
+      "evidenceCount": 2,
+      "path": "core_benchmark/pre_mixed_testcases/abstention_evidence/2_evidence/batched_045.json",
+      "localName": "convomem-abstention_evidence-2-batched_045.json",
+      "url": "https://huggingface.co/datasets/Salesforce/ConvoMem/resolve/e3e9b39115b02346824c70d349350de738f8be41/core_benchmark/pre_mixed_testcases/abstention_evidence/2_evidence/batched_045.json",
+      "bytes": 31354261,
+      "sha256": "01bcbaffe8b49c827e2d939b647f07322034692782cd31591b9b5fc5e3c43ebf"
+    },
+    {
+      "dataset": "convomem",
+      "category": "preference_evidence",
+      "evidenceCount": 2,
+      "path": "core_benchmark/pre_mixed_testcases/preference_evidence/2_evidence/batched_000.json",
+      "localName": "convomem-preference_evidence-2-batched_000.json",
+      "url": "https://huggingface.co/datasets/Salesforce/ConvoMem/resolve/e3e9b39115b02346824c70d349350de738f8be41/core_benchmark/pre_mixed_testcases/preference_evidence/2_evidence/batched_000.json",
+      "bytes": 1422168,
+      "sha256": "490a56d0ab32fcc07d839a4f2586d867879054779d491e1f2693e40482d0d2ad"
+    },
+    {
+      "dataset": "convomem",
+      "category": "preference_evidence",
+      "evidenceCount": 2,
+      "path": "core_benchmark/pre_mixed_testcases/preference_evidence/2_evidence/batched_004.json",
+      "localName": "convomem-preference_evidence-2-batched_004.json",
+      "url": "https://huggingface.co/datasets/Salesforce/ConvoMem/resolve/e3e9b39115b02346824c70d349350de738f8be41/core_benchmark/pre_mixed_testcases/preference_evidence/2_evidence/batched_004.json",
+      "bytes": 2699156,
+      "sha256": "684cb36bb967b506e7da923132076e3386353bc19b78cb87d2850be9335e7e1e"
+    },
+    {
+      "dataset": "convomem",
+      "category": "preference_evidence",
+      "evidenceCount": 2,
+      "path": "core_benchmark/pre_mixed_testcases/preference_evidence/2_evidence/batched_009.json",
+      "localName": "convomem-preference_evidence-2-batched_009.json",
+      "url": "https://huggingface.co/datasets/Salesforce/ConvoMem/resolve/e3e9b39115b02346824c70d349350de738f8be41/core_benchmark/pre_mixed_testcases/preference_evidence/2_evidence/batched_009.json",
+      "bytes": 7951337,
+      "sha256": "4d00c4d3cd71f5b0a15fb70a3d135c41c7991ec4069b67103596e883922efdac"
+    },
+    {
+      "dataset": "convomem",
+      "category": "implicit_connection_evidence",
+      "evidenceCount": 2,
+      "path": "core_benchmark/pre_mixed_testcases/implicit_connection_evidence/2_evidence/batched_000.json",
+      "localName": "convomem-implicit_connection_evidence-2-batched_000.json",
+      "url": "https://huggingface.co/datasets/Salesforce/ConvoMem/resolve/e3e9b39115b02346824c70d349350de738f8be41/core_benchmark/pre_mixed_testcases/implicit_connection_evidence/2_evidence/batched_000.json",
+      "bytes": 5757584,
+      "sha256": "2f771d1d0c76d9ee22cdddb19839657b60bff12c0ccbd3182bf2036cf18316e1"
+    },
+    {
+      "dataset": "convomem",
+      "category": "implicit_connection_evidence",
+      "evidenceCount": 2,
+      "path": "core_benchmark/pre_mixed_testcases/implicit_connection_evidence/2_evidence/batched_023.json",
+      "localName": "convomem-implicit_connection_evidence-2-batched_023.json",
+      "url": "https://huggingface.co/datasets/Salesforce/ConvoMem/resolve/e3e9b39115b02346824c70d349350de738f8be41/core_benchmark/pre_mixed_testcases/implicit_connection_evidence/2_evidence/batched_023.json",
+      "bytes": 7660442,
+      "sha256": "baec2ff9062b55e910216e5879aa9af8cc206d239589aeca197e6bb19b6a7a0d"
+    },
+    {
+      "dataset": "convomem",
+      "category": "implicit_connection_evidence",
+      "evidenceCount": 2,
+      "path": "core_benchmark/pre_mixed_testcases/implicit_connection_evidence/2_evidence/batched_045.json",
+      "localName": "convomem-implicit_connection_evidence-2-batched_045.json",
+      "url": "https://huggingface.co/datasets/Salesforce/ConvoMem/resolve/e3e9b39115b02346824c70d349350de738f8be41/core_benchmark/pre_mixed_testcases/implicit_connection_evidence/2_evidence/batched_045.json",
+      "bytes": 28745163,
+      "sha256": "30e0a5ad602b9d1ff7e486211fb794ce51de7ff3df1eb8078f509748e8450bcf"
+    }
+  ],
+  "upstreamCode": {
+    "LongMemEval": {
+      "repository": "xiaowu0162/LongMemEval",
+      "revision": "9e0b455f4ef0e2ab8f2e582289761153549043fc"
+    },
+    "ConvoMem": {
+      "repository": "SalesforceAIResearch/ConvoMem",
+      "revision": "624f582ecf0d336ae1d4539d19186089800774b1"
+    }
+  },
+  "sourceDocuments": [
+    {
+      "url": "https://huggingface.co/datasets/xiaowu0162/longmemeval-cleaned/resolve/98d7416c24c778c2fee6e6f3006e7a073259d48f/README.md",
+      "sha256": "fe31783d4e5d132681a25e4192e85def8edd214094939879f5283818c0a4a3e0"
+    },
+    {
+      "url": "https://huggingface.co/datasets/Salesforce/ConvoMem/resolve/e3e9b39115b02346824c70d349350de738f8be41/README.md",
+      "sha256": "fa03843012cf85a491c073008f853861d553ba99505ec8c5c013f978376102ba"
+    },
+    {
+      "url": "https://huggingface.co/datasets/Salesforce/ConvoMem/resolve/e3e9b39115b02346824c70d349350de738f8be41/dataset_info.json",
+      "sha256": "5b98237477b800681e22f5fe25c8791699cca121f7c6c5f4d46969a14567f832"
+    },
+    {
+      "url": "https://huggingface.co/datasets/Salesforce/ConvoMem/resolve/e3e9b39115b02346824c70d349350de738f8be41/core_benchmark/pre_mixed_testcases/README.md",
+      "sha256": "bdc452779846f35bad6b7c1dd564846f69eb6fb0922b4ff4c284786e5e51bd4e"
+    }
+  ]
+}
