@@ -14,6 +14,13 @@ Only older eligible text is indexed. Chunks are up to 800 Unicode code points by
 
 ## Write ordering and recovery
 
+Accessing the same SillyTavern server/account from another device shares host
+chats and the owner ID, but not the browser-local collection mapping or journal.
+The current UI cannot discover and reconnect an existing collection on a fresh
+browser merely by entering the API key. Remote excerpts also cannot replace the
+authoritative source chat. See [device-continuity follow-ups](evaluation-and-device-followups.md#same-server-device-continuity-current-limits-and-follow-up)
+for the proposed sequential-handoff scope and the unresolved coordination work.
+
 A per-engine promise queue serializes mutations. A session-long Web Lock prevents a second active tab for that account/browser. The local journal writes the union of prior and desired IDs **before** remote requests. Obsolete IDs are deleted; missing current IDs use normal upsert batches of 50. A successful pass replaces the journal with the desired IDs. In-memory acknowledgements skip duplicate writes during the session. Reload conservatively re-upserts current records and deletes obsolete recorded IDs, including writes whose response was lost.
 
 No chat text or API key is persisted in the journal. If local storage fails, remote writes do not begin. An interrupted mutation may still reach the service; the durable intent and next reconciliation repair it. There is no background retry loop against a failing service. A new event, explicit Sync, or next generation retries. The synthetic gate polls readiness with a bounded attempt count; ordinary queries use a 15-second per-request timeout. Full initial indexing can require multiple requests and take longer.

@@ -96,6 +96,17 @@ Ordinary document deletion removes current retrievable records; snapshot retenti
 
 ## Development and verification
 
+The [evaluation and device-continuity follow-ups](docs/evaluation-and-device-followups.md)
+record the limits of the small-context comparisons, default versus experimental
+memory settings, proposed 32K/128K validation, local-embedding measurements, and
+the work needed to resume the same remote memory from another device. These are
+follow-up directions, not new measured results or shipped continuity support.
+
+The [external benchmark selection](docs/benchmark-selection.md) prioritizes
+LongMemEval-S and ConvoMem, compares additional memory benchmarks, and records
+the data audit, host adaptation and scoring controls needed before paid runs.
+No external benchmark results are claimed by this selection record.
+
 The [natural-dialogue evaluation protocol](docs/natural-dialogue-evaluation.md)
 provides four frozen bilingual synthetic histories, 16 cases and an offline plan
 exporter. The [first live attempt](docs/natural-dialogue-live.md#first-live-attempt--2026-09-28)
