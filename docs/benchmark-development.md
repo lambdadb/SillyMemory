@@ -223,6 +223,65 @@ not published as another standalone preparation PR. Complete that evaluation and
 analysis before expanding the harness further unless a concrete blocker requires
 an independently useful fix. See the [retention policy](../CONTRIBUTING.md#experiment-lifecycle-and-retention).
 
+## Provider transport checkpoint — local validation
+
+`scripts/benchmark-provider-ledger.mjs` adds the provider transport needed by the
+future development executor. It is a library, not a paid-run CLI, and is not yet
+connected to the host runner. Product code, managed embeddings and the frozen
+workload are unchanged. The complete suite passes **303 tests**, including 28 new
+ledger tests. Runtime/tool syntax and release checks pass. This stage makes no
+new paid calls and adds no answer-quality results.
+
+The caller supplies a secret-bearing `send` closure and pinned-model tokenizers.
+Only normalized request bodies enter the ledger; credentials and headers must
+remain in that closure. The library accepts only the frozen fresh development
+tasks and model/settings. It rejects pilot-reuse and held-out task IDs, extra
+completion options, excess summary ordinals and native embedding batches larger
+than ten inputs. Aggregate limits may be lowered, never raised. Reservation uses
+the historical frozen plan's price assumptions, not a current billing guarantee.
+
+Before dispatch, it persists the exact body and reserves the entire attempt's
+upper cost. A complete HTTP response is saved before JSON parsing, response-shape,
+finish-reason and token-usage assertions. Reopening the same checkpoint reuses
+that receipt; an invalid success is retained and rejected, never regenerated.
+Successful embedding vectors are also cached with their original input request.
+A changed logical request fails instead of using or replacing the old response.
+Concurrent identical calls coalesce within a process; the checkpoint writer lock
+excludes a second process.
+
+Completions are serialized with at least 15 seconds between dispatches. Only
+HTTP 500/502/503/504 permit up to three attempts, within the aggregate 16 extra
+attempts and 180-second logical deadline. HTTP 401/429, invalid success responses,
+and native embedding failures are not retried. Backoff decisions are persisted;
+process downtime consumes the deadline. Restart imposes a fresh conservative
+15-second completion gap. Each attempt has a 90-second abort signal; the supplied
+sender must honor it through response-body consumption.
+
+A six-hour execution window starts at initial ledger creation, including downtime;
+it blocks fresh paid work while allowing completed receipts to be inspected.
+Unknown delivery or an interrupted response body leaves pending intent and blocks
+further fresh provider work. Recovery requires inspection; deleting state to get a
+new budget or assuming an unknown call was free is not a supported recovery path.
+The file format/lock has the same crash boundary described above: this is not an
+exactly-once remote execution guarantee.
+
+The tests cover reservation exhaustion without partial charging, input/option
+bounds, malformed/truncated successes, retry exhaustion, interrupted backoff,
+caller mutation, concurrent dispatch, downtime, cached embeddings and separate
+Node-process replay after downstream validation failure. Two loopback HTTP tests
+exercise 503-to-success replay and a connection dropped mid-body. Test time and
+provider bodies are controlled fixtures. These are **unit/process/loopback checks**,
+not SillyTavern-host or OpenAI integration results. Authentication isolation is
+checked using a synthetic header secret, not a real key.
+
+```sh
+node --test tests/benchmark-provider-ledger.test.js
+```
+
+Host task recovery, native-index replay ordering, LambdaDB request reservations
+and owned-resource cleanup remain to be connected and fault-tested before the
+62-answer paid expansion. The ledger alone does not establish those guarantees.
+
 ## Remaining sequence
 
 1. Integrate these tested checkpoints/observations into a bounded development live
