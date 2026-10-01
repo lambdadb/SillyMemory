@@ -142,6 +142,11 @@ declares MIT, so its independent host preflight can proceed.
 
 ## Input boundaries and next implementation
 
+Follow-up: the [host preflight](benchmark-host-preflight.md) now exercises the
+two development inputs through real SillyTavern with local service fixtures.
+It records final prompt delivery and automatic summary events, plus macro/empty
+message limitations. The live pilot and model-quality evaluation remain pending.
+
 The adapters whitelist model-visible fields. LongMemEval exposes only source
 role/content, explicit session/date markers and question/date. ConvoMem exposes
 only conversation role/text, numbered boundaries and the chosen question. Answer
