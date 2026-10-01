@@ -41,7 +41,7 @@ ranking asserted by the benchmark authors.
 | Benchmark and primary source | Useful coverage | Fit, limitation and priority |
 | --- | --- | --- |
 | [LongMemEval](https://github.com/xiaowu0162/LongMemEval) | 500 questions covering extraction, multi-session reasoning, updates, time and abstention. S has roughly 115K Llama 3 tokens per history; M is larger. | **First external suite: cleaned S.** A useful general memory reference. Measure lengths with our generator's tokenizer; the published token count does not prove that each request fits 128K. Oracle history is diagnostic only. |
-| [ConvoMem](https://github.com/SalesforceAIResearch/ConvoMem) | 75,336 QA pairs covering user facts, assistant facts, changing facts, abstention, preferences and implicit connections, with different history sizes. | **Second suite.** Directly addresses full-context versus retrieved-memory tradeoffs. Synthetic assistant conversations are not representative character roleplay. Start with a declared stratified subset rather than the entire corpus. |
+| [ConvoMem](https://github.com/SalesforceAIResearch/ConvoMem) | 75,336 QA pairs covering user facts, assistant facts, changing facts, abstention, preferences and implicit connections, with different history sizes. | **Conditional second suite.** Directly addresses full-context versus retrieved-memory tradeoffs. Synthetic assistant conversations are not representative character roleplay. Confirm permission for our product comparison and aggregate-result publication before running a declared stratified subset; see the [license history and audit decision](benchmark-data-audit.md#convomem-use-the-actual-schema-and-resolve-usage-terms-first). |
 | [LoCoMo](https://github.com/snap-research/locomo) | Long conversations with temporal, multi-hop and other memory questions. | **Follow-up comparability suite.** Keep original categories, answerability and scoring visible; a vendor's non-adversarial subset is not the complete benchmark. Check the dataset's CC BY-NC 4.0 terms separately from code before intended use or redistribution. |
 | [PersonaMem](https://github.com/bowen-upenn/PersonaMem) / [PersonaMem-v2](https://github.com/bowen-upenn/PersonaMem-v2) | Dynamic user profiles and personalized responses; v2 emphasizes implicit preferences and provides 32K/128K history construction. | **Later personalization cohort.** Choose and pin one version; v1 and v2 are not interchangeable. User preference application does not establish fictional-character identity, voice or narrative consistency. |
 | [DialSim / LongDialQA](https://dialsim.github.io/) | An agent plays a TV character in long, multi-party scripted conversations, answering spontaneous, temporal and multi-hop questions under time limits. | **Roleplay-oriented follow-up.** Closer in format to character chat, but multi-party mapping and response deadlines change the task. A one-to-one adaptation must be labeled; inspect possible prior model knowledge of the TV scripts with a no-history control. |
@@ -65,8 +65,9 @@ SillyTavern extension loading, automatic updates or final prompt delivery.
    distributions. Save source revision, checksum, sample IDs and preprocessing
    decisions in a manifest. Resolve whether a subset can populate the intended
    fitting/overflowing cohorts before estimating paid work.
-2. **Freeze a bounded protocol.** Use LongMemEval-S first, then a ConvoMem subset
-   stratified by question type, evidence distribution and history size. Specify
+2. **Freeze a bounded protocol.** Use LongMemEval-S first. Add a ConvoMem subset
+   stratified by question type, evidence distribution and history size only after
+   the intended product-evaluation and result-publication use is cleared. Specify
    the exact sample count, selection seed, development/evaluation separation,
    model, scorer and spend limits before execution. No sample count or paid-run
    authorization is implied by this document.
@@ -80,8 +81,9 @@ SillyTavern extension loading, automatic updates or final prompt delivery.
    unanswered product question justifies it.
 
 This revises the earlier discussion's LongMemEval-then-LoCoMo order by moving
-ConvoMem ahead of LoCoMo. The immediate deliverable is a data audit and frozen
-protocol, not implementation of every candidate.
+ConvoMem ahead of LoCoMo as a candidate, subject to the usage terms above. The
+immediate deliverable is a data audit and frozen protocol, not implementation of
+every candidate.
 
 ## Host adaptation and leakage controls
 

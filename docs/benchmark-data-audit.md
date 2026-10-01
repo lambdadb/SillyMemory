@@ -116,10 +116,27 @@ split as independent questions during later tuning.
 The dataset card declares
 [CC BY-NC 4.0](https://huggingface.co/datasets/Salesforce/ConvoMem/blob/e3e9b39115b02346824c70d349350de738f8be41/README.md),
 while [dataset_info.json](https://huggingface.co/datasets/Salesforce/ConvoMem/blob/e3e9b39115b02346824c70d349350de738f8be41/dataset_info.json)
-declares Apache-2.0. The code repository's license does not resolve that conflict
-for the dataset. This audit does not settle permitted product-evaluation or
-redistribution use. Keep ConvoMem out of the executable paid comparison until
-the applicable dataset terms are confirmed. LongMemEval's
+still declares Apache-2.0. The provider's
+[license-change commit](https://huggingface.co/datasets/Salesforce/ConvoMem/commit/e3e9b39115b02346824c70d349350de738f8be41)
+explicitly changes the dataset card from Apache-2.0 to CC BY-NC 4.0. This suggests
+stale metadata in `dataset_info.json`, rather than two equally current license
+choices. The code repository's license does not establish dataset permissions.
+
+[CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/legalcode.en)
+does not prohibit publication as such; its noncommercial condition concerns the
+purpose of the use, not whether a model API costs money. Publishing aggregate
+evaluation scores or token counts is distinct from redistributing source dialogues
+or questions. However, publishing aggregates alone does not settle whether the
+underlying dataset use for product evaluation or promotion meets that condition.
+This audit establishes neither blanket permission nor a prohibition on our
+evaluation or publication of its results.
+
+Proceed with LongMemEval first. Defer ConvoMem answer-quality comparisons until
+the provider clarifies whether our product comparison and publication of aggregate
+results are permitted, or grants suitable permission. This is a project sequencing
+decision, not a finding that paid API calls or public results are forbidden. The
+completed offline schema/token audit remains available; no ConvoMem model-quality
+run is claimed. LongMemEval's
 [cleaned dataset card](https://huggingface.co/datasets/xiaowu0162/longmemeval-cleaned/blob/98d7416c24c778c2fee6e6f3006e7a073259d48f/README.md)
 declares MIT, so its independent host preflight can proceed.
 
