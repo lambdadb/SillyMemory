@@ -288,3 +288,32 @@ test('pinned host sampling defaults are forwarded exactly and changes are reject
         assert.throws(() => ledger.invoke(off.id, 'judge', 0, { ...body('judge'), [key]: value }));
     }
 }));
+test('explicit summary recovery retains unknown intent and charges its bounded replacement', () => fixture(async ({ open, clock }) => {
+    let calls = 0, ledger = await open(async () => { calls++; throw new Error('no response'); });
+    await assert.rejects(ledger.invoke(summary.id, 'summary', 0, body()), /Uncertain/);
+    const id = `provider/${summary.id}/summary/0/0`;
+    await ledger.close(); clock.time += 210000;
+    ledger = await open(async () => { calls++; return calls === 2 ? response({}, 500) : response(); });
+    await assert.rejects(ledger.invoke(summary.id, 'summary', 0, body()), /Uncertain/);
+    await ledger.acknowledgeSummaryRetry(id, 'Inspected aborted transport; original cost remains reserved');
+    const result = await ledger.invoke(summary.id, 'summary', 0, body());
+    assert.deepEqual(result.attempts.map(a => a.status), [null, 500, 200]);
+    assert.equal(result.attempts[0].unknownDelivery, true);
+    assert.equal(ledger.state.calls[id].status, 'pending'); assert.equal(ledger.state.calls[id].receipt, undefined);
+    assert.equal(ledger.state.used.completionAttempts, 3); assert.equal(ledger.state.used.extraAttempts, 2);
+    assert.equal(calls, 3);
+    await ledger.close(); ledger = await open(async () => { throw new Error('must not regenerate'); });
+    const cached = await ledger.invoke(summary.id, 'summary', 0, body());
+    assert.equal(cached.result.choices[0].message.content, 'original answer'); assert.equal(cached.reused, true);
+}));
+test('summary acknowledgment cannot authorize final-answer retries or exceed three attempts', () => fixture(async ({ open }) => {
+    let calls = 0; const ledger = await open(async () => { calls++; throw new Error('lost'); });
+    await assert.rejects(ledger.invoke(summary.id, 'summary', 0, body()));
+    await assert.rejects(ledger.acknowledgeSummaryRetry(`provider/${off.id}/answer/0/0`, 'wrong kind'), /Only a bounded/);
+    for (let n = 0; n < 2; n++) {
+        await ledger.acknowledgeSummaryRetry(`provider/${summary.id}/summary/0/${n}`, 'Inspected missing response');
+        await assert.rejects(ledger.invoke(summary.id, 'summary', 0, body()));
+    }
+    await assert.rejects(ledger.acknowledgeSummaryRetry(`provider/${summary.id}/summary/0/2`, 'over cap'), /Only a bounded/);
+    assert.equal(calls, 3); assert.equal(ledger.state.used.completionAttempts, 3); assert.equal(ledger.state.used.extraAttempts, 2);
+}));

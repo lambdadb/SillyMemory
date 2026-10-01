@@ -7,7 +7,7 @@ import { openCheckpoint } from './benchmark-checkpoint.mjs';
 import { sha } from './benchmark-audit.mjs';
 import { NATURAL_RETRY, retryDelay } from './provider-retry.mjs';
 const frozenPlan = JSON.parse(await readFile(new URL('../docs/benchmarks/development-plan-v1.json', import.meta.url), 'utf8'));
-export const LEDGER_POLICY = Object.freeze({ version: 'development-provider-ledger-v1', durationMs: 6 * 60 * 60 * 1000,
+export const LEDGER_POLICY = Object.freeze({ version: 'development-provider-ledger-v2', durationMs: 6 * 60 * 60 * 1000,
     completionIntervalMs: 15000, attemptTimeoutMs: 90000, requestDeadlineMs: 180000, maxAttempts: 3 });
 
 export async function openProviderLedger(directory, plan, { binding, send, countTokens,
@@ -29,7 +29,8 @@ export async function openProviderLedger(directory, plan, { binding, send, count
     let completionTail = Promise.resolve(), lastCompletionStart = now(), closed = false;
     const expired = () => assert(now() - startedAt < LEDGER_POLICY.durationMs, 'Development execution window expired');
     function uncertain() {
-        assert(!Object.entries(journal.state.calls).some(([id, c]) => id.startsWith('provider/') && c.status === 'pending' && !activeAttempts.has(id)),
+        const state = journal.state;
+        assert(!Object.entries(state.calls).some(([id, c]) => id.startsWith('provider/') && c.status === 'pending' && !activeAttempts.has(id) && !state.observations[`retry-decision/${id}`]),
             'Uncertain provider delivery requires explicit recovery');
     }
     function request(taskId, kind, ordinal, body) {
@@ -95,6 +96,15 @@ export async function openProviderLedger(directory, plan, { binding, send, count
         let firstStart;
         for (let n = 0; n < maxAttempts; n++) {
             const attemptId = `provider/${id}/${n}`, existing = journal.state.calls[attemptId];
+            const decision = journal.state.observations[`retry-decision/${attemptId}`]?.value;
+            if (existing?.status === 'pending' && decision) {
+                // No provider receipt is invented. The lost attempt stays pending and charged.
+                const key = `retry-window/${attemptId}`;
+                const window = journal.state.observations[key]?.value || { startedAt: now() };
+                await journal.observe(key, window); firstStart = window.startedAt;
+                attempts.push({ id: attemptId, reused: true, status: null, unknownDelivery: true });
+                continue;
+            }
             if (!existing) { expired(); uncertain(); }
             const perform = async () => {
                 if (!existing && kind !== 'embedding') {
@@ -151,6 +161,16 @@ export async function openProviderLedger(directory, plan, { binding, send, count
             if (existing) { assert.equal(existing.hash, hash, 'Concurrent logical request changed'); return existing.promise; }
             const promise = execute(kind, body, id, checked).finally(() => inflight.delete(id));
             inflight.set(id, { hash, promise }); return promise;
+        },
+        async acknowledgeSummaryRetry(attemptId, reason) {
+            assert(!closed && inflight.size === 0, 'Recovery requires an idle open ledger');
+            expired();
+            assert(typeof reason === 'string' && reason.length > 0 && reason.length <= 500);
+            assert(/^provider\/.+\/summary\/\d+\/[01]$/.test(attemptId), 'Only a bounded unfinished summary attempt can be acknowledged');
+            assert.equal(journal.state.calls[attemptId]?.status, 'pending', 'Pending intent required');
+            assert(!journal.state.observations[`retry-decision/${attemptId}`], 'Recovery already acknowledged');
+            await journal.observe(`retry-decision/${attemptId}`, { reviewedAt: now(), reason,
+                delivery: 'unknown', decision: 'retry same summary within original aggregate budget and three-attempt cap' });
         },
         async close() {
             if (closed) return;
