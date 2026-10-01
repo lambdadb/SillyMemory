@@ -76,35 +76,39 @@ for (const file of [...runtimeFiles, 'scripts/benchmark-development-live.mjs', '
 const binding = { plan: sha(planBytes), sourceSha256ByFile, fixture, pilot: sha(pilotBytes), scorer: sha(scorer),
     destination: fixture ? 'loopback' : sha(endpoint + '/' + env.LAMBDADB_PROJECT_NAME) };
 await mkdir(path.dirname(path.resolve(output)), { recursive: true });
-let report;
-try { report = JSON.parse(await readFile(output)); assert.deepEqual(report.binding, binding, 'Run binding changed'); }
-catch (error) { if (error.code !== 'ENOENT') throw error; report = { version: 'longmemeval-development-live-v1', binding, fixture,
-    evidence: fixture ? 'Actual pinned host with local deterministic services; no provider quality evidence.' : 'Actual pinned host, OpenAI and LambdaDB managed embeddings; development split only.',
-    rows: fixture ? [] : reused, summaries: [], generations: [], embeddings: [], nativeBarriers: [], sessions: [],
-    traffic: { lambda: [], vector: [], hostBlocked: 0, browserBlocked: 0 }, owned: [], passed: false, cleanup: false }; }
-assert(!report.passed, 'Completed run is read-only');
+// Acquire the run lock before reading or modifying its report; a second process
+// must not touch the report even if provider-ledger initialization fails.
+const durable = await openCheckpoint(output + '.state', binding, plan.limits);
+let report, ledger, fixtureClock = 0;
+try {
+    try { report = JSON.parse(await readFile(output)); assert.deepEqual(report.binding, binding, 'Run binding changed'); }
+    catch (error) { if (error.code !== 'ENOENT') throw error; report = { version: 'longmemeval-development-live-v1', binding, fixture,
+        evidence: fixture ? 'Actual pinned host with local deterministic services; no provider quality evidence.' : 'Actual pinned host, OpenAI and LambdaDB managed embeddings; development split only.',
+        rows: fixture ? [] : reused, summaries: [], generations: [], embeddings: [], nativeBarriers: [], sessions: [],
+        traffic: { lambda: [], vector: [], hostBlocked: 0, browserBlocked: 0 }, owned: [], passed: false, cleanup: false }; }
+    assert(!report.passed, 'Completed run is read-only');
+    ledger = await openProviderLedger(output + '.providers', plan, { binding,
+        countTokens: (text, kind) => kind === 'embedding' ? embeddingCount(text) : count(text),
+        ...(fixture ? { now: () => fixtureClock, wait: async ms => { fixtureClock += ms; }, random: () => 0 } : {}),
+        send: async ({ kind, body, signal }) => {
+            if (!fixture) return fetch(`https://api.openai.com/v1/${kind === 'embedding' ? 'embeddings' : 'chat/completions'}`, {
+                method: 'POST', headers: { Authorization: `Bearer ${env.LLM_API_KEY}`, 'Content-Type': 'application/json' }, body: JSON.stringify(body), signal });
+            if (kind === 'embedding') return new Response(JSON.stringify({ data: body.input.map((text, index) => ({ index,
+                embedding: Array.from({ length: 1536 }, (_, i) => (parseInt(sha(text).slice(i % 60, i % 60 + 4), 16) / 65535) - .5) })),
+                usage: { total_tokens: body.input.reduce((n, text) => n + embeddingCount(text), 0) } }));
+            const content = kind === 'judge' ? 'yes' : kind === 'summary' ? 'LOCAL_SUMMARY' : 'LOCAL_ANSWER';
+            const prompt_tokens = body.messages.reduce((n, m) => n + count(m.content) + 6, 0), completion_tokens = count(content);
+            return new Response(JSON.stringify({ choices: [{ index: 0, finish_reason: 'stop', message: { role: 'assistant', content } }], usage: { prompt_tokens, completion_tokens, total_tokens: prompt_tokens + completion_tokens } }));
+        },
+    });
+} catch (error) { await durable.close(); throw error; }
 const startedAt = Date.now();
 report.sessions.push({ startedAt: new Date(startedAt).toISOString(), priorFailure: report.failure || null });
 delete report.failure; report.cleanup = false;
 let checkpointTail = Promise.resolve();
 const checkpoint = () => { const bytes = JSON.stringify(report) + '\n'; checkpointTail = checkpointTail.then(async () => { await writeFile(output + '.tmp', bytes); await rename(output + '.tmp', output); }); return checkpointTail; };
-await checkpoint();
-const durable = await openCheckpoint(output + '.state', binding, plan.limits);
-let fixtureClock = 0;
-const ledger = await openProviderLedger(output + '.providers', plan, { binding,
-    countTokens: (text, kind) => kind === 'embedding' ? embeddingCount(text) : count(text),
-    ...(fixture ? { now: () => fixtureClock, wait: async ms => { fixtureClock += ms; }, random: () => 0 } : {}),
-    send: async ({ kind, body, signal }) => {
-        if (!fixture) return fetch(`https://api.openai.com/v1/${kind === 'embedding' ? 'embeddings' : 'chat/completions'}`, {
-            method: 'POST', headers: { Authorization: `Bearer ${env.LLM_API_KEY}`, 'Content-Type': 'application/json' }, body: JSON.stringify(body), signal });
-        if (kind === 'embedding') return new Response(JSON.stringify({ data: body.input.map((text, index) => ({ index,
-            embedding: Array.from({ length: 1536 }, (_, i) => (parseInt(sha(text).slice(i % 60, i % 60 + 4), 16) / 65535) - .5) })),
-            usage: { total_tokens: body.input.reduce((n, text) => n + embeddingCount(text), 0) } }));
-        const content = kind === 'judge' ? 'yes' : kind === 'summary' ? 'LOCAL_SUMMARY' : 'LOCAL_ANSWER';
-        const prompt_tokens = body.messages.reduce((n, m) => n + count(m.content) + 6, 0), completion_tokens = count(content);
-        return new Response(JSON.stringify({ choices: [{ index: 0, finish_reason: 'stop', message: { role: 'assistant', content } }], usage: { prompt_tokens, completion_tokens, total_tokens: prompt_tokens + completion_tokens } }));
-    },
-});
+try { await checkpoint(); }
+catch (error) { await ledger.close(); await durable.close(); throw error; }
 // Replay exact prior embedding batches even if native background work changes their order.
 // Consume each prior occurrence once; new requests still reserve a fresh ordinal.
 const priorEmbedding = new Map(), embeddingNext = new Map();
