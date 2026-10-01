@@ -32,6 +32,10 @@ The [external benchmark data audit](docs/benchmark-data-audit.md) records pinned
 LongMemEval-S and ConvoMem schemas, local token estimates, question selection and
 the bounded next pilot design. It contains no new model-quality results.
 
+The [LongMemEval host preflight](docs/benchmark-host-preflight.md) checks the two
+development inputs at 32K/128K through the actual host, with local service fixtures.
+It records prompt delivery, automatic summary scheduling and import limitations.
+
 ## Supported host
 
 The development baseline is **SillyTavern 1.19.0**, pinned to commit [`06bde939fb1e9c4c8d8641d810f0a916b5bce127`](https://github.com/SillyTavern/SillyTavern/tree/06bde939fb1e9c4c8d8641d810f0a916b5bce127). Other revisions are unverified. Use a browser with Web Crypto, Web Locks, and `AbortSignal.any` (the automated browser test uses Chromium). Serve SillyTavern on localhost or HTTPS. One active SillyMemory tab per SillyTavern account/browser profile is enforced with a Web Lock.
