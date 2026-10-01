@@ -46,3 +46,27 @@ test('continuation cannot hide or regenerate successful prior calls', () => {
     const obscured = structuredClone(report); obscured.continuation.errors = [];
     assert.throws(() => validateContinuation(obscured, previous));
 });
+
+
+test('CLI rejects missing producer provenance and a changed dataset lock without writing a summary', async () => {
+    const { mkdtemp, writeFile, access, rm } = await import('node:fs/promises');
+    const { tmpdir } = await import('node:os');
+    const { join } = await import('node:path');
+    const { spawnSync } = await import('node:child_process');
+    const dir = await mkdtemp(join(tmpdir(), 'sm-provenance-'));
+    try {
+        for (const mutate of [
+            r => { r.sourceSha256ByFile = {}; },
+            r => { delete r.sourceSha256ByFile['scripts/benchmark-live-pilot.mjs']; },
+            r => { r.sourceSha256ByFile['unexpected.mjs'] = 'a'.repeat(64); },
+            r => { r.sourceSha256 = '0'.repeat(64); },
+        ]) {
+            const changed = structuredClone(report); mutate(changed);
+            assert.throws(() => validateLivePilot(changed, plan));
+            const input = join(dir, 'input.json'), output = join(dir, 'output.json');
+            await writeFile(input, JSON.stringify(changed));
+            const result = spawnSync(process.execPath, ['scripts/benchmark-live-results.mjs', input, output]);
+            assert.notEqual(result.status, 0); await assert.rejects(access(output));
+        }
+    } finally { await rm(dir, { recursive: true, force: true }); }
+});

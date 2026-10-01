@@ -1,8 +1,22 @@
 // Validate completed live evidence before comparing modes. No generation or judge calls.
 import assert from 'node:assert/strict';
 import { createBudget, LIMITS } from './benchmark-live-budget.mjs';
+import { recordedSource } from './recorded-source.mjs';
 import { PROVIDER_SPACING, summarizeProviderSpacing } from './provider-spacing.mjs';
+const commonProducers = [
+    'scripts/benchmark-live-pilot.mjs', 'scripts/benchmark-live-budget.mjs',
+    'scripts/provider-retry.mjs', 'scripts/provider-spacing.mjs', 'scripts/benchmark-host-input.mjs',
+    'scripts/benchmark-live-network.cjs', 'scripts/benchmark-audit.mjs', 'index.js', 'manifest.json',
+    'src/memory.js', 'src/context.js', 'src/client.js', 'src/gate.js', 'src/delivery.js', 'src/status.js',
+];
+export function validateProvenance(report, plan, { initial = false } = {}) {
+    assert.equal(report.sourceSha256, plan.sourceSha256, 'Dataset lock differs from frozen plan');
+    const required = initial ? commonProducers : [...commonProducers, 'scripts/three-mode-native.mjs'];
+    assert.deepEqual(Object.keys(report.sourceSha256ByFile || {}).sort(), [...required].sort(), 'Complete producer map required');
+    for (const file of required) recordedSource(file, report.sourceSha256ByFile[file]);
+}
 export function validateLivePilot(report, plan) {
+    validateProvenance(report, plan);
     assert.equal(report.version, 'longmemeval-live-pilot-v1');
     assert(report.passed && report.cleanup, 'Incomplete execution or cleanup');
     assert.equal(report.failure, undefined); assert.deepEqual(report.errors, []);
@@ -143,12 +157,12 @@ if (process.argv[1] && import.meta.url === (await import('node:url')).pathToFile
     const planBytes = await readFile(new URL('../docs/benchmarks/pilot-design-v1.json', import.meta.url));
     assert.equal(report.planSha256, sha(planBytes));
     assert.equal(report.preflightSha256, sha(await readFile(new URL('../docs/benchmarks/host-preflight-v1.json', import.meta.url))));
-    for (const [file, hash] of Object.entries(report.sourceSha256ByFile)) recordedSource(file, hash);
+    validateProvenance(report, JSON.parse(planBytes));
     if (report.continuation) {
         const priorBytes = await readFile(new URL('../docs/benchmarks/live-pilot-interrupted-v1.json', import.meta.url));
         assert.equal(report.continuation.reportSha256, sha(priorBytes));
         const prior = JSON.parse(priorBytes);
-        for (const [file, hash] of Object.entries(prior.sourceSha256ByFile)) recordedSource(file, hash);
+        validateProvenance(prior, JSON.parse(planBytes), { initial: true });
         validateContinuation(report, prior);
     }
     const result = { reportSha256: sha(bytes), ...validateLivePilot(report, JSON.parse(planBytes)) };
