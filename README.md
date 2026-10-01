@@ -39,8 +39,11 @@ The [bounded 32K live pilot](docs/benchmark-live-pilot.md) follows with real Ope
 and LambdaDB managed embeddings, separate summary costs, and preserved failure
 and recovery evidence. Two development questions do not establish general recall
 superiority. The [14-question development expansion](docs/benchmark-development.md)
-freezes the next schedule and adds retained observations and retrieval-stage
-diagnostics; its local-fixture evidence is separate from paid quality results.
+completes 70 host-generated answers with separate setup costs and retrieval-stage
+diagnostics. SillyMemory scores 10/14 with 3,361.5 median input tokens; plain 128K
+also scores 10/14 with 104,761 median input tokens, while missing different
+questions. These development results do not establish general superiority; the
+42 held-out questions remain reserved.
 
 ## Supported host
 
