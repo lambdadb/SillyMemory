@@ -20,7 +20,7 @@ import { openCheckpoint } from './benchmark-checkpoint.mjs';
 import { prepareDevelopmentCase } from './benchmark-development-input.mjs';
 import { validateLivePilot } from './benchmark-live-results.mjs';
 import { validateObservation } from './benchmark-observation.mjs';
-import { nativeBarrier } from './benchmark-native-barrier.mjs';
+import { nativeBarrier, completeNativeIndex } from './benchmark-native-barrier.mjs';
 import { installRetrievalObserver } from './benchmark-retrieval-observer.mjs';
 import { createServer as createHttpsServer } from 'node:https';
 
@@ -105,8 +105,20 @@ const ledger = await openProviderLedger(output + '.providers', plan, { binding,
         return new Response(JSON.stringify({ choices: [{ index: 0, finish_reason: 'stop', message: { role: 'assistant', content } }], usage: { prompt_tokens, completion_tokens, total_tokens: prompt_tokens + completion_tokens } }));
     },
 });
+// Replay exact prior embedding batches even if native background work changes their order.
+// Consume each prior occurrence once; new requests still reserve a fresh ordinal.
+const priorEmbedding = new Map(), embeddingNext = new Map();
+for (const [id, call] of Object.entries(ledger.state.calls)) {
+    const match = /^request\/(.+)\/embedding\/(\d+)$/.exec(id);
+    if (!match) continue;
+    const task = match[1], ordinal = Number(match[2]);
+    embeddingNext.set(task, Math.max(embeddingNext.get(task) || 0, ordinal + 1));
+    const key = task + '/' + call.requestSha256;
+    if (!priorEmbedding.has(key)) priorEmbedding.set(key, []);
+    priorEmbedding.get(key).push(ordinal);
+}
 const work = await mkdtemp(path.join(tmpdir(), 'sillymemory-development-live-')), source = path.join(work, 'host');
-let host, browser, page, native, remote, cert, hostAdded = false, stage = 'setup', summarySignal = 0, summaryOrdinal = 0, embeddingOrdinal = 0;
+let host, browser, page, native, remote, cert, hostAdded = false, stage = 'setup', summarySignal = 0, summaryOrdinal = 0;
 const generations = [], errors = [], memoryDocs = new Map();
 const send = (res, status, body = {}) => { res.writeHead(status, { 'Content-Type': 'application/json' }); res.end(JSON.stringify(body)); };
 const json = async req => { const parts = []; for await (const chunk of req) parts.push(chunk); return JSON.parse(Buffer.concat(parts).toString() || '{}'); };
@@ -129,7 +141,10 @@ const bridge = createServer(async (req, res) => {
         const body = await json(req); deadline();
         if (req.url === '/v1/embeddings') {
             assert(stage.endsWith('/vectors'), 'Embedding request outside native arm');
-            const ordinal = embeddingOrdinal++;
+            const key = stage + '/' + sha(JSON.stringify({ kind: 'embedding', body }));
+            const previousOrdinals = priorEmbedding.get(key);
+            const ordinal = previousOrdinals?.length ? previousOrdinals.shift() : (embeddingNext.get(stage) || 0);
+            embeddingNext.set(stage, Math.max(embeddingNext.get(stage) || 0, ordinal + 1));
             const { result, attempts, reused } = await ledger.invoke(stage, 'embedding', ordinal, body);
             const id = `${stage}/embedding/${ordinal}`;
             if (!report.embeddings.some(e => e.id === id)) report.embeddings.push({ id, stage, inputs: body.input.length, usage: result.usage, attempts, reused });
@@ -359,7 +374,7 @@ print(ns['get_anscheck_prompt'](**x))`, path.join(cache, 'evaluate_qa.py')], { i
             const existingRow = report.rows.find(r => r.id === item.id && r.context === context && r.mode === mode);
             if (existingRow) { if (!existingRow.judge) await judgeRow(existingRow); continue; }
             stage = `${item.id}/${context}/${mode}`; console.log(`LIVE ${stage}`);
-            summaryOrdinal = 0; embeddingOrdinal = 0;
+            summaryOrdinal = 0;
             const armStarted = Date.now();
             let saved;
             if (!durable.state.calls[`observation/${stage}`]) {
@@ -368,7 +383,9 @@ print(ns['get_anscheck_prompt'](**x))`, path.join(cache, 'evaluate_qa.py')], { i
             assert.equal(sha(JSON.stringify(restored)), sha(JSON.stringify(sourceView(mode === 'summary' ? [] : item.chat))), 'Restored source hash');
             let nativeDocuments = 0;
             if (mode === 'vectors') {
-                await indexNative(page);
+                const indexed = await completeNativeIndex(page, { index: indexNative, barrier: native,
+                    healthy: () => assert.deepEqual(errors, [], 'Provider failed during native indexing') });
+                report.nativeIndexCompletion ||= []; report.nativeIndexCompletion.push({ stage, attempts: indexed.completionAttempts, hashes: indexed.hashes.length });
                 nativeDocuments = report.traffic.vector.filter(r => r.stage === stage && r.operation === 'insert').reduce((n, r) => n + r.count, 0);
                 assert(nativeDocuments > 0);
             }

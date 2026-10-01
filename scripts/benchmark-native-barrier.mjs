@@ -22,3 +22,17 @@ export function nativeBarrier(page, { settleMs = 1500, quietMs = 250, timeoutMs 
         return { disabled: true, pending: active.size, startedDuringBarrier: started - before, settleMs, elapsedMs: Date.now() - start };
     }, close() { page.off('request', begin); page.off('requestfinished', end); page.off('requestfailed', end); } };
 }
+
+// The pinned Vectorize All handler treats synchronizeChat's busy return (-1)
+// as completion. Its return alone is not proof that every source hash is indexed.
+export async function completeNativeIndex(page, { index, barrier, healthy = () => {}, maxAttempts = 4 }) {
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+        healthy();
+        try { return { ...await index(page), completionAttempts: attempt }; }
+        catch (error) {
+            if (!error.message.includes('Native index differs from restored source') || attempt === maxAttempts) throw error;
+            healthy(); // Provider failures are not a host-lock retry.
+            await barrier.suspend();
+        }
+    }
+}
