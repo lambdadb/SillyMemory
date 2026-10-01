@@ -14,9 +14,6 @@ import { PROVIDER_SPACING, createSpacedSender, summarizeProviderSpacing } from '
 import { fixtureFiles } from './natural-dialogue.mjs';
 import { semanticFiles, verifySemanticPlan } from './semantic-long.mjs';
 import { createDirectAdapter, directFiles, directProtocol, verifyDirectPlan } from './semantic-direct.mjs';
-import { summaryFiles, summaryRetry, verifySummaryPlan } from './summarize-plan.mjs';
-import { runSummarize } from './summarize-live.mjs';
-import { createSummaryTrafficGuard } from './summary-traffic.mjs';
 import { tuningFiles, tuningRetry, verifyTuningPlan } from './native-tuning-plan.mjs';
 import { threeModeFiles, threeModeRetry, verifyThreeModePlan } from './three-mode-plan.mjs';
 import { purgeNativeCollections } from './three-mode-native.mjs';
@@ -30,11 +27,9 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const source = process.env.ST_SOURCE || '/tmp/sillymemory-st-source';
 const revision = '06bde939fb1e9c4c8d8641d810f0a916b5bce127';
 const env = parseEnv(await readFile(process.env.SM_ENV_FILE || path.join(root, '.env.local'), 'utf8'));
-const summarizeMode = process.argv.includes('--summarize');
-if(summarizeMode && ['--semantic','--natural','--native-tuning','--three-modes','--direct-embeddings','--comparison','--korean-eval','--challenges','--heldout'].some(flag=>process.argv.includes(flag))) throw new Error('Choose --summarize without another evaluation mode');
 const nativeTuning = process.argv.includes('--native-tuning');
 const threeModes = process.argv.includes('--three-modes') || nativeTuning;
-const semantic = process.argv.includes('--semantic') || threeModes || summarizeMode;
+const semantic = process.argv.includes('--semantic') || threeModes;
 if (semantic && process.argv.includes('--natural')) throw new Error('Choose one evaluation mode.');
 const directEmbeddingsMode = process.argv.includes('--direct-embeddings');
 if (directEmbeddingsMode && (!semantic || threeModes)) throw new Error('--direct-embeddings requires --semantic');
@@ -43,10 +38,10 @@ const retryTransient = process.argv.includes('--retry-transient');
 if (semantic && !retryTransient) throw new Error('--semantic requires the frozen --retry-transient policy');
 if (retryTransient && !natural) throw new Error('--retry-transient requires --natural');
 const retryBudget = { calls: 0, retries: 0 };
-const frozenNatural = natural ? (semantic ? await (summarizeMode ? verifySummaryPlan : nativeTuning ? verifyTuningPlan : threeModes ? verifyThreeModePlan : directEmbeddingsMode ? verifyDirectPlan : verifySemanticPlan)(process.env.SM_NATURAL_PLAN) : await verifyNaturalPlan(process.env.SM_NATURAL_PLAN)) : null;
+const frozenNatural = natural ? (semantic ? await (nativeTuning ? verifyTuningPlan : threeModes ? verifyThreeModePlan : directEmbeddingsMode ? verifyDirectPlan : verifySemanticPlan)(process.env.SM_NATURAL_PLAN) : await verifyNaturalPlan(process.env.SM_NATURAL_PLAN)) : null;
 const comparison = process.argv.includes('--comparison');
 const nativeComparison = comparison || threeModes;
-const transportProtocol = summarizeMode ? summaryRetry : nativeTuning ? tuningRetry : threeModes ? threeModeRetry : NATURAL_RETRY;
+const transportProtocol = nativeTuning ? tuningRetry : threeModes ? threeModeRetry : NATURAL_RETRY;
 const setupOnly = process.argv.includes('--comparison-setup');
 const comparisonStart = Number(process.env.SM_COMPARE_START || 0);
 if (!Number.isInteger(comparisonStart) || comparisonStart < 0 || comparisonStart > 53) throw new Error('Invalid SM_COMPARE_START');
@@ -77,42 +72,35 @@ if (reasoningEffort && !['none', 'minimal', 'low', 'medium', 'high'].includes(re
 // Use the host's documented body exclusions, not a prompt-rewriting bridge.
 const excludedParameters = liveModel && new URL(env.LLM_BASE_URL).hostname === 'generativelanguage.googleapis.com' ? ['frequency_penalty', 'logprobs', 'top_logprobs'] : [];
 const credentials = { endpoint: env.LAMBDADB_BASE_URL, project: env.LAMBDADB_PROJECT_NAME, key: env.LAMBDADB_PROJECT_API_KEY };
-if (!summarizeMode && !nativeTuning && !Object.values(credentials).every(Boolean)) throw new Error('LambdaDB configuration is incomplete.');
+if (!nativeTuning && !Object.values(credentials).every(Boolean)) throw new Error('LambdaDB configuration is incomplete.');
 if (execFileSync('git', ['-C', source, 'rev-parse', 'HEAD'], { encoding: 'utf8' }).trim() !== revision) throw new Error('Unexpected host revision.');
 if (await realpath(path.join(source, 'public/scripts/extensions/third-party/sillymemory')) !== root) throw new Error('Host extension symlink must point to this checkout.');
 const artifacts = path.join(root, 'artifacts'); await mkdir(artifacts, { recursive: true });
-const modeSuffix = natural ? (summarizeMode ? 'summarize' : nativeTuning ? 'native-tuning' : threeModes ? 'three-modes' : semantic ? 'semantic' : 'natural') : challenges ? `${heldout ? 'heldout' : 'challenges'}${challengeStart ? `-from-${challengeStart}` : ''}` : comparison ? `comparison${comparisonStart ? `-from-${comparisonStart}` : ''}${setupOnly ? '-setup' : ''}` : koreanEvaluation ? `korean-eval${process.env.SM_SAMPLE_START ? `-from-sample-${sampleStart}` : caseStart ? `-from-${caseStart}` : ''}` : liveModel ? 'live-model' : 'fixture-model';
+const modeSuffix = natural ? (nativeTuning ? 'native-tuning' : threeModes ? 'three-modes' : semantic ? 'semantic' : 'natural') : challenges ? `${heldout ? 'heldout' : 'challenges'}${challengeStart ? `-from-${challengeStart}` : ''}` : comparison ? `comparison${comparisonStart ? `-from-${comparisonStart}` : ''}${setupOnly ? '-setup' : ''}` : koreanEvaluation ? `korean-eval${process.env.SM_SAMPLE_START ? `-from-sample-${sampleStart}` : caseStart ? `-from-${caseStart}` : ''}` : liveModel ? 'live-model' : 'fixture-model';
 const suffix = modeSuffix + (artifactTag ? `-${artifactTag}` : '');
 const reportPath = path.join(artifacts, `generation-${suffix}.json`);
 if (natural) await writeFile(reportPath, JSON.stringify({ passed: false, incomplete: true }), { flag: 'wx' });
-const naturalSourceFiles = ['index.js', 'src/client.js', 'src/gate.js', 'src/memory.js', 'src/context.js', 'src/status.js', 'scripts/generation-smoke.mjs', 'scripts/provider-spacing.mjs', 'scripts/generation-cleanup.mjs', 'scripts/natural-eval.mjs', 'scripts/natural-dialogue.mjs', ...(semantic ? [...semanticFiles, ...(summarizeMode ? summaryFiles : nativeTuning ? tuningFiles : threeModes ? threeModeFiles : []), ...(directEmbeddingsMode ? directFiles : [])] : fixtureFiles(frozenNatural?.plan.version)), ...(retryTransient ? ['scripts/provider-retry.mjs', 'docs/natural-dialogue-retry.md', 'scripts/natural-summary.mjs', 'scripts/natural-score.mjs'] : [])];
+const naturalSourceFiles = ['index.js', 'src/client.js', 'src/gate.js', 'src/memory.js', 'src/context.js', 'src/status.js', 'scripts/generation-smoke.mjs', 'scripts/provider-spacing.mjs', 'scripts/generation-cleanup.mjs', 'scripts/natural-eval.mjs', 'scripts/natural-dialogue.mjs', ...(semantic ? [...semanticFiles, ...(nativeTuning ? tuningFiles : threeModes ? threeModeFiles : []), ...(directEmbeddingsMode ? directFiles : [])] : fixtureFiles(frozenNatural?.plan.version)), ...(retryTransient ? ['scripts/provider-retry.mjs', 'docs/natural-dialogue-retry.md', 'scripts/natural-summary.mjs', 'scripts/natural-score.mjs'] : [])];
 const naturalSourceSha256 = natural ? Object.fromEntries(await Promise.all(naturalSourceFiles.map(async file => [file, createHash('sha256').update(await readFile(path.join(root, file))).digest('hex')]))) : null;
 const pendingPath = path.join(artifacts, `generation-${suffix}-pending.json`);
 const pending = { collections: [], connectionHash: createHash('sha256').update(JSON.stringify([credentials.endpoint, credentials.project])).digest('hex') };
 await writeFile(pendingPath, JSON.stringify(pending), { flag: 'wx' });
 const work = await mkdtemp(path.join(tmpdir(), 'sillymemory-generation-'));
 const checks = [], generations = [], embeddings = [], vectorQueries = [], lambdaRequests = [];
-const resumeReport=frozenNatural?.resumeReport;
-if(resumeReport){generations.push(...structuredClone(resumeReport.generations));retryBudget.calls=resumeReport.providerCalls;retryBudget.retries=resumeReport.providerCalls-resumeReport.generations.length;}
-const resumedEvidence=()=>resumeReport?{resume:{...frozenNatural.plan.resume,generations:resumeReport.generations.length,providerCalls:resumeReport.providerCalls}}:{};
 const directEmbeddings = [];
-const directEvidence = () => ({ embeddingMode: summarizeMode ? 'none' : nativeTuning ? 'native-openai' : directEmbeddingsMode ? 'direct-experimental' : 'managed', ...(directEmbeddingsMode ? { directProtocol, directEmbeddings } : {}) });
+const directEvidence = () => ({ embeddingMode: nativeTuning ? 'native-openai' : directEmbeddingsMode ? 'direct-experimental' : 'managed', ...(directEmbeddingsMode ? { directProtocol, directEmbeddings } : {}) });
 const transformDirect = directEmbeddingsMode ? createDirectAdapter({ key: env.LLM_API_KEY, rows: directEmbeddings, stage: () => stage }) : null;
 const lambdaRequestMap = new Map();
 const redact = value => { let output = JSON.stringify(value, null, 2); for (const secret of [credentials.key, env.LLM_API_KEY, credentials.endpoint, credentials.project, env.LLM_BASE_URL].filter(Boolean)) output = output.replaceAll(secret, "[REDACTED]"); return output; };
 async function checkpointNatural() {
     if (!natural) return;
     const temporary = `${reportPath}.tmp`;
-    await writeFile(temporary, redact({ passed: false, incomplete: true, ...directEvidence(), evaluation, generations, providerCalls, ...resumedEvidence(), lambdaRequests, embeddings, vectorQueries, ...summaryTrafficEvidence(), transportProtocol: retryTransient ? transportProtocol : null, providerSpacing: PROVIDER_SPACING, sourceSha256: naturalSourceSha256 }));
+    await writeFile(temporary, redact({ passed: false, incomplete: true, ...directEvidence(), evaluation, generations, providerCalls, lambdaRequests, transportProtocol: retryTransient ? transportProtocol : null, providerSpacing: PROVIDER_SPACING, sourceSha256: naturalSourceSha256 }));
     await rename(temporary, reportPath);
-    summaryTraffic?.assertClean();
 }
-let nativeCleanupComplete = !nativeComparison, providerCalls = resumeReport?.providerCalls || 0;
+let nativeCleanupComplete = !nativeComparison, providerCalls = 0;
 let nativeCleanup = [];
 let stage = 'startup', failRetrieval = false, server, browser, page, failure, cleanupComplete = false;
-const summaryTraffic = summarizeMode ? createSummaryTrafficGuard({ embeddings, vectorQueries,
-    stage: () => stage, onViolation: reason => { failure ||= { stage, reason }; } }) : null;
-const summaryTrafficEvidence = () => summaryTraffic ? { nativeTrafficObservation: summaryTraffic.observation() } : {};
 const assert = (condition, name) => { if (!condition) throw new Error(name); checks.push(name); console.log(`PASS ${name}`); };
 const sendGeneration = createSpacedSender((body, signal) => {
     providerCalls++;
@@ -121,7 +109,6 @@ const sendGeneration = createSpacedSender((body, signal) => {
 // This loopback test bridge is not an extension component or server plugin.
 // Live provider keys remain in this process; the host only sees its local URL.
 const bridge = createServer(async (req, res) => {
-    if (summaryTraffic?.blockBridgeRequest(req, res)) return;
     if (req.url === '/v1/models') { res.writeHead(200, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ data: [{ id: model, object: 'model' }] })); return; }
     if (nativeComparison && req.url === '/v1/embeddings') {
         const entry = { stage, startedAt: Date.now() }; embeddings.push(entry);
@@ -140,7 +127,6 @@ const bridge = createServer(async (req, res) => {
     }
     if (req.url !== '/v1/chat/completions') { res.writeHead(404); res.end(); return; }
     try {
-        summaryTraffic?.assertClean();
         const buffers = []; for await (const b of req) buffers.push(b);
         const body = JSON.parse(Buffer.concat(buffers).toString());
         const entry = { stage, messages: body.messages, stream: body.stream, model, maxOutputTokens: body.max_tokens, reasoningEffort: body.reasoning_effort, startedAt: Date.now() };
@@ -325,7 +311,6 @@ try {
         }
         await route.continue();
     });
-    if (summaryTraffic) await summaryTraffic.installVectorRoutes(page);
     if (nativeComparison) await page.route('**/api/vector/query', async route => {
         const response = await route.fetch();
         const payload = await response.json();
@@ -355,14 +340,14 @@ try {
     });
     assert(true, 'real host connected to the selected completion endpoint');
     stage = 'UI LambdaDB setup'; await openSettings();
-    if (!nativeTuning && !summarizeMode) {
+    if (!nativeTuning) {
     await page.evaluate(({ endpoint, project, key }) => { for (const [name, value] of Object.entries({ endpoint, project, key })) document.querySelector(`[data-sm="${name}"]`).value = value; }, credentials);
     await field('connect').click(); await field('gate').click(); await waitStatus('Transport gate passed');
     await field('provision').click(); await waitStatus('Memory collection created');
     }
     if (natural) {
         evaluation = {};
-        await (summarizeMode ? runSummarize : semantic ? runSemanticDialogue : runNaturalDialogue)({ generations, page, field, openSettings, waitStatus, generate, assert, setStage: value => { stage = value; }, result: evaluation, frozen: frozenNatural, checkpoint: checkpointNatural, bridgeUrl, vectorQueries });
+        await (semantic ? runSemanticDialogue : runNaturalDialogue)({ page, field, openSettings, waitStatus, generate, assert, setStage: value => { stage = value; }, result: evaluation, frozen: frozenNatural, checkpoint: checkpointNatural, bridgeUrl, vectorQueries });
         events = await page.evaluate(() => globalThis.generationTestEvents);
     } else if (comparison) {
         evaluation = {};
@@ -448,7 +433,7 @@ try {
                     assert(nativeCleanupComplete, 'native synthetic vector index purged and verified empty');
                 }
             }, deleteRemote: async () => {
-                if (nativeTuning || summarizeMode) { assert(lambdaRequests.length === 0, 'native-only comparison made no LambdaDB requests'); return; }
+                if (nativeTuning) { assert(lambdaRequests.length === 0, 'native tuning made no LambdaDB requests'); return; }
                 const hasMemory = await page.evaluate(() => {
                     const owner = SillyTavern.getContext().extensionSettings.sillymemory?.owner;
                     return Boolean(JSON.parse(localStorage.getItem(`sillymemory:state:${owner}`) || '{}').collection);
@@ -475,13 +460,13 @@ try {
         } catch { console.log('Cleanup incomplete; keep pending resource record.'); }
     }
     const sourceSha256 = {};
-    for (const file of ['index.js','src/client.js','src/gate.js','src/memory.js', 'src/context.js','src/status.js','scripts/generation-smoke.mjs','scripts/provider-spacing.mjs','scripts/generation-cleanup.mjs','scripts/korean-eval.mjs','scripts/korean-fixture.mjs','scripts/comparison-fixture.mjs','scripts/comparison-eval.mjs','scripts/challenge-eval.mjs','scripts/recall-challenges.mjs','scripts/heldout-fixture.mjs', ...(natural ? ['scripts/natural-eval.mjs', 'scripts/natural-dialogue.mjs', ...(semantic ? [...semanticFiles, ...(summarizeMode ? summaryFiles : nativeTuning ? tuningFiles : threeModes ? threeModeFiles : []), ...(directEmbeddingsMode ? directFiles : [])] : fixtureFiles(frozenNatural?.plan.version)), ...(retryTransient ? ['scripts/provider-retry.mjs', 'docs/natural-dialogue-retry.md', 'scripts/natural-summary.mjs', 'scripts/natural-score.mjs'] : [])] : [])]) sourceSha256[file] = createHash('sha256').update(await readFile(path.join(root, file))).digest('hex');
+    for (const file of ['index.js','src/client.js','src/gate.js','src/memory.js', 'src/context.js','src/status.js','scripts/generation-smoke.mjs','scripts/provider-spacing.mjs','scripts/generation-cleanup.mjs','scripts/korean-eval.mjs','scripts/korean-fixture.mjs','scripts/comparison-fixture.mjs','scripts/comparison-eval.mjs','scripts/challenge-eval.mjs','scripts/recall-challenges.mjs','scripts/heldout-fixture.mjs', ...(natural ? ['scripts/natural-eval.mjs', 'scripts/natural-dialogue.mjs', ...(semantic ? [...semanticFiles, ...(nativeTuning ? tuningFiles : threeModes ? threeModeFiles : []), ...(directEmbeddingsMode ? directFiles : [])] : fixtureFiles(frozenNatural?.plan.version)), ...(retryTransient ? ['scripts/provider-retry.mjs', 'docs/natural-dialogue-retry.md', 'scripts/natural-summary.mjs', 'scripts/natural-score.mjs'] : [])] : [])]) sourceSha256[file] = createHash('sha256').update(await readFile(path.join(root, file))).digest('hex');
     if (natural && Object.entries(naturalSourceSha256).some(([file, digest]) => sourceSha256[file] !== digest)) failure ||= { stage: 'source identity', reason: 'Source changed during execution' };
     if (natural && !failure) {
-        try { assert(summarizeProviderSpacing(resumeReport ? generations.slice(resumeReport.generations.length) : generations, PROVIDER_SPACING).verified, 'actual provider starts respect the 15-second interval'); }
+        try { assert(summarizeProviderSpacing(generations, PROVIDER_SPACING).verified, 'actual provider starts respect the 15-second interval'); }
         catch (error) { failure = { stage: 'provider spacing', reason: error.message }; }
     }
-    const report = { ...directEvidence(), ...resumedEvidence(), ...summaryTrafficEvidence(), time:new Date().toISOString(), sillyTavern:revision, lambdaDB:summarizeMode ? 'unused' : 'live', generator:liveModel?'live compatible model':'deterministic test fixture, not a real LLM', model, generationIntervalMs, maxOutputTokens, reasoningEffort, excludedParameters, hostContextTokens, evaluation, embeddings, vectorQueries, ...(natural ? { lambdaRequests, transportProtocol: retryTransient ? transportProtocol : null, providerSpacing: PROVIDER_SPACING, initialSourceSha256: naturalSourceSha256, managedEmbeddingUsage: null, managedEmbeddingCost: null, semanticScores: null } : {}), nativeCleanupComplete, ...(threeModes ? { nativeCleanup } : {}), providerCalls, checks, failure, events, generations, cleanupComplete, sourceSha256, passed:!failure&&cleanupComplete&&nativeCleanupComplete };
+    const report = { ...directEvidence(), time:new Date().toISOString(), sillyTavern:revision, lambdaDB:'live', generator:liveModel?'live compatible model':'deterministic test fixture, not a real LLM', model, generationIntervalMs, maxOutputTokens, reasoningEffort, excludedParameters, hostContextTokens, evaluation, embeddings, vectorQueries, ...(natural ? { lambdaRequests, transportProtocol: retryTransient ? transportProtocol : null, providerSpacing: PROVIDER_SPACING, initialSourceSha256: naturalSourceSha256, managedEmbeddingUsage: null, managedEmbeddingCost: null, semanticScores: null } : {}), nativeCleanupComplete, ...(threeModes ? { nativeCleanup } : {}), providerCalls, checks, failure, events, generations, cleanupComplete, sourceSha256, passed:!failure&&cleanupComplete&&nativeCleanupComplete };
     let output = JSON.stringify(report,null,2);
     for (const value of [credentials.key,env.LLM_API_KEY,credentials.endpoint,credentials.project,env.LLM_BASE_URL].filter(Boolean)) output=output.replaceAll(value,'[REDACTED]');
     await writeFile(reportPath,output);

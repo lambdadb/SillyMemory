@@ -25,6 +25,8 @@ Storage and SillyMemory. It reports source delivery, provisional answer scores,
 input/cache tokens and latency separately, with explicit native-setting limits.
 The [native Insert# sensitivity follow-up](docs/native-tuning-results.md) tests
 whether increasing the built-in retrieval count closes that quality gap.
+The [built-in Summarize comparison](docs/summarize-results.md) measures rolling
+summary fidelity, answer quality and summary-generation overhead separately.
 
 ## Supported host
 
