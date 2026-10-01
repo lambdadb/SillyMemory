@@ -38,7 +38,9 @@ It records prompt delivery, automatic summary scheduling and import limitations.
 The [bounded 32K live pilot](docs/benchmark-live-pilot.md) follows with real OpenAI
 and LambdaDB managed embeddings, separate summary costs, and preserved failure
 and recovery evidence. Two development questions do not establish general recall
-superiority.
+superiority. The [14-question development expansion](docs/benchmark-development.md)
+freezes the next schedule and adds retained observations and retrieval-stage
+diagnostics; its local-fixture evidence is separate from paid quality results.
 
 ## Supported host
 
