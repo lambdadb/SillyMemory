@@ -35,6 +35,10 @@ the bounded next pilot design. It contains no new model-quality results.
 The [LongMemEval host preflight](docs/benchmark-host-preflight.md) checks the two
 development inputs at 32K/128K through the actual host, with local service fixtures.
 It records prompt delivery, automatic summary scheduling and import limitations.
+The [bounded 32K live pilot](docs/benchmark-live-pilot.md) follows with real OpenAI
+and LambdaDB managed embeddings, separate summary costs, and preserved failure
+and recovery evidence. Two development questions do not establish general recall
+superiority.
 
 ## Supported host
 

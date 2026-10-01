@@ -1,0 +1,4 @@
+{
+  "scripts/benchmark-live-pilot.mjs:dfebf44e85cac35a3e9b7eec985abd06cbb86afe3ec48c566eb04dac3e2d6ac7": "tests/fixtures/live-pilot-producers/initial-runner.txt",
+  "scripts/benchmark-live-budget.mjs:7634beacbc9452e07d5966863825614d6d25edceab56b180eca69c974279ce6f": "tests/fixtures/live-pilot-producers/initial-budget.txt"
+}

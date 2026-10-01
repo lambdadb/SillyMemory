@@ -1,0 +1,88 @@
+{
+  "reportSha256": "3e06cc066cd0782e8e844cbd0d437f99fcbb16156c211ceffb8a7c8a895234f8",
+  "rows": [
+    {
+      "id": "8ebdbe50",
+      "mode": "off",
+      "correct": true,
+      "promptTokens": 31608,
+      "completionTokens": 10
+    },
+    {
+      "id": "8ebdbe50",
+      "mode": "vectors",
+      "correct": true,
+      "promptTokens": 31092,
+      "completionTokens": 10
+    },
+    {
+      "id": "8ebdbe50",
+      "mode": "summary",
+      "correct": true,
+      "promptTokens": 31337,
+      "completionTokens": 10
+    },
+    {
+      "id": "8ebdbe50",
+      "mode": "sillymemory",
+      "correct": true,
+      "promptTokens": 2896,
+      "completionTokens": 10
+    },
+    {
+      "id": "eeda8a6d_abs",
+      "mode": "off",
+      "correct": true,
+      "promptTokens": 31494,
+      "completionTokens": 33
+    },
+    {
+      "id": "eeda8a6d_abs",
+      "mode": "vectors",
+      "correct": true,
+      "promptTokens": 31494,
+      "completionTokens": 72
+    },
+    {
+      "id": "eeda8a6d_abs",
+      "mode": "summary",
+      "correct": true,
+      "promptTokens": 31360,
+      "completionTokens": 30
+    },
+    {
+      "id": "eeda8a6d_abs",
+      "mode": "sillymemory",
+      "correct": true,
+      "promptTokens": 4126,
+      "completionTokens": 89
+    }
+  ],
+  "automaticSummaries": 97,
+  "attempts": 113,
+  "spacing": [
+    {
+      "run": 0,
+      "verified": true,
+      "evidence": "monotonic upstream-send timestamps",
+      "minimumIntervalMs": 15000,
+      "minimumObservedIntervalMs": 15000.029958000057,
+      "gapsBelowMinimum": 0
+    },
+    {
+      "run": 1,
+      "verified": true,
+      "evidence": "monotonic upstream-send timestamps",
+      "minimumIntervalMs": 15000,
+      "minimumObservedIntervalMs": 15000.032708000013,
+      "gapsBelowMinimum": 0
+    }
+  ],
+  "openaiUsageCostUsd": {
+    "answers": 0.05999959999999999,
+    "summaries": 1.0750896000000008,
+    "judges": 0.00319,
+    "nativeEmbeddings": 0.00420324
+  },
+  "costBoundary": "Returned usage at recorded prices; excludes unreported failed-attempt charges, LambdaDB usage and taxes. Reservations are separate."
+}

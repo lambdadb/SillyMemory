@@ -145,7 +145,9 @@ declares MIT, so its independent host preflight can proceed.
 Follow-up: the [host preflight](benchmark-host-preflight.md) now exercises the
 two development inputs through real SillyTavern with local service fixtures.
 It records final prompt delivery and automatic summary events, plus macro/empty
-message limitations. The live pilot and model-quality evaluation remain pending.
+message limitations. The subsequent [bounded 32K live pilot](benchmark-live-pilot.md)
+records real provider execution, costs, recovery boundaries and separate results.
+The frozen design below remains the historical pre-execution plan.
 
 The adapters whitelist model-visible fields. LongMemEval exposes only source
 role/content, explicit session/date markers and question/date. ConvoMem exposes
@@ -166,7 +168,8 @@ The subsequent paid pilot is designed for 32K only, with one answer per question
 and mode: eight answers. Use the same `gpt-4.1-mini-2025-04-14`, temperature 0 and
 1,024 output cap across arms; the higher cap accommodates longer benchmark answers
 and inherited summary output, rather than reusing the small regression cap of
-256. This is a new declared condition. Model availability is still unverified.
+256. This was a newly declared condition; model availability required verification
+before live execution. See the subsequent live pilot for that evidence.
 
 - **Plain:** memory features disabled.
 - **Vector Storage:** OpenAI `text-embedding-3-small` through the existing
@@ -189,9 +192,10 @@ model/prompt provenance must follow the pinned
 [official evaluator](https://github.com/xiaowu0162/LongMemEval/blob/9e0b455f4ef0e2ab8f2e582289761153549043fc/src/evaluation/evaluate_qa.py);
 its `gpt-4o` alias maps to `gpt-4o-2024-08-06`, temperature 0 and output cap 10.
 
-This design is **not yet an executable frozen live plan**. The next host preflight
-must determine finite indexing/query limits, actual prompt occupancy, summary
-triggers and monetary limits before paid execution. The 42-question evaluation
+At design freeze, this was **not yet an executable frozen live plan**. Its launch
+gates required finite indexing/query limits, actual prompt occupancy, summary
+triggers and monetary limits before paid execution. The host preflight and live
+pilot linked above record those subsequent checks. The 42-question evaluation
 split remains untouched by model calls; expansion to it and both context sizes
 requires a separate bounded run plan. Report recall, input/cache/output tokens,
 summary/embedding overhead and failures separately, including unfavorable cases.
