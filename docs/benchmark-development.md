@@ -106,6 +106,13 @@ the host, index, query or generator. The adapter rejects held-out inputs.
 response before further assertions, and a complete host observation before its
 validation. Completed responses can be read after reopening without dispatching
 again. Request hashes, frozen plan/producer bindings and receipt hashes must match.
+The observation is cloned on entry, and validators receive a separate clone, so
+caller changes or mutating/failed validators cannot overwrite raw evidence.
+The historical checkpoint producer is retained in
+`tests/fixtures/development-checkpoint-producer-v1.txt`; the existing host reports
+keep their original hashes. The mutation fix is verified by regression tests and
+offline revalidation, without repeating the 70-slot host run. Both new mutation
+regressions and the full 275-test suite pass.
 Unknown delivery remains pending and is **not automatically resent**. Limits are
 reserved before dispatch, failed calls retain their reservation, and an exclusive
 writer lock rejects concurrent execution.

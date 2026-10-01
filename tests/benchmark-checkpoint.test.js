@@ -66,3 +66,37 @@ test('a second Node process reuses a response after the first exits on validatio
     assert.deepEqual(replay, { reused: true, answer: 'original' });
     assert.equal(await readFile(path.join(dir, 'sends'), 'utf8'), 'send\n');
 }));
+test('validator mutation cannot overwrite retained nested observations or caller data', () => fixture(async dir => {
+    const c = await openCheckpoint(dir, binding, limits);
+    const original = { prompt: { messages: [{ content: 'original' }] }, source: ['retained'] };
+    const supplied = structuredClone(original);
+    await c.observe('row', supplied, value => {
+        value.prompt.messages[0].content = 'normalized'; delete value.source;
+    });
+    assert.deepEqual(supplied, original);
+    supplied.prompt.messages[0].content = 'caller edit';
+    await c.charge({ calls: 1 }); // Later saves must not import caller mutations.
+    assert.deepEqual(c.state.observations.row.value, original);
+    assert.deepEqual(JSON.parse(await readFile(path.join(dir, 'state.json'))).observations.row.value, original);
+    await c.close();
+    const reopened = await openCheckpoint(dir, binding, limits);
+    assert.deepEqual(reopened.state.observations.row.value, original); await reopened.close();
+}));
+test('caller changes during validation and a mutating failure cannot alter the captured evidence', () => fixture(async dir => {
+    const c = await openCheckpoint(dir, binding, limits);
+    const original = { prompt: { text: 'original' }, sources: [1, 2] }, supplied = structuredClone(original);
+    let entered, resume;
+    const started = new Promise(resolve => { entered = resolve; });
+    const paused = new Promise(resolve => { resume = resolve; });
+    const operation = c.observe('row', supplied, async value => {
+        entered(); await paused;
+        value.prompt.text = 'normalized'; value.sources.pop(); throw new Error('invalid');
+    });
+    await started; supplied.prompt.text = 'caller edit'; supplied.sources.push(3); resume();
+    await assert.rejects(operation, /invalid/);
+    await c.charge({ calls: 1 });
+    assert.equal(c.state.observations.row.validated, false);
+    assert.deepEqual(c.state.observations.row.value, original);
+    assert.deepEqual(JSON.parse(await readFile(path.join(dir, 'state.json'))).observations.row.value, original);
+    await c.close();
+}));

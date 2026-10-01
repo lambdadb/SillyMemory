@@ -56,12 +56,11 @@ export async function openCheckpoint(directory, binding, limits) {
             return { value, reused: false };
         },
         async observe(id, observation, validate) {
-            const captured = structuredClone(observation);
             const existing = state.observations[id];
-            if (existing) assert.deepEqual(existing.value, captured, 'Recorded observation changed');
-            else { state.observations[id] = { value: captured, validated: false }; await save(); }
+            if (existing) assert.deepEqual(existing.value, observation, 'Recorded observation changed');
+            else { state.observations[id] = { value: observation, validated: false }; await save(); }
             if (!validate) return;
-            await validate(structuredClone(state.observations[id].value));
+            await validate(observation);
             state.observations[id].validated = true; await save();
         },
         async charge(delta) { reserve(delta); await save(); },
