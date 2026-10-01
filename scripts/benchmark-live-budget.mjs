@@ -1,0 +1,29 @@
+// Test-only cost reservations. Reserve every attempt, including failed attempts;
+// never assume cached-input discounts, free quotas, or refunds.
+import assert from 'node:assert/strict';
+export const LIMITS = Object.freeze({ completions: 125, openaiUsd: 3, embeddingCalls: 1000,
+    embeddingInputs: 4000, embeddingTokens: 1000000, lambdaRequests: 300,
+    lambdaDocuments: 3000, lambdaTokens: 1000000, lambdaWriteBytes: 20000000,
+    collections: 4, durationMs: 90 * 60 * 1000 });
+export function createBudget(state = {}) {
+    Object.assign(state, { ...{ completions: 0, openaiReservedUsd: 0, embeddingCalls: 0,
+        embeddingInputs: 0, embeddingTokens: 0, lambdaRequests: 0, lambdaDocuments: 0,
+        lambdaTokens: 0, lambdaWriteBytes: 0, collections: 0 }, ...state });
+    function reserve(delta) {
+        const next = { ...state };
+        for (const [key, value] of Object.entries(delta)) { assert(Number.isFinite(value) && value >= 0); next[key] += value; }
+        for (const [key, value] of Object.entries(next)) {
+            const limit = key === 'openaiReservedUsd' ? LIMITS.openaiUsd : LIMITS[key];
+            assert(Number.isFinite(value) && value <= limit, `Pilot budget exceeded: ${key}`);
+        }
+        Object.assign(state, next);
+    }
+    return { state, completion(model) {
+        const judge = model === 'gpt-4o-2024-08-06';
+        assert(judge || model === 'gpt-4.1-mini-2025-04-14', 'Unpinned model');
+        reserve({ completions: 1, openaiReservedUsd: judge ? (4096 * 2.5 + 10 * 10) / 1e6 : (32768 * .4 + 1024 * 1.6) / 1e6 });
+    }, embedding(inputs, tokens) { reserve({ embeddingCalls: 1, embeddingInputs: inputs, embeddingTokens: tokens, openaiReservedUsd: tokens * .02 / 1e6 }); },
+    lambda({ documents = 0, tokens = 0, bytes = 0, create = false } = {}) {
+        reserve({ lambdaRequests: 1, lambdaDocuments: documents, lambdaTokens: tokens, lambdaWriteBytes: bytes, collections: Number(create) });
+    } };
+}
