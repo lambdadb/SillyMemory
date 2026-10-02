@@ -21,3 +21,15 @@ test('an unsettled native request fails closed instead of switching chats', asyn
     const barrier = nativeBarrier(page, { settleMs: 0, quietMs: 0, timeoutMs: 20 });
     await assert.rejects(barrier.suspend(), /did not settle/); barrier.close();
 });
+test('premature Vectorize All completion is drained and verified again with a finite bound', async () => {
+    const { completeNativeIndex } = await import('../scripts/benchmark-native-barrier.mjs');
+    let indexed = 0, drains = 0;
+    const args = { index: async () => { if (++indexed === 1) throw new Error('Native index differs from restored source'); return { hashes: [1, 2] }; },
+        barrier: { suspend: async () => { drains++; } } };
+    assert.deepEqual(await completeNativeIndex({}, args), { hashes: [1, 2], completionAttempts: 2 });
+    assert.equal(drains, 1);
+    indexed = 0; args.index = async () => { indexed++; throw new Error('Native index differs from restored source'); };
+    await assert.rejects(completeNativeIndex({}, args), /differs/); assert.equal(indexed, 4);
+    args.healthy = () => { throw new Error('provider failed'); };
+    await assert.rejects(completeNativeIndex({}, args), /provider failed/); assert.equal(indexed, 4);
+});

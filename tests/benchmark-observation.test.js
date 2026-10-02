@@ -26,3 +26,15 @@ test('an empty native insertion is recorded without inventing a failed model ans
     saved.observation.promptReady = [];
     assert.throws(() => validateObservation(item, 32768, 'vectors', saved, 1024), /transport/);
 });
+test('live zero-hit memory is a retained result while missing delivery still fails', () => {
+    const item = { chat: [{ mes: 'old', name: 'User', is_user: true }], question: 'question' };
+    const request = { max_tokens: 1024, messages: [{ role: 'user', content: 'question' }] };
+    const retrieval = { budget: 800, prepared: { docs: [] }, queries: [{ query: 'q', hits: [] }], result: { passages: [], messages: [], tokens: 0 } };
+    const saved = { successfulCompletions: 1, request, observation: { snapshotCount: 1, promptReady: request.messages,
+        chat: [...item.chat, {}, {}], hostPromptTokens: 100, hostPromptBudget: 31744, delivery: 'Final host prompt: 0/0', retrieval } };
+    assert.throws(() => validateObservation(item, 32768, 'sillymemory', saved, 1024), /No prepared memory/);
+    const result = validateObservation(item, 32768, 'sillymemory', saved, 1024, { requirePreparedMemory: false });
+    assert.equal(result.retrieval.preparedMessages, 0); assert.equal(result.retrieval.uniqueValidCandidates, 0);
+    retrieval.result.messages.push({ mes: 'missing', is_user: true });
+    assert.throws(() => validateObservation(item, 32768, 'sillymemory', saved, 1024, { requirePreparedMemory: false }), /missing from final prompt/);
+});
