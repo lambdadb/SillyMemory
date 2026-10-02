@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
+import { execFileSync } from 'node:child_process';
 
 // Exact historical producer snapshots, not a bypass for changed/unknown inputs.
 // The runtime adapter changed after these cohorts; do not relabel their evidence.
@@ -19,7 +20,12 @@ const snapshots = {
 };
 export function recordedSource(file, expectedHash) {
     assert(/^[a-f0-9]{64}$/.test(expectedHash), 'Recorded source hash required');
-    const bytes = readFileSync(new URL(`../${snapshots[`${file}:${expectedHash}`] || file}`, import.meta.url));
+    let bytes = readFileSync(new URL(`../${snapshots[`${file}:${expectedHash}`] || file}`, import.meta.url));
+    // Resolve pre-collection runtime evidence from its immutable Git revision,
+    // rather than copying another historical implementation into CI fixtures.
+    if (!snapshots[`${file}:${expectedHash}`] && createHash('sha256').update(bytes).digest('hex') !== expectedHash) {
+        bytes = execFileSync('git', ['show', `8e38ea73527682375fdd4fe594f760d2534c9a76:${file}`], { cwd: new URL('..', import.meta.url), stdio: ['ignore', 'pipe', 'ignore'] });
+    }
     assert.equal(createHash('sha256').update(bytes).digest('hex'), expectedHash, `Recorded source mismatch: ${file}`);
     return bytes;
 }

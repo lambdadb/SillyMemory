@@ -35,17 +35,18 @@ const remote = createServer({ key: await readFile(key), cert: await readFile(cer
     calls.push({ method: req.method, path: req.url, body, keyPresent: req.headers['x-api-key'] === 'synthetic-session-key', cookiePresent: Boolean(req.headers.cookie), csrfPresent: Boolean(req.headers['x-csrf-token']) });
     const send = (status, value = {}) => { res.writeHead(status, { 'Content-Type': 'application/json' }); res.end(JSON.stringify(value)); };
     if (req.headers['x-api-key'] !== 'synthetic-session-key') return send(401, { message: 'synthetic auth failure' });
-    const parts = req.url.split('/').filter(Boolean);
+    const parts = new URL(req.url, 'https://localhost').pathname.split('/').filter(Boolean);
     if (parts[0] !== 'projects' || parts[1] !== 'synthetic' || parts[2] !== 'collections') return send(404);
     const name = parts[3];
+    if (!name && req.method === 'GET') return send(200, { collections: [...collections.values()].map(c => c.definition) });
     if (!name && req.method === 'POST') {
         if (collections.has(body.collectionName)) return send(409);
         assert.equal(body.indexConfigs.embedding.managedEmbedding, true);
-        collections.set(body.collectionName, { definition: body, docs: new Map() }); return send(201, { collection: body });
+        return faults.respond('create', () => { collections.set(body.collectionName, { definition: body, docs: new Map() }); return [201, { collection: body }]; }, send);
     }
     const c = collections.get(name); if (!c) return send(404);
     if (parts.length === 4 && req.method === 'GET') return send(200, { collection: c.definition });
-    if (parts.length === 4 && req.method === 'DELETE') { collections.delete(name); return send(200); }
+    if (parts.length === 4 && req.method === 'DELETE') return faults.respond('delete-collection', () => { collections.delete(name); return [200, {}]; }, send);
     if (parts[4] === 'docs' && parts[5] === 'upsert') return faults.respond('upsert', () => { body.docs.forEach(d => c.docs.set(d.id, d)); return [202, {}]; }, send);
     if (parts[4] === 'docs' && parts[5] === 'delete') return faults.respond('delete-docs', () => { body.ids.forEach(id => c.docs.delete(id)); return [202, {}]; }, send);
     if (parts[4] === 'query') {
@@ -124,8 +125,8 @@ try {
     if (faultMode) check('transport gate retries transient upsert readiness through the proxy', calls.filter(c => c.path.endsWith('/docs/upsert')).length === 2);
     check('synthetic gate traverses the real proxy and cleans up', collections.size === 0);
     check('real proxy forwards x-api-key and strips cookies/CSRF', calls.some(c => c.keyPresent) && calls.every(c => !c.cookiePresent && !c.csrfPresent));
-    await field('provision').click(); await waitStatus('Memory collection created');
-    check('owned memory collection created', collections.size === 1);
+    await field('provision').click(); await waitStatus('Chat memory is ready');
+    check('preparation creates no collection before a chat is enabled', collections.size === 0);
     await page.locator('#sillymemory .inline-drawer-toggle').scrollIntoViewIfNeeded();
     if (!faultMode) await page.screenshot({ path: path.join(artifacts, 'setup.png') });
     await field('recent').fill('2'); await field('recent').dispatchEvent('change');
@@ -193,7 +194,26 @@ try {
     check('chat switch rejects late result and aborts old generation', raced.aborted && !raced.injection);
     await waitStatus('synchronized'); staleHits = [old];
     const branch = await prompt();
-    check('native branch scope excludes original chat results', !branch.injection.includes('Edited:') && new Set([...collection.docs.values()].map(d => d.scope)).size === 2);
+    check('native branch scope excludes original chat results', !branch.injection.includes('Edited:') && collections.size === 2 && [...collections.values()].every(c => new Set([...c.docs.values()].map(d => d.scope)).size === 1));
+    if (!faultMode) {
+        const beforeCopy = await page.evaluate(() => SillyTavern.getContext().chatMetadata.sillymemory.id);
+        await field('enabled').uncheck();
+        await page.evaluate(async () => { const c = SillyTavern.getContext(), { saveChat } = await import('/script.js'); await saveChat({ chatName: 'Synthetic copied' }); await c.openCharacterChat('Synthetic copied'); });
+        page.once('dialog', d => d.accept()); await field('delete-chat').click(); await waitStatus('no longer accessible');
+        check('deleting an unactivated copy cannot delete its parent', collections.size === 2);
+        const uncertainCreate = faults.arm('create', 'hold'); await field('enabled').check();
+        await uncertainCreate.entered; await waitStatus('timed out'); uncertainCreate.release();
+        check('uncertain creation retains one pending owned collection', collections.size === 3);
+        await field('sync').click(); await waitStatus('synchronized');
+        check('create retry recovers the same collection', collections.size === 3);
+        check('copied metadata receives a distinct collection', collections.size === 3 && await page.evaluate(() => SillyTavern.getContext().chatMetadata.sillymemory.id) !== beforeCopy);
+        faults.arm('delete-collection', 'http', 503);
+        page.once('dialog', d => d.accept()); await field('delete-chat').click(); await waitStatus('HTTP 503');
+        check('failed individual deletion keeps remote collection for retry', collections.size === 3);
+        page.once('dialog', d => d.accept()); await field('delete-chat').click(); await waitStatus('no longer accessible');
+        check('individual deletion preserves parent and branch collections', collections.size === 2);
+        await field('enabled').check(); await waitStatus('synchronized');
+    }
     failQuery = true;
     const failed = await prompt(); failQuery = false;
     check('query failure preserves unmodified prompt', !failed.injection && failed.chat.length === 7);
@@ -212,7 +232,7 @@ try {
     check('final reload again requires key entry', await field('key').inputValue() === '' && !await field('enabled').isChecked());
     if (faultMode) check('fault run has no uncaught browser page errors', errors.length === 0);
     const sourceSha256 = {};
-    for (const file of ['index.js', 'manifest.json', 'settings.html', 'style.css', 'src/client.js', 'src/gate.js', 'src/memory.js', 'src/context.js', 'src/status.js', 'scripts/browser-smoke.mjs', 'scripts/fault-scenarios.mjs', 'scripts/recovery-scenarios.mjs']) {
+    for (const file of ['index.js', 'manifest.json', 'settings.html', 'style.css', 'src/client.js', 'src/chat-collections.js', 'src/gate.js', 'src/memory.js', 'src/context.js', 'src/status.js', 'scripts/browser-smoke.mjs', 'scripts/fault-scenarios.mjs', 'scripts/recovery-scenarios.mjs']) {
         sourceSha256[file] = createHash('sha256').update(await readFile(path.join(root, file))).digest('hex');
     }
     await writeFile(path.join(artifacts, artifactName), JSON.stringify({ passed: true, faultResults, sourceSha256, time: new Date().toISOString(), sillyTavern: revision, node: process.version, browser: browser.version(), upstream: 'Local HTTPS LambdaDB emulator; no live managed embeddings', checks, pageErrors: errors, requestCount: calls.length, remainingCollections: collections.size }, null, 2));

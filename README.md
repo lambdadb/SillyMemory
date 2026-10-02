@@ -47,7 +47,7 @@ subsequent [42-question held-out evaluation](docs/english-heldout-evaluation.md)
 scores 24/42 for SillyMemory, 14/42 for plain 32K and 29/42 for plain 128K.
 SillyMemory uses 3,282 median input tokens: a useful token/accuracy tradeoff,
 with a remaining full-history quality gap. All 126 new answers and judgments
-completed; the runtime remains unchanged.
+completed; that evaluation did not change the runtime.
 
 ## Supported host
 
@@ -66,9 +66,9 @@ The development baseline is **SillyTavern 1.19.0**, pinned to commit [`06bde939f
    Preserve SillyTavern's host/IP/private-address protections and authentication configuration. Do not expose an unauthenticated proxy on a public interface. See the [official configuration reference](https://docs.sillytavern.app/administration/config-yaml/#cors-proxy-configuration).
 4. Reload SillyTavern. Open **Extensions → SillyMemory**. Enter your region-specific HTTPS base origin, project name, and project API key from LambdaDB. The endpoint field accepts an origin such as `https://<regional-host>`, without `/projects/...`. The extension adds the project path. There is no hardcoded global endpoint.
 5. Click **Use key for this session**. The input is immediately cleared. The key lives only in the client instance's browser memory, never in saved settings, local/session storage, a URL, or extension logs. A reload or **Forget key** requires re-entry. Other trusted extensions and the browser/server runtime can still observe network requests; this is not an isolation boundary against malicious extensions.
-6. Click **Test synthetic upsert / query / delete**. This creates a dedicated `smtest_<random>` collection, upserts a synthetic story, queries `knn.queryText`, deletes its document, verifies it no longer appears, then deletes the owned test collection. This consumes LambdaDB resources and inference usage. The test must pass before **Create memory collection** becomes available.
+6. Click **Test synthetic upsert / query / delete**. This creates a dedicated `smtest_<random>` collection, upserts a synthetic story, queries `knn.queryText`, deletes its document, verifies it no longer appears, then deletes the owned test collection. This consumes LambdaDB resources and inference usage. The test must pass before **Prepare chat memory** becomes available.
 7. If a test fails, use **Clean up test collection**. Pending test identity is preserved across reloads so cleanup can be retried after reconnecting. A failed cleanup is not reported as successful.
-8. Click **Create memory collection**, select a character chat, then enable memory. Default settings retain 12 recent messages and allow 800 memory tokens, including excerpt content and source labels; provider message-envelope overhead is managed by the host. Configure the bounds in the panel. Disable built-in Vector Storage chat vectorization and other prompt-rewriting memory extensions for this prototype.
+8. Click **Prepare chat memory**, select a character chat, then enable memory. The extension creates a separate owned collection on first use of each chat or native branch. Default settings retain 12 recent messages and allow 800 memory tokens, including excerpt content and source labels; provider message-envelope overhead is managed by the host. Configure the bounds in the panel. Disable built-in Vector Storage chat vectorization and other prompt-rewriting memory extensions for this prototype.
 
 The memory budget applies **per generated answer**, not cumulatively across a
 chat. Recent messages and character instructions are separate from that budget.
@@ -78,7 +78,7 @@ not an established optimum. It is unrelated to the current 800-**character**
 indexing chunks, which have no overlap. See the
 [controlled budget comparison](docs/memory-budget-calibration.md) for evidence
 and limitations, and the [design review](docs/memory-design-followups.md) for
-planned collection, chunking and hybrid-search work.
+chunking and hybrid-search work. The [chat collection lifecycle](docs/chat-collections.md) describes the implemented isolation and cleanup behavior.
 
 For local development, symlink the checkout into
 `SillyTavern/public/scripts/extensions/third-party/sillymemory`; do not also install
@@ -110,22 +110,36 @@ or undo remote data changes.
 - The status panel shows preparation, queued writes, ownership checks, outdated-chunk deletion, upload, search, and token budgeting. Upload totals count current older chunks; confirmed chunks include this session's earlier successful writes. Counts advance only after a service response, not merely after sending a request. They do not measure embedding/index visibility or bytes transferred. A failed operation keeps the last confirmed count and shows retry guidance.
 - Send messages normally. Message generation, edits, selected swipes, deletion, chat changes, and reload/re-enable trigger reconciliation. Click **Sync this chat** to retry after a network failure. For authentication errors, re-enter the key using **Use key for this session** first; for rate limits or timeouts, wait before retrying. Successful batches are skipped within the session. A lost response can require an idempotent re-upsert, and reload conservatively rechecks current records after key re-entry and re-enabling memory. Progress is not saved across reloads.
 - Only older plain-text messages are embedded. Recent messages stay in the generation array. Files, media, and tool messages are not indexed; group chats and chats with system tool invocations are bypassed.
-- Character avatar identity, chat filename (including native branch filenames), and installation owner identity define a strict hashed scope. A native branch gets its own index; inherited chat text is reindexed there.
+- Each character chat and native branch uses its own collection. Installation owner, character avatar and a saved chat-metadata ID define its scope. Renaming a chat preserves memory; branching or opening a duplicate rotates the ID and reindexes that chat’s current source in a separate collection. Every query still applies an owner/scope filter and validates results against the current local chat.
 - Before generation, the extension synchronizes current source text and retrieves matching chunks with `knn.queryText`: the latest user message and the preceding nonempty user message are searched independently. A first user turn has only one query; generic assistant acknowledgments are not concatenated into the topic query. Explicit **Continue** generation instead anchors on the latest message being extended; regenerate and swipe still use the user question. It interleaves the two result lists, validates every result against current local text and IDs, and token-counts the complete injected string using the host tokenizer. Macro braces and legacy macro markers are shown with fullwidth delimiters so recalled dialogue stays literal during host prompt assembly.
 - If at least one valid passage fits, older eligible full messages are removed from the ephemeral prompt array and the selected passages are injected. Source chat messages on disk are not modified. If nothing fits or an operation fails, the original prompt remains. A mid-request chat change aborts that generation; generate again in the new chat.
 - Identical selected passages from the same speaker and role share one full body with every selected source position listed. If this saves tokens, additional distinct retrieved passages may fit; no already-selected source is dropped. Repeated groups appear at their latest selected occurrence. The inspection panel exposes these labels.
 - **Memory in the last prompt** separates prepared excerpts from those verified in the final host prompt. **Stop on missing context** is enabled by default: if prepared memory or verifiable recent messages are missing or changed, generation is canceled before the completion request. Increase context, reduce reserved output or recent-message count, then generate again; the submitted user message remains in the chat. Turn the option off to proceed with a visible warning. There is no automatic retry. See [behavior, limits and validation](docs/prompt-delivery.md).
 - Verification uses the pinned host's Chat Completion prompt boundary, not provider receipt or billed tokens. Name macros are supported; arbitrary macros and the final continuation prefix are explicitly unverified rather than falsely counted as missing. Other completion formats report verification unavailable. Later provider transformations and other prompt-rewriting extensions are outside this check. The default 800-token allocation and one-quarter cap remain heuristics, not exact remaining capacity; the [capacity audit](docs/prompt-capacity-results.md) records why.
 - **Disable** stops synchronization/retrieval and clears the injection. It retains remote data. **Forget key** also disables memory. Reload starts disabled and requires key re-entry.
-- **Delete all owned remote memory** disables memory, drains outstanding writes, checks collection ownership tags, deletes the installation's memory collection, and waits until its API lookup returns 404. It affects every indexed chat and branch in that collection. Local SillyTavern chats are preserved. This is not proof of physical erasure from provider backups.
+- **Delete this chat’s remote memory** removes only the current chat’s owned collection; parent and sibling branches remain. **Delete all owned remote memory** discovers this installation’s chat collections and any previous shared memory, including collections absent from browser bookkeeping. Both disable memory, drain outstanding writes, verify ownership tags and wait for API lookup to return 404. Local chats are preserved. This is not proof of physical erasure from provider backups.
 
 ## Data, usage, and cleanup
 
 A LambdaDB project/API key with collection create/read/delete and document write/query access is required. Source text, speaker labels, message/chunk positions, hashed scope/revision identities, and query text go through your SillyTavern server to LambdaDB. LambdaDB sends embedding inputs to its managed embedding provider (currently configured here as OpenAI `text-embedding-3-small`). Each retrieval submits up to two distinct queries concurrently. Managed embeddings incur inference usage; storage and retrieval have service costs. See [managed embeddings](https://docs.lambdadb.ai/guides/collections/managed-embeddings) and [LambdaDB costs](https://docs.lambdadb.ai/guides/costs/understanding-costs).
 
-Ordinary document deletion removes current retrievable records; snapshot retention and provider backup policies are separate. The extension requests one-day snapshot retention for its collections and creates no Tags/savepoints. Removing the extension, deleting a SillyTavern chat, renaming a chat, changing browsers, or clearing browser storage does **not** automatically delete every remote record. Renamed chats get a new scope; previous scopes remain until full cleanup. Delete the owned memory collection and any pending test collection before uninstalling or changing connection settings. If local bookkeeping is lost, inspect your LambdaDB project's `sillymemory_*` / `smtest_*` collections and ownership tags to clean up the correct collections manually.
+Ordinary document deletion removes current retrievable records; snapshot retention and provider backup policies are separate. The extension requests one-day snapshot retention and creates no version savepoints. Removing the extension or deleting a native SillyTavern chat does **not** delete its remote collection automatically. Use current-chat deletion before removing the local chat, or all-owned cleanup afterward. Renaming preserves the same memory. Delete all owned memory and any pending test collection before uninstalling or changing connection settings.
+
+Browser storage loss does not delete chat metadata or account ownership stored by SillyTavern. Re-enter the endpoint/project/key and prepare memory to reconnect the same saved chat; all-owned cleanup can discover tagged `smchat_*` collections and earlier `sillymemory_*` collections. If the account owner metadata is lost too, inspect ownership tags manually; the extension must not adopt another owner’s data. Pending `smtest_*` collections have a separate cleanup button. Simultaneous writers on different devices are unsupported; browser locks do not coordinate them. See [lifecycle and recovery limits](docs/chat-collections.md).
 
 ## Development and verification
+
+For the chat-collection lifecycle acceptance, run:
+
+```sh
+ST_SOURCE=/path/to/pinned/SillyTavern SM_ENV_FILE=/path/to/.env.local npm run test:collections:live
+```
+
+This uses a disposable profile, real settings buttons, native rename/branch/copy,
+managed embeddings and the built-in proxy. It creates at most four small synthetic
+collections, invokes no generation model, and verifies owned cleanup. See
+[the validation record](docs/chat-collections.md) for boundaries and retained evidence.
+
 
 The [evaluation and device-continuity follow-ups](docs/evaluation-and-device-followups.md)
 record the limits of the small-context comparisons, default versus experimental

@@ -84,18 +84,18 @@ export class LambdaClient {
         if (!/^[a-zA-Z0-9_-]{3,52}$/.test(collection)) throw new ConnectionError('Invalid collection name.');
         return `/collections/${collection}${suffix}`;
     }
-    create(collection, owner) {
-        return this.request('/collections', { body: { collectionName: collection, indexConfigs: schema, description: 'SillyMemory owned memory', tags: { application: 'sillymemory', owner }, snapshotRetentionInDays: 1 } });
+    create(collection, owner, scope) {
+        return this.request('/collections', { body: { collectionName: collection, indexConfigs: schema, description: 'SillyMemory owned memory', tags: { application: 'sillymemory', owner, ...(scope ? { chat: scope } : {}) }, snapshotRetentionInDays: 1 } });
     }
     get(collection, signal) { return this.request(this.path(collection), { method: 'GET', signal }); }
-    async assertOwned(collection, owner, signal) {
+    async assertOwned(collection, owner, signal, scope) {
         const result = await this.get(collection, signal);
-        if (result.collection?.tags?.application !== 'sillymemory' || result.collection?.tags?.owner !== owner) throw new ConnectionError('Ownership check failed. No remote data was deleted or written.');
+        if (result.collection?.tags?.application !== 'sillymemory' || result.collection?.tags?.owner !== owner || (scope && result.collection?.tags?.chat !== scope)) throw new ConnectionError('Ownership check failed. No remote data was deleted or written.');
     }
     upsert(collection, docs, signal) { return this.request(this.path(collection, '/docs/upsert'), { body: { docs, branch: 'main' }, signal }); }
     deleteIds(collection, ids, signal) { return this.request(this.path(collection, '/docs/delete'), { body: { ids, branch: 'main' }, signal }); }
-    async deleteOwnedCollection(collection, owner) {
-        try { await this.assertOwned(collection, owner); } catch (e) { if (e.status === 404) return; throw e; }
+    async deleteOwnedCollection(collection, owner, scope) {
+        try { await this.assertOwned(collection, owner, undefined, scope); } catch (e) { if (e.status === 404) return; throw e; }
         await this.request(this.path(collection), { method: 'DELETE' });
         // A deletion acknowledgement is not proof of physical erasure/backups.
         for (let i = 0; i < 15; i++) {
@@ -103,6 +103,22 @@ export class LambdaClient {
             await new Promise(resolve => setTimeout(resolve, 1000));
         }
         throw new ConnectionError('Deletion accepted, but collection disappearance is not yet confirmed. Retry cleanup.');
+    }
+    async listOwned(owner) {
+        const collections = [], tokens = new Set(); let token;
+        do {
+            const params = new URLSearchParams({ size: '100' });
+            if (token) params.set('pageToken', token);
+            const result = await this.request(`/collections?${params}`, { method: 'GET' });
+            if (!Array.isArray(result.collections)) throw new ConnectionError('Invalid collection listing. Cleanup was not completed.');
+            for (const c of result.collections) if (c.tags?.application === 'sillymemory' && c.tags?.owner === owner) {
+                this.path(c.collectionName); collections.push(c);
+            }
+            token = result.nextPageToken;
+            if (token && (typeof token !== 'string' || tokens.has(token))) throw new ConnectionError('Invalid collection pagination. Cleanup was not completed.');
+            if (token) tokens.add(token);
+        } while (token);
+        return collections;
     }
     async query(collection, query, { signal, size = 30 } = {}) {
         const result = await this.request(this.path(collection, '/query'), { body: { query, size, consistentRead: true, ref: { kind: 'branch', name: 'main' }, includeVectors: false }, signal });

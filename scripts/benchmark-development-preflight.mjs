@@ -87,7 +87,7 @@ try {
         '-out', cert, '-days', '1', '-subj', '/CN=localhost', '-addext', 'subjectAltName=IP:127.0.0.1'], { stdio: 'ignore' });
     remote = createHttpsServer({ key: await readFile(key), cert: await readFile(cert) }, async (req, res) => {
         try {
-            const body = await json(req), parts = req.url.split('/').filter(Boolean), name = parts[3];
+            const body = await json(req), parts = new URL(req.url, 'https://localhost').pathname.split('/').filter(Boolean), name = parts[3];
             assert.equal(req.headers['x-api-key'], 'synthetic-session-key');
             assert.deepEqual(parts.slice(0, 3), ['projects', 'synthetic', 'collections']);
             const operation = parts.slice(4).join('/') || (name ? 'collection' : 'create');
@@ -96,6 +96,7 @@ try {
                 assert.equal(body.indexConfigs.embedding.managedEmbedding, true);
                 collections.set(body.collectionName, { definition: body, docs: new Map() }); return send(res, 201, { collection: body });
             }
+            if (!name && req.method === 'GET') return send(res, 200, { collections: [...collections.values()].map(c => c.definition) });
             const c = collections.get(name); if (!c) return send(res, 404);
             if (parts.length === 4 && req.method === 'GET') return send(res, 200, { collection: c.definition });
             if (parts.length === 4 && req.method === 'DELETE') { collections.delete(name); return send(res, 200); }
@@ -188,7 +189,7 @@ try {
     await page.locator('#sillymemory .inline-drawer-toggle').click();
     await field('endpoint').fill(endpoint); await field('project').fill('synthetic'); await field('key').fill('synthetic-session-key');
     await field('connect').click(); await field('gate').click(); await status('Transport gate passed');
-    assert.equal(collections.size, 0); await field('provision').click(); await status('Memory collection created');
+    assert.equal(collections.size, 0); await field('provision').click(); await status('Chat memory is ready');
     report.settings = await page.evaluate(() => {
         const c = SillyTavern.getContext();
         c.extensionSettings.memory.source = 'main'; c.extensionSettings.memory.memoryFrozen = true;

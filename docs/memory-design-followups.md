@@ -1,10 +1,14 @@
 # Memory design review — 2026-10-02
 
 This review records the implementation questions raised after PR #42. The
-current single collection, 800-character chunk size and 800-token default are
+then-current single collection, 800-character chunk size and 800-token default were
 initial choices, not demonstrated optima. Evaluate one retrieval variable at a
 time; do not interpret failed formatting experiments as evidence against better
 indexing or a larger useful memory budget.
+
+The collection design below is now implemented in the development candidate;
+see [chat collections](chat-collections.md) for acceptance evidence and limitations.
+The original rationale and requirements remain below as historical context.
 
 ## Collection ownership and chat lifecycle
 
@@ -15,7 +19,7 @@ these independent memories. Document storage, embedding and request usage remain
 separate from collection-count overhead. This is a lifecycle/isolation decision,
 not a claim that a collection split improves answer quality.
 
-Current behavior uses one owned collection with an owner/scope KNN pre-filter
+The pre-change behavior used one owned collection with an owner/scope KNN pre-filter
 and local source validation. Scope hashes the owner, character avatar and chat
 filename. Native branches have separate filenames and scopes; common prefix text
 is reindexed. Renaming a chat creates another scope and leaves its prior records
@@ -40,7 +44,7 @@ full real-native-branch/live-provider workflow, scale behavior or a new collecti
 layout. Detailed reports and source hashes are retained with the budget run's
 local-only archive.
 
-Before implementing the new layout, satisfy these concrete requirements:
+Acceptance requirements for the new layout:
 
 1. Bind a collection to a durable chat identity, not its display filename.
    Pinned SillyTavern exposes `chatMetadata.integrity`; `createBranch` explicitly
