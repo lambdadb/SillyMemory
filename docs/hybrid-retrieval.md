@@ -160,3 +160,12 @@ Every archived entry was byte-verified. The overlay applies to
 `c72c983b196561c0305294b79167acc823437216`. It is not downloadable from a fresh
 clone. The full report is `artifacts/generation-hybrid-rrf-v1.json`; result text
 added to this document afterward does not alter its frozen protocol archive.
+
+## Follow-up: budget versus ranking
+
+The [completed budget diagnosis and fresh confirmation](budget-confirmation.md)
+separates absent candidates from budget-related omissions. At 1,600, the old
+hybrid correction still does not fit; it first appears at 1,717 for those exact
+recorded lists. The new vector-only answer comparison does not justify raising
+the default either. Keep vector/800 and the existing adjustable budget; these
+are bounded findings, not proof of a globally optimal search policy or budget.

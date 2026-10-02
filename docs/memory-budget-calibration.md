@@ -6,6 +6,12 @@ paired loss in this 12-question run. At 3,200, evidence coverage improved furthe
 but answer accuracy returned to the 800-token level. All 36 fresh answers and
 36 judgments completed; the product default is unchanged.
 
+The later [boundary-aware vector confirmation](budget-confirmation.md) keeps the
+800 default: its eight new synthetic cases already delivered all required facts
+at 800, and 1,600 gained no answer and lost one. That set lacked budget-pressure
+headroom, so it does not overturn this earlier development result or establish
+a universal ranking. Both records and their limitations remain relevant.
+
 ## Question and controlled comparison
 
 Does the default 800-token memory allocation unnecessarily limit useful evidence
