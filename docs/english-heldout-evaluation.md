@@ -177,7 +177,8 @@ checks, not only a larger count of selected passages.
 The candidate-specific unit subsets passed 41 and 39 tests, covering source
 boundaries, literal macros, provenance, invalid hits and token-counter failure.
 These are synthetic/offline checks, not host integration or answer-quality
-results. The predeclared required-source gain was zero, so no live fixture,
+results. Observed required-source gain was zero, below the predeclared minimum,
+so no live fixture,
 provider call, new answer, judge or remote resource was started. Rejected code and
 tests were archived and removed from maintained source. The restored baseline
 passes all 309 unit tests plus syntax and release metadata checks.
@@ -190,8 +191,9 @@ in a fresh clone. Reproduction requires producer revision
 `33fc1278f1e0c8c6ec7f0279862ec35b5f5b51db`, the separately retained development
 archive linked by its checksum in the manifest, and the recorded tokenizer.
 The bundle's `compression-bindings.json` records required local paths; restore
-the baseline checkout there and apply each archived patch in a separate worktree
-before running its replay. There is no new maintained runner or historical-source
+the baseline checkout there, apply each archived patch in a separate worktree,
+and copy that candidate's replay script to the worktree's `artifacts/` root before
+running it (its relative imports expect that location). There is no new maintained runner or historical-source
 fixture. No generated-answer improvement or release readiness is claimed.
 
 ## Frozen protocol
