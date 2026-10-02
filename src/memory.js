@@ -19,7 +19,7 @@ export function capture(context) {
         user: Boolean(m.is_user), swipe: m.swipe_id ?? 0,
         eligible: !m.extra?.file && !m.extra?.media?.length && !m.extra?.tool_invocations?.length,
     }));
-    return { character: avatar, chat: context.getCurrentChatId(), messages };
+    return { character: avatar, chat: context.chatMetadata?.sillymemory?.id || context.getCurrentChatId(), messages };
 }
 export function fingerprint(snapshot) { return JSON.stringify(snapshot); }
 export const RETRIEVAL_POLICY = 'latest-anchor-with-context-selection-v5';
@@ -175,8 +175,8 @@ export class Journal {
 }
 
 export class MemoryEngine {
-    constructor({ client, owner, collection, journal, lock = job => job() }) {
-        Object.assign(this, { client, owner, collection, journal, lock });
+    constructor({ client, owner, collection, scope, journal, lock = job => job() }) {
+        Object.assign(this, { client, owner, collection, scope, journal, lock });
         this.queue = Promise.resolve(); this.acknowledged = new Set(); this.generation = 0;
         this.pendingReads = new AbortController();
     }
@@ -198,7 +198,8 @@ export class MemoryEngine {
         return this.serial(async () => {
             if (!current()) return null;
             report({ phase: 'checking' });
-            await this.client.assertOwned(this.collection, this.owner);
+            if (this.scope && prepared.scope !== this.scope) throw new Error('Chat collection scope changed.');
+            await this.client.assertOwned(this.collection, this.owner, undefined, this.scope);
             if (!current()) return null;
             const { scope, docs } = prepared;
             const ids = docs.map(d => d.id); const desired = new Set(ids);
@@ -260,7 +261,7 @@ export class MemoryEngine {
     async deleteAll() {
         this.invalidate();
         await this.serial(async () => {
-            await this.client.deleteOwnedCollection(this.collection, this.owner);
+            await this.client.deleteOwnedCollection(this.collection, this.owner, this.scope);
             this.journal.clear(); this.acknowledged.clear();
         });
     }

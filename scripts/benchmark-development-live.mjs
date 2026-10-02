@@ -55,7 +55,7 @@ const pilotPlanBytes = await read('docs/benchmarks/pilot-design-v1.json');
 assert.equal(sha(pilotPlanBytes), plan.pilotPlanSha256);
 validateLivePilot(pilot, JSON.parse(pilotPlanBytes));
 assert.deepEqual(pilot.generator, plan.generator); assert.equal(pilot.judge, plan.judge.model);
-const runtimeFiles = ['index.js', 'manifest.json', 'src/memory.js', 'src/context.js', 'src/client.js', 'src/gate.js', 'src/delivery.js', 'src/status.js'];
+const runtimeFiles = ['index.js', 'src/chat-collections.js', 'manifest.json', 'src/memory.js', 'src/context.js', 'src/client.js', 'src/gate.js', 'src/delivery.js', 'src/status.js'];
 for (const file of runtimeFiles) assert.equal(sha(await read(file)), pilot.sourceSha256ByFile[file], `Pilot runtime changed: ${file}`);
 const reused = plan.tasks.filter(t => t.reusePilot).map(t => {
     const row = pilot.rows.find(r => `${r.id}/${r.context}/${r.mode}` === t.id);
@@ -182,11 +182,12 @@ try {
         const collections = new Map();
         remote = createHttpsServer({ key: await readFile(key), cert: await readFile(cert) }, async (req, res) => {
             try {
-                const body = await json(req), parts = req.url.split('/').filter(Boolean), name = parts[3];
+                const body = await json(req), parts = new URL(req.url, 'https://localhost').pathname.split('/').filter(Boolean), name = parts[3];
                 assert.equal(req.headers['x-api-key'], env.LAMBDADB_PROJECT_API_KEY);
                 assert.deepEqual(parts.slice(0, 3), ['projects', 'synthetic', 'collections']);
                 const operation = parts.slice(4).join('/');
                 if (!name && req.method === 'POST') { collections.set(body.collectionName, { definition: body, docs: new Map() }); return send(res, 201, { collection: body }); }
+                if (!name && req.method === 'GET') return send(res, 200, { collections: [...collections.values()].map(c => c.definition) });
                 const c = collections.get(name); if (!c) return send(res, 404);
                 if (parts.length === 4 && req.method === 'GET') return send(res, 200, { collection: c.definition });
                 if (parts.length === 4 && req.method === 'DELETE') { collections.delete(name); return send(res, 200); }
@@ -240,10 +241,13 @@ try {
         try {
             if (target.pathname.startsWith('/proxy/')) {
                 const remote = new URL(decodeURIComponent(target.pathname.slice(7)));
-                assert.equal(remote.origin, endpoint); assert.equal(remote.search, '');
+                assert.equal(remote.origin, endpoint);
                 const prefix = `/projects/${encodeURIComponent(env.LAMBDADB_PROJECT_NAME)}/collections`;
                 assert(remote.pathname === prefix || remote.pathname.startsWith(prefix + '/'));
                 const parts = remote.pathname.slice(prefix.length).split('/').filter(Boolean);
+                const listing = !parts.length && request.method() === 'GET';
+                if (listing) assert([...remote.searchParams.keys()].every(key => ['size', 'pageToken'].includes(key)));
+                else assert.equal(remote.search, '');
                 const body = request.postData() ? request.postDataJSON() : {};
                 const operation = parts.slice(1).join('/') || (parts[0] ? 'collection' : 'create');
                 const create = operation === 'create' && request.method() === 'POST';
@@ -256,10 +260,10 @@ try {
                 if (create) {
                     assert.equal(body.indexConfigs.embedding.managedEmbedding, true);
                     assert.equal(body.tags.application, 'sillymemory'); assert(/^[a-f0-9]+$/.test(body.tags.owner));
-                    assert(/^(sillymemory|smtest)_[a-f0-9]{32}$/.test(body.collectionName));
+                    assert(/^(smchat_[a-f0-9]{40}|smtest_[a-f0-9]{32})$/.test(body.collectionName));
                     const owned = { collection: body.collectionName, owner: body.tags.owner };
                     await durable.observe(`owned/${owned.collection}`, owned); report.owned.push(owned);
-                } else assert(durable.state.observations[`owned/${parts[0]}`], 'Unowned remote target');
+                } else if (!listing && !(request.method() === 'GET' && parts.length === 1 && /^smchat_[a-f0-9]{40}$/.test(parts[0]))) assert(durable.state.observations[`owned/${parts[0]}`], 'Unowned remote target');
                 if (body.docs) { assert(body.docs.length <= 50); for (const d of body.docs) memoryDocs.set(d.id, { scope: d.scope, stage }); }
                 const entry = { stage, method: request.method(), operation, count: body.docs?.length ?? body.ids?.length };
                 report.traffic.lambda.push(entry);
@@ -303,7 +307,7 @@ try {
     await page.locator('#sillymemory .inline-drawer-toggle').click();
     await field('endpoint').fill(endpoint); await field('project').fill(env.LAMBDADB_PROJECT_NAME); await field('key').fill(env.LAMBDADB_PROJECT_API_KEY);
     await field('connect').click(); await field('gate').click(); await status('Transport gate passed');
-    await field('provision').click(); await status('Memory collection created');
+    await field('provision').click(); await status('Chat memory is ready');
     report.settings = await page.evaluate(bridgeUrl => {
         globalThis.threeModeNativeCollections = [];
         const c = SillyTavern.getContext();

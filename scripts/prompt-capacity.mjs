@@ -17,7 +17,7 @@ const source = process.env.ST_SOURCE || '/tmp/sillymemory-st-prompt-capacity';
 const output = path.resolve(process.argv[2] || path.join(root, 'artifacts/prompt-capacity.json'));
 assert.equal(execFileSync('git', ['-C', source, 'rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(), plan.host);
 assert.equal(await realpath(path.join(source, 'public/scripts/extensions/third-party/sillymemory')), root);
-const sourceFiles = ['index.js', 'manifest.json', 'src/client.js', 'src/context.js', 'src/gate.js', 'src/memory.js', 'src/status.js', 'scripts/prompt-capacity.mjs', 'scripts/prompt-capacity-cases.mjs'];
+const sourceFiles = ['index.js', 'src/chat-collections.js', 'manifest.json', 'src/client.js', 'src/context.js', 'src/gate.js', 'src/memory.js', 'src/status.js', 'scripts/prompt-capacity.mjs', 'scripts/prompt-capacity-cases.mjs'];
 const hostFiles = ['public/script.js', 'public/scripts/openai.js', 'public/scripts/PromptManager.js', 'public/scripts/tokenizers.js', 'src/endpoints/tokenizers.js', 'src/endpoints/backends/chat-completions.js', 'package-lock.json'];
 async function hashes() {
     return Object.fromEntries(await Promise.all(sourceFiles.map(async file => [file, createHash('sha256').update(await readFile(path.join(root, file))).digest('hex')])));
@@ -41,7 +41,7 @@ const send = (res, status, body = {}) => { res.writeHead(status, { 'Content-Type
 async function json(req) { const buffers = []; for await (const b of req) buffers.push(b); return buffers.length ? JSON.parse(Buffer.concat(buffers).toString()) : {}; }
 const remote = httpsServer({ key: await readFile(key), cert: await readFile(cert) }, async (req, res) => {
     try {
-        const body = await json(req), parts = req.url.split('/').filter(Boolean), name = parts[3];
+        const body = await json(req), parts = new URL(req.url, 'https://localhost').pathname.split('/').filter(Boolean), name = parts[3];
         assert.equal(req.headers['x-api-key'], 'synthetic-session-key');
         assert.ok(!req.headers.cookie && !req.headers['x-csrf-token']);
         assert.deepEqual(parts.slice(0, 3), ['projects', 'synthetic', 'collections']);
@@ -52,6 +52,7 @@ const remote = httpsServer({ key: await readFile(key), cert: await readFile(cert
             collections.set(body.collectionName, { definition: body, docs: new Map() });
             return send(res, 201, { collection: body });
         }
+        if (!name && req.method === 'GET') return send(res, 200, { collections: [...collections.values()].map(c => c.definition) });
         const c = collections.get(name); if (!c) return send(res, 404);
         if (parts.length === 4 && req.method === 'GET') return send(res, 200, { collection: c.definition });
         if (parts.length === 4 && req.method === 'DELETE') { collections.delete(name); return send(res, 200); }
@@ -132,7 +133,7 @@ try {
     await field('endpoint').fill(endpoint); await field('project').fill('synthetic'); await field('key').fill('synthetic-session-key');
     await field('connect').click(); await field('gate').click(); await waitStatus('Transport gate passed');
     assert.equal(collections.size, 0);
-    await field('provision').click(); await waitStatus('Memory collection created');
+    await field('provision').click(); await waitStatus('Chat memory is ready');
     for (const name of ['recent', 'budget']) { await field(name).fill(String(plan[name])); await field(name).dispatchEvent('change'); }
 
     // Observe the real methods; no host accounting or extension behavior is replaced.

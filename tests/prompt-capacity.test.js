@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { createHash } from 'node:crypto';
+import { recordedSource } from '../scripts/recorded-source.mjs';
 import { inspectCapacity } from '../scripts/prompt-capacity-inspect.mjs';
 
 const report = JSON.parse(await readFile(new URL('../docs/results/prompt-capacity-v1.json', import.meta.url), 'utf8'));
@@ -10,8 +10,7 @@ const frozen = JSON.parse(await readFile(new URL('../docs/results/prompt-capacit
 test('capacity evidence matches the pre-run plan and frozen harness', async () => {
     for (const field of ['plan', 'sourceSha256', 'hostSha256', 'time']) assert.deepEqual(report[field], frozen[field]);
     for (const file of ['scripts/prompt-capacity.mjs', 'scripts/prompt-capacity-cases.mjs']) {
-        const data = await readFile(new URL(`../${file}`, import.meta.url));
-        assert.equal(createHash('sha256').update(data).digest('hex'), frozen.sourceSha256[file]);
+        recordedSource(file, frozen.sourceSha256[file]);
     }
     assert.ok(report.requests.some(r => r.operation === 'docs/upsert'));
     assert.ok(report.requests.some(r => r.operation === 'query'));

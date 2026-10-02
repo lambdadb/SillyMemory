@@ -8,6 +8,10 @@ boundary; publication is confirmed by the corresponding Git tag and GitHub Relea
 
 ### Added
 
+- Separate owned collection per character chat/native branch, rename-stable chat
+  identity, duplicate-chat isolation and current-chat remote deletion. All-owned
+  cleanup discovers tagged collections after browser bookkeeping loss.
+
 - Final host-prompt verification and **Stop on missing context**, enabled by
   default. Missing recalled passages or verifiable recent messages stop the
   completion request. Users can adjust context settings and retry explicitly,
