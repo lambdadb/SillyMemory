@@ -140,6 +140,62 @@ archived instead of added to maintained CI or copied as historical fixtures.
 The development adapter's rejection of held-out inputs remains intact; the
 archived evaluation adapter separately allows only the frozen 42 question IDs.
 
+## Development follow-up: compression candidates closed
+
+After this evaluation, two small source-preserving candidates were implemented
+and screened on **development data only**. The consumed 42 questions were not
+replayed or used to choose between candidates. Both candidates are rejected and
+the product implementation is restored byte-for-byte to the baseline.
+
+The first joined consecutive chunks from the same message under one full-range
+label, retaining every byte and all prior selected sources. It failed its frozen
+minimum-gain screen before any paid calls. A separately frozen second and final
+candidate shortened repeated role/speaker/coordinate wording across distinct
+messages; it retained every field and used the new formatting only when another
+distinct retrieved passage fitted. That candidate failed the same screen too.
+
+| Cached cohort | Baseline evidence selected | Contiguous candidate | Compact-label candidate |
+| --- | ---: | ---: | ---: |
+| English follow-ups: 112 case/budget rows | 98 | 98 | 98 |
+| Development: 12 saved retrieval traces | 14 / 21 labeled messages | 14 / 21 | 14 / 21 |
+
+Neither candidate evicted a previously selected passage. Contiguous packing added
+one passage in the development cohort; compact labels added four development
+passages and 35 follow-up passages. **None added a required/labeled source.**
+Saving label space can admit more text without admitting the missing evidence.
+The two reused development pilot rows have no retained retrieval traces and are
+excluded; repeated budgets and overlapping fixtures are not independent samples.
+
+This closes these formatting-only approaches for the current development task.
+It does not prove all compression is ineffective, or that a particular new
+ranking policy will work. The next design should address relevance and competing
+candidate allocation, including when contextual-query results deserve space,
+rather than accumulating further label variants. Preserve the rejected 2:1
+answer-level result too; a future policy needs answer-use and generation-variation
+checks, not only a larger count of selected passages.
+
+The candidate-specific unit subsets passed 41 and 39 tests, covering source
+boundaries, literal macros, provenance, invalid hits and token-counter failure.
+These are synthetic/offline checks, not host integration or answer-quality
+results. Observed required-source gain was zero, below the predeclared minimum,
+so no live fixture,
+provider call, new answer, judge or remote resource was started. Rejected code and
+tests were archived and removed from maintained source. The restored baseline
+passes all 309 unit tests plus syntax and release metadata checks.
+
+The [compact decision manifest](benchmarks/english-compression-summary-v1.json)
+records both source/patch/result hashes and the verified 84,545-byte, 21-file
+local-only archive at `artifacts/archive/english-compression-v1/evidence.tar.gz`
+in the `sillymemory-contiguous-packing` worktree. It is not uploaded or available
+in a fresh clone. Reproduction requires producer revision
+`33fc1278f1e0c8c6ec7f0279862ec35b5f5b51db`, the separately retained development
+archive linked by its checksum in the manifest, and the recorded tokenizer.
+The bundle's `compression-bindings.json` records required local paths; restore
+the baseline checkout there, apply each archived patch in a separate worktree,
+and copy that candidate's replay script to the worktree's `artifacts/` root before
+running it (its relative imports expect that location). There is no new maintained runner or historical-source
+fixture. No generated-answer improvement or release readiness is claimed.
+
 ## Frozen protocol
 
 Decision: test whether the retained SillyMemory policy preserves useful long-history
