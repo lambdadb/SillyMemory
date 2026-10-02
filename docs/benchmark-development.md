@@ -3,8 +3,9 @@
 The frozen **14-question, 70-answer comparison is complete** through the actual
 SillyTavern host, OpenAI and LambdaDB managed embeddings. It reused eight verified
 pilot answers and generated/judged 62 new answers. Owned remote data and native
-indexes were cleaned up after every session. The 42 held-out questions remain
-reserved.
+indexes were cleaned up after every session. The 42 held-out questions were
+reserved at this stage; see the subsequent [completed evaluation](english-heldout-evaluation.md)
+for their separate results.
 
 SillyMemory answered 10/14 correctly with a median of 3,361.5 final-answer input
 tokens. Plain 128K also answered 10/14, using 104,761 median input tokens, but they

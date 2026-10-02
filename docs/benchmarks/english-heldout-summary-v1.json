@@ -1,0 +1,1550 @@
+{
+  "version": "english-heldout-result-v1",
+  "passed": true,
+  "cleanup": true,
+  "failure": null,
+  "errors": [],
+  "plannedQuestions": 42,
+  "plannedAnswers": 126,
+  "completedAnswers": 126,
+  "completedJudges": 126,
+  "conditions": [
+    {
+      "mode": "off",
+      "context": 32768,
+      "graded": 42,
+      "correct": 14,
+      "answers": 42,
+      "medianInputTokens": 31403,
+      "totalInputTokens": 1315631,
+      "totalOutputTokens": 3767,
+      "strata": {
+        "abstention": {
+          "graded": 6,
+          "correct": 3,
+          "answers": 6,
+          "medianInputTokens": 31292,
+          "totalInputTokens": 187690,
+          "totalOutputTokens": 238
+        },
+        "knowledge-update": {
+          "graded": 6,
+          "correct": 4,
+          "answers": 6,
+          "medianInputTokens": 31296,
+          "totalInputTokens": 188009,
+          "totalOutputTokens": 184
+        },
+        "multi-session": {
+          "graded": 6,
+          "correct": 0,
+          "answers": 6,
+          "medianInputTokens": 31475.5,
+          "totalInputTokens": 188490,
+          "totalOutputTokens": 322
+        },
+        "single-session-assistant": {
+          "graded": 6,
+          "correct": 3,
+          "answers": 6,
+          "medianInputTokens": 31330,
+          "totalInputTokens": 188066,
+          "totalOutputTokens": 352
+        },
+        "single-session-preference": {
+          "graded": 6,
+          "correct": 1,
+          "answers": 6,
+          "medianInputTokens": 31403,
+          "totalInputTokens": 186369,
+          "totalOutputTokens": 2046
+        },
+        "single-session-user": {
+          "graded": 6,
+          "correct": 2,
+          "answers": 6,
+          "medianInputTokens": 31416.5,
+          "totalInputTokens": 188367,
+          "totalOutputTokens": 312
+        },
+        "temporal-reasoning": {
+          "graded": 6,
+          "correct": 1,
+          "answers": 6,
+          "medianInputTokens": 31510.5,
+          "totalInputTokens": 188640,
+          "totalOutputTokens": 313
+        }
+      }
+    },
+    {
+      "mode": "sillymemory",
+      "context": 32768,
+      "graded": 42,
+      "correct": 24,
+      "answers": 42,
+      "medianInputTokens": 3282,
+      "totalInputTokens": 141946,
+      "totalOutputTokens": 3586,
+      "strata": {
+        "abstention": {
+          "graded": 6,
+          "correct": 4,
+          "answers": 6,
+          "medianInputTokens": 3273.5,
+          "totalInputTokens": 19576,
+          "totalOutputTokens": 517
+        },
+        "knowledge-update": {
+          "graded": 6,
+          "correct": 3,
+          "answers": 6,
+          "medianInputTokens": 3056,
+          "totalInputTokens": 19811,
+          "totalOutputTokens": 97
+        },
+        "multi-session": {
+          "graded": 6,
+          "correct": 4,
+          "answers": 6,
+          "medianInputTokens": 3957.5,
+          "totalInputTokens": 23049,
+          "totalOutputTokens": 383
+        },
+        "single-session-assistant": {
+          "graded": 6,
+          "correct": 5,
+          "answers": 6,
+          "medianInputTokens": 2394.5,
+          "totalInputTokens": 16870,
+          "totalOutputTokens": 202
+        },
+        "single-session-preference": {
+          "graded": 6,
+          "correct": 2,
+          "answers": 6,
+          "medianInputTokens": 3450,
+          "totalInputTokens": 18925,
+          "totalOutputTokens": 1746
+        },
+        "single-session-user": {
+          "graded": 6,
+          "correct": 4,
+          "answers": 6,
+          "medianInputTokens": 3757,
+          "totalInputTokens": 22088,
+          "totalOutputTokens": 126
+        },
+        "temporal-reasoning": {
+          "graded": 6,
+          "correct": 2,
+          "answers": 6,
+          "medianInputTokens": 3611,
+          "totalInputTokens": 21627,
+          "totalOutputTokens": 515
+        }
+      }
+    },
+    {
+      "mode": "off",
+      "context": 131072,
+      "graded": 42,
+      "correct": 29,
+      "answers": 42,
+      "medianInputTokens": 104933.5,
+      "totalInputTokens": 4394512,
+      "totalOutputTokens": 3895,
+      "strata": {
+        "abstention": {
+          "graded": 6,
+          "correct": 5,
+          "answers": 6,
+          "medianInputTokens": 105008,
+          "totalInputTokens": 627671,
+          "totalOutputTokens": 375
+        },
+        "knowledge-update": {
+          "graded": 6,
+          "correct": 6,
+          "answers": 6,
+          "medianInputTokens": 104447,
+          "totalInputTokens": 628195,
+          "totalOutputTokens": 126
+        },
+        "multi-session": {
+          "graded": 6,
+          "correct": 3,
+          "answers": 6,
+          "medianInputTokens": 104026.5,
+          "totalInputTokens": 621083,
+          "totalOutputTokens": 444
+        },
+        "single-session-assistant": {
+          "graded": 6,
+          "correct": 6,
+          "answers": 6,
+          "medianInputTokens": 105153.5,
+          "totalInputTokens": 628646,
+          "totalOutputTokens": 295
+        },
+        "single-session-preference": {
+          "graded": 6,
+          "correct": 0,
+          "answers": 6,
+          "medianInputTokens": 105930,
+          "totalInputTokens": 633273,
+          "totalOutputTokens": 2074
+        },
+        "single-session-user": {
+          "graded": 6,
+          "correct": 6,
+          "answers": 6,
+          "medianInputTokens": 104804,
+          "totalInputTokens": 627773,
+          "totalOutputTokens": 108
+        },
+        "temporal-reasoning": {
+          "graded": 6,
+          "correct": 3,
+          "answers": 6,
+          "medianInputTokens": 105149.5,
+          "totalInputTokens": 627871,
+          "totalOutputTokens": 473
+        }
+      }
+    }
+  ],
+  "paired": [
+    {
+      "against": "off/32768",
+      "pairs": 42,
+      "wins": [
+        "gpt4_c27434e8_abs",
+        "c8090214_abs",
+        "dfde3500",
+        "ce6d2d27",
+        "d682f1a2",
+        "4f54b7c9",
+        "e831120c",
+        "7405e8b1",
+        "b759caee",
+        "ac031881",
+        "89527b6b",
+        "07b6f563",
+        "ad7109d1",
+        "3f1e9474",
+        "60d45044",
+        "gpt4_85da3956",
+        "gpt4_74aed68e"
+      ],
+      "losses": [
+        "gpt4_372c3eed_abs",
+        "cf22b7bf",
+        "8fb83627",
+        "852ce960",
+        "eaca4986",
+        "51a45a95",
+        "4dfccbf7"
+      ],
+      "bothCorrect": 7,
+      "bothIncorrect": 11,
+      "medianPairedInputReduction": 0.8950443436291025
+    },
+    {
+      "against": "off/131072",
+      "pairs": 42,
+      "wins": [
+        "d682f1a2",
+        "4f54b7c9",
+        "07b6f563",
+        "b6025781",
+        "gpt4_74aed68e"
+      ],
+      "losses": [
+        "gpt4_372c3eed_abs",
+        "cf22b7bf",
+        "8fb83627",
+        "852ce960",
+        "1f2b8d4f",
+        "eaca4986",
+        "ccb36322",
+        "51a45a95",
+        "gpt4_98f46fc6",
+        "6613b389"
+      ],
+      "bothCorrect": 19,
+      "bothIncorrect": 8,
+      "medianPairedInputReduction": 0.968685392873164
+    }
+  ],
+  "usage": {
+    "answer": {
+      "calls": 126,
+      "promptTokens": 5852089,
+      "outputTokens": 11248
+    },
+    "judge": {
+      "calls": 126,
+      "promptTokens": 29966,
+      "outputTokens": 216
+    }
+  },
+  "successfulOpenaiUncachedPriceEstimateUsd": 2.4359073999999996,
+  "costBoundary": "Frozen historical uncached prices; not invoice; excludes LambdaDB/managed embeddings and failed or unknown responses",
+  "elapsedMs": 3862495,
+  "reservations": {
+    "provider": {
+      "completionAttempts": 252,
+      "openaiUsd": 4.812292799999999
+    },
+    "lambda": {
+      "collections": 2,
+      "lambdaRequests": 1116,
+      "lambdaDocuments": 37855,
+      "lambdaTokens": 4613116,
+      "lambdaWriteBytes": 35992691
+    }
+  },
+  "pending": [],
+  "checkedReceipts": 630,
+  "ownedCollections": 2,
+  "reportSha256": "25a2d9987524ede04fb6d8f8f3d55292c15ec6381ffb704761c3e477eeed13a6",
+  "planSha256": "4c31d5b8a2740a9e3e9a6b9f4f4dd26286a3fb9794e9381abf27c58b1a3ea794",
+  "diagnostics": {
+    "version": "english-heldout-diagnostics-v1",
+    "scope": "Post-run message-coordinate audit; no quality retries or grade overrides",
+    "answerableQuestions": 36,
+    "labeledMessages": 59,
+    "candidateLabeledMessages": 59,
+    "selectedLabeledMessages": 41,
+    "answerableMisses": 16,
+    "missGroups": {
+      "noneSelected": [
+        "cf22b7bf",
+        "1f2b8d4f",
+        "eaca4986",
+        "1c0ddc50",
+        "ccb36322",
+        "gpt4_98f46fc6"
+      ],
+      "someSelected": [
+        "8fb83627",
+        "aae3761f",
+        "1da05512",
+        "4dfccbf7",
+        "6613b389"
+      ],
+      "allLabeledTextDelivered": [
+        "852ce960",
+        "6b7dfb22",
+        "fca70973",
+        "51a45a95",
+        "370a8ff4"
+      ]
+    },
+    "interpretation": "Message-level annotation overlap is not exact-span recall, complete evidence coverage, or ANN recall. Every prepared message was delivered, but neighboring context may still be absent.",
+    "inspectedExamples": [
+      {
+        "id": "cf22b7bf",
+        "finding": "Both labeled weight-update messages were candidates (primary ranks 5 and 7), neither selected; the answer retained 5 pounds instead of the 10-pound update."
+      },
+      {
+        "id": "eaca4986",
+        "finding": "Chunks of the labeled second song were primary candidates at ranks 6, 7 and 9, but none were selected. The answer gave the wrong chorus progression."
+      },
+      {
+        "id": "852ce960",
+        "finding": "Both old $350,000 and later dated $400,000 statements were delivered; the answer used the old amount. This is not a missing-candidate observation."
+      },
+      {
+        "id": "6b7dfb22",
+        "finding": "The labeled painting-preference message was delivered in full; the answer gave general suggestions instead of grounding them in the prior preferences. Full rubric-supporting context was not independently annotated."
+      },
+      {
+        "id": "fca70973",
+        "finding": "The labeled theme-park preference message was delivered in full; the answer still requested preferences and gave general park options. Official no grade retained."
+      },
+      {
+        "id": "51a45a95",
+        "finding": "The labeled coupon turn does not name the store. Neighboring user turn 442 names Target, was a candidate at primary rank 27, and was not selected. An assistant Target example was delivered, which is weaker evidence. Labeled-turn coverage alone overstates complete evidence."
+      },
+      {
+        "id": "370a8ff4",
+        "finding": "Both labeled turns and their dates were delivered. Released dates Jan 19 to Apr 10, 2023 are 81 calendar days apart, while released gold is 15 weeks. Apparent source/gold inconsistency; all official grades remain unchanged.",
+        "releasedDates": [
+          "2023/01/19 (Thu) 10:47",
+          "2023/04/10 (Mon) 20:58"
+        ],
+        "calendarDays": 81,
+        "releasedGoldWeeks": 15
+      }
+    ],
+    "nextDecision": "Retain the current experimental runtime; prioritize development-only evidence selection, neighboring context and update/preference use before another untouched evaluation. Do not assume a larger ANN candidate pool is the demonstrated remedy."
+  },
+  "passMeaning": "Execution, source/delivery, receipt and cleanup checks; not an answer-quality acceptance threshold",
+  "runtimeChanged": false,
+  "producerBaseRevision": "db1c0c2c611d159d73786986a24a8c95b2a20034",
+  "attemptCount": 252,
+  "attemptStatuses": {
+    "200": 252
+  },
+  "cases": [
+    {
+      "id": "f685340e_abs",
+      "stratum": "abstention",
+      "outcomes": [
+        {
+          "mode": "off",
+          "context": 32768,
+          "correct": false,
+          "promptTokens": 31463,
+          "outputTokens": 17
+        },
+        {
+          "mode": "sillymemory",
+          "context": 32768,
+          "correct": false,
+          "promptTokens": 4267,
+          "outputTokens": 17
+        },
+        {
+          "mode": "off",
+          "context": 131072,
+          "correct": false,
+          "promptTokens": 105845,
+          "outputTokens": 14
+        }
+      ]
+    },
+    {
+      "id": "gpt4_c27434e8_abs",
+      "stratum": "abstention",
+      "outcomes": [
+        {
+          "mode": "off",
+          "context": 32768,
+          "correct": false,
+          "promptTokens": 31209,
+          "outputTokens": 11
+        },
+        {
+          "mode": "sillymemory",
+          "context": 32768,
+          "correct": true,
+          "promptTokens": 3752,
+          "outputTokens": 54
+        },
+        {
+          "mode": "off",
+          "context": 131072,
+          "correct": true,
+          "promptTokens": 105578,
+          "outputTokens": 36
+        }
+      ]
+    },
+    {
+      "id": "gpt4_93159ced_abs",
+      "stratum": "abstention",
+      "outcomes": [
+        {
+          "mode": "off",
+          "context": 32768,
+          "correct": true,
+          "promptTokens": 31316,
+          "outputTokens": 45
+        },
+        {
+          "mode": "sillymemory",
+          "context": 32768,
+          "correct": true,
+          "promptTokens": 2471,
+          "outputTokens": 85
+        },
+        {
+          "mode": "off",
+          "context": 131072,
+          "correct": true,
+          "promptTokens": 101855,
+          "outputTokens": 30
+        }
+      ]
+    },
+    {
+      "id": "c8090214_abs",
+      "stratum": "abstention",
+      "outcomes": [
+        {
+          "mode": "off",
+          "context": 32768,
+          "correct": false,
+          "promptTokens": 31111,
+          "outputTokens": 82
+        },
+        {
+          "mode": "sillymemory",
+          "context": 32768,
+          "correct": true,
+          "promptTokens": 3271,
+          "outputTokens": 185
+        },
+        {
+          "mode": "off",
+          "context": 131072,
+          "correct": true,
+          "promptTokens": 104377,
+          "outputTokens": 65
+        }
+      ]
+    },
+    {
+      "id": "0862e8bf_abs",
+      "stratum": "abstention",
+      "outcomes": [
+        {
+          "mode": "off",
+          "context": 32768,
+          "correct": true,
+          "promptTokens": 31268,
+          "outputTokens": 30
+        },
+        {
+          "mode": "sillymemory",
+          "context": 32768,
+          "correct": true,
+          "promptTokens": 3276,
+          "outputTokens": 32
+        },
+        {
+          "mode": "off",
+          "context": 131072,
+          "correct": true,
+          "promptTokens": 104695,
+          "outputTokens": 39
+        }
+      ]
+    },
+    {
+      "id": "gpt4_372c3eed_abs",
+      "stratum": "abstention",
+      "outcomes": [
+        {
+          "mode": "off",
+          "context": 32768,
+          "correct": true,
+          "promptTokens": 31323,
+          "outputTokens": 53
+        },
+        {
+          "mode": "sillymemory",
+          "context": 32768,
+          "correct": false,
+          "promptTokens": 2539,
+          "outputTokens": 144
+        },
+        {
+          "mode": "off",
+          "context": 131072,
+          "correct": true,
+          "promptTokens": 105321,
+          "outputTokens": 191
+        }
+      ]
+    },
+    {
+      "id": "dfde3500",
+      "stratum": "knowledge-update",
+      "outcomes": [
+        {
+          "mode": "off",
+          "context": 32768,
+          "correct": false,
+          "promptTokens": 31282,
+          "outputTokens": 45
+        },
+        {
+          "mode": "sillymemory",
+          "context": 32768,
+          "correct": true,
+          "promptTokens": 3161,
+          "outputTokens": 13
+        },
+        {
+          "mode": "off",
+          "context": 131072,
+          "correct": true,
+          "promptTokens": 104608,
+          "outputTokens": 15
+        }
+      ]
+    },
+    {
+      "id": "cf22b7bf",
+      "stratum": "knowledge-update",
+      "outcomes": [
+        {
+          "mode": "off",
+          "context": 32768,
+          "correct": true,
+          "promptTokens": 31542,
+          "outputTokens": 44
+        },
+        {
+          "mode": "sillymemory",
+          "context": 32768,
+          "correct": false,
+          "promptTokens": 2550,
+          "outputTokens": 22
+        },
+        {
+          "mode": "off",
+          "context": 131072,
+          "correct": true,
+          "promptTokens": 104286,
+          "outputTokens": 55
+        }
+      ]
+    },
+    {
+      "id": "ce6d2d27",
+      "stratum": "knowledge-update",
+      "outcomes": [
+        {
+          "mode": "off",
+          "context": 32768,
+          "correct": false,
+          "promptTokens": 31206,
+          "outputTokens": 48
+        },
+        {
+          "mode": "sillymemory",
+          "context": 32768,
+          "correct": true,
+          "promptTokens": 4380,
+          "outputTokens": 9
+        },
+        {
+          "mode": "off",
+          "context": 131072,
+          "correct": true,
+          "promptTokens": 104986,
+          "outputTokens": 9
+        }
+      ]
+    },
+    {
+      "id": "603deb26",
+      "stratum": "knowledge-update",
+      "outcomes": [
+        {
+          "mode": "off",
+          "context": 32768,
+          "correct": true,
+          "promptTokens": 31201,
+          "outputTokens": 23
+        },
+        {
+          "mode": "sillymemory",
+          "context": 32768,
+          "correct": true,
+          "promptTokens": 2951,
+          "outputTokens": 25
+        },
+        {
+          "mode": "off",
+          "context": 131072,
+          "correct": true,
+          "promptTokens": 106591,
+          "outputTokens": 23
+        }
+      ]
+    },
+    {
+      "id": "8fb83627",
+      "stratum": "knowledge-update",
+      "outcomes": [
+        {
+          "mode": "off",
+          "context": 32768,
+          "correct": true,
+          "promptTokens": 31310,
+          "outputTokens": 11
+        },
+        {
+          "mode": "sillymemory",
+          "context": 32768,
+          "correct": false,
+          "promptTokens": 4457,
+          "outputTokens": 10
+        },
+        {
+          "mode": "off",
+          "context": 131072,
+          "correct": true,
+          "promptTokens": 103604,
+          "outputTokens": 11
+        }
+      ]
+    },
+    {
+      "id": "852ce960",
+      "stratum": "knowledge-update",
+      "outcomes": [
+        {
+          "mode": "off",
+          "context": 32768,
+          "correct": true,
+          "promptTokens": 31468,
+          "outputTokens": 13
+        },
+        {
+          "mode": "sillymemory",
+          "context": 32768,
+          "correct": false,
+          "promptTokens": 2312,
+          "outputTokens": 18
+        },
+        {
+          "mode": "off",
+          "context": 131072,
+          "correct": true,
+          "promptTokens": 104120,
+          "outputTokens": 13
+        }
+      ]
+    },
+    {
+      "id": "d682f1a2",
+      "stratum": "multi-session",
+      "outcomes": [
+        {
+          "mode": "off",
+          "context": 32768,
+          "correct": false,
+          "promptTokens": 31590,
+          "outputTokens": 40
+        },
+        {
+          "mode": "sillymemory",
+          "context": 32768,
+          "correct": true,
+          "promptTokens": 3213,
+          "outputTokens": 75
+        },
+        {
+          "mode": "off",
+          "context": 131072,
+          "correct": false,
+          "promptTokens": 104396,
+          "outputTokens": 47
+        }
+      ]
+    },
+    {
+      "id": "4f54b7c9",
+      "stratum": "multi-session",
+      "outcomes": [
+        {
+          "mode": "off",
+          "context": 32768,
+          "correct": false,
+          "promptTokens": 31477,
+          "outputTokens": 66
+        },
+        {
+          "mode": "sillymemory",
+          "context": 32768,
+          "correct": true,
+          "promptTokens": 4003,
+          "outputTokens": 88
+        },
+        {
+          "mode": "off",
+          "context": 131072,
+          "correct": false,
+          "promptTokens": 99169,
+          "outputTokens": 48
+        }
+      ]
+    },
+    {
+      "id": "1f2b8d4f",
+      "stratum": "multi-session",
+      "outcomes": [
+        {
+          "mode": "off",
+          "context": 32768,
+          "correct": false,
+          "promptTokens": 31474,
+          "outputTokens": 43
+        },
+        {
+          "mode": "sillymemory",
+          "context": 32768,
+          "correct": false,
+          "promptTokens": 3912,
+          "outputTokens": 38
+        },
+        {
+          "mode": "off",
+          "context": 131072,
+          "correct": true,
+          "promptTokens": 104043,
+          "outputTokens": 33
+        }
+      ]
+    },
+    {
+      "id": "aae3761f",
+      "stratum": "multi-session",
+      "outcomes": [
+        {
+          "mode": "off",
+          "context": 32768,
+          "correct": false,
+          "promptTokens": 31056,
+          "outputTokens": 47
+        },
+        {
+          "mode": "sillymemory",
+          "context": 32768,
+          "correct": false,
+          "promptTokens": 4517,
+          "outputTokens": 87
+        },
+        {
+          "mode": "off",
+          "context": 131072,
+          "correct": false,
+          "promptTokens": 103502,
+          "outputTokens": 162
+        }
+      ]
+    },
+    {
+      "id": "e831120c",
+      "stratum": "multi-session",
+      "outcomes": [
+        {
+          "mode": "off",
+          "context": 32768,
+          "correct": false,
+          "promptTokens": 31549,
+          "outputTokens": 49
+        },
+        {
+          "mode": "sillymemory",
+          "context": 32768,
+          "correct": true,
+          "promptTokens": 4180,
+          "outputTokens": 51
+        },
+        {
+          "mode": "off",
+          "context": 131072,
+          "correct": true,
+          "promptTokens": 104010,
+          "outputTokens": 102
+        }
+      ]
+    },
+    {
+      "id": "7405e8b1",
+      "stratum": "multi-session",
+      "outcomes": [
+        {
+          "mode": "off",
+          "context": 32768,
+          "correct": false,
+          "promptTokens": 31344,
+          "outputTokens": 77
+        },
+        {
+          "mode": "sillymemory",
+          "context": 32768,
+          "correct": true,
+          "promptTokens": 3224,
+          "outputTokens": 44
+        },
+        {
+          "mode": "off",
+          "context": 131072,
+          "correct": true,
+          "promptTokens": 105963,
+          "outputTokens": 52
+        }
+      ]
+    },
+    {
+      "id": "eaca4986",
+      "stratum": "single-session-assistant",
+      "outcomes": [
+        {
+          "mode": "off",
+          "context": 32768,
+          "correct": true,
+          "promptTokens": 31176,
+          "outputTokens": 80
+        },
+        {
+          "mode": "sillymemory",
+          "context": 32768,
+          "correct": false,
+          "promptTokens": 3758,
+          "outputTokens": 24
+        },
+        {
+          "mode": "off",
+          "context": 131072,
+          "correct": true,
+          "promptTokens": 103949,
+          "outputTokens": 84
+        }
+      ]
+    },
+    {
+      "id": "b759caee",
+      "stratum": "single-session-assistant",
+      "outcomes": [
+        {
+          "mode": "off",
+          "context": 32768,
+          "correct": false,
+          "promptTokens": 31450,
+          "outputTokens": 59
+        },
+        {
+          "mode": "sillymemory",
+          "context": 32768,
+          "correct": true,
+          "promptTokens": 2535,
+          "outputTokens": 28
+        },
+        {
+          "mode": "off",
+          "context": 131072,
+          "correct": true,
+          "promptTokens": 105327,
+          "outputTokens": 39
+        }
+      ]
+    },
+    {
+      "id": "fca762bc",
+      "stratum": "single-session-assistant",
+      "outcomes": [
+        {
+          "mode": "off",
+          "context": 32768,
+          "correct": true,
+          "promptTokens": 31101,
+          "outputTokens": 55
+        },
+        {
+          "mode": "sillymemory",
+          "context": 32768,
+          "correct": true,
+          "promptTokens": 2196,
+          "outputTokens": 33
+        },
+        {
+          "mode": "off",
+          "context": 131072,
+          "correct": true,
+          "promptTokens": 105054,
+          "outputTokens": 56
+        }
+      ]
+    },
+    {
+      "id": "ac031881",
+      "stratum": "single-session-assistant",
+      "outcomes": [
+        {
+          "mode": "off",
+          "context": 32768,
+          "correct": false,
+          "promptTokens": 31210,
+          "outputTokens": 64
+        },
+        {
+          "mode": "sillymemory",
+          "context": 32768,
+          "correct": true,
+          "promptTokens": 3941,
+          "outputTokens": 40
+        },
+        {
+          "mode": "off",
+          "context": 131072,
+          "correct": true,
+          "promptTokens": 103147,
+          "outputTokens": 35
+        }
+      ]
+    },
+    {
+      "id": "89527b6b",
+      "stratum": "single-session-assistant",
+      "outcomes": [
+        {
+          "mode": "off",
+          "context": 32768,
+          "correct": false,
+          "promptTokens": 31581,
+          "outputTokens": 27
+        },
+        {
+          "mode": "sillymemory",
+          "context": 32768,
+          "correct": true,
+          "promptTokens": 2254,
+          "outputTokens": 18
+        },
+        {
+          "mode": "off",
+          "context": 131072,
+          "correct": true,
+          "promptTokens": 105916,
+          "outputTokens": 18
+        }
+      ]
+    },
+    {
+      "id": "d596882b",
+      "stratum": "single-session-assistant",
+      "outcomes": [
+        {
+          "mode": "off",
+          "context": 32768,
+          "correct": true,
+          "promptTokens": 31548,
+          "outputTokens": 67
+        },
+        {
+          "mode": "sillymemory",
+          "context": 32768,
+          "correct": true,
+          "promptTokens": 2186,
+          "outputTokens": 59
+        },
+        {
+          "mode": "off",
+          "context": 131072,
+          "correct": true,
+          "promptTokens": 105253,
+          "outputTokens": 63
+        }
+      ]
+    },
+    {
+      "id": "07b6f563",
+      "stratum": "single-session-preference",
+      "outcomes": [
+        {
+          "mode": "off",
+          "context": 32768,
+          "correct": false,
+          "promptTokens": 31406,
+          "outputTokens": 197
+        },
+        {
+          "mode": "sillymemory",
+          "context": 32768,
+          "correct": true,
+          "promptTokens": 2896,
+          "outputTokens": 286
+        },
+        {
+          "mode": "off",
+          "context": 131072,
+          "correct": false,
+          "promptTokens": 104963,
+          "outputTokens": 197
+        }
+      ]
+    },
+    {
+      "id": "6b7dfb22",
+      "stratum": "single-session-preference",
+      "outcomes": [
+        {
+          "mode": "off",
+          "context": 32768,
+          "correct": false,
+          "promptTokens": 29263,
+          "outputTokens": 396
+        },
+        {
+          "mode": "sillymemory",
+          "context": 32768,
+          "correct": false,
+          "promptTokens": 4382,
+          "outputTokens": 345
+        },
+        {
+          "mode": "off",
+          "context": 131072,
+          "correct": false,
+          "promptTokens": 106045,
+          "outputTokens": 385
+        }
+      ]
+    },
+    {
+      "id": "b6025781",
+      "stratum": "single-session-preference",
+      "outcomes": [
+        {
+          "mode": "off",
+          "context": 32768,
+          "correct": true,
+          "promptTokens": 31479,
+          "outputTokens": 307
+        },
+        {
+          "mode": "sillymemory",
+          "context": 32768,
+          "correct": true,
+          "promptTokens": 1666,
+          "outputTokens": 305
+        },
+        {
+          "mode": "off",
+          "context": 131072,
+          "correct": false,
+          "promptTokens": 106443,
+          "outputTokens": 306
+        }
+      ]
+    },
+    {
+      "id": "1c0ddc50",
+      "stratum": "single-session-preference",
+      "outcomes": [
+        {
+          "mode": "off",
+          "context": 32768,
+          "correct": false,
+          "promptTokens": 31400,
+          "outputTokens": 272
+        },
+        {
+          "mode": "sillymemory",
+          "context": 32768,
+          "correct": false,
+          "promptTokens": 1846,
+          "outputTokens": 198
+        },
+        {
+          "mode": "off",
+          "context": 131072,
+          "correct": false,
+          "promptTokens": 105815,
+          "outputTokens": 199
+        }
+      ]
+    },
+    {
+      "id": "1da05512",
+      "stratum": "single-session-preference",
+      "outcomes": [
+        {
+          "mode": "off",
+          "context": 32768,
+          "correct": false,
+          "promptTokens": 31490,
+          "outputTokens": 412
+        },
+        {
+          "mode": "sillymemory",
+          "context": 32768,
+          "correct": false,
+          "promptTokens": 4004,
+          "outputTokens": 221
+        },
+        {
+          "mode": "off",
+          "context": 131072,
+          "correct": false,
+          "promptTokens": 106222,
+          "outputTokens": 420
+        }
+      ]
+    },
+    {
+      "id": "fca70973",
+      "stratum": "single-session-preference",
+      "outcomes": [
+        {
+          "mode": "off",
+          "context": 32768,
+          "correct": false,
+          "promptTokens": 31331,
+          "outputTokens": 462
+        },
+        {
+          "mode": "sillymemory",
+          "context": 32768,
+          "correct": false,
+          "promptTokens": 4131,
+          "outputTokens": 391
+        },
+        {
+          "mode": "off",
+          "context": 131072,
+          "correct": false,
+          "promptTokens": 103785,
+          "outputTokens": 567
+        }
+      ]
+    },
+    {
+      "id": "ad7109d1",
+      "stratum": "single-session-user",
+      "outcomes": [
+        {
+          "mode": "off",
+          "context": 32768,
+          "correct": false,
+          "promptTokens": 31541,
+          "outputTokens": 113
+        },
+        {
+          "mode": "sillymemory",
+          "context": 32768,
+          "correct": true,
+          "promptTokens": 2674,
+          "outputTokens": 23
+        },
+        {
+          "mode": "off",
+          "context": 131072,
+          "correct": true,
+          "promptTokens": 102161,
+          "outputTokens": 29
+        }
+      ]
+    },
+    {
+      "id": "3f1e9474",
+      "stratum": "single-session-user",
+      "outcomes": [
+        {
+          "mode": "off",
+          "context": 32768,
+          "correct": false,
+          "promptTokens": 31310,
+          "outputTokens": 73
+        },
+        {
+          "mode": "sillymemory",
+          "context": 32768,
+          "correct": true,
+          "promptTokens": 4531,
+          "outputTokens": 12
+        },
+        {
+          "mode": "off",
+          "context": 131072,
+          "correct": true,
+          "promptTokens": 104562,
+          "outputTokens": 11
+        }
+      ]
+    },
+    {
+      "id": "ccb36322",
+      "stratum": "single-session-user",
+      "outcomes": [
+        {
+          "mode": "off",
+          "context": 32768,
+          "correct": false,
+          "promptTokens": 31141,
+          "outputTokens": 48
+        },
+        {
+          "mode": "sillymemory",
+          "context": 32768,
+          "correct": false,
+          "promptTokens": 2953,
+          "outputTokens": 44
+        },
+        {
+          "mode": "off",
+          "context": 131072,
+          "correct": true,
+          "promptTokens": 104704,
+          "outputTokens": 27
+        }
+      ]
+    },
+    {
+      "id": "d52b4f67",
+      "stratum": "single-session-user",
+      "outcomes": [
+        {
+          "mode": "off",
+          "context": 32768,
+          "correct": true,
+          "promptTokens": 31506,
+          "outputTokens": 13
+        },
+        {
+          "mode": "sillymemory",
+          "context": 32768,
+          "correct": true,
+          "promptTokens": 4416,
+          "outputTokens": 11
+        },
+        {
+          "mode": "off",
+          "context": 131072,
+          "correct": true,
+          "promptTokens": 104904,
+          "outputTokens": 14
+        }
+      ]
+    },
+    {
+      "id": "51a45a95",
+      "stratum": "single-session-user",
+      "outcomes": [
+        {
+          "mode": "off",
+          "context": 32768,
+          "correct": true,
+          "promptTokens": 31327,
+          "outputTokens": 16
+        },
+        {
+          "mode": "sillymemory",
+          "context": 32768,
+          "correct": false,
+          "promptTokens": 4226,
+          "outputTokens": 26
+        },
+        {
+          "mode": "off",
+          "context": 131072,
+          "correct": true,
+          "promptTokens": 105525,
+          "outputTokens": 13
+        }
+      ]
+    },
+    {
+      "id": "60d45044",
+      "stratum": "single-session-user",
+      "outcomes": [
+        {
+          "mode": "off",
+          "context": 32768,
+          "correct": false,
+          "promptTokens": 31542,
+          "outputTokens": 49
+        },
+        {
+          "mode": "sillymemory",
+          "context": 32768,
+          "correct": true,
+          "promptTokens": 3288,
+          "outputTokens": 10
+        },
+        {
+          "mode": "off",
+          "context": 131072,
+          "correct": true,
+          "promptTokens": 105917,
+          "outputTokens": 14
+        }
+      ]
+    },
+    {
+      "id": "gpt4_85da3956",
+      "stratum": "temporal-reasoning",
+      "outcomes": [
+        {
+          "mode": "off",
+          "context": 32768,
+          "correct": false,
+          "promptTokens": 31500,
+          "outputTokens": 28
+        },
+        {
+          "mode": "sillymemory",
+          "context": 32768,
+          "correct": true,
+          "promptTokens": 3317,
+          "outputTokens": 44
+        },
+        {
+          "mode": "off",
+          "context": 131072,
+          "correct": true,
+          "promptTokens": 103340,
+          "outputTokens": 17
+        }
+      ]
+    },
+    {
+      "id": "370a8ff4",
+      "stratum": "temporal-reasoning",
+      "outcomes": [
+        {
+          "mode": "off",
+          "context": 32768,
+          "correct": false,
+          "promptTokens": 31540,
+          "outputTokens": 36
+        },
+        {
+          "mode": "sillymemory",
+          "context": 32768,
+          "correct": false,
+          "promptTokens": 2047,
+          "outputTokens": 90
+        },
+        {
+          "mode": "off",
+          "context": 131072,
+          "correct": false,
+          "promptTokens": 103082,
+          "outputTokens": 171
+        }
+      ]
+    },
+    {
+      "id": "4dfccbf7",
+      "stratum": "temporal-reasoning",
+      "outcomes": [
+        {
+          "mode": "off",
+          "context": 32768,
+          "correct": true,
+          "promptTokens": 31047,
+          "outputTokens": 103
+        },
+        {
+          "mode": "sillymemory",
+          "context": 32768,
+          "correct": false,
+          "promptTokens": 2894,
+          "outputTokens": 139
+        },
+        {
+          "mode": "off",
+          "context": 131072,
+          "correct": false,
+          "promptTokens": 105188,
+          "outputTokens": 123
+        }
+      ]
+    },
+    {
+      "id": "gpt4_98f46fc6",
+      "stratum": "temporal-reasoning",
+      "outcomes": [
+        {
+          "mode": "off",
+          "context": 32768,
+          "correct": false,
+          "promptTokens": 31553,
+          "outputTokens": 33
+        },
+        {
+          "mode": "sillymemory",
+          "context": 32768,
+          "correct": false,
+          "promptTokens": 5028,
+          "outputTokens": 54
+        },
+        {
+          "mode": "off",
+          "context": 131072,
+          "correct": true,
+          "promptTokens": 105111,
+          "outputTokens": 47
+        }
+      ]
+    },
+    {
+      "id": "gpt4_74aed68e",
+      "stratum": "temporal-reasoning",
+      "outcomes": [
+        {
+          "mode": "off",
+          "context": 32768,
+          "correct": false,
+          "promptTokens": 31479,
+          "outputTokens": 76
+        },
+        {
+          "mode": "sillymemory",
+          "context": 32768,
+          "correct": true,
+          "promptTokens": 3905,
+          "outputTokens": 138
+        },
+        {
+          "mode": "off",
+          "context": 131072,
+          "correct": false,
+          "promptTokens": 105412,
+          "outputTokens": 79
+        }
+      ]
+    },
+    {
+      "id": "6613b389",
+      "stratum": "temporal-reasoning",
+      "outcomes": [
+        {
+          "mode": "off",
+          "context": 32768,
+          "correct": false,
+          "promptTokens": 31521,
+          "outputTokens": 37
+        },
+        {
+          "mode": "sillymemory",
+          "context": 32768,
+          "correct": false,
+          "promptTokens": 4436,
+          "outputTokens": 50
+        },
+        {
+          "mode": "off",
+          "context": 131072,
+          "correct": true,
+          "promptTokens": 105738,
+          "outputTokens": 36
+        }
+      ]
+    }
+  ],
+  "retrieval": {
+    "observations": 42,
+    "zeroPreparedMemory": 0,
+    "maximumMemoryTokens": 799,
+    "invalidCandidateHits": 0,
+    "preparedMessages": 348,
+    "deliveredMessages": 348
+  },
+  "localHostFixture": {
+    "passed": true,
+    "rows": 3,
+    "cleanup": true,
+    "qualityEvidence": false
+  },
+  "finalUnitTests": 309,
+  "archive": {
+    "path": "artifacts/archive/english-heldout-v1/evidence.tar.gz",
+    "sha256": "d82c2402bba4c8ee8d834e28980706e7dba316944d97599c9a3a3bed9a94fe37",
+    "bytes": 73163473,
+    "filesVerified": 671,
+    "configuredSecretMatches": 0,
+    "availability": "Local-only in the sillymemory-english-heldout worktree; not uploaded or available in a fresh clone"
+  }
+}

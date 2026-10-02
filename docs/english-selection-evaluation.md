@@ -19,7 +19,8 @@ The net gain is promising development evidence, not an adopted improvement.
 In particular, one win had an **identical complete API request** to the old run:
 it cannot be attributed to the selection change. No score, acceptance criterion
 or candidate was changed after these observations, and no answer was rerun for
-quality. The 42 held-out questions remain unused.
+quality. The 42 held-out questions were unused at this stage; their subsequent
+[separate evaluation](english-heldout-evaluation.md) retains this baseline policy.
 
 ## Interpretation of changed answers
 
