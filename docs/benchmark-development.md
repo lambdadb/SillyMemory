@@ -290,12 +290,61 @@ source-bound checks. Current CI checks small invariants, not this historical run
 The complete unit suite passes 308 tests; runtime/tool syntax and release metadata
 checks pass. Unit/local-service fixtures and paid quality results remain separate.
 
-Retain this run as the current 800-token baseline. Next, evaluate one bounded
-change to primary/context selection on development data and existing follow-up
-regressions, then verify generated answers. Reuse the completed comparison arms;
-do not repeat native indexing or hundreds of summaries for that diagnostic.
-Freeze the chosen policy and aggregate cost/time bounds before the 42-question
-held-out evaluation, and do not tune against its answers. Keep implementation,
-completed validation and the decision together rather than opening another
-preparation-only PR. No release or general quality claim follows from this
-development-only result.
+## Primary-priority follow-up: reject the change
+
+The cached LongMemEval diagnostic alone is insufficient to change the product.
+A subsequent offline gate fixed three candidates before replay: take two primary
+hits per contextual hit, three per contextual hit, or all primary hits first.
+Keep query construction, returned candidates, local-source checks, packing and
+each case's budget/recent window unchanged. Ranking sees no answer labels.
+Adoption required a development source-selection gain with **zero losses of
+previously selected required evidence in either cohort**. Prefer 2:1, then 3:1,
+then primary-first if more than one qualifies. All three failed this gate.
+
+| Ordering | Follow-up sources selected / 190 | Follow-up losses | Development labeled sources selected / 21 | Development losses |
+| --- | ---: | ---: | ---: | ---: |
+| Current equal interleaving | 182 | — | 14 | — |
+| Primary 2 : context 1 | 176 | 6 | 19 | 0 |
+| Primary 3 : context 1 | 176 | 6 | 20 | 0 |
+| All primary hits first, then context | 174 | 8 | 20 | 0 |
+
+Follow-up evidence reuses all 218 existing case/budget rows: 62 historical search
+cases at 320/400/800 tokens and 32 historical generation observations at 320.
+The original 94 selections and token counts reproduce exactly; current packing
+also matches those original selections. The 12 fresh development observations
+with retained retrieval traces reproduce exactly, including memory text/tokens.
+The two reused pilot rows lack that trace and are excluded from this diagnostic.
+The development denominator counts labeled source messages; the follow-up
+cohort checks required quotes. They are different measures, both reuse known
+inputs, and neither counts correct generated answers or independent samples.
+
+Even 2:1 loses the Korean banner fact at budget 400 in six controls: long
+reference, first-user, assistant-topic, blank-assistant, retained-answer and
+blank-user. These controls share the same source fact; they are six failing
+configurations, not six independent conversations. Primary-first additionally
+loses the Korean observatory reference at 320 and 400. A LongMemEval-only gain
+would therefore conceal a regression in conversational reference handling.
+
+**Keep the existing v5 query policy, equal interleaving and 800-token default.**
+This closes the proposed primary-priority change. No product implementation,
+provider call, new answer/judge, host run or held-out evaluation was made for
+this follow-up. The previous 10/14 quality result is unchanged. The gate prevented
+paid validation of a candidate already known to lose required sources; it does
+not establish that future policies cannot improve. No arbitrary language,
+question-length or case-ID exception was added to rescue a failing candidate.
+
+The existing [manifest](benchmarks/development-live-summary-v1.json) includes the
+compact result, six loss identities and a separate 27 KiB local-only archive
+checksum. That archive holds the fixed plan, one-off replay, full results, input
+hashes and check logs. It depends on the separately retained baseline evidence;
+restore both to reproduce without provider calls. No new maintained runner or
+separate experiment PR is added. The replay checkout at `945973e` passes its
+275 unit tests plus syntax/release checks; those checks are distinct from the
+308-test PR39 suite and from paid quality evidence.
+
+Next, freeze the unchanged policy/settings and aggregate cost/time bounds for
+the reserved 42-question held-out evaluation. Do not add another selection-tuning
+round or repeat the completed development comparison by default. Keep held-out
+answers out of tuning and report multi-session/temporal failures alongside the
+aggregate result. Any promotion or release remains a separate decision; these
+development results do not establish general quality or release readiness.

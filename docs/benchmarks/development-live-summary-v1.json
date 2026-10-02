@@ -263,5 +263,96 @@
     "Frozen uncached price assumptions; old pilot and LambdaDB bill excluded",
     "Native raw search rankings not retained; message-label diagnostics are not ANN recall",
     "Final startup-lock fix is local-fixture evidence; paid source and continuation history are archived"
-  ]
+  ],
+  "primarySelectionFollowup": {
+    "evidence": "Offline replay of recorded candidates, not fresh retrieval or answer quality",
+    "sourceRevision": "945973ec374b7e054a86bbdaf6dbf62586a3593a",
+    "runtimeChanged": false,
+    "providerCalls": 0,
+    "heldOutQuestionsExecuted": 0,
+    "decision": "Reject all three fixed primary-priority candidates; retain v5 and close this selection change.",
+    "baselineReproduced": {
+      "historicalSearch": 62,
+      "historicalGeneration": 32,
+      "developmentObservations": 12
+    },
+    "cohorts": {
+      "followup": {
+        "rows": 218,
+        "selectedSourceObservations": {
+          "baseline": 182,
+          "primary-2": 176,
+          "primary-3": 176,
+          "primary-first": 174
+        },
+        "gains": {
+          "baseline": 0,
+          "primary-2": 0,
+          "primary-3": 0,
+          "primary-first": 0
+        },
+        "losses": {
+          "baseline": 0,
+          "primary-2": 6,
+          "primary-3": 6,
+          "primary-first": 8
+        }
+      },
+      "development": {
+        "rows": 12,
+        "selectedSourceObservations": {
+          "baseline": 14,
+          "primary-2": 19,
+          "primary-3": 20,
+          "primary-first": 20
+        },
+        "gains": {
+          "baseline": 0,
+          "primary-2": 5,
+          "primary-3": 6,
+          "primary-first": 6
+        },
+        "losses": {
+          "baseline": 0,
+          "primary-2": 0,
+          "primary-3": 0,
+          "primary-first": 0
+        }
+      }
+    },
+    "leastDisruptiveCandidateLosses": [
+      {
+        "case": "search/long-dialogue-v1/ko-long-reference",
+        "budget": 400
+      },
+      {
+        "case": "search/boundaries/ko-first-user",
+        "budget": 400
+      },
+      {
+        "case": "search/boundaries/ko-assistant-topic",
+        "budget": 400
+      },
+      {
+        "case": "search/fallback-controls/ko-blank-assistant",
+        "budget": 400
+      },
+      {
+        "case": "search/fallback-controls/ko-retained-answer",
+        "budget": 400
+      },
+      {
+        "case": "search/fallback-controls/ko-blank-user",
+        "budget": 400
+      }
+    ],
+    "reportSha256": "fd2b7ada656359443b5ef339f46a26de1e3b160e9818a38f40da6f0b6461d035",
+    "archive": {
+      "path": "artifacts/archive/primary-selection-v1/evidence.tar.gz",
+      "sha256": "7179c6db0406394e64c66af6c49d35a0fffb359c159a895d0d70507727e83bdf",
+      "availability": "Local-only in the benchmark-live-resume worktree; not uploaded or available in a fresh clone",
+      "bytes": 27923
+    },
+    "reproduction": "Extract artifacts into a checkout at sourceRevision. Set SM_BASELINE_ROOT to the restored PR39 evidence worktree, install its pinned host dependencies, then node artifacts/replay.mjs artifacts/new-replay.json. Needs the separately archived PR39 baseline evidence. No credentials or network calls."
+  }
 }
