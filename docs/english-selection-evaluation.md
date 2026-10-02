@@ -86,7 +86,7 @@ It excludes credentials, dataset cache and host dependencies. To revalidate,
 check out the manifest's producer base revision, extract the bundle, apply
 `artifacts/candidate.patch` and run `node artifacts/analyze-primary.mjs` after
 restoring the separately archived baseline evidence and locked dataset/tokenizer.
-Use a fresh output path or move the extracted analysis report aside; the analyzer
+Move the extracted `artifacts/primary-analysis.json` aside first; the analyzer
 refuses overwrite. This is offline verification, not another paid run.
 
 Close this candidate instead of trying more weights or rerunning the loss until
