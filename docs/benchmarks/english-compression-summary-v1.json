@@ -1,0 +1,76 @@
+{
+  "version": "english-compression-v1",
+  "classification": "Offline cached-candidate replay and synthetic unit regressions only",
+  "decision": "Reject both candidates: no labeled development source gain. No paid calls or runtime changes.",
+  "producerBaseRevision": "33fc1278f1e0c8c6ec7f0279862ec35b5f5b51db",
+  "baselineMemorySha256": "c6dd10765199745724703cb47abe664d1a45d60dd71adb60b749cbf22d8908b3",
+  "candidates": {
+    "contiguous": {
+      "candidateSourceSha256": "e41121e9d1dfc39dd533ad7a5cbf266fcca5100e066806d5c59822d087237fed",
+      "patchSha256": "8ec6134f243fe1fe62d51133fd226a8a1997d4c59ebcd31ab007ebc47fb819fb",
+      "resultSha256": "8aa7dad39390f40b78601c9768b341289e3178cd00912fb648a92917943b45cd",
+      "groups": {
+        "followup": {
+          "rows": 112,
+          "baselineSelectedEvidence": 98,
+          "candidateSelectedEvidence": 98,
+          "addedPassages": 0,
+          "changedTokenOrPassageRows": 0,
+          "sourceLosses": 0,
+          "evidenceGains": 0
+        },
+        "development": {
+          "rows": 12,
+          "baselineSelectedEvidence": 14,
+          "candidateSelectedEvidence": 14,
+          "addedPassages": 1,
+          "changedTokenOrPassageRows": 3,
+          "sourceLosses": 0,
+          "evidenceGains": 0
+        }
+      },
+      "adopt": false
+    },
+    "compact": {
+      "candidateSourceSha256": "25d473cbb44c377fbe864161de532846cd7b73bac473289b837e417f26a552ea",
+      "patchSha256": "998298ae03b752916d50ac5a0c9c55624b9f1af7000eb77494b53306f32e638e",
+      "resultSha256": "161e2d7e68cc2dda6eeb711f7d03af134b5ed6ade9e98c6b0cac54fafe9c4f86",
+      "groups": {
+        "followup": {
+          "rows": 112,
+          "baselineSelectedEvidence": 98,
+          "candidateSelectedEvidence": 98,
+          "addedPassages": 35,
+          "changedTokenOrPassageRows": 35,
+          "sourceLosses": 0,
+          "evidenceGains": 0
+        },
+        "development": {
+          "rows": 12,
+          "baselineSelectedEvidence": 14,
+          "candidateSelectedEvidence": 14,
+          "addedPassages": 4,
+          "changedTokenOrPassageRows": 4,
+          "sourceLosses": 0,
+          "evidenceGains": 0
+        }
+      },
+      "adopt": false
+    }
+  },
+  "candidateUnitTests": {
+    "contiguous": 41,
+    "compact": 39
+  },
+  "finalUnitTests": 309,
+  "heldoutQuestionsConsumed": 0,
+  "newProviderCalls": 0,
+  "archive": {
+    "path": "artifacts/archive/english-compression-v1/evidence.tar.gz",
+    "sha256": "76d2c94c85f6afc2b58327be8667d82e9bde8a1f27073ecc5f41fd14429db01d",
+    "bytes": 84545,
+    "verifiedFiles": 21,
+    "availability": "Local-only in sillymemory-contiguous-packing; not uploaded or available in a fresh clone",
+    "requiresDevelopmentEvidenceArchiveSha256": "26e1669b3a24c33742b9cc4a76c47707a6c870ad16436f14fe2c46acc692baa8"
+  }
+}
