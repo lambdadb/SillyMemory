@@ -117,6 +117,30 @@ also excludes the two reused pilot histories; it is not an equally sized per-arm
 production cost comparison. Managed embedding charges are not inferred from the
 native OpenAI embedding bill.
 
+## Why Summarize used many tokens
+
+There are two separate costs. The final answer used a median 31,318.5 input
+tokens at 32K context because the built-in summary is added as an extension
+prompt; it does not replace the source history with the summary plus a small
+recent-message window. The host still fills the available context with chat.
+The requested 200 words limits the summary output, not the answer input.
+
+Maintaining that summary incurred 609 successful calls across the 12 newly
+replayed histories, totaling 16,572,010 input tokens: about 27,212 per call.
+The interval is 10 **messages**, not ten user/assistant pairs. The pinned Main API
+DEFAULT builder calls `generateQuietPrompt` through normal host prompt assembly,
+so successive summaries reread overlapping context rather than only the new
+messages since the previous summary. The existing summary can also be present.
+See the pinned host's [summary builder and insertion code](https://github.com/SillyTavern/SillyTavern/blob/06bde939fb1e9c4c8d8641d810f0a916b5bce127/public/scripts/extensions/memory/index.js).
+
+This is the measured automatic/default-builder condition with Main API selected;
+it is not a measurement of every summarization strategy. The host also has raw
+builders, but this comparison did not evaluate them. Replaying full histories
+concentrates maintenance work into setup; normal ongoing use spreads it over
+conversation. The two unknown-delivery attempts are additional uncertainty,
+not the cause of the 609 successful calls' token total. No new provider requests
+were made to explain these results.
+
 ## Method and interpretation
 
 The product question is whether SillyMemory preserves useful long-history answer
@@ -290,7 +314,7 @@ source-bound checks. Current CI checks small invariants, not this historical run
 The complete unit suite passes 308 tests; runtime/tool syntax and release metadata
 checks pass. Unit/local-service fixtures and paid quality results remain separate.
 
-## Primary-priority follow-up: reject the change
+## Primary-priority follow-up: original multilingual gate
 
 The cached LongMemEval diagnostic alone is insufficient to change the product.
 A subsequent offline gate fixed three candidates before replay: take two primary
@@ -325,8 +349,9 @@ configurations, not six independent conversations. Primary-first additionally
 loses the Korean observatory reference at 320 and 400. A LongMemEval-only gain
 would therefore conceal a regression in conversational reference handling.
 
-**Keep the existing v5 query policy, equal interleaving and 800-token default.**
-This closes the proposed primary-priority change. No product implementation,
+**Original decision: keep v5, equal interleaving and the 800-token default.**
+This closed the proposed change under the original multilingual gate; the later
+English-first scope update below changes the next step. No product implementation,
 provider call, new answer/judge, host run or held-out evaluation was made for
 this follow-up. The previous 10/14 quality result is unchanged. The gate prevented
 paid validation of a candidate already known to lose required sources; it does
@@ -342,9 +367,27 @@ separate experiment PR is added. The replay checkout at `945973e` passes its
 275 unit tests plus syntax/release checks; those checks are distinct from the
 308-test PR39 suite and from paid quality evidence.
 
-Next, freeze the unchanged policy/settings and aggregate cost/time bounds for
-the reserved 42-question held-out evaluation. Do not add another selection-tuning
-round or repeat the completed development comparison by default. Keep held-out
+### Updated scope: English first
+
+After reviewing this result, the maintainer limited near-term quality evaluation
+and optimization to English. New Korean/other-language live runs and targeted
+optimization are deferred. Preserve the historical multilingual findings and
+existing inexpensive unit tests; the change of scope does not erase regressions
+or establish multilingual quality.
+
+All losses above were Korean. The previous rejection remains the result of the
+original multilingual gate, but those losses are no longer a blocking adoption
+criterion for an explicitly English-focused candidate. The shipped policy is
+still unchanged. A gain in labeled English source coverage is not yet a gain in
+generated-answer correctness.
+
+Next, carry the already fixed **2:1** candidate into bounded English development
+answer validation, following the original least-disruptive candidate preference.
+Retain English follow-up checks, source isolation, stale-hit rejection and token
+limits. Reuse completed comparator arms; do not rerun native indexing or rolling
+summaries. Freeze candidate/settings, spend/time bounds and answer-quality
+acceptance criteria before calls, retaining every failure. Only then choose and
+freeze the policy for the reserved 42 English held-out questions. Keep held-out
 answers out of tuning and report multi-session/temporal failures alongside the
-aggregate result. Any promotion or release remains a separate decision; these
-development results do not establish general quality or release readiness.
+aggregate result. Promotion/release remains a separate decision; no runtime
+adoption or fresh answer-quality result is claimed by this scope update.

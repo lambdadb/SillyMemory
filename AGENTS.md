@@ -27,3 +27,13 @@ Read [CONTRIBUTING.md](CONTRIBUTING.md) before changing this repository.
 - Avoid general-purpose experiment infrastructure unless a concrete recurring use
   requires it. Test-count growth and infrastructure completion are not product or
   answer-quality progress. Report those boundaries explicitly.
+
+## Current evaluation priority
+
+- Prioritize English for near-term answer-quality evaluation and optimization.
+  Defer new Korean/other-language live experiments and targeted optimization.
+- Preserve historical multilingual results and existing inexpensive unit tests.
+  Korean-only quality regressions are not a blocking adoption gate for an
+  explicitly English-focused candidate; disclose them and avoid multilingual
+  quality claims. Isolation, synchronization, budget and failure-safety checks
+  remain required regardless of language.
