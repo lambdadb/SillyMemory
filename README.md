@@ -70,6 +70,16 @@ The development baseline is **SillyTavern 1.19.0**, pinned to commit [`06bde939f
 7. If a test fails, use **Clean up test collection**. Pending test identity is preserved across reloads so cleanup can be retried after reconnecting. A failed cleanup is not reported as successful.
 8. Click **Create memory collection**, select a character chat, then enable memory. Default settings retain 12 recent messages and allow 800 memory tokens, including excerpt content and source labels; provider message-envelope overhead is managed by the host. Configure the bounds in the panel. Disable built-in Vector Storage chat vectorization and other prompt-rewriting memory extensions for this prototype.
 
+The memory budget applies **per generated answer**, not cumulatively across a
+chat. Recent messages and character instructions are separate from that budget.
+You can set 64–4,096 memory tokens; the effective limit is also capped at one
+quarter of the context size passed by the host. The default 800 is a heuristic,
+not an established optimum. It is unrelated to the current 800-**character**
+indexing chunks, which have no overlap. See the
+[controlled budget comparison](docs/memory-budget-calibration.md) for evidence
+and limitations, and the [design review](docs/memory-design-followups.md) for
+planned collection, chunking and hybrid-search work.
+
 For local development, symlink the checkout into
 `SillyTavern/public/scripts/extensions/third-party/sillymemory`; do not also install
 a user-scoped copy. Manual copies without Git metadata cannot use the normal
