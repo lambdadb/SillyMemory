@@ -1,5 +1,6 @@
 // Full SillyTavern Generate/UI path + live LambdaDB. Model is deterministic by
 // default; --live-model requires explicitly supplied compatible-model settings.
+import { runChunking, chunkingBaseline, chunkingFiles } from './chunking-eval.mjs';
 import { chromium } from '@playwright/test';
 import { createServer } from 'node:http';
 import { parseEnv } from 'node:util';
@@ -30,6 +31,8 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const source = process.env.ST_SOURCE || '/tmp/sillymemory-st-source';
 const revision = '06bde939fb1e9c4c8d8641d810f0a916b5bce127';
 const env = parseEnv(await readFile(process.env.SM_ENV_FILE || path.join(root, '.env.local'), 'utf8'));
+const chunkingMode = process.argv.includes('--chunking');
+if (chunkingMode && ['--semantic','--natural','--comparison','--heldout','--challenges','--summarize','--native-tuning','--three-modes','--direct-embeddings','--korean-eval'].some(f => process.argv.includes(f))) throw new Error('Choose chunking mode alone.');
 const summarizeMode = process.argv.includes('--summarize');
 if(summarizeMode && ['--semantic','--natural','--native-tuning','--three-modes','--direct-embeddings','--comparison','--korean-eval','--challenges','--heldout'].some(flag=>process.argv.includes(flag))) throw new Error('Choose --summarize without another evaluation mode');
 const nativeTuning = process.argv.includes('--native-tuning');
@@ -39,14 +42,14 @@ if (semantic && process.argv.includes('--natural')) throw new Error('Choose one 
 const directEmbeddingsMode = process.argv.includes('--direct-embeddings');
 if (directEmbeddingsMode && (!semantic || threeModes)) throw new Error('--direct-embeddings requires --semantic');
 const natural = process.argv.includes('--natural') || semantic;
-const retryTransient = process.argv.includes('--retry-transient');
+const retryTransient = process.argv.includes('--retry-transient') || chunkingMode;
 if (semantic && !retryTransient) throw new Error('--semantic requires the frozen --retry-transient policy');
-if (retryTransient && !natural) throw new Error('--retry-transient requires --natural');
+if (retryTransient && !natural && !chunkingMode) throw new Error('--retry-transient requires --natural');
 const retryBudget = { calls: 0, retries: 0 };
 const frozenNatural = natural ? (semantic ? await (summarizeMode ? verifySummaryPlan : nativeTuning ? verifyTuningPlan : threeModes ? verifyThreeModePlan : directEmbeddingsMode ? verifyDirectPlan : verifySemanticPlan)(process.env.SM_NATURAL_PLAN) : await verifyNaturalPlan(process.env.SM_NATURAL_PLAN)) : null;
 const comparison = process.argv.includes('--comparison');
 const nativeComparison = comparison || threeModes;
-const transportProtocol = summarizeMode ? summaryRetry : nativeTuning ? tuningRetry : threeModes ? threeModeRetry : NATURAL_RETRY;
+const transportProtocol = chunkingMode ? { ...NATURAL_RETRY, maxCalls: 20 } : summarizeMode ? summaryRetry : nativeTuning ? tuningRetry : threeModes ? threeModeRetry : NATURAL_RETRY;
 const setupOnly = process.argv.includes('--comparison-setup');
 const comparisonStart = Number(process.env.SM_COMPARE_START || 0);
 if (!Number.isInteger(comparisonStart) || comparisonStart < 0 || comparisonStart > 53) throw new Error('Invalid SM_COMPARE_START');
@@ -59,8 +62,8 @@ const challengeStart = Number(process.env.SM_CHALLENGE_START || 0);
 if (!Number.isInteger(challengeStart) || challengeStart < 0 || challengeStart >= challengeCount) throw new Error('Invalid SM_CHALLENGE_START');
 const artifactTag = process.env.SM_ARTIFACT_TAG || '';
 if (artifactTag && !/^[a-zA-Z0-9][a-zA-Z0-9._-]{0,79}$/.test(artifactTag)) throw new Error('Invalid SM_ARTIFACT_TAG.');
-const liveModel = process.argv.includes('--live-model') || koreanEvaluation || comparison || challenges || natural;
-const hostContextTokens = natural ? frozenNatural.plan.settings.context : (koreanEvaluation || comparison) ? 32768 : 8192;
+const liveModel = chunkingMode || process.argv.includes('--live-model') || koreanEvaluation || comparison || challenges || natural;
+const hostContextTokens = natural ? frozenNatural.plan.settings.context : (koreanEvaluation || comparison || chunkingMode) ? 32768 : 8192;
 const caseStart = koreanEvaluation ? Number(process.env.SM_CASE_START || 0) : 0;
 if (!Number.isInteger(caseStart) || caseStart < 0 || caseStart > 7) throw new Error('SM_CASE_START must be an integer from 0 to 7.');
 const sampleStart = koreanEvaluation ? Number(process.env.SM_SAMPLE_START ?? caseStart * 2) : 0;
@@ -68,7 +71,7 @@ if (!Number.isInteger(sampleStart) || sampleStart < 0 || sampleStart > 15) throw
 let transientRetriesRemaining = natural ? 0 : 1;
 if (liveModel && !(env.LLM_BASE_URL && (process.env.SM_MODEL || env.LLM_MODEL) && env.LLM_API_KEY)) throw new Error('Live model requires LLM_BASE_URL, LLM_MODEL, and LLM_API_KEY in .env.local.');
 const model = liveModel ? (process.env.SM_MODEL || env.LLM_MODEL) : 'sillymemory-deterministic-fixture';
-if ((comparison || challenges || natural) && (env.LLM_BASE_URL !== 'https://api.openai.com/v1' || model !== 'gpt-4.1-mini-2025-04-14')) throw new Error('Comparison requires the fixed OpenAI snapshot and endpoint.');
+if ((comparison || challenges || natural || chunkingMode) && (env.LLM_BASE_URL !== 'https://api.openai.com/v1' || model !== 'gpt-4.1-mini-2025-04-14')) throw new Error('Comparison requires the fixed OpenAI snapshot and endpoint.');
 const generationIntervalMs = liveModel ? PROVIDER_SPACING.minimumIntervalMs : 0;
 const maxOutputTokens = liveModel ? 256 : 100;
 const reasoningEffort = liveModel ? env.LLM_REASONING_EFFORT : undefined;
@@ -81,12 +84,15 @@ if (!summarizeMode && !nativeTuning && !Object.values(credentials).every(Boolean
 if (execFileSync('git', ['-C', source, 'rev-parse', 'HEAD'], { encoding: 'utf8' }).trim() !== revision) throw new Error('Unexpected host revision.');
 if (await realpath(path.join(source, 'public/scripts/extensions/third-party/sillymemory')) !== root) throw new Error('Host extension symlink must point to this checkout.');
 const artifacts = path.join(root, 'artifacts'); await mkdir(artifacts, { recursive: true });
-const modeSuffix = natural ? (summarizeMode ? 'summarize' : nativeTuning ? 'native-tuning' : threeModes ? 'three-modes' : semantic ? 'semantic' : 'natural') : challenges ? `${heldout ? 'heldout' : 'challenges'}${challengeStart ? `-from-${challengeStart}` : ''}` : comparison ? `comparison${comparisonStart ? `-from-${comparisonStart}` : ''}${setupOnly ? '-setup' : ''}` : koreanEvaluation ? `korean-eval${process.env.SM_SAMPLE_START ? `-from-sample-${sampleStart}` : caseStart ? `-from-${caseStart}` : ''}` : liveModel ? 'live-model' : 'fixture-model';
+const modeSuffix = chunkingMode ? 'chunking' : natural ? (summarizeMode ? 'summarize' : nativeTuning ? 'native-tuning' : threeModes ? 'three-modes' : semantic ? 'semantic' : 'natural') : challenges ? `${heldout ? 'heldout' : 'challenges'}${challengeStart ? `-from-${challengeStart}` : ''}` : comparison ? `comparison${comparisonStart ? `-from-${comparisonStart}` : ''}${setupOnly ? '-setup' : ''}` : koreanEvaluation ? `korean-eval${process.env.SM_SAMPLE_START ? `-from-sample-${sampleStart}` : caseStart ? `-from-${caseStart}` : ''}` : liveModel ? 'live-model' : 'fixture-model';
 const suffix = modeSuffix + (artifactTag ? `-${artifactTag}` : '');
 const reportPath = path.join(artifacts, `generation-${suffix}.json`);
-if (natural) await writeFile(reportPath, JSON.stringify({ passed: false, incomplete: true }), { flag: 'wx' });
-const naturalSourceFiles = ['index.js', 'src/chat-collections.js', 'src/client.js', 'src/gate.js', 'src/memory.js', 'src/context.js', 'src/status.js', 'scripts/generation-smoke.mjs', 'scripts/provider-spacing.mjs', 'scripts/generation-cleanup.mjs', 'scripts/natural-eval.mjs', 'scripts/natural-dialogue.mjs', ...(semantic ? [...semanticFiles, ...(summarizeMode ? summaryFiles : nativeTuning ? tuningFiles : threeModes ? threeModeFiles : []), ...(directEmbeddingsMode ? directFiles : [])] : fixtureFiles(frozenNatural?.plan.version)), ...(retryTransient ? ['scripts/provider-retry.mjs', 'docs/natural-dialogue-retry.md', 'scripts/natural-summary.mjs', 'scripts/natural-score.mjs'] : [])];
+if (natural || chunkingMode) await writeFile(reportPath, JSON.stringify({ passed: false, incomplete: true }), { flag: 'wx' });
+const naturalSourceFiles = ['src/chunking.js', 'index.js', 'src/chat-collections.js', 'src/client.js', 'src/gate.js', 'src/memory.js', 'src/context.js', 'src/status.js', 'scripts/generation-smoke.mjs', 'scripts/provider-spacing.mjs', 'scripts/generation-cleanup.mjs', 'scripts/natural-eval.mjs', 'scripts/natural-dialogue.mjs', ...(semantic ? [...semanticFiles, ...(summarizeMode ? summaryFiles : nativeTuning ? tuningFiles : threeModes ? threeModeFiles : []), ...(directEmbeddingsMode ? directFiles : [])] : fixtureFiles(frozenNatural?.plan.version)), ...(retryTransient ? ['scripts/provider-retry.mjs', 'docs/natural-dialogue-retry.md', 'scripts/natural-summary.mjs', 'scripts/natural-score.mjs'] : [])];
 const naturalSourceSha256 = natural ? Object.fromEntries(await Promise.all(naturalSourceFiles.map(async file => [file, createHash('sha256').update(await readFile(path.join(root, file))).digest('hex')]))) : null;
+const chunkingHashes = async () => Object.fromEntries(await Promise.all(['index.js', 'src/memory.js', 'src/client.js', 'src/chat-collections.js', 'src/context.js', 'scripts/generation-smoke.mjs', ...chunkingFiles].map(async file => [file, createHash('sha256').update(await readFile(path.join(root, file))).digest('hex')])));
+const chunkingSource = chunkingMode ? await chunkingHashes() : null;
+if (chunkingMode) await writeFile(reportPath + '.plan.json', JSON.stringify({ sourceSha256: chunkingSource, baseline: chunkingBaseline, model, context: hostContextTokens, maxOutputTokens, budget: 800, recent: 4, samples: 12, maxCalls: 20 }, null, 2), { flag: 'wx' });
 const pendingPath = path.join(artifacts, `generation-${suffix}-pending.json`);
 const pending = { collections: [], connectionHash: createHash('sha256').update(JSON.stringify([credentials.endpoint, credentials.project])).digest('hex') };
 await writeFile(pendingPath, JSON.stringify(pending), { flag: 'wx' });
@@ -101,9 +107,9 @@ const transformDirect = directEmbeddingsMode ? createDirectAdapter({ key: env.LL
 const lambdaRequestMap = new Map();
 const redact = value => { let output = JSON.stringify(value, null, 2); for (const secret of [credentials.key, env.LLM_API_KEY, credentials.endpoint, credentials.project, env.LLM_BASE_URL].filter(Boolean)) output = output.replaceAll(secret, "[REDACTED]"); return output; };
 async function checkpointNatural() {
-    if (!natural) return;
+    if (!natural && !chunkingMode) return;
     const temporary = `${reportPath}.tmp`;
-    await writeFile(temporary, redact({ passed: false, incomplete: true, ...directEvidence(), evaluation, generations, providerCalls, ...resumedEvidence(), lambdaRequests, embeddings, vectorQueries, ...summaryTrafficEvidence(), transportProtocol: retryTransient ? transportProtocol : null, providerSpacing: PROVIDER_SPACING, sourceSha256: naturalSourceSha256 }));
+    await writeFile(temporary, redact({ passed: false, incomplete: true, ...directEvidence(), evaluation, generations, providerCalls, ...resumedEvidence(), lambdaRequests, embeddings, vectorQueries, ...summaryTrafficEvidence(), transportProtocol: retryTransient ? transportProtocol : null, providerSpacing: PROVIDER_SPACING, sourceSha256: naturalSourceSha256 || chunkingSource }));
     await rename(temporary, reportPath);
     summaryTraffic?.assertClean();
 }
@@ -144,7 +150,7 @@ const bridge = createServer(async (req, res) => {
         const buffers = []; for await (const b of req) buffers.push(b);
         const body = JSON.parse(Buffer.concat(buffers).toString());
         const entry = { stage, messages: body.messages, stream: body.stream, model, maxOutputTokens: body.max_tokens, reasoningEffort: body.reasoning_effort, startedAt: Date.now() };
-        if (natural && (body.model !== model || body.temperature !== 0 || body.max_tokens !== 256)) throw new Error('Frozen model parameters changed');
+        if ((natural || chunkingMode) && (body.model !== model || body.temperature !== 0 || body.max_tokens !== 256)) throw new Error('Frozen model parameters changed');
         entry.requestOptions = Object.fromEntries(Object.entries(body).filter(([key]) => key !== 'messages'));
         generations.push(entry);
         if (liveModel) {
@@ -270,7 +276,7 @@ async function generate(name, type = 'normal', streaming = false, evaluationOpti
     return { ...result, request, prompt: JSON.stringify(request.messages) };
 }
 try {
-    if (natural) {
+    if (natural || chunkingMode) {
         stage = 'fixed model availability';
         const response = await fetch(`${env.LLM_BASE_URL}/models/${encodeURIComponent(model)}`, { headers: { Authorization: `Bearer ${env.LLM_API_KEY}` }, signal: AbortSignal.timeout(30000) });
         assert(response.ok && (await response.json()).id === model, 'fixed model is available; no substitution');
@@ -281,7 +287,7 @@ try {
     for (let i = 0; i < 90; i++) { if (server.exitCode !== null) throw new Error('Host exited'); try { if ((await fetch(url)).ok) { ready = true; break; } } catch {} await new Promise(r => setTimeout(r, 500)); }
     if (!ready) throw new Error('Host startup timeout');
     browser = await chromium.launch(); page = await browser.newPage({ viewport: { width: 1440, height: 1000 } }); page.setDefaultTimeout(20000);
-    if (natural) {
+    if (natural || chunkingMode) {
         const finishRequest = (request, failed = false) => {
             const entry = lambdaRequestMap.get(request); if (!entry) return;
             if (failed) { entry.failed = true; entry.controller?.abort(); }
@@ -294,9 +300,13 @@ try {
         page.on('requestfailed', request => finishRequest(request, true));
     }
     // Persist only non-secret ownership metadata before any collection creation.
+    if (chunkingMode) {
+        const baseline = execFileSync('git', ['show', `${chunkingBaseline}:src/memory.js`], { cwd: root, encoding: 'utf8' });
+        await page.route('**/src/memory-baseline.js', route => route.fulfill({ contentType: 'text/javascript', body: baseline }));
+    }
     await page.route('**/proxy/**', async route => {
         const req = route.request(); const target = new URL(decodeURIComponent(new URL(req.url()).pathname.split('/proxy/')[1]));
-        if (natural) { const entry = { stage, method: req.method(), path: target.pathname.replace(/^\/projects\/[^/]+/, ''), started: performance.now() }; lambdaRequests.push(entry); lambdaRequestMap.set(req, entry); }
+        if (natural || chunkingMode) { const entry = { stage, method: req.method(), path: target.pathname.replace(/^\/projects\/[^/]+/, ''), started: performance.now() }; lambdaRequests.push(entry); lambdaRequestMap.set(req, entry); }
         if (req.method() === 'POST' && target.pathname.endsWith('/collections')) {
             const body = req.postDataJSON(); pending.collections.push({ name: body.collectionName, owner: body.tags.owner });
             await writeFile(pendingPath, JSON.stringify(pending, null, 2));
@@ -360,7 +370,11 @@ try {
     await field('connect').click(); await field('gate').click(); await waitStatus('Transport gate passed');
     await field('provision').click(); await waitStatus('Chat memory is ready');
     }
-    if (natural) {
+    if (chunkingMode) {
+        evaluation = {};
+        await runChunking({ page, field, openSettings, waitStatus, generate, setStage: value => { stage = value; }, result: evaluation, checkpoint: checkpointNatural });
+        events = await page.evaluate(() => globalThis.generationTestEvents);
+    } else if (natural) {
         evaluation = {};
         await (summarizeMode ? runSummarize : semantic ? runSemanticDialogue : runNaturalDialogue)({ generations, page, field, openSettings, waitStatus, generate, assert, setStage: value => { stage = value; }, result: evaluation, frozen: frozenNatural, checkpoint: checkpointNatural, bridgeUrl, vectorQueries });
         events = await page.evaluate(() => globalThis.generationTestEvents);
@@ -475,13 +489,14 @@ try {
         } catch { console.log('Cleanup incomplete; keep pending resource record.'); }
     }
     const sourceSha256 = {};
-    for (const file of ['index.js', 'src/chat-collections.js','src/client.js','src/gate.js','src/memory.js', 'src/context.js','src/status.js','scripts/generation-smoke.mjs','scripts/provider-spacing.mjs','scripts/generation-cleanup.mjs','scripts/korean-eval.mjs','scripts/korean-fixture.mjs','scripts/comparison-fixture.mjs','scripts/comparison-eval.mjs','scripts/challenge-eval.mjs','scripts/recall-challenges.mjs','scripts/heldout-fixture.mjs', ...(natural ? ['scripts/natural-eval.mjs', 'scripts/natural-dialogue.mjs', ...(semantic ? [...semanticFiles, ...(summarizeMode ? summaryFiles : nativeTuning ? tuningFiles : threeModes ? threeModeFiles : []), ...(directEmbeddingsMode ? directFiles : [])] : fixtureFiles(frozenNatural?.plan.version)), ...(retryTransient ? ['scripts/provider-retry.mjs', 'docs/natural-dialogue-retry.md', 'scripts/natural-summary.mjs', 'scripts/natural-score.mjs'] : [])] : [])]) sourceSha256[file] = createHash('sha256').update(await readFile(path.join(root, file))).digest('hex');
+    for (const file of [...(chunkingMode ? chunkingFiles : []), 'src/chunking.js', 'index.js', 'src/chat-collections.js','src/client.js','src/gate.js','src/memory.js', 'src/context.js','src/status.js','scripts/generation-smoke.mjs','scripts/provider-spacing.mjs','scripts/generation-cleanup.mjs','scripts/korean-eval.mjs','scripts/korean-fixture.mjs','scripts/comparison-fixture.mjs','scripts/comparison-eval.mjs','scripts/challenge-eval.mjs','scripts/recall-challenges.mjs','scripts/heldout-fixture.mjs', ...(natural ? ['scripts/natural-eval.mjs', 'scripts/natural-dialogue.mjs', ...(semantic ? [...semanticFiles, ...(summarizeMode ? summaryFiles : nativeTuning ? tuningFiles : threeModes ? threeModeFiles : []), ...(directEmbeddingsMode ? directFiles : [])] : fixtureFiles(frozenNatural?.plan.version)), ...(retryTransient ? ['scripts/provider-retry.mjs', 'docs/natural-dialogue-retry.md', 'scripts/natural-summary.mjs', 'scripts/natural-score.mjs'] : [])] : [])]) sourceSha256[file] = createHash('sha256').update(await readFile(path.join(root, file))).digest('hex');
     if (natural && Object.entries(naturalSourceSha256).some(([file, digest]) => sourceSha256[file] !== digest)) failure ||= { stage: 'source identity', reason: 'Source changed during execution' };
-    if (natural && !failure) {
+    if ((natural || chunkingMode) && !failure) {
         try { assert(summarizeProviderSpacing(resumeReport ? generations.slice(resumeReport.generations.length) : generations, PROVIDER_SPACING).verified, 'actual provider starts respect the 15-second interval'); }
         catch (error) { failure = { stage: 'provider spacing', reason: error.message }; }
     }
-    const report = { ...directEvidence(), ...resumedEvidence(), ...summaryTrafficEvidence(), time:new Date().toISOString(), sillyTavern:revision, lambdaDB:summarizeMode ? 'unused' : 'live', generator:liveModel?'live compatible model':'deterministic test fixture, not a real LLM', model, generationIntervalMs, maxOutputTokens, reasoningEffort, excludedParameters, hostContextTokens, evaluation, embeddings, vectorQueries, ...(natural ? { lambdaRequests, transportProtocol: retryTransient ? transportProtocol : null, providerSpacing: PROVIDER_SPACING, initialSourceSha256: naturalSourceSha256, managedEmbeddingUsage: null, managedEmbeddingCost: null, semanticScores: null } : {}), nativeCleanupComplete, ...(threeModes ? { nativeCleanup } : {}), providerCalls, checks, failure, events, generations, cleanupComplete, sourceSha256, passed:!failure&&cleanupComplete&&nativeCleanupComplete };
+    if (chunkingMode && JSON.stringify(await chunkingHashes()) !== JSON.stringify(chunkingSource)) failure ||= { stage, reason: 'Chunking producer changed during run' };
+    const report = { ...(chunkingMode ? { initialSourceSha256: chunkingSource, lambdaRequests } : {}), ...directEvidence(), ...resumedEvidence(), ...summaryTrafficEvidence(), time:new Date().toISOString(), sillyTavern:revision, lambdaDB:summarizeMode ? 'unused' : 'live', generator:liveModel?'live compatible model':'deterministic test fixture, not a real LLM', model, generationIntervalMs, maxOutputTokens, reasoningEffort, excludedParameters, hostContextTokens, evaluation, embeddings, vectorQueries, ...(natural ? { lambdaRequests, transportProtocol: retryTransient ? transportProtocol : null, providerSpacing: PROVIDER_SPACING, initialSourceSha256: naturalSourceSha256, managedEmbeddingUsage: null, managedEmbeddingCost: null, semanticScores: null } : {}), nativeCleanupComplete, ...(threeModes ? { nativeCleanup } : {}), providerCalls, checks, failure, events, generations, cleanupComplete, sourceSha256, passed:!failure&&cleanupComplete&&nativeCleanupComplete };
     let output = JSON.stringify(report,null,2);
     for (const value of [credentials.key,env.LLM_API_KEY,credentials.endpoint,credentials.project,env.LLM_BASE_URL].filter(Boolean)) output=output.replaceAll(value,'[REDACTED]');
     await writeFile(reportPath,output);

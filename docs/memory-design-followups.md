@@ -76,8 +76,10 @@ Source inspection: [native branch identity](https://github.com/SillyTavern/Silly
 
 ## Chunk boundaries and neighboring dialogue
 
-Current indexing splits each old message every 800 Unicode code points, without
-overlap or sentence/paragraph awareness. It preserves code points, not complete
+The pre-change indexing split each old message every 800 Unicode code points,
+without overlap or sentence/paragraph awareness. The [boundary-aware indexing
+candidate](boundary-chunking.md) now preserves exact source partitions at preferred
+boundaries while retaining the same ceiling and no overlap. It preserves code points, not complete
 words, sentences, grapheme clusters or semantic units. A chunk can separate a
 condition from its consequence. Short messages are kept whole.
 

@@ -53,7 +53,7 @@ test('offline audit proves source eligibility without claiming ranking or genera
     assert.equal(audit.rows.filter(r => r.requiredEvidence.length).length, 12);
     for (const row of audit.rows) {
         assert(row.indexableChunks > 0); assert(row.queries.length >= 1);
-        for (const evidence of row.requiredEvidence) assert(evidence.documentIds.every(id => /^[a-f0-9]{64}_[a-f0-9]{64}_\d+$/.test(id)));
+        for (const evidence of row.requiredEvidence) assert(evidence.documentIds.every(id => /^[a-f0-9]{64}_[a-f0-9]{64}_boundary-v1_\d+_\d+_\d+$/.test(id)));
     }
     assert.equal(audit.accuracy, undefined);
 });

@@ -22,6 +22,10 @@ boundary; publication is confirmed by the corresponding Git tag and GitHub Relea
 
 ### Changed
 
+- Long-message indexing prefers paragraph/sentence/word boundaries within the
+  800-code-point ceiling. Exact offsets and layout-specific document IDs keep
+  reindexing and stale-result rejection safe. No overlap or budget change.
+
 - Recalled excerpts preserve native user/assistant roles and literal macro text.
 - Retrieval searches the latest anchor and a separate contextual turn, including
   assistant context when no prior user turn exists or its local historical match

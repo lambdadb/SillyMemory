@@ -54,7 +54,7 @@ export async function freshBundleInputs() {
 export function coverageFor(item, passages) {
     const excerpts = passages.map(doc => {
         const source = item.messages[doc.message]; assert(source);
-        const start = Array.from(source.text).slice(0, doc.chunk * 800).join('').length;
+        const start = doc.start ?? Array.from(source.text).slice(0, doc.chunk * 800).join('').length;
         assert.equal(source.text.slice(start, start + doc.text.length), doc.text);
         assert.equal(doc.role, source.role); assert.equal(doc.speaker, source.speaker);
         return sourceExcerpt(item, doc.message, start, start + doc.text.length);

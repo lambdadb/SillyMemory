@@ -1,4 +1,5 @@
 import { preferAssistantContext } from './context.js';
+import { chunkSpans, CHUNKING_POLICY } from './chunking.js';
 
 export const DEFAULTS = Object.freeze({ recent: 12, budget: 800, chunkChars: 800 });
 export function options(value = {}) {
@@ -53,20 +54,15 @@ export function interleaveHits(lists) {
     // not suppress a valid copy of the same source ID from the other query.
     return hits;
 }
-export function chunks(text, limit) {
-    const chars = Array.from(text); // Do not split surrogate pairs.
-    const result = [];
-    for (let start = 0; start < chars.length; start += limit) result.push(chars.slice(start, start + limit).join(''));
-    return result;
-}
+export function chunks(text, limit) { return chunkSpans(text, limit).map(span => span.text); }
 export async function documents(snapshot, owner, config) {
     const scope = await digest(JSON.stringify([owner, snapshot.character, snapshot.chat]));
     const docs = [];
     for (const m of snapshot.messages.slice(0, -config.recent)) {
         if (!m.eligible || !m.text.trim()) continue;
         const revision = await digest(JSON.stringify([m.index, m.name, m.user, m.swipe, m.text]));
-        for (const [chunk, text] of chunks(m.text, config.chunkChars).entries()) {
-            docs.push({ id: `${scope}_${revision}_${chunk}`, owner, scope, revision, text, message: m.index, chunk, speaker: m.name, role: m.user ? 'user' : 'assistant' });
+        for (const [chunk, { start, end, text }] of chunkSpans(m.text, config.chunkChars).entries()) {
+            docs.push({ id: `${scope}_${revision}_${CHUNKING_POLICY}_${chunk}_${start}_${end}`, owner, scope, revision, text, start, end, message: m.index, chunk, speaker: m.name, role: m.user ? 'user' : 'assistant' });
         }
     }
     return { scope, docs };
