@@ -75,7 +75,7 @@ export function semanticPromptEvidence(item,passages,outgoing) {
         const message=item.messages[doc.message];assert(message,'Unknown selected message');
         assert.equal(doc.role,message.role);assert.equal(doc.speaker,message.speaker);
         assert(Number.isInteger(doc.chunk)&&doc.chunk>=0);
-        const start=Array.from(message.text).slice(0,doc.chunk*800).join('').length,end=start+doc.text.length;
+        const start=doc.start??Array.from(message.text).slice(0,doc.chunk*800).join('').length,end=doc.end??start+doc.text.length;
         assert.equal(message.text.slice(start,end),doc.text,'Selected source chunk changed');
         const excerpt=sourceExcerpt(item,doc.message,start,end); memory.push(excerpt);
         delivered.push(excerpt);
