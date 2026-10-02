@@ -381,8 +381,11 @@ criterion for an explicitly English-focused candidate. The shipped policy is
 still unchanged. A gain in labeled English source coverage is not yet a gain in
 generated-answer correctness.
 
-Next, carry the already fixed **2:1** candidate into bounded English development
-answer validation, following the original least-disruptive candidate preference.
+The fixed **2:1** candidate has now completed its bounded English development
+answer validation: [results and interpretation](english-selection-evaluation.md).
+It scored 12/14 but lost one prior correct answer; one win also came from an
+identical API request. It was rejected under the frozen gate and the runtime
+remains unchanged. The following validation requirements defined that follow-up:
 Retain English follow-up checks, source isolation, stale-hit rejection and token
 limits. Reuse completed comparator arms; do not rerun native indexing or rolling
 summaries. Freeze candidate/settings, spend/time bounds and answer-quality
