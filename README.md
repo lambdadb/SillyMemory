@@ -43,7 +43,11 @@ completes 70 host-generated answers with separate setup costs and retrieval-stag
 diagnostics. SillyMemory scores 10/14 with 3,361.5 median input tokens; plain 128K
 also scores 10/14 with 104,761 median input tokens, while missing different
 questions. These development results do not establish general superiority; the
-42 held-out questions remain reserved.
+subsequent [42-question held-out evaluation](docs/english-heldout-evaluation.md)
+scores 24/42 for SillyMemory, 14/42 for plain 32K and 29/42 for plain 128K.
+SillyMemory uses 3,282 median input tokens: a useful token/accuracy tradeoff,
+with a remaining full-history quality gap. All 126 new answers and judgments
+completed; the runtime remains unchanged.
 
 ## Supported host
 
