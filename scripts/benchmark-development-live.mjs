@@ -18,7 +18,7 @@ import { prepareHostCase, sourceView, promptCoverage } from './benchmark-host-in
 import { openProviderLedger, LEDGER_POLICY } from './benchmark-provider-ledger.mjs';
 import { openCheckpoint } from './benchmark-checkpoint.mjs';
 import { prepareDevelopmentCase } from './benchmark-development-input.mjs';
-import { validateLivePilot } from './benchmark-live-results.mjs';
+import { validateLivePilot, parseJudgeResponse } from './benchmark-live-results.mjs';
 import { validateObservation } from './benchmark-observation.mjs';
 import { nativeBarrier, completeNativeIndex } from './benchmark-native-barrier.mjs';
 import { installRetrievalObserver } from './benchmark-retrieval-observer.mjs';
@@ -72,7 +72,7 @@ const count = text => encoder.encode(text, [], []).length, embeddingCount = text
 const sourceSha256ByFile = {};
 for (const file of [...runtimeFiles, 'scripts/benchmark-development-live.mjs', 'scripts/benchmark-provider-ledger.mjs', 'scripts/benchmark-checkpoint.mjs',
     'scripts/benchmark-development-input.mjs', 'scripts/benchmark-observation.mjs', 'scripts/benchmark-retrieval-observer.mjs', 'scripts/benchmark-native-barrier.mjs',
-    'scripts/three-mode-native.mjs', 'scripts/provider-retry.mjs', 'scripts/benchmark-host-input.mjs', 'scripts/benchmark-live-network.cjs', 'scripts/benchmark-audit.mjs']) sourceSha256ByFile[file] = sha(await read(file));
+    'scripts/benchmark-live-results.mjs', 'scripts/three-mode-native.mjs', 'scripts/provider-retry.mjs', 'scripts/benchmark-host-input.mjs', 'scripts/benchmark-live-network.cjs', 'scripts/benchmark-audit.mjs']) sourceSha256ByFile[file] = sha(await read(file));
 const binding = { plan: sha(planBytes), sourceSha256ByFile, fixture, pilot: sha(pilotBytes), scorer: sha(scorer),
     destination: fixture ? 'loopback' : sha(endpoint + '/' + env.LAMBDADB_PROJECT_NAME) };
 await mkdir(path.dirname(path.resolve(output)), { recursive: true });
@@ -369,7 +369,7 @@ exec(compile(ast.Module(body=[f],type_ignores=[]),'<pinned-scorer>','exec'),ns)
 x=json.load(sys.stdin)
 print(ns['get_anscheck_prompt'](**x))`, path.join(cache, 'evaluate_qa.py')], { input: JSON.stringify({ task: gold.question_type, question: gold.question, answer: gold.answer, response: row.answer, abstention: row.id.endsWith('_abs') }), encoding: 'utf8' }).trimEnd();
             const { record: judged } = await completion({ model: plan.judge.model, messages: [{ role: 'user', content: judgePrompt }], temperature: 0, max_tokens: 10, stream: false }, `${row.id}/${row.context}/${row.mode}/judge`);
-            row.judge = { response: judged.answer, correct: judged.answer.toLowerCase().includes('yes'), exactYesNo: /^(yes|no)\.?$/i.test(judged.answer.trim()), promptSha256: judged.promptSha256 };
+            row.judge = { response: judged.answer, correct: parseJudgeResponse(judged.answer), exactYesNo: true, promptSha256: judged.promptSha256 };
             await checkpoint();
     }
     for (const item of cases) for (const context of [32768, 131072]) {
@@ -464,6 +464,10 @@ print(ns['get_anscheck_prompt'](**x))`, path.join(cache, 'evaluate_qa.py')], { i
     }
 
     assert.deepEqual(errors, []); assert.equal(report.rows.length, fixture ? 5 : 70);
+    for (const row of report.rows) {
+        assert.equal(row.judge?.correct, parseJudgeResponse(row.judge?.response));
+        assert.equal(row.judge.exactYesNo, true);
+    }
     report.passed = true;
 } catch (e) {
     const message = e.message.split('\n')[0].slice(0, 240);

@@ -70,3 +70,13 @@ test('CLI rejects missing producer provenance and a changed dataset lock without
         }
     } finally { await rm(dir, { recursive: true, force: true }); }
 });
+
+
+test('judge parsing rejects explanations instead of matching a yes substring', async () => {
+    const { parseJudgeResponse } = await import('../scripts/benchmark-live-results.mjs');
+    for (const value of ['yes', ' YES.\n']) assert.equal(parseJudgeResponse(value), true);
+    for (const value of ['no', ' No. ']) assert.equal(parseJudgeResponse(value), false);
+    for (const value of ['No, but yes for another fact', 'Maybe yes', 'yes/no', '', null, 'yesterday']) {
+        assert.throws(() => parseJudgeResponse(value), /Ambiguous judge response/);
+    }
+});

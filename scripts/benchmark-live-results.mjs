@@ -9,6 +9,11 @@ const commonProducers = [
     'scripts/benchmark-live-network.cjs', 'scripts/benchmark-audit.mjs', 'index.js', 'manifest.json',
     'src/memory.js', 'src/context.js', 'src/client.js', 'src/gate.js', 'src/delivery.js', 'src/status.js',
 ];
+export function parseJudgeResponse(response) {
+    assert(typeof response === 'string' && /^(yes|no)\.?$/i.test(response.trim()), 'Ambiguous judge response');
+    return /^yes\.?$/i.test(response.trim());
+}
+
 export function validateProvenance(report, plan, { initial = false } = {}) {
     assert.equal(report.sourceSha256, plan.sourceSha256, 'Dataset lock differs from frozen plan');
     const required = initial ? commonProducers : [...commonProducers, 'scripts/three-mode-native.mjs'];
@@ -68,7 +73,7 @@ export function validateLivePilot(report, plan) {
         assert.equal(calls[0].answer, row.answer); assert.deepEqual(calls[0].usage, row.usage);
         assert.equal(calls[0].promptSha256, row.promptSha256);
         assert.equal(judges[0].answer, row.judge.response); assert.equal(judges[0].promptSha256, row.judge.promptSha256);
-        assert.equal(row.judge.correct, row.judge.response.toLowerCase().includes('yes'));
+        assert.equal(row.judge.correct, parseJudgeResponse(row.judge.response));
         assert(row.judge.exactYesNo && /^(yes|no)\.?$/i.test(row.judge.response.trim()), 'Ambiguous judge response');
         if (row.mode === 'off') assert(row.exactNativeRoleMessages < row.sourceMessages);
         if (row.mode === 'vectors') { assert(row.nativeDocuments > 0); assert(row.nativePromptDelivered || row.nativeNoInjection); }

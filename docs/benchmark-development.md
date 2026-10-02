@@ -391,3 +391,17 @@ freeze the policy for the reserved 42 English held-out questions. Keep held-out
 answers out of tuning and report multi-session/temporal failures alongside the
 aggregate result. Promotion/release remains a separate decision; no runtime
 adoption or fresh answer-quality result is claimed by this scope update.
+
+
+## Final review: strict judge responses
+
+The final review found that the live runner recorded `exactYesNo` but did not
+reject ambiguous judge text before scoring via a `yes` substring. It now rejects
+anything except a normalized `yes`/`no` (optional final period), preserving the
+provider receipt before validation. Final completion also revalidates cached row
+grades. The shared parser is included in source bindings. A regression covers
+mixed explanations, substrings and valid capitalization/whitespace. Offline
+inspection of all 70 saved judge responses found exact verdicts and unchanged
+scores; no judge or generation was repeated. The updated unit suite passes 309
+tests, with syntax and release checks passing. This is a scoring guard, not a
+new host/provider quality run.
