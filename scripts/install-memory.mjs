@@ -18,6 +18,13 @@ export function installMemory({ page, field, settings, check, credentials, entri
         try { await client.assertOwned(collection, owner); return await client.query(collection, { queryString: { query: `owner:${owner}` } }); }
         finally { client.forget(); }
     }, { base, credentials, collection, owner });
+    const absent = collection => page.evaluate(async ({ base, credentials, collection }) => {
+        const { LambdaClient } = await import(`${base}/src/client.js`);
+        const client = new LambdaClient(credentials, credentials.key, { headers: () => SillyTavern.getContext().getRequestHeaders() });
+        try { await client.get(collection); return false; }
+        catch (error) { if (error.status === 404) return true; throw error; }
+        finally { client.forget(); }
+    }, { base, credentials, collection });
     const identity = () => page.evaluate(async base => {
         const c = SillyTavern.getContext(), { capture } = await import(`${base}/src/memory.js`);
         const { chatCollection } = await import(`${base}/src/chat-collections.js`);
@@ -84,20 +91,21 @@ export function installMemory({ page, field, settings, check, credentials, entri
                 return { aborted, text: memories.map(m => m.mes).join('\n'), recent: chat.at(-1)?.mes };
             });
             check('upgraded interceptor recalls branch facts through managed queryText and keeps recent history', !recalled.aborted && recalled.text.includes('stone tower') && !recalled.text.includes('cedar tree') && recalled.recent.includes('turn 17'));
-            page.once('dialog', d => d.accept()); await field('delete-chat').click(); await status('no longer accessible');
+            await settings(); await field('delete-chat').click(); await status('no longer accessible');
+            check('current-chat deletion confirms the branch is absent', await absent(branch.collection));
             check('current-chat deletion preserves the upgraded parent and legacy data', (await inspect(parent.collection, legacy.owner)).length === actual.length && isDeepStrictEqual(sorted(await inspect(legacy.collection, legacy.owner)), legacyDocs));
             await page.reload(); await page.locator('#sillymemory').waitFor({ state: 'attached' });
             await page.locator('#rightNavHolder .drawer-toggle').click(); await page.locator('.character_select').filter({ hasText: 'Upgrade Acceptance' }).click();
             await page.evaluate(async file => SillyTavern.getContext().openCharacterChat(file), parent.file);
             await connect(); await field('enabled').check(); await status('synchronized');
             check('reload and key re-entry reuse the renamed upgraded parent', (await identity()).collection === parent.collection && entries.length === 4);
-            page.once('dialog', d => d.accept()); await field('delete').click(); await status('no longer accessible');
-            check('all-owned deletion clears the old shared collection pointer', !(await state()).collection);
+            await settings(); await field('delete').click(); await status('no longer accessible');
+            check('all-owned deletion removes old and new collections before fallback cleanup', !(await state()).collection && await absent(legacy.collection) && await absent(parent.collection) && await absent(branch.collection));
         },
         async cleanup() {
             // UI deletion drains queued writes; a failure keeps the pending record.
             if (entries.length) {
-                await connect(); page.once('dialog', d => d.accept()); await field('delete').click();
+                await connect(); await settings(); await field('delete').click();
                 await status('no longer accessible');
                 await page.evaluate(async ({ base, credentials, entries }) => {
                     const c = SillyTavern.getContext(), { LambdaClient } = await import(`${base}/src/client.js`);

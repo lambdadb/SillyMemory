@@ -58,17 +58,18 @@ try {
     profile.main_api = 'openai'; await writeFile(profilePath, JSON.stringify(profile));
     browser = await chromium.launch(); page = await browser.newPage({ viewport: { width: 1440, height: 1100 } }); page.setDefaultTimeout(30000);
     page.on('pageerror', error => report.pageErrors.push(error.message));
+    page.on('dialog', dialog => { void dialog.accept().catch(error => report.pageErrors.push(error.message)); });
     await page.route('**/proxy/**', async route => {
         report.proxyRequests++; if (!liveMemory) return route.abort();
         try {
-        const req = route.request(), target = new URL(decodeURIComponent(new URL(req.url()).pathname.slice('/proxy/'.length)));
-        assert.equal(target.origin, new URL(credentials.endpoint).origin);
-        if (req.method() === 'POST' && target.pathname.endsWith('/collections')) {
-            assert(entries.length < 4, 'Live installation collection bound'); const body = req.postDataJSON();
-            entries.push({ collection: body.collectionName, owner: body.tags.owner, scope: body.tags.chat });
-            await writeFile(pendingPath, JSON.stringify(entries, null, 2));
-        }
-        await route.continue();
+            const req = route.request(), target = new URL(decodeURIComponent(new URL(req.url()).pathname.slice('/proxy/'.length)));
+            assert.equal(target.origin, new URL(credentials.endpoint).origin);
+            if (req.method() === 'POST' && target.pathname.endsWith('/collections')) {
+                assert(entries.length < 4, 'Live installation collection bound'); const body = req.postDataJSON();
+                entries.push({ collection: body.collectionName, owner: body.tags.owner, scope: body.tags.chat });
+                await writeFile(pendingPath, JSON.stringify(entries, null, 2));
+            }
+            await route.continue();
         } catch (error) { report.pageErrors.push(error.message); await route.abort().catch(() => {}); }
     });
     page.on('response', response => { if (/\/api\/extensions\/(install|update)$/.test(new URL(response.url()).pathname)) report.api.push({ operation: new URL(response.url()).pathname.split('/').at(-1), status: response.status() }); });
@@ -158,6 +159,8 @@ try {
 } catch (error) {
     report.failure = error.message;
     report.lastStatus = await page?.locator('[data-sm="status"]').textContent().catch(() => 'unavailable');
+    report.createdCollections = entries.length;
+    await writeFile(reportPath, redact(report));
     console.error('FAIL', liveMemory ? error.name : error.message);
     if (!liveMemory) await page?.screenshot({ path: path.join(artifacts, `${artifactTag}-failure.png`) }).catch(() => {});
     process.exitCode = 1;
@@ -166,11 +169,12 @@ try {
         try {
             if (entries.length) { assert(memory, 'Cleanup adapter unavailable'); await memory.cleanup(); }
             report.cleanupComplete = true; await rm(pendingPath);
-        } catch { report.cleanupComplete = false; report.passed = false; process.exitCode = 1; }
+        } catch (error) { report.cleanupFailure = error.message; report.cleanupComplete = false; report.passed = false; process.exitCode = 1; }
     }
     await browser?.close();
     if (server && server.exitCode === null) { server.kill('SIGTERM'); await new Promise(r => server.once('exit', r)); }
     if (report.cleanupComplete) { await rm(work, { recursive: true, force: true }); report.localProfileRemoved = true; }
     else { report.localProfileRemoved = false; report.recoveryProfile = work; }
+    report.createdCollections = entries.length;
     await writeFile(reportPath, redact(report));
 }
