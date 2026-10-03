@@ -100,9 +100,10 @@ their original proxy/runtime attribution. Group chats, multi-device writers,
 other browsers, remote HTTPS page origins, production outages and all regional
 CORS deployments are not newly certified by this bounded localhost acceptance.
 
-All reported producer hashes were compared with the final files. Those results describe the original reviewed candidate. The combined acceptance
-below records the later integration and review corrections. Exact reports, available failed-attempt
-outputs and producer sources were archived and read back byte-for-byte:
+All reported producer hashes were compared with the original candidate files.
+Those results describe that reviewed candidate. The combined acceptance below
+records the later integration and review corrections. Exact reports, available
+failed-attempt outputs and producer sources were archived and read back byte-for-byte:
 
 - Local archive: `artifacts/archive/direct-cors-v1/evidence.tar.gz`
   (137 members; 1,495,402 bytes), SHA-256
@@ -127,4 +128,39 @@ endpoint origin (including when configuration has a trailing slash), and removed
 a stale settings disclosure claiming that memory requests pass through the host.
 These preserve the existing direct client and memory semantics.
 
-Combined results pending the bounded validation.
+Completed on 2026-10-03 at integrated candidate
+`4f2e6f50d213df0cf8df68b18a24dfe75d8a2847`, with the same pinned host above.
+Both runs installed public main at `b55b78f28feb769683da723206bf3b37c83ec04b`
+and pulled the candidate through the real update UI. The disposable common-ancestor
+setup and code-rollback limitations described above still apply.
+
+| Boundary | Result |
+| --- | --- |
+| Unit / syntax / release metadata | 326 tests passed; all runtime, script and test syntax passed; 0.2.0 remains Unreleased. CI passed on Node.js 20.12.0 and 24. |
+| Actual Git URL install/update/rollback, no remote memory calls | 21 checks passed; candidate version 0.2.0 displayed and session-key clearing verified. |
+| Same installation path + live LambdaDB managed embeddings | 37 checks passed. Legacy phase: 14 proxy requests; candidate phase: 60 direct requests and zero proxy requests. |
+| Ownership and cleanup | Four collections total, two created through each transport. Legacy documents preserved on upgrade; isolated parent/branch sync, edit, retrieval and deletion passed. All four collections confirmed absent; no pending cleanup record remains and both disposable profiles were removed. |
+
+The live run also verified key absence from persisted browser and host settings,
+reload/key re-entry without a fifth collection, and cleanup of legacy shared and
+new per-chat memory before code rollback. No uncaught page errors occurred.
+No generation-model call was made. The paid generation runner's canonical-origin
+correction was inspected and syntax-checked; its paid modes were not rerun.
+The earlier emulator/fault/prompt-dispatch runs retain their original producer
+attribution and were not repeated for this integration. The client, memory engine
+and prompt semantics did not change during integration.
+
+Detailed reports, the inspected non-live extension-manager screenshot, unit log
+and exact producing sources were archived and read back byte-for-byte:
+
+- Local archive: `artifacts/archive/direct-cors-integrated-v1/evidence.tar.gz`
+  (253 members; 820,568 bytes), SHA-256
+  `a2e6188cd41185573b9790d588d9583367a1ce1050a3f4aacb73089069ce0897`.
+- Manifest: `artifacts/archive/direct-cors-integrated-v1/manifest.json`, SHA-256
+  `4f864a3d5c5a9c11c1726adfba395e0d00794dfbecc5e01164eeddc8596e5a9c`.
+
+This second archive is also local-only in the `sillymemory-direct-cors` worktree
+and unavailable in a fresh clone. Tracked files and decompressed archive contents
+passed a scan for configured credentials. Only documentation follows the tested
+integrated commit. This completes develop integration acceptance; main promotion,
+a tag and Release publication remain separate steps.
