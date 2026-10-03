@@ -7,3 +7,6 @@
 #sillymemory label.sm-toggle { display: flex; align-items: center; gap: 0.5rem; }
 
 #sillymemory progress { width: 100%; accent-color: var(--SmartThemeQuoteColor, #8ab4f8); }
+
+#sillymemory .sm-checkpoint { border-top: 1px solid var(--SmartThemeBorderColor); padding: 0.6rem 0; overflow-wrap: anywhere; }
+#sillymemory .sm-checkpoint p { margin: 0.3rem 0; }

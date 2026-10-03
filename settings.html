@@ -12,8 +12,12 @@
     <label class="sm-toggle"><input data-sm="enabled" type="checkbox"> Enable memory (isolated chat history)</label>
     <button data-sm="versioned" class="menu_button">Use versioned memory for this story</button>
     <p>Opt in once per story. Native branches reuse committed memory in isolated LambdaDB branches. Initial indexing consumes managed embedding usage; earlier collections remain until all-owned cleanup. This is not a chat rollback control.</p>
+    <label>Checkpoint name (optional)<input data-sm="checkpoint-name" class="text_pole" maxlength="120" placeholder="Before entering the observatory"></label>
     <div class="sm-actions"><button data-sm="checkpoint-save" class="menu_button">Save / finish checkpoint</button><button data-sm="checkpoint-resume" class="menu_button">Resume checkpoint in new chat</button></div>
-    <p>Checkpoints save this transcript and its memory branch. Select a saved checkpoint in the native chat list to resume. Editing its saved transcript invalidates it. Pending checkpoints can be finished after reconnecting.</p>
+    <p>Checkpoints save this transcript and its memory branch. Editing a saved transcript invalidates it. Refresh the list after reconnecting to check remote availability.</p>
+    <button data-sm="checkpoint-refresh" class="menu_button">Refresh story checkpoints</button>
+    <div data-sm="checkpoint-list" aria-live="polite">Refresh to view checkpoints for this story.</div>
+    <p>Deleting a checkpoint removes only that saved transcript and memory branch. To rename or delete the currently open checkpoint, open another story path first. The all-owned remote cleanup below removes every story's memory but keeps native chat files.</p>
     <label>Recent full messages <input data-sm="recent" class="text_pole" type="number" min="2" max="100"></label>
     <label>Memory token budget (including labels) <input data-sm="budget" class="text_pole" type="number" min="64" max="4096"></label>
     <label class="sm-toggle"><input data-sm="stopOnLoss" type="checkbox" checked> Stop on missing context</label>

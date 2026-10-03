@@ -1,4 +1,4 @@
-import { createCheckpoint, finishCheckpoint, resumeCheckpoint } from './src/checkpoints.js';
+import { createCheckpoint, finishCheckpoint, resumeCheckpoint, listCheckpoints, checkpointRows, renameCheckpoint, deleteCheckpoint } from './src/checkpoints.js';
 import { LambdaClient, ConnectionError, connectionConfig } from './src/client.js';
 import { ChatCollections, chatCollection, ensureChatIdentity } from './src/chat-collections.js';
 import { runTransportGate } from './src/gate.js';
@@ -14,6 +14,7 @@ let promptSequence = 0;
 let retrievalSequence = 0, retrievalOperation;
 let statusView, collections, identityKey;
 let preparation = Promise.resolve();
+let checkpointRevision = 0;
 const engines = new Map();
 const entryKey = entry => `${entry.collection}:${entry.branch || 'main'}`;
 const delivery = new PromptDelivery();
@@ -272,43 +273,116 @@ async function initialize() {
         if (!valid() || !await ensureChatIdentity(ctx, saveChat, valid)) return;
         status('Versioned story memory is ready. Enable memory to synchronize; native branches will share unchanged committed history.');
     });
-    async function checkpointAction(resume) {
+    function checkpointReader(ctx, avatar) {
+        const request = async (url, body) => {
+            const response = await fetch(url, { method: 'POST', signal: AbortSignal.timeout(15000), headers: ctx.getRequestHeaders(), body: JSON.stringify({ avatar_url: avatar, ...body }) });
+            if (!response.ok) throw new ConnectionError('Could not read the saved checkpoint.');
+            return response.json();
+        };
+        return { read: name => request('/api/chats/get', { file_name: name }), list: () => request('/api/characters/chats', { metadata: true }) };
+    }
+    let listSequence = 0;
+    async function refreshCheckpoints() {
+        const sequence = ++listSequence, ctx = context(), file = ctx.getCurrentChatId();
+        const avatar = ctx.characters[ctx.characterId]?.avatar, story = ctx.chatMetadata.sillymemory?.story;
+        const valid = () => sequence === listSequence && context().getCurrentChatId() === file && context().characters[context().characterId]?.avatar === avatar;
+        const list = element('checkpoint-list'); list.replaceChildren();
+        if (!capture(ctx) || !story) { list.textContent = 'Select a versioned story to view its checkpoints.'; return; }
+        list.textContent = 'Checking saved transcripts and memory branches…';
+        try {
+            const rows = await listCheckpoints({ host: checkpointReader(ctx, avatar), client, owner, story, avatar, valid });
+            if (!valid()) return;
+            list.replaceChildren();
+            const labels = { ready: 'Ready', pending: 'Pending — finish preparation', modified: 'Transcript modified', missing: 'Remote memory missing', 'remote-changed': 'Remote memory changed', duplicate: 'Duplicate identity — actions blocked', unverified: 'Remote state unverified — reconnect and refresh' };
+            for (const row of rows) {
+                const item = document.createElement('div'); item.className = 'sm-checkpoint'; item.dataset.file = row.file;
+                const title = document.createElement('strong'); title.textContent = row.name;
+                const detail = document.createElement('p'); detail.textContent = `${row.createdAt || 'Unknown creation time'} · ${labels[row.status]}`;
+                const buttons = document.createElement('div'); buttons.className = 'sm-actions';
+                const add = (text, handler) => { const button = document.createElement('button'); button.type = 'button'; button.className = 'menu_button'; button.textContent = text; button.onclick = () => action(handler); buttons.append(button); };
+                if (row.status === 'ready') add('Resume', () => checkpointAction(true, row.file));
+                if (row.status === 'pending') add('Finish / retry', () => checkpointAction(false, row.file));
+                if (row.status !== 'duplicate' && row.file !== file) {
+                    if (['ready', 'pending', 'missing', 'unverified', 'remote-changed'].includes(row.status)) add('Rename', () => checkpointAction(false, row.file, 'rename'));
+                    add('Delete checkpoint', () => checkpointAction(false, row.file, 'delete'));
+                }
+                item.append(title, detail, buttons); list.append(item);
+            }
+            if (!rows.length) list.textContent = 'No saved checkpoints in this story.';
+        } catch (error) { if (valid()) list.textContent = 'Checkpoint list unavailable. Reconnect and refresh.'; throw error; }
+    }
+    element('checkpoint-refresh').onclick = () => action(refreshCheckpoints);
+    async function checkpointAction(resume, selected, command) {
         if (!client || !collections || !state.ready || !capture(context())) throw new ConnectionError('Connect, prepare memory and select a versioned chat first.');
         const ctx = context(), file = ctx.getCurrentChatId(), avatar = ctx.characters[ctx.characterId]?.avatar;
-        const valid = () => context().getCurrentChatId() === file && context().characters[context().characterId]?.avatar === avatar;
+        const revision = checkpointRevision;
+        const valid = () => revision === checkpointRevision && context().getCurrentChatId() === file && context().characters[context().characterId]?.avatar === avatar;
         state.enabled = false; element('enabled').checked = false; persist(); invalidate(); clearTimeout(timer);
         await drain();
-        const { saveChat } = await import('/script.js');
+        const { saveChat, isGenerating } = await import('/script.js');
+        if (isGenerating()) throw new ConnectionError('Wait for generation to finish before preparing a checkpoint.');
         const host = {
-            read: async name => {
-                const response = await fetch('/api/chats/get', { method: 'POST', headers: ctx.getRequestHeaders(), body: JSON.stringify({ avatar_url: avatar, file_name: name }) });
-                if (!response.ok) throw new ConnectionError('Could not read the saved checkpoint.');
-                return response.json();
-            },
+            ...checkpointReader(ctx, avatar),
             save: async (name, messages, metadata) => {
-                const response = await fetch('/api/chats/save', { method: 'POST', headers: ctx.getRequestHeaders(), body: JSON.stringify({
+                const response = await fetch('/api/chats/save', { method: 'POST', signal: AbortSignal.timeout(15000), headers: ctx.getRequestHeaders(), body: JSON.stringify({
                     ch_name: ctx.characters[ctx.characterId].name, avatar_url: avatar, file_name: name, force: false,
                     chat: [{ user_name: 'unused', character_name: 'unused', chat_metadata: metadata }, ...messages],
                 }) });
                 if (!response.ok) throw new ConnectionError('Checkpoint chat save failed. Select the saved checkpoint to retry if it exists.');
             },
-            open: name => context().openCharacterChat(name),
+            remove: async name => {
+                if (!valid() || context().getCurrentChatId() === name) throw new ConnectionError('Open another story path before deleting this checkpoint.');
+                const response = await fetch('/api/chats/delete', { method: 'POST', signal: AbortSignal.timeout(15000), headers: ctx.getRequestHeaders(), body: JSON.stringify({ avatar_url: avatar, chatfile: `${name}.jsonl` }) });
+                if (!response.ok) throw new ConnectionError('Checkpoint file deletion failed. Its remote branch may already be gone. Refresh and retry.');
+            },
+            withWriteLock: async job => {
+                if (isGenerating()) throw new ConnectionError('Wait for generation to finish before completing the checkpoint.');
+                const handle = ctx.loader.show({ blocking: true, toastMode: 'static', message: 'Verifying and saving checkpoint…' });
+                try { return await job(); } finally { await handle.hide(); }
+            },
+            open: async name => {
+                await context().openCharacterChat(name);
+                if (context().getCurrentChatId() !== name) throw new ConnectionError('Resume chat was saved but could not be opened. Retry to open the same chat.');
+            },
         };
         if (!valid()) return;
-        const args = { host, client, collections, owner, file, avatar, valid, progress: status };
+        const intents = {
+            get: key => JSON.parse(localStorage.getItem(`sillymemory:resume:${key}`) || 'null'),
+            set: (key, value) => localStorage.setItem(`sillymemory:resume:${key}`, JSON.stringify(value)),
+            delete: key => localStorage.removeItem(`sillymemory:resume:${key}`),
+        };
+        const args = { host, client, collections, owner, file: selected || file, avatar, intents, valid, progress: status, story: ctx.chatMetadata.sillymemory?.story };
+        if (selected) await checkpointRows(args);
+        if (command === 'rename' || command === 'delete') {
+            if (selected === file) throw new ConnectionError('Open another story path before renaming or deleting this checkpoint.');
+            if (command === 'rename') {
+                const name = prompt('Checkpoint name (up to 120 characters):');
+                if (name === null) return;
+                await renameCheckpoint(args, name);
+                status('Checkpoint name saved.');
+            } else {
+                if (!confirm('Delete this checkpoint transcript and its remote memory branch? This cannot be undone. Other saved chats and branches remain. A resumed chat that has not synchronized yet will rebuild its memory.')) return;
+                const entry = await deleteCheckpoint(args);
+                engines.delete(entryKey(entry)); engine = undefined;
+                new Journal(localStorage, `${owner}:${entry.collection}:${entry.branch}`).clear();
+                status('Checkpoint transcript and memory branch deleted. Other story paths remain.');
+            }
+            await refreshCheckpoints(); return;
+        }
         if (resume) {
             const name = await resumeCheckpoint(args);
             status(`Checkpoint resumed as ${name}. Enable memory to continue.`);
-        } else if (ctx.chatMetadata.sillymemory?.checkpoint) {
+        } else if (selected || ctx.chatMetadata.sillymemory?.checkpoint) {
             await finishCheckpoint(args);
-            if (valid()) await host.open(file);
+            if (!selected && valid()) await host.open(file);
             status('Checkpoint verified and ready. Resume it in a new chat.');
         } else {
             if (!await ensureChatIdentity(ctx, saveChat, valid)) return;
             const rows = [{ chat_metadata: structuredClone(ctx.chatMetadata) }, ...structuredClone(ctx.chat)];
-            const name = await createCheckpoint({ ...args, rows, config: options(state) });
-            status(`Checkpoint saved: ${name}. Select it from the native chat list to resume. Memory remains disabled.`);
+            const name = await createCheckpoint({ ...args, rows, config: options(state), name: element('checkpoint-name').value });
+            status(`Checkpoint saved: ${name}. Use the checkpoint list to resume. Memory remains disabled.`);
         }
+        await refreshCheckpoints();
     }
     element('checkpoint-save').onclick = () => action(() => checkpointAction(false));
     element('checkpoint-resume').onclick = () => action(() => checkpointAction(true));
@@ -385,8 +459,10 @@ async function initialize() {
     });
     for (const name of ['CHAT_CHANGED', 'MESSAGE_SENT', 'MESSAGE_RECEIVED', 'MESSAGE_EDITED', 'MESSAGE_UPDATED', 'MESSAGE_SWIPED', 'MESSAGE_DELETED', 'GENERATION_ENDED', 'CHAT_RENAMED']) {
         if (events[name]) ctx.eventSource.on(events[name], () => {
+            checkpointRevision++;
             if (name === 'CHAT_CHANGED' || name === 'CHAT_RENAMED') {
                 identityKey = undefined;
+                listSequence++; element('checkpoint-list').textContent = 'Refresh to view checkpoints for this story.';
                 element('inspection').textContent = 'No memory injected in this chat.';
                 element('delivery').textContent = 'No prompt checked in this chat.';
             }
