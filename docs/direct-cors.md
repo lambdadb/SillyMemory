@@ -58,5 +58,56 @@ Neither PR preparation authorizes main promotion, a tag or a Release.
 
 ## Results
 
-Pending the bounded checks above. Detailed runs remain ignored local artifacts;
-completed results and checksums will be recorded here before opening the PR.
+Completed on 2026-10-03 with the shipped runtime at
+`e99aa66b7509b75c09c4096d3b03deea7065f3e8` and pinned SillyTavern
+`06bde939fb1e9c4c8d8641d810f0a916b5bce127`:
+
+| Boundary | Result |
+| --- | --- |
+| Unit regressions | 326 passed; direct URL, key-only application headers, omitted credentials, redirect rejection, error status and cleanup safety contracts. |
+| Syntax / release metadata | All runtime, script and test syntax passed; 0.2.0 remains Unreleased. |
+| Actual host + Chromium + local HTTPS CORS emulator | 29 checks passed, 96 real preflights, zero proxy requests and no remaining collections. Missing CORS permission blocks the request and retains pending cleanup; auth errors stay readable. |
+| Actual host + local emulator, injected faults/races | 69 checks passed, 255 preflights, zero proxy requests and no remaining collections. Covers timeout, 429/503, edits/deletes/branches during retrieval, uncertain writes/reload and deletion ordering. |
+| Actual host prompt dispatch + local service fixtures | 11 delivery cases and repeated-passage packing passed. No live generation provider. |
+| Actual settings UI + live LambdaDB managed embeddings | 14 checks passed: unchanged sync, rename, branch/copy isolation, edit reconciliation, queryText, individual deletion, reload/key entry, discovery after registry loss and all-owned cleanup. Four bounded collections; zero proxy requests. |
+| Actual Git URL install/update UI | 21 checks passed with host proxy disabled: public 0.1.0 → candidate, settings/key handling, direct-CORS guidance, tag rollback and return. No remote memory or model calls in this run. |
+
+The installation run pulled the published candidate branch into a disposable
+clone whose starting tree matched public main (`b55b78f28feb769683da723206bf3b37c83ec04b`).
+Public main was not changed. Code rollback does not reverse remote writes or
+prove that 0.1.0 can manage newer per-chat collections.
+
+The browser emulator test uses normal browser networking, with no Playwright
+request routing, to observe real preflights and missing-header rejection. Local
+fixtures trust their disposable self-signed certificate only; live runs retain
+normal TLS verification. The live collection runner intercepts requests only to
+record/bound creation before forwarding; the extension itself uses its shipped
+client, not a test transport adapter. Its recall check invokes the interceptor
+with a synthetic final event; complete host prompt dispatch is the separate
+local-fixture row above. Local fault injection is not a live service outage.
+
+Two initial local harness attempts needed correction: installing a Playwright
+route interfered with the intended preflight-negative probe, and the delivery
+harness still blocked the new remote origin. The final normal browser test uses
+unintercepted networking; other harness allowlists admit only their configured
+LambdaDB origin. These were harness failures, not product-quality measurements.
+
+No new paid answer-quality benchmark was run. Other maintained evaluation
+runners received mechanical URL/CORS-fixture updates and passed syntax/unit
+checks; their paid experiment modes were not rerun. Historical results keep
+their original proxy/runtime attribution. Group chats, multi-device writers,
+other browsers, remote HTTPS page origins, production outages and all regional
+CORS deployments are not newly certified by this bounded localhost acceptance.
+
+All reported producer hashes were compared with the final files. Only result
+documentation follows the tested commit. Exact reports, available failed-attempt
+outputs and producer sources were archived and read back byte-for-byte:
+
+- Local archive: `artifacts/archive/direct-cors-v1/evidence.tar.gz`
+  (137 members; 1,495,402 bytes), SHA-256
+  `2f6a35c77c449de1421ca1ebda9396e4f4a7a71f6d6a7e5a0baff1027a3f99af`.
+- Manifest: `artifacts/archive/direct-cors-v1/manifest.json`, SHA-256
+  `1d4f0dd5bfd1c53885d3a221b2d91da83cd27139d428e089db7e640f94a4977c`.
+
+These files are local-only in the `sillymemory-direct-cors` worktree, ignored by
+Git and unavailable in a fresh clone. No pending live cleanup record remains.
