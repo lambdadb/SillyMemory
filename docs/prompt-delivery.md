@@ -43,8 +43,10 @@ Completion. It uses the host's cancellation API because the host catches event
 listener exceptions. No host method is patched and no prompt is repacked.
 
 Matching requires the original user/assistant role and the entire expected text
-inside a single prompt message. Names/injected surrounding text are allowed;
-each prompt message can satisfy at most one expected message, so one duplicate
+inside a single prompt message, bounded by message edges or newlines. The
+known source speaker’s `name: ` prefix and line-separated injections are allowed;
+arbitrary interior substrings (for example `OK` inside `BOOK A TRIP`) are not.
+Each prompt message can satisfy at most one expected message, so one duplicate
 cannot stand for two turns. CRLF is normalized. Text parts of multipart messages
 can be checked; this does not verify media delivery.
 

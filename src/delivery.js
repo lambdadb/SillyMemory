@@ -8,6 +8,7 @@ export function expectedMessages(messages, { user, character, continuation = fal
             .replace(/\{\{char\}\}|<BOT>/gi, () => character ?? '{{char}}');
         return {
             role: message.is_user ? 'user' : 'assistant', content, index: message.index,
+            speaker: normalize(message.name ?? (message.is_user ? user : character)),
             // Do not execute arbitrary macros twice or call a transformed turn lost.
             verifiable: Boolean(content) && !/\{\{|\}\}/.test(content)
                 && !(continuation && i === messages.length - 1),
@@ -22,11 +23,18 @@ export function inspectPrompt(expected, prompt) {
         content: normalize(typeof message?.content === 'string' ? message.content
             : Array.isArray(message?.content) ? message.content.filter(p => p.type === 'text').map(p => p.text).join('\n') : ''),
     }));
+    // The pinned host prepends "name: " and separates in-chat injections with
+    // newlines. Accept those wrappers, never a word inside another turn.
+    const containsMessage = (content, message) => {
+        const bounded = `\n${content}\n`;
+        return bounded.includes(`\n${message.content}\n`)
+            || Boolean(message.speaker && bounded.includes(`\n${message.speaker}: ${message.content}\n`));
+    };
     const used = new Set();
     // Match one occurrence per source message, including identical repeated turns.
     const match = messages => messages.map(message => {
         if (!message.verifiable) return { ...message, outcome: 'unverified' };
-        const index = available.findIndex((out, i) => !used.has(i) && out.role === message.role && out.content.includes(message.content));
+        const index = available.findIndex((out, i) => !used.has(i) && out.role === message.role && containsMessage(out.content, message));
         if (index >= 0) used.add(index);
         return { ...message, outcome: index >= 0 ? 'included' : 'missing' };
     });
