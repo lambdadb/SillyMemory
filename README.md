@@ -79,6 +79,12 @@ indexing chunks: long messages now prefer paragraph, sentence and word boundarie
 [controlled budget comparison](docs/memory-budget-calibration.md) for evidence
 and limitations, and the [design review](docs/memory-design-followups.md) for
 chunking and hybrid-search work. The [chat collection lifecycle](docs/chat-collections.md) describes the implemented isolation and cleanup behavior.
+The [controlled hybrid comparison](docs/hybrid-retrieval.md) found an answer
+regression despite broader candidate coverage, so production retrieval remains
+vector-only.
+The [budget follow-up](docs/budget-confirmation.md) distinguishes missing
+candidates, budget exclusions and wrong answers despite complete evidence;
+it does not justify changing the adjustable 800-token default.
 
 For local development, symlink the checkout into
 `SillyTavern/public/scripts/extensions/third-party/sillymemory`; do not also install

@@ -102,6 +102,12 @@ reconciliation; cached old rankings cannot validate its retrieval quality.
 
 ## Consistent reads and hybrid retrieval
 
+The [completed controlled RRF comparison](hybrid-retrieval.md) retained
+vector-only production retrieval: candidate fact coverage improved from 7/8 to
+8/8, but correct answers fell from 6/8 to 5/8 because a correction was no longer
+selected. The proposal below is historical motivation; it is not an outstanding
+instruction to repeat the same experiment or ship hybrid by default.
+
 The runtime awaits every ordinary upsert batch (at most 50 documents) and required
 deletion before searching the same LambdaDB `main` branch with
 `consistentRead: true`. It does not poll index completion. A sync acknowledgement
@@ -132,3 +138,8 @@ Do not launch a new broad benchmark or publish a PR for each intermediate retry.
 Keep one bounded quality change's completed evidence and decision together. The
 previous 42 evaluation questions are consumed; any replay is diagnostic, never
 fresh held-out confirmation. English remains the near-term evaluation priority.
+
+The boundary-aware indexing and single-candidate hybrid comparison are now
+complete, as is the chat-collection lifecycle change. No further hybrid tuning
+is implied by this work order. A future retrieval change needs a new bounded
+question and independent quality cases, with correction evidence preserved.
