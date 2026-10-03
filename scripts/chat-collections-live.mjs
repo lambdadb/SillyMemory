@@ -1,5 +1,5 @@
 // Bounded real UI + direct browser CORS + managed LambdaDB lifecycle acceptance.
-// No generation provider calls; fresh synthetic profile and at most four small collections.
+// No generation calls; at most four small collections, or two with --large-history (1,100 submitted documents).
 import assert from 'node:assert/strict';
 import { chromium } from '@playwright/test';
 import { parseEnv } from 'node:util';
@@ -8,7 +8,9 @@ import { readFile, writeFile, mkdir, mkdtemp, rm, realpath } from 'node:fs/promi
 import { spawn, execFileSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-const recovery = process.argv.includes('--checkpoint-recovery');
+const large = process.argv.includes('--large-history');
+const manager = process.argv.includes('--checkpoint-manager');
+const recovery = process.argv.includes('--checkpoint-recovery') || manager;
 const checkpoints = process.argv.includes('--checkpoints') || recovery;
 const versioned = process.argv.includes('--versioned') || checkpoints;
 const root = path.resolve(new URL('..', import.meta.url).pathname);
@@ -26,8 +28,8 @@ const artifacts = path.join(root, 'artifacts', artifactTag); await mkdir(artifac
 const pendingPath = path.join(artifacts, 'chat-collections-live-pending.json');
 const pending = []; await writeFile(pendingPath, '[]', { flag: 'wx' });
 const sourceSha256 = {};
-for (const file of ['index.js', 'settings.html', 'src/chat-collections.js', 'src/client.js', 'src/memory.js', 'src/status.js', 'src/checkpoints.js', 'scripts/chat-collections-live.mjs']) sourceSha256[file] = createHash('sha256').update(await readFile(path.join(root, file))).digest('hex');
-const report = { recovery, checkpoints, versioned, upserts: [], time: new Date().toISOString(), host: revision, sourceSha256, checks: [], responses: [], proxyRequests: 0, pageErrors: [], cleanup: false, passed: false };
+for (const file of ['index.js', 'settings.html', 'style.css', 'src/chat-collections.js', 'src/client.js', 'src/memory.js', 'src/status.js', 'src/checkpoints.js', 'scripts/chat-collections-live.mjs']) sourceSha256[file] = createHash('sha256').update(await readFile(path.join(root, file))).digest('hex');
+const report = { large, manager, recovery, checkpoints, versioned, upserts: [], time: new Date().toISOString(), host: revision, sourceSha256, checks: [], responses: [], proxyRequests: 0, pageErrors: [], cleanup: false, passed: false };
 const check = (name, ok) => { assert(ok, name); report.checks.push(name); console.log(`PASS ${name}`); };
 const url = `http://127.0.0.1:${Number(process.env.ST_LIVE_PORT || 18147)}`;
 let server, browser, page, panel, connect, stage = 'startup';
@@ -42,18 +44,19 @@ try {
     const profile = JSON.parse(await readFile(profilePath, 'utf8')); profile.main_api = 'openai'; await writeFile(profilePath, JSON.stringify(profile));
     browser = await chromium.launch(); page = await browser.newPage({ viewport: { width: 1440, height: 1100 } }); page.setDefaultTimeout(20000);
     page.on('request', req => { if (new URL(req.url()).pathname.startsWith('/proxy/')) report.proxyRequests++; });
-    page.on('dialog', dialog => { void dialog.accept().catch(error => report.pageErrors.push(error.name)); });
+    page.on('dialog', dialog => { void dialog.accept(dialog.type() === 'prompt' ? 'Observatory checkpoint' : undefined).catch(error => report.pageErrors.push(error.name)); });
     await page.route(`${new URL(credentials.endpoint).origin}/**`, async route => {
         try {
         const req = route.request(), target = new URL(req.url());
         assert.equal(target.origin, new URL(credentials.endpoint).origin);
         if (req.method() === 'POST' && target.pathname.endsWith('/collections')) {
             const body = req.postDataJSON();
-            assert(pending.length < 4, 'Bounded collection count');
+            assert(pending.length < (large ? 2 : 4), 'Bounded collection count');
             pending.push({ collection: body.collectionName, owner: body.tags.owner, scope: body.tags.chat });
             await writeFile(pendingPath, JSON.stringify(pending, null, 2));
         }
         if (req.method() === 'POST' && target.pathname.endsWith('/docs/upsert')) report.upserts.push({ stage, branch: req.postDataJSON().branch, documents: req.postDataJSON().docs.length });
+        if (large) assert(report.upserts.reduce((n, x) => n + x.documents, 0) <= 1100, 'Bounded large-history document submissions');
         if (loseBranch && req.method() === 'POST' && target.pathname.endsWith('/branches')) {
             loseBranch = false; const response = await route.fetch(); assert(response.ok()); await route.abort(); return;
         }
@@ -76,7 +79,7 @@ try {
         await page.route('**/api/chats/get', route => route.request().postDataJSON().file_name === blockedResume
             ? route.fulfill({ status: 503, contentType: 'application/json', body: '{}' }) : route.continue());
     }
-    page.on('response', r => { if (new URL(r.url()).origin === new URL(credentials.endpoint).origin) report.responses.push({ stage, status: r.status() }); });
+    page.on('response', r => { if (new URL(r.url()).origin === new URL(credentials.endpoint).origin) report.responses.push({ stage, status: r.status(), method: r.request().method(), resource: new URL(r.url()).pathname.split('/').slice(5).join('/') || 'collection' }); });
     await page.goto(url); await page.getByText('Welcome to SillyTavern!', { exact: true }).waitFor(); await page.getByText('Save', { exact: true }).last().click();
     const field = name => page.locator(`#sillymemory [data-sm="${name}"]`);
     const status = async text => page.waitForFunction(text => document.querySelector('[data-sm="status"]')?.textContent.includes(text), text, { timeout: 180000 });
@@ -114,6 +117,47 @@ try {
     await page.locator('#rightNavHolder .drawer-toggle').click(); await page.locator('.character_select').filter({ hasText: 'Collection Lifecycle' }).click();
     await page.waitForFunction(() => SillyTavern.getContext().characterId !== undefined);
     await connect();
+    if (large) {
+        report.measurements = []; report.largeMessages = 1000;
+        const measure = async (name, job) => {
+            stage = name; const start = performance.now(), before = report.responses.length, writes = report.upserts.length;
+            await job();
+            report.measurements.push({ phase: name, milliseconds: Math.round(performance.now() - start), remoteResponses: report.responses.length - before, upsertDocuments: report.upserts.slice(writes).reduce((n, x) => n + x.documents, 0) });
+        };
+        const idle = () => page.waitForFunction(() => !document.querySelector('[data-sm="checkpoint-refresh"]').disabled);
+        await page.evaluate(async () => {
+            const c = SillyTavern.getContext();
+            const text = 'The expedition recorded the route to the observatory, checked the brass compass, and compared the ledger with the harbor map. Mira marked the supplies, weather, and next meeting location in the journal. ';
+            c.chat.splice(0, c.chat.length, ...Array.from({ length: 1000 }, (_, i) => ({ mes: `Synthetic expedition entry ${i}. ${text.repeat(3).slice(0, 450)}`, name: i % 2 ? 'Mira' : 'User', is_user: !(i % 2), is_system: false, send_date: 0, extra: {} })));
+            await c.saveChat();
+        });
+        await panel(); await field('versioned').click(); await status('Versioned story memory is ready');
+        await measure('large initial sync', async () => {
+            await field('enabled').check(); await status('synchronized'); await field('enabled').uncheck();
+        });
+        const parent = await identity();
+        check('large history initially submits 998 older messages exactly once', report.upserts.filter(x => x.stage === 'large initial sync').reduce((n, x) => n + x.documents, 0) === 998);
+        for (let i = 1; i <= 3; i++) await measure(`large checkpoint ${i}`, async () => {
+            await field('checkpoint-name').fill(`Large snapshot ${i}`);
+            await field('checkpoint-save').click(); await status('Checkpoint saved:'); await idle();
+        });
+        await measure('large list', async () => { await field('checkpoint-refresh').click(); await idle(); });
+        check('large manager lists three ready checkpoints', await field('checkpoint-list').locator('.sm-checkpoint').count() === 3 && (await field('checkpoint-list').innerText()).match(/Ready/g)?.length === 3);
+        await measure('large resume and sync', async () => {
+            const row = field('checkpoint-list').locator('.sm-checkpoint').filter({ has: page.locator('strong', { hasText: 'Large snapshot 1' }) });
+            await row.getByRole('button', { name: 'Resume', exact: true }).click(); await status('Checkpoint resumed as'); await idle();
+            await field('enabled').check(); await status('synchronized'); await field('enabled').uncheck();
+        });
+        const resumed = await identity();
+        await page.reload(); await page.locator('#sillymemory').waitFor({ state: 'attached' });
+        check('large reload clears key and disables memory', await field('key').inputValue() === '' && !await field('enabled').isChecked());
+        await page.locator('#rightNavHolder .drawer-toggle').click(); await page.locator('.character_select').filter({ hasText: 'Collection Lifecycle' }).click();
+        await page.evaluate(async name => SillyTavern.getContext().openCharacterChat(name), resumed.file); await connect();
+        await measure('large reload sync', async () => { await field('enabled').check(); await status('synchronized'); await field('enabled').uncheck(); });
+        check('large unchanged checkpoint resume and reload submit zero inherited documents', report.measurements.filter(x => x.phase !== 'large initial sync').every(x => x.upsertDocuments === 0));
+        check('large resumed path shares story but has a separate writable branch', parent.collection === resumed.collection && parent.branch !== resumed.branch);
+        check('large direct lifecycle uses no host proxy or automation errors', report.proxyRequests === 0 && report.pageErrors.length === 0);
+    } else {
     await page.evaluate(async () => {
         const c = SillyTavern.getContext(); c.chat.splice(0, c.chat.length, ...Array.from({ length: 6 }, (_, i) => ({ mes: i === 0 ? 'The blue compass is beneath the cedar tree.' : `Synthetic turn ${i}: tell me about the blue compass.`, name: i % 2 ? 'Mira' : 'User', is_user: !(i % 2), is_system: false, send_date: 0, extra: {} })));
         await c.saveChat();
@@ -193,6 +237,9 @@ try {
             await page.locator('.character_select').filter({ hasText: 'Collection Lifecycle' }).click();
             await page.evaluate(async name => SillyTavern.getContext().openCharacterChat(name), name); await connect();
         };
+        const checkpointRow = name => field('checkpoint-list').locator('.sm-checkpoint').filter({ has: page.locator('strong', { hasText: name }) });
+        const refreshList = async () => { await field('checkpoint-refresh').click(); await page.waitForFunction(() => !document.querySelector('[data-sm="checkpoint-refresh"]').disabled); };
+        if (manager) await field('checkpoint-name').fill('Before the harbor');
         loseBranch = recovery;
         await panel(); await field('checkpoint-save').click();
         await status(recovery ? 'Memory request failed' : 'Checkpoint saved:');
@@ -203,9 +250,15 @@ try {
             await reopen(checkpointFile); blockReady = true;
             await field('checkpoint-save').click(); await status('Checkpoint chat save failed'); blockReady = false;
             check('rejected ready save preserves pending transcript', (await readChat(checkpointFile))[0].chat_metadata.sillymemory.checkpoint.state === 'pending');
-            await reopen(checkpointFile); await field('checkpoint-save').click(); await status('Checkpoint verified and ready');
+            if (manager) {
+                await reopen(renamed.file); await refreshList();
+                check('manager finds named pending checkpoint after reload without selecting it', (await checkpointRow('Before the harbor').innerText()).includes('Pending'));
+                await checkpointRow('Before the harbor').getByRole('button', { name: 'Finish / retry', exact: true }).click();
+            } else { await reopen(checkpointFile); await field('checkpoint-save').click(); }
+            await status('Checkpoint verified and ready');
             check('reload finishes the same checkpoint without re-embedding', (await readChat(checkpointFile))[0].chat_metadata.sillymemory.checkpoint.state === 'ready' && !report.upserts.some(r => r.stage === 'checkpoint'));
             await page.evaluate(async name => SillyTavern.getContext().openCharacterChat(name), renamed.file);
+            if (manager) await field('checkpoint-name').fill('Interrupted edit checkpoint');
             loseBranch = true; await field('checkpoint-save').click(); await status('Memory request failed');
             const editFile = (await files()).find(x => x.chat_metadata?.sillymemory?.checkpoint?.state === 'pending').file_name.replace(/\.jsonl$/, '');
             await page.evaluate(async name => SillyTavern.getContext().openCharacterChat(name), editFile);
@@ -218,6 +271,14 @@ try {
             const edited = await readChat(editFile);
             check('edit during remote preparation survives without ready overwrite', edited[1].mes === 'Concurrent user edit must survive' && edited[0].chat_metadata.sillymemory.checkpoint.state === 'pending');
             await page.evaluate(async name => SillyTavern.getContext().openCharacterChat(name), renamed.file);
+        }
+        if (manager) {
+            await refreshList();
+            await checkpointRow('Before the harbor').getByRole('button', { name: 'Rename', exact: true }).click();
+            await status('Checkpoint name saved');
+            await checkpointRow('Observatory checkpoint').waitFor();
+            check('manager rename changes presentation only and leaves the current path selected', (await identity()).file === renamed.file && (await readChat(checkpointFile))[0].chat_metadata.sillymemory.checkpoint.name === 'Observatory checkpoint');
+            await field('checkpoint-list').screenshot({ path: path.join(artifacts, 'checkpoint-manager.png') });
         }
         stage = 'parent after checkpoint';
         await page.evaluate(async () => { const c = SillyTavern.getContext(); c.chat[0].mes = 'The compass moved to a future harbor.'; c.chatMetadata.variables.checkpointTest = 'after'; await c.saveChat(); });
@@ -247,14 +308,36 @@ try {
         await status('synchronized');
         check('resumed edits preserve checkpoint and later original path', (await inspect(checkpoint)).some(d => d.text.includes('cedar tree')) && (await inspect(parent)).some(d => d.text.includes('future harbor')) && (await inspect(resumed)).some(d => d.text.includes('resumed path')));
         await field('enabled').uncheck();
-        await page.evaluate(async name => SillyTavern.getContext().openCharacterChat(name), checkpointFile);
-        stage = 'second resume'; await field('checkpoint-resume').click(); await status('Checkpoint resumed as');
+        if (manager) await refreshList();
+        else await page.evaluate(async name => SillyTavern.getContext().openCharacterChat(name), checkpointFile);
+        stage = 'second resume';
+        if (manager) await checkpointRow('Observatory checkpoint').getByRole('button', { name: 'Resume', exact: true }).click();
+        else await field('checkpoint-resume').click(); await status('Checkpoint resumed as');
         const second = await identity(); await field('enabled').check(); await status('synchronized');
         check('second resume forks the same frozen checkpoint independently', second.branch !== resumed.branch && (await inspect(second)).some(d => d.text.includes('cedar tree')) && !report.upserts.some(r => r.stage === 'second resume'));
         await field('enabled').uncheck();
         await page.evaluate(async name => { await SillyTavern.getContext().openCharacterChat(name); const c = SillyTavern.getContext(); c.chat[0].swipes[1] = 'Changed hidden swipe'; await c.saveChat(); }, checkpointFile);
         await field('checkpoint-resume').click(); await status('Checkpoint transcript or metadata changed');
         check('modified checkpoint transcript is rejected before opening another path', (await identity()).file === checkpointFile);
+        if (manager) {
+            await page.evaluate(async name => SillyTavern.getContext().openCharacterChat(name), renamed.file);
+            await refreshList();
+            check('manager marks changed transcript and offers no resume', (await checkpointRow('Observatory checkpoint').innerText()).includes('Transcript modified') && await checkpointRow('Observatory checkpoint').getByRole('button', { name: 'Resume', exact: true }).count() === 0);
+            await checkpointRow('Observatory checkpoint').getByRole('button', { name: 'Delete checkpoint', exact: true }).click();
+            await status('Checkpoint transcript and memory branch deleted');
+            check('manager deletes one checkpoint while retaining resumed paths and source', !(await readChat(checkpointFile)).length && await absent(checkpoint) && (await inspect(second)).length > 0 && (await inspect(parent)).length > 0);
+            // Create another snapshot of already committed history, then remove only its remote branch.
+            await field('checkpoint-name').fill('Missing remote example');
+            await field('checkpoint-save').click(); await status('Checkpoint saved:');
+            const missingFile = (await files()).find(x => x.chat_metadata?.sillymemory?.checkpoint?.name === 'Missing remote example').file_name.replace(/\.jsonl$/, '');
+            await page.evaluate(async name => SillyTavern.getContext().openCharacterChat(name), missingFile);
+            await field('delete-chat').click(); await status('no longer accessible');
+            await page.evaluate(async name => SillyTavern.getContext().openCharacterChat(name), renamed.file);
+            await refreshList();
+            check('manager reports missing branch without allowing resume', (await checkpointRow('Missing remote example').innerText()).includes('Remote memory missing') && await checkpointRow('Missing remote example').getByRole('button', { name: 'Resume', exact: true }).count() === 0);
+            await checkpointRow('Missing remote example').getByRole('button', { name: 'Delete checkpoint', exact: true }).click(); await status('Checkpoint transcript and memory branch deleted');
+            check('manager removes local checkpoint after already completed remote deletion', !(await readChat(missingFile)).length);
+        }
     }
     stage = 'discovery cleanup';
     // Lose only the local registry: remote ownership discovery must still find both.
@@ -263,9 +346,11 @@ try {
     check('all-owned cleanup discovers collections after local registry loss', await absent(parent) && await absent(branch) && await absent(copy));
     check('credentials absent from persistent profile', !(await readFile(profilePath, 'utf8')).includes(credentials.key));
     check('direct lifecycle uses no host proxy or browser automation errors', report.proxyRequests === 0 && report.pageErrors.length === 0);
+    }
     report.passed = true;
 } catch (error) { report.lastStatus = await page?.locator('[data-sm="status"]').textContent().catch(() => 'unavailable'); report.failure = { stage, type: error.name, message: error.message.replaceAll(credentials.key, '[redacted]').slice(0, 600), ...(error.name === 'AssertionError' ? { check: error.message } : {}) }; console.log(`FAIL ${stage}: ${error.name}`); }
 finally {
+    stage = 'final cleanup';
     if (page && !page.isClosed()) {
         try {
             if (pending.length) {

@@ -18,6 +18,9 @@ boundary; publication is confirmed by the corresponding Git tag and GitHub Relea
   verify and resume it into independent new chats. Interrupted pending preparation
   can be retried; altered transcripts or remote snapshots are rejected.
 
+- A current-story checkpoint manager with names, creation times, verified local/remote
+  states, pending retry, resume, rename and individually scoped deletion.
+
 ### Fixed
 
 - Reject edits made during pending checkpoint preparation before readiness writes,

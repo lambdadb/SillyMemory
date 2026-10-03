@@ -26,17 +26,18 @@ Connect, prepare memory and opt the selected story into versioned memory first.
    disables memory and drains previous writes, saves a separate native chat with
    a unique `SillyMemory checkpoint ...` name, then prepares its memory branch.
    The original chat stays selected. Re-enable memory to continue that original
-   path after saving, or select the saved checkpoint in the native chat list.
+   path after saving, or resume the saved checkpoint from the manager below.
 2. A checkpoint is ready only after its intended older documents are committed
    and the matching snapshot ID is saved and read back from the host. Creation
    can take minutes while waiting for commits. No generation model is called.
-3. Select that checkpoint in the native chat list and click **Resume checkpoint
-   in new chat**. It checks the persisted transcript digest and remote branch
+3. Click **Resume** on that checkpoint in the current-story list. Alternatively,
+   select it in the native chat list and click **Resume checkpoint in new chat**.
+   It checks the persisted transcript digest and remote branch
    snapshot, saves a separate `SillyMemory resume ...` chat, verifies it and opens
    it. Enable memory to inherit from the frozen branch and continue. Repeating
    this creates another independent path.
-4. If creation stops partway, reconnect, select the saved checkpoint and click
-   **Save / finish checkpoint**. Its pending record contains the original memory
+4. If creation stops partway, reconnect, refresh the current-story list and click
+   **Finish / retry** on the pending checkpoint. Its pending record contains the original memory
    settings and source identity, so it can finish the same branch. If the local
    save never succeeded, no checkpoint remote data was created; save again from
    the original path. An ambiguous resume keeps its generated target identity in browser storage.
@@ -260,3 +261,113 @@ members were read back byte-for-byte and indexed in `ARCHIVE-MANIFEST.json`.
 Only this evidence pointer follows the measured candidate. The bundle is not
 available in a fresh clone; keep it before removing this worktree. Earlier
 checkpoint/versioning evidence was not modified or deleted.
+
+## Checkpoint manager
+
+Give a checkpoint an optional name (up to 120 characters) before saving. Use
+**Refresh story checkpoints** to list checkpoints belonging to the selected
+character and versioned story. Each row shows the name, creation time and verified
+status. Names live in the checkpoint's presentation metadata, so renaming does not
+change its identity, transcript hash, native filename or memory branch.
+
+- **Ready**: the saved transcript and remote snapshot agree. **Resume** opens a
+  new path without selecting the checkpoint in the native chat list first.
+- **Pending**: **Finish / retry** completes the original snapshot and settings.
+- **Transcript modified** or **Remote memory changed**: resume is unavailable.
+- **Remote memory missing**: the branch or collection is absent. It cannot be
+  silently recreated as the original ready checkpoint.
+- **Remote state unverified**: reconnect and refresh. Authentication/network
+  failures are not reported as missing data.
+- **Duplicate identity**: actions are blocked until the native copies are resolved.
+
+The list is refreshed explicitly and after successful management actions. Changing
+chats clears old rows; actions check story identity and saved state again. Listing
+checks each candidate transcript and shares one ownership check/branch listing
+across the story. It never queries embeddings or writes remote documents.
+
+From another path in the same story, **Rename** changes a checkpoint's display
+name. **Delete checkpoint**, after confirmation, deletes only that native
+checkpoint file and its remote branch. Remote absence is verified first. If local
+deletion subsequently fails, the retained row shows missing memory and deletion
+can be retried. Other source/resumed chat files and existing memory branches are
+preserved. A resumed path that has never synchronized must rebuild from its own
+transcript if its source checkpoint was deleted. The currently open checkpoint
+cannot be renamed or deleted through this list; open another story path first.
+
+This differs from **Delete this chat's remote memory**, which keeps its native
+file, and all-owned cleanup, which removes all owned remote story collections but
+keeps every native chat. Native deletion is irreversible; no full-story local
+file deletion is provided.
+
+### Manager and large-history validation (2026-10-04)
+
+Decision: keep checkpoint management in the extension and retain the committed
+branch reuse strategy. The manager has bounded remote lookup cost per refresh;
+unchanged history was not re-embedded. No synchronization shortcut was introduced
+just to reduce read counts: consistent verification and commit-before-fork checks
+remain necessary for correctness.
+
+- 298 unit tests passed, including story/duplicate isolation, status distinctions,
+  rename integrity, stale edits and partial deletion recovery. Syntax and release
+  metadata checks passed (`0.3.0`, still Unreleased).
+- 31 existing real-host/Chromium checks with a local LambdaDB emulator passed.
+- 40 actual pinned-host/Chromium + live managed LambdaDB checks passed, including
+  list-based pending recovery, rename, resume, modified/missing states, and scoped
+  deletion. Three synthetic collections were removed. The failure cases use
+  deliberately discarded responses/rejected saves, not observed provider faults.
+- A separate actual-host/live run used 1,000 deterministic English messages of
+  approximately 480 characters each, `recent=2`, `budget=800`, three checkpoints,
+  and no generation model calls. It submitted 998 memory documents once (plus one
+  transport-test document), under the 1,100-document/two-collection cap. Both
+  collections were removed and source hashes stayed unchanged during each run.
+
+| Large-history operation | Elapsed | Remote responses during operation | Documents upserted |
+| --- | ---: | ---: | ---: |
+| Initial synchronization | 10.860 s | 38 | 998 |
+| First checkpoint | 65.299 s | 115 | 0 |
+| Second checkpoint | 4.933 s | 58 | 0 |
+| Third checkpoint | 4.817 s | 58 | 0 |
+| Refresh three checkpoint rows | 0.166 s | 2 | 0 |
+| Resume and first memory sync | 4.336 s | 49 | 0 |
+| Reload, reconnect, then memory sync | 2.255 s | 23 | 0 |
+
+Elapsed times measure the UI operation, including automatic list refresh for
+checkpoint actions; reload/navigation/key entry are excluded from reload-sync time.
+They are one run, not medians, throughput estimates or latency guarantees. The
+first checkpoint made 87 fetch requests versus 30 for later checkpoints: repeated
+committed-read polling explains much of its additional minute after acknowledged
+upserts. An upsert acknowledgement is still not sufficient to fork safely. Later
+checkpoints each made 20 paginated document-list reads and 30 fetches; reload made
+10 list reads and 10 consistent fetches. These reads verify inherited content,
+including uncertain writes. Zero upserts does not mean zero network or local
+transcript cost. Larger histories/checkpoint counts scale those costs; this is not
+a stress test, answer-quality result, or multi-device concurrency certification.
+
+The large report's final `responses` entries retain its last stage label during
+cleanup; the table uses each measurement's before/after slice, which excludes
+cleanup. The maintained runner now labels final cleanup separately. Original
+reports are preserved without rewriting. Live runner error counts cover automation
+routing/dialog errors; the emulator runner also monitors browser page errors.
+
+Evidence: local-only archive
+`/Users/steven/Dev/sillymemory-checkpoint-manager/artifacts/archive/checkpoint-manager-v1/evidence.tar.gz`,
+SHA-256 `aec0643cb8ebe8d27037736539d35bea1c7d0a5f2b337dc0f8c16fb98e4032da`.
+All 309 members were read back and matched byte-for-byte. It contains the
+candidate source/patch against `2ba4a59560c782a6879eb910a3cde46d57d2972e`, both
+live reports with exact producer overlays, screenshot, emulator/unit logs and
+input boundary. The final evidence pointer was appended after the snapshot;
+runtime matches both live runs. A configured-secret scan passed on tracked files
+and the decompressed archive. No historical evidence was removed.
+
+Re-run the bounded scenarios with the pinned host, a root-workspace env-file
+reference (never a copied key), and a fresh artifact tag:
+
+```sh
+ST_SOURCE=/path/to/pinned-host SM_ENV_FILE=/path/to/.env.local \
+  SM_ARTIFACT_TAG=manager-unique node scripts/chat-collections-live.mjs --checkpoint-manager
+ST_SOURCE=/path/to/pinned-host SM_ENV_FILE=/path/to/.env.local \
+  SM_ARTIFACT_TAG=large-unique node scripts/chat-collections-live.mjs --large-history
+```
+
+The host's `third-party/sillymemory` symlink must point to the tested checkout.
+Do not start a retry if a pending ownership file remains without verified cleanup.
