@@ -1,3 +1,4 @@
+import { createCheckpoint, finishCheckpoint, resumeCheckpoint } from './src/checkpoints.js';
 import { LambdaClient, ConnectionError, connectionConfig } from './src/client.js';
 import { ChatCollections, chatCollection, ensureChatIdentity } from './src/chat-collections.js';
 import { runTransportGate } from './src/gate.js';
@@ -46,6 +47,7 @@ function prepareMemory(valid, progress = () => {}) {
             identityKey = key();
         }
         if (!valid()) return null;
+        if (ctx.chatMetadata.sillymemory?.checkpoint) throw new ConnectionError('This is a saved checkpoint. Resume it in a new chat before enabling memory.');
         const snapshot = capture(context());
         const entry = await collections.ensure(snapshot, valid, options(state), progress);
         if (!entry || !valid()) return null;
@@ -270,6 +272,46 @@ async function initialize() {
         if (!valid() || !await ensureChatIdentity(ctx, saveChat, valid)) return;
         status('Versioned story memory is ready. Enable memory to synchronize; native branches will share unchanged committed history.');
     });
+    async function checkpointAction(resume) {
+        if (!client || !collections || !state.ready || !capture(context())) throw new ConnectionError('Connect, prepare memory and select a versioned chat first.');
+        const ctx = context(), file = ctx.getCurrentChatId(), avatar = ctx.characters[ctx.characterId]?.avatar;
+        const valid = () => context().getCurrentChatId() === file && context().characters[context().characterId]?.avatar === avatar;
+        state.enabled = false; element('enabled').checked = false; persist(); invalidate(); clearTimeout(timer);
+        await drain();
+        const { saveChat } = await import('/script.js');
+        const host = {
+            read: async name => {
+                const response = await fetch('/api/chats/get', { method: 'POST', headers: ctx.getRequestHeaders(), body: JSON.stringify({ avatar_url: avatar, file_name: name }) });
+                if (!response.ok) throw new ConnectionError('Could not read the saved checkpoint.');
+                return response.json();
+            },
+            save: async (name, messages, metadata) => {
+                const response = await fetch('/api/chats/save', { method: 'POST', headers: ctx.getRequestHeaders(), body: JSON.stringify({
+                    ch_name: ctx.characters[ctx.characterId].name, avatar_url: avatar, file_name: name, force: false,
+                    chat: [{ user_name: 'unused', character_name: 'unused', chat_metadata: metadata }, ...messages],
+                }) });
+                if (!response.ok) throw new ConnectionError('Checkpoint chat save failed. Select the saved checkpoint to retry if it exists.');
+            },
+            open: name => context().openCharacterChat(name),
+        };
+        if (!valid()) return;
+        const args = { host, client, collections, owner, file, avatar, valid, progress: status };
+        if (resume) {
+            const name = await resumeCheckpoint(args);
+            status(`Checkpoint resumed as ${name}. Enable memory to continue.`);
+        } else if (ctx.chatMetadata.sillymemory?.checkpoint) {
+            await finishCheckpoint(args);
+            if (valid()) await host.open(file);
+            status('Checkpoint verified and ready. Resume it in a new chat.');
+        } else {
+            if (!await ensureChatIdentity(ctx, saveChat, valid)) return;
+            const rows = [{ chat_metadata: structuredClone(ctx.chatMetadata) }, ...structuredClone(ctx.chat)];
+            const name = await createCheckpoint({ ...args, rows, config: options(state) });
+            status(`Checkpoint saved: ${name}. Select it from the native chat list to resume. Memory remains disabled.`);
+        }
+    }
+    element('checkpoint-save').onclick = () => action(() => checkpointAction(false));
+    element('checkpoint-resume').onclick = () => action(() => checkpointAction(true));
     element('enabled').onchange = () => action(async () => {
         invalidate();
         const requested = element('enabled').checked;

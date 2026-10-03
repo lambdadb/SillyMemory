@@ -8,7 +8,8 @@ import { readFile, writeFile, mkdir, mkdtemp, rm, realpath } from 'node:fs/promi
 import { spawn, execFileSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-const versioned = process.argv.includes('--versioned');
+const checkpoints = process.argv.includes('--checkpoints');
+const versioned = process.argv.includes('--versioned') || checkpoints;
 const root = path.resolve(new URL('..', import.meta.url).pathname);
 const source = process.env.ST_SOURCE || '/tmp/sillymemory-st-source';
 const revision = '06bde939fb1e9c4c8d8641d810f0a916b5bce127';
@@ -18,14 +19,14 @@ const env = parseEnv(await readFile(process.env.SM_ENV_FILE || path.join(root, '
 const credentials = { endpoint: env.LAMBDADB_BASE_URL, project: env.LAMBDADB_PROJECT_NAME, key: env.LAMBDADB_PROJECT_API_KEY };
 assert(Object.values(credentials).every(Boolean), 'Missing LambdaDB credentials');
 const work = await mkdtemp(path.join(tmpdir(), 'sm-chat-collections-'));
-const artifactTag = process.env.SM_ARTIFACT_TAG || (versioned ? 'versioned-host' : 'collections-host');
+const artifactTag = process.env.SM_ARTIFACT_TAG || (checkpoints ? 'checkpoint-host' : versioned ? 'versioned-host' : 'collections-host');
 assert(/^[a-zA-Z0-9][a-zA-Z0-9._-]{0,79}$/.test(artifactTag));
 const artifacts = path.join(root, 'artifacts', artifactTag); await mkdir(artifacts, { recursive: true });
 const pendingPath = path.join(artifacts, 'chat-collections-live-pending.json');
 const pending = []; await writeFile(pendingPath, '[]', { flag: 'wx' });
 const sourceSha256 = {};
-for (const file of ['index.js', 'settings.html', 'src/chat-collections.js', 'src/client.js', 'src/memory.js', 'src/status.js', 'scripts/chat-collections-live.mjs']) sourceSha256[file] = createHash('sha256').update(await readFile(path.join(root, file))).digest('hex');
-const report = { versioned, upserts: [], time: new Date().toISOString(), host: revision, sourceSha256, checks: [], responses: [], proxyRequests: 0, pageErrors: [], cleanup: false, passed: false };
+for (const file of ['index.js', 'settings.html', 'src/chat-collections.js', 'src/client.js', 'src/memory.js', 'src/status.js', 'src/checkpoints.js', 'scripts/chat-collections-live.mjs']) sourceSha256[file] = createHash('sha256').update(await readFile(path.join(root, file))).digest('hex');
+const report = { checkpoints, versioned, upserts: [], time: new Date().toISOString(), host: revision, sourceSha256, checks: [], responses: [], proxyRequests: 0, pageErrors: [], cleanup: false, passed: false };
 const check = (name, ok) => { assert(ok, name); report.checks.push(name); console.log(`PASS ${name}`); };
 const url = `http://127.0.0.1:${Number(process.env.ST_LIVE_PORT || 18147)}`;
 let server, browser, page, panel, stage = 'startup';
@@ -148,6 +149,49 @@ try {
         check('earlier native fork submits no unchanged inherited documents', !report.upserts.some(r => r.stage === 'earlier branch'));
         await panel(); await field('delete-chat').click(); await status('no longer accessible');
         check('current branch deletion preserves sibling and parent', await absent(earlier) && (await inspect(parent)).length === 4 && (await inspect(branch)).length === 4);
+    }
+    if (checkpoints) {
+        stage = 'checkpoint';
+        await page.evaluate(async name => {
+            await SillyTavern.getContext().openCharacterChat(name); const c = SillyTavern.getContext();
+            c.chat[0].swipe_id = 0; c.chat[0].swipes = [c.chat[0].mes, 'Unselected synthetic alternative'];
+            c.chat[0].swipe_info = [{ extra: {} }, { extra: { checkpointTest: 'retained' } }];
+            c.chatMetadata.variables = { checkpointTest: 'before' }; await c.saveChat();
+        }, renamed.file);
+        await panel(); await field('checkpoint-save').click(); await status('Checkpoint saved:');
+        const checkpointFile = await page.evaluate(async () => {
+            const c = SillyTavern.getContext(); const r = await fetch('/api/characters/chats', { method: 'POST', headers: c.getRequestHeaders(), body: JSON.stringify({ avatar_url: c.characters[c.characterId].avatar, metadata: true }) });
+            return (await r.json()).find(x => x.chat_metadata?.sillymemory?.checkpoint?.state === 'ready').file_name.replace(/\.jsonl$/, '');
+        });
+        check('checkpoint creation leaves source chat active and submits no inherited documents', (await identity()).file === renamed.file && !report.upserts.some(r => r.stage === 'checkpoint'));
+        stage = 'parent after checkpoint';
+        await page.evaluate(async () => { const c = SillyTavern.getContext(); c.chat[0].mes = 'The compass moved to a future harbor.'; c.chatMetadata.variables.checkpointTest = 'after'; await c.saveChat(); });
+        await field('enabled').check(); await status('synchronized');
+        await field('enabled').uncheck();
+        await page.evaluate(async name => SillyTavern.getContext().openCharacterChat(name), checkpointFile);
+        const checkpoint = await identity();
+        await field('enabled').check(); await status('This is a saved checkpoint'); await field('enabled').uncheck();
+        check('opening a checkpoint refuses ordinary memory writes', (await inspect(checkpoint)).some(d => d.text.includes('cedar tree')));
+        stage = 'checkpoint resume';
+        await field('checkpoint-resume').click(); await status('Checkpoint resumed as');
+        const resumed = await identity();
+        const restored = await page.evaluate(() => { const c = SillyTavern.getContext(); return c.chat[0].mes.includes('cedar tree') && c.chat[0].swipes[1] === 'Unselected synthetic alternative' && c.chat[0].swipe_info[1].extra.checkpointTest === 'retained' && c.chatMetadata.variables.checkpointTest === 'before'; });
+        check('resume restores old text, hidden swipes and chat variables in a new chat', restored && resumed.file !== checkpointFile && resumed.collection === parent.collection && resumed.branch !== checkpoint.branch);
+        await field('enabled').check(); await status('synchronized');
+        check('resumed memory inherits without unchanged upserts', !report.upserts.some(r => r.stage === 'checkpoint resume'));
+        stage = 'resumed edit';
+        await page.evaluate(async () => { const c = SillyTavern.getContext(); c.chat[0].mes = 'The compass belongs to the resumed path.'; await c.saveChat(); await c.eventSource.emit(c.eventTypes.MESSAGE_UPDATED, 0); });
+        await status('synchronized');
+        check('resumed edits preserve checkpoint and later original path', (await inspect(checkpoint)).some(d => d.text.includes('cedar tree')) && (await inspect(parent)).some(d => d.text.includes('future harbor')) && (await inspect(resumed)).some(d => d.text.includes('resumed path')));
+        await field('enabled').uncheck();
+        await page.evaluate(async name => SillyTavern.getContext().openCharacterChat(name), checkpointFile);
+        stage = 'second resume'; await field('checkpoint-resume').click(); await status('Checkpoint resumed as');
+        const second = await identity(); await field('enabled').check(); await status('synchronized');
+        check('second resume forks the same frozen checkpoint independently', second.branch !== resumed.branch && (await inspect(second)).some(d => d.text.includes('cedar tree')) && !report.upserts.some(r => r.stage === 'second resume'));
+        await field('enabled').uncheck();
+        await page.evaluate(async name => { await SillyTavern.getContext().openCharacterChat(name); const c = SillyTavern.getContext(); c.chat[0].swipes[1] = 'Changed hidden swipe'; await c.saveChat(); }, checkpointFile);
+        await field('checkpoint-resume').click(); await status('Checkpoint transcript or metadata changed');
+        check('modified checkpoint transcript is rejected before opening another path', (await identity()).file === checkpointFile);
     }
     stage = 'discovery cleanup';
     // Lose only the local registry: remote ownership discovery must still find both.

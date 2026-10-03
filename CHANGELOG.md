@@ -14,6 +14,9 @@ boundary; publication is confirmed by the corresponding Git tag and GitHub Relea
 - Remote reconciliation removes future/deleted/changed chunks from the selected
   branch; current-chat deletion preserves its parent and siblings. All-owned
   cleanup includes versioned story collections.
+- Save a native transcript/swipe checkpoint with a retained LambdaDB branch;
+  verify and resume it into independent new chats. Interrupted pending preparation
+  can be retried; altered transcripts or remote snapshots are rejected.
 
 ### Requirements and limits
 
@@ -24,8 +27,8 @@ boundary; publication is confirmed by the corresponding Git tag and GitHub Relea
   to use direct-branch consistent reads and validation against local history.
 - Validated on SillyTavern 1.19.0 with synthetic managed-memory lifecycle cases.
   No new answer-quality, large-history performance or multi-device writer claim.
-  Frozen checkpoints and transcript restore are deferred. Version 0.2.0 cannot
-  manage the new layout; see [usage, evidence and rollback](docs/versioned-memory.md).
+  Checkpoints cover chat state, not character cards or external/global state.
+  Version 0.2.0 cannot manage the new layout; see [usage, evidence and rollback](docs/versioned-memory.md).
 
 ## [0.2.0] - 2026-10-03
 

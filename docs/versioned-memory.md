@@ -1,5 +1,9 @@
 # Versioned story memory
 
+This records the branch-inheritance scope validated in PR #53. The current
+0.3.0 candidate also includes optional [frozen checkpoints](checkpoints.md), with
+a separate acceptance record and transcript/restore boundaries.
+
 ## Decision and acceptance boundary
 
 Use a collection for one story family and a writable LambdaDB branch for each
@@ -82,7 +86,8 @@ that choice. Before reverting to 0.2.0, use 0.3.0's all-owned cleanup if remote
 cleanup is desired: 0.2.0 cannot discover/manage `smstory_*` collections and will
 use its earlier per-chat layout. Keep a native data backup; code rollback does
 not restore transcripts or reverse metadata/data changes. Re-enabling memory can
-rebuild it from local history. No whole-chat checkpoint restore UI is included.
+rebuild it from local history. Checkpoint controls and their restore limits are documented separately in
+[the checkpoint guide](checkpoints.md).
 
 ## Contracts inspected
 
