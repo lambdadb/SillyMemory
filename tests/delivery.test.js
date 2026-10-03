@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { expectedMessages, inspectPrompt, deliverySummary, PromptDelivery } from '../src/delivery.js';
 
-const source = (mes, is_user = false, index = 0) => ({ mes, is_user, index });
+const source = (mes, is_user = false, index = 0) => ({ mes, is_user, index, name: is_user ? 'User' : 'Mira' });
 const expected = (memory = [], recent = []) => ({ memory: expectedMessages(memory), recent: expectedMessages(recent) });
 
 test('final prompt includes full content with the original native role, not just a label', () => {
@@ -61,4 +61,30 @@ test('overlap cannot replace a ready prompt and unsupported formats stay unverif
     const result = tracker.finish('text completion');
     assert.equal(result.result, null); assert.equal(result.lost, false);
     assert.match(deliverySummary(null, true), /unavailable/);
+});
+
+
+test('short protected turns require complete line boundaries, not words inside other messages', () => {
+    for (const content of ['BOOK A TRIP', 'OKAY', 'NOT OK', 'OK then', 'Mira: NOT OK', 'Mira: OKAY', 'Other: OK']) {
+        const tracker = new PromptDelivery();
+        tracker.begin(expected([], [source('OK')]), () => true);
+        const result = tracker.finish([{ role: 'assistant', content }]);
+        assert.equal(result.lost, true, content);
+        assert.equal(result.result.recent[0].outcome, 'missing', content);
+    }
+});
+
+test('complete multiline content permits line-separated injections and the known speaker prefix', () => {
+    const input = expected([source('first\nsecond')]);
+    for (const content of ['first\nsecond', 'Mira: first\nsecond', 'before\nfirst\nsecond\nafter', 'before\nMira: first\nsecond\nafter']) {
+        assert.equal(inspectPrompt(input, [{ role: 'assistant', content }]).memory[0].outcome, 'included', content);
+    }
+    for (const content of ['prefix first\nsecond', 'first\nsecond suffix', 'Other: first\nsecond']) {
+        assert.equal(inspectPrompt(input, [{ role: 'assistant', content }]).memory[0].outcome, 'missing', content);
+    }
+});
+
+test('a substring collision cannot consume the real remaining turn', () => {
+    const result = inspectPrompt(expected([], [source('OK', true), source('BOOK A TRIP', true)]), [{ role: 'user', content: 'BOOK A TRIP' }]);
+    assert.deepEqual(result.recent.map(m => m.outcome), ['missing', 'included']);
 });

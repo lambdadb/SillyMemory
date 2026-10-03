@@ -21,6 +21,8 @@ assert.ok(packingFixture);
 const base = { enabled: true, context: 1536, output: 256, instructions: 1, recentRepeats: 1, stopOnLoss: true, type: 'normal' };
 const plan = { ...capacityPlan, cases: [
     { ...base, id: 'included' },
+    { ...base, id: 'speaker-prefix', names: 2 },
+    { ...base, id: 'substring-collision', context: 4096, noHits: true, collision: true, blocked: true },
     { ...base, id: 'pressure-stopped', recentRepeats: 100, blocked: true },
     { ...base, id: 'pressure-warning', recentRepeats: 100, stopOnLoss: false },
     { ...base, id: 'pressure-streaming', recentRepeats: 100, streaming: true, blocked: true },
@@ -172,15 +174,28 @@ try {
     for (const spec of plan.cases) {
         console.log(`VERIFY ${spec.id}`);
         noHits = spec.noHits === true;
+        const chat = capacityChat(spec.recentRepeats);
+        if (spec.collision) chat[10].mes = 'OK';
         if (await field('enabled').isChecked()) await field('enabled').uncheck();
         await field('stopOnLoss').setChecked(spec.stopOnLoss);
         await page.evaluate(async ({ spec, chat, instructions }) => {
             const c = SillyTavern.getContext(), { oai_settings } = await import('/scripts/openai.js');
-            Object.assign(oai_settings, { openai_max_context: spec.context, openai_max_tokens: spec.output, stream_openai: Boolean(spec.streaming) });
+            Object.assign(oai_settings, { openai_max_context: spec.context, openai_max_tokens: spec.output, stream_openai: Boolean(spec.streaming), names_behavior: spec.names ?? 0 });
             oai_settings.prompts.find(p => p.identifier === 'main').content = instructions;
             c.chat.splice(0, c.chat.length, ...chat); await c.saveChat(); await c.reloadCurrentChat();
-        }, { spec, chat: capacityChat(spec.recentRepeats), instructions: capacityInstructions(spec.instructions) });
+        }, { spec, chat, instructions: capacityInstructions(spec.instructions) });
         if (spec.enabled) { await field('enabled').check(); await waitStatus('synchronized'); }
+        if (spec.collision) await page.evaluate(() => {
+            const c = SillyTavern.getContext();
+            globalThis.deliveryCollision = { removed: 0 };
+            const omit = (data, dryRun) => {
+                if (dryRun) return;
+                const index = data.prompt.findIndex(m => m.role === 'user' && m.content === 'OK');
+                if (index >= 0) { data.prompt.splice(index, 1); deliveryCollision.removed++; }
+            };
+            deliveryCollision.omit = omit;
+            c.eventSource.makeFirst(c.eventTypes.GENERATE_AFTER_DATA, omit);
+        });
         const requestStart = generations.length;
         const observation = await page.evaluate(async ({ question, type }) => {
             const c = SillyTavern.getContext();
@@ -193,7 +208,16 @@ try {
                 inspection: document.querySelector('[data-sm="inspection"]').textContent,
                 generating: (await import('/script.js')).is_send_press,
                 generatingUI: document.body.dataset.generating || null };
-        }, { question: plan.question, type: spec.type });
+        }, { question: spec.collision ? 'BOOK A TRIP' : plan.question, type: spec.type });
+        if (spec.collision) {
+            const removed = await page.evaluate(() => {
+                const c = SillyTavern.getContext();
+                c.eventSource.removeListener(c.eventTypes.GENERATE_AFTER_DATA, deliveryCollision.omit);
+                return deliveryCollision.removed;
+            });
+            assert.equal(removed, 1, 'Fixture omits exactly the short protected turn before verification');
+            assert.match(observation.delivery, /1 recent messages are missing/);
+        }
         const sent = generations.slice(requestStart);
         rows.push({ spec, ...observation, requests: sent });
         assert.equal(sent.length, spec.blocked ? 0 : 1, 'Blocked generations make zero completion requests');
@@ -211,7 +235,7 @@ try {
             assert.ok(observation.answer.endsWith('LOCAL_FIXTURE_OK'));
             if (spec.enabled) assert.match(observation.delivery, spec.stopOnLoss ? /^Final host prompt:/ : /^Warning:/);
         }
-        if (spec.type === 'normal') assert.deepEqual(observation.chat.slice(0, 12), capacityChat(spec.recentRepeats).map(m => m.mes), 'Original chat text preserved');
+        if (spec.type === 'normal') assert.deepEqual(observation.chat.slice(0, 12), chat.map(m => m.mes), 'Original chat text preserved');
         if (spec.id === 'included') {
             assert.match(observation.delivery, /3\/3 memory passages and 4\/4 recent messages verified/);
             assert.equal(sent[0].messages.filter(m => m.content.startsWith('[Past conversation excerpt:')).length, 3);

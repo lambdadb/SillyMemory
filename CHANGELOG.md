@@ -38,6 +38,12 @@ boundary; publication is confirmed by the corresponding Git tag and GitHub Relea
 - Overlapping prompt assembly cannot consume another generation's verification.
   If another extension prevents a reserved final event, reload resets the slot.
 
+### Fixed
+
+- Final-prompt verification no longer accepts an arbitrary substring of another
+  same-role message as a delivered turn. Known speaker prefixes and line-separated
+  injections remain supported; missing short turns stop generation by default.
+
 ### Validation and limits
 
 - A historical 64-answer actual-host run used live LambdaDB managed embeddings and
