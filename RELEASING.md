@@ -9,8 +9,9 @@ commit to preserve long-lived branch ancestry.
 The current release boundary is **0.2.0 (experimental)**, dated **2026-10-03**.
 See the [release notes](docs/releases/0.2.0.md) and
 [GitHub Releases](https://github.com/lambdadb/SillyMemory/releases) to confirm
-publication. No later candidate version is assigned yet. Start the next version
-with an `Unreleased` entry; never reuse a published version. Main promotion, tag
+publication. The development candidate is **0.3.0**, with an `Unreleased` entry
+and opt-in [versioned story memory](docs/versioned-memory.md). It has not been
+promoted or published; never reuse a published version. Main promotion, tag
 push and GitHub Release publication require maintainer authorization, which may
 cover the full sequence in one request.
 

@@ -234,6 +234,28 @@ try {
     await page.locator('#sillymemory details').evaluate(e => { e.open = true; });
     await field('inspection').scrollIntoViewIfNeeded();
     if (!faultMode) await page.screenshot({ path: path.join(artifacts, 'settings.png') });
+    if (!faultMode) {
+        // The host can swallow save errors. Verify disk metadata, not just the
+        // resolved save promise, before allowing any versioned remote requests.
+        const legacy = await page.evaluate(() => structuredClone(SillyTavern.getContext().chatMetadata.sillymemory));
+        const before = calls.length;
+        await page.route('**/api/chats/save', route => route.fulfill({ status: 503, contentType: 'application/json', body: '{}' }));
+        page.once('dialog', dialog => dialog.accept()); await field('versioned').click();
+        await waitStatus('not saved');
+        await field('enabled').check(); await waitStatus('not saved');
+        check('failed version opt-in cannot create remote data on re-enable', calls.length === before);
+        await page.unroute('**/api/chats/save');
+        await field('versioned').click(); await waitStatus('Versioned story memory is ready');
+        const persisted = await page.evaluate(async () => {
+            const c = SillyTavern.getContext();
+            const response = await fetch('/api/chats/get', { method: 'POST', headers: c.getRequestHeaders(), body: JSON.stringify({ avatar_url: c.characters[c.characterId].avatar, file_name: c.getCurrentChatId() }) });
+            const rows = await response.json();
+            return JSON.stringify(rows[0].chat_metadata.sillymemory) === JSON.stringify(c.chatMetadata.sillymemory);
+        });
+        check('version opt-in retry persists full metadata before reporting ready', persisted && !await field('enabled').isChecked() && calls.length === before);
+        // Restore the synthetic legacy fixture for this emulator's existing cleanup.
+        await page.evaluate(async legacy => { const c = SillyTavern.getContext(); c.chatMetadata.sillymemory = legacy; await c.saveChat(); }, legacy);
+    }
     if (faultMode) { staleHits = []; faultResults = await runFaultScenarios({ page, field, waitStatus, prompt, check, faults, collections, calls, restartHost: recoveryMode ? async () => { const exited = new Promise(resolve => server.once('exit', resolve)); server.kill('SIGKILL'); await exited; await start(false); } : undefined, screenshot: name => page.screenshot({ path: path.join(artifacts, `${name}${artifactTag ? `-${artifactTag}` : ''}.png`) }) }); }
     else { page.once('dialog', dialog => dialog.accept()); await field('delete').click(); await waitStatus('no longer accessible'); }
     check('owned remote deletion leaves no collections', collections.size === 0);

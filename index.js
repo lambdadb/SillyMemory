@@ -14,6 +14,7 @@ let retrievalSequence = 0, retrievalOperation;
 let statusView, collections, identityKey;
 let preparation = Promise.resolve();
 const engines = new Map();
+const entryKey = entry => `${entry.collection}:${entry.branch || 'main'}`;
 const delivery = new PromptDelivery();
 const element = name => root.querySelector(`[data-sm="${name}"]`);
 const status = text => statusView.show(text);
@@ -26,19 +27,19 @@ function makeCollections() {
     engine = undefined; engines.clear(); identityKey = undefined;
     collections = client ? new ChatCollections(client, owner, entry => {
         state.chatCollections ??= [];
-        if (!state.chatCollections.some(e => e.collection === entry.collection)) { state.chatCollections.push(entry); persist(); }
-    }, name => {
-        state.chatCollections = (state.chatCollections || []).filter(e => e.collection !== name);
+        if (!state.chatCollections.some(e => entryKey(e) === entryKey(entry))) { state.chatCollections.push(entry); persist(); }
+    }, (name, branch) => {
+        state.chatCollections = (state.chatCollections || []).filter(e => e.collection !== name || (branch && e.branch !== branch));
         if (state.collection === name) delete state.collection;
         persist();
     }) : undefined;
 }
-function prepareMemory(valid) {
+function prepareMemory(valid, progress = () => {}) {
     const task = preparation.catch(() => {}).then(async () => {
         if (!valid() || !collections) return null;
         const ctx = context(), file = ctx.getCurrentChatId(), avatar = ctx.characters[ctx.characterId]?.avatar;
         if (!capture(ctx)) throw new ConnectionError('Select a supported character chat.');
-        const key = () => JSON.stringify([avatar, file, ctx.chatMetadata.sillymemory?.id, ctx.chatMetadata.integrity]);
+        const key = () => JSON.stringify([avatar, file, ctx.chatMetadata.sillymemory, ctx.chatMetadata.integrity]);
         if (identityKey !== key()) {
             const { saveChat } = await import('/script.js');
             if (!valid() || !await ensureChatIdentity(ctx, saveChat, valid)) return null;
@@ -46,11 +47,11 @@ function prepareMemory(valid) {
         }
         if (!valid()) return null;
         const snapshot = capture(context());
-        const entry = await collections.ensure(snapshot, valid);
+        const entry = await collections.ensure(snapshot, valid, options(state), progress);
         if (!entry || !valid()) return null;
-        if (!engines.has(entry.collection)) engines.set(entry.collection, new MemoryEngine({ client, owner, ...entry,
-            journal: new Journal(localStorage, `${owner}:${entry.collection}`) }));
-        engine = engines.get(entry.collection);
+        if (!engines.has(entryKey(entry))) engines.set(entryKey(entry), new MemoryEngine({ client, owner, ...entry,
+            journal: new Journal(localStorage, `${owner}:${entry.collection}${entry.branch ? `:${entry.branch}` : ''}`) }));
+        engine = engines.get(entryKey(entry));
         return { snapshot, instance: engine };
     });
     preparation = task; return task;
@@ -68,7 +69,7 @@ async function sync() {
     const current = () => sequence === promptSequence && sessionReady && state.enabled;
     const operation = statusView.start(current);
     try {
-        const prepared = await prepareMemory(current); if (!prepared) return;
+        const prepared = await prepareMemory(current, operation.update); if (!prepared) return;
         const { snapshot, instance } = prepared;
         const valid = () => current() && validSnapshot(snapshot, instance);
         const result = await instance.sync(snapshot, options(state), valid, operation.update);
@@ -250,7 +251,24 @@ async function initialize() {
     element('provision').onclick = () => action(async () => {
         if (!client || !gatePassed) throw new ConnectionError('Pass the synthetic transport test in this session first.');
         state.ready = true; persist();
-        status('Chat memory is ready. Each chat and branch gets its own collection when enabled.');
+        status('Chat memory is ready. Enable memory for this chat, or opt into shared history for future native branches.');
+    });
+    element('versioned').onclick = () => action(async () => {
+        if (!client || !state.ready || !capture(context())) throw new ConnectionError('Connect, prepare memory and select a character chat first.');
+        if (context().chatMetadata.sillymemory?.version !== 1 && !confirm('Use versioned memory for this story? First sync indexes its history into a new collection. Existing remote memory is retained for all-owned cleanup. Future native branches reuse committed memory.')) return;
+        const ctx = context(), file = ctx.getCurrentChatId(), avatar = ctx.characters[ctx.characterId]?.avatar;
+        const valid = () => context().getCurrentChatId() === file && context().characters[context().characterId]?.avatar === avatar;
+        state.enabled = false; element('enabled').checked = false; persist(); invalidate(); clearTimeout(timer);
+        await drain();
+        const { saveChat } = await import('/script.js');
+        if (!valid() || !await ensureChatIdentity(ctx, saveChat, valid)) return;
+        identityKey = undefined; // A failed or ambiguous save must never reuse the legacy verification.
+        if (ctx.chatMetadata.sillymemory.version !== 1) {
+            ctx.chatMetadata.sillymemory = { id: ctx.chatMetadata.sillymemory.id, integrity: ctx.chatMetadata.integrity, version: 1, story: ctx.chatMetadata.sillymemory.id };
+            await saveChat();
+        }
+        if (!valid() || !await ensureChatIdentity(ctx, saveChat, valid)) return;
+        status('Versioned story memory is ready. Enable memory to synchronize; native branches will share unchanged committed history.');
     });
     element('enabled').onchange = () => action(async () => {
         invalidate();
@@ -291,14 +309,15 @@ async function initialize() {
         }
         const entries = all ? [...(state.chatCollections || []), ...(state.collection ? [{ collection: state.collection }] : []), ...await collections.discover()] : [selected];
         for (const entry of new Map(entries.map(e => [e.collection, e])).values()) {
-            await collections.delete(entry);
-            new Journal(localStorage, `${owner}:${entry.collection}`).clear(); engines.delete(entry.collection);
+            await collections.delete(all ? { ...entry, branch: undefined } : entry);
+            new Journal(localStorage, `${owner}:${entry.collection}${!all && entry.branch ? `:${entry.branch}` : ''}`).clear();
+            for (const [key, instance] of engines) if (instance.collection === entry.collection && (all || instance.branch === entry.branch)) engines.delete(key);
         }
         engine = undefined;
         if (all) { state.ready = false; persist(); }
         element('delivery').textContent = 'Owned memory deleted. No pending prompt verification.';
         element('inspection').textContent = 'No memory prepared.';
-        status('Owned remote memory collection is no longer accessible for the selected scope. Local chats remain. Prepare/enable memory to rebuild.');
+        status('Owned remote memory is no longer accessible for the selected scope. Local chats remain. Prepare/enable memory to rebuild.');
     }
     element('delete').onclick = () => action(() => deleteMemory(true));
     element('delete-chat').onclick = () => action(() => deleteMemory(false));

@@ -9,7 +9,9 @@
     <div class="sm-actions"><button data-sm="connect" class="menu_button">Use key for this session</button><button data-sm="forget" class="menu_button">Forget key</button></div>
     <p>Connects directly to LambdaDB from this browser. Allow this page’s origin in LambdaDB CORS settings. No SillyTavern proxy setting or restart is needed.</p>
     <div class="sm-actions"><button data-sm="gate" class="menu_button">Test synthetic upsert / query / delete</button><button data-sm="cleanup" class="menu_button">Clean up test collection</button><button data-sm="provision" class="menu_button">Prepare chat memory</button></div>
-    <label class="sm-toggle"><input data-sm="enabled" type="checkbox"> Enable memory (separate collection per chat and branch)</label>
+    <label class="sm-toggle"><input data-sm="enabled" type="checkbox"> Enable memory (isolated chat history)</label>
+    <button data-sm="versioned" class="menu_button">Use versioned memory for this story</button>
+    <p>Opt in once per story. Native branches reuse committed memory in isolated LambdaDB branches. Initial indexing consumes managed embedding usage; earlier collections remain until all-owned cleanup. This is not a chat rollback control.</p>
     <label>Recent full messages <input data-sm="recent" class="text_pole" type="number" min="2" max="100"></label>
     <label>Memory token budget (including labels) <input data-sm="budget" class="text_pole" type="number" min="64" max="4096"></label>
     <label class="sm-toggle"><input data-sm="stopOnLoss" type="checkbox" checked> Stop on missing context</label>

@@ -4,6 +4,29 @@ Versions describe the extension, independently of the SillyTavern host version.
 An `Unreleased` entry is a development candidate. A dated entry records a release
 boundary; publication is confirmed by the corresponding Git tag and GitHub Release.
 
+## [0.3.0] - Unreleased
+
+### Added
+
+- Opt-in versioned story memory: one LambdaDB collection per story family and a
+  writable branch per native chat path. Unchanged committed history is inherited
+  without resubmitting documents, including after reload.
+- Remote reconciliation removes future/deleted/changed chunks from the selected
+  branch; current-chat deletion preserves its parent and siblings. All-owned
+  cleanup includes versioned story collections.
+
+### Requirements and limits
+
+- Existing chats keep per-chat collections until **Use versioned memory for this
+  story** is selected. The first sync builds new managed memory; old collections
+  remain for explicit all-owned cleanup. Keys still clear on reload.
+- Forks may wait for acknowledged source documents to commit. Retrieval continues
+  to use direct-branch consistent reads and validation against local history.
+- Validated on SillyTavern 1.19.0 with synthetic managed-memory lifecycle cases.
+  No new answer-quality, large-history performance or multi-device writer claim.
+  Frozen checkpoints and transcript restore are deferred. Version 0.2.0 cannot
+  manage the new layout; see [usage, evidence and rollback](docs/versioned-memory.md).
+
 ## [0.2.0] - 2026-10-03
 
 ### Added

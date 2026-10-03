@@ -103,3 +103,24 @@ test('a response-body deadline is reported as timeout instead of invalid JSON', 
         await assert.rejects(client.get('test'), e => e.code === 'timeout');
     } finally { clearTimeout(keeper); }
 });
+
+test('versioned read/write operations select a direct branch and preserve safe transport', async () => {
+    const requests = [];
+    const client = new LambdaClient(config, 'synthetic', { fetcher: async (url, init) => {
+        requests.push({ url, init, body: init.body ? JSON.parse(init.body) : undefined });
+        return new Response(JSON.stringify({ docs: [], isDocsInline: true, branches: [] }));
+    } });
+    await client.upsert('memory', [{ id: 'doc' }], undefined, 'chat_child');
+    await client.deleteIds('memory', ['doc'], undefined, 'chat_child');
+    await client.search('memory', owner, scope, 'query', undefined, 'chat_child');
+    await client.fetchDocs('memory', ['doc'], 'chat_child', false);
+    await client.listDocs('memory', 'chat_child');
+    assert(requests.slice(0, 2).every(r => r.body.branch === 'chat_child'));
+    assert.deepEqual(requests[2].body.ref, { kind: 'branch', name: 'chat_child' });
+    assert.equal(requests[2].body.consistentRead, true);
+    assert.equal(requests[3].body.consistentRead, false);
+    assert.equal(new URL(requests[4].url).searchParams.get('refName'), 'chat_child');
+    assert(requests.every(r => r.init.credentials === 'omit' && !Object.hasOwn(r.init.headers, 'X-CSRF-Token')));
+    await assert.rejects(client.deleteBranch('memory', 'main'), /default branch/);
+    assert.throws(() => client.upsert('memory', [], undefined, '../other'), /Invalid memory branch/);
+});

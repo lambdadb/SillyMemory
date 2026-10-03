@@ -8,6 +8,7 @@ import { readFile, writeFile, mkdir, mkdtemp, rm, realpath } from 'node:fs/promi
 import { spawn, execFileSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
+const versioned = process.argv.includes('--versioned');
 const root = path.resolve(new URL('..', import.meta.url).pathname);
 const source = process.env.ST_SOURCE || '/tmp/sillymemory-st-source';
 const revision = '06bde939fb1e9c4c8d8641d810f0a916b5bce127';
@@ -17,12 +18,14 @@ const env = parseEnv(await readFile(process.env.SM_ENV_FILE || path.join(root, '
 const credentials = { endpoint: env.LAMBDADB_BASE_URL, project: env.LAMBDADB_PROJECT_NAME, key: env.LAMBDADB_PROJECT_API_KEY };
 assert(Object.values(credentials).every(Boolean), 'Missing LambdaDB credentials');
 const work = await mkdtemp(path.join(tmpdir(), 'sm-chat-collections-'));
-const artifacts = path.join(root, 'artifacts'); await mkdir(artifacts, { recursive: true });
+const artifactTag = process.env.SM_ARTIFACT_TAG || (versioned ? 'versioned-host' : 'collections-host');
+assert(/^[a-zA-Z0-9][a-zA-Z0-9._-]{0,79}$/.test(artifactTag));
+const artifacts = path.join(root, 'artifacts', artifactTag); await mkdir(artifacts, { recursive: true });
 const pendingPath = path.join(artifacts, 'chat-collections-live-pending.json');
 const pending = []; await writeFile(pendingPath, '[]', { flag: 'wx' });
 const sourceSha256 = {};
-for (const file of ['index.js', 'settings.html', 'src/chat-collections.js', 'src/client.js', 'src/memory.js', 'scripts/chat-collections-live.mjs']) sourceSha256[file] = createHash('sha256').update(await readFile(path.join(root, file))).digest('hex');
-const report = { time: new Date().toISOString(), host: revision, sourceSha256, checks: [], responses: [], proxyRequests: 0, pageErrors: [], cleanup: false, passed: false };
+for (const file of ['index.js', 'settings.html', 'src/chat-collections.js', 'src/client.js', 'src/memory.js', 'src/status.js', 'scripts/chat-collections-live.mjs']) sourceSha256[file] = createHash('sha256').update(await readFile(path.join(root, file))).digest('hex');
+const report = { versioned, upserts: [], time: new Date().toISOString(), host: revision, sourceSha256, checks: [], responses: [], proxyRequests: 0, pageErrors: [], cleanup: false, passed: false };
 const check = (name, ok) => { assert(ok, name); report.checks.push(name); console.log(`PASS ${name}`); };
 const url = `http://127.0.0.1:${Number(process.env.ST_LIVE_PORT || 18147)}`;
 let server, browser, page, panel, stage = 'startup';
@@ -47,13 +50,14 @@ try {
             pending.push({ collection: body.collectionName, owner: body.tags.owner, scope: body.tags.chat });
             await writeFile(pendingPath, JSON.stringify(pending, null, 2));
         }
+        if (req.method() === 'POST' && target.pathname.endsWith('/docs/upsert')) report.upserts.push({ stage, branch: req.postDataJSON().branch, documents: req.postDataJSON().docs.length });
         await route.continue();
         } catch (error) { report.pageErrors.push(error.name); await route.abort().catch(() => {}); }
     });
     page.on('response', r => { if (new URL(r.url()).origin === new URL(credentials.endpoint).origin) report.responses.push({ stage, status: r.status() }); });
     await page.goto(url); await page.getByText('Welcome to SillyTavern!', { exact: true }).waitFor(); await page.getByText('Save', { exact: true }).last().click();
     const field = name => page.locator(`#sillymemory [data-sm="${name}"]`);
-    const status = async text => page.waitForFunction(text => document.querySelector('[data-sm="status"]')?.textContent.includes(text), text, { timeout: 60000 });
+    const status = async text => page.waitForFunction(text => document.querySelector('[data-sm="status"]')?.textContent.includes(text), text, { timeout: 180000 });
     panel = async () => {
         await page.locator('#sillymemory').waitFor({ state: 'attached', timeout: 45000 });
         if (!await page.locator('#sillymemory .inline-drawer-toggle').isVisible()) await page.locator('#extensions-settings-button .drawer-toggle').click();
@@ -68,13 +72,13 @@ try {
     const absent = entry => page.evaluate(async ({ credentials, entry }) => {
         const { LambdaClient } = await import('/scripts/extensions/third-party/sillymemory/src/client.js');
         const client = new LambdaClient(credentials, credentials.key);
-        try { await client.get(entry.collection); return false; } catch (e) { if (e.status !== 404) throw e; return true; } finally { client.forget(); }
+        try { if (entry.branch) return !(await client.branches(entry.collection)).some(b => b.name === entry.branch); await client.get(entry.collection); return false; } catch (e) { if (e.status !== 404) throw e; return true; } finally { client.forget(); }
     }, { credentials, entry });
     const inspect = entry => page.evaluate(async ({ credentials, entry }) => {
         const { LambdaClient, scopeFilter } = await import('/scripts/extensions/third-party/sillymemory/src/client.js');
         const c = SillyTavern.getContext(), owner = c.extensionSettings.sillymemory.owner;
         const client = new LambdaClient(credentials, credentials.key);
-        try { await client.assertOwned(entry.collection, owner, undefined, entry.scope); return await client.query(entry.collection, scopeFilter(owner, entry.scope)); } finally { client.forget(); }
+        try { await client.assertOwned(entry.collection, owner, undefined, entry.scope); return await client.query(entry.collection, scopeFilter(owner, entry.scope), { branch: entry.branch || 'main' }); } finally { client.forget(); }
     }, { credentials, entry });
     stage = 'transport'; await connect(); await field('gate').click(); await status('Transport gate passed');
     await field('provision').click(); await status('Chat memory is ready');
@@ -92,6 +96,7 @@ try {
         const c = SillyTavern.getContext(); c.chat.splice(0, c.chat.length, ...Array.from({ length: 6 }, (_, i) => ({ mes: i === 0 ? 'The blue compass is beneath the cedar tree.' : `Synthetic turn ${i}: tell me about the blue compass.`, name: i % 2 ? 'Mira' : 'User', is_user: !(i % 2), is_system: false, send_date: 0, extra: {} })));
         await c.saveChat();
     });
+    if (versioned) { await panel(); await field('versioned').click(); await status('Versioned story memory is ready'); }
     stage = 'parent'; await field('enabled').check(); await status('synchronized');
     const parent = await identity(), parentRows = await inspect(parent);
     check('parent managed collection contains four current documents', parentRows.length === 4);
@@ -106,7 +111,9 @@ try {
     stage = 'branch';
     await page.evaluate(async () => { const c = SillyTavern.getContext(), { createBranch } = await import('/scripts/bookmarks.js'); const branch = await createBranch(c.chat.length - 1); await c.openCharacterChat(branch); });
     await status('synchronized'); const branch = await identity();
-    check('native branch gets separate collection and complete source', branch.collection !== parent.collection && (await inspect(branch)).length === 4);
+    check('native branch gets isolated memory and complete source', (versioned ? branch.collection === parent.collection && branch.branch !== parent.branch : branch.collection !== parent.collection) && (await inspect(branch)).length === 4);
+    if (versioned) check('unchanged native fork performs zero document upserts', !report.upserts.some(r => r.stage === 'branch'));
+    stage = 'branch edit';
     await page.evaluate(async () => { const c = SillyTavern.getContext(); c.chat[0].mes = 'The silver compass is in the stone tower.'; await c.saveChat(); await c.eventSource.emit(c.eventTypes.MESSAGE_UPDATED, 0); });
     await status('synchronized');
     check('branch edits leave parent facts unchanged', (await inspect(parent)).some(d => d.text.includes('cedar tree')) && (await inspect(branch)).some(d => d.text.includes('stone tower')) && !(await inspect(branch)).some(d => d.text.includes('cedar tree')));
@@ -131,7 +138,17 @@ try {
     await page.locator('#rightNavHolder .drawer-toggle').click(); await page.locator('.character_select').filter({ hasText: 'Collection Lifecycle' }).click();
     await page.evaluate(async name => SillyTavern.getContext().openCharacterChat(name), renamed.file);
     await connect(); await field('enabled').check(); await status('synchronized');
-    check('reload reconnects renamed parent without another collection', (await identity()).collection === parent.collection && pending.length === 4);
+    check('reload reconnects renamed parent without another collection', (await identity()).collection === parent.collection && pending.length === (versioned ? 3 : 4));
+    if (versioned) check('reload performs zero unchanged document upserts', !report.upserts.some(r => r.stage === 'reload'));
+    if (versioned) {
+        stage = 'earlier branch';
+        await page.evaluate(async () => { const c = SillyTavern.getContext(), { createBranch } = await import('/scripts/bookmarks.js'); const file = await createBranch(3); await c.openCharacterChat(file); });
+        await status('synchronized'); const earlier = await identity(), rows = await inspect(earlier);
+        check('earlier native fork removes future and protected-recent remote chunks', earlier.collection === parent.collection && rows.length === 2 && rows.every(d => d.message < 2));
+        check('earlier native fork submits no unchanged inherited documents', !report.upserts.some(r => r.stage === 'earlier branch'));
+        await panel(); await field('delete-chat').click(); await status('no longer accessible');
+        check('current branch deletion preserves sibling and parent', await absent(earlier) && (await inspect(parent)).length === 4 && (await inspect(branch)).length === 4);
+    }
     stage = 'discovery cleanup';
     // Lose only the local registry: remote ownership discovery must still find both.
     await page.evaluate(() => { const c = SillyTavern.getContext(), key = `sillymemory:state:${c.extensionSettings.sillymemory.owner}`; const s = JSON.parse(localStorage.getItem(key)); s.chatCollections = []; localStorage.setItem(key, JSON.stringify(s)); });
@@ -140,14 +157,14 @@ try {
     check('credentials absent from persistent profile', !(await readFile(profilePath, 'utf8')).includes(credentials.key));
     check('direct lifecycle uses no host proxy or browser automation errors', report.proxyRequests === 0 && report.pageErrors.length === 0);
     report.passed = true;
-} catch (error) { report.failure = { stage, type: error.name, message: error.message.replaceAll(credentials.key, '[redacted]').slice(0, 600), ...(error.name === 'AssertionError' ? { check: error.message } : {}) }; console.log(`FAIL ${stage}: ${error.name}`); }
+} catch (error) { report.lastStatus = await page?.locator('[data-sm="status"]').textContent().catch(() => 'unavailable'); report.failure = { stage, type: error.name, message: error.message.replaceAll(credentials.key, '[redacted]').slice(0, 600), ...(error.name === 'AssertionError' ? { check: error.message } : {}) }; console.log(`FAIL ${stage}: ${error.name}`); }
 finally {
     if (page && !page.isClosed()) {
         try {
             if (pending.length) {
                 await panel();
                 await page.locator('[data-sm="delete"]').click();
-                await page.waitForFunction(() => document.querySelector('[data-sm="status"]')?.textContent.includes('no longer accessible'), null, { timeout: 60000 });
+                await page.waitForFunction(() => document.querySelector('[data-sm="status"]')?.textContent.includes('no longer accessible'), null, { timeout: 180000 });
             }
             await page.evaluate(async ({ credentials, entries }) => {
                 const c = SillyTavern.getContext();

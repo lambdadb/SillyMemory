@@ -40,3 +40,11 @@ test('failure guidance separates reconnect, rate limiting, network and unknown e
     assert.match(failureText(new ConnectionError('Network failed.', 0, 'network')), /Check the connection/);
     assert(!failureText(new Error('private chat and key')).includes('private'));
 });
+
+test('commit readiness progress preserves ownership of the synchronization completion', () => {
+    const rendered = [], view = new OperationStatus(text => rendered.push(text));
+    const operation = view.start(); operation.update({ phase: 'committing' });
+    assert.match(rendered.at(-1), /waiting for inherited writes to commit/);
+    assert(operation.current()); operation.finish('Current chat synchronized.');
+    assert.equal(rendered.at(-1), 'Current chat synchronized.');
+});
