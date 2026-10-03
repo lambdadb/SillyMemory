@@ -3,7 +3,7 @@ import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { buildLongPlan, pinnedCounter, sha, sourceFiles } from './semantic-long.mjs';
-import { recordedSource } from './recorded-source.mjs';
+import { verifySource } from './verify-source.mjs';
 import { NATURAL_RETRY } from './provider-retry.mjs';
 import { summaryTrafficFile, validateSummaryTraffic } from './summary-traffic.mjs';
 export const summaryVersion = 'native-summarize-v2';
@@ -23,7 +23,7 @@ export function loadSummaryResume(filename) {
     assert(report.generations.every(g=>g.upstreamStatus===200));
     assert.deepEqual(report.evaluation.summarySettings,summarySettings);
     validateSummaryTraffic(report);
-    for(const [file,hash]of Object.entries(report.sourceSha256))recordedSource(file,hash);
+    for(const [file,hash]of Object.entries(report.sourceSha256))verifySource(file,hash);
     return {file:filename,sha256:sha(bytes),report};
 }
 export function buildSummaryPlan(count,resumeFile) {

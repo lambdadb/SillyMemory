@@ -51,33 +51,3 @@ test('decision requires both recoveries and no individual baseline loss', () => 
     assert.equal(candidateDecision(rows), null);
     assert.equal(candidateDecision(rows.slice(1)), null);
 });
-
-test('recorded live comparison retains every case and exact frozen query policy, including regressions', async () => {
-    const { readFileSync } = await import('node:fs');
-    const { createHash } = await import('node:crypto');
-    const report = JSON.parse(readFileSync(new URL('../docs/results/assistant-topic-selection-v1.json', import.meta.url)));
-    assert.equal(report.passed, true); assert.equal(report.sourceUnchanged, true); assert.equal(report.cleanupComplete, true);
-    const cases = assistantTopicCases();
-    assert.equal(report.rows.length, cases.length);
-    assert.equal(new Set(report.rows.map(r => r.case)).size, cases.length);
-    for (const item of cases) {
-        const row = report.rows.find(r => r.case === item.id);
-        assert(row); assert.equal(row.budget, item.config.budget); assert.equal(row.fixtureHash, item.fixtureHash);
-        for (const [name, queries] of Object.entries(assistantTopicQueries(item.snapshot))) {
-            const result = row.variants[name];
-            assert.deepEqual(result.queries, queries);
-            assert.deepEqual(result.evidence.map(e => e.message), item.evidence.map(e => e.message));
-            assert(result.tokens <= row.budget);
-            assert(result.evidence.every(e => e.ranks.length === queries.length));
-        }
-    }
-    for (const file of ['scripts/assistant-topic-policy.mjs', 'scripts/assistant-topic-diagnostic.mjs', 'docs/assistant-topic-evaluation.md']) {
-        assert.equal(createHash('sha256').update(readFileSync(new URL(`../${file}`, import.meta.url))).digest('hex'), report.sourceSha256[file]);
-    }
-    assert.equal(candidateDecision(report.rows), null);
-    assert.equal(report.adopt, null);
-    for (const name of ['user-first', 'assistant-first']) {
-        const losses = report.rows.filter(r => r.variants.baseline.evidence.some((e, i) => e.selected && !r.variants[name].evidence[i].selected)).map(r => r.case);
-        assert.deepEqual(losses, ['long-dialogue-v1/ko-long-reference']);
-    }
-});

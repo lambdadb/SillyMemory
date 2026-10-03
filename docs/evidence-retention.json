@@ -1,0 +1,941 @@
+{
+  "version": 1,
+  "preservedRevision": "94b9bc04cf664587ae4c96b7739c22af87897b6b",
+  "sourceTreeUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b",
+  "archive": "artifacts/archive/repository-retention-v1/evidence.tar.gz",
+  "archiveSha256": "14c6b324f3213c551b8de4e84c9071a2b9174822e16a538e11c7bf843ae46462",
+  "archiveManifestSha256": "98221325fcd9226ab898162fff7e60cc5c86432385b38ea2494548db64514420",
+  "availability": "Archive local-only in primary sillymemory and sillymemory-evidence-retention worktrees; original tracked bytes also remain in public Git history. Existing other evidence bundles were not removed.",
+  "files": [
+    {
+      "path": "docs/benchmarks/host-preflight-v1.json",
+      "bytes": 222271,
+      "sha256": "afe3c0b30fa26888a941fe3485068193c869df5fbd1cadf3f3d484079cf760ae",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/benchmarks/host-preflight-v1.json"
+    },
+    {
+      "path": "docs/benchmarks/live-pilot-interrupted-v1.json",
+      "bytes": 345388,
+      "sha256": "56710b9e02362bc9b3fbe009f084013894ecf3c70f3140efaffe03a5029b5eb9",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/benchmarks/live-pilot-interrupted-v1.json"
+    },
+    {
+      "path": "docs/benchmarks/live-pilot-v1.json",
+      "bytes": 507807,
+      "sha256": "3e06cc066cd0782e8e844cbd0d437f99fcbb16156c211ceffb8a7c8a895234f8",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/benchmarks/live-pilot-v1.json"
+    },
+    {
+      "path": "docs/results/actor-ablation-v1.json",
+      "bytes": 152729,
+      "sha256": "d9393383095689aa3c8fb11339c0a154aa82a2ea0a154e0cae80853f57dc0ab1",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/actor-ablation-v1.json"
+    },
+    {
+      "path": "docs/results/actor-perspective-v1.json",
+      "bytes": 190283,
+      "sha256": "4aa3242b8ac844432f4eff188a0373d12b1f33bcbe373b65b646486b89e4e4c7",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/actor-perspective-v1.json"
+    },
+    {
+      "path": "docs/results/assistant-fallback-generation-v1.json",
+      "bytes": 193008,
+      "sha256": "1ba5932837890715c1a286767af82cefa93736232b0f3a28feca197055b6c8e2",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/assistant-fallback-generation-v1.json"
+    },
+    {
+      "path": "docs/results/assistant-fallback-search-v1.json",
+      "bytes": 78563,
+      "sha256": "50c89ea992a398b7064ef3224b330b6da589a7fc26f550c0fb688f3613674062",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/assistant-fallback-search-v1.json"
+    },
+    {
+      "path": "docs/results/assistant-topic-selection-v1.json",
+      "bytes": 108217,
+      "sha256": "76fe98304df3bfec87e95b613b2030ca93ef5cfd9d71819b1f39ab6b35268bc8",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/assistant-topic-selection-v1.json"
+    },
+    {
+      "path": "docs/results/budget-selection-replay-v1.json",
+      "bytes": 595457,
+      "sha256": "eee6cf2a7bb92a3d847798e825a0adcfe21c2bba717ddc4e50ab692721140102",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/budget-selection-replay-v1.json"
+    },
+    {
+      "path": "docs/results/context-bundle-plan-v1.json",
+      "bytes": 5525,
+      "sha256": "e889fa92888450134f5393aa099f1c0fbc494296e22798f8ee5e16e16cd391fb",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/context-bundle-plan-v1.json"
+    },
+    {
+      "path": "docs/results/context-bundle-replay-v1.json",
+      "bytes": 2076694,
+      "sha256": "c25cbd58488580326e066b807cd52dc154d8c1101411e0987eceffd013682ea6",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/context-bundle-replay-v1.json"
+    },
+    {
+      "path": "docs/results/context-candidate-v1.json",
+      "bytes": 288640,
+      "sha256": "a35f26c041b60646c5b035d319b33d5a39d96eec6d9b7597bf4d5bcca0cf8d43",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/context-candidate-v1.json"
+    },
+    {
+      "path": "docs/results/context-edges-v1.json",
+      "bytes": 21058,
+      "sha256": "70d5c3ac768bdde68c1a03e74b4286cd9dda6dc8a0302394bc680220bc6b5564",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/context-edges-v1.json"
+    },
+    {
+      "path": "docs/results/context-selection-long-v1.json",
+      "bytes": 236483,
+      "sha256": "2e0912062c72a615c51917a6c2d9bd82839b4668ecec320900c81ce8aa9b9a4f",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/context-selection-long-v1.json"
+    },
+    {
+      "path": "docs/results/context-selection-v1.json",
+      "bytes": 123181,
+      "sha256": "26871c27ff1eee3dab5d9fb1fbd05aa1a02997930c21813d608914a1190339f6",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/context-selection-v1.json"
+    },
+    {
+      "path": "docs/results/context-turn-generation-v1.json",
+      "bytes": 1904934,
+      "sha256": "7ceb09b04e98f2fbd953b2a9c37966abfda5a4a061a74fc8c6f4f3c8177d8b0d",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/context-turn-generation-v1.json"
+    },
+    {
+      "path": "docs/results/context-turn-review-browser-v1.json",
+      "bytes": 2674,
+      "sha256": "72dfafaf5b49e1335ccf9562b82890de3b6a6116ff9241fdf2ca41d9c327cfa0",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/context-turn-review-browser-v1.json"
+    },
+    {
+      "path": "docs/results/context-turn-search-v1.json",
+      "bytes": 150984,
+      "sha256": "c9bbd38c7445a4bb3867e3d4f9970a2e1de32572ef091a0a57ae718a87688011",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/context-turn-search-v1.json"
+    },
+    {
+      "path": "docs/results/direct-embedding-v1.json",
+      "bytes": 5470,
+      "sha256": "c7102dceff175e0b367e4601cda589adfd208535711d2dcd42a861d0e07c315f",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/direct-embedding-v1.json"
+    },
+    {
+      "path": "docs/results/install-0.2.0-v1.json",
+      "bytes": 2195,
+      "sha256": "76a1ac0e506d560b517911556ce43266e495b4e83d5d1e7f29cdf43d649000fc",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/install-0.2.0-v1.json"
+    },
+    {
+      "path": "docs/results/long-dialogue-v1.json",
+      "bytes": 170255,
+      "sha256": "ad22ef9b340b20da47d0b94ab41714bb9b88bb67d5aa23c8e67ea7dcc590fbd4",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/long-dialogue-v1.json"
+    },
+    {
+      "path": "docs/results/managed-packed-baseline-review-v1/assistant-annotations.json",
+      "bytes": 117267,
+      "sha256": "7caa0f42b6b472a012568c7239d51d7c12eb3bfc84ea1a71c7e9832275de5618",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/managed-packed-baseline-review-v1/assistant-annotations.json"
+    },
+    {
+      "path": "docs/results/managed-packed-baseline-review-v1/assistant-score.json",
+      "bytes": 36099,
+      "sha256": "4397cb61da046594c67743f5d2694cfe7a4df8ec3d96b743d40fb098fd893dba",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/managed-packed-baseline-review-v1/assistant-score.json"
+    },
+    {
+      "path": "docs/results/managed-packed-baseline-review-v1/key.json",
+      "bytes": 6363,
+      "sha256": "519bd3f52e72f0efe2d53833ada1db53354401fa4307e2a07fb690c8dc90643b",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/managed-packed-baseline-review-v1/key.json"
+    },
+    {
+      "path": "docs/results/managed-packed-baseline-review-v1/packet.json",
+      "bytes": 107939,
+      "sha256": "5fbee5bacd45bd4d2befbc6fe29a85f152662a657a21754892975864599992f6",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/managed-packed-baseline-review-v1/packet.json"
+    },
+    {
+      "path": "docs/results/managed-packed-baseline-v1.json",
+      "bytes": 2537761,
+      "sha256": "22dcfea05401f4fffece0b0e2a93fb68f2befca3ed3e3566ff591b079049b9a4",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/managed-packed-baseline-v1.json"
+    },
+    {
+      "path": "docs/results/native-tuning-v1-assistant-annotations.json",
+      "bytes": 113734,
+      "sha256": "fcc5603fa03370f314a5d7266822b824ed395ad4a0dca4ad9694031495e5b8f6",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/native-tuning-v1-assistant-annotations.json"
+    },
+    {
+      "path": "docs/results/native-tuning-v1-assistant-score.json",
+      "bytes": 21076,
+      "sha256": "7d72c2cd4a1c3961caa8cdb36af81705764e442cb01b92a7522b1dcb4b643071",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/native-tuning-v1-assistant-score.json"
+    },
+    {
+      "path": "docs/results/native-tuning-v1-plan.json",
+      "bytes": 327757,
+      "sha256": "a2c880521de5715309b3eaef347eff8deff0afab405e2c200ade0a3bc98bc9b5",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/native-tuning-v1-plan.json"
+    },
+    {
+      "path": "docs/results/native-tuning-v1-raw.json",
+      "bytes": 1251522,
+      "sha256": "1f7084e7e2427199ae5a8d441fc36f6e081dcaefe57e82af79863b22e8050324",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/native-tuning-v1-raw.json"
+    },
+    {
+      "path": "docs/results/native-tuning-v1-review.json",
+      "bytes": 109123,
+      "sha256": "daabfbf9a08ca93237396e060aed0835f43a6c87b53b187970765bb0c657a31b",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/native-tuning-v1-review.json"
+    },
+    {
+      "path": "docs/results/natural-dialogue-retry-v1.json",
+      "bytes": 143367,
+      "sha256": "ff17c09f66140d12b71577142a6301c1f6b05c04fe321ebd487cae9024148233",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/natural-dialogue-retry-v1.json"
+    },
+    {
+      "path": "docs/results/prompt-capacity-plan-v1.json",
+      "bytes": 3036,
+      "sha256": "ef5aa3b5579cc0f9e7411d8cfb0df90f471d72a4fd9d7c5c9894b259818012e6",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/prompt-capacity-plan-v1.json"
+    },
+    {
+      "path": "docs/results/prompt-capacity-v1.json",
+      "bytes": 159293,
+      "sha256": "24a567a4912e66e926078fc433b263316c02cd336603ebfeca6cd0df5fb1efff",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/prompt-capacity-v1.json"
+    },
+    {
+      "path": "docs/results/prompt-delivery-browser-v1.json",
+      "bytes": 2674,
+      "sha256": "943e662524197d66d260affcc859f98bcec7b2ff66645e3b17a82adbbc7b2090",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/prompt-delivery-browser-v1.json"
+    },
+    {
+      "path": "docs/results/prompt-delivery-review-browser-v1.json",
+      "bytes": 2674,
+      "sha256": "57d174d2ccca0a38cf497f69eeda950428e65387ebd53b7052e9cc0266cebc7c",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/prompt-delivery-review-browser-v1.json"
+    },
+    {
+      "path": "docs/results/prompt-delivery-review-v1.json",
+      "bytes": 216630,
+      "sha256": "4161f922c147be7b653804c4f4253dc3b591cca651241eda58839d69684d0df3",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/prompt-delivery-review-v1.json"
+    },
+    {
+      "path": "docs/results/prompt-delivery-v1.json",
+      "bytes": 215353,
+      "sha256": "3c8f3fe360f2611269bd7ae2ff3ebf0a30a3836c9c682e8ff88149655f3ff1ce",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/prompt-delivery-v1.json"
+    },
+    {
+      "path": "docs/results/recall-guide-pilot-v1-plan.json",
+      "bytes": 23705,
+      "sha256": "a928502f60ff8cab761e8321202d32c2facdb9c38011da2cd9207a886ddf4021",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/recall-guide-pilot-v1-plan.json"
+    },
+    {
+      "path": "docs/results/recall-guide-pilot-v1-raw.json",
+      "bytes": 170431,
+      "sha256": "6af91edcb71cdbe781a112d11d26f5f503cd418aac2f18f890021a996ef40b99",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/recall-guide-pilot-v1-raw.json"
+    },
+    {
+      "path": "docs/results/recall-guide-pilot-v2-plan.json",
+      "bytes": 23705,
+      "sha256": "f9d1fb47641db356de78329dc3a4d09150542cef42585345df66a48aaf4834c2",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/recall-guide-pilot-v2-plan.json"
+    },
+    {
+      "path": "docs/results/recall-guide-pilot-v2-raw.json",
+      "bytes": 170606,
+      "sha256": "4336df9ec6478a83e95b4a1383dd16cf86e27bb1f5a4e4009862da09d3c5d6f2",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/recall-guide-pilot-v2-raw.json"
+    },
+    {
+      "path": "docs/results/recall-guide-pilot-v3-plan.json",
+      "bytes": 23705,
+      "sha256": "4b8d50d4b3ea0dd32792fd4a38b09c4513e0141f9577b74a288215e3b51714b1",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/recall-guide-pilot-v3-plan.json"
+    },
+    {
+      "path": "docs/results/recall-guide-pilot-v3-raw.json",
+      "bytes": 170078,
+      "sha256": "be36527d9c77168fa7dc432482efa49f0511488b608a4a438c099bbfadba9a07",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/recall-guide-pilot-v3-raw.json"
+    },
+    {
+      "path": "docs/results/repeated-packing-browser-v1.json",
+      "bytes": 2674,
+      "sha256": "ddc6c25c50cb1c08f8f68dad05ec0ee4866a36bbc9709eb48414ab3866ba2b67",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/repeated-packing-browser-v1.json"
+    },
+    {
+      "path": "docs/results/repeated-packing-host-v1.json",
+      "bytes": 221775,
+      "sha256": "75d125a06e25f51708f601cca6388abd52d8ee65686d30db127e66215636fc36",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/repeated-packing-host-v1.json"
+    },
+    {
+      "path": "docs/results/repeated-packing-live-v1.json",
+      "bytes": 10370,
+      "sha256": "760ce9c0d4dd53d708e2d459796f9e8b2ea1a3730af80a429a47a8ff529080d3",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/repeated-packing-live-v1.json"
+    },
+    {
+      "path": "docs/results/repeated-packing-v1.json",
+      "bytes": 237600,
+      "sha256": "bc7ee8ea5954ec27d526355e127fb086365d714986b737224c7d09c2cb6f5f40",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/repeated-packing-v1.json"
+    },
+    {
+      "path": "docs/results/semantic-direct-review-v1/assistant-annotations.json",
+      "bytes": 118567,
+      "sha256": "48cbfbea847a7e60a104aa85b4652542317521a5f1da3115ea1096a8e5d0c3bb",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/semantic-direct-review-v1/assistant-annotations.json"
+    },
+    {
+      "path": "docs/results/semantic-direct-review-v1/assistant-score.json",
+      "bytes": 37728,
+      "sha256": "93c5c82d44e5ad53fb625a48aa328a52347f27fc2eb292e92dc075a3389b7d9d",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/semantic-direct-review-v1/assistant-score.json"
+    },
+    {
+      "path": "docs/results/semantic-direct-review-v1/key.json",
+      "bytes": 6363,
+      "sha256": "85245f8b620424bb0f547c02139c9f6b29db8de7bff79e42b3b4f361ad620127",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/semantic-direct-review-v1/key.json"
+    },
+    {
+      "path": "docs/results/semantic-direct-review-v1/packet.json",
+      "bytes": 107610,
+      "sha256": "8967c7c8dca5508c927e6d9216dce183c64462957afc157b2481445802944d80",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/semantic-direct-review-v1/packet.json"
+    },
+    {
+      "path": "docs/results/semantic-direct-v1.json",
+      "bytes": 2886046,
+      "sha256": "64fd3cb80d89fdb2d855f3bf8fea64a8cbac2239637f527737cf7f59ed8dcce3",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/semantic-direct-v1.json"
+    },
+    {
+      "path": "docs/results/semantic-evidence-audit-v1.json",
+      "bytes": 43537,
+      "sha256": "9ab7bff9b4b693bca879e9e7ba8399eded6d028e00ca1ffa80955880be8083fc",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/semantic-evidence-audit-v1.json"
+    },
+    {
+      "path": "docs/results/semantic-long-diagnostic-v1.json",
+      "bytes": 8715,
+      "sha256": "740825d30037c08b7bf6b3aed35ed4446910bf5baf4af0fc156651f68d4a01f0",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/semantic-long-diagnostic-v1.json"
+    },
+    {
+      "path": "docs/results/semantic-long-diagnostic-v2.json",
+      "bytes": 8676,
+      "sha256": "300049c2053dc0711695b1bc655f9d11b1eca43d707570759c7b6464b589efe4",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/semantic-long-diagnostic-v2.json"
+    },
+    {
+      "path": "docs/results/semantic-long-incomplete-v1.json",
+      "bytes": 410916,
+      "sha256": "67c91a76e13e614b4799c4ed6420652439c187a2cb8eff89962767740c734e0d",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/semantic-long-incomplete-v1.json"
+    },
+    {
+      "path": "docs/results/semantic-long-incomplete-v2.json",
+      "bytes": 7888,
+      "sha256": "22b22c60f139c7207e8bd724701092ce0b755deb22bd10f6c79730dab7381a3e",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/semantic-long-incomplete-v2.json"
+    },
+    {
+      "path": "docs/results/semantic-long-incomplete-v3.json",
+      "bytes": 7689,
+      "sha256": "18ca06b3dfb39a7d7fdbd7aca3ac2ac17662d3e42da9ce9e7bf814be14163ac3",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/semantic-long-incomplete-v3.json"
+    },
+    {
+      "path": "docs/results/sentence-passage-replay-v1.json",
+      "bytes": 1097949,
+      "sha256": "532618f15f98c343c1c18761face37c4093d0eefd48e0ee174924949d992b0e3",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/sentence-passage-replay-v1.json"
+    },
+    {
+      "path": "docs/results/speaker-attribution-v1.json",
+      "bytes": 102539,
+      "sha256": "917e4bd0258bb344b6bb8b8c68c29193847d460ac61e93be0dc2abf4712b616b",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/speaker-attribution-v1.json"
+    },
+    {
+      "path": "docs/results/speaker-attribution-v2.json",
+      "bytes": 103778,
+      "sha256": "05fbfc160f9bec185a77772834f6320982722ae23b4733a432efc704887037c0",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/speaker-attribution-v2.json"
+    },
+    {
+      "path": "docs/results/speaker-native-generation-fixture.json",
+      "bytes": 4222,
+      "sha256": "ade070c6e096bf6024724190d7277330a61440c2d3b64a01c69a40bd2a05247e",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/speaker-native-generation-fixture.json"
+    },
+    {
+      "path": "docs/results/speaker-native-recovery.json",
+      "bytes": 17310,
+      "sha256": "4b559adfdbcda8b665544644d6611b1446dcc81cf8e326bb533d8637aa40a484",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/speaker-native-recovery.json"
+    },
+    {
+      "path": "docs/results/speaker-native-v1.json",
+      "bytes": 126495,
+      "sha256": "f696df068b0090405195e07b120c554fb88b96043f54e1857eaf615e26861e4a",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/speaker-native-v1.json"
+    },
+    {
+      "path": "docs/results/summarize-traffic-guard-smoke.json",
+      "bytes": 805,
+      "sha256": "b83ac32f60596b0cff952374dd70d4634c7b91f3a314a9ee47929231757053bd",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/summarize-traffic-guard-smoke.json"
+    },
+    {
+      "path": "docs/results/summarize-v1-initial-plan.json",
+      "bytes": 320748,
+      "sha256": "af5c22dc7e1b9a606e84d3cbd2db2738a899103352855e66d9f87d600049a9e8",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/summarize-v1-initial-plan.json"
+    },
+    {
+      "path": "docs/results/summarize-v1-interrupted.json",
+      "bytes": 295617,
+      "sha256": "a58a461faba5ddd6eb55b70c84d56c80a8b6a6481c47c2fa01357fde0ca17377",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/summarize-v1-interrupted.json"
+    },
+    {
+      "path": "docs/results/summarize-v2-assistant-annotations.json",
+      "bytes": 60838,
+      "sha256": "c0053e51cb93ce30d131903a644f444663d8ac12aca902e2ee700a57f70960f0",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/summarize-v2-assistant-annotations.json"
+    },
+    {
+      "path": "docs/results/summarize-v2-assistant-score.json",
+      "bytes": 6946,
+      "sha256": "11912e0411705b4a5345fb92c51ddca9fd25edacaadc1463af4acf423bede6ae",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/summarize-v2-assistant-score.json"
+    },
+    {
+      "path": "docs/results/summarize-v2-plan.json",
+      "bytes": 320906,
+      "sha256": "e48d37180df17c880c35343b216a619b10fadca3e326fd2d8c53e2b429904a0b",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/summarize-v2-plan.json"
+    },
+    {
+      "path": "docs/results/summarize-v2-raw.json",
+      "bytes": 845223,
+      "sha256": "724c4c4ad8631e4d8075fe193443b9930f4052511c8d33e42895a919b827cad2",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/summarize-v2-raw.json"
+    },
+    {
+      "path": "docs/results/summarize-v2-review.json",
+      "bytes": 56894,
+      "sha256": "f930bdd3ca6a8a0db1e802a2f6b407737b5222c75976d65c2fb4e95746a11258",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/summarize-v2-review.json"
+    },
+    {
+      "path": "docs/results/three-mode-v1-assistant-annotations.json",
+      "bytes": 172804,
+      "sha256": "320f9d227df8b19beea01372796d86f2686e66914dd0e206439c89c113c2c331",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/three-mode-v1-assistant-annotations.json"
+    },
+    {
+      "path": "docs/results/three-mode-v1-assistant-score.json",
+      "bytes": 32182,
+      "sha256": "34f0f9cb0828b2f2f68b7157f06362f6f4759caeba48a5eb7f913b2871f4aeb0",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/three-mode-v1-assistant-score.json"
+    },
+    {
+      "path": "docs/results/three-mode-v1-plan.json",
+      "bytes": 330061,
+      "sha256": "fd4a3ac32d8d2ce4ddaa771eeca1809d3314bd85a25f5d0f0326e558344879dc",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/three-mode-v1-plan.json"
+    },
+    {
+      "path": "docs/results/three-mode-v1-raw.json",
+      "bytes": 3118551,
+      "sha256": "2c97585c19a481846803379d2aa50a38e6fdfc0d71a1536fc5d29484732d0684",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/three-mode-v1-raw.json"
+    },
+    {
+      "path": "docs/results/three-mode-v1-review.json",
+      "bytes": 164185,
+      "sha256": "9a977543d50f6e72e7f9d4f0bce39aadc5e2f485041e07c59761175e43c9234f",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/three-mode-v1-review.json"
+    },
+    {
+      "path": "scripts/benchmark-development-live.mjs",
+      "bytes": 41031,
+      "sha256": "424f99343ed17c2f5e34e19cbe0f0e8fa1b4a55a8d396efc0812480011cc1360",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/scripts/benchmark-development-live.mjs"
+    },
+    {
+      "path": "scripts/benchmark-live-pilot.mjs",
+      "bytes": 37656,
+      "sha256": "75f1868c02e81f285e43ba0f34cc643e9472f8dc1f47382f961ae49a2670bce5",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/scripts/benchmark-live-pilot.mjs"
+    },
+    {
+      "path": "scripts/benchmark-live-results.mjs",
+      "bytes": 13824,
+      "sha256": "e6598879f6d28c44b0d2e47c18a1c60f4076c6a5b1f5f8477893ae6b1fe8d273",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/scripts/benchmark-live-results.mjs"
+    },
+    {
+      "path": "scripts/budget-selection-data.mjs",
+      "bytes": 6653,
+      "sha256": "841738feee40c3351d5a8e22175c0799c5de9ec5b14544842ff208ecce6a4928",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/scripts/budget-selection-data.mjs"
+    },
+    {
+      "path": "scripts/budget-selection-replay.mjs",
+      "bytes": 4548,
+      "sha256": "c8870882e1c8e0547abbb7ba73dbc4aeeb29ed9eb5ee74536d6410ed412b75d6",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/scripts/budget-selection-replay.mjs"
+    },
+    {
+      "path": "scripts/context-bundle-inspect.mjs",
+      "bytes": 1583,
+      "sha256": "22a7044012dcb9475ff130f35724432d16e3119d00e58736ec202874c480217b",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/scripts/context-bundle-inspect.mjs"
+    },
+    {
+      "path": "scripts/context-bundle-replay.mjs",
+      "bytes": 9449,
+      "sha256": "3bcf7689521c19b35b55ebcf602e2e3cea83c31011fd25654922eaab39187272",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/scripts/context-bundle-replay.mjs"
+    },
+    {
+      "path": "scripts/direct-embedding-probe.mjs",
+      "bytes": 5625,
+      "sha256": "996dc4b73b92cdf07efd793a1c79e6135bb4ed7d3dbc6af0d1391aca97258eb0",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/scripts/direct-embedding-probe.mjs"
+    },
+    {
+      "path": "scripts/fusion-replay.mjs",
+      "bytes": 3821,
+      "sha256": "1f850d504da88161d77ad89a0a02d784256c35b179d16cc46282fd1bc0e81241",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/scripts/fusion-replay.mjs"
+    },
+    {
+      "path": "scripts/recall-pilot-results.mjs",
+      "bytes": 6961,
+      "sha256": "2a596b3f980c6f268660ff76864e0de104575da7254f374526ed97f1adf9ec3a",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/scripts/recall-pilot-results.mjs"
+    },
+    {
+      "path": "scripts/recorded-source.mjs",
+      "bytes": 2669,
+      "sha256": "fbb69434618f001e392155c9f9d347d7424d55e5eaef5892eac87ca42376fb6a",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/scripts/recorded-source.mjs"
+    },
+    {
+      "path": "scripts/repeated-packing-check.mjs",
+      "bytes": 4250,
+      "sha256": "4371188da5965b0a2757c24f043d96f4b8b5dace9061565f96c708d84f261e1e",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/scripts/repeated-packing-check.mjs"
+    },
+    {
+      "path": "scripts/semantic-direct.mjs",
+      "bytes": 7785,
+      "sha256": "be92dfc91e038ec0bef01c25bec6dce3323f94a879d60e4ceca76c44dfd5efc4",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/scripts/semantic-direct.mjs"
+    },
+    {
+      "path": "scripts/sentence-passage-replay.mjs",
+      "bytes": 4894,
+      "sha256": "d3e3d5a7d755a7e9e58359b84175dc21b4cc42f9e7037bba1fa9f02d931b9786",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/scripts/sentence-passage-replay.mjs"
+    },
+    {
+      "path": "tests/benchmark-host-report.test.js",
+      "bytes": 3501,
+      "sha256": "725fabbb6a253c984ccee21b0c774a4cb64386825a3c78ae6f1a114de7856354",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/tests/benchmark-host-report.test.js"
+    },
+    {
+      "path": "tests/benchmark-live-results.test.js",
+      "bytes": 4782,
+      "sha256": "26a4ed8c9128ed478474a2a6daf40a1b8d21cbedfa24532027f4f8f63308b95c",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/tests/benchmark-live-results.test.js"
+    },
+    {
+      "path": "tests/context-bundle-report.test.js",
+      "bytes": 3436,
+      "sha256": "d4613181069999619f4555f8c8d6746f672d409ef9aaf0560fcfaeaf59865175",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/tests/context-bundle-report.test.js"
+    },
+    {
+      "path": "tests/context-selection.test.js",
+      "bytes": 1482,
+      "sha256": "8426bec394cd6108af841e1b639bb2db00c43fbd875b43aba44e7da78db44960",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/tests/context-selection.test.js"
+    },
+    {
+      "path": "tests/delivery-report.test.js",
+      "bytes": 2556,
+      "sha256": "8cd8e48141ab162ba5655ba59804e5eb045df53cd4e9192649fc80931a3d3cfb",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/tests/delivery-report.test.js"
+    },
+    {
+      "path": "tests/direct-embedding-probe.test.js",
+      "bytes": 861,
+      "sha256": "dc04f1d5a22726658ac2a33acc1d23d4b4b0633c019c638e87650bdab16ad211",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/tests/direct-embedding-probe.test.js"
+    },
+    {
+      "path": "tests/fixtures/budget-selection-hits-v1.json",
+      "bytes": 66769,
+      "sha256": "b1c7a2cc98ee40b57550e44aecb34a55ce364bf3ebf37e810a61cd5e8e456318",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/tests/fixtures/budget-selection-hits-v1.json"
+    },
+    {
+      "path": "tests/fixtures/generation-smoke-semantic-managed-v1.txt",
+      "bytes": 40680,
+      "sha256": "d213e045a00dee7db1d8c9cb75b00a9d6e28b26b8d6a920b44d1669285443eb7",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/tests/fixtures/generation-smoke-semantic-managed-v1.txt"
+    },
+    {
+      "path": "tests/fixtures/index-before-delivery-v1.txt",
+      "bytes": 15487,
+      "sha256": "e02dbd971a7864a58bbb87394b29391bb05ac6f10073668cd4da30c90cb7f301",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/tests/fixtures/index-before-delivery-v1.txt"
+    },
+    {
+      "path": "tests/fixtures/live-pilot-producers/initial-budget.txt",
+      "bytes": 1957,
+      "sha256": "7634beacbc9452e07d5966863825614d6d25edceab56b180eca69c974279ce6f",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/tests/fixtures/live-pilot-producers/initial-budget.txt"
+    },
+    {
+      "path": "tests/fixtures/live-pilot-producers/initial-runner.txt",
+      "bytes": 33314,
+      "sha256": "dfebf44e85cac35a3e9b7eec985abd06cbb86afe3ec48c566eb04dac3e2d6ac7",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/tests/fixtures/live-pilot-producers/initial-runner.txt"
+    },
+    {
+      "path": "tests/fixtures/live-pilot-producers/registry.json",
+      "bytes": 326,
+      "sha256": "78385db9fce4f031bc208a076d5dfdfaec723e92927702cd5d0cc7874858e937",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/tests/fixtures/live-pilot-producers/registry.json"
+    },
+    {
+      "path": "tests/fixtures/memory-before-packing-v1.txt",
+      "bytes": 12182,
+      "sha256": "f88515cf16bf8344961591d8b1b2a2ba1804fdd43ff667fb8c3896fa42af792c",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/tests/fixtures/memory-before-packing-v1.txt"
+    },
+    {
+      "path": "tests/fixtures/native-tuning-producers/0400aa0916e2f18ddb8479e4d0bf50dade36a4971d8f9466609d1dfd950dca17.txt",
+      "bytes": 2621,
+      "sha256": "0400aa0916e2f18ddb8479e4d0bf50dade36a4971d8f9466609d1dfd950dca17",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/tests/fixtures/native-tuning-producers/0400aa0916e2f18ddb8479e4d0bf50dade36a4971d8f9466609d1dfd950dca17.txt"
+    },
+    {
+      "path": "tests/fixtures/native-tuning-producers/641d260a78e8ffaa049a5094843033f6cb1b48df1506a280c895c97b753d90d2.txt",
+      "bytes": 11528,
+      "sha256": "641d260a78e8ffaa049a5094843033f6cb1b48df1506a280c895c97b753d90d2",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/tests/fixtures/native-tuning-producers/641d260a78e8ffaa049a5094843033f6cb1b48df1506a280c895c97b753d90d2.txt"
+    },
+    {
+      "path": "tests/fixtures/native-tuning-producers/db8661c235faf6afd0c7812ae170f449f36b72b605cd611252eb4bb27b23eb71.txt",
+      "bytes": 8348,
+      "sha256": "db8661c235faf6afd0c7812ae170f449f36b72b605cd611252eb4bb27b23eb71",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/tests/fixtures/native-tuning-producers/db8661c235faf6afd0c7812ae170f449f36b72b605cd611252eb4bb27b23eb71.txt"
+    },
+    {
+      "path": "tests/fixtures/native-tuning-producers/f08e8a3ffb992e393b5433722a62a127cd170c53cca6051c9556f0bd2c0a4028.txt",
+      "bytes": 44578,
+      "sha256": "f08e8a3ffb992e393b5433722a62a127cd170c53cca6051c9556f0bd2c0a4028",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/tests/fixtures/native-tuning-producers/f08e8a3ffb992e393b5433722a62a127cd170c53cca6051c9556f0bd2c0a4028.txt"
+    },
+    {
+      "path": "tests/fixtures/native-tuning-producers/registry.json",
+      "bytes": 841,
+      "sha256": "70f1c6c74dcef9c49f8058a3603cc5d95be4b9e497a556be78fe0012b69012e4",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/tests/fixtures/native-tuning-producers/registry.json"
+    },
+    {
+      "path": "tests/fixtures/pre-summarize-producers/09e932167f9fa69176d10fcb99d491c22f466198fa59e0cca13dd976e694329b.txt",
+      "bytes": 46498,
+      "sha256": "09e932167f9fa69176d10fcb99d491c22f466198fa59e0cca13dd976e694329b",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/tests/fixtures/pre-summarize-producers/09e932167f9fa69176d10fcb99d491c22f466198fa59e0cca13dd976e694329b.txt"
+    },
+    {
+      "path": "tests/fixtures/pre-summarize-producers/4bce56097d739ab956f2f8ec692adcc1d053fd7d5010cdc52419b3f127969945.txt",
+      "bytes": 45660,
+      "sha256": "4bce56097d739ab956f2f8ec692adcc1d053fd7d5010cdc52419b3f127969945",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/tests/fixtures/pre-summarize-producers/4bce56097d739ab956f2f8ec692adcc1d053fd7d5010cdc52419b3f127969945.txt"
+    },
+    {
+      "path": "tests/fixtures/pre-summarize-producers/4c5a2a605d97c0a31e7bd473ba891969316b722b3a2e18bcd9030e91d67f523e.txt",
+      "bytes": 2540,
+      "sha256": "4c5a2a605d97c0a31e7bd473ba891969316b722b3a2e18bcd9030e91d67f523e",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/tests/fixtures/pre-summarize-producers/4c5a2a605d97c0a31e7bd473ba891969316b722b3a2e18bcd9030e91d67f523e.txt"
+    },
+    {
+      "path": "tests/fixtures/pre-summarize-producers/711c06a30aeeda2da705ef9e41ccdc9c50d9f99237cb53441d3e22ffa3b4c34e.txt",
+      "bytes": 2976,
+      "sha256": "711c06a30aeeda2da705ef9e41ccdc9c50d9f99237cb53441d3e22ffa3b4c34e",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/tests/fixtures/pre-summarize-producers/711c06a30aeeda2da705ef9e41ccdc9c50d9f99237cb53441d3e22ffa3b4c34e.txt"
+    },
+    {
+      "path": "tests/fixtures/pre-summarize-producers/885703e3bdca7f405aad32fd5f07351aab9c4d4680e67f144b061d06b518c606.txt",
+      "bytes": 3278,
+      "sha256": "885703e3bdca7f405aad32fd5f07351aab9c4d4680e67f144b061d06b518c606",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/tests/fixtures/pre-summarize-producers/885703e3bdca7f405aad32fd5f07351aab9c4d4680e67f144b061d06b518c606.txt"
+    },
+    {
+      "path": "tests/fixtures/pre-summarize-producers/9a8329ab3c956cf8fbdb45fc8223812417c4e5bca143a0f81dcb45e209f1953c.txt",
+      "bytes": 3922,
+      "sha256": "9a8329ab3c956cf8fbdb45fc8223812417c4e5bca143a0f81dcb45e209f1953c",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/tests/fixtures/pre-summarize-producers/9a8329ab3c956cf8fbdb45fc8223812417c4e5bca143a0f81dcb45e209f1953c.txt"
+    },
+    {
+      "path": "tests/fixtures/pre-summarize-producers/c8a8baaa2815753bb891905af0e2b840d1350c9ec67862b5eeede643b03bdb89.txt",
+      "bytes": 3650,
+      "sha256": "c8a8baaa2815753bb891905af0e2b840d1350c9ec67862b5eeede643b03bdb89",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/tests/fixtures/pre-summarize-producers/c8a8baaa2815753bb891905af0e2b840d1350c9ec67862b5eeede643b03bdb89.txt"
+    },
+    {
+      "path": "tests/fixtures/pre-summarize-producers/fae06fc0a48923da76aa3fc18cb0a39a1ffc7428526edaab59481e18bc707bdd.txt",
+      "bytes": 5582,
+      "sha256": "fae06fc0a48923da76aa3fc18cb0a39a1ffc7428526edaab59481e18bc707bdd",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/tests/fixtures/pre-summarize-producers/fae06fc0a48923da76aa3fc18cb0a39a1ffc7428526edaab59481e18bc707bdd.txt"
+    },
+    {
+      "path": "tests/fixtures/pre-summarize-producers/fe0a6216f6c2d1d42e35bda327752b75649139a29ff83db5635cf48359ad0ac9.txt",
+      "bytes": 45127,
+      "sha256": "fe0a6216f6c2d1d42e35bda327752b75649139a29ff83db5635cf48359ad0ac9",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/tests/fixtures/pre-summarize-producers/fe0a6216f6c2d1d42e35bda327752b75649139a29ff83db5635cf48359ad0ac9.txt"
+    },
+    {
+      "path": "tests/fixtures/pre-summarize-producers/registry.json",
+      "bytes": 1885,
+      "sha256": "884e8ac540ad77b1521590abed2059032638496a385d6b7fe05af177d8a59957",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/tests/fixtures/pre-summarize-producers/registry.json"
+    },
+    {
+      "path": "tests/fixtures/pre-three-mode-producers/6829b5c15c0f80d8ed3ba3686b11773c5fd5ed460578f54038faa0abed24ec48.txt",
+      "bytes": 6742,
+      "sha256": "6829b5c15c0f80d8ed3ba3686b11773c5fd5ed460578f54038faa0abed24ec48",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/tests/fixtures/pre-three-mode-producers/6829b5c15c0f80d8ed3ba3686b11773c5fd5ed460578f54038faa0abed24ec48.txt"
+    },
+    {
+      "path": "tests/fixtures/pre-three-mode-producers/97a7fa4669dbbae764eda7528da0532158de450ad884ae825eb02b8d97d32bc1.txt",
+      "bytes": 3149,
+      "sha256": "97a7fa4669dbbae764eda7528da0532158de450ad884ae825eb02b8d97d32bc1",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/tests/fixtures/pre-three-mode-producers/97a7fa4669dbbae764eda7528da0532158de450ad884ae825eb02b8d97d32bc1.txt"
+    },
+    {
+      "path": "tests/fixtures/pre-three-mode-producers/eb810cfe0575d8b290ce109e424507816744fd482d50e1f2cd7858619eff917d.txt",
+      "bytes": 43608,
+      "sha256": "eb810cfe0575d8b290ce109e424507816744fd482d50e1f2cd7858619eff917d",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/tests/fixtures/pre-three-mode-producers/eb810cfe0575d8b290ce109e424507816744fd482d50e1f2cd7858619eff917d.txt"
+    },
+    {
+      "path": "tests/fixtures/pre-three-mode-producers/registry.json",
+      "bytes": 631,
+      "sha256": "23fec7e1b10d957900942081636b794a06891dcc9e86385d247633a2f0b54aea",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/tests/fixtures/pre-three-mode-producers/registry.json"
+    },
+    {
+      "path": "tests/fixtures/recall-guidance-candidate/delivery.txt",
+      "bytes": 4558,
+      "sha256": "4b25def404d0a12aeca9a8d9cbc2334e3ffcd994745ce9b3c02c4f7be7c62de2",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/tests/fixtures/recall-guidance-candidate/delivery.txt"
+    },
+    {
+      "path": "tests/fixtures/recall-guidance-candidate/index.txt",
+      "bytes": 19557,
+      "sha256": "1c317cd1ea042553455d05e7ead6801009f998a974c65e26184e9fa952758fab",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/tests/fixtures/recall-guidance-candidate/index.txt"
+    },
+    {
+      "path": "tests/fixtures/recall-guidance-candidate/memory.txt",
+      "bytes": 15328,
+      "sha256": "128d111629ea78b2948ab935fc21875a4648e9e08950bec844f099f854d05e6b",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/tests/fixtures/recall-guidance-candidate/memory.txt"
+    },
+    {
+      "path": "tests/fixtures/recall-guidance-candidate/recall-v1.txt",
+      "bytes": 1036,
+      "sha256": "ad0ce8191095bd0dd3fef986327fa2a98d88b4cdb613231e9786182bb997e001",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/tests/fixtures/recall-guidance-candidate/recall-v1.txt"
+    },
+    {
+      "path": "tests/fixtures/recall-guidance-candidate/recall-v2.txt",
+      "bytes": 1071,
+      "sha256": "fcf75718bb9d955139aa9ad28580c0ec65ee33337eddbe784a4456a763d67720",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/tests/fixtures/recall-guidance-candidate/recall-v2.txt"
+    },
+    {
+      "path": "tests/fixtures/recall-guidance-candidate/recall-v3.txt",
+      "bytes": 1096,
+      "sha256": "f2b237efc61251e0daf5f0a4b00478b2f0b67267ea30d0e6df8b0304bd205f3e",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/tests/fixtures/recall-guidance-candidate/recall-v3.txt"
+    },
+    {
+      "path": "tests/fixtures/recall-pilot-producers/04ef0dd3b48ed64bb735763fa21c6a8f8af28b426e1d22fd37627fe4dac3b5eb.txt",
+      "bytes": 8805,
+      "sha256": "04ef0dd3b48ed64bb735763fa21c6a8f8af28b426e1d22fd37627fe4dac3b5eb",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/tests/fixtures/recall-pilot-producers/04ef0dd3b48ed64bb735763fa21c6a8f8af28b426e1d22fd37627fe4dac3b5eb.txt"
+    },
+    {
+      "path": "tests/fixtures/recall-pilot-producers/0e2ff05b9e988f7e5497442eee79517fd6337f1070efe3e5e9964b8a1d554142.txt",
+      "bytes": 6962,
+      "sha256": "0e2ff05b9e988f7e5497442eee79517fd6337f1070efe3e5e9964b8a1d554142",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/tests/fixtures/recall-pilot-producers/0e2ff05b9e988f7e5497442eee79517fd6337f1070efe3e5e9964b8a1d554142.txt"
+    },
+    {
+      "path": "tests/fixtures/recall-pilot-producers/128d111629ea78b2948ab935fc21875a4648e9e08950bec844f099f854d05e6b.txt",
+      "bytes": 15328,
+      "sha256": "128d111629ea78b2948ab935fc21875a4648e9e08950bec844f099f854d05e6b",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/tests/fixtures/recall-pilot-producers/128d111629ea78b2948ab935fc21875a4648e9e08950bec844f099f854d05e6b.txt"
+    },
+    {
+      "path": "tests/fixtures/recall-pilot-producers/1c317cd1ea042553455d05e7ead6801009f998a974c65e26184e9fa952758fab.txt",
+      "bytes": 19557,
+      "sha256": "1c317cd1ea042553455d05e7ead6801009f998a974c65e26184e9fa952758fab",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/tests/fixtures/recall-pilot-producers/1c317cd1ea042553455d05e7ead6801009f998a974c65e26184e9fa952758fab.txt"
+    },
+    {
+      "path": "tests/fixtures/recall-pilot-producers/4b25def404d0a12aeca9a8d9cbc2334e3ffcd994745ce9b3c02c4f7be7c62de2.txt",
+      "bytes": 4558,
+      "sha256": "4b25def404d0a12aeca9a8d9cbc2334e3ffcd994745ce9b3c02c4f7be7c62de2",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/tests/fixtures/recall-pilot-producers/4b25def404d0a12aeca9a8d9cbc2334e3ffcd994745ce9b3c02c4f7be7c62de2.txt"
+    },
+    {
+      "path": "tests/fixtures/recall-pilot-producers/5b985e91b7ddb56a512f6f60177a2fa4ddca92c355f7765ed74c049a8dc18f13.txt",
+      "bytes": 43659,
+      "sha256": "5b985e91b7ddb56a512f6f60177a2fa4ddca92c355f7765ed74c049a8dc18f13",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/tests/fixtures/recall-pilot-producers/5b985e91b7ddb56a512f6f60177a2fa4ddca92c355f7765ed74c049a8dc18f13.txt"
+    },
+    {
+      "path": "tests/fixtures/recall-pilot-producers/ad0ce8191095bd0dd3fef986327fa2a98d88b4cdb613231e9786182bb997e001.txt",
+      "bytes": 1036,
+      "sha256": "ad0ce8191095bd0dd3fef986327fa2a98d88b4cdb613231e9786182bb997e001",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/tests/fixtures/recall-pilot-producers/ad0ce8191095bd0dd3fef986327fa2a98d88b4cdb613231e9786182bb997e001.txt"
+    },
+    {
+      "path": "tests/fixtures/recall-pilot-producers/d5bb46eb4b2a4397e2e722a230c77e2e56ff9b8ca5f62fa80519932bbd6e7c93.txt",
+      "bytes": 8437,
+      "sha256": "d5bb46eb4b2a4397e2e722a230c77e2e56ff9b8ca5f62fa80519932bbd6e7c93",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/tests/fixtures/recall-pilot-producers/d5bb46eb4b2a4397e2e722a230c77e2e56ff9b8ca5f62fa80519932bbd6e7c93.txt"
+    },
+    {
+      "path": "tests/fixtures/recall-pilot-producers/f2b237efc61251e0daf5f0a4b00478b2f0b67267ea30d0e6df8b0304bd205f3e.txt",
+      "bytes": 1096,
+      "sha256": "f2b237efc61251e0daf5f0a4b00478b2f0b67267ea30d0e6df8b0304bd205f3e",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/tests/fixtures/recall-pilot-producers/f2b237efc61251e0daf5f0a4b00478b2f0b67267ea30d0e6df8b0304bd205f3e.txt"
+    },
+    {
+      "path": "tests/fixtures/recall-pilot-producers/fcf75718bb9d955139aa9ad28580c0ec65ee33337eddbe784a4456a763d67720.txt",
+      "bytes": 1071,
+      "sha256": "fcf75718bb9d955139aa9ad28580c0ec65ee33337eddbe784a4456a763d67720",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/tests/fixtures/recall-pilot-producers/fcf75718bb9d955139aa9ad28580c0ec65ee33337eddbe784a4456a763d67720.txt"
+    },
+    {
+      "path": "tests/fixtures/recall-pilot-producers/registry.json",
+      "bytes": 1994,
+      "sha256": "3d95420ad58793b23124108a30a69db0e44bd41e60b2abf771096891f1636ab9",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/tests/fixtures/recall-pilot-producers/registry.json"
+    },
+    {
+      "path": "tests/fixtures/semantic-long-before-packing-v1.txt",
+      "bytes": 7905,
+      "sha256": "cf00bafebe290bc7d96524a50f72b9c0b7b30649bba54bee6b813374fb66502a",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/tests/fixtures/semantic-long-before-packing-v1.txt"
+    },
+    {
+      "path": "tests/fixtures/semantic-long-before-recall-guide-v1.txt",
+      "bytes": 8260,
+      "sha256": "3e063de5f400d3c6dd4b010d6751385a3b2fb42d45b89a656fc204d00cc355a5",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/tests/fixtures/semantic-long-before-recall-guide-v1.txt"
+    },
+    {
+      "path": "tests/fixtures/semantic-results-direct-v1.txt",
+      "bytes": 8096,
+      "sha256": "a28b5ecafcd8b0b9a0bac385a36cb9bb21e6da66db224295e2b8edb30e203edd",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/tests/fixtures/semantic-results-direct-v1.txt"
+    },
+    {
+      "path": "tests/fixtures/semantic-results-v1.txt",
+      "bytes": 7116,
+      "sha256": "f18992a036cb76a2945874ffd0f8f855509af1bd701aca0fd9f3fe96d9864565",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/tests/fixtures/semantic-results-v1.txt"
+    },
+    {
+      "path": "tests/fixtures/three-mode-results-producer-v1.txt",
+      "bytes": 10943,
+      "sha256": "57ab34c8233ff2a2b4159fcd2831f896a5869e8c6fcfb7a824ea19a1863e5ff7",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/tests/fixtures/three-mode-results-producer-v1.txt"
+    },
+    {
+      "path": "tests/managed-packed-report.test.js",
+      "bytes": 4909,
+      "sha256": "958b5de1889ecd6def725728cff9a7c0f3042f134f3e364b6ba353d7509192cf",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/tests/managed-packed-report.test.js"
+    },
+    {
+      "path": "tests/native-tuning-report.test.js",
+      "bytes": 2725,
+      "sha256": "ebc53baab0ad4f1cd7544ad39063f05e3340297bbba880d02e785e8d3cf594e6",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/tests/native-tuning-report.test.js"
+    },
+    {
+      "path": "tests/packing-report.test.js",
+      "bytes": 2806,
+      "sha256": "67b02df3dbc87c96c87aa80e77a69e3510ec66c7102831f37deb9e3f295b760d",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/tests/packing-report.test.js"
+    },
+    {
+      "path": "tests/prompt-capacity.test.js",
+      "bytes": 3286,
+      "sha256": "ee680610ed571ce5be50388183d8bc6fe8f7c61a8ed14a61a688ba27cb53d9b4",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/tests/prompt-capacity.test.js"
+    },
+    {
+      "path": "tests/semantic-direct-report.test.js",
+      "bytes": 2635,
+      "sha256": "271e54266022838e5f10d19984696086a916719b37bb2d786f155b8b285142f5",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/tests/semantic-direct-report.test.js"
+    },
+    {
+      "path": "tests/semantic-direct.test.js",
+      "bytes": 6383,
+      "sha256": "f44441cda92f93ce9498e48642b88c84c3df393777ba3934528d96d536e05a77",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/tests/semantic-direct.test.js"
+    },
+    {
+      "path": "tests/semantic-report.test.js",
+      "bytes": 4336,
+      "sha256": "1d5069dd5103ebc93f85ddafdb5cc0b26a522526d84395d1aa74a0f2e455509d",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/tests/semantic-report.test.js"
+    },
+    {
+      "path": "tests/summarize-report.test.js",
+      "bytes": 3969,
+      "sha256": "2efd3cc86f5380ee02e108c81e478996518c225c49f9fc3fa59351f729f88e6b",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/tests/summarize-report.test.js"
+    },
+    {
+      "path": "tests/three-mode-report.test.js",
+      "bytes": 2137,
+      "sha256": "036e00f728937f4c26c3a5681eb60bf1087963751b2e1cb3e34b21b1aae381b1",
+      "originalUrl": "https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/tests/three-mode-report.test.js"
+    }
+  ]
+}

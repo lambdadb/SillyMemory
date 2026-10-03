@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { memoryMessages, selectMemory } from '../src/memory.js';
 import { selectContextBundles } from '../scripts/context-bundles.mjs';
-import { freshBundleInputs, semanticBundleInputs, coverageFor, diagnoseEvidence } from '../scripts/context-bundle-data.mjs';
+import { freshBundleInputs, coverageFor, diagnoseEvidence } from '../scripts/context-bundle-data.mjs';
 const doc = (message, text = `Message ${message}.`, chunk = 0) => ({ id: `doc-${message}-${chunk}`, message, chunk, text, owner: 'owner', scope: 'scope', revision: `rev-${message}`, role: message % 2 ? 'assistant' : 'user', speaker: message % 2 ? 'Mira' : 'User' });
 const count = text => text.length;
 const tokens = docs => count(memoryMessages(docs).map(m => m.mes).join('\n'));
@@ -58,9 +58,9 @@ test('baseline trace reproduces shipped greedy selection and rejected/covered de
     await assert.rejects(selectContextBundles(hits, docs, -1, 'passage', count), /Invalid memory budget/);
 });
 
-test('fresh and recorded sources preserve rubrics outside candidate input and diagnose retrieval separately', async () => {
-    const fresh = await freshBundleInputs(), recorded = await semanticBundleInputs();
-    assert.equal(fresh.length, 16); assert.equal(recorded.length, 32);
+test('synthetic sources preserve rubrics outside candidate input and diagnose retrieval separately', async () => {
+    const fresh = await freshBundleInputs();
+    assert.equal(fresh.length, 16);
     for (const input of fresh) {
         assert.equal(coverageFor(input.item, input.docs).completeEvidence, input.item.expected.type === 'abstain' ? null : true);
         assert(input.docs.every(d => !('evidence' in d) && !('expected' in d)));

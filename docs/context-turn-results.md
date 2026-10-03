@@ -1,5 +1,10 @@
 # Context-turn selection
 
+> Historical evidence: detailed runs and retired tools are preserved at the
+> [pre-cleanup revision](https://github.com/lambdadb/SillyMemory/tree/94b9bc04cf664587ae4c96b7739c22af87897b6b).
+> Reproduction commands below require their recorded producer; see
+> [evidence retention](evidence-retention.md) for archives and recovery.
+
 Runtime `latest-anchor-with-context-selection-v5` keeps at most two searches. It
 replaces the prior-user context only when a newer assistant turn has more than
 1.25 times its lexical similarity to earlier conversation messages. Missing user
@@ -40,7 +45,7 @@ selected budget. The newer assistant context returns it at rank 2; v5 selects it
 in 330/400 content tokens (v4 used 394/400 without that source). Relative changes
 eight context choices across the full cohort, including four Korean workshop
 cases, the known boundary and three fresh controls. All selections and both
-candidate policies are retained in [the comparison evidence](results/context-turn-search-v1.json).
+candidate policies are retained in [the comparison evidence](https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/context-turn-search-v1.json).
 The new English assistant-topic and both paraphrase cases do not switch under
 Relative; their target selection alone does not demonstrate topic resolution.
 
@@ -109,7 +114,7 @@ session-key audits and owned/native cleanup passed. Provider usage was 60,646
 prompt and 1,602 completion tokens; managed embedding usage/cost was not measured.
 No general latency or cost claim is made.
 
-[Checked-in generation evidence](results/context-turn-generation-v1.json) retains
+[Checked-in generation evidence](https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/context-turn-generation-v1.json) retains
 all answers, memory text/hits, source delivery, provisional judgments, provider
 attempts, source identities and the recovery report. Raw report byte SHA-256:
 `fcf8dffc7e2c9ba594e7f686c91d5431da120157df31629e6aac337e4c99d8cd`.
@@ -222,6 +227,6 @@ all four generation anchors, the fallback path and segment-hash rejection.
 The original 62-case frozen-query parity tests still pass. Runtime/tool syntax
 and release metadata checks pass. The corrected runtime passed all 22 real-host
 plus emulated-LambdaDB browser checks, with no page errors or remaining collections;
-see [the review validation report](results/context-turn-review-browser-v1.json).
+see [the review validation report](https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/context-turn-review-browser-v1.json).
 No new live LambdaDB or generation calls were made for these corrections. Earlier
 provider results are historical evidence, not a fresh run of the corrected hashes.

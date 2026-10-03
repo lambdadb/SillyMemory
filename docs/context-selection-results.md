@@ -1,5 +1,10 @@
 # Independent prior-user retrieval — 2026-09-29
 
+> Historical evidence: detailed runs and retired tools are preserved at the
+> [pre-cleanup revision](https://github.com/lambdadb/SillyMemory/tree/94b9bc04cf664587ae4c96b7739c22af87897b6b).
+> Reproduction commands below require their recorded producer; see
+> [evidence retention](evidence-retention.md) for archives and recovery.
+
 The v3 query policy searches the latest anchor and preceding user turn
 independently. It fixes the observed Korean banner-reference selection miss
 without increasing the 400-token memory budget. The source was already in the
@@ -38,7 +43,7 @@ runs first in rank interleaving; no oracle or scores enter runtime selection.
 The diagnostic passed 45 browser/proxy checks and recorded 266 LambdaDB
 responses, including the deliberate invalid-key test. Both exclusively owned
 collections were deleted and confirmed absent. Browser storage/settings and
-reload key-reset checks passed. [Checked-in comparison evidence](results/context-selection-v1.json)
+reload key-reset checks passed. [Checked-in comparison evidence](https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/context-selection-v1.json)
 retains all query pairs, per-source ranks, selected indices, budgets, hashes and
 status checks. Full synthetic hit payloads remain in the ignored raw artifact.
 
@@ -94,7 +99,7 @@ deleted and confirmed absent. Browser/settings key checks passed. Total provider
 usage was 44,560 prompt and 817 completion tokens; embedding/LambdaDB cost is not
 measured. These observations do not establish cost or latency improvements.
 
-[Checked-in follow-up evidence](results/context-selection-long-v1.json) contains
+[Checked-in follow-up evidence](https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/context-selection-long-v1.json) contains
 all answers, memory text, target ranks, paired provisional rationale, identity
 hashes and regression reports. The raw report byte SHA-256 is
 `5be1e62dfb1ca8c4b64b844a94c1d0322645922812f2af27bee516dacd76d687`.

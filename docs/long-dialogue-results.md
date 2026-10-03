@@ -1,5 +1,10 @@
 # Long dialogue results — 2026-09-29
 
+> Historical evidence: detailed runs and retired tools are preserved at the
+> [pre-cleanup revision](https://github.com/lambdadb/SillyMemory/tree/94b9bc04cf664587ae4c96b7739c22af87897b6b).
+> Reproduction commands below require their recorded producer; see
+> [evidence retention](evidence-retention.md) for archives and recovery.
+
 The reviewed PR #16 runtime completed the separately frozen 32-answer evaluation
 without implementation changes. All 16 memory-off prompts were actually truncated
 by the 2,048-token host limit. Required old evidence reached the outgoing prompt
@@ -34,7 +39,7 @@ Frozen plan byte SHA-256:
 `7e003d34014bc40a78f2cd20476728f35a61b863a5b4846efa4622e26b618905`.
 Raw report byte SHA-256:
 `e07d5f6f48dd5a601c04cd41638a22b0688ca104f333fbd0711c84bea25d8df3`.
-[Checked-in evidence](results/long-dialogue-v1.json) preserves source hashes,
+[Checked-in evidence](https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/long-dialogue-v1.json) preserves source hashes,
 all answers, memory text, ranks, usage, source lengths, provisional rationale and
 paired results. Current evaluated files and the plan match the recorded hashes.
 

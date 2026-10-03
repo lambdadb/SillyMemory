@@ -5,7 +5,7 @@ import { loadLong, validateLong, hostSource, sha } from './semantic-long.mjs';
 import { tuningVersion, tuningSchedule, tuningFiles, tuningRetry } from './native-tuning-plan.mjs';
 import { threeModeSchedule, threeModeVersion, threeModeNative, threeModeRetry, threeModeFiles } from './three-mode-plan.mjs';
 import { threeModeEvidence } from './three-mode-native.mjs';
-import { recordedSource } from './recorded-source.mjs';
+import { verifySource } from './verify-source.mjs';
 import { summarizeProviderSpacing } from './provider-spacing.mjs';
 import { verifySourcePresence } from './semantic-results.mjs';
 
@@ -21,9 +21,9 @@ export function summarizeThreeModes(report) {
     assert.deepEqual(evaluation.nativeSettings, threeModeNative); assert.deepEqual(report.transportProtocol, protocol);
     assert.equal(report.sillyTavern, '06bde939fb1e9c4c8d8641d810f0a916b5bce127');
     assert.equal(report.hostContextTokens, 1536); assert.equal(report.embeddingMode, tuning ? 'native-openai' : 'managed'); assert.equal(report.model, fixture.generation.model);
-    for (const file of files) { assert.equal(report.sourceSha256[file], report.initialSourceSha256[file], `Changed input: ${file}`); recordedSource(file, report.sourceSha256[file]); }
+    for (const file of files) { assert.equal(report.sourceSha256[file], report.initialSourceSha256[file], `Changed input: ${file}`); verifySource(file, report.sourceSha256[file]); }
     for (const [file, hash] of Object.entries(report.initialSourceSha256)) assert.equal(report.sourceSha256[file], hash, `Changed input: ${file}`);
-    for (const [file, hash] of Object.entries(report.sourceSha256)) recordedSource(file, hash);
+    for (const [file, hash] of Object.entries(report.sourceSha256)) verifySource(file, hash);
     assert.equal(evaluation.rows.length, schedule.length); assert.equal(report.generations.length, schedule.length);
     assert.equal(evaluation.preparation.length, schedule.length); assert.equal(new Set(evaluation.rows.map(row => row.chatId)).size, schedule.length);
     let calls = 0;

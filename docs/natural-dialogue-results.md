@@ -1,5 +1,10 @@
 # Natural dialogue completed run — 2026-09-28
 
+> Historical evidence: detailed runs and retired tools are preserved at the
+> [pre-cleanup revision](https://github.com/lambdadb/SillyMemory/tree/94b9bc04cf664587ae4c96b7739c22af87897b6b).
+> Reproduction commands below require their recorded producer; see
+> [evidence retention](evidence-retention.md) for archives and recovery.
+
 ## Execution and transport
 
 All **64 scheduled answers** completed through pinned SillyTavern 1.19.0,
@@ -127,23 +132,23 @@ long-duration reliability validation remain outstanding.
 Checked-in review evidence:
 
 - [All 64 exact answers, provisional rationales, per-sample retrieval evidence,
-  token usage and source identities](results/natural-dialogue-retry-v1.json)
+  token usage and source identities](https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/natural-dialogue-retry-v1.json)
 
 Ignored local artifacts (available only in this validation checkout):
 
-- [Raw complete report](../artifacts/generation-natural-retry-v1.json)
-- [Technical summary](../artifacts/natural-review-retry-v1/summary.json)
-- [Unfilled human-review packet](../artifacts/natural-review-retry-v1/blind-review.json)
-- [Assistant annotations](../artifacts/natural-review-retry-v1/assistant-review.json)
-- [Decoded provisional scores](../artifacts/natural-review-retry-v1/assistant-scores.json)
-- [Recomputed scores with 32 pairs](../artifacts/natural-review-retry-v1/assistant-scores-review-fixes.json)
-- [Local HTTP spacing check with real timers](../artifacts/provider-spacing-real-timer.json)
-- [Review-fix Node 20 tests](../artifacts/unit-review-fixes20.log)
-- [Review-fix Node 24 tests](../artifacts/unit-review-fixes24.log)
-- [Source, credential and cleanup verification](../artifacts/natural-retry-v1-verification.json)
-- [Run log](../artifacts/natural-retry-v1.log)
-- [Node 20 tests](../artifacts/unit-retry20.log)
-- [Node 24 tests](../artifacts/unit-retry24.log)
+- Raw complete report (`artifacts/generation-natural-retry-v1.json`, local-only)
+- Technical summary (`artifacts/natural-review-retry-v1/summary.json`, local-only)
+- Unfilled human-review packet (`artifacts/natural-review-retry-v1/blind-review.json`, local-only)
+- Assistant annotations (`artifacts/natural-review-retry-v1/assistant-review.json`, local-only)
+- Decoded provisional scores (`artifacts/natural-review-retry-v1/assistant-scores.json`, local-only)
+- Recomputed scores with 32 pairs (`artifacts/natural-review-retry-v1/assistant-scores-review-fixes.json`, local-only)
+- Local HTTP spacing check with real timers (`artifacts/provider-spacing-real-timer.json`, local-only)
+- Review-fix Node 20 tests (`artifacts/unit-review-fixes20.log`, local-only)
+- Review-fix Node 24 tests (`artifacts/unit-review-fixes24.log`, local-only)
+- Source, credential and cleanup verification (`artifacts/natural-retry-v1-verification.json`, local-only)
+- Run log (`artifacts/natural-retry-v1.log`, local-only)
+- Node 20 tests (`artifacts/unit-retry20.log`, local-only)
+- Node 24 tests (`artifacts/unit-retry24.log`, local-only)
 
 Raw report byte SHA-256:
 `caa15b7cc020780f3aaa278db3e8e8d0a772324c03704e0ad7e9d0d2b277d69b`.

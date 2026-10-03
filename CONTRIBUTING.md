@@ -100,6 +100,11 @@ Say when an archive is local-only and unavailable in a fresh clone. A checksum o
 commit ID alone is not a promise that a downloadable archive exists. Do not upload
 private checkpoints or change publication/release scope merely to archive a run.
 Never discard unresolved cleanup/ownership records while remote resources remain.
+Evidence archives are retained data, not disposable cache. Keep core results and
+interpretation in Git with immutable original links and archive checksums. Before
+removing a worktree, verify that its unique evidence has a retained copy at the
+documented location. Do not delete evidence archives or rewrite public Git history
+as part of routine cleanup. See [the evidence index](docs/evidence-retention.md).
 
 CI should check current invariants with small synthetic fixtures. Validate a
 historical run with its recorded revision and artifact bundle rather than copying

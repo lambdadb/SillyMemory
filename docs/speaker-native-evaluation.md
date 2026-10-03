@@ -1,8 +1,13 @@
 # Native speaker-role development evaluation
 
+> Historical evidence: detailed runs and retired tools are preserved at the
+> [pre-cleanup revision](https://github.com/lambdadb/SillyMemory/tree/94b9bc04cf664587ae4c96b7739c22af87897b6b).
+> Reproduction commands below require their recorded producer; see
+> [evidence retention](evidence-retention.md) for archives and recovery.
+
 Declared on 2026-09-29 after the two system-wrapper trials were closed and
-preserved separately. [v1](results/speaker-attribution-v1.json) retained four
-on-mode attribution flags; [v2](results/speaker-attribution-v2.json) retained two.
+preserved separately. [v1](https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/speaker-attribution-v1.json) retained four
+on-mode attribution flags; [v2](https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/speaker-attribution-v2.json) retained two.
 The second trial also had one wrong-actor **off-mode** response. Its unchanged
 baseline shows that model variation is possible. Neither trial solved the issue.
 Do not keep tuning the system-wrapper wording on those six cases.

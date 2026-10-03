@@ -1,5 +1,10 @@
 # Temporary direct-embedding semantic experiment
 
+> Historical evidence: detailed runs and retired tools are preserved at the
+> [pre-cleanup revision](https://github.com/lambdadb/SillyMemory/tree/94b9bc04cf664587ae4c96b7739c22af87897b6b).
+> Reproduction commands below require their recorded producer; see
+> [evidence retention](evidence-retention.md) for archives and recovery.
+
 This is a separate `semantic-direct-v1` experiment, not managed-path recovery or
 release acceptance. The final product remains LambdaDB managed embeddings with
 no separate embedding-provider setup for users. No product runtime, LambdaDB

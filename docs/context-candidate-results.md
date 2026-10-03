@@ -1,5 +1,10 @@
 # Label removal and adjacent-turn candidates — 2026-09-29
 
+> Historical evidence: detailed runs and retired tools are preserved at the
+> [pre-cleanup revision](https://github.com/lambdadb/SillyMemory/tree/94b9bc04cf664587ae4c96b7739c22af87897b6b).
+> Reproduction commands below require their recorded producer; see
+> [evidence retention](evidence-retention.md) for archives and recovery.
+
 Both candidates are implemented and tested, but **neither is adopted into the
 extension runtime**. Provisional strict totals improved from current **9/16** to
 raw **10/16** and adjacent **11/16**, while the new-control cohort regressed from
@@ -125,7 +130,7 @@ support stable accuracy estimates or a model-internal explanation.
 
 ## Review and decision
 
-[Committed evidence](results/context-candidate-v1.json) contains all 48 answers,
+[Committed evidence](https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/context-candidate-v1.json) contains all 48 answers,
 provisional rationales, cohort and paired results, selected/added source messages,
 token-trace hashes, prompt identities and resource accounting. Assistant judgments
 were recorded from randomized records before opening the condition key, but the

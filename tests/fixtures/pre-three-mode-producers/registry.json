@@ -1,5 +1,0 @@
-{
-  "scripts/generation-smoke.mjs:eb810cfe0575d8b290ce109e424507816744fd482d50e1f2cd7858619eff917d": "tests/fixtures/pre-three-mode-producers/eb810cfe0575d8b290ce109e424507816744fd482d50e1f2cd7858619eff917d.txt",
-  "scripts/semantic-live.mjs:6829b5c15c0f80d8ed3ba3686b11773c5fd5ed460578f54038faa0abed24ec48": "tests/fixtures/pre-three-mode-producers/6829b5c15c0f80d8ed3ba3686b11773c5fd5ed460578f54038faa0abed24ec48.txt",
-  "scripts/provider-retry.mjs:97a7fa4669dbbae764eda7528da0532158de450ad884ae825eb02b8d97d32bc1": "tests/fixtures/pre-three-mode-producers/97a7fa4669dbbae764eda7528da0532158de450ad884ae825eb02b8d97d32bc1.txt"
-}

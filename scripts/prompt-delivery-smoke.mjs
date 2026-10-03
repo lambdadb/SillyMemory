@@ -12,10 +12,10 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { capacityPlan, capacityChat, capacityInstructions } from './prompt-capacity-cases.mjs';
-import { semanticBundleInputs } from './context-bundle-data.mjs';
-import { hostSource } from './semantic-long.mjs';
+import { hostSource, loadLong } from './semantic-long.mjs';
 
-const packingFixture = (await semanticBundleInputs()).find(input => input.id === 'semantic/long-ko-quotation/r1/on');
+const packingRanks = JSON.parse(await readFile(new URL('../tests/fixtures/packing-ranks.json', import.meta.url)));
+const packingFixture = { item: loadLong().cases.find(item => item.id === packingRanks.case), original: packingRanks };
 assert.ok(packingFixture);
 
 const base = { enabled: true, context: 1536, output: 256, instructions: 1, recentRepeats: 1, stopOnLoss: true, type: 'normal' };
@@ -39,7 +39,7 @@ const output = path.resolve(process.argv[2] || path.join(root, 'artifacts/prompt
 assert.equal(execFileSync('git', ['-C', source, 'rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(), plan.host);
 assert.equal(await realpath(path.join(source, 'public/scripts/extensions/third-party/sillymemory')), root);
 const sourceFiles = ['index.js', 'src/chat-collections.js', 'manifest.json', 'src/chunking.js', 'src/client.js', 'src/context.js', 'src/gate.js', 'src/memory.js', 'src/status.js', 'scripts/prompt-delivery-smoke.mjs', 'scripts/emulator-cors.mjs', 'src/delivery.js', 'settings.html', 'scripts/prompt-capacity-cases.mjs'];
-sourceFiles.push('scripts/context-bundle-data.mjs', 'scripts/semantic-long.mjs', 'tests/fixtures/semantic-long-v1.json', 'docs/results/semantic-direct-v1.json');
+sourceFiles.push('scripts/semantic-long.mjs', 'tests/fixtures/semantic-long-v1.json', 'tests/fixtures/packing-ranks.json');
 const hostFiles = ['public/script.js', 'public/scripts/openai.js', 'public/scripts/PromptManager.js', 'public/scripts/tokenizers.js', 'src/endpoints/tokenizers.js', 'src/endpoints/backends/chat-completions.js', 'package-lock.json'];
 async function hashes() {
     return Object.fromEntries(await Promise.all(sourceFiles.map(async file => [file, createHash('sha256').update(await readFile(path.join(root, file))).digest('hex')])));
@@ -94,7 +94,7 @@ const remote = httpsServer({ key: await readFile(key), cert: await readFile(cert
                 docs = recorded.hits.map(hit => {
                     const doc = docs.find(doc => doc.message === hit.message && doc.chunk === hit.chunk);
                     assert.ok(doc, 'Recorded rank refers to a synchronized source');
-                    assert.equal(doc.text, hit.text);
+                    assert.equal(createHash('sha256').update(doc.text).digest('hex'), hit.textSha256);
                     return doc;
                 });
             }

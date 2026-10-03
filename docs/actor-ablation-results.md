@@ -1,5 +1,10 @@
 # Actor labels and surrounding context — results, 2026-09-29
 
+> Historical evidence: detailed runs and retired tools are preserved at the
+> [pre-cleanup revision](https://github.com/lambdadb/SillyMemory/tree/94b9bc04cf664587ae4c96b7739c22af87897b6b).
+> Reproduction commands below require their recorded producer; see
+> [evidence retention](evidence-retention.md) for archives and recovery.
+
 Both excerpt labels and surrounding-context removal contributed to actor errors
 in this controlled development sample. Removing labels improved the sparse
 condition from **2/8 to 6/8** provisional strict passes, but did not restore the
@@ -99,7 +104,7 @@ label removal and bounded adjacent-turn retention on these four cases plus four
 new controls. Both candidates have new-control regressions and leave the English
 user-report failure unresolved, so neither was adopted into the runtime.
 
-[Committed evidence](results/actor-ablation-v1.json) records all answers, provisional
+[Committed evidence](https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/actor-ablation-v1.json) records all answers, provisional
 semantic rationales, all four paired contrasts, source indices, prompt hashes,
 fixed-selection identities, exact historical reference checks and lifecycle data.
 Scores were assigned from randomized answer records before opening their condition

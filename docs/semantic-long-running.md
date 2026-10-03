@@ -1,5 +1,10 @@
 # Running the semantic long-dialogue baseline
 
+> Historical evidence: detailed runs and retired tools are preserved at the
+> [pre-cleanup revision](https://github.com/lambdadb/SillyMemory/tree/94b9bc04cf664587ae4c96b7739c22af87897b6b).
+> Reproduction commands below require their recorded producer; see
+> [evidence retention](evidence-retention.md) for archives and recovery.
+
 Use the pinned SillyTavern checkout from the [protocol](semantic-long-evaluation.md)
 with its extension symlink pointing to this worktree. Keep credentials in the
 existing ignored environment file, outside any new worktree. This live run uses

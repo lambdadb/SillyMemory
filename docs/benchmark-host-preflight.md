@@ -1,5 +1,10 @@
 # LongMemEval host preflight — 2026-10-01
 
+> Historical evidence: detailed runs and retired tools are preserved at the
+> [pre-cleanup revision](https://github.com/lambdadb/SillyMemory/tree/94b9bc04cf664587ae4c96b7739c22af87897b6b).
+> Reproduction commands below require their recorded producer; see
+> [evidence retention](evidence-retention.md) for archives and recovery.
+
 This follows the [offline data audit](benchmark-data-audit.md) and its
 [two-question pilot design](benchmarks/pilot-design-v1.json). It exercises real
 SillyTavern 1.19.0 (`06bde939`) and Chromium with local service fixtures. It is
@@ -18,7 +23,7 @@ The host checkout needs its installed dependencies and Playwright needs Chromium
 The script creates its own detached host worktree, extension symlink, configuration
 and disposable profile. It does not change the supplied host checkout, read
 `.env.local`, or use personal profiles. The output filename must not already exist.
-The [report](benchmarks/host-preflight-v1.json) records source/plan hashes and the
+The [report](https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/benchmarks/host-preflight-v1.json) records source/plan hashes and the
 host revision. Raw source dialogues, questions and outgoing prompts are not
 included in the committed report; prompt hashes and coverage counts are retained.
 

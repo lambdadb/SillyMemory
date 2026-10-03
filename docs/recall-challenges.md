@@ -145,11 +145,11 @@ not held-out cases; one answer per condition cannot support statistical claims.
 
 Local evidence (ignored `artifacts/` under the evaluation checkout):
 
-- [v1 raw run](../artifacts/generation-challenges-challenge-baseline-v1.json)
-  and [v1 summary](../artifacts/challenge-summary-baseline-v1.json);
-- [v2 raw run](../artifacts/generation-challenges-challenge-continuation-v2.json)
-  and [v2 summary](../artifacts/challenge-summary-continuation-v2.json);
-- [v2 emulator regression report](../artifacts/fault-smoke-continuation-policy-v2.json).
+- v1 raw run (`artifacts/generation-challenges-challenge-baseline-v1.json`, local-only)
+  and v1 summary (`artifacts/challenge-summary-baseline-v1.json`, local-only);
+- v2 raw run (`artifacts/generation-challenges-challenge-continuation-v2.json`, local-only)
+  and v2 summary (`artifacts/challenge-summary-continuation-v2.json`, local-only);
+- v2 emulator regression report (`artifacts/fault-smoke-continuation-policy-v2.json`, local-only).
 
 All final generation and emulator source hashes match the implementation.
 The existing fault suite passed **68 checks** with no uncaught primary-page
@@ -169,8 +169,8 @@ tests reproduced the omission and now reject changed or missing hashes for each
 harness. All **53 unit tests** pass on Node.js 20.12.0 and 24.15.0.
 
 The existing live reports were reaggregated separately with the stricter checks:
-[v1 reviewed summary](../artifacts/challenge-summary-baseline-v1-reviewed.json)
-and [v2 reviewed summary](../artifacts/challenge-summary-continuation-v2-reviewed.json).
+v1 reviewed summary (`artifacts/challenge-summary-baseline-v1-reviewed.json`, local-only)
+and v2 reviewed summary (`artifacts/challenge-summary-continuation-v2-reviewed.json`, local-only).
 Their sample rows and metrics are unchanged, and both harness hashes match the
 current files. This review fix changes only offline aggregation, tests and
 documentation; no additional model calls or live/emulator runs were made.

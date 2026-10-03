@@ -63,13 +63,13 @@ The managed `queryText` candidates matched the materialized-probe exhaustive top
 
 The mirror collection's ordinary, non-consistent query returned a total of zero documents both before and after the successful run. All corpus documents and copied vectors were verified with `consistentRead: true`. Thus this run covers the real service's consistent-read path and pending-write visibility; it does **not** demonstrate committed ANN graph execution. A separate long-lived committed-index experiment would be needed to measure graph recall. The query-construction result still holds: exhaustive ranking already reproduces the observed old-fact misses, and the real managed path retrieves/selects all six with the latest-message query.
 
-The first v1 attempt incorrectly made committed visibility a prerequisite and stopped after twelve bounded visibility checks, before any kNN comparison. Its vector export/copy checks passed and both collections were cleaned up. V2 separates this additional visibility observation from the production consistent-read comparison. Preserve the [failed v1 report](../artifacts/retrieval-diagnostic-v1.json) and [v1 vectors](../artifacts/retrieval-vectors-v1.json); they are not a successful search comparison. Fresh embedding generation produced small rank differences between exports (for example, boat rank 208 in v1 versus 207 in v2), so the reported table uses only the complete v2 evidence.
+The first v1 attempt incorrectly made committed visibility a prerequisite and stopped after twelve bounded visibility checks, before any kNN comparison. Its vector export/copy checks passed and both collections were cleaned up. V2 separates this additional visibility observation from the production consistent-read comparison. Preserve the failed v1 report (`artifacts/retrieval-diagnostic-v1.json`, local-only) and v1 vectors (`artifacts/retrieval-vectors-v1.json`, local-only); they are not a successful search comparison. Fresh embedding generation produced small rank differences between exports (for example, boat rank 208 in v1 versus 207 in v2), so the reported table uses only the complete v2 evidence.
 
 ### Review and reproduce
 
-- [Successful raw report](../artifacts/retrieval-diagnostic-v2.json): all query strings, complete exhaustive ranks, server candidate IDs/scores, target ranks and selected text.
-- [Actual exported vectors](../artifacts/retrieval-vectors-v2.json): synthetic corpus/probe text and vector components, bound to the raw report by SHA-256.
-- [Verified summary](../artifacts/retrieval-summary-v2.json): independently recomputed rankings, target detection, selection and token counts.
+- Successful raw report (`artifacts/retrieval-diagnostic-v2.json`, local-only): all query strings, complete exhaustive ranks, server candidate IDs/scores, target ranks and selected text.
+- Actual exported vectors (`artifacts/retrieval-vectors-v2.json`, local-only): synthetic corpus/probe text and vector components, bound to the raw report by SHA-256.
+- Verified summary (`artifacts/retrieval-summary-v2.json`, local-only): independently recomputed rankings, target detection, selection and token counts.
 - [Live runner](../scripts/retrieval-diagnostic.mjs), [analysis functions](../scripts/retrieval-analysis.mjs), [offline verifier](../scripts/retrieval-summary.mjs), and [tests](../tests/retrieval-analysis.test.js).
 
 Rebuild the summary without network calls from the exact source hashes recorded in that historical report (the verifier intentionally rejects a changed runtime):

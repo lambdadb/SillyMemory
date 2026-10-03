@@ -41,18 +41,3 @@ test('frozen first-user generation corpus covers both languages and all three sh
     }
     assert.equal((await auditNaturalDialogue(fixture)).passed,true);
 });
-
-test('frozen v4 reproduces every independently recorded fallback query and retains the known unresolved case', async () => {
-    const {readFileSync}=await import('node:fs');
-    const report=JSON.parse(readFileSync(new URL('../docs/results/assistant-fallback-search-v1.json',import.meta.url)));
-    const cases=assistantFallbackCases();
-    assert.equal(report.rows.length,48);assert.equal(new Set(report.rows.map(r=>r.case)).size,48);
-    assert.equal(report.qualifies,true);assert.equal(report.cleanupComplete,true);assert.equal(report.sourceUnchanged,true);
-    for(const item of cases){
-        const row=report.rows.find(r=>r.case===item.id);assert(row);
-        assert.deepEqual(assistantFallbackQueries(item.snapshot),row.variants.fallback.queries);
-        assert(row.variants.baseline.evidence.every((e,i)=>!e.selected||row.variants.fallback.evidence[i].selected));
-    }
-    const missing=report.rows.filter(r=>r.variants.fallback.evidence.some(e=>!e.selected)).map(r=>r.case);
-    assert.deepEqual(missing,['boundaries/ko-assistant-topic']);
-});

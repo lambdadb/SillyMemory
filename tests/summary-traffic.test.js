@@ -84,8 +84,4 @@ test('empty arrays require active collectors and cannot upgrade historical evide
         attempted[field].push({ status: 404 });
         assert.throws(() => validateSummaryTraffic(attempted));
     }
-    const old = JSON.parse(readFileSync(new URL('../docs/results/summarize-v2-raw.json', import.meta.url)));
-    assert.deepEqual(validateSummaryTraffic(old), { verified: false, coverage: 'unobserved-historical' });
-    old.nativeTrafficObservation = guard.observation();
-    assert.throws(() => validateSummaryTraffic(old), /Historical producers/);
 });

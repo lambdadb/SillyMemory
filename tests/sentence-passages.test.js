@@ -1,10 +1,7 @@
 import test from 'node:test';
-import { recordedSource } from '../scripts/recorded-source.mjs';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
 import { sentenceSpans, bestWindow, excerptMessages, selectSentencePassages, excerptEvidence, sentencePolicies } from '../scripts/sentence-passages.mjs';
 import { memoryMessages } from '../src/memory.js';
-import { read, sha, replayInputs } from '../scripts/budget-selection-data.mjs';
 
 const source = (text, index = 0) => ({ id: `source-${index}`, owner: 'owner', scope: 'chat', revision: `rev-${index}`,
     text, message: index, chunk: 0, speaker: index % 2 ? 'Mira' : 'User', role: index % 2 ? 'assistant' : 'user' });
@@ -74,50 +71,4 @@ test('a matching parent or split correction is not complete evidence coverage', 
     assert.deepEqual(excerptEvidence(selected,[{message:0,quote:doc.text}]),[{message:0,selected:false,parentSelected:true}]);
     assert.deepEqual(excerptEvidence(selected,[{message:0,quote:'Cancel the red lantern.'}]),[{message:0,selected:false,parentSelected:true}]);
     assert.deepEqual(excerptEvidence(selected,[{message:0,quote:'blue lantern'}]),[{message:0,selected:true,parentSelected:true}]);
-});
-
-test('recorded experiment preserves the entire baseline grid, exact source offsets and producer identities', async () => {
-    const report=read('docs/results/sentence-passage-replay-v1.json');
-    const prior=read('docs/results/budget-selection-replay-v1.json');
-    const inputs=new Map((await replayInputs()).map(input=>[input.id,input]));
-    assert.equal(report.serviceCalls,0); assert.equal(report.generationCalls,0);
-    assert.equal(report.reproducedBaselineRows,218); assert.equal(report.rows.length,218);
-    assert.equal(new Set(report.rows.map(row=>`${row.id}/${row.budget}`)).size,218);
-    for(const row of report.rows){
-        const input=inputs.get(row.id); assert(input);
-        const original=prior.rows.find(r=>r.id===row.id&&r.budget===row.budget); assert(original);
-        assert.equal(row.recent,input.recent); assert.deepEqual(row.evidence,input.evidence);
-        assert.equal(row.variants.baseline.tokens,original.variants.baseline.tokens);
-        assert.deepEqual(row.variants.baseline.selected.map(p=>`${p.message}:${p.chunk}`),original.variants.baseline.selected);
-        const parents=new Map(input.lists.flat().map(doc=>[`${doc.message}:${doc.chunk}`,doc]));
-        for(const policy of ['baseline',...sentencePolicies]){
-            const variant=row.variants[policy]; assert(variant.tokens>=0&&variant.tokens<=row.budget);
-            const spans=variant.selected.map(entry=>{const doc=parents.get(`${entry.message}:${entry.chunk}`);assert(doc);return {doc,start:entry.start,end:entry.end};});
-            assert.equal(new Set(spans.map(s=>s.doc.id)).size,spans.length);
-            excerptMessages(spans); // verifies source bounds and literal rendering
-            assert.deepEqual(variant.evidence,excerptEvidence(spans,input.evidence));
-        }
-    }
-    for(const file of ['src/memory.js','src/context.js','scripts/sentence-passages.mjs','scripts/sentence-passage-replay.mjs','docs/sentence-passage-evaluation.md'])assert(report.sourceSha256[file]);
-    for(const [file,hash]of Object.entries(report.sourceSha256))assert.equal(sha(recordedSource(file,hash)),hash,`Recorded input changed: ${file}`);
-    for(const policy of ['baseline',...sentencePolicies]){
-        const refs=report.rows.flatMap(row=>row.variants[policy].evidence);
-        assert.equal(report.summary[policy].total,190);
-        assert.equal(report.summary[policy].selected,refs.filter(ref=>ref.selected).length);
-        assert.equal(report.summary[policy].partialParents,refs.filter(ref=>ref.parentSelected&&!ref.selected).length);
-        const losses=[],gains=[];
-        for(const row of report.rows)for(const [i,ref]of row.variants[policy].evidence.entries()){
-            const baseline=row.variants.baseline.evidence[i].selected;
-            const pointer={id:row.id,budget:row.budget,message:ref.message};
-            if(baseline&&!ref.selected)losses.push(pointer);
-            if(!baseline&&ref.selected)gains.push(pointer);
-        }
-        assert.deepEqual(report.summary[policy].losses,losses);
-        assert.deepEqual(report.summary[policy].gains,gains);
-        const historical=report.rows.filter(row=>row.id.startsWith('generation/ko-historical-assistant-topic/'));
-        assert.equal(historical.length,2);
-        const recovered=historical.every(row=>row.variants[policy].evidence.every(ref=>ref.selected));
-        assert.equal(report.summary[policy].recoveredHistorical,recovered);
-        assert.equal(report.summary[policy].eligibleForFreshValidation,gains.length>0&&losses.length===0&&recovered);
-    }
 });

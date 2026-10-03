@@ -1,5 +1,10 @@
 # Assistant-topic selection results
 
+> Historical evidence: detailed runs and retired tools are preserved at the
+> [pre-cleanup revision](https://github.com/lambdadb/SillyMemory/tree/94b9bc04cf664587ae4c96b7739c22af87897b6b).
+> Reproduction commands below require their recorded producer; see
+> [evidence retention](evidence-retention.md) for archives and recovery.
+
 Neither candidate qualified for runtime adoption. Adding a third assistant query
 recovered the Korean first-user boundary, but lost the previously recovered
 Korean prior-user reference. The Korean assistant-topic case still failed.
@@ -47,7 +52,7 @@ candidate-to-budget selection loss: the desired result exists in the returned
 hits. The experiment does not compare ANN against exhaustive search and makes
 no new claim about ANN recall or committed-index quality.
 
-[Checked-in evidence](results/assistant-topic-selection-v1.json) retains every
+[Checked-in evidence](https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/assistant-topic-selection-v1.json) retains every
 case's query text, target ranks, selected source indices, budget, fixture hashes,
 source hashes and lifecycle checks. Full synthetic hit payloads remain in the
 ignored raw artifact `artifacts/live-assistant-topic-assistant-topic-v1.json`.

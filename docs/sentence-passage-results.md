@@ -1,5 +1,10 @@
 # Sentence passage replay results
 
+> Historical evidence: detailed runs and retired tools are preserved at the
+> [pre-cleanup revision](https://github.com/lambdadb/SillyMemory/tree/94b9bc04cf664587ae4c96b7739c22af87897b6b).
+> Reproduction commands below require their recorded producer; see
+> [evidence retention](evidence-retention.md) for archives and recovery.
+
 Neither fixed candidate passes the conservative source-retention gate. The
 production extension keeps its existing whole-passage selector. This work adds
 an offline excerpt selector, regression tests and reproducible evidence; no
@@ -103,9 +108,9 @@ ST_SOURCE=/absolute/path/to/pinned/SillyTavern \
 ```
 
 Review the [selector](../scripts/sentence-passages.mjs),
-[runner](../scripts/sentence-passage-replay.mjs),
+[runner](https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/scripts/sentence-passage-replay.mjs),
 [tests](../tests/sentence-passages.test.js) and
-[full result](results/sentence-passage-replay-v1.json).
+[full result](https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/sentence-passage-replay-v1.json).
 
 Stop tuning ranking/splitting on these known cases. Before another optimization,
 define a fresh semantic fixture that distinguishes the minimum answer-bearing

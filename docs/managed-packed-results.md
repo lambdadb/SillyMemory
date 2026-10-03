@@ -1,5 +1,10 @@
 # Managed recall after repeated passage packing
 
+> Historical evidence: detailed runs and retired tools are preserved at the
+> [pre-cleanup revision](https://github.com/lambdadb/SillyMemory/tree/94b9bc04cf664587ae4c96b7739c22af87897b6b).
+> Reproduction commands below require their recorded producer; see
+> [evidence retention](evidence-retention.md) for archives and recovery.
+
 This follow-up runs the merged PR #30 product path through the actual pinned
 SillyTavern host, LambdaDB managed embeddings and the live generation provider.
 The earlier packing replay established source retention at a fixed budget; this
@@ -29,7 +34,7 @@ attribution. Exact archived producer bytes preserve the historical reports.
 
 ## Completion record
 
-The [complete managed report](results/managed-packed-baseline-v1.json) passed
+The [complete managed report](https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/managed-packed-baseline-v1.json) passed
 all 837 integrity checks: 64/64 scheduled provider answers, zero generation
 retries, zero failed LambdaDB requests, intact recent history and source chats,
 and verified deletion of both owned test collections. Provider starts were at
@@ -43,10 +48,10 @@ changes its version metadata but does not add a new memory policy.
 | Provisional strict answer passes, including unknowns | 4/32 | 30/32 |
 | Unknown-price questions handled without inventing a price | 4/4 | 4/4 |
 
-The [separate answer score](results/managed-packed-baseline-review-v1/assistant-score.json)
+The [separate answer score](https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/managed-packed-baseline-review-v1/assistant-score.json)
 records every grade and paired outcome. The
-[unfilled review packet](results/managed-packed-baseline-review-v1/packet.json)
-and [assistant annotations](results/managed-packed-baseline-review-v1/assistant-annotations.json)
+[unfilled review packet](https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/managed-packed-baseline-review-v1/packet.json)
+and [assistant annotations](https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/managed-packed-baseline-review-v1/assistant-annotations.json)
 remain separate. The coding assistant inspected all source rules and 64 answers;
 this is neither independent nor blinded grading.
 
@@ -67,9 +72,9 @@ memory-on totals were 305, 308 and 314 tokens respectively.
 All [12 pilot responses and instruction texts](results/recall-guide-pilots-v1.json)
 are retained with producer hashes, provisional grades and cleanup status.
 The complete raw reports and frozen plans are retained for
-[pilot 1](results/recall-guide-pilot-v1-raw.json),
-[pilot 2](results/recall-guide-pilot-v2-raw.json), and
-[pilot 3](results/recall-guide-pilot-v3-raw.json).
+[pilot 1](https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/recall-guide-pilot-v1-raw.json),
+[pilot 2](https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/recall-guide-pilot-v2-raw.json), and
+[pilot 3](https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/recall-guide-pilot-v3-raw.json).
 Every recorded producer hash resolves to current or archived exact bytes.
 The offline verifier checks the focused schedule, source passages against captured
 prompts, provider answers, request settings, spacing, and deletion followed by
@@ -97,7 +102,7 @@ Main promotion and pre-release publication require review of that remaining issu
 
 ## Git installation, update and rollback
 
-The [actual-host installation report](results/install-0.2.0-v1.json) passes
+The [actual-host installation report](https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/install-0.2.0-v1.json) passes
 20 checks. The pinned host installed public `main` 0.1.0 at
 `b55b78f28feb769683da723206bf3b37c83ec04b`, then its real Update UI pulled the
 candidate branch at `b63cdeeae8ed8bc2180ce52a75117986239cee98` (0.2.0).

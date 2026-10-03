@@ -1,37 +1,15 @@
 // Rubrics are kept here/the scorer, never passed into candidate selection.
 import assert from 'node:assert/strict';
 import { capture, documents, retrievalQueries, interleaveHits } from '../src/memory.js';
-import { read } from './budget-selection-data.mjs';
-import { loadLong, hostSource, sha } from './semantic-long.mjs';
+import { readFileSync } from 'node:fs';
+const read = file => JSON.parse(readFileSync(new URL(`../${file}`, import.meta.url)));
+import { hostSource } from './semantic-long.mjs';
 import { validateSemanticCase, sourceExcerpt, evidenceCoverage } from './semantic-evidence.mjs';
-const coordinate = doc => `${doc.message}:${doc.chunk}`;
 
 async function sourceDocuments(item, id, recent) {
     const chat = hostSource(item); chat.push({ mes: item.question, name: 'User', is_user: true });
     const snapshot = capture({ chat, characterId: 0, characters: [{ avatar: 'synthetic.png' }], getCurrentChatId: () => id });
     return { snapshot, ...(await documents(snapshot, 'offline-context-bundle', { recent, chunkChars: 800 })) };
-}
-export async function semanticBundleInputs() {
-    const report = read('docs/results/semantic-direct-v1.json'), fixture = loadLong(), inputs = [];
-    assert(report.passed && report.cleanupComplete && report.evaluation.complete);
-    for (const row of report.evaluation.rows.filter(row => row.mode === 'on')) {
-        const item = fixture.cases.find(item => item.id === row.case); assert(item); validateSemanticCase(item);
-        assert.equal(row.sourceHash, sha(JSON.stringify(hostSource(item).map(m => ({ text: m.mes, user: m.is_user, name: m.name })))));
-        const { docs, snapshot } = await sourceDocuments(item, row.id, 8), queries = retrievalQueries(snapshot);
-        const local = new Map(docs.map(doc => [coordinate(doc), doc]));
-        assert.equal(row.queries.length, queries.length);
-        const lists = queries.map(query => {
-            const matches = row.queries.filter(entry => entry.query === query); assert.equal(matches.length, 1);
-            return matches[0].hits.map(hit => {
-                const doc = local.get(coordinate(hit)); assert(doc, 'Hit outside eligible source');
-                for (const field of ['text', 'revision', 'message', 'chunk', 'speaker', 'role']) assert.deepEqual(hit[field], doc[field], `Stale recorded ${field}`);
-                return doc;
-            });
-        });
-        inputs.push({ id: `semantic/${row.id}`, corpus: 'semantic-recorded', docs, hits: interleaveHits(lists), item, budgets: [320, 400, 800], original: row });
-    }
-    assert.equal(inputs.length, 32);
-    return inputs;
 }
 export async function freshBundleInputs() {
     const fixture = read('tests/fixtures/context-bundles-v1.json');
