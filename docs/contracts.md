@@ -30,3 +30,11 @@ The official [managed embedding guide](https://docs.lambdadb.ai/guides/collectio
 | Collection delete | DELETE collection, then poll GET for 404 |
 
 The 2026-09-27 live proxy test subsequently confirmed authenticated creation/upsert, managed query-text visibility, scope filtering, edit/swipe/deletion reconciliation, invalid-key rejection, and owned collection cleanup in the supplied project. This does not establish all error paths, load behavior, or service performance. The emulator and live evidence remain separate in the validation record.
+
+## Current transport supersedes the original proxy contract
+
+The proxy source inspection above describes the initial 0.1.0 design. The current
+development client uses direct HTTPS/CORS with credentials omitted and redirects
+rejected; it does not call `/proxy/` or use host CSRF headers. Host chat/settings
+requests remain same-origin. See [direct CORS](direct-cors.md) for configuration,
+error/cleanup semantics and separately labeled live evidence.

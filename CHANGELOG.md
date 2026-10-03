@@ -22,6 +22,11 @@ boundary; publication is confirmed by the corresponding Git tag and GitHub Relea
 
 ### Changed
 
+- Memory API requests go directly from the browser to LambdaDB over HTTPS/CORS,
+  omitting cookies and host CSRF headers. No SillyTavern proxy setting or restart
+  is required. Configure LambdaDB access for the page origin where needed; see
+  [transport requirements and validation](docs/direct-cors.md).
+
 - Long-message indexing prefers paragraph/sentence/word boundaries within the
   800-code-point ceiling. Exact offsets and layout-specific document IDs keep
   reindexing and stale-result rejection safe. No overlap or budget change.

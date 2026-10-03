@@ -10,7 +10,8 @@ Read [CONTRIBUTING.md](CONTRIBUTING.md) before changing this repository.
 - Open completed, validated work as a regular PR; reserve Draft for unfinished work.
 - Keep credentials and personal chat data out of Git, logs, PRs, and test artifacts.
 - Distinguish source inspection, unit/emulator tests, live integration, and deployment.
-- Preserve the UI-extension/built-in-proxy design and session-only API key handling.
+- Preserve the UI-extension/direct-CORS design and session-only API key handling.
+  Never forward SillyTavern cookies/CSRF headers or add a server plugin.
 - Use English for repository documentation and follow the user's language in conversation.
 
 ## Experiment scope and retention

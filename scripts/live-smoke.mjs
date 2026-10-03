@@ -1,5 +1,5 @@
 // Explicit live test: reads .env.local without exporting secrets to child processes.
-// Sends only synthetic data through the pinned SillyTavern browser/proxy path.
+// Sends only synthetic data through the pinned SillyTavern browser/direct-CORS path.
 import { runContextTurnDiagnostic } from './context-turn-diagnostic.mjs';
 import { runAssistantFallbackDiagnostic } from './assistant-fallback-diagnostic.mjs';
 import { runAssistantTopicDiagnostic } from './assistant-topic-diagnostic.mjs';
@@ -58,7 +58,7 @@ await writeFile(pendingPath, JSON.stringify({ owner, gateCollection, memoryColle
 const port = Number(process.env.ST_LIVE_PORT || 18127), url = `http://127.0.0.1:${port}`;
 let server, browser, page, stage = 'startup', failure = false, cleanupComplete = false;
 const checks = [], responses = [];
-const report = { time: new Date().toISOString(), sillyTavern: revision, upstream: 'Live LambdaDB through real browser and built-in proxy', checks, responses, initialSourceSha256 };
+const report = { time: new Date().toISOString(), sillyTavern: revision, upstream: 'Live LambdaDB through real browser and direct CORS', checks, responses, initialSourceSha256 };
 const record = name => { checks.push(name); console.log(`PASS ${name}`); };
 async function run(name, fn, arg) {
     stage = name;
@@ -71,7 +71,7 @@ async function run(name, fn, arg) {
 }
 try {
     const config = path.join(work, 'config.yaml'); await writeFile(config, await readFile(path.join(source, 'default/config.yaml')));
-    server = spawn(process.execPath, ['server.js', '--configPath', config, '--dataRoot', path.join(work, 'data'), '--port', String(port), '--listen', 'false', '--browserLaunchEnabled', 'false', '--corsProxy', 'true'], { cwd: source, stdio: 'ignore' });
+    server = spawn(process.execPath, ['server.js', '--configPath', config, '--dataRoot', path.join(work, 'data'), '--port', String(port), '--listen', 'false', '--browserLaunchEnabled', 'false', '--corsProxy', 'false'], { cwd: source, stdio: 'ignore' });
     let ready = false;
     for (let i = 0; i < 90; i++) {
         if (server.exitCode !== null) throw new Error('Host exited');
@@ -86,7 +86,7 @@ try {
     await writeFile(profilePath, JSON.stringify(profile));
     browser = await chromium.launch(); page = await browser.newPage(); page.setDefaultTimeout(20000);
     // Status and operation only; never collect request headers, bodies, URLs or traces.
-    page.on('response', response => { if (response.url().includes('/proxy/')) responses.push({ stage, status: response.status() }); });
+    page.on('response', response => { if (new URL(response.url()).origin === new URL(credentials.endpoint).origin) responses.push({ stage, status: response.status() }); });
     await page.goto(url); await page.getByText('Welcome to SillyTavern!', { exact: true }).waitFor();
     await page.getByText('Save', { exact: true }).last().click();
     await page.locator('#sillymemory').waitFor({ state: 'attached', timeout: 45000 });
@@ -95,12 +95,12 @@ try {
         const { LambdaClient } = await import('/scripts/extensions/third-party/sillymemory/src/client.js');
         const { poll, runTransportGate } = await import('/scripts/extensions/third-party/sillymemory/src/gate.js');
         const { MemoryEngine, Journal, documents } = await import('/scripts/extensions/third-party/sillymemory/src/memory.js');
-        const client = new LambdaClient(credentials, credentials.key, { headers: () => SillyTavern.getContext().getRequestHeaders() });
+        const client = new LambdaClient(credentials, credentials.key);
         globalThis.liveTest = { client, poll, runTransportGate, owner, gateCollection, memoryCollection, MemoryEngine, Journal, documents };
     }, { credentials, owner, gateCollection, memoryCollection });
-    await run('invalid key is rejected through the real proxy', async ({ endpoint, project, collection }) => {
+    await run('invalid key is rejected through direct browser CORS', async ({ endpoint, project, collection }) => {
         const { LambdaClient } = await import('/scripts/extensions/third-party/sillymemory/src/client.js');
-        const invalid = new LambdaClient({ endpoint, project }, 'sillymemory-intentionally-invalid', { headers: () => SillyTavern.getContext().getRequestHeaders() });
+        const invalid = new LambdaClient({ endpoint, project }, 'sillymemory-intentionally-invalid');
         try { await invalid.get(collection); throw new Error('Invalid key unexpectedly accepted'); }
         catch (e) { if (![400, 401, 403].includes(e.status)) throw e; } finally { invalid.forget(); }
     }, { endpoint: credentials.endpoint, project: credentials.project, collection: gateCollection });

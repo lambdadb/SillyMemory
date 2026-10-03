@@ -22,7 +22,7 @@ export async function runHybrid({ page, field, openSettings, waitStatus, generat
         const { LambdaClient, scopeFilter } = await import('/scripts/extensions/third-party/sillymemory/src/client.js');
         const { hybridQuery } = await import('/scripts/extensions/third-party/sillymemory/scripts/hybrid-query.mjs');
         const c = SillyTavern.getContext(), owner = c.extensionSettings.sillymemory.owner;
-        const client = new LambdaClient(credentials, credentials.key, { headers: () => c.getRequestHeaders() });
+        const client = new LambdaClient(credentials, credentials.key);
         const collection = `sm_hybrid_${crypto.randomUUID().replaceAll('-', '')}`, scope = 'b'.repeat(64), foreign = 'c'.repeat(64);
         const docs = [{ id: 'allowed', owner, scope, text: 'The alpha beacon belongs to the permitted memory.' },
             { id: 'foreign-chat', owner, scope: foreign, text: 'alpha beacon '.repeat(20) },

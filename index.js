@@ -222,7 +222,7 @@ async function initialize() {
         if ((state.collection || state.testCollection || state.chatCollections.length) && (candidate.endpoint !== state.endpoint || candidate.project !== state.project)) throw new ConnectionError('Clean up owned collections before changing the connection.');
         invalidate(); status('Connecting: waiting for earlier writes to finish…');
         await drain(); client?.forget();
-        client = new LambdaClient(candidate, element('key').value, { headers: () => context().getRequestHeaders() });
+        client = new LambdaClient(candidate, element('key').value);
         element('key').value = ''; gatePassed = false;
         Object.assign(state, candidate); persist(); makeCollections();
         status('Key is in browser memory. Run the synthetic transport test before creating a memory collection.');

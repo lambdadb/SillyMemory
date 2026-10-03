@@ -176,7 +176,7 @@ try {
     await writeFile(config, await readFile(path.join(source, 'default/config.yaml')));
     host = spawn(process.execPath, ['--require', path.join(root, 'scripts/benchmark-live-network.cjs'),
         'server.js', '--configPath', config, '--dataRoot', path.join(work, 'data'), '--port', String(port),
-        '--listen', 'false', '--browserLaunchEnabled', 'false', '--corsProxy', 'true'], {
+        '--listen', 'false', '--browserLaunchEnabled', 'false', '--corsProxy', 'false'], {
         cwd: source, env: { PATH: process.env.PATH, HOME: process.env.HOME, BENCHMARK_LAMBDA_HOST: new URL(endpoint).hostname }, stdio: ['ignore', 'ignore', 'pipe'] });
     host.stderr.on('data', bytes => { report.traffic.hostBlocked += (String(bytes).match(/BENCHMARK_NETWORK_BLOCKED/g) || []).length; });
     let ready = false;
@@ -198,10 +198,10 @@ try {
     });
     await page.route('**/*', async route => {
         const request = route.request(), target = new URL(request.url());
-        if (target.origin !== url) { report.traffic.browserBlocked++; return route.abort(); }
+        if (target.origin !== url && target.origin !== endpoint) { report.traffic.browserBlocked++; return route.abort(); }
         try {
-            if (target.pathname.startsWith('/proxy/')) {
-                const remote = new URL(decodeURIComponent(target.pathname.slice(7)));
+            if (target.origin === endpoint) {
+                const remote = target;
                 assert.equal(remote.origin, endpoint); assert.equal(remote.search, '');
                 const prefix = `/projects/${encodeURIComponent(env.LAMBDADB_PROJECT_NAME)}/collections`;
                 assert(remote.pathname === prefix || remote.pathname.startsWith(prefix + '/'));
@@ -441,7 +441,7 @@ print(ns['get_anscheck_prompt'](**x))`, path.join(cache, 'evaluate_qa.py')], { i
                 await page.evaluate(async ({ endpoint, project, key, owned }) => {
                     const { LambdaClient } = await import('/scripts/extensions/third-party/sillymemory/src/client.js');
                     const c = SillyTavern.getContext();
-                    const client = new LambdaClient({ endpoint, project }, key, { headers: () => c.getRequestHeaders() });
+                    const client = new LambdaClient({ endpoint, project }, key);
                     await client.deleteOwnedCollection(owned.collection, owned.owner); client.forget();
                 }, { endpoint, project: env.LAMBDADB_PROJECT_NAME, key: env.LAMBDADB_PROJECT_API_KEY, owned });
                 report.cleanupResults.remote.push({ collection: owned.collection, inaccessible: true });

@@ -38,7 +38,7 @@ let server, browser, page;
 try {
     const configPath = path.join(work, 'config.yaml');
     await writeFile(configPath, await readFile(path.join(source, 'default/config.yaml')));
-    server = spawn(process.execPath, ['server.js', '--configPath', configPath, '--dataRoot', path.join(work, 'data'), '--port', String(port), '--listen', 'false', '--browserLaunchEnabled', 'false', '--corsProxy', 'true'], { cwd: source, stdio: 'ignore' });
+    server = spawn(process.execPath, ['server.js', '--configPath', configPath, '--dataRoot', path.join(work, 'data'), '--port', String(port), '--listen', 'false', '--browserLaunchEnabled', 'false', '--corsProxy', 'false'], { cwd: source, stdio: 'ignore' });
     let ready = false;
     for (let i = 0; i < 90; i++) { assert(server.exitCode === null, 'Host exited'); try { if ((await fetch(url)).ok) { ready = true; break; } } catch {} await new Promise(r => setTimeout(r, 500)); }
     assert(ready, 'Host startup timeout');
@@ -99,10 +99,10 @@ try {
     await page.reload(); await page.locator('#sillymemory').waitFor({ state: 'attached', timeout: 45000 }); await settings();
     const upgraded = await page.evaluate(() => { const owner = SillyTavern.getContext().extensionSettings.sillymemory.owner; return { owner, state: JSON.parse(localStorage.getItem(`sillymemory:state:${owner}`)) }; });
     assert.equal(upgraded.owner, saved.owner);
-    // The candidate adds one documented default. Compare values, not the old
-    // serialized bytes, while still rejecting any lost or changed prior field.
-    assert.deepEqual(upgraded.state, { ...JSON.parse(saved.state), stopOnLoss: true });
-    check('update reload preserves ownership and prior settings, adding only the documented default', true);
+    // Preserve legacy values and the cleanup pointer while adding documented defaults.
+    const previous = JSON.parse(saved.state);
+    assert.deepEqual(upgraded.state, { ...previous, enabled: false, stopOnLoss: true, chatCollections: [], ready: Boolean(previous.collection) });
+    check('update reload preserves ownership, settings and cleanup pointers with documented collection defaults', true);
     check('update reload clears the session key and leaves memory disabled', await field('key').inputValue() === '' && !await field('enabled').isChecked());
     check('updated controls retain configured budget and recent messages', await field('recent').inputValue() === '14' && await field('budget').inputValue() === '600');
     check('0.1.0 upgrades enable the missing-context stop by default', await field('stopOnLoss').isChecked());
@@ -112,6 +112,7 @@ try {
     await page.reload(); await page.locator('#sillymemory').waitFor({ state: 'attached' }); await settings();
     check('explicit warning-only preference survives reload', !await field('stopOnLoss').isChecked());
     check('updated settings link to the canonical source and license', await page.locator('#sillymemory a', { hasText: 'Source' }).getAttribute('href') === repository && await page.locator('#sillymemory a', { hasText: 'AGPL-3.0-only' }).getAttribute('href') === `${repository}/blob/main/LICENSE`);
+    check('candidate panel explains direct CORS without a host proxy setup', (await page.locator('#sillymemory').innerText()).includes('No SillyTavern proxy setting or restart is needed.'));
     const candidate = JSON.parse(await readFile(path.join(installed, 'manifest.json'), 'utf8'));
     check('candidate manifest version agrees with package version', candidate.version === JSON.parse(await readFile(path.join(installed, 'package.json'), 'utf8')).version);
     report.updatedVersion = candidate.version;

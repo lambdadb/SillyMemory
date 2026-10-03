@@ -122,6 +122,10 @@ change; it does not prove arbitrary future-version downgrade safety.
 
 ## Installation smoke test
 
+The current direct-CORS candidate is tested with the host proxy disabled. Its
+[current transport evidence](docs/direct-cors.md) supplements earlier proxy-path
+release checks; run final installation acceptance on the combined release tree.
+
 Use an isolated pinned host checkout with no global SillyMemory symlink. The
 script creates/removes its own host data directory and browser profile. It
 installs public main from the actual GitHub URL through the UI. In the disposable

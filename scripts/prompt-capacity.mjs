@@ -1,4 +1,5 @@
-// Real pinned host/Chromium/proxy, local LambdaDB and completion emulators only.
+import { emulatorCors } from './emulator-cors.mjs';
+// Real pinned host/Chromium/direct CORS, local LambdaDB and completion emulators only.
 // Does not load .env.local. Never supply a personal profile or real credentials.
 import assert from 'node:assert/strict';
 import { chromium } from '@playwright/test';
@@ -17,7 +18,7 @@ const source = process.env.ST_SOURCE || '/tmp/sillymemory-st-prompt-capacity';
 const output = path.resolve(process.argv[2] || path.join(root, 'artifacts/prompt-capacity.json'));
 assert.equal(execFileSync('git', ['-C', source, 'rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(), plan.host);
 assert.equal(await realpath(path.join(source, 'public/scripts/extensions/third-party/sillymemory')), root);
-const sourceFiles = ['index.js', 'src/chat-collections.js', 'manifest.json', 'src/client.js', 'src/context.js', 'src/gate.js', 'src/memory.js', 'src/status.js', 'scripts/prompt-capacity.mjs', 'scripts/prompt-capacity-cases.mjs'];
+const sourceFiles = ['index.js', 'src/chat-collections.js', 'manifest.json', 'src/client.js', 'src/context.js', 'src/gate.js', 'src/memory.js', 'src/status.js', 'scripts/prompt-capacity.mjs', 'scripts/emulator-cors.mjs', 'scripts/prompt-capacity-cases.mjs'];
 const hostFiles = ['public/script.js', 'public/scripts/openai.js', 'public/scripts/PromptManager.js', 'public/scripts/tokenizers.js', 'src/endpoints/tokenizers.js', 'src/endpoints/backends/chat-completions.js', 'package-lock.json'];
 async function hashes() {
     return Object.fromEntries(await Promise.all(sourceFiles.map(async file => [file, createHash('sha256').update(await readFile(path.join(root, file))).digest('hex')])));
@@ -40,6 +41,7 @@ const collections = new Map(), requests = [], generations = [], rows = [], error
 const send = (res, status, body = {}) => { res.writeHead(status, { 'Content-Type': 'application/json' }); res.end(JSON.stringify(body)); };
 async function json(req) { const buffers = []; for await (const b of req) buffers.push(b); return buffers.length ? JSON.parse(Buffer.concat(buffers).toString()) : {}; }
 const remote = httpsServer({ key: await readFile(key), cert: await readFile(cert) }, async (req, res) => {
+        if (emulatorCors(req, res)) return;
     try {
         const body = await json(req), parts = new URL(req.url, 'https://localhost').pathname.split('/').filter(Boolean), name = parts[3];
         assert.equal(req.headers['x-api-key'], 'synthetic-session-key');
@@ -80,7 +82,7 @@ const bridge = httpServer(async (req, res) => {
     } catch (error) { errors.push(error.message); send(res, 500); }
 });
 let server, browser, page;
-const report = { ...frozen, evidence: 'Real SillyTavern/Chromium/proxy; emulated LambdaDB and generation; no live embeddings or model', rows };
+const report = { ...frozen, evidence: 'Real SillyTavern/Chromium/direct CORS; emulated LambdaDB and generation; no live embeddings or model', rows };
 try {
     await new Promise(r => remote.listen(0, '127.0.0.1', r));
     await new Promise(r => bridge.listen(0, '127.0.0.1', r));
@@ -89,7 +91,7 @@ try {
     const port = Number(process.env.ST_CAPACITY_PORT || 18134), url = `http://127.0.0.1:${port}`;
     const configPath = path.join(work, 'config.yaml');
     await writeFile(configPath, await readFile(path.join(source, 'default/config.yaml')));
-    server = spawn(process.execPath, ['server.js', '--configPath', configPath, '--dataRoot', path.join(work, 'data'), '--port', String(port), '--listen', 'false', '--browserLaunchEnabled', 'false', '--corsProxy', 'true'], {
+    server = spawn(process.execPath, ['server.js', '--configPath', configPath, '--dataRoot', path.join(work, 'data'), '--port', String(port), '--listen', 'false', '--browserLaunchEnabled', 'false', '--corsProxy', 'false'], {
         cwd: source, env: { PATH: process.env.PATH, HOME: process.env.HOME, NODE_EXTRA_CA_CERTS: cert }, stdio: 'ignore',
     });
     let ready = false;
@@ -103,10 +105,10 @@ try {
     const profile = JSON.parse(await readFile(profilePath, 'utf8'));
     profile.main_api = 'openai'; // Avoid the default remote Horde connection.
     await writeFile(profilePath, JSON.stringify(profile));
-    browser = await chromium.launch(); page = await browser.newPage({ viewport: { width: 1440, height: 1100 } });
+    browser = await chromium.launch(); page = await browser.newPage({ ignoreHTTPSErrors: true, viewport: { width: 1440, height: 1100 } });
     page.setDefaultTimeout(30000);
     page.on('pageerror', error => errors.push(error.message));
-    await page.route('**/*', route => new URL(route.request().url()).origin === url ? route.continue() : route.abort());
+    await page.route('**/*', route => [url, endpoint].includes(new URL(route.request().url()).origin) ? route.continue() : route.abort());
     await page.goto(url); await page.getByText('Welcome to SillyTavern!', { exact: true }).waitFor();
     await page.getByText('Save', { exact: true }).last().click();
     await page.locator('#sillymemory').waitFor({ state: 'attached' });
