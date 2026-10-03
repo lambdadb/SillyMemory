@@ -2,12 +2,12 @@
   <div class="inline-drawer-toggle inline-drawer-header"><b>SillyMemory</b><div class="inline-drawer-icon fa-solid fa-circle-chevron-down down"></div></div>
   <div class="inline-drawer-content">
     <p>Long-term memory for SillyTavern.<br><strong>Powered by LambdaDB</strong></p>
-    <p>Chat excerpts and retrieval queries are sent through your SillyTavern server to LambdaDB and its embedding provider. A LambdaDB account and inference usage are required. Disable pauses use; it does not delete remote data.</p>
+    <p>Chat excerpts and retrieval queries are sent directly from this browser to LambdaDB and its managed embedding provider. A LambdaDB account and inference usage are required. Disable pauses use; it does not delete remote data.</p>
     <label>Regional HTTPS endpoint <input data-sm="endpoint" class="text_pole" type="url" placeholder="Regional base URL from your project"></label>
     <label>Project name <input data-sm="project" class="text_pole" autocomplete="off"></label>
     <label>API key (memory only; re-enter after reload) <input data-sm="key" class="text_pole" type="password" autocomplete="off" spellcheck="false"></label>
     <div class="sm-actions"><button data-sm="connect" class="menu_button">Use key for this session</button><button data-sm="forget" class="menu_button">Forget key</button></div>
-    <p>Enable <code>enableCorsProxy: true</code> in SillyTavern config.yaml and restart before testing.</p>
+    <p>Connects directly to LambdaDB from this browser. Allow this page’s origin in LambdaDB CORS settings. No SillyTavern proxy setting or restart is needed.</p>
     <div class="sm-actions"><button data-sm="gate" class="menu_button">Test synthetic upsert / query / delete</button><button data-sm="cleanup" class="menu_button">Clean up test collection</button><button data-sm="provision" class="menu_button">Prepare chat memory</button></div>
     <label class="sm-toggle"><input data-sm="enabled" type="checkbox"> Enable memory (separate collection per chat and branch)</label>
     <label>Recent full messages <input data-sm="recent" class="text_pole" type="number" min="2" max="100"></label>

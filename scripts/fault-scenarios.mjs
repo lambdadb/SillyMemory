@@ -123,7 +123,7 @@ export async function runFaultScenarios({ page, field, waitStatus, prompt, check
 
     const blockedTab = await page.context().newPage();
     let blockedProxyRequests = 0;
-    blockedTab.on('request', request => { if (new URL(request.url()).pathname.startsWith('/proxy/')) blockedProxyRequests++; });
+    blockedTab.on('request', request => { if (new URL(request.url()).pathname.startsWith('/projects/')) blockedProxyRequests++; });
     try {
         await blockedTab.goto(page.url());
         await blockedTab.waitForFunction(() => document.querySelector('#sillymemory [data-sm="status"]')?.textContent.includes('already open in another tab'), null, { timeout: 45000 });

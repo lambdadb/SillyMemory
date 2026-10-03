@@ -21,7 +21,7 @@ export async function runTransportGate(client, owner, collection, report = () =>
         report('Creating dedicated synthetic test collection…');
         await client.create(collection, owner);
         await poll(async () => { await client.upsert(collection, [doc]); return true; });
-        report('Checking managed queryText retrieval through the proxy…');
+        report('Checking managed queryText retrieval directly from this browser…');
         await poll(async () => (await client.search(collection, owner, scope, 'Where is the blue compass?')).some(x => x.id === id && x.text === doc.text));
         await client.deleteIds(collection, [id]);
         await poll(async () => !(await client.query(collection, scopeFilter(owner, scope))).some(x => x.id === id));

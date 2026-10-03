@@ -4,7 +4,7 @@ import { LambdaClient, connectionConfig, scopeFilter } from '../src/client.js';
 import { runTransportGate } from '../src/gate.js';
 const config = { endpoint: 'https://region.example.test', project: 'synthetic' };
 const owner = 'a'.repeat(32), scope = 'b'.repeat(64);
-test('proxy contract preserves auth/body, CSRF, main ref and managed knn filter', async () => {
+test('direct CORS preserves auth/body and query scope without host credentials', async () => {
     const calls = [];
     const client = new LambdaClient(config, 'secret-test-only', { headers: () => ({ 'X-CSRF-Token': 'csrf' }), fetcher: async (url, init) => {
         calls.push({ url, init }); return new Response(JSON.stringify({ docs: [], isDocsInline: true }));
@@ -12,9 +12,12 @@ test('proxy contract preserves auth/body, CSRF, main ref and managed knn filter'
     await client.upsert('test', [{ id: '1', text: 'synthetic' }]);
     await client.search('test', owner, scope, 'compass');
     await client.deleteIds('test', ['1']);
-    assert.equal(calls[0].url, '/proxy/https%3A%2F%2Fregion.example.test%2Fprojects%2Fsynthetic%2Fcollections%2Ftest%2Fdocs%2Fupsert');
+    assert.equal(calls[0].url, 'https://region.example.test/projects/synthetic/collections/test/docs/upsert');
     assert.equal(calls[0].init.headers['x-api-key'], 'secret-test-only');
-    assert.equal(calls[0].init.headers['X-CSRF-Token'], 'csrf');
+    for (const { init } of calls) {
+        assert.equal(init.credentials, 'omit'); assert.equal(init.mode, 'cors'); assert.equal(init.redirect, 'error');
+        assert.deepEqual(Object.keys(init.headers).sort(), ['Content-Type', 'x-api-key']);
+    }
     const body = JSON.parse(calls[1].init.body);
     assert.equal(body.query.knn.queryText, 'compass'); assert.deepEqual(body.query.knn.filter, scopeFilter(owner, scope));
     assert.equal(body.consistentRead, true); assert.deepEqual(body.ref, { kind: 'branch', name: 'main' });
@@ -50,14 +53,16 @@ test('synthetic gate verifies upsert/query/delete and always attempts collection
     await assert.rejects(runTransportGate(client, owner, 'smtest')); assert.equal(order.at(-1), 'cleanup');
 });
 
-test('pinned proxy 400 Unauthorized is surfaced as an authentication failure', async () => {
+test('direct 400 remains a bad request, independently of HTTP reason text', async () => {
     const client = new LambdaClient(config, 'test-key', { fetcher: async () => new Response('{}', { status: 400, statusText: 'Unauthorized' }) });
-    await assert.rejects(client.get('test'), e => e.status === 401 && e.message.includes('Authentication failed'));
+    await assert.rejects(client.get('test'), e => e.status === 400);
 });
 
-test('disabled proxy 404 cannot falsely confirm collection cleanup', async () => {
-    const client = new LambdaClient(config, 'test-key', { fetcher: async () => new Response('CORS proxy is disabled. Enable it in config.yaml or use the --corsProxy flag.', { status: 404 }) });
-    await assert.rejects(client.deleteOwnedCollection('test', owner), e => e.status === 0 && e.message.includes('proxy is disabled'));
+test('CORS rejection cannot falsely confirm deletion and exposes no credentials', async () => {
+    let calls = 0;
+    const client = new LambdaClient(config, 'test-key', { fetcher: async () => { calls++; throw new TypeError('private endpoint and key'); } });
+    await assert.rejects(client.deleteOwnedCollection('test', owner), e => e.status === 0 && e.code === 'network' && e.message.includes('CORS') && !e.message.includes('private'));
+    assert.equal(calls, 1);
 });
 
 test('readiness polling retries transient statuses and stops at its fixed limit', async () => {

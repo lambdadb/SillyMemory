@@ -1,3 +1,4 @@
+import { emulatorCors } from './emulator-cors.mjs';
 // Real pinned host, native vector backend, OpenAI and LambdaDB managed embeddings.
 // Public frozen development cases only. Credentials never enter reports or disk profiles.
 import assert from 'node:assert/strict';
@@ -164,7 +165,7 @@ async function cleanOwned() {
         const owned = entry.value;
         await page.evaluate(async ({ endpoint, project, key, owned }) => {
             const { LambdaClient } = await import('/scripts/extensions/third-party/sillymemory/src/client.js');
-            const c = SillyTavern.getContext(), client = new LambdaClient({ endpoint, project }, key, { headers: () => c.getRequestHeaders() });
+            const c = SillyTavern.getContext(), client = new LambdaClient({ endpoint, project }, key);
             try { await client.deleteOwnedCollection(owned.collection, owned.owner); } finally { client.forget(); }
         }, { endpoint, project: env.LAMBDADB_PROJECT_NAME, key: env.LAMBDADB_PROJECT_API_KEY, owned });
         await durable.observe(`cleaned/${owned.collection}`, { inaccessible: true });
@@ -181,6 +182,7 @@ try {
             '-out', cert, '-days', '1', '-subj', '/CN=localhost', '-addext', 'subjectAltName=IP:127.0.0.1'], { stdio: 'ignore' });
         const collections = new Map();
         remote = createHttpsServer({ key: await readFile(key), cert: await readFile(cert) }, async (req, res) => {
+        if (emulatorCors(req, res)) return;
             try {
                 const body = await json(req), parts = new URL(req.url, 'https://localhost').pathname.split('/').filter(Boolean), name = parts[3];
                 assert.equal(req.headers['x-api-key'], env.LAMBDADB_PROJECT_API_KEY);
@@ -216,7 +218,7 @@ try {
     await writeFile(config, await readFile(path.join(source, 'default/config.yaml')));
     host = spawn(process.execPath, ['--require', path.join(root, 'scripts/benchmark-live-network.cjs'),
         'server.js', '--configPath', config, '--dataRoot', path.join(work, 'data'), '--port', String(port),
-        '--listen', 'false', '--browserLaunchEnabled', 'false', '--corsProxy', 'true'], {
+        '--listen', 'false', '--browserLaunchEnabled', 'false', '--corsProxy', 'false'], {
         cwd: source, env: { PATH: process.env.PATH, HOME: process.env.HOME, BENCHMARK_LAMBDA_HOST: new URL(endpoint).hostname, ...(fixture ? { NODE_EXTRA_CA_CERTS: cert } : {}) }, stdio: ['ignore', 'ignore', 'pipe'] });
     host.stderr.on('data', bytes => { report.traffic.hostBlocked += (String(bytes).match(/BENCHMARK_NETWORK_BLOCKED/g) || []).length; });
     let ready = false;
@@ -229,7 +231,7 @@ try {
     const profilePath = path.join(work, 'data/default-user/settings.json');
     const profile = JSON.parse(await readFile(profilePath)); profile.main_api = 'openai';
     await writeFile(profilePath, JSON.stringify(profile));
-    browser = await chromium.launch(); page = await browser.newPage(); page.setDefaultTimeout(30000);
+    browser = await chromium.launch(); page = await browser.newPage({ ignoreHTTPSErrors: fixture }); page.setDefaultTimeout(30000);
     native = nativeBarrier(page);
     page.on('pageerror', e => errors.push(e.message));
     page.on('console', message => {
@@ -237,10 +239,10 @@ try {
     });
     await page.route('**/*', async route => {
         const request = route.request(), target = new URL(request.url());
-        if (target.origin !== url) { report.traffic.browserBlocked++; return route.abort(); }
+        if (target.origin !== url && target.origin !== endpoint) { report.traffic.browserBlocked++; return route.abort(); }
         try {
-            if (target.pathname.startsWith('/proxy/')) {
-                const remote = new URL(decodeURIComponent(target.pathname.slice(7)));
+            if (target.origin === endpoint) {
+                const remote = target;
                 assert.equal(remote.origin, endpoint);
                 const prefix = `/projects/${encodeURIComponent(env.LAMBDADB_PROJECT_NAME)}/collections`;
                 assert(remote.pathname === prefix || remote.pathname.startsWith(prefix + '/'));

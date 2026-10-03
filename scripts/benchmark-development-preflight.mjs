@@ -1,3 +1,4 @@
+import { emulatorCors } from './emulator-cors.mjs';
 // Real pinned host and Chromium; local completion/LambdaDB fixtures and vector API
 // emulation only. Never reads .env.local. Raw source/prompt text stays in ignored private checkpoints.
 import assert from 'node:assert/strict';
@@ -86,6 +87,7 @@ try {
     execFileSync('openssl', ['req', '-x509', '-newkey', 'rsa:2048', '-nodes', '-keyout', key,
         '-out', cert, '-days', '1', '-subj', '/CN=localhost', '-addext', 'subjectAltName=IP:127.0.0.1'], { stdio: 'ignore' });
     remote = createHttpsServer({ key: await readFile(key), cert: await readFile(cert) }, async (req, res) => {
+        if (emulatorCors(req, res)) return;
         try {
             const body = await json(req), parts = new URL(req.url, 'https://localhost').pathname.split('/').filter(Boolean), name = parts[3];
             assert.equal(req.headers['x-api-key'], 'synthetic-session-key');
@@ -122,7 +124,7 @@ try {
     await writeFile(config, await readFile(path.join(source, 'default/config.yaml')));
     host = spawn(process.execPath, ['--require', path.join(root, 'scripts/benchmark-loopback-guard.cjs'),
         'server.js', '--configPath', config, '--dataRoot', path.join(work, 'data'), '--port', String(port),
-        '--listen', 'false', '--browserLaunchEnabled', 'false', '--corsProxy', 'true'], {
+        '--listen', 'false', '--browserLaunchEnabled', 'false', '--corsProxy', 'false'], {
         cwd: source, env: { PATH: process.env.PATH, HOME: process.env.HOME, NODE_EXTRA_CA_CERTS: cert }, stdio: ['ignore', 'ignore', 'pipe'] });
     host.stderr.on('data', bytes => { report.traffic.hostBlocked += (String(bytes).match(/BENCHMARK_NETWORK_BLOCKED/g) || []).length; });
     let ready = false;
@@ -135,14 +137,14 @@ try {
     const profilePath = path.join(work, 'data/default-user/settings.json');
     const profile = JSON.parse(await readFile(profilePath)); profile.main_api = 'openai';
     await writeFile(profilePath, JSON.stringify(profile));
-    browser = await chromium.launch(); page = await browser.newPage(); page.setDefaultTimeout(30000); native = nativeBarrier(page);
+    browser = await chromium.launch(); page = await browser.newPage({ ignoreHTTPSErrors: true }); page.setDefaultTimeout(30000); native = nativeBarrier(page);
     page.on('pageerror', e => errors.push(e.message));
     page.on('console', message => {
         if (/Not enough messages in chat to summarize|Summary conditions not satisfied|Summary set to:/.test(message.text())) summarySignal++;
     });
     await page.route('**/*', async route => {
         const target = new URL(route.request().url());
-        if (target.origin !== url) { report.traffic.browserBlocked++; return route.abort(); }
+        if (target.origin !== url && target.origin !== endpoint) { report.traffic.browserBlocked++; return route.abort(); }
         if (!target.pathname.startsWith('/api/vector/')) return route.continue();
         try {
             const body = route.request().postDataJSON(), operation = target.pathname.split('/').at(-1);

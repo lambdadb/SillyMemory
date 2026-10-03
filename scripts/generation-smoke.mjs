@@ -287,7 +287,7 @@ try {
         assert(response.ok && (await response.json()).id === model, 'fixed model is available; no substitution');
     }
     const configPath = path.join(work, 'config.yaml'); await writeFile(configPath, await readFile(path.join(source, 'default/config.yaml')));
-    server = spawn(process.execPath, ['server.js', '--configPath', configPath, '--dataRoot', path.join(work, 'data'), '--port', String(port), '--listen', 'false', '--browserLaunchEnabled', 'false', '--corsProxy', 'true'], { cwd: source, stdio: 'ignore' });
+    server = spawn(process.execPath, ['server.js', '--configPath', configPath, '--dataRoot', path.join(work, 'data'), '--port', String(port), '--listen', 'false', '--browserLaunchEnabled', 'false', '--corsProxy', 'false'], { cwd: source, stdio: 'ignore' });
     let ready = false;
     for (let i = 0; i < 90; i++) { if (server.exitCode !== null) throw new Error('Host exited'); try { if ((await fetch(url)).ok) { ready = true; break; } } catch {} await new Promise(r => setTimeout(r, 500)); }
     if (!ready) throw new Error('Host startup timeout');
@@ -309,14 +309,14 @@ try {
         const baseline = execFileSync('git', ['show', `${chunkingBaseline}:src/memory.js`], { cwd: root, encoding: 'utf8' });
         await page.route('**/src/memory-baseline.js', route => route.fulfill({ contentType: 'text/javascript', body: baseline }));
     }
-    await page.route('**/proxy/**', async route => {
-        const req = route.request(); const target = new URL(decodeURIComponent(new URL(req.url()).pathname.split('/proxy/')[1]));
+    await page.route(`${new URL(credentials.endpoint).origin}/**`, async route => {
+        const req = route.request(); const target = new URL(req.url());
         if (natural || retrievalExperiment) { const entry = { stage, method: req.method(), path: target.pathname.replace(/^\/projects\/[^/]+/, ''), started: performance.now() }; lambdaRequests.push(entry); lambdaRequestMap.set(req, entry); }
         if (req.method() === 'POST' && target.pathname.endsWith('/collections')) {
             const body = req.postDataJSON(); pending.collections.push({ name: body.collectionName, owner: body.tags.owner });
             await writeFile(pendingPath, JSON.stringify(pending, null, 2));
         }
-        if (failRetrieval && target.pathname.endsWith('/query')) return route.fulfill({ status: 503, contentType: 'application/json', body: '{"message":"Injected test failure"}' });
+        if (failRetrieval && target.pathname.endsWith('/query')) return route.fulfill({ headers: { 'Access-Control-Allow-Origin': new URL(page.url()).origin }, status: 503, contentType: 'application/json', body: '{"message":"Injected test failure"}' });
         if (transformDirect) {
             const entry = lambdaRequestMap.get(req), controller = new AbortController();
             Object.defineProperty(entry, 'controller', { value: controller });
@@ -334,7 +334,7 @@ try {
                 await route.continue(transformed === undefined ? {} : { postData: JSON.stringify(transformed) });
             } catch {
                 entry.adapterFailed = true;
-                await route.fulfill({ status: 400, contentType: 'application/json', body: '{"error":"Temporary direct embedding experiment failed"}' }).catch(() => {});
+                await route.fulfill({ headers: { 'Access-Control-Allow-Origin': new URL(page.url()).origin }, status: 400, contentType: 'application/json', body: '{"error":"Temporary direct embedding experiment failed"}' }).catch(() => {});
             }
             return;
         }
@@ -483,7 +483,7 @@ try {
                 }
                 await page.evaluate(async ({ credentials, collections }) => {
                     const { LambdaClient } = await import('/scripts/extensions/third-party/sillymemory/src/client.js');
-                    const client = new LambdaClient(credentials, credentials.key, { headers: () => SillyTavern.getContext().getRequestHeaders() });
+                    const client = new LambdaClient(credentials, credentials.key);
                     try { for (const item of collections) await client.deleteOwnedCollection(item.name, item.owner); }
                     finally { client.forget(); }
                 }, { credentials, collections: pending.collections });

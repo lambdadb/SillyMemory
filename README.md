@@ -4,7 +4,7 @@ Long-term memory for SillyTavern.
 
 **Powered by LambdaDB**
 
-An installable, experimental UI extension for character chats. SillyMemory keeps recent messages intact at its prompt hook and replaces older plain-text history with relevant source passages under a fixed memory token budget. SillyTavern may subsequently truncate the prompt to fit its context limit. It uses LambdaDB managed embeddings through SillyTavern's built-in CORS proxy. No server plugin or LambdaDB modification is required.
+An installable, experimental UI extension for character chats. SillyMemory keeps recent messages intact at its prompt hook and replaces older plain-text history with relevant source passages under a fixed memory token budget. SillyTavern may subsequently truncate the prompt to fit its context limit. It uses LambdaDB managed embeddings over direct browser HTTPS/CORS. No server plugin or LambdaDB modification is required.
 
 **0.2.0 is an experimental development candidate.** The published 0.1.0 build
 remains on `main` until an approved promotion. This candidate preserves native
@@ -57,15 +57,9 @@ The development baseline is **SillyTavern 1.19.0**, pinned to commit [`06bde939f
 
 1. Prepare SillyTavern **1.19.0** and Git on the host. Other host revisions are unverified.
 2. Open **Extensions → Install extension**, enter `https://github.com/lambdadb/SillyMemory`, leave the optional branch/tag field empty, and choose **Install just for me** (or **Install** for a non-admin account). Review SillyTavern's third-party-extension prompt and confirm. The default branch is `main`; `develop` and PR branches are for development. The extension has no runtime npm dependencies or build step. Do not install two copies.
-3. Set this in SillyTavern's `config.yaml` and **restart SillyTavern**:
-
-   ```yaml
-   enableCorsProxy: true
-   ```
-
-   Preserve SillyTavern's host/IP/private-address protections and authentication configuration. Do not expose an unauthenticated proxy on a public interface. See the [official configuration reference](https://docs.sillytavern.app/administration/config-yaml/#cors-proxy-configuration).
+3. Allow your SillyTavern page origin in LambdaDB CORS settings where required. Include scheme, host and port (for example, `http://localhost:8000`); `127.0.0.1` is a different origin. SillyMemory connects directly from the browser. No `enableCorsProxy` setting or SillyTavern restart is required for this candidate. Published 0.1.0 still uses the proxy; these instructions apply after installing the direct-CORS candidate or its approved release. See [direct CORS configuration and validation](docs/direct-cors.md).
 4. Reload SillyTavern. Open **Extensions → SillyMemory**. Enter your region-specific HTTPS base origin, project name, and project API key from LambdaDB. The endpoint field accepts an origin such as `https://<regional-host>`, without `/projects/...`. The extension adds the project path. There is no hardcoded global endpoint.
-5. Click **Use key for this session**. The input is immediately cleared. The key lives only in the client instance's browser memory, never in saved settings, local/session storage, a URL, or extension logs. A reload or **Forget key** requires re-entry. Other trusted extensions and the browser/server runtime can still observe network requests; this is not an isolation boundary against malicious extensions.
+5. Click **Use key for this session**. The input is immediately cleared. The key lives only in the client instance's browser memory, never in saved settings, local/session storage, a URL, or extension logs. A reload or **Forget key** requires re-entry. Other trusted extensions and the browser runtime can still observe network requests; this is not an isolation boundary against malicious extensions.
 6. Click **Test synthetic upsert / query / delete**. This creates a dedicated `smtest_<random>` collection, upserts a synthetic story, queries `knn.queryText`, deletes its document, verifies it no longer appears, then deletes the owned test collection. This consumes LambdaDB resources and inference usage. The test must pass before **Prepare chat memory** becomes available.
 7. If a test fails, use **Clean up test collection**. Pending test identity is preserved across reloads so cleanup can be retried after reconnecting. A failed cleanup is not reported as successful.
 8. Click **Prepare chat memory**, select a character chat, then enable memory. The extension creates a separate owned collection on first use of each chat or native branch. Default settings retain 12 recent messages and allow 800 memory tokens, including excerpt content and source labels; provider message-envelope overhead is managed by the host. Configure the bounds in the panel. Disable built-in Vector Storage chat vectorization and other prompt-rewriting memory extensions for this prototype.
@@ -134,7 +128,7 @@ or undo remote data changes.
 
 ## Data, usage, and cleanup
 
-A LambdaDB project/API key with collection create/read/delete and document write/query access is required. Source text, speaker labels, message/chunk positions, hashed scope/revision identities, and query text go through your SillyTavern server to LambdaDB. LambdaDB sends embedding inputs to its managed embedding provider (currently configured here as OpenAI `text-embedding-3-small`). Each retrieval submits up to two distinct queries concurrently. Managed embeddings incur inference usage; storage and retrieval have service costs. See [managed embeddings](https://docs.lambdadb.ai/guides/collections/managed-embeddings) and [LambdaDB costs](https://docs.lambdadb.ai/guides/costs/understanding-costs).
+A LambdaDB project/API key with collection create/read/delete and document write/query access is required. Source text, speaker labels, message/chunk positions, hashed scope/revision identities, and query text go directly from your browser to LambdaDB. LambdaDB sends embedding inputs to its managed embedding provider (currently configured here as OpenAI `text-embedding-3-small`). Each retrieval submits up to two distinct queries concurrently. Managed embeddings incur inference usage; storage and retrieval have service costs. See [managed embeddings](https://docs.lambdadb.ai/guides/collections/managed-embeddings) and [LambdaDB costs](https://docs.lambdadb.ai/guides/costs/understanding-costs).
 
 Ordinary document deletion removes current retrievable records; snapshot retention and provider backup policies are separate. The extension requests one-day snapshot retention and creates no version savepoints. Removing the extension or deleting a native SillyTavern chat does **not** delete its remote collection automatically. Use current-chat deletion before removing the local chat, or all-owned cleanup afterward. Renaming preserves the same memory. Delete all owned memory and any pending test collection before uninstalling or changing connection settings.
 
@@ -149,7 +143,7 @@ ST_SOURCE=/path/to/pinned/SillyTavern SM_ENV_FILE=/path/to/.env.local npm run te
 ```
 
 This uses a disposable profile, real settings buttons, native rename/branch/copy,
-managed embeddings and the built-in proxy. It creates at most four small synthetic
+managed embeddings and direct browser CORS (host proxy disabled). It creates at most four small synthetic
 collections, invokes no generation model, and verifies owned cleanup. See
 [the validation record](docs/chat-collections.md) for boundaries and retained evidence.
 
@@ -220,6 +214,8 @@ ST_SOURCE=/absolute/path/to/pinned/SillyTavern npm run test:live
 ```
 
 This starts an isolated host on localhost port 18127 (`ST_LIVE_PORT` overrides it), creates dedicated `smtest_*` and `smlive_*` collections, and uses only synthetic text. It incurs real service usage. The harness reads the credential file into process memory and passes the key to the browser client without changing normal extension key storage. It disables host log output and records only check names/status codes, not credentials or response bodies. Cleanup checks ownership and confirms collection disappearance. If cleanup fails, `artifacts/live-pending.json` preserves the exact non-secret resource identities; resolve cleanup before another run. Results are in `artifacts/live-smoke.json`. This live harness tests the shipped client and memory engine in a real browser; the complete settings-button/LLM flow is a separate test boundary.
+
+Historical proxy-path results below retain their original test boundary; see [direct-CORS acceptance](docs/direct-cors.md) for current transport validation.
 
 Run `npm run test:live:faults` to additionally discard an acknowledged real upsert response and delay a real query response across an edit. The browser test wrapper injects these failures after the real service/proxy operation; it does not provoke a service outage. The latest run passed 15 checks, including durable-journal recovery with a fresh engine, rejection of stale live results, and owned collection cleanup. It calls live LambdaDB but no generation model. Evidence and any failed-cleanup record use `artifacts/live-faults.json` and `artifacts/live-faults-pending.json`. The emulator fault test exercises actual page reload; this live response-loss case recreates the engine while retaining browser storage. See the [validation record](docs/validation.md) for boundaries and the host save/reload caveat. Fault commands overwrite their default reports; use `SM_ARTIFACT_TAG` to preserve a named run.
 
@@ -327,7 +323,7 @@ See [architecture](docs/architecture.md), [pinned contracts](docs/contracts.md),
 
 ## Deferred
 
-Direct browser CORS, persistent keys, versioned savepoints/rollback, Data Bank, World Info, multi-user administration, and external result downloads are outside this MVP. The synthetic built-in-memory comparison is documented separately; no general recall-quality, latency, or total operating-cost improvement is claimed. Stable release readiness remains under evaluation.
+Persistent keys, versioned savepoints/rollback, Data Bank, World Info, multi-user administration, and external result downloads are outside this MVP. The synthetic built-in-memory comparison is documented separately; no general recall-quality, latency, or total operating-cost improvement is claimed. Stable release readiness remains under evaluation.
 
 The [latest-user/context query policy](docs/query-policy.md) documents the retrieval change, its regression and held-out checks, and commands for reproducing them. The original comparison and vector diagnostic remain historical evidence from their recorded source hashes.
 

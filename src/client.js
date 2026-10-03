@@ -26,11 +26,11 @@ export function scopeFilter(owner, scope) {
 
 export class LambdaClient {
     #key;
-    constructor(config, key, { fetcher = (...args) => globalThis.fetch(...args), headers = () => ({}), timeoutMs = 15000 } = {}) {
+    constructor(config, key, { fetcher = (...args) => globalThis.fetch(...args), timeoutMs = 15000 } = {}) {
         this.config = connectionConfig(config);
         this.#key = key.trim();
         if (!this.#key) throw new ConnectionError('Enter your API key again. Keys are cleared on reload.');
-        this.fetcher = fetcher; this.headers = headers; this.timeoutMs = timeoutMs;
+        this.fetcher = fetcher; this.timeoutMs = timeoutMs;
     }
     forget() { this.#key = ''; }
     async request(path, { method = 'POST', body, signal } = {}) {
@@ -41,12 +41,12 @@ export class LambdaClient {
             ? new ConnectionError('Memory request canceled.', 0, 'canceled')
             : timeout.aborted
                 ? new ConnectionError('Memory request timed out.', 0, 'timeout')
-                : new ConnectionError('Memory request failed. Check the server and network.', 0, 'network');
+                : new ConnectionError('Memory request failed. Check the endpoint, network and LambdaDB CORS access for this page’s origin.', 0, 'network');
         let response;
         try {
-            response = await this.fetcher(`/proxy/${encodeURIComponent(target)}`, {
-                method, credentials: 'same-origin', redirect: 'error',
-                headers: { ...this.headers(), 'Content-Type': 'application/json', 'x-api-key': this.#key },
+            response = await this.fetcher(target, {
+                method, mode: 'cors', credentials: 'omit', redirect: 'error',
+                headers: { 'Content-Type': 'application/json', 'x-api-key': this.#key },
                 body: body === undefined ? undefined : JSON.stringify(body),
                 signal: signal ? AbortSignal.any([signal, timeout]) : timeout,
             });
@@ -54,21 +54,12 @@ export class LambdaClient {
             throw failure();
         }
         if (!response.ok) {
-            // Pinned SillyTavern rewrites upstream 401 to 400 Unauthorized to
-            // avoid resetting its own HTTP Basic authentication.
-            const status = response.status === 400 && response.statusText.toLowerCase() === 'unauthorized' ? 401 : response.status;
-            if (status === 404) {
-                // A disabled host proxy also returns 404. It must never count as
-                // confirmed collection deletion. Inspect only its fixed marker.
-                let body;
-                try { body = await response.text(); } catch { throw failure(); }
-                if (body.includes('CORS proxy is disabled')) throw new ConnectionError('CORS proxy is disabled. Set enableCorsProxy: true and restart SillyTavern.');
-            }
+            const status = response.status;
             const messages = {
                 400: 'Invalid request or authentication failure. Check configuration and re-enter your project key.',
                 401: 'Authentication failed. Re-enter your project API key.',
-                403: 'Access denied. Check your project key and SillyTavern proxy protections.',
-                404: 'Resource or proxy unavailable. Check endpoint/project, enableCorsProxy: true, and restart SillyTavern.',
+                403: 'Access denied. Check your project key and permissions.',
+                404: 'Resource unavailable. Check the endpoint, project and collection.',
                 409: 'Collection already exists. Do not adopt an unrelated collection.',
                 429: 'LambdaDB is busy or over its request limit. Retry later.',
             };

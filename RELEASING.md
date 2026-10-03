@@ -123,6 +123,10 @@ mode it removes the test's remote data before rollback; it does not prove that
 
 ## Installation smoke test
 
+The current direct-CORS candidate is tested with the host proxy disabled. Its
+[current transport evidence](docs/direct-cors.md) supplements earlier proxy-path
+release checks; run final installation acceptance on the combined release tree.
+
 Use an isolated pinned host checkout with no global SillyMemory symlink. The
 script creates/removes its own host data directory and browser profile. It
 installs public main from the actual GitHub URL through the UI. In the disposable
@@ -158,7 +162,11 @@ SM_UPDATE_BRANCH=your-published-candidate-branch SM_ARTIFACT_TAG=upgrade-unique 
 This reads the existing `LAMBDADB_BASE_URL`, `LAMBDADB_PROJECT_NAME` and
 `LAMBDADB_PROJECT_API_KEY` values. It creates at most four synthetic owned
 collections: transport gate, 0.1.0 shared memory, upgraded parent and native
-branch. It verifies first-sync reindexing, legacy preservation, rename/branch/edit
+branch. Only the old 0.1.0 setup uses the proxy. After the UI update the runner
+restarts the isolated host with its proxy disabled, then records direct requests
+and collection intent at the canonical endpoint origin. This restart is a test
+assertion, not a requirement for users updating the extension. It verifies
+first-sync reindexing, legacy preservation, rename/branch/edit
 isolation, managed queryText through the interceptor, key re-entry and both
 remote deletion controls. No generation model is called; this is not a complete
 provider-generation or answer-quality test. Screenshots are disabled in live

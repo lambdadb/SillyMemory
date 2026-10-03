@@ -1,5 +1,6 @@
-// Real pinned SillyTavern + real Chromium + real CORS proxy; LambdaDB is emulated.
+// Real pinned SillyTavern + real Chromium + direct browser CORS; LambdaDB is emulated.
 // Never use this harness with personal data or a real API key.
+import { emulatorCors } from './emulator-cors.mjs';
 import { faultController, runFaultScenarios } from './fault-scenarios.mjs';
 import { chromium } from '@playwright/test';
 import assert from 'node:assert/strict';
@@ -28,11 +29,12 @@ try { await lstat(extension); } catch (error) { if (error.code !== 'ENOENT') thr
 assert.equal(await realpath(extension), root, 'Host extension must point to the checkout under test.');
 const cert = path.join(work, 'cert.pem'), key = path.join(work, 'key.pem');
 execFileSync('openssl', ['req', '-x509', '-newkey', 'rsa:2048', '-nodes', '-keyout', key, '-out', cert, '-days', '1', '-subj', '/CN=localhost', '-addext', 'subjectAltName=DNS:localhost,IP:127.0.0.1'], { stdio: 'ignore' });
-const collections = new Map(); const calls = []; let delayedQuery = 0; let staleHits = []; let failQuery = false;
+const collections = new Map(); const calls = []; let delayedQuery = 0; let staleHits = []; let failQuery = false; let corsEnabled = true; let proxyRequests = 0; let preflights = 0;
 const remote = createServer({ key: await readFile(key), cert: await readFile(cert) }, async (req, res) => {
+    if (emulatorCors(req, res, corsEnabled)) { preflights++; return; }
     const buffers = []; for await (const b of req) buffers.push(b);
     const body = buffers.length ? JSON.parse(Buffer.concat(buffers).toString()) : {};
-    calls.push({ method: req.method, path: req.url, body, keyPresent: req.headers['x-api-key'] === 'synthetic-session-key', cookiePresent: Boolean(req.headers.cookie), csrfPresent: Boolean(req.headers['x-csrf-token']) });
+    calls.push({ method: req.method, path: req.url, body, keyPresent: req.headers['x-api-key'] === 'synthetic-session-key', cookiePresent: Boolean(req.headers.cookie), csrfPresent: Boolean(req.headers['x-csrf-token']), origin: req.headers.origin });
     const send = (status, value = {}) => { res.writeHead(status, { 'Content-Type': 'application/json' }); res.end(JSON.stringify(value)); };
     if (req.headers['x-api-key'] !== 'synthetic-session-key') return send(401, { message: 'synthetic auth failure' });
     const parts = new URL(req.url, 'https://localhost').pathname.split('/').filter(Boolean);
@@ -85,7 +87,6 @@ try {
     await start(false);
     const disabled = await fetch(`${url}/proxy/${encodeURIComponent(`${endpoint}/projects/synthetic/collections`)}`);
     check('real server rejects proxy when disabled', disabled.status === 404 && (await disabled.text()).includes('CORS proxy is disabled'));
-    await stop(); await start(true);
     // The default profile selects the remote Horde service. This interceptor
     // test generates no model responses; do not make its success depend on
     // Horde availability during startup/reloads. Use an unconnected OpenAI UI.
@@ -94,8 +95,10 @@ try {
     profile.main_api = 'openai';
     await writeFile(profilePath, JSON.stringify(profile));
     browser = await chromium.launch();
-    const browserContext = await browser.newContext({ viewport: { width: 1440, height: 1100 } });
+    const browserContext = await browser.newContext({ viewport: { width: 1440, height: 1100 }, ignoreHTTPSErrors: true });
     const page = await browserContext.newPage();
+    await browserContext.addCookies([{ url: endpoint, name: 'synthetic-remote-cookie', value: 'must-not-send', secure: true, sameSite: 'None' }]);
+    page.on('request', request => { if (new URL(request.url()).pathname.startsWith('/proxy/')) proxyRequests++; });
     debugPage = page; page.setDefaultTimeout(15000);
     page.on('pageerror', e => { errors.push(e.message); pageErrorDetails.push(e.stack); });
     page.on('response', response => {
@@ -115,6 +118,12 @@ try {
     const status = () => field('status').innerText();
     const waitStatus = async text => { await page.waitForFunction(text => document.querySelector('#sillymemory [data-sm="status"]')?.textContent.includes(text), text, { timeout: 30000 }); };
     await field('endpoint').fill(endpoint); await field('project').fill('synthetic');
+    corsEnabled = false;
+    await field('key').fill('synthetic-session-key'); await field('connect').click();
+    await field('gate').click(); await waitStatus('CORS access');
+    check('missing CORS permission fails visibly and cannot confirm cleanup', collections.size === 0 && (await page.evaluate(() => Object.values(localStorage).some(v => v.includes('testCollection')))));
+    corsEnabled = true;
+    await field('cleanup').click(); await waitStatus('No pending');
     await field('key').fill('wrong-synthetic-key'); await field('connect').click();
     await field('gate').click(); await waitStatus('Authentication failed');
     check('auth failure is visible with reconnect guidance', (await status()).includes('Authentication failed') && (await status()).includes('Use key for this session'));
@@ -122,9 +131,9 @@ try {
     await field('cleanup').click(); await waitStatus('No pending');
     if (faultMode) faults.arm('upsert', 'http', 503);
     await field('gate').click(); await waitStatus('Transport gate passed');
-    if (faultMode) check('transport gate retries transient upsert readiness through the proxy', calls.filter(c => c.path.endsWith('/docs/upsert')).length === 2);
-    check('synthetic gate traverses the real proxy and cleans up', collections.size === 0);
-    check('real proxy forwards x-api-key and strips cookies/CSRF', calls.some(c => c.keyPresent) && calls.every(c => !c.cookiePresent && !c.csrfPresent));
+    if (faultMode) check('transport gate retries transient upsert readiness through direct CORS', calls.filter(c => c.path.endsWith('/docs/upsert')).length === 2);
+    check('synthetic gate uses direct browser CORS with the host proxy disabled and cleans up', collections.size === 0);
+    check('direct requests carry the key and origin but omit cookies and host CSRF', calls.some(c => c.keyPresent) && calls.every(c => !c.cookiePresent && !c.csrfPresent && c.origin === url) && preflights > 0 && proxyRequests === 0);
     await field('provision').click(); await waitStatus('Chat memory is ready');
     check('preparation creates no collection before a chat is enabled', collections.size === 0);
     await page.locator('#sillymemory .inline-drawer-toggle').scrollIntoViewIfNeeded();
@@ -225,17 +234,17 @@ try {
     await page.locator('#sillymemory details').evaluate(e => { e.open = true; });
     await field('inspection').scrollIntoViewIfNeeded();
     if (!faultMode) await page.screenshot({ path: path.join(artifacts, 'settings.png') });
-    if (faultMode) { staleHits = []; faultResults = await runFaultScenarios({ page, field, waitStatus, prompt, check, faults, collections, calls, restartHost: recoveryMode ? async () => { const exited = new Promise(resolve => server.once('exit', resolve)); server.kill('SIGKILL'); await exited; await start(true); } : undefined, screenshot: name => page.screenshot({ path: path.join(artifacts, `${name}${artifactTag ? `-${artifactTag}` : ''}.png`) }) }); }
+    if (faultMode) { staleHits = []; faultResults = await runFaultScenarios({ page, field, waitStatus, prompt, check, faults, collections, calls, restartHost: recoveryMode ? async () => { const exited = new Promise(resolve => server.once('exit', resolve)); server.kill('SIGKILL'); await exited; await start(false); } : undefined, screenshot: name => page.screenshot({ path: path.join(artifacts, `${name}${artifactTag ? `-${artifactTag}` : ''}.png`) }) }); }
     else { page.once('dialog', dialog => dialog.accept()); await field('delete').click(); await waitStatus('no longer accessible'); }
     check('owned remote deletion leaves no collections', collections.size === 0);
     await page.reload(); await page.locator('#sillymemory').waitFor({ state: 'attached', timeout: 45000 });
     check('final reload again requires key entry', await field('key').inputValue() === '' && !await field('enabled').isChecked());
     if (faultMode) check('fault run has no uncaught browser page errors', errors.length === 0);
     const sourceSha256 = {};
-    for (const file of ['index.js', 'manifest.json', 'settings.html', 'style.css', 'src/chunking.js', 'src/client.js', 'src/chat-collections.js', 'src/gate.js', 'src/memory.js', 'src/context.js', 'src/status.js', 'scripts/browser-smoke.mjs', 'scripts/fault-scenarios.mjs', 'scripts/recovery-scenarios.mjs']) {
+    for (const file of ['index.js', 'manifest.json', 'settings.html', 'style.css', 'src/chunking.js', 'src/client.js', 'src/chat-collections.js', 'src/gate.js', 'src/memory.js', 'src/context.js', 'src/status.js', 'scripts/browser-smoke.mjs', 'scripts/emulator-cors.mjs', 'scripts/fault-scenarios.mjs', 'scripts/recovery-scenarios.mjs']) {
         sourceSha256[file] = createHash('sha256').update(await readFile(path.join(root, file))).digest('hex');
     }
-    await writeFile(path.join(artifacts, artifactName), JSON.stringify({ passed: true, faultResults, sourceSha256, time: new Date().toISOString(), sillyTavern: revision, node: process.version, browser: browser.version(), upstream: 'Local HTTPS LambdaDB emulator; no live managed embeddings', checks, pageErrors: errors, requestCount: calls.length, remainingCollections: collections.size }, null, 2));
+    await writeFile(path.join(artifacts, artifactName), JSON.stringify({ passed: true, faultResults, sourceSha256, time: new Date().toISOString(), sillyTavern: revision, node: process.version, browser: browser.version(), upstream: 'Local HTTPS LambdaDB emulator; no live managed embeddings', checks, pageErrors: errors, requestCount: calls.length, preflights, proxyRequests, remainingCollections: collections.size }, null, 2));
 } catch (error) {
     if (faultMode) await writeFile(path.join(artifacts, artifactName), JSON.stringify({ passed: false, checks, faultResults, faultObservations: faults.observations, failure: error.message, pageErrors: errors, pageErrorDetails, hostFailures, remainingCollections: collections.size }, null, 2));
     console.error('Browser failure status:', await debugPage?.locator('[data-sm="status"]').innerText().catch(() => 'unavailable'));

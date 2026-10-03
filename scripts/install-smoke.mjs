@@ -41,16 +41,20 @@ const entries = [], pendingPath = path.join(artifacts, `${artifactTag}-pending.j
 if (liveMemory) await writeFile(pendingPath, '[]', { flag: 'wx' });
 const redact = value => { let result = JSON.stringify(value, null, 2); for (const secret of Object.values(credentials || {})) result = result.replaceAll(secret, '[REDACTED]'); return result; };
 const harnessSha256 = createHash('sha256').update(await readFile(fileURLToPath(import.meta.url))).digest('hex');
-const report = { liveMemory, cleanupComplete: !liveMemory, helperSha256: createHash('sha256').update(await readFile(new URL('./install-memory.mjs', import.meta.url))).digest('hex'), harnessSha256, host: revision, repository, installFolder, initialBranch: 'main', mainSha, updateBranch, updateSha, checks: [], api: [], pageErrors: [], proxyRequests: 0, passed: false };
+const report = { liveMemory, cleanupComplete: !liveMemory, helperSha256: createHash('sha256').update(await readFile(new URL('./install-memory.mjs', import.meta.url))).digest('hex'), harnessSha256, host: revision, repository, installFolder, initialBranch: 'main', mainSha, updateBranch, updateSha, checks: [], api: [], pageErrors: [], proxyRequests: 0, directRequests: 0, traffic: { legacy: { proxy: 0, direct: 0 }, candidate: { proxy: 0, direct: 0 }, rollback: { proxy: 0, direct: 0 } }, passed: false };
 const check = (name, value) => { assert(value, name); report.checks.push(name); console.log(`PASS ${name}`); };
-let server, browser, page, memory;
+let server, browser, page, memory, phase = 'legacy';
 try {
     const configPath = path.join(work, 'config.yaml');
     await writeFile(configPath, await readFile(path.join(source, 'default/config.yaml')));
-    server = spawn(process.execPath, ['server.js', '--configPath', configPath, '--dataRoot', path.join(work, 'data'), '--port', String(port), '--listen', 'false', '--browserLaunchEnabled', 'false', '--corsProxy', 'true'], { cwd: source, stdio: 'ignore' });
-    let ready = false;
-    for (let i = 0; i < 90; i++) { assert(server.exitCode === null, 'Host exited'); try { if ((await fetch(url)).ok) { ready = true; break; } } catch {} await new Promise(r => setTimeout(r, 500)); }
-    assert(ready, 'Host startup timeout');
+    async function startHost(enableProxy) {
+        server = spawn(process.execPath, ['server.js', '--configPath', configPath, '--dataRoot', path.join(work, 'data'), '--port', String(port), '--listen', 'false', '--browserLaunchEnabled', 'false', '--corsProxy', String(enableProxy)], { cwd: source, stdio: 'ignore' });
+        let ready = false;
+        for (let i = 0; i < 90; i++) { assert(server.exitCode === null, 'Host exited'); try { if ((await fetch(url)).ok) { ready = true; break; } } catch {} await new Promise(r => setTimeout(r, 500)); }
+        assert(ready, 'Host startup timeout');
+    }
+    // Only the published 0.1.0 live setup still requires the old host proxy.
+    await startHost(liveMemory);
     // The host default automatically polls remote Horde. Installation requires
     // no model connection; keep this profile offline, as in the live harness.
     const profilePath = path.join(work, 'data/default-user/settings.json');
@@ -59,19 +63,27 @@ try {
     browser = await chromium.launch(); page = await browser.newPage({ viewport: { width: 1440, height: 1100 } }); page.setDefaultTimeout(30000);
     page.on('pageerror', error => report.pageErrors.push(error.message));
     page.on('dialog', dialog => { void dialog.accept().catch(error => report.pageErrors.push(error.message)); });
-    await page.route('**/proxy/**', async route => {
-        report.proxyRequests++; if (!liveMemory) return route.abort();
+    const observeMemory = async route => {
+        const req = route.request(), requestUrl = new URL(req.url());
+        const proxy = requestUrl.origin === url && requestUrl.pathname.startsWith('/proxy/');
+        const transport = proxy ? 'proxy' : 'direct';
+        report[proxy ? 'proxyRequests' : 'directRequests']++;
+        report.traffic[phase][transport]++;
+        if (!liveMemory) return route.abort();
         try {
-            const req = route.request(), target = new URL(decodeURIComponent(new URL(req.url()).pathname.slice('/proxy/'.length)));
+            assert(!(phase === 'candidate' && proxy), 'Updated client must not use the host proxy');
+            const target = proxy ? new URL(decodeURIComponent(requestUrl.pathname.slice('/proxy/'.length))) : requestUrl;
             assert.equal(target.origin, new URL(credentials.endpoint).origin);
             if (req.method() === 'POST' && target.pathname.endsWith('/collections')) {
                 assert(entries.length < 4, 'Live installation collection bound'); const body = req.postDataJSON();
-                entries.push({ collection: body.collectionName, owner: body.tags.owner, scope: body.tags.chat });
+                entries.push({ collection: body.collectionName, owner: body.tags.owner, scope: body.tags.chat, transport });
                 await writeFile(pendingPath, JSON.stringify(entries, null, 2));
             }
             await route.continue();
         } catch (error) { report.pageErrors.push(error.message); await route.abort().catch(() => {}); }
-    });
+    };
+    await page.route('**/proxy/**', observeMemory);
+    if (liveMemory) await page.route(`${new URL(credentials.endpoint).origin}/**`, observeMemory);
     page.on('response', response => { if (/\/api\/extensions\/(install|update)$/.test(new URL(response.url()).pathname)) report.api.push({ operation: new URL(response.url()).pathname.split('/').at(-1), status: response.status() }); });
     await page.goto(url); await page.getByText('Welcome to SillyTavern!', { exact: true }).waitFor(); await page.getByText('Save', { exact: true }).last().click();
     await page.locator('#extensions-settings-button .drawer-toggle').click();
@@ -119,6 +131,13 @@ try {
     await block.locator('.btn_update').click();
     const response = await updateResponse; assert(response.ok(), 'Update API failed');
     check('real UI update pulls the candidate from GitHub', git(installed, 'rev-parse', 'HEAD') === updateSha && !(await response.json()).isUpToDate);
+    if (liveMemory) {
+        server.kill('SIGTERM'); await new Promise(r => server.once('exit', r));
+        await startHost(false);
+        const response = await fetch(`${url}/proxy/${encodeURIComponent(`${credentials.endpoint}/projects/${credentials.project}/collections`)}`);
+        check('host proxy is disabled before upgraded memory is enabled', response.status === 404 && (await response.text()).includes('CORS proxy is disabled'));
+    }
+    phase = 'candidate';
     await page.reload(); await page.locator('#sillymemory').waitFor({ state: 'attached', timeout: 45000 }); await settings();
     const upgraded = await page.evaluate(() => { const owner = SillyTavern.getContext().extensionSettings.sillymemory.owner; return { owner, state: JSON.parse(localStorage.getItem(`sillymemory:state:${owner}`)) }; });
     assert.equal(upgraded.owner, saved.owner);
@@ -135,6 +154,7 @@ try {
     await page.reload(); await page.locator('#sillymemory').waitFor({ state: 'attached' }); await settings();
     check('explicit warning-only preference survives reload', !await field('stopOnLoss').isChecked());
     check('updated settings link to the canonical source and license', await page.locator('#sillymemory a', { hasText: 'Source' }).getAttribute('href') === repository && await page.locator('#sillymemory a', { hasText: 'AGPL-3.0-only' }).getAttribute('href') === `${repository}/blob/main/LICENSE`);
+    check('candidate panel explains direct CORS without a host proxy setup', (await page.locator('#sillymemory').innerText()).includes('No SillyTavern proxy setting or restart is needed.'));
     if (memory) { await memory.afterUpdate(); await memory.cleanup(); report.cleanupComplete = true; await rm(pendingPath); }
     const candidate = JSON.parse(await readFile(path.join(installed, 'manifest.json'), 'utf8'));
     check('candidate manifest version agrees with package version', candidate.version === JSON.parse(await readFile(path.join(installed, 'package.json'), 'utf8')).version);
@@ -145,6 +165,7 @@ try {
     check('extension manager displays the candidate version', (await page.locator('.extensions_info .extension_block').filter({ hasText: 'SillyMemory' }).innerText()).includes(candidate.version));
     if (!liveMemory) await page.screenshot({ path: path.join(artifacts, `${artifactTag}.png`) });
     // Exercise the published baseline tag only in the disposable clone.
+    phase = 'rollback';
     git(installed, 'switch', '--detach', report.rollbackTag);
     await page.reload(); await page.locator('#sillymemory').waitFor({ state: 'attached', timeout: 45000 }); await settings();
     check('published-tag rollback loads the previous version without changing owned settings', git(installed, 'rev-parse', 'HEAD') === report.rollbackSha && JSON.parse(await readFile(path.join(installed, 'manifest.json'), 'utf8')).version === report.initialVersion && await field('budget').inputValue() === '600' && await page.evaluate(owner => SillyTavern.getContext().extensionSettings.sillymemory.owner === owner, saved.owner));
@@ -154,7 +175,8 @@ try {
     const persisted = await page.evaluate(() => JSON.stringify({ local: { ...localStorage }, session: { ...sessionStorage }, settings: SillyTavern.getContext().extensionSettings }));
     check('session keys are absent from persistent browser state', !persisted.includes('synthetic-release-session-key') && (!credentials || !persisted.includes(credentials.key)));
     if (liveMemory) check('real key is absent from persisted host settings', !(await readFile(profilePath, 'utf8')).includes(credentials.key));
-    check('installation/update/rollback has no uncaught page errors or unexpected proxy traffic', report.pageErrors.length === 0 && (liveMemory ? report.proxyRequests > 0 : report.proxyRequests === 0));
+    check('installation/update/rollback has no uncaught page errors or unexpected proxy traffic', report.pageErrors.length === 0 && report.traffic.candidate.proxy === 0 && (liveMemory ? report.traffic.legacy.proxy > 0 && report.traffic.candidate.direct > 0 : report.proxyRequests === 0 && report.directRequests === 0));
+    if (liveMemory) check('both legacy and direct collection creation are journaled within the four-collection bound', entries.filter(e => e.transport === 'proxy').length === 2 && entries.filter(e => e.transport === 'direct').length === 2);
     report.passed = true;
 } catch (error) {
     report.failure = error.message;
