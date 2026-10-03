@@ -1,5 +1,10 @@
 # Built-in Summarize results — 2026-10-01
 
+> Historical evidence: detailed runs and retired tools are preserved at the
+> [pre-cleanup revision](https://github.com/lambdadb/SillyMemory/tree/94b9bc04cf664587ae4c96b7739c22af87897b6b).
+> Reproduction commands below require their recorded producer; see
+> [evidence retention](evidence-retention.md) for archives and recovery.
+
 This actual-host comparison evaluates SillyTavern's built-in Summarize extension
 against a concurrent memory-off control. Earlier Vector Storage and
 SillyMemory results are references from separate runs.
@@ -7,7 +12,7 @@ SillyMemory results are references from separate runs.
 ## What ran
 
 The [frozen protocol](summarize-evaluation.md) and
-[plan](results/summarize-v2-plan.json) use the same 16 English/Korean 60-message
+[plan](https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/summarize-v2-plan.json) use the same 16 English/Korean 60-message
 synthetic cases, unchanged questions/rubrics, SillyTavern 1.19.0 at
 `06bde939fb1e9c4c8d8641d810f0a916b5bce127`, `gpt-4.1-mini-2025-04-14`, temperature 0,
 context 1,536 and maximum output 256. Each case receives one answer per arm;
@@ -33,8 +38,8 @@ bridge process.
 
 The initial run stopped at its four-summary-call per-case limit, after 34
 successful provider calls. The Korean negation case had reached only index 55.
-The [interrupted report](results/summarize-v1-interrupted.json) and
-[initial frozen plan](results/summarize-v1-initial-plan.json) are retained. The
+The [interrupted report](https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/summarize-v1-interrupted.json) and
+[initial frozen plan](https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/summarize-v1-initial-plan.json) are retained. The
 continuation increased the cap to six, restored the exact prior summary metadata,
 and reused all ten existing answers and 24 summaries without regeneration.
 The final report's prefix must match the interrupted report exactly. Provider
@@ -128,11 +133,11 @@ be counted as a reduction in provider input tokens.
 
 ## Review and reproduction
 
-The [raw report](results/summarize-v2-raw.json),
+The [raw report](https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/summarize-v2-raw.json),
 [derived transport/usage summary](results/summarize-v2-summary.json),
-[unfilled review packet](results/summarize-v2-review.json),
-[assistant annotations](results/summarize-v2-assistant-annotations.json), and
-[derived provisional score](results/summarize-v2-assistant-score.json) separate
+[unfilled review packet](https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/summarize-v2-review.json),
+[assistant annotations](https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/summarize-v2-assistant-annotations.json), and
+[derived provisional score](https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/summarize-v2-assistant-score.json) separate
 mechanical delivery checks from answer correctness and final-summary fidelity.
 Exact-source quotation coverage is not used to grade paraphrased summaries.
 Assistant grades are not blinded or independent human review.
@@ -158,7 +163,7 @@ native query/insert requests and a local bridge embedding request. All three
 returned 403, were recorded and raised failure signals; no request was forwarded
 by the bridge. The disposable profile/server were removed. Reproduce with
 `ST_SOURCE=/pinned/host node scripts/summary-traffic-smoke.mjs`; the
-[fault-injection report](results/summarize-traffic-guard-smoke.json) is local
+[fault-injection report](https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/summarize-traffic-guard-smoke.json) is local
 browser/bridge evidence, not a paid provider or full generation rerun.
 
 The product remains experimental. This change adds test tooling and evidence;

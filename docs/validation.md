@@ -1,5 +1,10 @@
 # Validation record
 
+> Historical evidence: detailed runs and retired tools are preserved at the
+> [pre-cleanup revision](https://github.com/lambdadb/SillyMemory/tree/94b9bc04cf664587ae4c96b7739c22af87897b6b).
+> Reproduction commands below require their recorded producer; see
+> [evidence retention](evidence-retention.md) for archives and recovery.
+
 Date: 2026-09-27. This is a local MVP implementation with a successful synthetic live LambdaDB integration test; it is not a production release or an LLM-quality benchmark.
 
 ## Source review
@@ -32,9 +37,9 @@ The browser test calls the **real host interceptor dispatcher** on synthetic pro
 
 Generated evidence (ignored by Git):
 
-- [`../artifacts/browser-smoke.json`](../artifacts/browser-smoke.json): actual run results.
-- [`../artifacts/setup.png`](../artifacts/setup.png): settings UI with a synthetic endpoint; the key input is empty.
-- [`../artifacts/settings.png`](../artifacts/settings.png): memory inspection and token budget in the running host.
+- `../artifacts/browser-smoke.json` (`artifacts/browser-smoke.json`, local-only): actual run results.
+- `../artifacts/setup.png` (`artifacts/setup.png`, local-only): settings UI with a synthetic endpoint; the key input is empty.
+- `../artifacts/settings.png` (`artifacts/settings.png`, local-only): memory inspection and token budget in the running host.
 
 The screenshot content was opened for visual inspection. These files are local review evidence, not publication assets or screenshots of live LambdaDB results.
 
@@ -63,7 +68,7 @@ The run verified:
 - The real key is absent from localStorage, sessionStorage, extension settings, and persisted host settings. A browser reload removes the in-memory test client and starts the UI disabled with an empty key input.
 - Both owned live-test collections are deleted, with API disappearance confirmed. No pending-cleanup record remains.
 
-Review [`../artifacts/live-smoke.json`](../artifacts/live-smoke.json) for exact check names, HTTP statuses, cleanup outcome, and source hashes. The harness intentionally omits endpoint/project values, request headers, credentials, response bodies, traces, and host console output. It does not modify the user's credential file. `.env.local` remains ignored and untracked.
+Review `../artifacts/live-smoke.json` (`artifacts/live-smoke.json`, local-only) for exact check names, HTTP statuses, cleanup outcome, and source hashes. The harness intentionally omits endpoint/project values, request headers, credentials, response bodies, traces, and host console output. It does not modify the user's credential file. `.env.local` remains ignored and untracked.
 
 Scope boundary: this run imports the **shipped client, gate, and memory engine into the real browser**. It drives synthetic snapshots directly rather than exercising all settings buttons, native edit gestures, or the complete `Generate` pipeline against LambdaDB. Native branch creation, the host event/interceptor integration, and failure/race paths were covered by the separate emulator-backed browser run above. The live branch check verifies the engine's real remote scope behavior; it does not repeat native branch UI creation against the service.
 
@@ -81,7 +86,7 @@ The run completed **27 checks and nine generations**. It captured the actual fin
 
 For this synthetic conversation, the memory-off request serialized `messages` to **8,342 characters**, compared with **1,359** with memory on. The host tokenizer counted **1,452 versus 248 tokens** in concatenated message content. These are fixture observations, not provider billing tokens: they exclude provider message framing, use the host's configured tokenizer, and do not prove general savings. The 220-token memory limit is separate from the entire request size. Fixture latency and answers cannot establish model latency, recall quality, or cost.
 
-Review [`../artifacts/generation-fixture-model.json`](../artifacts/generation-fixture-model.json) for all final synthetic prompts/replies, events, check names, cleanup, and tested source hashes. The harness suppresses host logs and redacts configured secrets and connection values from its report. It does not read or send personal chats.
+Review `../artifacts/generation-fixture-model.json` (`artifacts/generation-fixture-model.json`, local-only) for all final synthetic prompts/replies, events, check names, cleanup, and tested source hashes. The harness suppresses host logs and redacts configured secrets and connection values from its report. It does not read or send personal chats.
 
 No real generation model was called during the response-fixture run above. Missing model configuration was verified to fail before host startup or remote resource creation. The subsequent live-model run is recorded separately below.
 
@@ -113,8 +118,8 @@ Both the failed and successful full runs confirmed deletion of their owned test 
 
 Evidence:
 
-- [`../artifacts/generation-live-model.json`](../artifacts/generation-live-model.json): final prompts, actual Gemini replies, request options, available usage, checks, cleanup, and matching source hashes.
-- [`../artifacts/generation-live-model-initial-failure.json`](../artifacts/generation-live-model-initial-failure.json): preserved initial HTTP 400 run and successful cleanup. This earlier report recorded the status but not the provider error body; the rejected-field diagnosis came from the subsequent targeted request.
+- `../artifacts/generation-live-model.json` (`artifacts/generation-live-model.json`, local-only): final prompts, actual Gemini replies, request options, available usage, checks, cleanup, and matching source hashes.
+- `../artifacts/generation-live-model-initial-failure.json` (`artifacts/generation-live-model-initial-failure.json`, local-only): preserved initial HTTP 400 run and successful cleanup. This earlier report recorded the status but not the provider error body; the rejected-field diagnosis came from the subsequent targeted request.
 - [`../scripts/generation-smoke.mjs`](../scripts/generation-smoke.mjs): repeatable full-host test with provider response matching and synthetic fact assertions.
 
 ## Korean long-dialogue comparison (partial)
@@ -139,7 +144,7 @@ The first attempt needed a harness fix to expand messages older than the host's 
 
 Every segment confirmed owned collection deletion; no pending cleanup record remains. Source and JSON artifact audits found no configured API keys. The aggregation command was also checked to reject incomplete comparisons by default, cross-model pooling, and duplicate samples. The explicitly partial summary marks `complete: false`, lists the missing case, and computes comparisons from matched pairs only.
 
-Review the [protocol and commands](korean-evaluation.md) and [partial summary](../artifacts/korean-evaluation-summary.json). The summary links and hashes all three Gemini 3.7 source reports. The fixture and runtime hashes match across those segments; runner hashes are retained separately because continuation and bounded retry support were added during the validation. Runtime extension code was not changed.
+Review the [protocol and commands](korean-evaluation.md) and partial summary (`artifacts/korean-evaluation-summary.json`, local-only). The summary links and hashes all three Gemini 3.7 source reports. The fixture and runtime hashes match across those segments; runner hashes are retained separately because continuation and bounded retry support were added during the validation. Runtime extension code was not changed.
 
 After this model's daily quota resets, restore the Gemini endpoint/key and low
 reasoning setting in `.env.local`, then execute only the missing sample. These
@@ -184,7 +189,7 @@ removed its pending record. No LambdaDB or extension runtime changes were needed
 for OpenAI compatibility. Harness changes add an optional artifact tag and a
 summary output path so these results do not overwrite earlier provider evidence.
 
-Review the [OpenAI generation report](../artifacts/generation-live-model-openai-gpt-4.1-mini.json)
+Review the OpenAI generation report (`artifacts/generation-live-model-openai-gpt-4.1-mini.json`, local-only)
 for final messages, provider replies, request options, usage, timings, checks,
 cleanup, and tested source hashes. See the [README](../README.md) for the local
 configuration and repeatable commands.
@@ -244,8 +249,8 @@ node scripts/korean-summary.mjs \
   artifacts/generation-korean-eval-openai-gpt-4.1-mini.json
 ```
 
-Review the [complete summary](../artifacts/korean-evaluation-summary-openai-gpt-4.1-mini.json),
-[raw generation report](../artifacts/generation-korean-eval-openai-gpt-4.1-mini.json),
+Review the complete summary (`artifacts/korean-evaluation-summary-openai-gpt-4.1-mini.json`, local-only),
+raw generation report (`artifacts/generation-korean-eval-openai-gpt-4.1-mini.json`, local-only),
 and [fixed protocol](korean-evaluation.md). The report records actual final prompts,
 answers, usage including cache counts, source hashes, timings, and cleanup; the
 summary binds itself to the report's SHA-256. Earlier provider evidence is preserved.
@@ -300,13 +305,13 @@ only schedules a debounced save. Reloading immediately can restore the prior
 on-disk source. The final test explicitly reopens the saved chat, opens the panel,
 awaits `saveChat()` before reload, and asserts exact post-deletion source contents
 afterward. This does not promise recovery of edits the host has not persisted.
-The initial failed harness [report](../artifacts/fault-smoke-initial-reload-failure.json)
-and [screenshot](../artifacts/fault-initial-reload-failure.png) are retained. Its one
+The initial failed harness report (`artifacts/fault-smoke-initial-reload-failure.json`, local-only)
+and screenshot (`artifacts/fault-initial-reload-failure.png`, local-only) are retained. Its one
 remaining collection was only in the discarded emulator process; that failed
 attempt did not demonstrate successful UI cleanup and contacted no live service.
 The screenshot was opened and inspected during diagnosis.
 
-Review the [successful fault report](../artifacts/fault-smoke.json), including
+Review the successful fault report (`artifacts/fault-smoke.json`, local-only), including
 timeouts, injected operations, checks, and source hashes; the [browser runner](../scripts/browser-smoke.mjs)
 and [fault scenarios](../scripts/fault-scenarios.mjs) define the exact boundaries.
 
@@ -336,7 +341,7 @@ Both owned collections were deleted and confirmed absent; no pending-cleanup
 record remains. Browser storage and persisted settings contained no real key.
 The final source/report scan found neither configured API key, and `.env.local`
 remained unchanged, ignored, and untracked. The report's tested source hashes
-match the final runtime and harness files. Review [live-faults.json](../artifacts/live-faults.json),
+match the final runtime and harness files. Review live-faults.json (`artifacts/live-faults.json`, local-only),
 the [live runner](../scripts/live-smoke.mjs), and [live fault scenarios](../scripts/live-fault-scenarios.mjs).
 
 These checks establish bounded recovery for the tested cases. They do not test
@@ -377,9 +382,9 @@ found neither configured key, and `.env.local` remained unchanged, ignored and
 untracked. No pending cleanup record or owned test host process remained.
 
 Review the [protocol, metrics, failures and interpretation](comparison-evaluation.md),
-[raw evidence](../artifacts/generation-comparison-openai-gpt-4.1-mini.json),
-[summary](../artifacts/comparison-summary-openai-gpt-4.1-mini.json), and
-[zero-generation preflight](../artifacts/generation-comparison-setup-preflight.json).
+raw evidence (`artifacts/generation-comparison-openai-gpt-4.1-mini.json`, local-only),
+summary (`artifacts/comparison-summary-openai-gpt-4.1-mini.json`, local-only), and
+zero-generation preflight (`artifacts/generation-comparison-setup-preflight.json`, local-only).
 The model-only cost estimates exclude embeddings and LambdaDB usage. This bounded
 synthetic experiment does not establish real-user quality or general cost/latency
 benefits.
@@ -404,9 +409,9 @@ The offline verifier checks artifact/source hashes, recomputes exact ranking,
 validates server score order, and replays selection/token counting. The unit suite
 passes 28 tests. No product runtime or previous answer score changed.
 
-Review [raw v2 evidence](../artifacts/retrieval-diagnostic-v2.json),
-[exported vectors](../artifacts/retrieval-vectors-v2.json), and the
-[verified summary](../artifacts/retrieval-summary-v2.json).
+Review raw v2 evidence (`artifacts/retrieval-diagnostic-v2.json`, local-only),
+exported vectors (`artifacts/retrieval-vectors-v2.json`, local-only), and the
+verified summary (`artifacts/retrieval-summary-v2.json`, local-only).
 
 ## Latest-user/context policy validation — 2026-09-27
 
@@ -461,8 +466,8 @@ shared OpenAI account; provider/backend evidence and concurrent-job status are
 unavailable, so the cause is not established.
 
 Review the [policy follow-up and diagnostic commands](query-policy.md),
-[current lifecycle report](../artifacts/generation-live-model-query-policy-resume.json),
-and [batch diagnostic](../artifacts/live-probe-query-policy-batch-diagnostic.json).
+current lifecycle report (`artifacts/generation-live-model-query-policy-resume.json`, local-only),
+and batch diagnostic (`artifacts/live-probe-query-policy-batch-diagnostic.json`, local-only).
 
 ## Completed current-policy comparison continuation — 2026-09-27
 
@@ -484,8 +489,8 @@ The strict complete summary verified source/settings, all sample identities,
 answers/usage, source preservation, actual injection, independent token recount
 and both cleanup boundaries. The 54-sample comparison and current-policy nine-
 generation lifecycle rerun are complete. Earlier partial/failed artifacts remain.
-Review the [complete summary](../artifacts/comparison-summary-query-policy-complete.json),
-[18-sample continuation](../artifacts/generation-comparison-from-36-query-policy-resume-2.json),
+Review the complete summary (`artifacts/comparison-summary-query-policy-complete.json`, local-only),
+18-sample continuation (`artifacts/generation-comparison-from-36-query-policy-resume-2.json`, local-only),
 and [full follow-up interpretation](query-policy.md).
 
 ## Final local commit review — 2026-09-28
@@ -503,8 +508,8 @@ The historical 54-sample comparison was strictly revalidated before modifying
 the harness; it was not rerun. Its exact harness source hashes differ from this
 final review, while all product runtime hashes are identical. See the
 [review, file inventory, and evidence boundaries](review.md),
-[final fault report](../artifacts/fault-smoke-final-review.json), and
-[final live report](../artifacts/generation-live-model-final-review.json).
+final fault report (`artifacts/fault-smoke-final-review.json`, local-only), and
+final live report (`artifacts/generation-live-model-final-review.json`, local-only).
 Raw reports remain Git-ignored local evidence. No public release or push occurred.
 
 ## Public source preparation — 2026-09-28
@@ -518,7 +523,7 @@ licenses remain separate.
 
 All 34 unit tests and runtime syntax checks passed. The real-host browser test
 with the local LambdaDB emulator passed 22 checks, with no remaining emulator
-collections. Review the local [browser report](../artifacts/browser-smoke-public-license.json).
+collections. Review the local browser report (`artifacts/browser-smoke-public-license.json`, local-only).
 This rerun used synthetic credentials and no live provider calls. The JavaScript
 runtime is unchanged from the previous live evaluation; the settings change is a
 source/license notice. This is source publication, not a stable release or a
@@ -557,7 +562,7 @@ checks pass. The local real-host fault harness exercises 63 checks, including:
 - drain-before-delete and complete emulator collection cleanup.
 
 An intermediate rerun failed local journal cleanup after remote deletion had
-already left zero collections. The preserved [failed report](../artifacts/fault-smoke-sync-status-final.json)
+already left zero collections. The preserved failed report (`artifacts/fault-smoke-sync-status-final.json`, local-only)
 is not a successful validation result. A deterministic regression test reproduced
 keys being skipped when Storage enumeration reordered after removal. Cleanup now
 snapshots the owned namespace keys before removing them, preserving other
@@ -571,11 +576,11 @@ live comparison/generation reports remain historical evidence of their recorded
 source hashes; they were not rerun or rewritten for this UI update. No live
 LambdaDB or generation-provider calls were made in this validation.
 
-Review the ignored local [final fault report](../artifacts/fault-smoke-sync-status-verified.json),
-[Node 24 unit log](../artifacts/unit-sync-status-verified.log), and
-[Node 20.12 unit log](../artifacts/unit-node20-sync-status-verified.log).
-The [in-progress panel](../artifacts/sync-progress-sync-status-verified.png) and
-[failed-batch panel](../artifacts/sync-failure-sync-status-verified.png) show synthetic
+Review the ignored local final fault report (`artifacts/fault-smoke-sync-status-verified.json`, local-only),
+Node 24 unit log (`artifacts/unit-sync-status-verified.log`, local-only), and
+Node 20.12 unit log (`artifacts/unit-node20-sync-status-verified.log`, local-only).
+The in-progress panel (`artifacts/sync-progress-sync-status-verified.png`, local-only) and
+failed-batch panel (`artifacts/sync-failure-sync-status-verified.png`, local-only) show synthetic
 content only. Raw artifacts are local evidence and are not included in Git.
 
 ```sh
@@ -755,11 +760,11 @@ tag-triggered GitHub workflow and published-release upgrade remain untested.
 
 Reproduce with the isolated host and a published candidate branch using the
 [installation smoke protocol](../RELEASING.md#installation-smoke-test). The final
-ignored local evidence is [git-install-v3.json](../artifacts/git-install-v3.json),
-[execution log](../artifacts/git-install-v3.log), and
-[version display screenshot](../artifacts/git-install-v3.png); unit logs are
-[Node 20](../artifacts/unit-release-20.log) and
-[Node 24](../artifacts/unit-release-24.log). These files live in the execution
+ignored local evidence is git-install-v3.json (`artifacts/git-install-v3.json`, local-only),
+execution log (`artifacts/git-install-v3.log`, local-only), and
+version display screenshot (`artifacts/git-install-v3.png`, local-only); unit logs are
+Node 20 (`artifacts/unit-release-20.log`, local-only) and
+Node 24 (`artifacts/unit-release-24.log`, local-only). These files live in the execution
 worktree and are not included in fresh clones. The earlier `git-install-v1.*`
 failed-fixture evidence and `git-install-v2.*` successful evidence are retained
 locally. Later documentation-only commits do not change the tested harness or
@@ -812,7 +817,7 @@ update commit, owner/configuration retention, key clearing, disabled memory afte
 reload, and commit rollback/return. No LambdaDB/model calls or uncaught page errors
 occurred; the temporary profile was removed. These are synthetic pre-release
 checks, not a published cross-version upgrade or migration test. The ignored
-local report is [branding-single-url.json](../artifacts/branding-single-url.json),
+local report is branding-single-url.json (`artifacts/branding-single-url.json`, local-only),
 with matching `.log` and `.png` files in the execution worktree.
 
 ## Natural dialogue protocol preparation — 2026-09-28
@@ -836,7 +841,7 @@ This is preparation, not a retrieval-quality or model result. No host, LambdaDB,
 embedding or model request ran; `results` is null. The browser/live adapter,
 provider/token/timing measurements, blinded human scoring and sustained-use tests
 remain subsequent work. The ignored review artifact is
-[natural-dialogue-frozen-v1.json](../artifacts/natural-dialogue-frozen-v1.json).
+natural-dialogue-frozen-v1.json (`artifacts/natural-dialogue-frozen-v1.json`, local-only).
 
 ## Remaining validation
 
@@ -947,7 +952,7 @@ A separate real-host/live-LambdaDB run passed **27 checks across nine generation
 with a deterministic local generation fixture, including streaming regenerate,
 swipe, branching, edit/delete, fallback and disable. Cleanup and key audits passed;
 this is integration evidence, not an additional model-quality result. See
-[the recorded fixture checks](results/speaker-native-generation-fixture.json).
+[the recorded fixture checks](https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/speaker-native-generation-fixture.json).
 
 
 ## Frozen long dialogue and human-review tooling — 2026-09-29
@@ -995,7 +1000,7 @@ and the English spatial ambiguity remain. Human judgment is still pending.
 
 105 unit tests pass on Node 20.12.0/24.15.0, 188 real-host/emulator recovery checks
 pass, and a separate real-proxy contextual regression selected 8/8 targets with
-cleanup and source identity verified. [Checked-in evidence](results/context-selection-long-v1.json)
+cleanup and source identity verified. [Checked-in evidence](https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/context-selection-long-v1.json)
 keeps all answers, provisional grades and regression reports; historical results
 remain unchanged. No main promotion, release or deployment is implied.
 
@@ -1038,7 +1043,7 @@ Neither policy qualified. Runtime remains v3.
 All 50 live integrity checks passed; 274 LambdaDB responses included only the
 expected invalid-key/absent-resource errors. Source identity, session-key audits
 and owned collection cleanup passed. All 38 cases, including six unknown cases
-without a source-coverage score, remain in [the evidence](results/assistant-topic-selection-v1.json).
+without a source-coverage score, remain in [the evidence](https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/assistant-topic-selection-v1.json).
 122 unit tests pass on Node 20.12.0/24.15.0, plus syntax and release checks.
 This was search-only: no new generated-answer, abstention, actor-attribution or
 ANN-versus-exact result. Emulator recovery was not rerun for the unchanged runtime.
@@ -1106,7 +1111,7 @@ missing-user fallback. Both reviewer cases have regression coverage.
 
 141 unit tests pass on Node 20.12.0/24.15.0; syntax and release checks pass.
 The corrected runtime also passes 22 pinned-host/emulator checks with zero page
-errors and zero remaining collections. The [report](results/context-turn-review-browser-v1.json)
+errors and zero remaining collections. The [report](https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/context-turn-review-browser-v1.json)
 records the corrected source hashes. The earlier 64-answer live generation and
 188-check recovery reports remain unchanged at their original revision; no new
 paid provider evaluation was run for this review fix.

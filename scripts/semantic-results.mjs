@@ -5,10 +5,9 @@ import { randomUUID } from 'node:crypto';
 import { pathToFileURL } from 'node:url';
 import path from 'node:path';
 import { loadLong, validateLong, longSchedule, semanticPromptEvidence, hostSource, sourceFiles, sha } from './semantic-long.mjs';
-import { verifyDirectEvidence } from './semantic-direct.mjs';
 import { NATURAL_RETRY } from './provider-retry.mjs';
 import { summarizeProviderSpacing } from './provider-spacing.mjs';
-import { recordedSource } from './recorded-source.mjs';
+import { verifySource } from './verify-source.mjs';
 // Counts literal source occurrences, not unique messages: repeated synthetic filler
 // can occur several times. The live adapter uses this same definition.
 export function verifySourcePresence(row, source, prompt) {
@@ -19,15 +18,14 @@ export function verifySourcePresence(row, source, prompt) {
 }
 export function summarizeSemantic(report) {
     assert(report.passed&&!report.failure&&!report.incomplete&&report.cleanupComplete&&report.nativeCleanupComplete,'Complete successful integrity and cleanup required');
-    if (report.embeddingMode === 'direct-experimental') verifyDirectEvidence(report);
-    else assert(!report.embeddingMode || report.embeddingMode === 'managed', 'Unknown embedding mode');
+    assert(!report.embeddingMode || report.embeddingMode === 'managed', 'Unknown embedding mode');
     const fixture=validateLong(loadLong()),schedule=longSchedule(fixture),evaluation=report.evaluation;
     assert.equal(evaluation.version,fixture.version);assert(evaluation.complete);
     assert.equal(evaluation.fixtureSha256,sha(JSON.stringify(fixture)));
     assert.deepEqual(evaluation.settings,fixture.settings);assert.deepEqual(evaluation.generation,fixture.generation);
     assert.equal(report.sillyTavern,'06bde939fb1e9c4c8d8641d810f0a916b5bce127');
     assert.equal(report.hostContextTokens,fixture.settings.context);assert.equal(report.model,fixture.generation.model);
-    for(const file of sourceFiles){assert(/^[a-f0-9]{64}$/.test(report.initialSourceSha256?.[file]),`Missing input hash: ${file}`);assert.equal(report.sourceSha256[file],report.initialSourceSha256[file],`Input changed: ${file}`);recordedSource(file,report.sourceSha256[file]);}
+    for(const file of sourceFiles){assert(/^[a-f0-9]{64}$/.test(report.initialSourceSha256?.[file]),`Missing input hash: ${file}`);assert.equal(report.sourceSha256[file],report.initialSourceSha256[file],`Input changed: ${file}`);verifySource(file,report.sourceSha256[file]);}
     assert.equal(evaluation.rows.length,schedule.length);assert.equal(report.generations.length,schedule.length);
     assert.equal(new Set(evaluation.rows.map(row=>row.chatId)).size,schedule.length);
     if(report.transportProtocol)assert.deepEqual(report.transportProtocol,NATURAL_RETRY);
@@ -59,7 +57,7 @@ export function summarizeSemantic(report) {
     const spacing=summarizeProviderSpacing(report.generations,report.providerSpacing);assert(spacing.verified);
     assert(Array.isArray(report.lambdaRequests)&&report.lambdaRequests.length>0);assert(report.lambdaRequests.every(r=>r.status||r.failed));
     const groups=['off','on'].map(mode=>{const rows=evaluation.rows.filter(r=>r.mode===mode),known=rows.filter(r=>r.coverage.prompt.completeEvidence!==null);return {mode,samples:rows.length,known:known.length,completeInMemory:known.filter(r=>r.coverage.memory.completeEvidence).length,completeInPrompt:known.filter(r=>r.coverage.prompt.completeEvidence).length,answerUnitsInPrompt:known.reduce((n,r)=>n+r.coverage.prompt.answerSpans.covered,0),contextUnitsInPrompt:known.reduce((n,r)=>n+r.coverage.prompt.mandatoryContext.covered,0),unknown:rows.length-known.length,maxMemoryTokens:Math.max(...rows.map(r=>r.memoryTokens))};});
-    return {version:fixture.version,kind:report.embeddingMode === 'direct-experimental' ? 'Actual SillyTavern, temporary direct embeddings, live vector search and generation; source delivery only, answers ungraded' : 'Actual SillyTavern, live managed search and generation; source delivery only, answers ungraded',groups,providerCalls:calls,retries:calls-schedule.length,spacing,checks:report.checks.length,lambdaResponses:report.lambdaRequests.length,cleanupComplete:true,answerQuality:null,independentHumanReview:null};
+    return {version:fixture.version,kind:'Actual SillyTavern, live managed search and generation; source delivery only, answers ungraded',groups,providerCalls:calls,retries:calls-schedule.length,spacing,checks:report.checks.length,lambdaResponses:report.lambdaRequests.length,cleanupComplete:true,answerQuality:null,independentHumanReview:null};
 }
 export function semanticReviewPacket(report) {
     const summary=summarizeSemantic(report),fixture=loadLong(),key=[];

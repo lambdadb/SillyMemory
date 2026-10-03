@@ -1,5 +1,10 @@
 # Context bundle results and prompt-capacity boundary
 
+> Historical evidence: detailed runs and retired tools are preserved at the
+> [pre-cleanup revision](https://github.com/lambdadb/SillyMemory/tree/94b9bc04cf664587ae4c96b7739c22af87897b6b).
+> Reproduction commands below require their recorded producer; see
+> [evidence retention](evidence-retention.md) for archives and recovery.
+
 Both structural context-bundle candidates recover the Korean quotation signature
 missed in PR #26 at the same 320-token cap, but lose previously retained evidence
 elsewhere. **Neither qualifies for fresh live validation or production adoption.**
@@ -9,8 +14,8 @@ managed embeddings, chunk IDs, settings and API key handling remain unchanged.
 
 The [protocol](context-bundle-evaluation.md) and candidates were committed as
 `8dcb264` before the fresh controls were authored or replay was run. A
-[frozen input plan](results/context-bundle-plan-v1.json) binds all execution
-sources and evidence. The [complete result](results/context-bundle-replay-v1.json)
+[frozen input plan](https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/context-bundle-plan-v1.json) binds all execution
+sources and evidence. The [complete result](https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/context-bundle-replay-v1.json)
 retains every candidate, corpus and budget, including regressions. No candidate
 parameters were changed after seeing results.
 
@@ -154,7 +159,7 @@ node scripts/context-bundle-inspect.mjs \
 The [candidate API](../scripts/context-bundles.mjs) returns all seed decisions.
 The report stores all reason counts and evidence-related decisions; evidence
 labels filter that diagnostic view only after selection. The
-[inspection command](../scripts/context-bundle-inspect.mjs) rejects incomplete
+[inspection command](https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/scripts/context-bundle-inspect.mjs) rejects incomplete
 reports or ambiguous/missing case-budget selections. It cannot infer unknown
 semantic dependencies from arbitrary unlabeled chat.
 

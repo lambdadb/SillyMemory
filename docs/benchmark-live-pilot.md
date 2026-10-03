@@ -1,5 +1,10 @@
 # LongMemEval 32K live development pilot
 
+> Historical evidence: detailed runs and retired tools are preserved at the
+> [pre-cleanup revision](https://github.com/lambdadb/SillyMemory/tree/94b9bc04cf664587ae4c96b7739c22af87897b6b).
+> Reproduction commands below require their recorded producer; see
+> [evidence retention](evidence-retention.md) for archives and recovery.
+
 This follows the [real-host preflight](benchmark-host-preflight.md) and the
 [frozen pilot design](benchmarks/pilot-design-v1.json). It runs only the two
 selected development questions in four modes: plain host, native Vector Storage,
@@ -58,9 +63,9 @@ deletion across the two runs. Both native indexes were listed empty, and both
 disposable host profiles/worktrees were removed. This does not claim immediate
 physical erasure from provider backups.
 
-Review the [combined execution report](benchmarks/live-pilot-v1.json),
+Review the [combined execution report](https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/benchmarks/live-pilot-v1.json),
 [validated usage summary](benchmarks/live-pilot-summary-v1.json), and
-[unchanged interrupted report](benchmarks/live-pilot-interrupted-v1.json).
+[unchanged interrupted report](https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/benchmarks/live-pilot-interrupted-v1.json).
 Local validation passed 255 tests plus runtime/tool syntax and release checks;
 these checks are separate from the actual provider execution above.
 

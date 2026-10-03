@@ -1,7 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { expectedMessages, inspectPrompt, deliverySummary, PromptDelivery } from '../src/delivery.js';
-import { recordedSource } from '../scripts/recorded-source.mjs';
 
 const source = (mes, is_user = false, index = 0) => ({ mes, is_user, index });
 const expected = (memory = [], recent = []) => ({ memory: expectedMessages(memory), recent: expectedMessages(recent) });
@@ -62,9 +61,4 @@ test('overlap cannot replace a ready prompt and unsupported formats stay unverif
     const result = tracker.finish('text completion');
     assert.equal(result.result, null); assert.equal(result.lost, false);
     assert.match(deliverySummary(null, true), /unavailable/);
-});
-
-test('historical source evidence accepts only the archived hash, never an arbitrary mismatch', () => {
-    assert.ok(recordedSource('index.js', 'e02dbd971a7864a58bbb87394b29391bb05ac6f10073668cd4da30c90cb7f301'));
-    assert.throws(() => recordedSource('index.js', '0'.repeat(64)), /Recorded source mismatch/);
 });

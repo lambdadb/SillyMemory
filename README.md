@@ -136,6 +136,12 @@ Browser storage loss does not delete chat metadata or account ownership stored b
 
 ## Development and verification
 
+Detailed historical reports and producer snapshots live outside the maintained
+source tree. [Evidence retention](docs/evidence-retention.md) lists preserved
+results, immutable public originals, verified local archives and restoration steps.
+Normal CI uses current source and synthetic fixtures; it does not replay old paid
+cohorts. Historical commands in evaluation documents use their recorded checkout.
+
 For the chat-collection lifecycle acceptance, run:
 
 ```sh

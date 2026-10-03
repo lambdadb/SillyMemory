@@ -1,5 +1,10 @@
 # Answer-bearing spans and mandatory context
 
+> Historical evidence: detailed runs and retired tools are preserved at the
+> [pre-cleanup revision](https://github.com/lambdadb/SillyMemory/tree/94b9bc04cf664587ae4c96b7739c22af87897b6b).
+> Reproduction commands below require their recorded producer; see
+> [evidence retention](evidence-retention.md) for archives and recovery.
+
 PR #24 found that sentence excerpts can retain the exact answer fact while
 failing a paragraph-length quote rubric. It also demonstrated why a selected
 parent ID cannot prove that all necessary context survives. This follow-up
@@ -104,7 +109,7 @@ and #24's negative results unchanged rather than rescoring them into successes.
 
 ## Current validation record
 
-The [checked-in audit](results/semantic-evidence-audit-v1.json) validates 16 cases:
+The [checked-in audit](https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/semantic-evidence-audit-v1.json) validates 16 cases:
 14 known answers, two unknowns, 30 required units and 30 single-unit omission
 probes. Ten cases require context beyond answer-bearing spans. All omission
 probes fail completeness as intended; full-source and minimal-required envelopes

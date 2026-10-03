@@ -1,5 +1,10 @@
 # Passage selection under fixed token budgets
 
+> Historical evidence: detailed runs and retired tools are preserved at the
+> [pre-cleanup revision](https://github.com/lambdadb/SillyMemory/tree/94b9bc04cf664587ae4c96b7739c22af87897b6b).
+> Reproduction commands below require their recorded producer; see
+> [evidence retention](evidence-retention.md) for archives and recovery.
+
 **No candidate qualifies for fresh live validation. Runtime selection stays
 unchanged.** Five offline ranking candidates can recover some missed source
 passages, but each drops at least one source selected by the current interleaving
@@ -126,11 +131,11 @@ run was performed; historical provider evidence is reused explicitly.
 ## Reproduction and next work
 
 The [candidate code](../scripts/budget-selection.mjs),
-[fixture loader/exporter](../scripts/budget-selection-data.mjs),
-[replay runner](../scripts/budget-selection-replay.mjs),
-[compact ordered-hit fixture](../tests/fixtures/budget-selection-hits-v1.json),
+[fixture loader/exporter](https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/scripts/budget-selection-data.mjs),
+[replay runner](https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/scripts/budget-selection-replay.mjs),
+[compact ordered-hit fixture](https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/tests/fixtures/budget-selection-hits-v1.json),
 [regression tests](../tests/budget-selection.test.js) and
-[full results](results/budget-selection-replay-v1.json) are checked in. The result
+[full results](https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/budget-selection-replay-v1.json) are checked in. The result
 records hashes of runtime, producer, corpus and prior evidence inputs. Historical
 raw search data is only needed to re-export the compact fixture, not to replay it.
 Use this PR's recorded revision when reproducing these exact results.

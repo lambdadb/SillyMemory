@@ -13,18 +13,6 @@ test('summary plan pairs every unchanged source with one native-summary and one 
     assert(!fixture.cases.some(item=>summarySettings.prompt.includes(item.question)));
 });
 
-test('continuation freezes the interrupted cohort and never treats capacity stop as quality failure',async()=>{
-    const {loadSummaryResume}=await import('../scripts/summarize-plan.mjs');
-    const resume=loadSummaryResume('docs/results/summarize-v1-interrupted.json');
-    const plan=buildSummaryPlan(text=>text.length/2,resume.file);
-    assert.equal(plan.resume.sha256,resume.sha256);assert.equal(plan.maxSummariesPerCase,6);
-    assert.equal(resume.report.generations.length,34);assert.equal(resume.report.evaluation.rows.length,10);
-    assert.equal(resume.report.evaluation.preparation.at(-1).steps.at(-1).to,55);
-    assert.deepEqual(plan.summarySettings,resume.report.evaluation.summarySettings);
-    assert.equal(plan.transportProtocol.maxCalls,136);
-    assert.throws(()=>loadSummaryResume('../.env.local'));
-});
-
 test('summary transport cap is finite without expanding other cohorts or default calls',async()=>{
     const {requestWithRetry,NATURAL_RETRY}=await import('../scripts/provider-retry.mjs');
     const send=async()=>new Response('{}',{status:200});

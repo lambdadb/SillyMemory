@@ -1,5 +1,10 @@
 # LongMemEval development comparison — 2026-10-02
 
+> Historical evidence: detailed runs and retired tools are preserved at the
+> [pre-cleanup revision](https://github.com/lambdadb/SillyMemory/tree/94b9bc04cf664587ae4c96b7739c22af87897b6b).
+> Reproduction commands below require their recorded producer; see
+> [evidence retention](evidence-retention.md) for archives and recovery.
+
 The frozen **14-question, 70-answer comparison is complete** through the actual
 SillyTavern host, OpenAI and LambdaDB managed embeddings. It reused eight verified
 pilot answers and generated/judged 62 new answers. Owned remote data and native

@@ -1,5 +1,10 @@
 # Direct OpenAI embedding diagnostic
 
+> Historical evidence: detailed runs and retired tools are preserved at the
+> [pre-cleanup revision](https://github.com/lambdadb/SillyMemory/tree/94b9bc04cf664587ae4c96b7739c22af87897b6b).
+> Reproduction commands below require their recorded producer; see
+> [evidence retention](evidence-retention.md) for archives and recovery.
+
 This diagnostic bypasses LambdaDB and SillyTavern to test the local machine's
 OpenAI embedding path. It does not replace managed embeddings in the product.
 The fixed model and single synthetic sentence match the earlier managed probe:
@@ -69,7 +74,7 @@ public promotion; retain the earlier incomplete attempts as evidence.
 
 ## Observed result — 2026-09-30
 
-The [complete direct-call report](results/direct-embedding-v1.json) records all ten
+The [complete direct-call report](https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/direct-embedding-v1.json) records all ten
 requests. Every request returned HTTP 200 and one valid 1,536-dimensional vector.
 No retries, database writes or generation requests were made.
 

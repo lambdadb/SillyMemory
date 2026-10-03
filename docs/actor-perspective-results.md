@@ -1,5 +1,10 @@
 # Reported actors and assistant-topic boundaries — 2026-09-29
 
+> Historical evidence: detailed runs and retired tools are preserved at the
+> [pre-cleanup revision](https://github.com/lambdadb/SillyMemory/tree/94b9bc04cf664587ae4c96b7739c22af87897b6b).
+> Reproduction commands below require their recorded producer; see
+> [evidence retention](evidence-retention.md) for archives and recovery.
+
 The controlled actor diagnostic found **six memory-on actor errors that were
 absent with the complete source history**. Provisional strict scores are off
 16/16 and on 10/16. Required evidence and native API roles were correct in every
@@ -130,9 +135,9 @@ history. These observations are not six generated-answer scores or an ANN verdic
 
 ## Review artifacts
 
-[Actor evidence](results/actor-perspective-v1.json) includes all 32 answers,
+[Actor evidence](https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/actor-perspective-v1.json) includes all 32 answers,
 source meanings, provisional rationale, factor counts, prompt-role evidence,
-selected text/ranks and source identities. [Search-boundary evidence](results/context-edges-v1.json)
+selected text/ranks and source identities. [Search-boundary evidence](https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/context-edges-v1.json)
 keeps all six comparisons, misses, budgets, queries and lifecycle status.
 
 Raw actor report SHA-256:

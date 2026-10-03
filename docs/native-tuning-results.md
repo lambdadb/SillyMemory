@@ -1,5 +1,10 @@
 # Native Insert# sensitivity results — 2026-10-01
 
+> Historical evidence: detailed runs and retired tools are preserved at the
+> [pre-cleanup revision](https://github.com/lambdadb/SillyMemory/tree/94b9bc04cf664587ae4c96b7739c22af87897b6b).
+> Reproduction commands below require their recorded producer; see
+> [evidence retention](evidence-retention.md) for archives and recovery.
+
 The earlier quality gap was substantially configuration-dependent. This follow-up
 changes only built-in Vector Storage's **Insert# from 3 to 10**. Source retrieval
 and final answer quality are separate outcomes; delivering all required source
@@ -8,7 +13,7 @@ text does not guarantee that the model states every required fact.
 ## Matched actual-host comparison
 
 The [frozen protocol](native-tuning-evaluation.md) and
-[exact plan](results/native-tuning-v1-plan.json) repeat the same 16 English/Korean
+[exact plan](https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/native-tuning-v1-plan.json) repeat the same 16 English/Korean
 60-message cases twice per setting. Settings alternate within each case and
 reverse order for repetition two. Both settings use SillyTavern 1.19.0 at
 `06bde939fb1e9c4c8d8641d810f0a916b5bce127`, `gpt-4.1-mini-2025-04-14`, temperature 0,
@@ -73,11 +78,11 @@ Do not assume 10 is optimal or always fits a different context, model or chat.
 
 ## Evidence and limits
 
-The [raw report](results/native-tuning-v1-raw.json),
+The [raw report](https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/native-tuning-v1-raw.json),
 [mechanically derived summary](results/native-tuning-v1-summary.json),
-[unfilled review packet](results/native-tuning-v1-review.json),
-[assistant annotations](results/native-tuning-v1-assistant-annotations.json) and
-[derived provisional score](results/native-tuning-v1-assistant-score.json) retain
+[unfilled review packet](https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/native-tuning-v1-review.json),
+[assistant annotations](https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/native-tuning-v1-assistant-annotations.json) and
+[derived provisional score](https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/native-tuning-v1-assistant-score.json) retain
 all scheduled answers. The coding assistant read every answer against the source
 and rubric. These grades are not blinded or independent human review. All source
 hashes resolve to current or exact archived bytes. `npm test` revalidates evidence,

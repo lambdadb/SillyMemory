@@ -1,5 +1,10 @@
 # Natural dialogue live runner and review
 
+> Historical evidence: detailed runs and retired tools are preserved at the
+> [pre-cleanup revision](https://github.com/lambdadb/SillyMemory/tree/94b9bc04cf664587ae4c96b7739c22af87897b6b).
+> Reproduction commands below require their recorded producer; see
+> [evidence retention](evidence-retention.md) for archives and recovery.
+
 The [frozen protocol](natural-dialogue-evaluation.md) and fixture remain unchanged.
 That document's status describes the original preparation milestone. This runner
 adds actual SillyTavern, LambdaDB and OpenAI execution; semantic annotations are a
@@ -170,8 +175,8 @@ meaning-based scoring remains subsequent work.
 
 Local ignored evidence (available only in the validation checkout):
 
-- [Raw failed run](../artifacts/generation-natural-v1.json)
-- [Run log](../artifacts/natural-v1.log)
-- [Source, credential and cleanup verification](../artifacts/natural-v1-verification.json)
-- [Node 20 tests](../artifacts/unit20.log)
-- [Node 24 tests](../artifacts/unit24.log)
+- Raw failed run (`artifacts/generation-natural-v1.json`, local-only)
+- Run log (`artifacts/natural-v1.log`, local-only)
+- Source, credential and cleanup verification (`artifacts/natural-v1-verification.json`, local-only)
+- Node 20 tests (`artifacts/unit20.log`, local-only)
+- Node 24 tests (`artifacts/unit24.log`, local-only)

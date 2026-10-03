@@ -1,5 +1,10 @@
 # Semantic long-dialogue baseline attempts — 2026-09-30
 
+> Historical evidence: detailed runs and retired tools are preserved at the
+> [pre-cleanup revision](https://github.com/lambdadb/SillyMemory/tree/94b9bc04cf664587ae4c96b7739c22af87897b6b).
+> Reproduction commands below require their recorded producer; see
+> [evidence retention](evidence-retention.md) for archives and recovery.
+
 The new real-host adapter and offline review tools are implemented, but the
 planned 64-answer experiment is **incomplete**. Three attempts stopped on failed
 LambdaDB requests near the existing 15-second client deadline. Two additional
@@ -69,9 +74,9 @@ tokens; managed embedding usage/cost was not measured.
 
 The complete synthetic reports are checked in, byte-identical to the raw files:
 
-- [Attempt v1](results/semantic-long-incomplete-v1.json), SHA-256
+- [Attempt v1](https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/semantic-long-incomplete-v1.json), SHA-256
   `67c91a76e13e614b4799c4ed6420652439c187a2cb8eff89962767740c734e0d`.
-- [Attempt v2](results/semantic-long-incomplete-v2.json), SHA-256
+- [Attempt v2](https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/semantic-long-incomplete-v2.json), SHA-256
   `22b22c60f139c7207e8bd724701092ce0b755deb22bd10f6c79730dab7381a3e`.
 
 Both retain matching initial/final source hashes and successful owned-resource
@@ -97,7 +102,7 @@ replay checks, not substitutes for the incomplete live experiment.
 The maintainer requested full-cohort completion before merging PR #26. It remains
 open and must not be treated as ready to merge based on unit checks alone.
 
-[Attempt v3](results/semantic-long-incomplete-v3.json) used the unchanged runtime,
+[Attempt v3](https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/semantic-long-incomplete-v3.json) used the unchanged runtime,
 fixture and generation settings. Its initial managed upsert failed after
 15,002 ms, so it made **zero generation calls**. The owned transport-gate
 collection was deleted and confirmed absent. This run adds no answer-quality
@@ -110,8 +115,8 @@ They do not count as the 64-answer cohort or successful product validation.
 
 | Diagnostic | Ordinary upsert | Ordinary scope query | Managed upsert |
 | --- | --- | --- | --- |
-| [v1](results/semantic-long-diagnostic-v1.json) | 202, 218 ms | 503, 120 ms | 504, 29,042 ms |
-| [v2](results/semantic-long-diagnostic-v2.json) | 202, 1,371 ms | 200, 117 ms | 504, 29,041 ms |
+| [v1](https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/semantic-long-diagnostic-v1.json) | 202, 218 ms | 503, 120 ms | 504, 29,042 ms |
+| [v2](https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/semantic-long-diagnostic-v2.json) | 202, 1,371 ms | 200, 117 ms | 504, 29,041 ms |
 
 The first ordinary query immediately followed fresh collection creation and is
 not a sustained-readiness test. The second confirms that ordinary storage/query

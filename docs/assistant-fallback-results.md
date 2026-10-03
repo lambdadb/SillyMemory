@@ -1,5 +1,10 @@
 # Assistant-only context fallback
 
+> Historical evidence: detailed runs and retired tools are preserved at the
+> [pre-cleanup revision](https://github.com/lambdadb/SillyMemory/tree/94b9bc04cf664587ae4c96b7739c22af87897b6b).
+> Reproduction commands below require their recorded producer; see
+> [evidence retention](evidence-retention.md) for archives and recovery.
+
 Runtime policy `latest-anchor-with-assistant-fallback-v4` keeps the prior-user
 query unchanged whenever that user turn exists. With no preceding nonempty user
 turn, it uses the preceding assistant message instead. The generation anchor,
@@ -43,7 +48,7 @@ blank-user and retained-answer variants. English/Korean explicit topic switches
 and corrections passed. There were no losses of baseline-selected evidence.
 All 32 previously evaluated prior-user query pairs remain byte-for-byte unchanged.
 The Korean ordinary assistant-topic boundary still fails and is preserved in
-[the full comparison evidence](results/assistant-fallback-search-v1.json).
+[the full comparison evidence](https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/assistant-fallback-search-v1.json).
 
 Real pinned SillyTavern 1.19.0, Chromium, built-in proxy and live LambdaDB managed
 embeddings passed 60 integrity checks across 298 responses. Source hashes,
@@ -81,7 +86,7 @@ collections and native test data were cleaned up; key audits and every frozen
 source hash passed. Provider usage was 33,414 prompt and 617 completion tokens;
 embedding cost was not measured. No latency/cost improvement is claimed.
 
-[Checked-in generation evidence](results/assistant-fallback-generation-v1.json)
+[Checked-in generation evidence](https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/assistant-fallback-generation-v1.json)
 contains all answers, recalled text, source delivery, provisional rationales,
 provider attempts, hashes and the recovery report. Raw report byte SHA-256:
 `a4163970989579891e0a775d65c0e4ffae8b2cef43d933aee71e187eb7b0aeb8`.

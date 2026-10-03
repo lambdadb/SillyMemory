@@ -76,7 +76,7 @@ Two earlier live test attempts are retained:
 - V1 stopped at the delayed-query test. Its old single-response barrier allowed the sibling query to abort normally; the test expected a completed stale-response result instead. The harness now captures **both** completed responses before invalidation to test the intended late-delivery case. Product runtime was unchanged.
 - V2 passed that recovery test, then stopped before the first scored contextual retrieval. The fixture's readiness query used the client's default 30-result limit while expecting 74 records. The harness now explicitly requests the expected document count. No question/answer/fact was changed, and no failed retrieval sample was replaced. Both failed attempts completed owned collection cleanup.
 
-Evidence: [emulator faults](../artifacts/fault-smoke-query-policy-v1.json), [failed live v1](../artifacts/live-context-query-policy-v1.json), [failed live v2](../artifacts/live-context-query-policy-v2.json), [complete live v3](../artifacts/live-context-query-policy-v3.json). The live runner records source hashes and synthetic query/inspection text. Test failure-injection is controlled and does not represent a real service outage.
+Evidence: emulator faults (`artifacts/fault-smoke-query-policy-v1.json`, local-only), failed live v1 (`artifacts/live-context-query-policy-v1.json`, local-only), failed live v2 (`artifacts/live-context-query-policy-v2.json`, local-only), complete live v3 (`artifacts/live-context-query-policy-v3.json`, local-only). The live runner records source hashes and synthetic query/inspection text. Test failure-injection is controlled and does not represent a real service outage.
 
 
 ## Service latency observed during answer evaluation
@@ -85,7 +85,7 @@ The first answer run completed samples 0–35, then timed out while preparing th
 
 A separate real-proxy transport test also failed during managed upsert while collection operations succeeded. A subsequent bounded probe submitted one unmanaged and one managed document upsert: both completed, in 0.193 and 14.297 seconds respectively. The latter was close to the unchanged 15-second request timeout. This narrows the observation to managed-operation latency at that time; the backend/provider cause is unverified, and it does not prove the earlier timeout had the identical cause. No LambdaDB changes, timeout increase or automatic model retry was introduced. Each diagnostic collection was deleted and confirmed absent.
 
-Review the [failed zero-generation continuation](../artifacts/generation-comparison-from-36-query-policy-v1.json), [second failed continuation](../artifacts/generation-comparison-from-36-query-policy-v2.json), [failed live gate diagnostic](../artifacts/live-service-diagnostic-smoke.json), and [bounded upsert comparison](../artifacts/live-probe-service-diagnostic.json). To rerun that small probe, use `SM_ARTIFACT_TAG=next-service node scripts/live-smoke.mjs --probe`; it uses the existing credentials, real browser/proxy, synthetic owned collections and no text-generation model.
+Review the failed zero-generation continuation (`artifacts/generation-comparison-from-36-query-policy-v1.json`, local-only), second failed continuation (`artifacts/generation-comparison-from-36-query-policy-v2.json`, local-only), failed live gate diagnostic (`artifacts/live-service-diagnostic-smoke.json`, local-only), and bounded upsert comparison (`artifacts/live-probe-service-diagnostic.json`, local-only). To rerun that small probe, use `SM_ARTIFACT_TAG=next-service node scripts/live-smoke.mjs --probe`; it uses the existing credentials, real browser/proxy, synthetic owned collections and no text-generation model.
 
 The summary supports an explicit `--partial` mode for complete, balanced scenario blocks forming the scheduled prefix. It reports missing sample indices and refuses arbitrary subsets or unbalanced blocks. By default it still requires all 54 samples. Injection counts, correct injected/uninjected answers and full-source counts are reported separately so safe fallback cannot masquerade as retrieval success.
 
@@ -106,7 +106,7 @@ On these same first 36 scheduled samples, the historical original policy scored 
 
 Provider/cache/output usage, all answers, source preservation and cleanup checks are retained. Median prompt tokens fell by about 85.1% relative to off on this subset, but median end-to-end time increased and the two failure paths took about 16 seconds. Generation-only estimates for 12 answers were $0.016195 off, $0.005790 SillyMemory and $0.025656 native; these exclude embedding and LambdaDB costs. Cache effects and service instability prevent general cost/performance conclusions.
 
-Review the [36-answer raw report](../artifacts/generation-comparison-query-policy-v1.json) and [validated partial summary](../artifacts/comparison-summary-query-policy-v1-partial.json). The summary explicitly marks `complete: false`, `completedSamples: 36` and all 18 missing indices. A failed attempt's `passed: false` is preserved even though its completed answers can be analyzed. The separate historical nine-generation streaming/edit/swipe/branch result predates this runtime. A later current-policy lifecycle rerun is recorded below; it is a distinct experiment.
+Review the 36-answer raw report (`artifacts/generation-comparison-query-policy-v1.json`, local-only) and validated partial summary (`artifacts/comparison-summary-query-policy-v1-partial.json`, local-only). The summary explicitly marks `complete: false`, `completedSamples: 36` and all 18 missing indices. A failed attempt's `passed: false` is preserved even though its completed answers can be analyzed. The separate historical nine-generation streaming/edit/swipe/branch result predates this runtime. A later current-policy lifecycle rerun is recorded below; it is a distinct experiment.
 
 After managed operations are reliable again, continue without replaying completed samples:
 
@@ -154,9 +154,9 @@ search failure in this observation. It is one bounded sample, not a latency
 distribution or proof of rate limiting. Both owned collections were deleted and
 confirmed absent. No text-generation model was called by either probe.
 
-Evidence: [single-document check](../artifacts/live-probe-query-policy-resume-check.json),
-[failed continuation](../artifacts/generation-comparison-from-36-query-policy-resume.json),
-and [50-document diagnostic](../artifacts/live-probe-query-policy-batch-diagnostic.json).
+Evidence: single-document check (`artifacts/live-probe-query-policy-resume-check.json`, local-only),
+failed continuation (`artifacts/generation-comparison-from-36-query-policy-resume.json`, local-only),
+and 50-document diagnostic (`artifacts/live-probe-query-policy-batch-diagnostic.json`, local-only).
 
 ```sh
 SM_PROBE_BATCH_SIZE=50 SM_PROBE_TIMEOUT_MS=45000 SM_PROBE_QUERY=1 SM_ARTIFACT_TAG=next-batch-diagnostic node scripts/live-smoke.mjs --probe
@@ -186,16 +186,16 @@ demonstrate reliable large initial indexing. The later comparison completion is
 recorded below. The runtime and frozen comparison protocol were
 not changed to accommodate the slow batch operation.
 
-Review [generation lifecycle evidence](../artifacts/generation-live-model-query-policy-resume.json).
+Review generation lifecycle evidence (`artifacts/generation-live-model-query-policy-resume.json`, local-only).
 The 32 unit tests and runtime syntax checks also passed again; see the
-[unit-test log](../artifacts/unit-query-policy-resume.log).
+unit-test log (`artifacts/unit-query-policy-resume.log`, local-only).
 
 ### Readiness under the shipped deadline
 
 After the successful lifecycle run, the same 50-document diagnostic was repeated
 with the shipped 15-second deadline. Managed upsert completed in 1.063 s and
 managed queryText in 0.471 s. Ordinary upsert completed in 0.147 s, but its separate
-scoped query returned HTTP 503 after 0.099 s. The [readiness report](../artifacts/live-probe-query-policy-batch-readiness.json)
+scoped query returned HTTP 503 after 0.099 s. The readiness report (`artifacts/live-probe-query-policy-batch-readiness.json`, local-only)
 is therefore correctly marked **failed overall**, despite the managed path
 completing successfully. All owned collections were deleted and confirmed absent.
 No requests were automatically retried by that diagnostic. The observed recovery
@@ -242,9 +242,9 @@ failure paths still took about 16 seconds. The segments ran at different times
 and under uncontrolled provider load/cache conditions. Native retained full source
 history, so its correctness is not an equal-budget retrieval comparison.
 
-Review the [complete validated summary](../artifacts/comparison-summary-query-policy-complete.json),
-[original 36-sample segment](../artifacts/generation-comparison-query-policy-v1.json),
-and [successful 18-sample continuation](../artifacts/generation-comparison-from-36-query-policy-resume-2.json).
+Review the complete validated summary (`artifacts/comparison-summary-query-policy-complete.json`, local-only),
+original 36-sample segment (`artifacts/generation-comparison-query-policy-v1.json`, local-only),
+and successful 18-sample continuation (`artifacts/generation-comparison-from-36-query-policy-resume-2.json`, local-only).
 Rebuild without further model calls using the exact recorded source versions
 (the final review subsequently changed test-harness cleanup/accounting; the
 strict CLI intentionally rejects those historical reports against that new

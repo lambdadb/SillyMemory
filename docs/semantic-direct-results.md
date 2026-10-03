@@ -1,5 +1,10 @@
 # Temporary direct-embedding cohort results
 
+> Historical evidence: detailed runs and retired tools are preserved at the
+> [pre-cleanup revision](https://github.com/lambdadb/SillyMemory/tree/94b9bc04cf664587ae4c96b7739c22af87897b6b).
+> Reproduction commands below require their recorded producer; see
+> [evidence retention](evidence-retention.md) for archives and recovery.
+
 On 2026-09-30, the complete 64-answer experiment finished through the actual
 SillyTavern 1.19.0 Generate path, live OpenAI generation, direct OpenAI embeddings,
 and LambdaDB vector writes/search through the built-in proxy. This is the
@@ -9,7 +14,7 @@ no separate embedding-provider setup.
 
 ## Execution and transport
 
-The [complete report](results/semantic-direct-v1.json) passed 837 checks with
+The [complete report](https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/semantic-direct-v1.json) passed 837 checks with
 64 generation calls, no generation retries and no embedding errors or retries.
 All 270 LambdaDB request records completed; the only non-success responses were
 expected HTTP 404 checks after owned collection deletion. Both owned collections
@@ -55,12 +60,12 @@ verification at `2fa3e96` did not alter any frozen execution input.
 ## Delivery and provisional answer review
 
 The [delivery summary](results/semantic-direct-review-v1/summary.json) is distinct
-from the [assistant score](results/semantic-direct-review-v1/assistant-score.json).
+from the [assistant score](https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/semantic-direct-review-v1/assistant-score.json).
 All 64 randomized answers were inspected against the frozen source, expected rule
 and forbidden claims. This is provisional assistant review, not independent or
-blinded human grading. Preserve the [unfilled human packet](results/semantic-direct-review-v1/packet.json),
-[condition key](results/semantic-direct-review-v1/key.json) and
-[separate assistant annotations](results/semantic-direct-review-v1/assistant-annotations.json).
+blinded human grading. Preserve the [unfilled human packet](https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/semantic-direct-review-v1/packet.json),
+[condition key](https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/semantic-direct-review-v1/key.json) and
+[separate assistant annotations](https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/semantic-direct-review-v1/assistant-annotations.json).
 
 | Measurement | Memory off | Memory on |
 | --- | ---: | ---: |

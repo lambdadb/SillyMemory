@@ -40,7 +40,7 @@ With both fixes, the full suite passed **66 checks** on pinned SillyTavern 1.19.
 and Chromium. It reported no uncaught primary-page errors, zero emulator
 collections, and completed journal cleanup. All ten recorded source hashes match
 the final runtime/harness. Review the ignored local
-[passing report](../artifacts/fault-smoke-review-fixes-verified.json).
+passing report (`artifacts/fault-smoke-review-fixes-verified.json`, local-only).
 All **44 unit tests** pass on Node.js 20.12.0 and 24.15.0; runtime and changed
 harness syntax checks also pass.
 
@@ -71,6 +71,6 @@ The follow-up passed **47 unit tests** on Node.js 20.12.0 and 24.15.0 and
 **68 real-host/emulator checks**, with no uncaught primary-page errors and no
 remaining emulator collections or journals. All ten runtime/harness hashes
 match the final source. Review the ignored local
-[follow-up report](../artifacts/fault-smoke-quiet-overlap-verified.json); use
+follow-up report (`artifacts/fault-smoke-quiet-overlap-verified.json`, local-only); use
 `SM_ARTIFACT_TAG=quiet-overlap-verified` with the command above to reproduce
 under a fresh tag. Live LambdaDB/OpenAI generation was not rerun.

@@ -41,10 +41,10 @@ regression tests, package metadata, and documentation.
 
 | Check | Result | Evidence |
 | --- | --- | --- |
-| Unit regression tests | 34 passed, 0 failed | [Unit log](../artifacts/unit-final-review.log) |
+| Unit regression tests | 34 passed, 0 failed | Unit log (`artifacts/unit-final-review.log`, local-only) |
 | Runtime, script, and test syntax | All passed | `npm run check` and `node --check` for every script/test |
-| Pinned SillyTavern + Chromium + local API emulator | 48 checks passed; no page errors; zero remaining collections | [Fault report](../artifacts/fault-smoke-final-review.json) |
-| Pinned SillyTavern + live LambdaDB + OpenAI | 9 generated answers, 45 checks passed; 9 provider calls; owned remote cleanup confirmed | [Live report](../artifacts/generation-live-model-final-review.json) |
+| Pinned SillyTavern + Chromium + local API emulator | 48 checks passed; no page errors; zero remaining collections | Fault report (`artifacts/fault-smoke-final-review.json`, local-only) |
+| Pinned SillyTavern + live LambdaDB + OpenAI | 9 generated answers, 45 checks passed; 9 provider calls; owned remote cleanup confirmed | Live report (`artifacts/generation-live-model-final-review.json`, local-only) |
 | Credential and evidence integrity | Configured keys absent from source/docs and new reports; `.env.local` unchanged; all new live-report source hashes match | Local content/hash audit |
 
 The live run used `gpt-4.1-mini-2025-04-14` and exercised off/on, edit,
@@ -70,7 +70,7 @@ Before changing the harness, the strict comparison summarizer revalidated the
 pinned host tokenizer. Each mode scored 18/18; SillyMemory injected memory for
 16 answers and retained full source after errors for two. The maximum injection
 was 800 tokens. The result is preserved in
-[the final-review summary](../artifacts/comparison-summary-final-review.json).
+the final-review summary (`artifacts/comparison-summary-final-review.json`, local-only).
 No new 54-sample run was performed for this review. These reports describe the
 unchanged product runtime with the earlier harness, not the new cleanup code.
 The strict CLI intentionally rejects a rebuild against mismatching current

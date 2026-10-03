@@ -55,7 +55,7 @@ Generation-end events clear the live SillyMemory extension prompt. Consequently 
 
 The summarizer requires the pinned host checkout (`ST_SOURCE`, default `/tmp/sillymemory-st-source`) and its installed `tiktoken` dependency for that independent recount. It verifies the host revision and unchanged tokenizer sources, current evaluated source hashes, complete fixed schedule, source hashes, actual provider usage, mode isolation, and both cleanup results. Unit tests reject missing/duplicate/mixed evidence, altered usage, missing integrity checks, budget overflow, and inspection/request mismatch.
 
-Review the [raw run](../artifacts/generation-comparison-openai-gpt-4.1-mini.json), [validated summary](../artifacts/comparison-summary-openai-gpt-4.1-mini.json), and [setup preflight](../artifacts/generation-comparison-setup-preflight.json). The raw report includes all synthetic outgoing prompts/answers and native query results. Remote test collections were confirmed absent, the native index listed empty, and the isolated host profile was removed. Earlier correctness and failure-recovery results remain separate in [validation](validation.md).
+Review the raw run (`artifacts/generation-comparison-openai-gpt-4.1-mini.json`, local-only), validated summary (`artifacts/comparison-summary-openai-gpt-4.1-mini.json`, local-only), and setup preflight (`artifacts/generation-comparison-setup-preflight.json`, local-only). The raw report includes all synthetic outgoing prompts/answers and native query results. Remote test collections were confirmed absent, the native index listed empty, and the isolated host profile was removed. Earlier correctness and failure-recovery results remain separate in [validation](validation.md).
 
 
 ## Retrieval-only follow-up
@@ -75,6 +75,6 @@ complete 54-sample result is 18/18 per mode; SillyMemory injected in 16/18 and u
 the full-source error fallback in two. Its maximum injection was 800 tokens,
 median input 1,439 tokens and median generation time 2.086 seconds, compared with
 9,420 tokens / 1.094 seconds off. These separate results do not replace the
-original-policy table above. See the [complete validated summary](../artifacts/comparison-summary-query-policy-complete.json).
+original-policy table above. See the complete validated summary (`artifacts/comparison-summary-query-policy-complete.json`, local-only).
 The current-policy lifecycle rerun also passed nine real generations and 45 checks;
 it is separate from the fixed 54-sample recall comparison.

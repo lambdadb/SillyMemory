@@ -1,5 +1,10 @@
 # Speaker attribution development results — 2026-09-29
 
+> Historical evidence: detailed runs and retired tools are preserved at the
+> [pre-cleanup revision](https://github.com/lambdadb/SillyMemory/tree/94b9bc04cf664587ae4c96b7739c22af87897b6b).
+> Reproduction commands below require their recorded producer; see
+> [evidence retention](evidence-retention.md) for archives and recovery.
+
 Recalled passages now retain their original user/assistant API role and source
 order instead of combining different speakers in one system extension prompt.
 The two original failure cases (studio key and ferry correction) passed both
@@ -18,9 +23,9 @@ limit 256, recent window 12 and memory budget 800 before generation.
 
 | Trial | Answers | Provisional strict off / on | Integrity checks | Result |
 | --- | ---: | --- | ---: | --- |
-| [Role labels in system wrapper](results/speaker-attribution-v1.json) | 24 | 12/12 / 8/12 | 257 | Original four attribution flags remained |
-| [Stronger perspective instruction](results/speaker-attribution-v2.json) | 24 | 11/12 / 10/12 | 257 | Key-action flags remained; one off-mode notebook actor error |
-| [Native source roles](results/speaker-native-v1.json) | 32 | 14/16 / 14/16 | 341 | Original failures absent; English reported-action error in both modes |
+| [Role labels in system wrapper](https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/speaker-attribution-v1.json) | 24 | 12/12 / 8/12 | 257 | Original four attribution flags remained |
+| [Stronger perspective instruction](https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/speaker-attribution-v2.json) | 24 | 11/12 / 10/12 | 257 | Key-action flags remained; one off-mode notebook actor error |
+| [Native source roles](https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/speaker-native-v1.json) | 32 | 14/16 / 14/16 | 341 | Original failures absent; English reported-action error in both modes |
 
 The first two trials have six cases and two repetitions per condition. The final
 trial preserves all six and adds two actor-versus-speaker cases. These are
@@ -79,14 +84,14 @@ syntax and release metadata checks. Regressions cover local role authority over
 forged remote metadata, role-change identity invalidation, exact budget limits,
 source/chunk order, macro literals and fixture/scoring separation.
 
-The final [real-host/local-emulator recovery run](results/speaker-native-recovery.json)
+The final [real-host/local-emulator recovery run](https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/speaker-native-recovery.json)
 passed **188 checks**, including two SIGKILL/restarts, 24 edit/swipe/delete/reload
 cycles, stale-result cancellation, branch isolation, key clearing/re-entry,
 write-response loss and draining owned deletion. It left zero collections and
 zero uncaught page errors. This test calls neither LambdaDB nor a model and is
 not a sustained-load or live-service outage test.
 
-A separate [real-host/live-LambdaDB generation fixture](results/speaker-native-generation-fixture.json)
+A separate [real-host/live-LambdaDB generation fixture](https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/speaker-native-generation-fixture.json)
 passed **27 checks across nine generations**, covering streaming regenerate,
 swipe, native branch creation, edit/delete, retrieval-failure fallback and disable.
 Its model replies are deterministic local fixtures, not real LLM quality evidence.

@@ -15,7 +15,6 @@ import { NATURAL_RETRY, requestWithRetry } from './provider-retry.mjs';
 import { PROVIDER_SPACING, createSpacedSender, summarizeProviderSpacing } from './provider-spacing.mjs';
 import { fixtureFiles } from './natural-dialogue.mjs';
 import { semanticFiles, verifySemanticPlan } from './semantic-long.mjs';
-import { createDirectAdapter, directFiles, directProtocol, verifyDirectPlan } from './semantic-direct.mjs';
 import { summaryFiles, summaryRetry, verifySummaryPlan } from './summarize-plan.mjs';
 import { runSummarize } from './summarize-live.mjs';
 import { createSummaryTrafficGuard } from './summary-traffic.mjs';
@@ -44,14 +43,13 @@ const nativeTuning = process.argv.includes('--native-tuning');
 const threeModes = process.argv.includes('--three-modes') || nativeTuning;
 const semantic = process.argv.includes('--semantic') || threeModes || summarizeMode;
 if (semantic && process.argv.includes('--natural')) throw new Error('Choose one evaluation mode.');
-const directEmbeddingsMode = process.argv.includes('--direct-embeddings');
-if (directEmbeddingsMode && (!semantic || threeModes)) throw new Error('--direct-embeddings requires --semantic');
+if (process.argv.includes('--direct-embeddings')) throw new Error('Temporary direct embedding experiments are archived; use the recorded producer.');
 const natural = process.argv.includes('--natural') || semantic;
 const retryTransient = process.argv.includes('--retry-transient') || retrievalExperiment;
 if (semantic && !retryTransient) throw new Error('--semantic requires the frozen --retry-transient policy');
 if (retryTransient && !natural && !retrievalExperiment) throw new Error('--retry-transient requires --natural');
 const retryBudget = { calls: 0, retries: 0 };
-const frozenNatural = natural ? (semantic ? await (summarizeMode ? verifySummaryPlan : nativeTuning ? verifyTuningPlan : threeModes ? verifyThreeModePlan : directEmbeddingsMode ? verifyDirectPlan : verifySemanticPlan)(process.env.SM_NATURAL_PLAN) : await verifyNaturalPlan(process.env.SM_NATURAL_PLAN)) : null;
+const frozenNatural = natural ? (semantic ? await (summarizeMode ? verifySummaryPlan : nativeTuning ? verifyTuningPlan : threeModes ? verifyThreeModePlan : verifySemanticPlan)(process.env.SM_NATURAL_PLAN) : await verifyNaturalPlan(process.env.SM_NATURAL_PLAN)) : null;
 const comparison = process.argv.includes('--comparison');
 const nativeComparison = comparison || threeModes;
 const transportProtocol = retrievalExperiment ? { ...NATURAL_RETRY, maxCalls: hybridMode ? 24 : 20 } : summarizeMode ? summaryRetry : nativeTuning ? tuningRetry : threeModes ? threeModeRetry : NATURAL_RETRY;
@@ -93,7 +91,7 @@ const modeSuffix = hybridMode ? 'hybrid' : chunkingMode ? 'chunking' : natural ?
 const suffix = modeSuffix + (artifactTag ? `-${artifactTag}` : '');
 const reportPath = path.join(artifacts, `generation-${suffix}.json`);
 if (natural || retrievalExperiment) await writeFile(reportPath, JSON.stringify({ passed: false, incomplete: true }), { flag: 'wx' });
-const naturalSourceFiles = ['src/chunking.js', 'index.js', 'src/chat-collections.js', 'src/client.js', 'src/gate.js', 'src/memory.js', 'src/context.js', 'src/status.js', 'scripts/generation-smoke.mjs', 'scripts/provider-spacing.mjs', 'scripts/generation-cleanup.mjs', 'scripts/natural-eval.mjs', 'scripts/natural-dialogue.mjs', ...(semantic ? [...semanticFiles, ...(summarizeMode ? summaryFiles : nativeTuning ? tuningFiles : threeModes ? threeModeFiles : []), ...(directEmbeddingsMode ? directFiles : [])] : fixtureFiles(frozenNatural?.plan.version)), ...(retryTransient ? ['scripts/provider-retry.mjs', 'docs/natural-dialogue-retry.md', 'scripts/natural-summary.mjs', 'scripts/natural-score.mjs'] : [])];
+const naturalSourceFiles = ['src/chunking.js', 'index.js', 'src/chat-collections.js', 'src/client.js', 'src/gate.js', 'src/memory.js', 'src/context.js', 'src/status.js', 'scripts/generation-smoke.mjs', 'scripts/provider-spacing.mjs', 'scripts/generation-cleanup.mjs', 'scripts/natural-eval.mjs', 'scripts/natural-dialogue.mjs', ...(semantic ? [...semanticFiles, ...(summarizeMode ? summaryFiles : nativeTuning ? tuningFiles : threeModes ? threeModeFiles : [])] : fixtureFiles(frozenNatural?.plan.version)), ...(retryTransient ? ['scripts/provider-retry.mjs', 'docs/natural-dialogue-retry.md', 'scripts/natural-summary.mjs', 'scripts/natural-score.mjs'] : [])];
 const naturalSourceSha256 = natural ? Object.fromEntries(await Promise.all(naturalSourceFiles.map(async file => [file, createHash('sha256').update(await readFile(path.join(root, file))).digest('hex')]))) : null;
 const experimentHashes = async () => Object.fromEntries(await Promise.all(['index.js', 'src/memory.js', 'src/client.js', 'src/chat-collections.js', 'src/context.js', 'scripts/generation-smoke.mjs', ...experimentFiles, 'src/chunking.js', 'src/gate.js', 'src/status.js', 'src/delivery.js', 'scripts/provider-retry.mjs', 'scripts/provider-spacing.mjs', 'scripts/generation-cleanup.mjs'].map(async file => [file, createHash('sha256').update(await readFile(path.join(root, file))).digest('hex')])));
 const experimentSource = retrievalExperiment ? await experimentHashes() : null;
@@ -106,9 +104,7 @@ const checks = [], generations = [], embeddings = [], vectorQueries = [], lambda
 const resumeReport=frozenNatural?.resumeReport;
 if(resumeReport){generations.push(...structuredClone(resumeReport.generations));retryBudget.calls=resumeReport.providerCalls;retryBudget.retries=resumeReport.providerCalls-resumeReport.generations.length;}
 const resumedEvidence=()=>resumeReport?{resume:{...frozenNatural.plan.resume,generations:resumeReport.generations.length,providerCalls:resumeReport.providerCalls}}:{};
-const directEmbeddings = [];
-const directEvidence = () => ({ embeddingMode: summarizeMode ? 'none' : nativeTuning ? 'native-openai' : directEmbeddingsMode ? 'direct-experimental' : 'managed', ...(directEmbeddingsMode ? { directProtocol, directEmbeddings } : {}) });
-const transformDirect = directEmbeddingsMode ? createDirectAdapter({ key: env.LLM_API_KEY, rows: directEmbeddings, stage: () => stage }) : null;
+const directEvidence = () => ({ embeddingMode: summarizeMode ? 'none' : nativeTuning ? 'native-openai' : 'managed' });
 const lambdaRequestMap = new Map();
 const redact = value => { let output = JSON.stringify(value, null, 2); for (const secret of [credentials.key, env.LLM_API_KEY, credentials.endpoint, credentials.project, env.LLM_BASE_URL].filter(Boolean)) output = output.replaceAll(secret, "[REDACTED]"); return output; };
 async function checkpointNatural() {
@@ -300,8 +296,7 @@ try {
             if (entry.forwarded !== undefined) entry.databaseMs = performance.now() - entry.forwarded;
             delete entry.started; delete entry.forwarded;
         };
-        page.on('response', response => { const entry = lambdaRequestMap.get(response.request()); if (entry) { entry.status = response.status(); if (!directEmbeddingsMode) finishRequest(response.request()); } });
-        page.on('requestfinished', request => { if (directEmbeddingsMode) finishRequest(request); });
+        page.on('response', response => { const entry = lambdaRequestMap.get(response.request()); if (entry) { entry.status = response.status(); finishRequest(response.request()); } });
         page.on('requestfailed', request => finishRequest(request, true));
     }
     // Persist only non-secret ownership metadata before any collection creation.
@@ -317,27 +312,6 @@ try {
             await writeFile(pendingPath, JSON.stringify(pending, null, 2));
         }
         if (failRetrieval && target.pathname.endsWith('/query')) return route.fulfill({ headers: { 'Access-Control-Allow-Origin': new URL(page.url()).origin }, status: 503, contentType: 'application/json', body: '{"message":"Injected test failure"}' });
-        if (transformDirect) {
-            const entry = lambdaRequestMap.get(req), controller = new AbortController();
-            Object.defineProperty(entry, 'controller', { value: controller });
-            const signal = AbortSignal.any([controller.signal, AbortSignal.timeout(directProtocol.requestDeadlineMs)]);
-            try {
-                if (target.origin !== new URL(credentials.endpoint).origin || !target.pathname.startsWith(`/projects/${credentials.project}/collections`)) throw new Error('Unexpected experiment destination');
-                const relative = target.pathname.replace(/^\/projects\/[^/]+/, '');
-                const name = relative.split('/')[2];
-                if (name && !pending.collections.some(item => item.name === name)) throw new Error('Unowned experiment collection');
-                const body = req.postData() ? req.postDataJSON() : undefined;
-                const transformed = await transformDirect(relative, body, { signal, requestIndex: lambdaRequests.indexOf(entry) });
-                signal.throwIfAborted();
-                if (performance.now() - entry.started >= directProtocol.requestDeadlineMs || entry.failed) throw new Error('Direct request expired');
-                entry.forwarded = performance.now();
-                await route.continue(transformed === undefined ? {} : { postData: JSON.stringify(transformed) });
-            } catch {
-                entry.adapterFailed = true;
-                await route.fulfill({ headers: { 'Access-Control-Allow-Origin': new URL(page.url()).origin }, status: 400, contentType: 'application/json', body: '{"error":"Temporary direct embedding experiment failed"}' }).catch(() => {});
-            }
-            return;
-        }
         await route.continue();
     });
     if (summaryTraffic) await summaryTraffic.installVectorRoutes(page);
@@ -494,7 +468,7 @@ try {
         } catch { console.log('Cleanup incomplete; keep pending resource record.'); }
     }
     const sourceSha256 = {};
-    for (const file of [...(retrievalExperiment ? [...experimentFiles, 'scripts/provider-retry.mjs'] : []), 'src/chunking.js', 'index.js', 'src/chat-collections.js','src/client.js','src/gate.js','src/memory.js', 'src/context.js','src/status.js','scripts/generation-smoke.mjs','scripts/provider-spacing.mjs','scripts/generation-cleanup.mjs','scripts/korean-eval.mjs','scripts/korean-fixture.mjs','scripts/comparison-fixture.mjs','scripts/comparison-eval.mjs','scripts/challenge-eval.mjs','scripts/recall-challenges.mjs','scripts/heldout-fixture.mjs', ...(natural ? ['scripts/natural-eval.mjs', 'scripts/natural-dialogue.mjs', ...(semantic ? [...semanticFiles, ...(summarizeMode ? summaryFiles : nativeTuning ? tuningFiles : threeModes ? threeModeFiles : []), ...(directEmbeddingsMode ? directFiles : [])] : fixtureFiles(frozenNatural?.plan.version)), ...(retryTransient ? ['scripts/provider-retry.mjs', 'docs/natural-dialogue-retry.md', 'scripts/natural-summary.mjs', 'scripts/natural-score.mjs'] : [])] : [])]) sourceSha256[file] = createHash('sha256').update(await readFile(path.join(root, file))).digest('hex');
+    for (const file of [...(retrievalExperiment ? [...experimentFiles, 'scripts/provider-retry.mjs'] : []), 'src/chunking.js', 'index.js', 'src/chat-collections.js','src/client.js','src/gate.js','src/memory.js', 'src/context.js','src/status.js','scripts/generation-smoke.mjs','scripts/provider-spacing.mjs','scripts/generation-cleanup.mjs','scripts/korean-eval.mjs','scripts/korean-fixture.mjs','scripts/comparison-fixture.mjs','scripts/comparison-eval.mjs','scripts/challenge-eval.mjs','scripts/recall-challenges.mjs','scripts/heldout-fixture.mjs', ...(natural ? ['scripts/natural-eval.mjs', 'scripts/natural-dialogue.mjs', ...(semantic ? [...semanticFiles, ...(summarizeMode ? summaryFiles : nativeTuning ? tuningFiles : threeModes ? threeModeFiles : [])] : fixtureFiles(frozenNatural?.plan.version)), ...(retryTransient ? ['scripts/provider-retry.mjs', 'docs/natural-dialogue-retry.md', 'scripts/natural-summary.mjs', 'scripts/natural-score.mjs'] : [])] : [])]) sourceSha256[file] = createHash('sha256').update(await readFile(path.join(root, file))).digest('hex');
     if (natural && Object.entries(naturalSourceSha256).some(([file, digest]) => sourceSha256[file] !== digest)) failure ||= { stage: 'source identity', reason: 'Source changed during execution' };
     if ((natural || retrievalExperiment) && !failure) {
         try { assert(summarizeProviderSpacing(resumeReport ? generations.slice(resumeReport.generations.length) : generations, PROVIDER_SPACING).verified, 'actual provider starts respect the 15-second interval'); }

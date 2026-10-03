@@ -3,7 +3,7 @@ import {readFileSync,writeFileSync} from 'node:fs';
 import {pathToFileURL} from 'node:url';
 import {loadLong,sha,hostSource,semanticHost} from './semantic-long.mjs';
 import {summaryVersion,summarySettings,summaryRetry,summaryFiles,loadSummaryResume} from './summarize-plan.mjs';
-import {recordedSource} from './recorded-source.mjs';
+import {verifySource} from './verify-source.mjs';
 import {median} from './three-mode-results.mjs';
 import {summarizeProviderSpacing} from './provider-spacing.mjs';
 import {summaryTrafficFile,validateSummaryTraffic} from './summary-traffic.mjs';
@@ -16,8 +16,8 @@ export function summarizeNativeSummary(report) {
     assert.deepEqual(report.lambdaRequests,[]);assert.deepEqual(report.transportProtocol,summaryRetry);
     let nativeTraffic=validateSummaryTraffic(report);
     const files=nativeTraffic.verified?summaryFiles:summaryFiles.filter(file=>file!==summaryTrafficFile);
-    for(const file of files) {assert.equal(report.initialSourceSha256[file],report.sourceSha256[file]);recordedSource(file,report.sourceSha256[file]);}
-    for(const [file,hash]of Object.entries(report.sourceSha256))recordedSource(file,hash);
+    for(const file of files) {assert.equal(report.initialSourceSha256[file],report.sourceSha256[file]);verifySource(file,report.sourceSha256[file]);}
+    for(const [file,hash]of Object.entries(report.sourceSha256))verifySource(file,hash);
     assert.equal(e.preparation.length,16);assert.equal(e.rows.length,32);
     assert.equal(new Set([...e.preparation,...e.rows].map(row=>row.chatId)).size,48);
     const used=new Set();let cursor=0;

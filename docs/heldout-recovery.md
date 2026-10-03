@@ -99,11 +99,11 @@ acknowledgment loss at the upstream emulator.
 
 Local evidence:
 
-- [Recovery report](../artifacts/recovery-smoke-recovery-v1.json)
-- [Recovery log](../artifacts/recovery-v1.log)
-- [Frozen held-out cases](../artifacts/heldout-frozen.json)
-- [Node 20 unit log](../artifacts/unit-20.log)
-- [Node 24 unit log](../artifacts/unit-24.log)
+- Recovery report (`artifacts/recovery-smoke-recovery-v1.json`, local-only)
+- Recovery log (`artifacts/recovery-v1.log`, local-only)
+- Frozen held-out cases (`artifacts/heldout-frozen.json`, local-only)
+- Node 20 unit log (`artifacts/unit-20.log`, local-only)
+- Node 24 unit log (`artifacts/unit-24.log`, local-only)
 
 
 ## Held-out live result — 2026-09-28
@@ -163,12 +163,12 @@ release or deployment is part of this validation.
 
 Local live evidence:
 
-- [Raw live report](../artifacts/generation-heldout-heldout-v1.json)
-- [Validated summary](../artifacts/heldout-summary-v1.json)
-- [Live run log](../artifacts/heldout-v1.log)
-- [Historical v1 compatibility summary](../artifacts/historical-baseline-compatibility.json)
-- [Historical v2 compatibility summary](../artifacts/historical-v2-compatibility.json)
-- [Source identity, credential and cleanup verification](../artifacts/verification.json)
+- Raw live report (`artifacts/generation-heldout-heldout-v1.json`, local-only)
+- Validated summary (`artifacts/heldout-summary-v1.json`, local-only)
+- Live run log (`artifacts/heldout-v1.log`, local-only)
+- Historical v1 compatibility summary (`artifacts/historical-baseline-compatibility.json`, local-only)
+- Historical v2 compatibility summary (`artifacts/historical-v2-compatibility.json`, local-only)
+- Source identity, credential and cleanup verification (`artifacts/verification.json`, local-only)
 
 
 ## Review integrity regression — 2026-09-28
@@ -187,9 +187,9 @@ failed and no additional model, host or emulator run was made for this fix.
 
 Review evidence:
 
-- [Reviewed held-out summary](../artifacts/heldout-summary-v1-reviewed.json)
-- [Reviewed historical baseline](../artifacts/historical-baseline-reviewed.json)
-- [Reviewed historical v2](../artifacts/historical-v2-reviewed.json)
-- [Offline review verification](../artifacts/pr8-review-verification.json)
-- [Node 20 review test log](../artifacts/unit-pr8-review-20.log)
-- [Node 24 review test log](../artifacts/unit-pr8-review-24.log)
+- Reviewed held-out summary (`artifacts/heldout-summary-v1-reviewed.json`, local-only)
+- Reviewed historical baseline (`artifacts/historical-baseline-reviewed.json`, local-only)
+- Reviewed historical v2 (`artifacts/historical-v2-reviewed.json`, local-only)
+- Offline review verification (`artifacts/pr8-review-verification.json`, local-only)
+- Node 20 review test log (`artifacts/unit-pr8-review-20.log`, local-only)
+- Node 24 review test log (`artifacts/unit-pr8-review-24.log`, local-only)

@@ -1,5 +1,10 @@
 # Native prompt capacity results
 
+> Historical evidence: detailed runs and retired tools are preserved at the
+> [pre-cleanup revision](https://github.com/lambdadb/SillyMemory/tree/94b9bc04cf664587ae4c96b7739c22af87897b6b).
+> Reproduction commands below require their recorded producer; see
+> [evidence retention](evidence-retention.md) for archives and recovery.
+
 ## Finding
 
 The real pinned SillyTavern run confirms that the extension allocation and final
@@ -25,8 +30,8 @@ endpoint were local fixtures. The latter returned `LOCAL_FIXTURE_OK` regardless
 of the prompt; answer quality was not evaluated. No live embedding/model API
 was called and no `.env.local` was loaded.
 
-The [protocol](prompt-capacity-evaluation.md), [pre-run plan](results/prompt-capacity-plan-v1.json)
-and [full report](results/prompt-capacity-v1.json) retain every condition and
+The [protocol](prompt-capacity-evaluation.md), [pre-run plan](https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/prompt-capacity-plan-v1.json)
+and [full report](https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/prompt-capacity-v1.json) retain every condition and
 boundary observation. The host tokenizer label was `gpt-4.1-mini-2025-04-14`.
 Its counts are estimates used by this host configuration, not provider usage.
 The final request exactly matched both the native completion object and the

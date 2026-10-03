@@ -1,10 +1,6 @@
 import assert from 'node:assert/strict';
 
 export const summaryTrafficFile = 'scripts/summary-traffic.mjs';
-const legacyProducers = new Set([
-    '4bce56097d739ab956f2f8ec692adcc1d053fd7d5010cdc52419b3f127969945',
-    '09e932167f9fa69176d10fcb99d491c22f466198fa59e0cca13dd976e694329b',
-]);
 
 // Record attempts even when no upstream call succeeds. Do not store request
 // bodies, URLs containing credentials, or authentication headers.
@@ -47,11 +43,6 @@ export function createSummaryTrafficGuard({ embeddings, vectorQueries, stage, on
 export function validateSummaryTraffic(report) {
     assert.deepEqual(report.embeddings, []);
     assert.deepEqual(report.vectorQueries, []);
-    if (legacyProducers.has(report.sourceSha256?.['scripts/generation-smoke.mjs'])) {
-        assert.equal(report.nativeTrafficObservation, undefined,
-            'Historical producers cannot claim traffic instrumentation');
-        return { verified: false, coverage: 'unobserved-historical' };
-    }
     assert.deepEqual(report.nativeTrafficObservation,
         { version: 1, embeddingBridge: true, nativeVectorRoutes: true },
         'Embedding bridge and native vector routes must both be instrumented');
