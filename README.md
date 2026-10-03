@@ -6,8 +6,8 @@ Long-term memory for SillyTavern.
 
 An installable, experimental UI extension for character chats. SillyMemory keeps recent messages intact at its prompt hook and replaces older plain-text history with relevant source passages under a fixed memory token budget. SillyTavern may subsequently truncate the prompt to fit its context limit. It uses LambdaDB managed embeddings over direct browser HTTPS/CORS. No server plugin or LambdaDB modification is required.
 
-**0.2.0 is an experimental development candidate.** The published 0.1.0 build
-remains on `main` until an approved promotion. This candidate preserves native
+**0.2.0 is experimental.** See the [release notes](docs/releases/0.2.0.md) for
+installation evidence and limitations. This version preserves native
 speaker roles, improves context retrieval, packs repeated excerpts, and stops
 generation when prepared memory or recent messages disappear during host packing.
 
@@ -57,7 +57,7 @@ The development baseline is **SillyTavern 1.19.0**, pinned to commit [`06bde939f
 
 1. Prepare SillyTavern **1.19.0** and Git on the host. Other host revisions are unverified.
 2. Open **Extensions → Install extension**, enter `https://github.com/lambdadb/SillyMemory`, leave the optional branch/tag field empty, and choose **Install just for me** (or **Install** for a non-admin account). Review SillyTavern's third-party-extension prompt and confirm. The default branch is `main`; `develop` and PR branches are for development. The extension has no runtime npm dependencies or build step. Do not install two copies.
-3. Allow your SillyTavern page origin in LambdaDB CORS settings where required. Include scheme, host and port (for example, `http://localhost:8000`); `127.0.0.1` is a different origin. SillyMemory connects directly from the browser. No `enableCorsProxy` setting or SillyTavern restart is required for this candidate. Published 0.1.0 still uses the proxy; these instructions apply after installing the direct-CORS candidate or its approved release. See [direct CORS configuration and validation](docs/direct-cors.md).
+3. Allow your SillyTavern page origin in LambdaDB CORS settings where required. Include scheme, host and port (for example, `http://localhost:8000`); `127.0.0.1` is a different origin. SillyMemory connects directly from the browser. No `enableCorsProxy` setting or SillyTavern restart is required. See [direct CORS configuration and validation](docs/direct-cors.md).
 4. Reload SillyTavern. Open **Extensions → SillyMemory**. Enter your region-specific HTTPS base origin, project name, and project API key from LambdaDB. The endpoint field accepts an origin such as `https://<regional-host>`, without `/projects/...`. The extension adds the project path. There is no hardcoded global endpoint.
 5. Click **Use key for this session**. The input is immediately cleared. The key lives only in the client instance's browser memory, never in saved settings, local/session storage, a URL, or extension logs. A reload or **Forget key** requires re-entry. Other trusted extensions and the browser runtime can still observe network requests; this is not an isolation boundary against malicious extensions.
 6. Click **Test synthetic upsert / query / delete**. This creates a dedicated `smtest_<random>` collection, upserts a synthetic story, queries `knn.queryText`, deletes its document, verifies it no longer appears, then deletes the owned test collection. This consumes LambdaDB resources and inference usage. The test must pass before **Prepare chat memory** becomes available.
@@ -87,7 +87,7 @@ Git-based update flow.
 
 ## Version and updates
 
-**0.2.0 is an experimental candidate; 0.1.0 is the published pre-release.** See [CHANGELOG.md](CHANGELOG.md) for changes and
+**0.2.0 is an experimental pre-release.** See [CHANGELOG.md](CHANGELOG.md) for changes and
 [GitHub Releases](https://github.com/lambdadb/SillyMemory/releases) for published
 versions. A dated changelog entry can precede publication. The `main` branch is
 the public installation baseline; `develop` contains ongoing work. The version
