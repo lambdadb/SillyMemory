@@ -118,7 +118,30 @@ history separately if running historical checks that consult old revisions.
 
 ## Validation and local cleanup boundary
 
-Validation results will be recorded after fresh-tree and pinned-host checks.
+Completed at `f8ec16766bc029b9417d54af14b1109e3273ccf6` on 2026-10-03:
+
+- All 438 preserved files restored into a new empty temporary directory and
+  verified against their SHA-256 values. Both retained archive copies match.
+- Retired-file index covers all 155 removed paths (25,481,822 bytes). Product
+  runtime/UI is byte-for-byte unchanged. Historical conclusion text is unchanged
+  apart from evidence pointers/notices; all local Markdown links resolve.
+- A depth-one fresh clone with no ignored archive or old producer history passed
+  all 271 unit tests, runtime syntax and release metadata checks. Current script
+  and test syntax also passed. The lower count reflects archived historical-report
+  and temporary-adapter tests, not removal of the product's safety contracts.
+- Actual pinned SillyTavern/Chromium with local HTTPS CORS and completion fixtures
+  passed 11 delivery cases plus repeated-passage packing, with zero remaining
+  emulator collections. The extracted ranks retained exact source hashes and
+  delivered 4/4 memory passages and 8/8 recent messages in the packing case.
+- No paid provider or remote memory operation was performed. Current source and
+  the decompressed preservation archive passed a configured-secret scan.
+
+The new validation report, unit logs and exact measured sources are local-only at
+`artifacts/archive/retention-validation-v1/evidence.tar.gz` in the
+`sillymemory-evidence-retention` worktree (SHA-256
+`d2fcd90dac3e9549318228925dbdfb306b770b49c0913f3335e7346cac63a5c8`). Members were read back byte-for-byte; only this
+completion record follows the tested code commit.
+
 No old evidence archive or detached historical worktree was deleted by this
 change. Several retained hosts share dependency symlinks, and ignored directories
 can contain unique receipts/recovery state. Their physical consolidation remains
