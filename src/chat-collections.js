@@ -1,11 +1,15 @@
 import { ConnectionError } from './client.js';
-import { digest } from './memory.js';
+import { poll } from './gate.js';
+import { digest, documents, options } from './memory.js';
 
 const idPattern = /^[a-f0-9]{32}$/;
-export const ownedMemoryName = name => /^(smchat_[a-f0-9]{40}|sillymemory_[a-f0-9]{32})$/.test(name);
+export const ownedMemoryName = name => /^(smchat_[a-f0-9]{40}|smstory_[a-f0-9]{40}|sillymemory_[a-f0-9]{32})$/.test(name);
 export async function chatCollection(snapshot, owner) {
-    const scope = await digest(JSON.stringify([owner, snapshot.character, snapshot.chat]));
-    return { collection: `smchat_${scope.slice(0, 40)}`, scope };
+    if (snapshot.memory && (!idPattern.test(snapshot.memory.story || '') || !idPattern.test(snapshot.chat || '') || (snapshot.memory.source && !idPattern.test(snapshot.memory.source)))) throw new ConnectionError('Invalid story memory identity.');
+    const scope = await digest(JSON.stringify([owner, snapshot.character, snapshot.memory?.story || snapshot.chat]));
+    return snapshot.memory
+        ? { collection: `smstory_${scope.slice(0, 40)}`, scope, branch: `chat_${snapshot.chat}`, ...(snapshot.memory.source ? { source: `chat_${snapshot.memory.source}` } : {}) }
+        : { collection: `smchat_${scope.slice(0, 40)}`, scope };
 }
 
 // Native branches change integrity but can inherit extension metadata. Imports
@@ -22,11 +26,19 @@ export async function ensureChatIdentity(ctx, saveChat, valid = () => true, fetc
     if (!Array.isArray(inventory)) throw new ConnectionError('Could not read the chat inventory. Save the chat and retry.');
     if (!valid()) return false;
     let id = ctx.chatMetadata.sillymemory?.id;
-    const duplicate = inventory.some(chat => chat.file_name !== `${file}.jsonl` && chat.chat_metadata?.sillymemory?.id === id);
+    const duplicate = inventory.some(chat => chat.file_name !== `${file}.jsonl` && chat.chat_metadata?.sillymemory?.id === id
+        && chat.chat_metadata?.sillymemory?.integrity === chat.chat_metadata?.integrity);
     let changed = false;
     if (!idPattern.test(id || '') || duplicate || ctx.chatMetadata.sillymemory?.integrity !== ctx.chatMetadata.integrity) {
+        const old = ctx.chatMetadata.sillymemory;
+        const parent = inventory.find(c => c.file_name === `${ctx.chatMetadata.main_chat}.jsonl`)?.chat_metadata;
+        const inherited = old?.version === 1 && idPattern.test(old.story || '') && idPattern.test(old.id || '');
+        const nativeFork = inherited && old.integrity !== ctx.chatMetadata.integrity
+            && parent?.sillymemory?.id === old.id && parent?.integrity === old.integrity
+            && parent?.sillymemory?.story === old.story;
         id = crypto.randomUUID().replaceAll('-', '');
-        ctx.chatMetadata.sillymemory = { id, integrity: ctx.chatMetadata.integrity };
+        ctx.chatMetadata.sillymemory = { id, integrity: ctx.chatMetadata.integrity,
+            ...(inherited ? { version: 1, story: nativeFork ? old.story : id, ...(nativeFork ? { source: old.id } : {}) } : {}) };
         changed = true;
     }
     const saved = inventory.find(chat => chat.file_name === `${file}.jsonl`)?.chat_metadata;
@@ -38,7 +50,7 @@ export async function ensureChatIdentity(ctx, saveChat, valid = () => true, fetc
     }
     const stored = await request('/api/chats/get', { avatar_url: avatar, file_name: file });
     if (!valid()) return false;
-    if (stored?.[0]?.chat_metadata?.sillymemory?.id !== id || stored?.[0]?.chat_metadata?.integrity !== ctx.chatMetadata.integrity) throw new ConnectionError('Chat identity was not saved. Save the chat and retry.');
+    if (JSON.stringify(stored?.[0]?.chat_metadata?.sillymemory) !== JSON.stringify(ctx.chatMetadata.sillymemory) || stored?.[0]?.chat_metadata?.integrity !== ctx.chatMetadata.integrity) throw new ConnectionError('Chat identity was not saved. Save the chat and retry.');
     return true;
 }
 
@@ -46,7 +58,7 @@ export class ChatCollections {
     constructor(client, owner, remember, forget) {
         Object.assign(this, { client, owner, remember, forget });
     }
-    async ensure(snapshot, valid = () => true) {
+    async ensure(snapshot, valid = () => true, config = options(), progress = () => {}) {
         const entry = await chatCollection(snapshot, this.owner);
         if (!valid()) return null;
         this.remember(entry); // Persist intent before even a possibly ambiguous create.
@@ -58,11 +70,44 @@ export class ChatCollections {
             catch (error) { if (error.status !== 409) throw error; }
             await this.client.assertOwned(entry.collection, this.owner, undefined, entry.scope);
         }
+        if (entry.branch) {
+            const branches = await this.client.branches(entry.collection);
+            if (!valid()) return null;
+            if (!branches.some(b => b.name === entry.branch)) {
+                const source = branches.some(b => b.name === entry.source) ? entry.source : 'main';
+                if (source !== 'main') {
+                    progress({ phase: 'committing' });
+                    const { docs } = await documents(snapshot, this.owner, config);
+                    // Wait for acknowledged, matching inherited text to commit. A
+                    // consistent read alone is not proof that a fork will copy it.
+                    for (let i = 0; i < docs.length; i += 100) {
+                        if (!valid()) return null;
+                        const batch = docs.slice(i, i + 100), desired = new Map(batch.map(d => [d.id, d]));
+                        const pending = (await this.client.fetchDocs(entry.collection, batch.map(d => d.id), source))
+                            .filter(d => desired.has(d.id) && Object.keys(desired.get(d.id)).every(k => d[k] === desired.get(d.id)[k]));
+                        if (pending.length) await poll(async () => {
+                            if (!valid()) throw new ConnectionError('Chat changed before memory fork.');
+                            const committed = await this.client.fetchDocs(entry.collection, pending.map(d => d.id), source, false);
+                            return pending.every(d => committed.some(c => c.id === d.id && Object.keys(desired.get(d.id)).every(k => c[k] === d[k])));
+                        }, { attempts: 120, delayMs: 1000 });
+                    }
+                }
+                if (!valid()) return null;
+                try { await this.client.createBranch(entry.collection, entry.branch, source); }
+                catch (error) { if (error.status !== 409) throw error; }
+                if (!(await this.client.branches(entry.collection)).some(b => b.name === entry.branch)) throw new ConnectionError('Memory branch creation is not confirmed. Retry synchronization.');
+            }
+        }
         return valid() ? entry : null;
     }
     async delete(entry) {
-        await this.client.deleteOwnedCollection(entry.collection, this.owner, entry.scope);
-        this.forget(entry.collection); // Retain a failed or uncertain deletion for retry.
+        if (entry.branch) {
+            try {
+                await this.client.assertOwned(entry.collection, this.owner, undefined, entry.scope);
+                await this.client.deleteBranch(entry.collection, entry.branch);
+            } catch (e) { if (e.status !== 404) throw e; }
+        } else await this.client.deleteOwnedCollection(entry.collection, this.owner, entry.scope);
+        this.forget(entry.collection, entry.branch); // Retain a failed or uncertain deletion for retry.
     }
     async discover() {
         return (await this.client.listOwned(this.owner)).filter(c => ownedMemoryName(c.collectionName))

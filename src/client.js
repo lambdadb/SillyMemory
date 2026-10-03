@@ -83,8 +83,46 @@ export class LambdaClient {
         const result = await this.get(collection, signal);
         if (result.collection?.tags?.application !== 'sillymemory' || result.collection?.tags?.owner !== owner || (scope && result.collection?.tags?.chat !== scope)) throw new ConnectionError('Ownership check failed. No remote data was deleted or written.');
     }
-    upsert(collection, docs, signal) { return this.request(this.path(collection, '/docs/upsert'), { body: { docs, branch: 'main' }, signal }); }
-    deleteIds(collection, ids, signal) { return this.request(this.path(collection, '/docs/delete'), { body: { ids, branch: 'main' }, signal }); }
+    upsert(collection, docs, signal, branch = 'main') { return this.request(this.path(collection, '/docs/upsert'), { body: { docs, branch: this.branchName(branch) }, signal }); }
+    deleteIds(collection, ids, signal, branch = 'main') { return this.request(this.path(collection, '/docs/delete'), { body: { ids, branch: this.branchName(branch) }, signal }); }
+    branchName(name) {
+        if (!/^[a-zA-Z0-9_-]{3,52}$/.test(name)) throw new ConnectionError('Invalid memory branch.');
+        return name;
+    }
+    async branches(collection) {
+        const result = await this.request(this.path(collection, '/branches'), { method: 'GET' });
+        if (!Array.isArray(result.branches)) throw new ConnectionError('Invalid memory branch list.');
+        return result.branches;
+    }
+    createBranch(collection, branch, source = 'main') {
+        return this.request(this.path(collection, '/branches'), { body: { branchName: this.branchName(branch), source: { kind: 'branch', name: this.branchName(source) } } });
+    }
+    async deleteBranch(collection, branch) {
+        if (branch === 'main') throw new ConnectionError('The default branch cannot be deleted.');
+        try { await this.request(this.path(collection, `/branches/${this.branchName(branch)}`), { method: 'DELETE' }); }
+        catch (e) { if (e.status !== 404) throw e; }
+        if ((await this.branches(collection)).some(b => b.name === branch)) throw new ConnectionError('Branch deletion is not confirmed. Retry cleanup.');
+    }
+    inlineDocs(result) {
+        if (result.isDocsInline === false || !Array.isArray(result.docs)) throw new ConnectionError('Memory documents unavailable inline. No state was adopted.');
+        return result.docs.map(x => x.doc);
+    }
+    async fetchDocs(collection, ids, branch = 'main', consistentRead = true) {
+        return this.inlineDocs(await this.request(this.path(collection, '/docs/fetch'), { body: { ids, ref: { kind: 'branch', name: this.branchName(branch) }, consistentRead, includeVectors: false } }));
+    }
+    async listDocs(collection, branch = 'main') {
+        const docs = [], tokens = new Set(); let token;
+        do {
+            const params = new URLSearchParams({ size: '100', includeVectors: 'false', refKind: 'branch', refName: this.branchName(branch) });
+            if (token) params.set('pageToken', token);
+            const result = await this.request(this.path(collection, `/docs?${params}`), { method: 'GET' });
+            docs.push(...this.inlineDocs(result));
+            token = result.nextPageToken;
+            if (token && (typeof token !== 'string' || tokens.has(token))) throw new ConnectionError('Invalid document pagination. No state was adopted.');
+            if (token) tokens.add(token);
+        } while (token);
+        return docs;
+    }
     async deleteOwnedCollection(collection, owner, scope) {
         try { await this.assertOwned(collection, owner, undefined, scope); } catch (e) { if (e.status === 404) return; throw e; }
         await this.request(this.path(collection), { method: 'DELETE' });
@@ -111,14 +149,14 @@ export class LambdaClient {
         } while (token);
         return collections;
     }
-    async query(collection, query, { signal, size = 30 } = {}) {
-        const result = await this.request(this.path(collection, '/query'), { body: { query, size, consistentRead: true, ref: { kind: 'branch', name: 'main' }, includeVectors: false }, signal });
+    async query(collection, query, { signal, size = 30, branch = 'main', consistentRead = true } = {}) {
+        const result = await this.request(this.path(collection, '/query'), { body: { query, size, consistentRead, ref: { kind: 'branch', name: this.branchName(branch) }, includeVectors: false }, signal });
         // Never forward a project key to a presigned download URL. Fail safely for now.
         if (result.isDocsInline === false) throw new ConnectionError('Result requires external download. Reduce the retrieval size; no memory was injected.');
         if (!Array.isArray(result.docs)) throw new ConnectionError('Invalid memory query response.');
         return result.docs.map(x => x.doc);
     }
-    search(collection, owner, scope, text, signal) {
-        return this.query(collection, { knn: { field: 'embedding', queryText: text, k: 30, filter: scopeFilter(owner, scope) } }, { signal });
+    search(collection, owner, scope, text, signal, branch = 'main') {
+        return this.query(collection, { knn: { field: 'embedding', queryText: text, k: 30, filter: scopeFilter(owner, scope) } }, { signal, branch });
     }
 }
