@@ -1,0 +1,11 @@
+{
+  "version": "chunking-v1",
+  "cases": [
+    {"id":"boundary-code","prefix":760,"fact":"The storage code for Mira's copper telescope is BIRCH-739, and that is the code to give its owner.","question":"What storage code should Mira give for her copper telescope? Reply only with the code.","answer":"BIRCH-739"},
+    {"id":"boundary-condition","prefix":755,"fact":"The after-sunset entry code is CEDAR-418, whereas during daylight the door must remain locked with no code provided.","question":"Which entry code is valid after sunset? Reply only with the code.","answer":"CEDAR-418"},
+    {"id":"boundary-correction","prefix":745,"fact":"The earlier locker assignment ASH-205 has been canceled; the current locker for the painted compass is MAPLE-862.","question":"What is the current locker assignment for the painted compass? Reply only with its code.","answer":"MAPLE-862"},
+    {"id":"boundary-speaker","prefix":750,"fact":"When I said 'I will bring the violet lantern', I was quoting Eren; the promise belongs to Eren, not to me, Mira.","question":"Who promised to bring the violet lantern? Reply only with the person's name.","answer":"Eren"},
+    {"id":"short-control","prefix":0,"fact":"The green atlas is stored under the code PINE-316.","question":"What is the storage code for the green atlas? Reply only with its code.","answer":"PINE-316"},
+    {"id":"unpunctuated-control","prefix":790,"unpunctuated":true,"fact":"the orange kite uses locker FERN-594 and the owner should quote that locker code when collecting it","question":"Which locker holds the orange kite? Reply only with its code.","answer":"FERN-594"}
+  ]
+}

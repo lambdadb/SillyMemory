@@ -1,0 +1,358 @@
+{
+  "version": "longmemeval-development-live-summary-v1",
+  "date": "2026-10-02",
+  "evidence": "Actual pinned SillyTavern host, OpenAI and LambdaDB managed embeddings; development-only",
+  "plan": "development-plan-v1.json",
+  "planSha256": "862e7c2c34a877794a427eca6df1c060ddfa3b6f9bcc023a22a9e2fb01bbc069",
+  "reportSha256": "01dbc72068ee686a33c42c78b196306826aba6fc2e6785e3ed2a26e37335d62b",
+  "paidProducerRevision": "c1d8eb9309aa181fdfdcd27043c4254332c231ee",
+  "finalFixtureProducerRevision": "7e1fd694677b4cf48571252152e989b59f26ff36",
+  "priorProducerRevisions": [
+    "fef4ddd6007a149cb2d7c49afaceb63cb7bbd2ea",
+    "565419d915efb5f50107911aac112a7a25a420d1"
+  ],
+  "runtimeUnchanged": true,
+  "heldOutQuestionsExecuted": 0,
+  "rows": 70,
+  "reusedPilotRows": 8,
+  "newAnswers": 62,
+  "newJudges": 62,
+  "modes": [
+    {
+      "context": 32768,
+      "mode": "off",
+      "answers": 14,
+      "judged": 14,
+      "correct": 4,
+      "medianInputTokens": 31498.0,
+      "medianOutputTokens": 39.5
+    },
+    {
+      "context": 32768,
+      "mode": "vectors",
+      "answers": 14,
+      "judged": 14,
+      "correct": 5,
+      "medianInputTokens": 31491.0,
+      "medianOutputTokens": 39.5
+    },
+    {
+      "context": 32768,
+      "mode": "summary",
+      "answers": 14,
+      "judged": 14,
+      "correct": 6,
+      "medianInputTokens": 31318.5,
+      "medianOutputTokens": 39.5
+    },
+    {
+      "context": 32768,
+      "mode": "sillymemory",
+      "answers": 14,
+      "judged": 14,
+      "correct": 10,
+      "medianInputTokens": 3361.5,
+      "medianOutputTokens": 40.0
+    },
+    {
+      "context": 131072,
+      "mode": "off",
+      "answers": 14,
+      "judged": 14,
+      "correct": 10,
+      "medianInputTokens": 104761.0,
+      "medianOutputTokens": 41.0
+    }
+  ],
+  "correctByStratum": {
+    "abstention": [
+      1,
+      1,
+      1,
+      2,
+      2
+    ],
+    "knowledge-update": [
+      2,
+      2,
+      2,
+      2,
+      2
+    ],
+    "multi-session": [
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "single-session-assistant": [
+      0,
+      0,
+      1,
+      2,
+      2
+    ],
+    "single-session-preference": [
+      0,
+      0,
+      1,
+      2,
+      1
+    ],
+    "single-session-user": [
+      1,
+      2,
+      1,
+      2,
+      2
+    ],
+    "temporal-reasoning": [
+      0,
+      0,
+      0,
+      0,
+      1
+    ]
+  },
+  "stratumColumnOrder": [
+    "plain32K",
+    "vectors32K",
+    "summary32K",
+    "sillymemory32K",
+    "plain128K"
+  ],
+  "pairedSillyMemory": [
+    {
+      "context": 32768,
+      "mode": "off",
+      "pairs": 14,
+      "wins": 6,
+      "losses": 0,
+      "bothCorrect": 4,
+      "bothWrong": 4,
+      "medianPairedInputReduction": 0.8929918230902909
+    },
+    {
+      "context": 32768,
+      "mode": "vectors",
+      "pairs": 14,
+      "wins": 5,
+      "losses": 0,
+      "bothCorrect": 5,
+      "bothWrong": 4,
+      "medianPairedInputReduction": 0.8930023524469097
+    },
+    {
+      "context": 32768,
+      "mode": "summary",
+      "pairs": 14,
+      "wins": 4,
+      "losses": 0,
+      "bothCorrect": 6,
+      "bothWrong": 4,
+      "medianPairedInputReduction": 0.8929857001290511
+    },
+    {
+      "context": 131072,
+      "mode": "off",
+      "pairs": 14,
+      "wins": 1,
+      "losses": 1,
+      "bothCorrect": 9,
+      "bothWrong": 3,
+      "medianPairedInputReduction": 0.9680960675802831
+    }
+  ],
+  "nativeNoInjection": 10,
+  "newSuccessfulUsage": {
+    "answer": {
+      "prompt": 2635994,
+      "output": 5150,
+      "calls": 62
+    },
+    "summary": {
+      "prompt": 16572010,
+      "output": 146688,
+      "calls": 609
+    },
+    "judge": {
+      "prompt": 14357,
+      "output": 103,
+      "calls": 62
+    }
+  },
+  "nativeEmbeddingCalls": 2703,
+  "nativeEmbeddingTokens": 1248974,
+  "knownSuccessfulOpenaiUsdEstimate": 7.98804438,
+  "providerReservations": {
+    "completionAttempts": 735,
+    "openaiUsd": 11.143799479999997,
+    "nativeEmbeddingCalls": 2703,
+    "nativeEmbeddingInputs": 21555,
+    "nativeEmbeddingTokens": 1421414,
+    "extraAttempts": 2
+  },
+  "lambdaReservations": {
+    "collections": 8,
+    "lambdaRequests": 354,
+    "lambdaDocuments": 10910,
+    "lambdaTokens": 1319230,
+    "lambdaWriteBytes": 10307409
+  },
+  "unknownDeliveryAttempts": [
+    "provider/gpt4_2ba83207/32768/summary/summary/14/0",
+    "provider/gpt4_2f584639/32768/summary/summary/30/0"
+  ],
+  "cleanup": {
+    "allFourSessionsCleaned": true,
+    "ownedCollectionsInaccessible": 8,
+    "physicalErasureClaimed": false
+  },
+  "validation": {
+    "unitTestsPassed": 308,
+    "runtimeAndToolSyntax": true,
+    "releaseMetadata": true,
+    "independentPaidReceiptAudit": "artifacts/development-live-verification.json",
+    "credentialScanMatches": 0,
+    "actualHostLocalFixtureRows": 5,
+    "savedAnswerReused": true,
+    "blockedSecondWriterReportUnchanged": true,
+    "providerLockFailureReleasesRunLock": true,
+    "archiveCredentialScan": {
+      "archiveSha256": "26e1669b3a24c33742b9cc4a76c47707a6c870ad16436f14fe2c46acc692baa8",
+      "decompressedBytesChecked": 1001996766,
+      "credentialValueMatches": 0
+    }
+  },
+  "archives": [
+    {
+      "path": "artifacts/archive/development-live-v1/evidence.tar.gz",
+      "sha256": "26e1669b3a24c33742b9cc4a76c47707a6c870ad16436f14fe2c46acc692baa8",
+      "bytes": 270628859,
+      "availability": "local-only; not uploaded or available in a fresh clone"
+    },
+    {
+      "path": "artifacts/archive/development-live-v1/source-paid-c1d8eb9.tar.gz",
+      "sha256": "fe590db8c1f2d684c6213c6e0f11f07deddd67b71bc30075979d9d80ad77d2e8",
+      "bytes": 2819861,
+      "availability": "local-only; not uploaded or available in a fresh clone"
+    },
+    {
+      "path": "artifacts/archive/development-live-v1/source-fixture-7e1fd69.tar.gz",
+      "sha256": "871e34bb059aeda51d9f2618a2477ce6bd09a0b7a4871c0013177e1acd4c892a",
+      "bytes": 2820013,
+      "availability": "local-only; not uploaded or available in a fresh clone"
+    }
+  ],
+  "cachedCandidateDiagnostic": {
+    "path": "artifacts/selection-replay.json",
+    "classification": "Offline candidate replay; no new answer-quality scores",
+    "originalSelectionsExactlyReproduced": 12,
+    "newProviderCalls": 0,
+    "casesWithIncreasedLabeledSelection": 5,
+    "casesWithDecreasedLabeledSelection": 0,
+    "selectedLabeledMessagesBefore": 14,
+    "selectedLabeledMessagesAfter": 20,
+    "labeledMessages": 21,
+    "sha256": "95c3a08e9a920febc38ca8b731dac6744b9102f28151d1bbe8926d3bc381bfe5"
+  },
+  "limits": [
+    "No statistical/general superiority claim",
+    "Unknown summary deliveries remain charged and unconfirmed; each has a successful inspected retry",
+    "Frozen uncached price assumptions; old pilot and LambdaDB bill excluded",
+    "Native raw search rankings not retained; message-label diagnostics are not ANN recall",
+    "Final startup-lock fix is local-fixture evidence; paid source and continuation history are archived"
+  ],
+  "primarySelectionFollowup": {
+    "evidence": "Offline replay of recorded candidates, not fresh retrieval or answer quality",
+    "sourceRevision": "945973ec374b7e054a86bbdaf6dbf62586a3593a",
+    "runtimeChanged": false,
+    "providerCalls": 0,
+    "heldOutQuestionsExecuted": 0,
+    "decision": "Reject all three fixed primary-priority candidates; retain v5 and close this selection change.",
+    "baselineReproduced": {
+      "historicalSearch": 62,
+      "historicalGeneration": 32,
+      "developmentObservations": 12
+    },
+    "cohorts": {
+      "followup": {
+        "rows": 218,
+        "selectedSourceObservations": {
+          "baseline": 182,
+          "primary-2": 176,
+          "primary-3": 176,
+          "primary-first": 174
+        },
+        "gains": {
+          "baseline": 0,
+          "primary-2": 0,
+          "primary-3": 0,
+          "primary-first": 0
+        },
+        "losses": {
+          "baseline": 0,
+          "primary-2": 6,
+          "primary-3": 6,
+          "primary-first": 8
+        }
+      },
+      "development": {
+        "rows": 12,
+        "selectedSourceObservations": {
+          "baseline": 14,
+          "primary-2": 19,
+          "primary-3": 20,
+          "primary-first": 20
+        },
+        "gains": {
+          "baseline": 0,
+          "primary-2": 5,
+          "primary-3": 6,
+          "primary-first": 6
+        },
+        "losses": {
+          "baseline": 0,
+          "primary-2": 0,
+          "primary-3": 0,
+          "primary-first": 0
+        }
+      }
+    },
+    "leastDisruptiveCandidateLosses": [
+      {
+        "case": "search/long-dialogue-v1/ko-long-reference",
+        "budget": 400
+      },
+      {
+        "case": "search/boundaries/ko-first-user",
+        "budget": 400
+      },
+      {
+        "case": "search/boundaries/ko-assistant-topic",
+        "budget": 400
+      },
+      {
+        "case": "search/fallback-controls/ko-blank-assistant",
+        "budget": 400
+      },
+      {
+        "case": "search/fallback-controls/ko-retained-answer",
+        "budget": 400
+      },
+      {
+        "case": "search/fallback-controls/ko-blank-user",
+        "budget": 400
+      }
+    ],
+    "reportSha256": "fd2b7ada656359443b5ef339f46a26de1e3b160e9818a38f40da6f0b6461d035",
+    "archive": {
+      "path": "artifacts/archive/primary-selection-v1/evidence.tar.gz",
+      "sha256": "7179c6db0406394e64c66af6c49d35a0fffb359c159a895d0d70507727e83bdf",
+      "availability": "Local-only in the benchmark-live-resume worktree; not uploaded or available in a fresh clone",
+      "bytes": 27923
+    },
+    "reproduction": "Extract artifacts into a checkout at sourceRevision. Set SM_BASELINE_ROOT to the restored PR39 evidence worktree, install its pinned host dependencies, then node artifacts/replay.mjs artifacts/new-replay.json. Needs the separately archived PR39 baseline evidence. No credentials or network calls."
+  }
+}

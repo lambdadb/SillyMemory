@@ -1,6 +1,6 @@
 {
   "name": "sillymemory",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "description": "Long-term memory for SillyTavern.",
   "type": "module",
@@ -8,9 +8,10 @@
     "test": "node --test tests/*.test.js",
     "check:release": "node scripts/check-release.mjs",
     "test:install": "node scripts/install-smoke.mjs",
-    "check": "node --check index.js && node --check src/client.js && node --check src/memory.js && node --check src/gate.js && node --check src/status.js",
+    "check": "node --check index.js && node --check src/chat-collections.js && node --check src/client.js && node --check src/chunking.js && node --check src/context.js && node --check src/memory.js && node --check src/gate.js && node --check src/status.js && node --check src/delivery.js",
     "test:browser": "node scripts/browser-smoke.mjs",
     "test:faults": "node scripts/browser-smoke.mjs --faults",
+    "test:collections:live": "node scripts/chat-collections-live.mjs",
     "test:live": "node scripts/live-smoke.mjs",
     "test:live:faults": "node scripts/live-smoke.mjs --faults",
     "test:generation": "node scripts/generation-smoke.mjs",
@@ -19,7 +20,8 @@
     "test:comparison:live": "node scripts/generation-smoke.mjs --comparison",
     "test:heldout:live": "node scripts/generation-smoke.mjs --heldout",
     "test:recovery": "node scripts/browser-smoke.mjs --recovery",
-    "test:challenges:live": "node scripts/generation-smoke.mjs --challenges"
+    "test:challenges:live": "node scripts/generation-smoke.mjs --challenges",
+    "test:natural:live": "node scripts/generation-smoke.mjs --natural"
   },
   "engines": {
     "node": ">=20.12"

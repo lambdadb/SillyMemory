@@ -1,5 +1,6 @@
-// Real pinned SillyTavern + real Chromium + real CORS proxy; LambdaDB is emulated.
+// Real pinned SillyTavern + real Chromium + direct browser CORS; LambdaDB is emulated.
 // Never use this harness with personal data or a real API key.
+import { emulatorCors } from './emulator-cors.mjs';
 import { faultController, runFaultScenarios } from './fault-scenarios.mjs';
 import { chromium } from '@playwright/test';
 import assert from 'node:assert/strict';
@@ -28,24 +29,26 @@ try { await lstat(extension); } catch (error) { if (error.code !== 'ENOENT') thr
 assert.equal(await realpath(extension), root, 'Host extension must point to the checkout under test.');
 const cert = path.join(work, 'cert.pem'), key = path.join(work, 'key.pem');
 execFileSync('openssl', ['req', '-x509', '-newkey', 'rsa:2048', '-nodes', '-keyout', key, '-out', cert, '-days', '1', '-subj', '/CN=localhost', '-addext', 'subjectAltName=DNS:localhost,IP:127.0.0.1'], { stdio: 'ignore' });
-const collections = new Map(); const calls = []; let delayedQuery = 0; let staleHits = []; let failQuery = false;
+const collections = new Map(); const calls = []; let delayedQuery = 0; let staleHits = []; let failQuery = false; let corsEnabled = true; let proxyRequests = 0; let preflights = 0;
 const remote = createServer({ key: await readFile(key), cert: await readFile(cert) }, async (req, res) => {
+    if (emulatorCors(req, res, corsEnabled)) { preflights++; return; }
     const buffers = []; for await (const b of req) buffers.push(b);
     const body = buffers.length ? JSON.parse(Buffer.concat(buffers).toString()) : {};
-    calls.push({ method: req.method, path: req.url, body, keyPresent: req.headers['x-api-key'] === 'synthetic-session-key', cookiePresent: Boolean(req.headers.cookie), csrfPresent: Boolean(req.headers['x-csrf-token']) });
+    calls.push({ method: req.method, path: req.url, body, keyPresent: req.headers['x-api-key'] === 'synthetic-session-key', cookiePresent: Boolean(req.headers.cookie), csrfPresent: Boolean(req.headers['x-csrf-token']), origin: req.headers.origin });
     const send = (status, value = {}) => { res.writeHead(status, { 'Content-Type': 'application/json' }); res.end(JSON.stringify(value)); };
     if (req.headers['x-api-key'] !== 'synthetic-session-key') return send(401, { message: 'synthetic auth failure' });
-    const parts = req.url.split('/').filter(Boolean);
+    const parts = new URL(req.url, 'https://localhost').pathname.split('/').filter(Boolean);
     if (parts[0] !== 'projects' || parts[1] !== 'synthetic' || parts[2] !== 'collections') return send(404);
     const name = parts[3];
+    if (!name && req.method === 'GET') return send(200, { collections: [...collections.values()].map(c => c.definition) });
     if (!name && req.method === 'POST') {
         if (collections.has(body.collectionName)) return send(409);
         assert.equal(body.indexConfigs.embedding.managedEmbedding, true);
-        collections.set(body.collectionName, { definition: body, docs: new Map() }); return send(201, { collection: body });
+        return faults.respond('create', () => { collections.set(body.collectionName, { definition: body, docs: new Map() }); return [201, { collection: body }]; }, send);
     }
     const c = collections.get(name); if (!c) return send(404);
     if (parts.length === 4 && req.method === 'GET') return send(200, { collection: c.definition });
-    if (parts.length === 4 && req.method === 'DELETE') { collections.delete(name); return send(200); }
+    if (parts.length === 4 && req.method === 'DELETE') return faults.respond('delete-collection', () => { collections.delete(name); return [200, {}]; }, send);
     if (parts[4] === 'docs' && parts[5] === 'upsert') return faults.respond('upsert', () => { body.docs.forEach(d => c.docs.set(d.id, d)); return [202, {}]; }, send);
     if (parts[4] === 'docs' && parts[5] === 'delete') return faults.respond('delete-docs', () => { body.ids.forEach(id => c.docs.delete(id)); return [202, {}]; }, send);
     if (parts[4] === 'query') {
@@ -79,16 +82,29 @@ async function start(enabled) {
     }
     throw new Error('SillyTavern did not start');
 }
+const errors = [], pageErrorDetails = [], hostFailures = [];
 try {
     await start(false);
     const disabled = await fetch(`${url}/proxy/${encodeURIComponent(`${endpoint}/projects/synthetic/collections`)}`);
     check('real server rejects proxy when disabled', disabled.status === 404 && (await disabled.text()).includes('CORS proxy is disabled'));
-    await stop(); await start(true);
+    // The default profile selects the remote Horde service. This interceptor
+    // test generates no model responses; do not make its success depend on
+    // Horde availability during startup/reloads. Use an unconnected OpenAI UI.
+    const profilePath = path.join(work, 'data/default-user/settings.json');
+    const profile = JSON.parse(await readFile(profilePath, 'utf8'));
+    profile.main_api = 'openai';
+    await writeFile(profilePath, JSON.stringify(profile));
     browser = await chromium.launch();
-    const browserContext = await browser.newContext({ viewport: { width: 1440, height: 1100 } });
+    const browserContext = await browser.newContext({ viewport: { width: 1440, height: 1100 }, ignoreHTTPSErrors: true });
     const page = await browserContext.newPage();
+    await browserContext.addCookies([{ url: endpoint, name: 'synthetic-remote-cookie', value: 'must-not-send', secure: true, sameSite: 'None' }]);
+    page.on('request', request => { if (new URL(request.url()).pathname.startsWith('/proxy/')) proxyRequests++; });
     debugPage = page; page.setDefaultTimeout(15000);
-    const errors = []; page.on('pageerror', e => errors.push(e.message));
+    page.on('pageerror', e => { errors.push(e.message); pageErrorDetails.push(e.stack); });
+    page.on('response', response => {
+        const pathname = new URL(response.url()).pathname;
+        if (response.status() >= 500 && pathname.startsWith('/api/')) hostFailures.push({ path: pathname, status: response.status() });
+    });
     await page.goto(url); await page.getByText('Welcome to SillyTavern!', { exact: true }).waitFor();
     await page.getByText('Save', { exact: true }).last().click();
     await page.locator('#sillymemory').waitFor({ state: 'attached', timeout: 30000 });
@@ -102,6 +118,12 @@ try {
     const status = () => field('status').innerText();
     const waitStatus = async text => { await page.waitForFunction(text => document.querySelector('#sillymemory [data-sm="status"]')?.textContent.includes(text), text, { timeout: 30000 }); };
     await field('endpoint').fill(endpoint); await field('project').fill('synthetic');
+    corsEnabled = false;
+    await field('key').fill('synthetic-session-key'); await field('connect').click();
+    await field('gate').click(); await waitStatus('CORS access');
+    check('missing CORS permission fails visibly and cannot confirm cleanup', collections.size === 0 && (await page.evaluate(() => Object.values(localStorage).some(v => v.includes('testCollection')))));
+    corsEnabled = true;
+    await field('cleanup').click(); await waitStatus('No pending');
     await field('key').fill('wrong-synthetic-key'); await field('connect').click();
     await field('gate').click(); await waitStatus('Authentication failed');
     check('auth failure is visible with reconnect guidance', (await status()).includes('Authentication failed') && (await status()).includes('Use key for this session'));
@@ -109,11 +131,11 @@ try {
     await field('cleanup').click(); await waitStatus('No pending');
     if (faultMode) faults.arm('upsert', 'http', 503);
     await field('gate').click(); await waitStatus('Transport gate passed');
-    if (faultMode) check('transport gate retries transient upsert readiness through the proxy', calls.filter(c => c.path.endsWith('/docs/upsert')).length === 2);
-    check('synthetic gate traverses the real proxy and cleans up', collections.size === 0);
-    check('real proxy forwards x-api-key and strips cookies/CSRF', calls.some(c => c.keyPresent) && calls.every(c => !c.cookiePresent && !c.csrfPresent));
-    await field('provision').click(); await waitStatus('Memory collection created');
-    check('owned memory collection created', collections.size === 1);
+    if (faultMode) check('transport gate retries transient upsert readiness through direct CORS', calls.filter(c => c.path.endsWith('/docs/upsert')).length === 2);
+    check('synthetic gate uses direct browser CORS with the host proxy disabled and cleans up', collections.size === 0);
+    check('direct requests carry the key and origin but omit cookies and host CSRF', calls.some(c => c.keyPresent) && calls.every(c => !c.cookiePresent && !c.csrfPresent && c.origin === url) && preflights > 0 && proxyRequests === 0);
+    await field('provision').click(); await waitStatus('Chat memory is ready');
+    check('preparation creates no collection before a chat is enabled', collections.size === 0);
     await page.locator('#sillymemory .inline-drawer-toggle').scrollIntoViewIfNeeded();
     if (!faultMode) await page.screenshot({ path: path.join(artifacts, 'setup.png') });
     await field('recent').fill('2'); await field('recent').dispatchEvent('change');
@@ -143,15 +165,19 @@ try {
         const chat = c.chat.map((m, index) => ({ ...m, index })); let aborted = false;
         // Exercise the actual host interceptor dispatcher, including manifest order.
         const { runGenerationInterceptors } = await import('/scripts/extensions.js');
-        const { getExtensionPrompt } = await import('/script.js');
         aborted = await runGenerationInterceptors(chat, 4096, 'normal');
-        const rendered = await getExtensionPrompt(1, 2, '\n', 0, true);
-        return { before, after: JSON.stringify(c.chat), chat, aborted, rendered, renderedTokens: await c.getTokenCountAsync(rendered), macroValue: c.chatMetadata.variables?.sillymemory_test, injection: c.extensionPrompts.sillymemory?.value, inspection: document.querySelector('[data-sm="inspection"]').textContent };
+        const rendered = chat.filter(m => m.mes.startsWith('[Past conversation excerpt:')).map(m => m.mes).join('\n');
+        const result = { before, after: JSON.stringify(c.chat), chat, aborted, rendered, renderedTokens: await c.getTokenCountAsync(rendered), macroValue: c.chatMetadata.variables?.sillymemory_test, injection: rendered, inspection: document.querySelector('[data-sm="inspection"]').textContent };
+        // This suite calls only the interceptor dispatcher. Emulate its completion
+        // boundary to release prompt ownership; full packing/dispatch is tested
+        // by prompt-delivery-smoke.mjs, not by this synthetic final event.
+        if (!aborted) await c.eventSource.emit(c.eventTypes.GENERATE_AFTER_DATA, { prompt: chat.map(m => ({ role: m.is_user ? 'user' : 'assistant', content: m.mes })) }, false);
+        return result;
     });
     const result = await prompt();
     check('real host dispatcher injects bounded memory', Boolean(result.injection) && /\d+ \/ 250 tokens/.test(result.inspection));
-    check('host prompt assembly keeps recalled macros literal within budget', result.rendered.includes('｛｛char｝｝') && result.rendered.includes('＜USER＞') && result.macroValue === undefined && result.renderedTokens <= 250);
-    check('recent messages and persisted source chat are preserved', result.chat.length === 2 && result.chat[0].mes.includes('passage 6') && result.before === result.after);
+    check('native recalled excerpts keep macros literal within budget', result.rendered.includes('｛｛char｝｝') && result.rendered.includes('＜USER＞') && result.macroValue === undefined && result.renderedTokens <= 250);
+    check('recent messages and persisted source chat are preserved', result.chat.filter(m => !m.mes.startsWith('[Past conversation excerpt:')).length === 2 && result.chat.at(-2).mes.includes('passage 6') && result.before === result.after);
     delayedQuery = 400;
     const olderGeneration = prompt();
     await page.waitForTimeout(100);
@@ -162,7 +188,7 @@ try {
     await page.evaluate(async () => { const c = SillyTavern.getContext(); c.chat[0].mes = 'Edited: the compass is in the tower.'; await c.eventSource.emit(c.eventTypes.MESSAGE_UPDATED, 0); });
     await waitStatus('synchronized'); staleHits = [old];
     const edited = await prompt();
-    check('edits delete stale records and reject delayed old hits', !collection.docs.has(old.id) && !edited.injection.includes('[Message 1, User, passage 1]\nSynthetic'));
+    check('edits delete stale records and reject delayed old hits', !collection.docs.has(old.id) && !edited.injection.includes('Synthetic passage 0'));
     await page.evaluate(async () => { const c = SillyTavern.getContext(); c.chat[1].mes = 'Selected swipe: silver compass'; c.chat[1].swipe_id = 1; await c.eventSource.emit(c.eventTypes.MESSAGE_SWIPED, 1); });
     await waitStatus('synchronized');
     check('swipe event updates remote source', [...collection.docs.values()].some(d => d.text.includes('Selected swipe')));
@@ -177,7 +203,26 @@ try {
     check('chat switch rejects late result and aborts old generation', raced.aborted && !raced.injection);
     await waitStatus('synchronized'); staleHits = [old];
     const branch = await prompt();
-    check('native branch scope excludes original chat results', !branch.injection.includes('Edited:') && new Set([...collection.docs.values()].map(d => d.scope)).size === 2);
+    check('native branch scope excludes original chat results', !branch.injection.includes('Edited:') && collections.size === 2 && [...collections.values()].every(c => new Set([...c.docs.values()].map(d => d.scope)).size === 1));
+    if (!faultMode) {
+        const beforeCopy = await page.evaluate(() => SillyTavern.getContext().chatMetadata.sillymemory.id);
+        await field('enabled').uncheck();
+        await page.evaluate(async () => { const c = SillyTavern.getContext(), { saveChat } = await import('/script.js'); await saveChat({ chatName: 'Synthetic copied' }); await c.openCharacterChat('Synthetic copied'); });
+        page.once('dialog', d => d.accept()); await field('delete-chat').click(); await waitStatus('no longer accessible');
+        check('deleting an unactivated copy cannot delete its parent', collections.size === 2);
+        const uncertainCreate = faults.arm('create', 'hold'); await field('enabled').check();
+        await uncertainCreate.entered; await waitStatus('timed out'); uncertainCreate.release();
+        check('uncertain creation retains one pending owned collection', collections.size === 3);
+        await field('sync').click(); await waitStatus('synchronized');
+        check('create retry recovers the same collection', collections.size === 3);
+        check('copied metadata receives a distinct collection', collections.size === 3 && await page.evaluate(() => SillyTavern.getContext().chatMetadata.sillymemory.id) !== beforeCopy);
+        faults.arm('delete-collection', 'http', 503);
+        page.once('dialog', d => d.accept()); await field('delete-chat').click(); await waitStatus('HTTP 503');
+        check('failed individual deletion keeps remote collection for retry', collections.size === 3);
+        page.once('dialog', d => d.accept()); await field('delete-chat').click(); await waitStatus('no longer accessible');
+        check('individual deletion preserves parent and branch collections', collections.size === 2);
+        await field('enabled').check(); await waitStatus('synchronized');
+    }
     failQuery = true;
     const failed = await prompt(); failQuery = false;
     check('query failure preserves unmodified prompt', !failed.injection && failed.chat.length === 7);
@@ -189,19 +234,19 @@ try {
     await page.locator('#sillymemory details').evaluate(e => { e.open = true; });
     await field('inspection').scrollIntoViewIfNeeded();
     if (!faultMode) await page.screenshot({ path: path.join(artifacts, 'settings.png') });
-    if (faultMode) { staleHits = []; faultResults = await runFaultScenarios({ page, field, waitStatus, prompt, check, faults, collections, calls, restartHost: recoveryMode ? async () => { const exited = new Promise(resolve => server.once('exit', resolve)); server.kill('SIGKILL'); await exited; await start(true); } : undefined, screenshot: name => page.screenshot({ path: path.join(artifacts, `${name}${artifactTag ? `-${artifactTag}` : ''}.png`) }) }); }
+    if (faultMode) { staleHits = []; faultResults = await runFaultScenarios({ page, field, waitStatus, prompt, check, faults, collections, calls, restartHost: recoveryMode ? async () => { const exited = new Promise(resolve => server.once('exit', resolve)); server.kill('SIGKILL'); await exited; await start(false); } : undefined, screenshot: name => page.screenshot({ path: path.join(artifacts, `${name}${artifactTag ? `-${artifactTag}` : ''}.png`) }) }); }
     else { page.once('dialog', dialog => dialog.accept()); await field('delete').click(); await waitStatus('no longer accessible'); }
     check('owned remote deletion leaves no collections', collections.size === 0);
     await page.reload(); await page.locator('#sillymemory').waitFor({ state: 'attached', timeout: 45000 });
     check('final reload again requires key entry', await field('key').inputValue() === '' && !await field('enabled').isChecked());
     if (faultMode) check('fault run has no uncaught browser page errors', errors.length === 0);
     const sourceSha256 = {};
-    for (const file of ['index.js', 'manifest.json', 'settings.html', 'style.css', 'src/client.js', 'src/gate.js', 'src/memory.js', 'src/status.js', 'scripts/browser-smoke.mjs', 'scripts/fault-scenarios.mjs', 'scripts/recovery-scenarios.mjs']) {
+    for (const file of ['index.js', 'manifest.json', 'settings.html', 'style.css', 'src/chunking.js', 'src/client.js', 'src/chat-collections.js', 'src/gate.js', 'src/memory.js', 'src/context.js', 'src/status.js', 'scripts/browser-smoke.mjs', 'scripts/emulator-cors.mjs', 'scripts/fault-scenarios.mjs', 'scripts/recovery-scenarios.mjs']) {
         sourceSha256[file] = createHash('sha256').update(await readFile(path.join(root, file))).digest('hex');
     }
-    await writeFile(path.join(artifacts, artifactName), JSON.stringify({ passed: true, faultResults, sourceSha256, time: new Date().toISOString(), sillyTavern: revision, node: process.version, browser: browser.version(), upstream: 'Local HTTPS LambdaDB emulator; no live managed embeddings', checks, pageErrors: errors, requestCount: calls.length, remainingCollections: collections.size }, null, 2));
+    await writeFile(path.join(artifacts, artifactName), JSON.stringify({ passed: true, faultResults, sourceSha256, time: new Date().toISOString(), sillyTavern: revision, node: process.version, browser: browser.version(), upstream: 'Local HTTPS LambdaDB emulator; no live managed embeddings', checks, pageErrors: errors, requestCount: calls.length, preflights, proxyRequests, remainingCollections: collections.size }, null, 2));
 } catch (error) {
-    if (faultMode) await writeFile(path.join(artifacts, artifactName), JSON.stringify({ passed: false, checks, faultResults, faultObservations: faults.observations, failure: error.message, remainingCollections: collections.size }, null, 2));
+    if (faultMode) await writeFile(path.join(artifacts, artifactName), JSON.stringify({ passed: false, checks, faultResults, faultObservations: faults.observations, failure: error.message, pageErrors: errors, pageErrorDetails, hostFailures, remainingCollections: collections.size }, null, 2));
     console.error('Browser failure status:', await debugPage?.locator('[data-sm="status"]').innerText().catch(() => 'unavailable'));
     console.error('Upstream request count:', calls.length);
     await debugPage?.screenshot({ path: path.join(artifacts, faultMode ? 'fault-failure.png' : 'failure.png') }).catch(() => {});

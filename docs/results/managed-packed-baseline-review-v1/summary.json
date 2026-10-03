@@ -1,0 +1,42 @@
+{
+  "version": "semantic-long-v1",
+  "kind": "Actual SillyTavern, live managed search and generation; source delivery only, answers ungraded",
+  "groups": [
+    {
+      "mode": "off",
+      "samples": 32,
+      "known": 28,
+      "completeInMemory": 0,
+      "completeInPrompt": 0,
+      "answerUnitsInPrompt": 0,
+      "contextUnitsInPrompt": 0,
+      "unknown": 4,
+      "maxMemoryTokens": 0
+    },
+    {
+      "mode": "on",
+      "samples": 32,
+      "known": 28,
+      "completeInMemory": 28,
+      "completeInPrompt": 28,
+      "answerUnitsInPrompt": 32,
+      "contextUnitsInPrompt": 28,
+      "unknown": 4,
+      "maxMemoryTokens": 319
+    }
+  ],
+  "providerCalls": 64,
+  "retries": 0,
+  "spacing": {
+    "verified": true,
+    "evidence": "monotonic upstream-send timestamps",
+    "minimumIntervalMs": 15000,
+    "minimumObservedIntervalMs": 15000.058582999976,
+    "gapsBelowMinimum": 0
+  },
+  "checks": 837,
+  "lambdaResponses": 270,
+  "cleanupComplete": true,
+  "answerQuality": null,
+  "independentHumanReview": null
+}

@@ -1,0 +1,94 @@
+{
+  "version": "external-benchmark-pilot-design-v1",
+  "status": "design frozen; host executor and prompt preflight pending; no model calls performed",
+  "selectionSha256": "2b048316165d08b407f6787d9e63752ee2485dcb6eec4502d63f1c9b6344d477",
+  "sourceSha256": "1c9811be7ccb5ba54a4c0e0d0f21be3f2bda54cea885341e1b62491f68fd8a46",
+  "hostRevision": "06bde939fb1e9c4c8d8641d810f0a916b5bce127",
+  "generator": {
+    "model": "gpt-4.1-mini-2025-04-14",
+    "temperature": 0,
+    "maxOutputTokens": 1024
+  },
+  "pilotContext": 32768,
+  "offlinePreflightContexts": [
+    32768,
+    131072
+  ],
+  "arms": {
+    "off": {},
+    "vectors": {
+      "source": "vllm",
+      "embeddingModel": "text-embedding-3-small",
+      "protect": 5,
+      "insert": 3,
+      "query": 2,
+      "message_chunk_size": 400,
+      "score_threshold": 0.25,
+      "template": "host default"
+    },
+    "summary": {
+      "source": "main",
+      "prompt_builder": 0,
+      "promptWords": 200,
+      "promptInterval": 10,
+      "memoryFrozen": false,
+      "overrideResponseLength": 0,
+      "template": "host default"
+    },
+    "sillymemory": {
+      "embeddingMode": "managed",
+      "recent": 12,
+      "budget": 800,
+      "chunkChars": 800
+    }
+  },
+  "cases": [
+    {
+      "id": "8ebdbe50",
+      "stratum": "single-session-user",
+      "split": "development",
+      "sourceIndex": 21,
+      "evidenceGroup": "2cf7708ef3bf3bdb114ac8a8ae21332b6938faa115faf47d5917550d489ac30b",
+      "inputSha256": "0dd90582823623a72ad81cd9c46b755fa14d8f048fe0fafc084f1bc4c393e089",
+      "adaptedHistoryTokenEstimate": 107339,
+      "auditFlags": [],
+      "sourceMessages": 487,
+      "automaticSummaryCallCap": 51
+    },
+    {
+      "id": "eeda8a6d_abs",
+      "stratum": "abstention",
+      "split": "development",
+      "sourceIndex": 128,
+      "evidenceGroup": "fe5674f92789594aea867ebf41160cbd2b37fbb18a7fdaabafcfb40e22f8814f",
+      "inputSha256": "a1b64ab8a3d12ebb89b5de303cd5bd271622108e0cfc43ff7caf101b0c8f915c",
+      "adaptedHistoryTokenEstimate": 104879,
+      "auditFlags": [],
+      "sourceMessages": 477,
+      "automaticSummaryCallCap": 50
+    }
+  ],
+  "answerCalls": 8,
+  "judgeCalls": 8,
+  "maxSummaryCalls": 101,
+  "repetitions": 1,
+  "retryPolicy": {
+    "statuses": [
+      500,
+      502,
+      503,
+      504
+    ],
+    "maxAttemptsPerRequest": 3,
+    "totalExtraAttempts": 8,
+    "minimumProviderStartIntervalMs": 15000,
+    "retrySuccessfulLowQualityAnswers": false
+  },
+  "requiredBeforePaidRun": [
+    "Verify source roles/date markers, macro handling and final outgoing prompts on pinned host without providers",
+    "Advance through real events; verify automatic summary schedule and stop on call cap without forcing catch-up",
+    "Freeze finite embedding/query/storage and dollar-cost limits from dry-run document counts and current prices; no implicit spending authorization",
+    "Record model availability and official scorer revision/prompt; retain independent raw question snapshots",
+    "Verify owned collection/profile cleanup and preserve incomplete/failed samples"
+  ]
+}

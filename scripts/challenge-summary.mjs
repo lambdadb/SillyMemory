@@ -23,7 +23,7 @@ export function summarizeChallenges(reports, { partial = false, heldout = false 
         assert.equal(config.model, 'gpt-4.1-mini-2025-04-14'); assert.equal(config.context, settings.context);
         assert.equal(config.host, '06bde939fb1e9c4c8d8641d810f0a916b5bce127'); assert.equal(config.output, 256);
         assert.equal(report.generator, 'live compatible model');
-        const source = Object.fromEntries(['index.js', 'src/client.js', 'src/gate.js', 'src/memory.js', 'src/status.js', 'scripts/recall-challenges.mjs', 'scripts/challenge-eval.mjs', 'scripts/generation-smoke.mjs', 'scripts/generation-cleanup.mjs', ...(heldout ? ['scripts/heldout-fixture.mjs'] : [])].map(f => { assert(report.sourceSha256?.[f], `Missing hash: ${f}`); return [f, report.sourceSha256[f]]; }));
+        const source = Object.fromEntries(['index.js', 'src/client.js', 'src/gate.js', 'src/memory.js', 'src/context.js', 'src/status.js', 'scripts/recall-challenges.mjs', 'scripts/challenge-eval.mjs', 'scripts/generation-smoke.mjs', 'scripts/generation-cleanup.mjs', ...(heldout ? ['scripts/heldout-fixture.mjs'] : [])].map(f => { assert(report.sourceSha256?.[f], `Missing hash: ${f}`); return [f, report.sourceSha256[f]]; }));
         if (hashes) { assert.deepEqual(source, hashes, 'Mixed runtime or evaluation source'); assert.deepEqual(config, configuration, 'Mixed configuration'); }
         hashes = source; configuration = config;
         for (const row of report.evaluation.rows) {

@@ -4,6 +4,64 @@ Versions describe the extension, independently of the SillyTavern host version.
 An `Unreleased` entry is a development candidate. A dated entry records a release
 boundary; publication is confirmed by the corresponding Git tag and GitHub Release.
 
+## [0.2.0] - 2026-10-03
+
+### Added
+
+- Separate owned collection per character chat/native branch, rename-stable chat
+  identity, duplicate-chat isolation and current-chat remote deletion. All-owned
+  cleanup discovers tagged collections after browser bookkeeping loss.
+
+- Final host-prompt verification and **Stop on missing context**, enabled by
+  default. Missing recalled passages or verifiable recent messages stop the
+  completion request. Users can adjust context settings and retry explicitly,
+  or turn the option off to proceed with a visible warning.
+- Repeated passage packing: identical selected text from the same speaker/role
+  shares one body with every selected source coordinate. Saved tokens admit
+  distinct retrieved context without evicting existing selected sources.
+
+### Changed
+
+- Memory API requests go directly from the browser to LambdaDB over HTTPS/CORS,
+  omitting cookies and host CSRF headers. No SillyTavern proxy setting or restart
+  is required. Configure LambdaDB access for the page origin where needed; see
+  [transport requirements and validation](docs/direct-cors.md).
+
+- Long-message indexing prefers paragraph/sentence/word boundaries within the
+  800-code-point ceiling. Exact offsets and layout-specific document IDs keep
+  reindexing and stale-result rejection safe. No overlap or budget change.
+
+- Recalled excerpts preserve native user/assistant roles and literal macro text.
+- Retrieval searches the latest anchor and a separate contextual turn, including
+  assistant context when no prior user turn exists or its local historical match
+  is stronger. Continue generation follows the message being extended.
+- Overlapping prompt assembly cannot consume another generation's verification.
+  If another extension prevents a reserved final event, reload resets the slot.
+
+### Fixed
+
+- Final-prompt verification no longer accepts an arbitrary substring of another
+  same-role message as a delivered turn. Known speaker prefixes and line-separated
+  injections remain supported; missing short turns stop generation by default.
+
+### Validation and limits
+
+- A historical 64-answer actual-host run used live LambdaDB managed embeddings and
+  the fixed OpenAI generation model, with zero service failures/retries and
+  verified cleanup. Provisional scores were off 4/32 and on 30/32; all 28
+  known-answer on samples received complete required evidence.
+- Two Korean quotation answers still omitted the author despite source delivery.
+  Guidance candidates did not reliably fix this and were not adopted.
+  Actor-attribution reliability and independent human review remain open.
+- Updating from 0.1.0 rebuilds opened chats from local history into new per-chat
+  collections, consuming managed embedding/storage usage. The old shared
+  collection remains available for all-owned cleanup; it is not migrated or
+  deleted automatically. No separate embedding-provider setup is needed.
+- Updating requires reload, key re-entry and re-enabling memory. SillyTavern
+  1.19.0 remains the only validated host version; this is not a stable release.
+  See [update/rollback notes](docs/releases/0.2.0.md) and the separate
+  [installation/lifecycle validation](docs/releases/0.2.0-validation.md).
+
 ## [0.1.0] - 2026-09-28
 
 ### Added

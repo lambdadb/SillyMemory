@@ -14,6 +14,13 @@ Only older eligible text is indexed. Chunks are up to 800 Unicode code points by
 
 ## Write ordering and recovery
 
+Accessing the same SillyTavern server/account from another device shares host
+chats and the owner ID, but not the browser-local collection mapping or journal.
+The current UI cannot discover and reconnect an existing collection on a fresh
+browser merely by entering the API key. Remote excerpts also cannot replace the
+authoritative source chat. See [device-continuity follow-ups](evaluation-and-device-followups.md#same-server-device-continuity-current-limits-and-follow-up)
+for the proposed sequential-handoff scope and the unresolved coordination work.
+
 A per-engine promise queue serializes mutations. A session-long Web Lock prevents a second active tab for that account/browser. The local journal writes the union of prior and desired IDs **before** remote requests. Obsolete IDs are deleted; missing current IDs use normal upsert batches of 50. A successful pass replaces the journal with the desired IDs. In-memory acknowledgements skip duplicate writes during the session. Reload conservatively re-upserts current records and deletes obsolete recorded IDs, including writes whose response was lost.
 
 No chat text or API key is persisted in the journal. If local storage fails, remote writes do not begin. An interrupted mutation may still reach the service; the durable intent and next reconciliation repair it. There is no background retry loop against a failing service. A new event, explicit Sync, or next generation retries. The synthetic gate polls readiness with a bounded attempt count; ordinary queries use a 15-second per-request timeout. Full initial indexing can require multiple requests and take longer.
@@ -22,13 +29,31 @@ No chat text or API key is persisted in the journal. If local storage fails, rem
 
 Queries use the default `main` Branch with `consistentRead: true`, not versioning Tags/Aliases. Managed embedding `knn.queryText` uses an owner/scope prefilter. Remote hits are ranking signals: only exact current IDs, ownership, scope, revision, and source text are accepted; injection uses the locally reconstructed text. This prevents eventual-index lag, deleted records, malicious remote text changes, and sibling-chat results from resurrecting stale content.
 
-The `latest-user-or-continuation-plus-context-v2` query policy normally anchors on the last non-empty user message (or the last non-empty message if no user message exists). It submits that message alone and a separate contextual query containing the anchor followed by the preceding two non-empty messages in reverse order. Each query is capped at 6,000 UTF-16 code units; identical query strings collapse to one request. Assistant answers after the anchor are excluded, including a retained answer during regenerate/swipe. For an explicit host `continue` generation, the anchor is instead the latest non-empty message being extended, including assistant text. Regenerate and swipe retain the user anchor. See the [continuation and overflow evaluation](recall-challenges.md).
+The `latest-anchor-with-context-selection-v5` query policy normally anchors on the
+last non-empty user message (or the last non-empty message if no user exists).
+The second query normally uses the preceding non-empty user turn. A newer
+eligible assistant turn strictly before the anchor replaces it only when its
+maximum lexical similarity to earlier eligible history exceeds the user's by a factor
+of 1.25. With no prior user, keep the preceding eligible assistant fallback.
+Assistant file/media/tool turns cannot become the second query. The local
+comparison uses word trigrams and smoothed IDF-weighted cosine on at most 256
+eligible messages before both candidates; no additional service call is made.
+This is a bounded heuristic, not semantic reference resolution. Each text/query
+is capped at 6,000 UTF-16 code units; duplicate queries collapse to one request.
+Regenerate/swipe exclude retained answers after the user anchor. Explicit host
+`continue` anchors on the latest non-empty message being extended and applies
+the same context rule before that anchor. See the [query policy](query-policy.md)
+and [context-turn results and limitations](context-turn-results.md).
 
 The distinct queries run concurrently, each requesting 30 candidates with the same scope filter. Candidate ranks are interleaved, question first, then context. Scores from separate queries are not added or compared. Current-source validation precedes deduplication; whole passages are accepted while the complete wrapper stays inside the same token budget. This reserves early selection opportunities for the question and the contextual reference without guaranteeing equal token shares. One query failure cancels the sibling and rejects the entire retrieval; the existing full-prompt fallback applies. Two requests can increase managed embedding/query usage and latency compared with the original single query.
 
 An epoch and a full snapshot comparison invalidate work across events, chat switches, disabling, and connection replacement. Pending queries are canceled when possible; canceled server writes are never assumed rolled back. Token counting and the final validity check precede mutation. Failed sync/query/counting or empty selection preserves the full ephemeral prompt. A valid selection replaces older eligible messages while preserving recent full messages and special messages. Only the generated `coreChat` array is spliced; persisted chat objects are untouched.
 
-Injection is an `IN_CHAT` system extension prompt at the recent-message depth, with World Info scanning disabled. Macro braces and legacy `<USER>`/`<CHAR>`-style markers are rendered with fullwidth delimiters before budgeting; recalled macros cannot execute or expand during the host's later substitution pass. Its full wrapper/labels and host newline separators are counted in the configured token budget, additionally capped at a quarter of the host context limit. This does not reserve the model's complete system/persona/response overhead or guarantee the host can fit oversized recent messages. Retrieved dialogue is labeled quoted context rather than instructions; this is not a comprehensive prompt-injection defense.
+Selected excerpts replace eligible older messages in the ephemeral `coreChat` at their source positions, using the locally reconstructed user/assistant role and display name. Presentation is chronological even when retrieval ranks differ. A system extension prompt no longer combines different speakers. Recent and special messages retain their original objects; source chat is untouched. Source labels identify recalled passages without rewriting pronouns or treating a speaker as the actor of every reported action.
+
+Macro braces and legacy `<USER>`/`<CHAR>`-style markers are rendered with fullwidth delimiters before budgeting. The joined excerpt content, source labels and newline separators are counted with the host tokenizer, additionally capped at a quarter of the host context limit. Provider per-message envelopes and the complete system/persona/response overhead remain the host's responsibility; this is not a cap on total billed tokens or a guarantee that oversized recent history fits. Labeling and native roles are not a comprehensive prompt-injection defense.
+
+The pinned host scans `coreChat` for World Info after interceptors. Recalled excerpts can therefore participate in its ordinary history scan, unlike the previous system extension prompt with scanning disabled. World Info, other prompt rewriters, non-chat-completion providers and different host revisions are unverified. See the [speaker results](speaker-attribution-results.md) for the bounded OpenAI validation and remaining actor-attribution failure.
 
 ## Ownership and deletion
 

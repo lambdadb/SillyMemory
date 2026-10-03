@@ -66,15 +66,15 @@ Without `--allow-partial`, the summary command rejects missing samples. With tha
 
 ## Evidence
 
-- [Complete OpenAI comparison](../artifacts/korean-evaluation-summary-openai-gpt-4.1-mini.json) and [full OpenAI run](../artifacts/generation-korean-eval-openai-gpt-4.1-mini.json)
-- [Partial Gemini comparison](../artifacts/korean-evaluation-summary.json)
-- [Gemini 3.7 first segment](../artifacts/generation-korean-eval-gemini-3.7-flash-partial.json), [continuation from case three](../artifacts/generation-korean-eval-from-3.json), and [continuation from sample nine](../artifacts/generation-korean-eval-from-sample-9.json)
+- Complete OpenAI comparison (`artifacts/korean-evaluation-summary-openai-gpt-4.1-mini.json`, local-only) and full OpenAI run (`artifacts/generation-korean-eval-openai-gpt-4.1-mini.json`, local-only)
+- Partial Gemini comparison (`artifacts/korean-evaluation-summary.json`, local-only)
+- Gemini 3.7 first segment (`artifacts/generation-korean-eval-gemini-3.7-flash-partial.json`, local-only), continuation from case three (`artifacts/generation-korean-eval-from-3.json`, local-only), and continuation from sample nine (`artifacts/generation-korean-eval-from-sample-9.json`, local-only)
 - [Summary command](../scripts/korean-summary.mjs)
-- [Initial setup failure](../artifacts/generation-korean-eval-setup-failure.json): the host initially renders only the newest 100 messages, so the old edit target was absent. No generation calls occurred and cleanup succeeded. The harness now clicks the native Show more messages control before editing.
+- Initial setup failure (`artifacts/generation-korean-eval-setup-failure.json`, local-only): the host initially renders only the newest 100 messages, so the old edit target was absent. No generation calls occurred and cleanup succeeded. The harness now clicks the native Show more messages control before editing.
 - [Host runner](../scripts/generation-smoke.mjs), [evaluation runner](../scripts/korean-eval.mjs), and [fixture](../scripts/korean-fixture.mjs)
 
-- [Gemini 3.8 partial run](../artifacts/generation-korean-eval-gemini-3.8-flash-partial.json): nine completed answers, followed by a quota failure on the tenth request. Cleanup succeeded; this is not a complete eight-question comparison.
-- [Quota diagnostic](../artifacts/korean-quota-diagnostic.json): one bounded retry after the indicated delay confirmed `GenerateRequestsPerDayPerProjectPerModel-FreeTier`, limit 20 for `gemini-3.8-flash`. The short retry delay did not mean the daily quota had reset.
-- [Alternative model probe](../artifacts/korean-alternative-model-probe.json): Gemini 3.7 returned a complete response before starting a separate full evaluation. No results are pooled across models.
+- Gemini 3.8 partial run (`artifacts/generation-korean-eval-gemini-3.8-flash-partial.json`, local-only): nine completed answers, followed by a quota failure on the tenth request. Cleanup succeeded; this is not a complete eight-question comparison.
+- Quota diagnostic (`artifacts/korean-quota-diagnostic.json`, local-only): one bounded retry after the indicated delay confirmed `GenerateRequestsPerDayPerProjectPerModel-FreeTier`, limit 20 for `gemini-3.8-flash`. The short retry delay did not mean the daily quota had reset.
+- Alternative model probe (`artifacts/korean-alternative-model-probe.json`, local-only): Gemini 3.7 returned a complete response before starting a separate full evaluation. No results are pooled across models.
 
 Complete OpenAI results and the separate partial Gemini results are summarized in the [validation record](validation.md). All reports are local, Git-ignored review evidence. Credentials are never part of these artifacts.

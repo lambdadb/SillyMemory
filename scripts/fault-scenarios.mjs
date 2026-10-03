@@ -38,7 +38,10 @@ async function entered(item) {
 
 export async function runFaultScenarios({ page, field, waitStatus, prompt, check, faults, collections, calls, screenshot, restartHost }) {
     const timings = {};
-    const activeCollection = () => [...collections.values()][0];
+    const activeCollection = async () => {
+        const expected = await expectedRemote();
+        return [...collections.values()].find(c => c.definition.tags.chat === expected.scope);
+    };
     const sync = async () => { await field('sync').click(); await waitStatus('synchronized'); };
     async function seed() {
         await page.evaluate(async () => {
@@ -62,7 +65,7 @@ export async function runFaultScenarios({ page, field, waitStatus, prompt, check
     }
     async function remoteMatches() {
         const expected = await expectedRemote();
-        const actual = [...activeCollection().docs.values()].filter(d => d.scope === expected.scope).map(d => d.id).sort();
+        const actual = [...(await activeCollection()).docs.values()].filter(d => d.scope === expected.scope).map(d => d.id).sort();
         return JSON.stringify(actual) === JSON.stringify(expected.docs.map(d => d.id).sort());
     }
     async function reconnect(chatId) {
@@ -81,6 +84,11 @@ export async function runFaultScenarios({ page, field, waitStatus, prompt, check
         await field('key').fill('synthetic-session-key'); await field('connect').click();
         await field('enabled').check(); await waitStatus('synchronized');
     }
+    // Fault recovery verifies reconciliation, not ranking: the emulator returns
+    // insertion order. Fit all six old fixture messages including quote labels.
+    // The base browser checks above already exercise the tighter 250-token budget.
+    await field('budget').fill('800'); await field('budget').dispatchEvent('change');
+    await waitStatus('synchronized');
     await seed();
     // A quiet prompt must not consume a chat event's pending debounce timer.
     await page.evaluate(async () => {
@@ -115,7 +123,7 @@ export async function runFaultScenarios({ page, field, waitStatus, prompt, check
 
     const blockedTab = await page.context().newPage();
     let blockedProxyRequests = 0;
-    blockedTab.on('request', request => { if (new URL(request.url()).pathname.startsWith('/proxy/')) blockedProxyRequests++; });
+    blockedTab.on('request', request => { if (new URL(request.url()).pathname.startsWith('/projects/')) blockedProxyRequests++; });
     try {
         await blockedTab.goto(page.url());
         await blockedTab.waitForFunction(() => document.querySelector('#sillymemory [data-sm="status"]')?.textContent.includes('already open in another tab'), null, { timeout: 45000 });
@@ -207,7 +215,7 @@ export async function runFaultScenarios({ page, field, waitStatus, prompt, check
     // Keep the full default timeout; do not replace the shipped client's clock.
     await seed(); const uncertain = faults.arm('upsert', 'hold');
     const writeStarted = performance.now(); await edit('FAULT_UNCERTAIN: A secret is in the amber box.'); await entered(uncertain);
-    check('upsert can be accepted remotely before the browser sees success', [...activeCollection().docs.values()].some(d => d.text.includes('FAULT_UNCERTAIN')));
+    check('upsert can be accepted remotely before the browser sees success', [...(await activeCollection()).docs.values()].some(d => d.text.includes('FAULT_UNCERTAIN')));
     await waitStatus('timed out'); timings.acceptedWriteTimeoutMs = performance.now() - writeStarted; uncertain.release();
     // Delete while disabled, then perform a real page reload. Only the durable
     // intent journal can remember the timed-out write in the newly created engine.
@@ -224,9 +232,9 @@ export async function runFaultScenarios({ page, field, waitStatus, prompt, check
     await page.reload(); await reconnect(chatId);
     check('host reload preserves the saved post-deletion source', JSON.stringify(await page.evaluate(() => SillyTavern.getContext().chat.map(m => m.mes))) === JSON.stringify(savedSource));
     const reloaded = await prompt();
-    check('reload reconciles an accepted timed-out write after its source was deleted', await remoteMatches() && ![...activeCollection().docs.values()].some(d => d.text.includes('FAULT_UNCERTAIN')) && !reloaded.injection.includes('FAULT_UNCERTAIN'));
+    check('reload reconciles an accepted timed-out write after its source was deleted', await remoteMatches() && ![...(await activeCollection()).docs.values()].some(d => d.text.includes('FAULT_UNCERTAIN')) && !reloaded.injection.includes('FAULT_UNCERTAIN'));
 
-    const recovery = restartHost ? await runRecoveryScenarios({ page, field, waitStatus, prompt, check, faults, collections, calls, seed, edit, entered, remoteMatches, reconnect, restartHost }) : undefined;
+    const recovery = restartHost ? await runRecoveryScenarios({ page, field, waitStatus, prompt, check, faults, collections, calls, seed, edit, entered, remoteMatches, reconnect, restartHost, activeCollection }) : undefined;
 
     // Collection removal must await an in-flight write before sending DELETE.
     await seed(); const inFlight = faults.arm('upsert', 'hold');
@@ -234,7 +242,7 @@ export async function runFaultScenarios({ page, field, waitStatus, prompt, check
     const deletesBefore = calls.filter(c => c.method === 'DELETE').length;
     page.once('dialog', dialog => dialog.accept()); await field('delete').click();
     await page.waitForFunction(() => document.querySelector('[data-sm="delete"]').disabled && !document.querySelector('[data-sm="enabled"]').checked);
-    check('owned collection deletion waits for the outstanding write', collections.size === 1 && calls.filter(c => c.method === 'DELETE').length === deletesBefore);
+    check('owned collection deletion waits for the outstanding write', collections.size > 0 && calls.filter(c => c.method === 'DELETE').length === deletesBefore);
     inFlight.release(); await waitStatus('no longer accessible');
     check('drained collection deletion leaves no remote data or journal', collections.size === 0 && await page.evaluate(() => !Object.keys(localStorage).some(k => k.startsWith('sillymemory:journal:'))));
     return { timings, recovery, injectedFaults: faults.observations };

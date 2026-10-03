@@ -52,7 +52,7 @@ export async function runKoreanEvaluation({ page, field, openSettings, waitStatu
             else assert(source.slice(-11).every(m => promptText.includes(m.mes)), `${item.id}/${mode}: recent complete messages retained`);
             const evaluation = grade(output.last, item);
             const inspection = /^(\d+) \/ (\d+) tokens/.exec(output.inspection);
-            const injected = output.prompt.includes('Past conversation excerpts');
+            const injected = output.prompt.includes('Past conversation excerpt');
             if (mode === 'on' && injected) assert(inspection && Number(inspection[1]) <= 800, `${item.id}/${mode}: complete memory fits 800 host tokens`);
             if (mode === 'off') assert(!injected, `${item.id}/${mode}: memory disabled in final prompt`);
             const row = { case: item.id, mode, question: item.question, answer: output.last, ...evaluation, injected, memoryTokens: injected && inspection ? Number(inspection[1]) : 0, promptTokens: output.request.providerUsage?.prompt_tokens ?? null, hostTextTokens: output.request.hostTextTokens, promptCharacters: output.request.promptCharacters, generationMs: output.request.generationMs, providerMs: output.request.responseMs };

@@ -46,7 +46,7 @@ export async function runChallenges({ page, field, openSettings, waitStatus, gen
             const after = await page.evaluate(({ length, continuation }) => SillyTavern.getContext().chat.slice(0, continuation ? length - 1 : length).map(m => ({ text: m.mes, user: m.is_user, name: m.name })), { length: item.source.length, continuation: item.type === 'continue' });
             assert(hash(after) === hash(before.slice(0, after.length)) && after.length === item.source.length - (item.type === 'continue' ? 1 : 0), `${item.id}/${mode}: original source preserved`);
             const promptText = output.request.messages.map(m => typeof m.content === 'string' ? m.content : JSON.stringify(m.content)).join('\n');
-            const injected = promptText.includes('Past conversation excerpts');
+            const injected = promptText.includes('Past conversation excerpt');
             const counts = /^(\d+) \/ (\d+) tokens/.exec(output.inspection);
             if (injected) assert(mode === 'on' && counts && Number(counts[1]) <= settings.budget, `${item.id}/${mode}: memory budget enforced`);
             if (mode === 'off') assert(!injected, `${item.id}/${mode}: memory disabled`);

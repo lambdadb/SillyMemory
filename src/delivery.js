@@ -1,0 +1,76 @@
+// Match content at the host's assembled-prompt boundary, not provider receipt.
+const normalize = text => String(text ?? '').replaceAll('\r', '').trim();
+
+export function expectedMessages(messages, { user, character, continuation = false } = {}) {
+    return messages.map((message, i) => {
+        const content = normalize(message.mes)
+            .replace(/\{\{user\}\}|<USER>/gi, () => user ?? '{{user}}')
+            .replace(/\{\{char\}\}|<BOT>/gi, () => character ?? '{{char}}');
+        return {
+            role: message.is_user ? 'user' : 'assistant', content, index: message.index,
+            speaker: normalize(message.name ?? (message.is_user ? user : character)),
+            // Do not execute arbitrary macros twice or call a transformed turn lost.
+            verifiable: Boolean(content) && !/\{\{|\}\}/.test(content)
+                && !(continuation && i === messages.length - 1),
+        };
+    });
+}
+
+export function inspectPrompt(expected, prompt) {
+    if (!Array.isArray(prompt)) return null;
+    const available = prompt.map(message => ({
+        role: message?.role,
+        content: normalize(typeof message?.content === 'string' ? message.content
+            : Array.isArray(message?.content) ? message.content.filter(p => p.type === 'text').map(p => p.text).join('\n') : ''),
+    }));
+    // The pinned host prepends "name: " and separates in-chat injections with
+    // newlines. Accept those wrappers, never a word inside another turn.
+    const containsMessage = (content, message) => {
+        const bounded = `\n${content}\n`;
+        return bounded.includes(`\n${message.content}\n`)
+            || Boolean(message.speaker && bounded.includes(`\n${message.speaker}: ${message.content}\n`));
+    };
+    const used = new Set();
+    // Match one occurrence per source message, including identical repeated turns.
+    const match = messages => messages.map(message => {
+        if (!message.verifiable) return { ...message, outcome: 'unverified' };
+        const index = available.findIndex((out, i) => !used.has(i) && out.role === message.role && containsMessage(out.content, message));
+        if (index >= 0) used.add(index);
+        return { ...message, outcome: index >= 0 ? 'included' : 'missing' };
+    });
+    return { memory: match(expected.memory), recent: match(expected.recent) };
+}
+
+export function deliverySummary(result, stopOnLoss) {
+    if (!result) return 'Final prompt verification unavailable for this completion format. Prepared memory is not confirmed.';
+    const count = (group, outcome) => result[group].filter(m => m.outcome === outcome).length;
+    const memoryLost = count('memory', 'missing'), recentLost = count('recent', 'missing');
+    const uncertain = count('memory', 'unverified') + count('recent', 'unverified');
+    const totals = `Final host prompt: ${count('memory', 'included')}/${result.memory.length} memory passages and ${count('recent', 'included')}/${result.recent.length} recent messages verified.`;
+    if (memoryLost || recentLost) return `${stopOnLoss ? 'Generation stopped' : 'Warning'}: ${memoryLost} memory passages and ${recentLost} recent messages are missing or changed. ${totals} Increase context, reduce reserved output or recent-message count, then generate again. Disable Stop on missing context to proceed with a warning.${uncertain ? ` ${uncertain} transformed messages could not be verified.` : ''}`;
+    return `${totals}${uncertain ? ` ${uncertain} transformed messages could not be verified; they are not counted as missing.` : ''} Provider receipt is not checked.`;
+}
+
+export class PromptDelivery {
+    get awaitingPrompt() { return Boolean(this.pending); }
+    begin(expected, valid) {
+        // The pinned host's final event has no generation ID. Permit only one
+        // completed interceptor to advance into prompt packing at a time.
+        if (this.pending) return false;
+        this.pending = { expected, valid, canceled: false };
+        return true;
+    }
+    clear() {
+        // Invalidation cancels the check, not its ownership of the next final
+        // event. Otherwise a late event could consume a newer generation.
+        if (this.pending) this.pending.canceled = true;
+    }
+    finish(prompt, dryRun = false) {
+        if (dryRun || !this.pending) return undefined;
+        const { expected, valid, canceled } = this.pending;
+        this.pending = undefined;
+        if (canceled || !valid()) return { canceled: true };
+        const result = inspectPrompt(expected, prompt);
+        return { result, lost: Boolean(result && [...result.memory, ...result.recent].some(m => m.outcome === 'missing')) };
+    }
+}

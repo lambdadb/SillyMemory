@@ -1,0 +1,1520 @@
+{
+  "version": "context-bundles-v1",
+  "candidateFreeze": "8dcb264",
+  "kind": "Authored synthetic ranked-input controls; no live retrieval, independent holdout or generated answers",
+  "humanReview": null,
+  "cases": [
+    {
+      "id": "bundle-en-quotation-before",
+      "language": "en",
+      "shape": "quotation-before",
+      "question": "Who promised to bring the violet lens, and when?",
+      "rationale": "Fresh authored selector control after candidate freeze; supplied ranks are synthetic, not an ANN result.",
+      "messages": [
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "The card is signed by Daria."
+        },
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "\"I will bring the violet lens on Saturday.\" This is a quotation, not my promise."
+        },
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "The empty drawers were dusted. This housekeeping note changes no commitments."
+        },
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "The empty drawers were dusted. This housekeeping note changes no commitments."
+        },
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "The empty drawers were dusted. This housekeeping note changes no commitments."
+        },
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "The empty drawers were dusted. This housekeeping note changes no commitments."
+        },
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "The empty drawers were dusted. This housekeeping note changes no commitments."
+        },
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "The empty drawers were dusted. This housekeeping note changes no commitments."
+        },
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "Let us review the earlier arrangement."
+        }
+      ],
+      "rankedMessages": [
+        [
+          1,
+          4,
+          6,
+          0,
+          2
+        ]
+      ],
+      "recent": 2,
+      "evidence": [
+        {
+          "id": "author",
+          "kind": "attribution",
+          "message": 0,
+          "start": 0,
+          "end": 28,
+          "quote": "The card is signed by Daria.",
+          "reason": "Required attribution for this question."
+        },
+        {
+          "id": "promise",
+          "kind": "answer",
+          "message": 1,
+          "start": 1,
+          "end": 42,
+          "quote": "I will bring the violet lens on Saturday.",
+          "reason": "Required answer for this question."
+        },
+        {
+          "id": "quoted",
+          "kind": "attribution",
+          "message": 1,
+          "start": 44,
+          "end": 80,
+          "quote": "This is a quotation, not my promise.",
+          "reason": "Required attribution for this question."
+        }
+      ],
+      "expected": {
+        "type": "answer",
+        "answerRule": "Daria promised Saturday; the assistant is quoting.",
+        "forbiddenClaims": [
+          "Changing the source attribution, qualification or final correction."
+        ]
+      }
+    },
+    {
+      "id": "bundle-ko-quotation-before",
+      "language": "ko",
+      "shape": "quotation-before",
+      "question": "누가 언제 은색 렌즈를 가져오겠다고 했나요?",
+      "rationale": "Fresh authored selector control after candidate freeze; supplied ranks are synthetic, not an ANN result.",
+      "messages": [
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "쪽지에는 라온의 서명이 있어요."
+        },
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "\"제가 목요일에 은색 렌즈를 가져올게요.\" 이것은 인용이며 제 약속은 아니에요."
+        },
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "빈 서랍의 먼지를 닦았어요. 이 정리 메모는 어떤 약속도 바꾸지 않아요."
+        },
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "빈 서랍의 먼지를 닦았어요. 이 정리 메모는 어떤 약속도 바꾸지 않아요."
+        },
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "빈 서랍의 먼지를 닦았어요. 이 정리 메모는 어떤 약속도 바꾸지 않아요."
+        },
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "빈 서랍의 먼지를 닦았어요. 이 정리 메모는 어떤 약속도 바꾸지 않아요."
+        },
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "빈 서랍의 먼지를 닦았어요. 이 정리 메모는 어떤 약속도 바꾸지 않아요."
+        },
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "빈 서랍의 먼지를 닦았어요. 이 정리 메모는 어떤 약속도 바꾸지 않아요."
+        },
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "앞에서 정한 내용을 다시 확인해요."
+        }
+      ],
+      "rankedMessages": [
+        [
+          1,
+          4,
+          6,
+          0,
+          2
+        ]
+      ],
+      "recent": 2,
+      "evidence": [
+        {
+          "id": "author",
+          "kind": "attribution",
+          "message": 0,
+          "start": 0,
+          "end": 17,
+          "quote": "쪽지에는 라온의 서명이 있어요.",
+          "reason": "Required attribution for this question."
+        },
+        {
+          "id": "promise",
+          "kind": "answer",
+          "message": 1,
+          "start": 1,
+          "end": 22,
+          "quote": "제가 목요일에 은색 렌즈를 가져올게요.",
+          "reason": "Required answer for this question."
+        },
+        {
+          "id": "quoted",
+          "kind": "attribution",
+          "message": 1,
+          "start": 24,
+          "end": 44,
+          "quote": "이것은 인용이며 제 약속은 아니에요.",
+          "reason": "Required attribution for this question."
+        }
+      ],
+      "expected": {
+        "type": "answer",
+        "answerRule": "라온이 목요일에 가져오기로 했으며 어시스턴트는 인용했다.",
+        "forbiddenClaims": [
+          "Changing the source attribution, qualification or final correction."
+        ]
+      }
+    },
+    {
+      "id": "bundle-en-quotation-after",
+      "language": "en",
+      "shape": "quotation-after",
+      "question": "Who promised the red dial and for which day?",
+      "rationale": "Fresh authored selector control after candidate freeze; supplied ranks are synthetic, not an ANN result.",
+      "messages": [
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "We opened a sealed letter."
+        },
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "\"I will return the red dial on Wednesday.\""
+        },
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "The quoted promise is signed by Ivo, not by the assistant."
+        },
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "The empty drawers were dusted. This housekeeping note changes no commitments."
+        },
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "The empty drawers were dusted. This housekeeping note changes no commitments."
+        },
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "The empty drawers were dusted. This housekeeping note changes no commitments."
+        },
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "The empty drawers were dusted. This housekeeping note changes no commitments."
+        },
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "The empty drawers were dusted. This housekeeping note changes no commitments."
+        },
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "The empty drawers were dusted. This housekeeping note changes no commitments."
+        },
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "Let us review the earlier arrangement."
+        }
+      ],
+      "rankedMessages": [
+        [
+          1,
+          5,
+          7,
+          2,
+          0
+        ]
+      ],
+      "recent": 2,
+      "evidence": [
+        {
+          "id": "promise",
+          "kind": "answer",
+          "message": 1,
+          "start": 1,
+          "end": 41,
+          "quote": "I will return the red dial on Wednesday.",
+          "reason": "Required answer for this question."
+        },
+        {
+          "id": "author",
+          "kind": "attribution",
+          "message": 2,
+          "start": 0,
+          "end": 58,
+          "quote": "The quoted promise is signed by Ivo, not by the assistant.",
+          "reason": "Required attribution for this question."
+        }
+      ],
+      "expected": {
+        "type": "answer",
+        "answerRule": "Ivo promised Wednesday.",
+        "forbiddenClaims": [
+          "Changing the source attribution, qualification or final correction."
+        ]
+      }
+    },
+    {
+      "id": "bundle-ko-quotation-after",
+      "language": "ko",
+      "shape": "quotation-after",
+      "question": "초록색 다이얼은 누가 언제 돌려주기로 했나요?",
+      "rationale": "Fresh authored selector control after candidate freeze; supplied ranks are synthetic, not an ANN result.",
+      "messages": [
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "봉인된 편지를 펼쳤어요."
+        },
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "\"제가 토요일에 초록색 다이얼을 돌려줄게요.\""
+        },
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "인용한 약속의 서명자는 어시스턴트가 아니라 도윤이에요."
+        },
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "빈 서랍의 먼지를 닦았어요. 이 정리 메모는 어떤 약속도 바꾸지 않아요."
+        },
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "빈 서랍의 먼지를 닦았어요. 이 정리 메모는 어떤 약속도 바꾸지 않아요."
+        },
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "빈 서랍의 먼지를 닦았어요. 이 정리 메모는 어떤 약속도 바꾸지 않아요."
+        },
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "빈 서랍의 먼지를 닦았어요. 이 정리 메모는 어떤 약속도 바꾸지 않아요."
+        },
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "빈 서랍의 먼지를 닦았어요. 이 정리 메모는 어떤 약속도 바꾸지 않아요."
+        },
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "빈 서랍의 먼지를 닦았어요. 이 정리 메모는 어떤 약속도 바꾸지 않아요."
+        },
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "앞에서 정한 내용을 다시 확인해요."
+        }
+      ],
+      "rankedMessages": [
+        [
+          1,
+          5,
+          7,
+          2,
+          0
+        ]
+      ],
+      "recent": 2,
+      "evidence": [
+        {
+          "id": "promise",
+          "kind": "answer",
+          "message": 1,
+          "start": 1,
+          "end": 24,
+          "quote": "제가 토요일에 초록색 다이얼을 돌려줄게요.",
+          "reason": "Required answer for this question."
+        },
+        {
+          "id": "author",
+          "kind": "attribution",
+          "message": 2,
+          "start": 0,
+          "end": 30,
+          "quote": "인용한 약속의 서명자는 어시스턴트가 아니라 도윤이에요.",
+          "reason": "Required attribution for this question."
+        }
+      ],
+      "expected": {
+        "type": "answer",
+        "answerRule": "도윤이 토요일에 돌려주기로 했다.",
+        "forbiddenClaims": [
+          "Changing the source attribution, qualification or final correction."
+        ]
+      }
+    },
+    {
+      "id": "bundle-en-correction-after",
+      "language": "en",
+      "shape": "correction-after",
+      "question": "What is the launch time? Is the draft valid?",
+      "rationale": "Fresh authored selector control after candidate freeze; supplied ranks are synthetic, not an ANN result.",
+      "messages": [
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "The draft says the launch is at 08:15."
+        },
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "That draft is false. The launch is at 12:05; 08:15 is canceled."
+        },
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "The empty drawers were dusted. This housekeeping note changes no commitments."
+        },
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "The empty drawers were dusted. This housekeeping note changes no commitments."
+        },
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "The empty drawers were dusted. This housekeeping note changes no commitments."
+        },
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "The empty drawers were dusted. This housekeeping note changes no commitments."
+        },
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "The empty drawers were dusted. This housekeeping note changes no commitments."
+        },
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "The empty drawers were dusted. This housekeeping note changes no commitments."
+        },
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "Let us review the earlier arrangement."
+        }
+      ],
+      "rankedMessages": [
+        [
+          0,
+          4,
+          6,
+          1,
+          2
+        ]
+      ],
+      "recent": 2,
+      "evidence": [
+        {
+          "id": "final",
+          "kind": "answer",
+          "message": 1,
+          "start": 21,
+          "end": 44,
+          "quote": "The launch is at 12:05;",
+          "reason": "Required answer for this question."
+        },
+        {
+          "id": "canceled",
+          "kind": "correction",
+          "message": 1,
+          "start": 45,
+          "end": 63,
+          "quote": "08:15 is canceled.",
+          "reason": "Required correction for this question."
+        },
+        {
+          "id": "false",
+          "kind": "negation",
+          "message": 1,
+          "start": 0,
+          "end": 20,
+          "quote": "That draft is false.",
+          "reason": "Required negation for this question."
+        }
+      ],
+      "expected": {
+        "type": "answer",
+        "answerRule": "12:05 is final and the draft 08:15 is canceled.",
+        "forbiddenClaims": [
+          "Changing the source attribution, qualification or final correction."
+        ]
+      }
+    },
+    {
+      "id": "bundle-ko-correction-after",
+      "language": "ko",
+      "shape": "correction-after",
+      "question": "출발 시각은 언제이며 초안도 유효한가요?",
+      "rationale": "Fresh authored selector control after candidate freeze; supplied ranks are synthetic, not an ANN result.",
+      "messages": [
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "초안에는 출발이 오전 7시 25분이라고 적혀 있어요."
+        },
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "그 초안은 틀렸어요. 출발은 오후 2시 10분이며 오전 7시 25분 일정은 취소됐어요."
+        },
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "빈 서랍의 먼지를 닦았어요. 이 정리 메모는 어떤 약속도 바꾸지 않아요."
+        },
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "빈 서랍의 먼지를 닦았어요. 이 정리 메모는 어떤 약속도 바꾸지 않아요."
+        },
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "빈 서랍의 먼지를 닦았어요. 이 정리 메모는 어떤 약속도 바꾸지 않아요."
+        },
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "빈 서랍의 먼지를 닦았어요. 이 정리 메모는 어떤 약속도 바꾸지 않아요."
+        },
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "빈 서랍의 먼지를 닦았어요. 이 정리 메모는 어떤 약속도 바꾸지 않아요."
+        },
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "빈 서랍의 먼지를 닦았어요. 이 정리 메모는 어떤 약속도 바꾸지 않아요."
+        },
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "앞에서 정한 내용을 다시 확인해요."
+        }
+      ],
+      "rankedMessages": [
+        [
+          0,
+          4,
+          6,
+          1,
+          2
+        ]
+      ],
+      "recent": 2,
+      "evidence": [
+        {
+          "id": "final",
+          "kind": "answer",
+          "message": 1,
+          "start": 12,
+          "end": 27,
+          "quote": "출발은 오후 2시 10분이며",
+          "reason": "Required answer for this question."
+        },
+        {
+          "id": "canceled",
+          "kind": "correction",
+          "message": 1,
+          "start": 28,
+          "end": 48,
+          "quote": "오전 7시 25분 일정은 취소됐어요.",
+          "reason": "Required correction for this question."
+        },
+        {
+          "id": "false",
+          "kind": "negation",
+          "message": 1,
+          "start": 0,
+          "end": 11,
+          "quote": "그 초안은 틀렸어요.",
+          "reason": "Required negation for this question."
+        }
+      ],
+      "expected": {
+        "type": "answer",
+        "answerRule": "오후 2시 10분 출발이며 초안 시간은 취소됐다.",
+        "forbiddenClaims": [
+          "Changing the source attribution, qualification or final correction."
+        ]
+      }
+    },
+    {
+      "id": "bundle-en-condition-after",
+      "language": "en",
+      "shape": "condition-after",
+      "question": "Can we take the north bridge now, and where should we wait otherwise?",
+      "rationale": "Fresh authored selector control after candidate freeze; supplied ranks are synthetic, not an ANN result.",
+      "messages": [
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "The north bridge is our route."
+        },
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "Only after the keeper lowers the gate. Otherwise wait in the round shelter."
+        },
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "The empty drawers were dusted. This housekeeping note changes no commitments."
+        },
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "The empty drawers were dusted. This housekeeping note changes no commitments."
+        },
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "The empty drawers were dusted. This housekeeping note changes no commitments."
+        },
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "The empty drawers were dusted. This housekeeping note changes no commitments."
+        },
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "The empty drawers were dusted. This housekeeping note changes no commitments."
+        },
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "The empty drawers were dusted. This housekeeping note changes no commitments."
+        },
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "Let us review the earlier arrangement."
+        }
+      ],
+      "rankedMessages": [
+        [
+          0,
+          4,
+          6,
+          1
+        ]
+      ],
+      "recent": 2,
+      "evidence": [
+        {
+          "id": "route",
+          "kind": "answer",
+          "message": 0,
+          "start": 0,
+          "end": 30,
+          "quote": "The north bridge is our route.",
+          "reason": "Required answer for this question."
+        },
+        {
+          "id": "condition",
+          "kind": "qualification",
+          "message": 1,
+          "start": 0,
+          "end": 38,
+          "quote": "Only after the keeper lowers the gate.",
+          "reason": "Required qualification for this question."
+        },
+        {
+          "id": "fallback",
+          "kind": "qualification",
+          "message": 1,
+          "start": 39,
+          "end": 75,
+          "quote": "Otherwise wait in the round shelter.",
+          "reason": "Required qualification for this question."
+        }
+      ],
+      "expected": {
+        "type": "answer",
+        "answerRule": "Only after the keeper lowers the gate; otherwise the round shelter.",
+        "forbiddenClaims": [
+          "Changing the source attribution, qualification or final correction."
+        ]
+      }
+    },
+    {
+      "id": "bundle-ko-condition-after",
+      "language": "ko",
+      "shape": "condition-after",
+      "question": "지금 서쪽 다리를 건너도 되며 아니면 어디서 기다리나요?",
+      "rationale": "Fresh authored selector control after candidate freeze; supplied ranks are synthetic, not an ANN result.",
+      "messages": [
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "서쪽 다리가 이동 경로예요."
+        },
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "단, 관리인이 문을 내린 뒤에만 가능해요. 아니면 둥근 정자에서 기다려요."
+        },
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "빈 서랍의 먼지를 닦았어요. 이 정리 메모는 어떤 약속도 바꾸지 않아요."
+        },
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "빈 서랍의 먼지를 닦았어요. 이 정리 메모는 어떤 약속도 바꾸지 않아요."
+        },
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "빈 서랍의 먼지를 닦았어요. 이 정리 메모는 어떤 약속도 바꾸지 않아요."
+        },
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "빈 서랍의 먼지를 닦았어요. 이 정리 메모는 어떤 약속도 바꾸지 않아요."
+        },
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "빈 서랍의 먼지를 닦았어요. 이 정리 메모는 어떤 약속도 바꾸지 않아요."
+        },
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "빈 서랍의 먼지를 닦았어요. 이 정리 메모는 어떤 약속도 바꾸지 않아요."
+        },
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "앞에서 정한 내용을 다시 확인해요."
+        }
+      ],
+      "rankedMessages": [
+        [
+          0,
+          4,
+          6,
+          1
+        ]
+      ],
+      "recent": 2,
+      "evidence": [
+        {
+          "id": "route",
+          "kind": "answer",
+          "message": 0,
+          "start": 0,
+          "end": 15,
+          "quote": "서쪽 다리가 이동 경로예요.",
+          "reason": "Required answer for this question."
+        },
+        {
+          "id": "condition",
+          "kind": "qualification",
+          "message": 1,
+          "start": 0,
+          "end": 23,
+          "quote": "단, 관리인이 문을 내린 뒤에만 가능해요.",
+          "reason": "Required qualification for this question."
+        },
+        {
+          "id": "fallback",
+          "kind": "qualification",
+          "message": 1,
+          "start": 24,
+          "end": 41,
+          "quote": "아니면 둥근 정자에서 기다려요.",
+          "reason": "Required qualification for this question."
+        }
+      ],
+      "expected": {
+        "type": "answer",
+        "answerRule": "관리인이 문을 내린 뒤에만 건너고 아니면 둥근 정자에서 기다린다.",
+        "forbiddenClaims": [
+          "Changing the source attribution, qualification or final correction."
+        ]
+      }
+    },
+    {
+      "id": "bundle-en-distant-reference",
+      "language": "en",
+      "shape": "distant-reference",
+      "question": "What is reserved for Leena, and until when?",
+      "rationale": "Fresh authored selector control after candidate freeze; supplied ranks are synthetic, not an ANN result.",
+      "messages": [
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "The ivory trunk is called Meadow Three."
+        },
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "The floor has new tiles."
+        },
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "A bench was moved into the shade."
+        },
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "It is reserved for Leena until 17:30."
+        },
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "The empty drawers were dusted. This housekeeping note changes no commitments."
+        },
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "The empty drawers were dusted. This housekeeping note changes no commitments."
+        },
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "The empty drawers were dusted. This housekeeping note changes no commitments."
+        },
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "The empty drawers were dusted. This housekeeping note changes no commitments."
+        },
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "The empty drawers were dusted. This housekeeping note changes no commitments."
+        },
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "The empty drawers were dusted. This housekeeping note changes no commitments."
+        },
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "Let us review the earlier arrangement."
+        }
+      ],
+      "rankedMessages": [
+        [
+          3,
+          6,
+          8,
+          0,
+          2
+        ]
+      ],
+      "recent": 2,
+      "evidence": [
+        {
+          "id": "name",
+          "kind": "reference",
+          "message": 0,
+          "start": 0,
+          "end": 39,
+          "quote": "The ivory trunk is called Meadow Three.",
+          "reason": "Required reference for this question."
+        },
+        {
+          "id": "reservation",
+          "kind": "answer",
+          "message": 3,
+          "start": 0,
+          "end": 37,
+          "quote": "It is reserved for Leena until 17:30.",
+          "reason": "Required answer for this question."
+        }
+      ],
+      "expected": {
+        "type": "answer",
+        "answerRule": "The ivory trunk Meadow Three, until 17:30.",
+        "forbiddenClaims": [
+          "Changing the source attribution, qualification or final correction."
+        ]
+      }
+    },
+    {
+      "id": "bundle-ko-distant-reference",
+      "language": "ko",
+      "shape": "distant-reference",
+      "question": "나린에게 무엇을 언제까지 배정했나요?",
+      "rationale": "Fresh authored selector control after candidate freeze; supplied ranks are synthetic, not an ANN result.",
+      "messages": [
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "상아색 궤짝의 이름은 들판 셋이에요."
+        },
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "바닥 타일을 새로 깔았어요."
+        },
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "벤치는 그늘로 옮겼어요."
+        },
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "그것은 나린에게 오후 5시 30분까지 배정돼 있어요."
+        },
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "빈 서랍의 먼지를 닦았어요. 이 정리 메모는 어떤 약속도 바꾸지 않아요."
+        },
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "빈 서랍의 먼지를 닦았어요. 이 정리 메모는 어떤 약속도 바꾸지 않아요."
+        },
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "빈 서랍의 먼지를 닦았어요. 이 정리 메모는 어떤 약속도 바꾸지 않아요."
+        },
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "빈 서랍의 먼지를 닦았어요. 이 정리 메모는 어떤 약속도 바꾸지 않아요."
+        },
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "빈 서랍의 먼지를 닦았어요. 이 정리 메모는 어떤 약속도 바꾸지 않아요."
+        },
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "빈 서랍의 먼지를 닦았어요. 이 정리 메모는 어떤 약속도 바꾸지 않아요."
+        },
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "앞에서 정한 내용을 다시 확인해요."
+        }
+      ],
+      "rankedMessages": [
+        [
+          3,
+          6,
+          8,
+          0,
+          2
+        ]
+      ],
+      "recent": 2,
+      "evidence": [
+        {
+          "id": "name",
+          "kind": "reference",
+          "message": 0,
+          "start": 0,
+          "end": 20,
+          "quote": "상아색 궤짝의 이름은 들판 셋이에요.",
+          "reason": "Required reference for this question."
+        },
+        {
+          "id": "reservation",
+          "kind": "answer",
+          "message": 3,
+          "start": 0,
+          "end": 29,
+          "quote": "그것은 나린에게 오후 5시 30분까지 배정돼 있어요.",
+          "reason": "Required answer for this question."
+        }
+      ],
+      "expected": {
+        "type": "answer",
+        "answerRule": "들판 셋이라는 상아색 궤짝을 오후 5시 30분까지 배정했다.",
+        "forbiddenClaims": [
+          "Changing the source attribution, qualification or final correction."
+        ]
+      }
+    },
+    {
+      "id": "bundle-en-split-message",
+      "language": "en",
+      "shape": "split-message",
+      "question": "Who promised the gray telescope, and when?",
+      "rationale": "Fresh authored selector control after candidate freeze; supplied ranks are synthetic, not an ANN result.",
+      "messages": [
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "The signature is Eren."
+        },
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "Notes. Notes. Notes. Notes. Notes. Notes. Notes. Notes. Notes. Notes. Notes. Notes. Notes. Notes. Notes. Notes. Notes. Notes. Notes. Notes. Notes. Notes. Notes. Notes. Notes. Notes. Notes. Notes. Notes. Notes. Notes. Notes. Notes. Notes. Notes. Notes. Notes. Notes. Notes. Notes. Notes. Notes. Notes. Notes. Notes. Notes. Notes. Notes. Notes. Notes. Notes. Notes. Notes. Notes. Notes. Notes. Notes. Notes. Notes. Notes. Notes. Notes. Notes. Notes. Notes. Notes. Notes. Notes. Notes. Notes. Notes. Notes. Notes. Notes. Notes. Notes. Notes. Notes. Notes. Notes. Notes. Notes. Notes. Notes. Notes. Notes. Notes. Notes. Notes. Notes. Notes. Notes. Notes. Notes. Notes. Notes. Notes. Notes. Notes. Notes. Notes. Notes. Notes. Notes. Notes. Notes. Notes. Notes. Notes. Notes. Notes. Notes. Notes. Notes. Notes. \"I will bring the gray telescope on Monday.\" This is Eren's quote, not my own promise."
+        },
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "The empty drawers were dusted. This housekeeping note changes no commitments."
+        },
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "The empty drawers were dusted. This housekeeping note changes no commitments."
+        },
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "The empty drawers were dusted. This housekeeping note changes no commitments."
+        },
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "The empty drawers were dusted. This housekeeping note changes no commitments."
+        },
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "The empty drawers were dusted. This housekeeping note changes no commitments."
+        },
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "The empty drawers were dusted. This housekeeping note changes no commitments."
+        },
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "Let us review the earlier arrangement."
+        }
+      ],
+      "rankedMessages": [
+        [
+          1,
+          4,
+          6,
+          0
+        ]
+      ],
+      "recent": 2,
+      "evidence": [
+        {
+          "id": "author",
+          "kind": "attribution",
+          "message": 0,
+          "start": 0,
+          "end": 22,
+          "quote": "The signature is Eren.",
+          "reason": "Required attribution for this question."
+        },
+        {
+          "id": "promise",
+          "kind": "answer",
+          "message": 1,
+          "start": 806,
+          "end": 848,
+          "quote": "I will bring the gray telescope on Monday.",
+          "reason": "Required answer for this question."
+        },
+        {
+          "id": "quoted",
+          "kind": "attribution",
+          "message": 1,
+          "start": 850,
+          "end": 891,
+          "quote": "This is Eren's quote, not my own promise.",
+          "reason": "Required attribution for this question."
+        }
+      ],
+      "expected": {
+        "type": "answer",
+        "answerRule": "Eren promised Monday.",
+        "forbiddenClaims": [
+          "Changing the source attribution, qualification or final correction."
+        ]
+      }
+    },
+    {
+      "id": "bundle-ko-split-message",
+      "language": "ko",
+      "shape": "split-message",
+      "question": "회색 망원경은 누가 언제 가져오겠다고 했나요?",
+      "rationale": "Fresh authored selector control after candidate freeze; supplied ranks are synthetic, not an ANN result.",
+      "messages": [
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "서명자는 시온이에요."
+        },
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "정리 메모. 정리 메모. 정리 메모. 정리 메모. 정리 메모. 정리 메모. 정리 메모. 정리 메모. 정리 메모. 정리 메모. 정리 메모. 정리 메모. 정리 메모. 정리 메모. 정리 메모. 정리 메모. 정리 메모. 정리 메모. 정리 메모. 정리 메모. 정리 메모. 정리 메모. 정리 메모. 정리 메모. 정리 메모. 정리 메모. 정리 메모. 정리 메모. 정리 메모. 정리 메모. 정리 메모. 정리 메모. 정리 메모. 정리 메모. 정리 메모. 정리 메모. 정리 메모. 정리 메모. 정리 메모. 정리 메모. 정리 메모. 정리 메모. 정리 메모. 정리 메모. 정리 메모. 정리 메모. 정리 메모. 정리 메모. 정리 메모. 정리 메모. 정리 메모. 정리 메모. 정리 메모. 정리 메모. 정리 메모. 정리 메모. 정리 메모. 정리 메모. 정리 메모. 정리 메모. 정리 메모. 정리 메모. 정리 메모. 정리 메모. 정리 메모. 정리 메모. 정리 메모. 정리 메모. 정리 메모. 정리 메모. 정리 메모. 정리 메모. 정리 메모. 정리 메모. 정리 메모. 정리 메모. 정리 메모. 정리 메모. 정리 메모. 정리 메모. 정리 메모. 정리 메모. 정리 메모. 정리 메모. 정리 메모. 정리 메모. 정리 메모. 정리 메모. 정리 메모. 정리 메모. 정리 메모. 정리 메모. 정리 메모. 정리 메모. 정리 메모. 정리 메모. 정리 메모. 정리 메모. 정리 메모. 정리 메모. 정리 메모. 정리 메모. 정리 메모. 정리 메모. 정리 메모. 정리 메모. 정리 메모. 정리 메모. 정리 메모. 정리 메모. 정리 메모. 정리 메모. 정리 메모. 정리 메모. 정리 메모. \"제가 화요일에 회색 망원경을 가져올게요.\" 시온의 말을 인용한 것이며 제 약속이 아니에요."
+        },
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "빈 서랍의 먼지를 닦았어요. 이 정리 메모는 어떤 약속도 바꾸지 않아요."
+        },
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "빈 서랍의 먼지를 닦았어요. 이 정리 메모는 어떤 약속도 바꾸지 않아요."
+        },
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "빈 서랍의 먼지를 닦았어요. 이 정리 메모는 어떤 약속도 바꾸지 않아요."
+        },
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "빈 서랍의 먼지를 닦았어요. 이 정리 메모는 어떤 약속도 바꾸지 않아요."
+        },
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "빈 서랍의 먼지를 닦았어요. 이 정리 메모는 어떤 약속도 바꾸지 않아요."
+        },
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "빈 서랍의 먼지를 닦았어요. 이 정리 메모는 어떤 약속도 바꾸지 않아요."
+        },
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "앞에서 정한 내용을 다시 확인해요."
+        }
+      ],
+      "rankedMessages": [
+        [
+          1,
+          4,
+          6,
+          0
+        ]
+      ],
+      "recent": 2,
+      "evidence": [
+        {
+          "id": "author",
+          "kind": "attribution",
+          "message": 0,
+          "start": 0,
+          "end": 11,
+          "quote": "서명자는 시온이에요.",
+          "reason": "Required attribution for this question."
+        },
+        {
+          "id": "promise",
+          "kind": "answer",
+          "message": 1,
+          "start": 806,
+          "end": 828,
+          "quote": "제가 화요일에 회색 망원경을 가져올게요.",
+          "reason": "Required answer for this question."
+        },
+        {
+          "id": "quoted",
+          "kind": "attribution",
+          "message": 1,
+          "start": 830,
+          "end": 856,
+          "quote": "시온의 말을 인용한 것이며 제 약속이 아니에요.",
+          "reason": "Required attribution for this question."
+        }
+      ],
+      "expected": {
+        "type": "answer",
+        "answerRule": "시온이 화요일에 가져오기로 했다.",
+        "forbiddenClaims": [
+          "Changing the source attribution, qualification or final correction."
+        ]
+      }
+    },
+    {
+      "id": "bundle-en-speaker",
+      "language": "en",
+      "shape": "speaker",
+      "question": "What am I collecting and when, and what are you collecting and when?",
+      "rationale": "Fresh authored selector control after candidate freeze; supplied ranks are synthetic, not an ANN result.",
+      "messages": [
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "I will pick up the orange parcel on Tuesday."
+        },
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "I will pick up the white folder on Thursday."
+        },
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "The empty drawers were dusted. This housekeeping note changes no commitments."
+        },
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "The empty drawers were dusted. This housekeeping note changes no commitments."
+        },
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "The empty drawers were dusted. This housekeeping note changes no commitments."
+        },
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "The empty drawers were dusted. This housekeeping note changes no commitments."
+        },
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "The empty drawers were dusted. This housekeeping note changes no commitments."
+        },
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "The empty drawers were dusted. This housekeeping note changes no commitments."
+        },
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "Let us review the earlier arrangement."
+        }
+      ],
+      "rankedMessages": [
+        [
+          0,
+          5,
+          3,
+          1
+        ]
+      ],
+      "recent": 2,
+      "evidence": [
+        {
+          "id": "user",
+          "kind": "answer",
+          "message": 0,
+          "start": 0,
+          "end": 44,
+          "quote": "I will pick up the orange parcel on Tuesday.",
+          "reason": "Required answer for this question."
+        },
+        {
+          "id": "assistant",
+          "kind": "attribution",
+          "message": 1,
+          "start": 0,
+          "end": 44,
+          "quote": "I will pick up the white folder on Thursday.",
+          "reason": "Required attribution for this question."
+        }
+      ],
+      "expected": {
+        "type": "answer",
+        "answerRule": "The user gets the orange parcel Tuesday; the assistant gets the white folder Thursday.",
+        "forbiddenClaims": [
+          "Changing the source attribution, qualification or final correction."
+        ]
+      }
+    },
+    {
+      "id": "bundle-ko-speaker",
+      "language": "ko",
+      "shape": "speaker",
+      "question": "제가 언제 무엇을 받고 당신은 언제 무엇을 받나요?",
+      "rationale": "Fresh authored selector control after candidate freeze; supplied ranks are synthetic, not an ANN result.",
+      "messages": [
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "저는 수요일에 주황색 꾸러미를 받을게요."
+        },
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "저는 금요일에 흰색 서류철을 받을게요."
+        },
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "빈 서랍의 먼지를 닦았어요. 이 정리 메모는 어떤 약속도 바꾸지 않아요."
+        },
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "빈 서랍의 먼지를 닦았어요. 이 정리 메모는 어떤 약속도 바꾸지 않아요."
+        },
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "빈 서랍의 먼지를 닦았어요. 이 정리 메모는 어떤 약속도 바꾸지 않아요."
+        },
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "빈 서랍의 먼지를 닦았어요. 이 정리 메모는 어떤 약속도 바꾸지 않아요."
+        },
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "빈 서랍의 먼지를 닦았어요. 이 정리 메모는 어떤 약속도 바꾸지 않아요."
+        },
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "빈 서랍의 먼지를 닦았어요. 이 정리 메모는 어떤 약속도 바꾸지 않아요."
+        },
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "앞에서 정한 내용을 다시 확인해요."
+        }
+      ],
+      "rankedMessages": [
+        [
+          0,
+          5,
+          3,
+          1
+        ]
+      ],
+      "recent": 2,
+      "evidence": [
+        {
+          "id": "user",
+          "kind": "answer",
+          "message": 0,
+          "start": 0,
+          "end": 22,
+          "quote": "저는 수요일에 주황색 꾸러미를 받을게요.",
+          "reason": "Required answer for this question."
+        },
+        {
+          "id": "assistant",
+          "kind": "attribution",
+          "message": 1,
+          "start": 0,
+          "end": 21,
+          "quote": "저는 금요일에 흰색 서류철을 받을게요.",
+          "reason": "Required attribution for this question."
+        }
+      ],
+      "expected": {
+        "type": "answer",
+        "answerRule": "사용자는 수요일 주황색 꾸러미, 어시스턴트는 금요일 흰색 서류철을 받는다.",
+        "forbiddenClaims": [
+          "Changing the source attribution, qualification or final correction."
+        ]
+      }
+    },
+    {
+      "id": "bundle-en-unknown",
+      "language": "en",
+      "shape": "unknown",
+      "question": "What insurance value did we agree for the green sundial?",
+      "rationale": "Fresh authored selector control after candidate freeze; supplied ranks are synthetic, not an ANN result.",
+      "messages": [
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "The green sundial is stored in the gallery."
+        },
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "No insurance amount has been discussed."
+        },
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "The empty drawers were dusted. This housekeeping note changes no commitments."
+        },
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "The empty drawers were dusted. This housekeeping note changes no commitments."
+        },
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "The empty drawers were dusted. This housekeeping note changes no commitments."
+        },
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "The empty drawers were dusted. This housekeeping note changes no commitments."
+        },
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "The empty drawers were dusted. This housekeeping note changes no commitments."
+        },
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "The empty drawers were dusted. This housekeeping note changes no commitments."
+        },
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "Let us review the earlier arrangement."
+        }
+      ],
+      "rankedMessages": [
+        [
+          0,
+          4,
+          6,
+          1
+        ]
+      ],
+      "recent": 2,
+      "evidence": [],
+      "expected": {
+        "type": "abstain",
+        "answerRule": "No insurance value is recorded; abstain.",
+        "forbiddenClaims": [
+          "Inventing an unrecorded value."
+        ]
+      }
+    },
+    {
+      "id": "bundle-ko-unknown",
+      "language": "ko",
+      "shape": "unknown",
+      "question": "초록색 해시계의 보험 금액은 얼마로 합의했나요?",
+      "rationale": "Fresh authored selector control after candidate freeze; supplied ranks are synthetic, not an ANN result.",
+      "messages": [
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "초록색 해시계는 전시실에 있어요."
+        },
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "보험 금액은 논의한 적이 없어요."
+        },
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "빈 서랍의 먼지를 닦았어요. 이 정리 메모는 어떤 약속도 바꾸지 않아요."
+        },
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "빈 서랍의 먼지를 닦았어요. 이 정리 메모는 어떤 약속도 바꾸지 않아요."
+        },
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "빈 서랍의 먼지를 닦았어요. 이 정리 메모는 어떤 약속도 바꾸지 않아요."
+        },
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "빈 서랍의 먼지를 닦았어요. 이 정리 메모는 어떤 약속도 바꾸지 않아요."
+        },
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "빈 서랍의 먼지를 닦았어요. 이 정리 메모는 어떤 약속도 바꾸지 않아요."
+        },
+        {
+          "role": "assistant",
+          "speaker": "SillyMemory E2E Mira",
+          "text": "빈 서랍의 먼지를 닦았어요. 이 정리 메모는 어떤 약속도 바꾸지 않아요."
+        },
+        {
+          "role": "user",
+          "speaker": "User",
+          "text": "앞에서 정한 내용을 다시 확인해요."
+        }
+      ],
+      "rankedMessages": [
+        [
+          0,
+          4,
+          6,
+          1
+        ]
+      ],
+      "recent": 2,
+      "evidence": [],
+      "expected": {
+        "type": "abstain",
+        "answerRule": "보험 금액 기록이 없으므로 모른다고 답한다.",
+        "forbiddenClaims": [
+          "Inventing an unrecorded value."
+        ]
+      }
+    }
+  ]
+}

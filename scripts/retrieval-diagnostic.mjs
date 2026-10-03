@@ -60,12 +60,12 @@ async function query(collection,field,value,filter) {
 try {
     const config=path.join(work,'config.yaml');await writeFile(config,await readFile(path.join(source,'default/config.yaml')));
     const port=Number(process.env.ST_RETRIEVAL_PORT||18129),url=`http://127.0.0.1:${port}`;
-    server=spawn(process.execPath,['server.js','--configPath',config,'--dataRoot',path.join(work,'data'),'--port',String(port),'--listen','false','--browserLaunchEnabled','false','--corsProxy','true'],{cwd:source,stdio:'ignore'});
+    server=spawn(process.execPath,['server.js','--configPath',config,'--dataRoot',path.join(work,'data'),'--port',String(port),'--listen','false','--browserLaunchEnabled','false','--corsProxy','false'],{cwd:source,stdio:'ignore'});
     let ready=false;for(let i=0;i<90;i++){if(server.exitCode!==null)throw new Error('Host exited');try{if((await fetch(url)).ok){ready=true;break;}}catch{}await new Promise(r=>setTimeout(r,500));}assert(ready,'Host startup timeout');
     browser=await chromium.launch();page=await browser.newPage();
     await page.goto(url);await page.getByText('Welcome to SillyTavern!',{exact:true}).waitFor();await page.getByText('Save',{exact:true}).last().click();
     await page.locator('#sillymemory').waitFor({state:'attached',timeout:45000});
-    await page.evaluate(async credentials=>{const {LambdaClient}=await import('/scripts/extensions/third-party/sillymemory/src/client.js');globalThis.retrievalClient=new LambdaClient(credentials,credentials.key,{headers:()=>SillyTavern.getContext().getRequestHeaders(),timeoutMs:30000});},credentials);
+    await page.evaluate(async credentials=>{const {LambdaClient}=await import('/scripts/extensions/third-party/sillymemory/src/client.js');globalThis.retrievalClient=new LambdaClient(credentials,credentials.key,{timeoutMs:30000});},credentials);
     stage='create owned collections';
     for(const [name,indexConfigs] of [[managed,schema],[mirror,{...schema,embedding:{type:'vector',dimensions:1536,similarity:'cosine'}}]]) {
         await page.evaluate(async ({name,indexConfigs,owner})=>{await globalThis.retrievalClient.request('/collections',{body:{collectionName:name,indexConfigs,tags:{application:'sillymemory',owner},description:'Synthetic retrieval diagnosis',snapshotRetentionInDays:1}});},{name,indexConfigs,owner});

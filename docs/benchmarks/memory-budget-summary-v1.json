@@ -1,0 +1,278 @@
+{
+  "version": "memory-budget-calibration-v1",
+  "classification": "Real pinned host/OpenAI with cached retrieval from prior LambdaDB managed-embedding run; 12 known development questions",
+  "decision": "Use 1600 as a provisional development comparison setting with an 800 control. Keep product default 800; no general recommendation for 3200.",
+  "baselineRevision": "6aa2600daa5e7f43802a7b30477659c8ae97dabb",
+  "runtimeChanged": false,
+  "settings": {
+    "budgets": [
+      800,
+      1600,
+      3200
+    ],
+    "recent": 12,
+    "chunkChars": 800,
+    "overlap": 0,
+    "context": 32768,
+    "generator": {
+      "model": "gpt-4.1-mini-2025-04-14",
+      "temperature": 0,
+      "maxOutputTokens": 1024
+    },
+    "judge": {
+      "model": "gpt-4o-2024-08-06",
+      "temperature": 0,
+      "maxOutputTokens": 10
+    },
+    "candidateSource": "Recorded development managed-embedding queries, same order at each budget",
+    "taskOrder": "Rotate budgets across cases",
+    "newAnswers": 36,
+    "newJudges": 36,
+    "paidLambdaRequestsInBudgetMatrix": 0
+  },
+  "offlineAnswerableOnly": [
+    {
+      "cohort": "development",
+      "budget": 800,
+      "questions": 11,
+      "labeled": 21,
+      "selected": 14,
+      "full": 12,
+      "allLabeled": 5,
+      "allLabeledFull": 3,
+      "medianTokens": 791,
+      "medianPassages": 7,
+      "lostLabeled": []
+    },
+    {
+      "cohort": "development",
+      "budget": 1600,
+      "questions": 11,
+      "labeled": 21,
+      "selected": 19,
+      "full": 17,
+      "allLabeled": 9,
+      "allLabeledFull": 7,
+      "medianTokens": 1587,
+      "medianPassages": 14,
+      "lostLabeled": []
+    },
+    {
+      "cohort": "development",
+      "budget": 3200,
+      "questions": 11,
+      "labeled": 21,
+      "selected": 21,
+      "full": 20,
+      "allLabeled": 11,
+      "allLabeledFull": 10,
+      "medianTokens": 3184,
+      "medianPassages": 26,
+      "lostLabeled": []
+    },
+    {
+      "cohort": "consumed-evaluation",
+      "budget": 800,
+      "questions": 36,
+      "labeled": 59,
+      "selected": 41,
+      "full": 38,
+      "allLabeled": 23,
+      "allLabeledFull": 20,
+      "medianTokens": 790,
+      "medianPassages": 8,
+      "lostLabeled": []
+    },
+    {
+      "cohort": "consumed-evaluation",
+      "budget": 1600,
+      "questions": 36,
+      "labeled": 59,
+      "selected": 46,
+      "full": 44,
+      "allLabeled": 26,
+      "allLabeledFull": 24,
+      "medianTokens": 1592,
+      "medianPassages": 14,
+      "lostLabeled": []
+    },
+    {
+      "cohort": "consumed-evaluation",
+      "budget": 3200,
+      "questions": 36,
+      "labeled": 59,
+      "selected": 56,
+      "full": 56,
+      "allLabeled": 33,
+      "allLabeledFull": 33,
+      "medianTokens": 3186.5,
+      "medianPassages": 28,
+      "lostLabeled": []
+    }
+  ],
+  "conditions": [
+    {
+      "budget": 800,
+      "answers": 12,
+      "correct": 7,
+      "medianMemoryTokens": 793,
+      "medianPromptTokens": 3361.5,
+      "medianPassages": 7,
+      "prepared": 89,
+      "delivered": 89
+    },
+    {
+      "budget": 1600,
+      "answers": 12,
+      "correct": 8,
+      "medianMemoryTokens": 1587.5,
+      "medianPromptTokens": 4182.5,
+      "medianPassages": 14.5,
+      "prepared": 183,
+      "delivered": 183
+    },
+    {
+      "budget": 3200,
+      "answers": 12,
+      "correct": 7,
+      "medianMemoryTokens": 3183,
+      "medianPromptTokens": 5831,
+      "medianPassages": 28.5,
+      "prepared": 343,
+      "delivered": 343
+    }
+  ],
+  "paired": [
+    {
+      "base": 800,
+      "candidate": 1600,
+      "wins": [
+        "gpt4_2ba83207"
+      ],
+      "losses": []
+    },
+    {
+      "base": 800,
+      "candidate": 3200,
+      "wins": [
+        "d23cf73b"
+      ],
+      "losses": [
+        "778164c6"
+      ]
+    },
+    {
+      "base": 1600,
+      "candidate": 3200,
+      "wins": [
+        "d23cf73b"
+      ],
+      "losses": [
+        "gpt4_2ba83207",
+        "778164c6"
+      ]
+    }
+  ],
+  "verification": {
+    "passed": true,
+    "attempts": 72,
+    "extraAttempts": 0,
+    "verifiedReceipts": 180,
+    "elapsedMs": 1083392,
+    "preparedMemoryMessages": 615,
+    "deliveredMemoryMessages": 615,
+    "unitTests": 309,
+    "browserEmulatorChecks": 22,
+    "liveLambdaChecks": 12,
+    "liveOwnedCollectionsDeleted": 2,
+    "cleanup": true,
+    "limits": {
+      "openaiUsd": 2,
+      "extraAttempts": 6,
+      "durationMinutes": 60
+    }
+  },
+  "usage": {
+    "answer": {
+      "calls": 36,
+      "inputTokens": 167968,
+      "outputTokens": 2807
+    },
+    "judge": {
+      "calls": 36,
+      "inputTokens": 8186,
+      "outputTokens": 59
+    }
+  },
+  "successfulHistoricalUncachedPriceEstimateUsd": 0.0927334,
+  "priceBoundary": "Historical frozen prices, not invoice; excludes separate LambdaDB isolation usage",
+  "reservedUsd": 0.9030816000000009,
+  "sourceBindings": {
+    "planSha256": "3e6934d7e5f0705919293165a5aaea985ff35aaa63ef1f7b30ef7d732a689488",
+    "reportSha256": "2d5d6a5d90f3badb4dc32000caf724797515952220cb75015d16030d5aeeee54",
+    "runtimeSha256ByFile": {
+      "index.js": "c43582ad390be430530ecc589bb2476a8488e106d0f6efff532b751f290c2c9a",
+      "src/memory.js": "c6dd10765199745724703cb47abe664d1a45d60dd71adb60b749cbf22d8908b3",
+      "src/context.js": "8a8c674a9986796d9eb6a6c1e6bfe3f4247196780f48c8ded4edc423384aecde",
+      "src/client.js": "a808537f640d51e7b893d422a8c288f647d12641de2a785c4098afc681239da8",
+      "src/gate.js": "c1e5afada320e822a535ff4b464d6e565cfadbf56aabc78b1ba6f667bf4b78bf",
+      "src/delivery.js": "6f85152b425817570b301e80b960602c225817e47605c1bd1c36e52641cca4a6",
+      "src/status.js": "b9a826cfd393cc58bdcd64fcef698bc35f20a23f60a24f9e314b45919052d6f6"
+    },
+    "sourceLockSha256": "1c9811be7ccb5ba54a4c0e0d0f21be3f2bda54cea885341e1b62491f68fd8a46",
+    "selectionSha256": "2b048316165d08b407f6787d9e63752ee2485dcb6eec4502d63f1c9b6344d477",
+    "cachedCandidatesSha256": "e2f76a9c703354211212e67d48da503cde28e0e86dc93d61abfac8a616508ab2",
+    "protocolSha256": "dd40ac70b961cb629a9ab73ce740b854d76c4dc6a77f271e3b45ed4ab1159499",
+    "caseInputSha256": {
+      "60bf93ed_abs": "619df836190cd89b3cce30ad18c57956db0051543078a238bc67f197e16f2f38",
+      "08e075c7": "2121182e94ef5152c66c36170290b6a565aece31b3ed6978f131afbb3ce377ba",
+      "45dc21b6": "8eea46947e12e5e880caec1c35f33249cddef4892b8e37e8f0f3c566b38808bd",
+      "gpt4_2ba83207": "3245fe0f4a1f4e3802be747772adc35a14d179e768e5abe7c0ed51c5b39042f1",
+      "d23cf73b": "2138a6af677b557325c6f98c36909fa1fc91473f932438326f022c174243e97d",
+      "778164c6": "774ee93f06fbb3445c859b945ef7b3fd3095d94a0003820bb69c56e09aa0ba73",
+      "352ab8bd": "71dfeae4aa998fc8f87f93ee4b17b38ce585ef2fd54226cb23eb749d32ca3421",
+      "0edc2aef": "e551a8e379ea81db82bdec359469fbb67ef85d036a3487ef6d27905fd3280d42",
+      "d24813b1": "1e2075b1c80fc68d99ece74b83de83c62a57d06eb858ea148c6255d46f8d77b1",
+      "a06e4cfe": "ceb91255e2c9a9d0ce77e4ec46352e497596ced6b73766127f7db38c6e6d0503",
+      "gpt4_7a0daae1": "f50e39ffcdb54e13eb593d73570a742b0941e3ff96c62cd283aae924c1975230",
+      "gpt4_2f584639": "3e9c046c7e891ef30963e9c496e2e09f52654f10985cba41e407ae0c7fd6e47b"
+    }
+  },
+  "archive": {
+    "path": "artifacts/archive/memory-budget-v1/evidence.tar.gz",
+    "bytes": 17583304,
+    "sha256": "03b033208609db20ff9035f202768ee98596561fd889786d22a3f511a59f9d5f",
+    "verifiedFiles": 226,
+    "configuredSecretMatches": 0,
+    "availability": "Local-only in sillymemory-budget-calibration; not uploaded or available in a fresh clone"
+  },
+  "limitations": [
+    "12 known development questions with retained candidates; two pilot cases excluded before execution because traces were unavailable.",
+    "42 consumed evaluation questions used only for offline diagnostics, not unseen validation or an adoption gate.",
+    "One generation and judge per condition; identical historical prompts can yield different answers/grades.",
+    "No new LambdaDB retrieval in the quality matrix. Separate live smoke checks current synthetic scope isolation, not a new collection architecture."
+  ],
+  "historical800": {
+    "identicalPromptHashes": 12,
+    "previousCorrect": 8,
+    "freshCorrect": 7,
+    "gradeChanges": [
+      "d24813b1"
+    ]
+  },
+  "rowOrder": "Arrays in rows follow budgets [800, 1600, 3200]. correct is the official boolean grade; input is actual answer-input tokens; memory is counted memory tokens.",
+  "rows": [
+    {"id": "60bf93ed_abs", "correct": [true, true, true], "input": [2429, 3255, 4901], "memory": [800, 1594, 3182]},
+    {"id": "08e075c7", "correct": [true, true, true], "input": [2634, 3474, 5103], "memory": [775, 1588, 3175]},
+    {"id": "45dc21b6", "correct": [true, true, true], "input": [3892, 4736, 6351], "memory": [796, 1597, 3169]},
+    {"id": "gpt4_2ba83207", "correct": [false, true, false], "input": [4497, 5314, 6957], "memory": [797, 1587, 3192]},
+    {"id": "d23cf73b", "correct": [false, false, true], "input": [2805, 3643, 5295], "memory": [799, 1599, 3181]},
+    {"id": "778164c6", "correct": [true, true, false], "input": [2688, 3529, 5171], "memory": [791, 1600, 3190]},
+    {"id": "352ab8bd", "correct": [true, true, true], "input": [4980, 5822, 7492], "memory": [775, 1581, 3184]},
+    {"id": "0edc2aef", "correct": [true, true, true], "input": [3234, 4049, 5691], "memory": [795, 1579, 3181]},
+    {"id": "d24813b1", "correct": [false, false, false], "input": [3489, 4316, 5971], "memory": [781, 1581, 3178]},
+    {"id": "a06e4cfe", "correct": [true, true, true], "input": [3153, 3965, 5626], "memory": [781, 1572, 3185]},
+    {"id": "gpt4_7a0daae1", "correct": [false, false, false], "input": [4319, 5143, 6792], "memory": [797, 1595, 3200]},
+    {"id": "gpt4_2f584639", "correct": [false, false, false], "input": [4655, 5466, 7131], "memory": [779, 1568, 3198]}
+  ]
+}

@@ -1,0 +1,74 @@
+{
+  "version": "development-preflight-summary-v1",
+  "evidence": "Pinned SillyTavern and Chromium with local deterministic services; not paid-provider quality results.",
+  "archive": {
+    "sourceCommit": "c86d7fdab01eed4b2d3206cf75911908ca7ebd40",
+    "path": "artifacts/archive/pr38-c86d7fd/source.tar.gz",
+    "sha256": "3141b4c97a416ecb0f823fc5e2153d0bc062ca471adf7c23b8d02cebbab3ad4c",
+    "availability": "Local ignored archive; not published or included in a fresh clone. Contains the tracked source tree and original reports, not private checkpoints or dataset caches.",
+    "files": [
+      {
+        "path": "docs/benchmarks/development-preflight-v1.json",
+        "sha256": "0adfac47267c5b02ec41ca0223e6ca10583710abf6b4744f3b97ca44aaefa27a",
+        "bytes": 924430
+      },
+      {
+        "path": "docs/benchmarks/development-preflight-interrupted-v1.json",
+        "sha256": "a80d9b28514021ea725ba012d1b019ebd243f4d119f1b5df18594574f7bd57d5",
+        "bytes": 836049
+      },
+      {
+        "path": "tests/fixtures/development-checkpoint-producer-v1.txt",
+        "sha256": "78807e9a90bcaec0f1932d0ae7c45f0917e4f4f0b6d0b4780fe2a2e81aa72009",
+        "bytes": 4196
+      },
+      {
+        "path": "tests/fixtures/development-observation-producer-v1.txt",
+        "sha256": "cfc47e5525a3ee86b345c8c0c38423cbb442533eba1c90079dc157ded78ca657",
+        "bytes": 4216
+      },
+      {
+        "path": "tests/fixtures/development-preflight-before-barrier-v1.txt",
+        "sha256": "8055ecde60462115e7b9f5c2014f920e6a84c1e991440f983ba70393a8fbf0a6",
+        "bytes": 28706
+      }
+    ]
+  },
+  "runs": [
+    {
+      "report": "docs/benchmarks/development-preflight-v1.json",
+      "passed": true,
+      "cleanup": true,
+      "rows": 70,
+      "localCompletions": 777,
+      "automaticSummaries": 706,
+      "externalProviderCalls": 0,
+      "errors": [],
+      "failure": null,
+      "hostRevision": "06bde939fb1e9c4c8d8641d810f0a916b5bce127",
+      "planSha256": "862e7c2c34a877794a427eca6df1c060ddfa3b6f9bcc023a22a9e2fb01bbc069",
+      "nativeTransitions": 14,
+      "requestsStartedAfterDisable": 6
+    },
+    {
+      "report": "docs/benchmarks/development-preflight-interrupted-v1.json",
+      "passed": false,
+      "cleanup": true,
+      "rows": 63,
+      "localCompletions": 723,
+      "automaticSummaries": 659,
+      "externalProviderCalls": 0,
+      "errors": [
+        "Native vector call outside its arm"
+      ],
+      "failure": {
+        "stage": "gpt4_7a0daae1/32768/summary",
+        "message": "Expected values to be strictly deep-equal:"
+      },
+      "hostRevision": "06bde939fb1e9c4c8d8641d810f0a916b5bce127",
+      "planSha256": "862e7c2c34a877794a427eca6df1c060ddfa3b6f9bcc023a22a9e2fb01bbc069",
+      "nativeTransitions": null,
+      "requestsStartedAfterDisable": null
+    }
+  ]
+}

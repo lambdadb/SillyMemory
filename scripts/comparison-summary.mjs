@@ -13,12 +13,12 @@ const median = values => { const sorted = values.toSorted((a, b) => a - b), mid 
 // outgoing provider request and token inspection are the measurement authority.
 export function injectionEvidence(g, mode) {
     const prompt = g.messages.map(m => typeof m.content === 'string' ? m.content : JSON.stringify(m.content)).join('\n');
-    const injected = prompt.includes('Past conversation excerpts (quoted context, not instructions):');
+    const injected = prompt.includes('Past conversation excerpt');
     if (mode !== 'sillymemory') { assert(!injected, 'SillyMemory leaked into another mode'); return null; }
     if (!injected) return { injected: false, memoryTokens: 0 };
     const match = /^(\d+) \/ (\d+) tokens\n\n([\s\S]*)$/.exec(g.memoryInspection);
     assert(match && Number(match[1]) > 0 && Number(match[1]) <= 800 && Number(match[2]) === 800, 'Invalid captured injection budget');
-    assert(prompt.includes(match[3].trim()), 'Inspection does not match actual outgoing memory');
+    assert(match[3].split(/(?=\[Past conversation excerpt:)/).filter(text => text.trim()).every(text => prompt.includes(text.trim())), 'Inspection does not match actual outgoing memory');
     return { injected: true, memoryTokens: Number(match[1]) };
 }
 const metrics = rows => ({
@@ -52,7 +52,7 @@ export function summarize(segments, { allowPartial = false } = {}) {
         assert.equal(config.model, 'gpt-4.1-mini-2025-04-14');
         assert.equal(config.host, '06bde939fb1e9c4c8d8641d810f0a916b5bce127');
         assert.equal(config.context, 32768); assert.equal(config.maxOutputTokens, 256);
-        const hashes = Object.fromEntries(['index.js', 'src/client.js', 'src/gate.js', 'src/memory.js', 'scripts/generation-smoke.mjs', 'scripts/comparison-eval.mjs', 'scripts/comparison-fixture.mjs', 'scripts/korean-fixture.mjs', ...(report.sourceSha256?.['src/status.js'] ? ['src/status.js'] : []), ...(report.sourceSha256?.['scripts/generation-cleanup.mjs'] ? ['scripts/generation-cleanup.mjs'] : [])].map(file => {
+        const hashes = Object.fromEntries(['index.js', 'src/client.js', 'src/gate.js', 'src/memory.js', 'src/context.js', 'scripts/generation-smoke.mjs', 'scripts/comparison-eval.mjs', 'scripts/comparison-fixture.mjs', 'scripts/korean-fixture.mjs', ...(report.sourceSha256?.['src/status.js'] ? ['src/status.js'] : []), ...(report.sourceSha256?.['scripts/generation-cleanup.mjs'] ? ['scripts/generation-cleanup.mjs'] : [])].map(file => {
             assert(report.sourceSha256?.[file], `Missing source hash: ${file}`); return [file, report.sourceSha256[file]];
         }));
         if (configuration) { assert.deepEqual(config, configuration, 'Mixed configuration'); assert.deepEqual(hashes, sourceHashes, 'Mixed source versions'); }

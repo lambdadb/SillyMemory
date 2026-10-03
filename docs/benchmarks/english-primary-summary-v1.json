@@ -1,0 +1,231 @@
+{
+  "version": "english-primary-selection-result-v1",
+  "evidence": "Actual pinned SillyTavern, fresh LambdaDB managed embeddings and OpenAI; English development only",
+  "candidate": "2 primary hits per contextual hit, 800 tokens",
+  "rows": [
+    {
+      "id": "eeda8a6d_abs",
+      "type": "multi-session",
+      "baselineCorrect": true,
+      "candidateCorrect": true,
+      "baselineInputTokens": 4126,
+      "candidateInputTokens": 4142,
+      "memoryTokens": 789
+    },
+    {
+      "id": "60bf93ed_abs",
+      "type": "multi-session",
+      "baselineCorrect": true,
+      "candidateCorrect": true,
+      "baselineInputTokens": 2429,
+      "candidateInputTokens": 2424,
+      "memoryTokens": 794
+    },
+    {
+      "id": "08e075c7",
+      "type": "knowledge-update",
+      "baselineCorrect": true,
+      "candidateCorrect": true,
+      "baselineInputTokens": 2634,
+      "candidateInputTokens": 2643,
+      "memoryTokens": 780
+    },
+    {
+      "id": "45dc21b6",
+      "type": "knowledge-update",
+      "baselineCorrect": true,
+      "candidateCorrect": true,
+      "baselineInputTokens": 3892,
+      "candidateInputTokens": 3894,
+      "memoryTokens": 798
+    },
+    {
+      "id": "gpt4_2ba83207",
+      "type": "multi-session",
+      "baselineCorrect": false,
+      "candidateCorrect": true,
+      "baselineInputTokens": 4497,
+      "candidateInputTokens": 4497,
+      "memoryTokens": 797
+    },
+    {
+      "id": "d23cf73b",
+      "type": "multi-session",
+      "baselineCorrect": false,
+      "candidateCorrect": true,
+      "baselineInputTokens": 2805,
+      "candidateInputTokens": 2811,
+      "memoryTokens": 800
+    },
+    {
+      "id": "778164c6",
+      "type": "single-session-assistant",
+      "baselineCorrect": true,
+      "candidateCorrect": true,
+      "baselineInputTokens": 2688,
+      "candidateInputTokens": 2710,
+      "memoryTokens": 797
+    },
+    {
+      "id": "352ab8bd",
+      "type": "single-session-assistant",
+      "baselineCorrect": true,
+      "candidateCorrect": true,
+      "baselineInputTokens": 4980,
+      "candidateInputTokens": 4989,
+      "memoryTokens": 779
+    },
+    {
+      "id": "0edc2aef",
+      "type": "single-session-preference",
+      "baselineCorrect": true,
+      "candidateCorrect": true,
+      "baselineInputTokens": 3234,
+      "candidateInputTokens": 3226,
+      "memoryTokens": 782
+    },
+    {
+      "id": "d24813b1",
+      "type": "single-session-preference",
+      "baselineCorrect": true,
+      "candidateCorrect": false,
+      "baselineInputTokens": 3489,
+      "candidateInputTokens": 3486,
+      "memoryTokens": 773
+    },
+    {
+      "id": "8ebdbe50",
+      "type": "single-session-user",
+      "baselineCorrect": true,
+      "candidateCorrect": true,
+      "baselineInputTokens": 2896,
+      "candidateInputTokens": 2906,
+      "memoryTokens": 796
+    },
+    {
+      "id": "a06e4cfe",
+      "type": "single-session-user",
+      "baselineCorrect": true,
+      "candidateCorrect": true,
+      "baselineInputTokens": 3153,
+      "candidateInputTokens": 3153,
+      "memoryTokens": 781
+    },
+    {
+      "id": "gpt4_7a0daae1",
+      "type": "temporal-reasoning",
+      "baselineCorrect": false,
+      "candidateCorrect": true,
+      "baselineInputTokens": 4319,
+      "candidateInputTokens": 4324,
+      "memoryTokens": 797
+    },
+    {
+      "id": "gpt4_2f584639",
+      "type": "temporal-reasoning",
+      "baselineCorrect": false,
+      "candidateCorrect": false,
+      "baselineInputTokens": 4655,
+      "candidateInputTokens": 4661,
+      "memoryTokens": 785
+    }
+  ],
+  "baselineCorrect": 10,
+  "candidateCorrect": 12,
+  "wins": [
+    "gpt4_2ba83207",
+    "d23cf73b",
+    "gpt4_7a0daae1"
+  ],
+  "losses": [
+    "d24813b1"
+  ],
+  "adopt": false,
+  "baselineMedianInputTokens": 3361.5,
+  "candidateMedianInputTokens": 3356,
+  "usage": {
+    "answer": {
+      "calls": 14,
+      "promptTokens": 49866,
+      "outputTokens": 1101
+    },
+    "judge": {
+      "calls": 14,
+      "promptTokens": 3136,
+      "outputTokens": 23
+    }
+  },
+  "providerAttempts": 28,
+  "reservations": {
+    "provider": {
+      "completionAttempts": 28,
+      "openaiUsd": 0.3511984000000001
+    },
+    "lambda": {
+      "collections": 2,
+      "lambdaRequests": 379,
+      "lambdaDocuments": 12672,
+      "lambdaTokens": 1540306,
+      "lambdaWriteBytes": 11990349
+    }
+  },
+  "checkedReceipts": 70,
+  "ownedCollections": 2,
+  "cleanup": true,
+  "heldOutQuestionsExecuted": 0,
+  "planSha256": "d8a0289cd847de94850e651bc54eb095919770da1c1fb169c1ee48ce18bfe203",
+  "reportSha256": "34fda93fd6d458020e3f81c47862ea27ac9a5497a36a94a7acf2be55318bb375",
+  "baselineReportSha256": "01dbc72068ee686a33c42c78b196306826aba6fc2e6785e3ed2a26e37335d62b",
+  "runtimeChanged": false,
+  "candidateInstalledOnlyDuringEvaluation": true,
+  "decision": "Retain equal interleaving; 2:1 fails the frozen no-answer-loss gate. Net improvement is not sufficient and includes one identical-request win.",
+  "producerBaseRevision": "2504796dafca0946144a120f90ebd5eb477170f9",
+  "candidatePatchSha256": "4563686cb134ccc64efde82fdaecc6bacb738acaec4ff3e382e7232c358a02cf",
+  "englishCachedReplay": {
+    "followup": {
+      "baseline": {
+        "rows": 112,
+        "selected": 98,
+        "gains": 0,
+        "losses": 0
+      },
+      "primary-2": {
+        "rows": 112,
+        "selected": 98,
+        "gains": 0,
+        "losses": 0
+      }
+    },
+    "development": {
+      "baseline": {
+        "rows": 12,
+        "selected": 14,
+        "gains": 0,
+        "losses": 0
+      },
+      "primary-2": {
+        "rows": 12,
+        "selected": 19,
+        "gains": 5,
+        "losses": 0
+      }
+    }
+  },
+  "rankedCandidatesUnchanged": "6/12 fresh-baseline comparisons",
+  "identicalRequestWin": "gpt4_2ba83207",
+  "preferenceLossEvidenceStillDelivered": "d24813b1, message 403 (zero-based)",
+  "localHostFixture": {
+    "passed": true,
+    "rows": 1,
+    "cleanup": true
+  },
+  "finalUnitTests": 309,
+  "archive": {
+    "path": "artifacts/archive/english-primary-v1/evidence.tar.gz",
+    "sha256": "f4aff56cf550063a5d94f0f4baba90c55a469db58262de3de125885c6ee3d793",
+    "bytes": 5728106,
+    "availability": "Local-only in the sillymemory-english-selection worktree; not uploaded or available in a fresh clone"
+  },
+  "successfulOpenaiUncachedPriceEstimateUsd": 0.029778000000000002,
+  "costBoundary": "Frozen historical prices; not invoice; excludes managed embedding/LambdaDB charges and baseline spending"
+}

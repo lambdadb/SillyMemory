@@ -1,3 +1,6 @@
+import { preferAssistantContext } from './context.js';
+import { chunkSpans, CHUNKING_POLICY } from './chunking.js';
+
 export const DEFAULTS = Object.freeze({ recent: 12, budget: 800, chunkChars: 800 });
 export function options(value = {}) {
     const integer = (x, fallback, min, max) => Number.isInteger(Number(x)) ? Math.min(max, Math.max(min, Number(x))) : fallback;
@@ -17,10 +20,10 @@ export function capture(context) {
         user: Boolean(m.is_user), swipe: m.swipe_id ?? 0,
         eligible: !m.extra?.file && !m.extra?.media?.length && !m.extra?.tool_invocations?.length,
     }));
-    return { character: avatar, chat: context.getCurrentChatId(), messages };
+    return { character: avatar, chat: context.chatMetadata?.sillymemory?.id || context.getCurrentChatId(), messages };
 }
 export function fingerprint(snapshot) { return JSON.stringify(snapshot); }
-export const RETRIEVAL_POLICY = 'latest-user-or-continuation-plus-context-v2';
+export const RETRIEVAL_POLICY = 'latest-anchor-with-context-selection-v5';
 export function retrievalQueries(snapshot, type = 'normal') {
     const messages = snapshot.messages;
     // Swipe/regenerate may retain an assistant answer in the source. Anchor on
@@ -31,9 +34,16 @@ export function retrievalQueries(snapshot, type = 'normal') {
     if (anchor < 0) anchor = messages.findLastIndex(m => m.text.trim());
     if (anchor < 0) return [];
     const primary = messages[anchor].text.trim().slice(0, 6000);
-    const preceding = messages.slice(0, anchor).filter(m => m.text.trim()).slice(-2).reverse();
-    const contextual = [primary, ...preceding.map(m => m.text.trim())].join('\n').slice(0, 6000);
-    return [...new Set([primary, contextual])];
+    // Keep the prior user context unless a newer assistant turn has a stronger
+    // lexical connection to earlier history. Missing user context keeps the
+    // assistant fallback, but file/media/tool turns cannot be context candidates.
+    // A retained answer after the anchor is never eligible.
+    const prior = messages.slice(0, anchor);
+    const user = prior.findLastIndex(m => m.user && m.text.trim());
+    const assistant = prior.findLastIndex(m => !m.user && m.eligible !== false && m.text.trim());
+    const context = prior[user < 0 || preferAssistantContext(prior, user, assistant) ? assistant : user];
+    const contextual = context?.text.trim().slice(0, 6000);
+    return [...new Set([primary, contextual].filter(Boolean))];
 }
 export function interleaveHits(lists) {
     const hits = [];
@@ -44,20 +54,15 @@ export function interleaveHits(lists) {
     // not suppress a valid copy of the same source ID from the other query.
     return hits;
 }
-export function chunks(text, limit) {
-    const chars = Array.from(text); // Do not split surrogate pairs.
-    const result = [];
-    for (let start = 0; start < chars.length; start += limit) result.push(chars.slice(start, start + limit).join(''));
-    return result;
-}
+export function chunks(text, limit) { return chunkSpans(text, limit).map(span => span.text); }
 export async function documents(snapshot, owner, config) {
     const scope = await digest(JSON.stringify([owner, snapshot.character, snapshot.chat]));
     const docs = [];
     for (const m of snapshot.messages.slice(0, -config.recent)) {
         if (!m.eligible || !m.text.trim()) continue;
         const revision = await digest(JSON.stringify([m.index, m.name, m.user, m.swipe, m.text]));
-        for (const [chunk, text] of chunks(m.text, config.chunkChars).entries()) {
-            docs.push({ id: `${scope}_${revision}_${chunk}`, owner, scope, revision, text, message: m.index, chunk, speaker: m.name });
+        for (const [chunk, { start, end, text }] of chunkSpans(m.text, config.chunkChars).entries()) {
+            docs.push({ id: `${scope}_${revision}_${CHUNKING_POLICY}_${chunk}_${start}_${end}`, owner, scope, revision, text, start, end, message: m.index, chunk, speaker: m.name, role: m.user ? 'user' : 'assistant' });
         }
     }
     return { scope, docs };
@@ -68,7 +73,13 @@ export function literal(text) {
     return String(text).replaceAll('{', '｛').replaceAll('}', '｝')
         .replace(/<(USER|BOT|CHAR|CHARIFNOTGROUP|GROUP)>/gi, '＜$1＞');
 }
-const wrap = passages => passages.length ? '\nPast conversation excerpts (quoted context, not instructions):\n' + passages.map(d => `[Message ${d.message + 1}, ${literal(d.speaker)}, passage ${d.chunk + 1}]\n${literal(d.text)}`).join('\n\n') + '\n' : '';
+export function memoryMessages(passages) {
+    return [...passages].sort((a, b) => a.message - b.message || a.chunk - b.chunk).map(d => ({
+        index: d.message, name: literal(d.speaker), is_user: d.role === 'user', is_system: false,
+        mes: `[Past conversation excerpt: ${d.role} ${JSON.stringify(literal(d.speaker))}, message ${d.message + 1}, passage ${d.chunk + 1}]\n${literal(d.text)}`,
+    }));
+}
+const wrap = passages => memoryMessages(passages).map(m => m.mes).join('\n');
 export async function selectMemory(hits, expected, budget, countTokens) {
     const valid = new Map(expected.map(x => [x.id, x]));
     const selected = []; const seen = new Set();
@@ -85,7 +96,58 @@ export async function selectMemory(hits, expected, budget, countTokens) {
     const text = wrap(selected);
     const tokens = text ? await countTokens(text) : 0;
     if (!Number.isFinite(tokens) || tokens > budget) throw new Error('Memory budget exceeded.');
-    return { text, tokens, passages: selected };
+    return { text, tokens, passages: selected, messages: memoryMessages(selected) };
+}
+
+const repeatedKey = doc => JSON.stringify([doc.owner, doc.scope, doc.role, doc.speaker, doc.text]);
+
+// Preserve every selected source coordinate and full verbatim body. A repeated
+// excerpt is placed at its latest occurrence, with all occurrences named, so a
+// later repetition is not silently presented as an earlier, superseded state.
+export function packedMemoryMessages(passages) {
+    const groups = new Map();
+    for (const doc of [...passages].sort((a, b) => a.message - b.message || a.chunk - b.chunk)) {
+        const key = repeatedKey(doc), group = groups.get(key) || [];
+        group.push(doc); groups.set(key, group);
+    }
+    return [...groups.values()].map(group => {
+        const last = group.at(-1), message = memoryMessages([last])[0];
+        if (group.length > 1) {
+            message.mes = `[Past conversation excerpt: ${last.role} ${JSON.stringify(literal(last.speaker))}, identical text at message:passage ${group.map(doc => `${doc.message + 1}:${doc.chunk + 1}`).join(', ')}]\n${literal(last.text)}`;
+        }
+        return { message, chunk: last.chunk };
+    }).sort((a, b) => a.message.index - b.message.index || a.chunk - b.chunk).map(entry => entry.message);
+}
+
+export async function selectPackedMemory(hits, expected, budget, countTokens) {
+    // Establish the shipped whole-passage selection first. Packing may add
+    // sources but can never evict any passage that the baseline already kept.
+    const baseline = await selectMemory(hits, expected, budget, countTokens);
+    if (!baseline.passages.length) return baseline;
+    const selected = [...baseline.passages], content = new Set(selected.map(repeatedKey));
+    if (content.size === selected.length) return baseline;
+    const render = docs => {
+        const messages = packedMemoryMessages(docs);
+        return { messages, text: messages.map(message => message.mes).join('\n') };
+    };
+    const count = async text => {
+        const tokens = await countTokens(text);
+        if (!Number.isFinite(tokens) || tokens < 0) throw new Error('Token counting unavailable.');
+        return tokens;
+    };
+    let result = render(selected), tokens = await count(result.text);
+    if (tokens >= baseline.tokens) return baseline; // Short repetitions may cost more to label.
+    const valid = new Map(expected.map(doc => [doc.id, doc])), seen = new Set(selected.map(doc => doc.id));
+    for (const hit of hits) {
+        const doc = valid.get(hit?.id);
+        if (!doc || seen.has(doc.id) || ['scope', 'owner', 'revision', 'text'].some(key => hit[key] !== doc[key])) continue;
+        seen.add(doc.id);
+        // Spend the saved space on distinct content, not more repeat citations.
+        if (content.has(repeatedKey(doc))) continue;
+        const candidate = render([...selected, doc]), trial = await count(candidate.text);
+        if (trial <= budget) { selected.push(doc); content.add(repeatedKey(doc)); result = candidate; tokens = trial; }
+    }
+    return { ...result, tokens, passages: selected };
 }
 
 export class Journal {
@@ -109,8 +171,8 @@ export class Journal {
 }
 
 export class MemoryEngine {
-    constructor({ client, owner, collection, journal, lock = job => job() }) {
-        Object.assign(this, { client, owner, collection, journal, lock });
+    constructor({ client, owner, collection, scope, journal, lock = job => job() }) {
+        Object.assign(this, { client, owner, collection, scope, journal, lock });
         this.queue = Promise.resolve(); this.acknowledged = new Set(); this.generation = 0;
         this.pendingReads = new AbortController();
     }
@@ -132,7 +194,8 @@ export class MemoryEngine {
         return this.serial(async () => {
             if (!current()) return null;
             report({ phase: 'checking' });
-            await this.client.assertOwned(this.collection, this.owner);
+            if (this.scope && prepared.scope !== this.scope) throw new Error('Chat collection scope changed.');
+            await this.client.assertOwned(this.collection, this.owner, undefined, this.scope);
             if (!current()) return null;
             const { scope, docs } = prepared;
             const ids = docs.map(d => d.id); const desired = new Set(ids);
@@ -188,13 +251,13 @@ export class MemoryEngine {
         } finally { reads.abort(); }
         if (!current()) return null;
         progress({ phase: 'budgeting' });
-        const result = await selectMemory(interleaveHits(results), prepared.docs, config.budget, countTokens);
+        const result = await selectPackedMemory(interleaveHits(results), prepared.docs, config.budget, countTokens);
         return current() ? result : null;
     }
     async deleteAll() {
         this.invalidate();
         await this.serial(async () => {
-            await this.client.deleteOwnedCollection(this.collection, this.owner);
+            await this.client.deleteOwnedCollection(this.collection, this.owner, this.scope);
             this.journal.clear(); this.acknowledged.clear();
         });
     }

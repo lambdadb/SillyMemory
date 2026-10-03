@@ -1,13 +1,13 @@
 // Real host process death and browser reload; remote writes remain emulated.
-export async function runRecoveryScenarios({ page, field, waitStatus, prompt, check, faults, collections, calls, seed, edit, entered, remoteMatches, reconnect, restartHost }) {
+export async function runRecoveryScenarios({ page, field, waitStatus, prompt, check, faults, collections, calls, seed, edit, entered, remoteMatches, reconnect, restartHost, activeCollection }) {
     const started = performance.now(), cycles = [];
-    const docs = () => [...collections.values()][0].docs;
+    const docs = async () => (await activeCollection()).docs;
     for (const mode of ['hold-before', 'hold']) {
         await seed();
         const marker = `CRASH_${mode.toUpperCase().replace('-', '_')}`;
         const item = faults.arm('upsert', mode);
         await edit(`${marker}: The repaired clock is in the west gallery.`); await entered(item);
-        check(`${mode}: remote acceptance matches the crash boundary`, [...docs().values()].some(d => d.text.includes(marker)) === (mode === 'hold'));
+        check(`${mode}: remote acceptance matches the crash boundary`, [...(await docs()).values()].some(d => d.text.includes(marker)) === (mode === 'hold'));
         const chatId = await page.evaluate(() => SillyTavern.getContext().getCurrentChatId());
         const persisted = await page.evaluate(() => SillyTavern.getContext().chat.map(m => m.mes));
         await restartHost(); item.release();
@@ -18,7 +18,7 @@ export async function runRecoveryScenarios({ page, field, waitStatus, prompt, ch
         await page.evaluate(async () => { const c = SillyTavern.getContext(); await c.deleteMessage(0); await c.saveChat(); });
         await waitStatus('synchronized');
         const result = await prompt();
-        check(`${mode}: deleted crash-time write cannot reappear`, await remoteMatches() && ![...docs().values()].some(d => d.text.includes(marker)) && !result.injection?.includes(marker));
+        check(`${mode}: deleted crash-time write cannot reappear`, await remoteMatches() && ![...(await docs()).values()].some(d => d.text.includes(marker)) && !result.injection?.includes(marker));
     }
     await seed();
     const parent = await page.evaluate(() => SillyTavern.getContext().getCurrentChatId());
@@ -37,7 +37,7 @@ export async function runRecoveryScenarios({ page, field, waitStatus, prompt, ch
         await waitStatus('synchronized');
         check(`cycle ${i}: edit/swipe remote state matches source`, await remoteMatches());
         const before = await prompt();
-        check(`cycle ${i}: scoped memory preserves recent messages and budget`, !before.aborted && before.injection?.includes(marker) && !new RegExp(`CYCLE_(?!${i}\\b)\\d+`).test(before.injection) && before.chat.length === 2 && before.before === before.after && before.renderedTokens <= 250);
+        check(`cycle ${i}: scoped memory preserves recent messages and budget`, !before.aborted && before.injection?.includes(marker) && !new RegExp(`CYCLE_(?!${i}\\b)\\d+`).test(before.injection) && before.chat.filter(m => !m.mes.startsWith('[Past conversation excerpt:')).length === 2 && before.before === before.after && before.renderedTokens <= 800);
         await page.evaluate(async i => {
             const c = SillyTavern.getContext(); await c.deleteMessage(0);
             c.chat.push({ mes: `Recent arrival ${i}: ready for tomorrow.`, name: 'User', is_user: true, is_system: false, send_date: 0, extra: {} });

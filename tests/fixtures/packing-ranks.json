@@ -1,0 +1,317 @@
+{
+  "kind": "Fixed local host regression ranks, extracted from a historical synthetic-chat run; no live retrieval or answer-quality evidence.",
+  "sourceRevision": "94b9bc04cf664587ae4c96b7739c22af87897b6b",
+  "case": "long-ko-quotation",
+  "queries": [
+    {
+      "query": "서명된 편지와 약속 이야기를 다시 해요.",
+      "hits": [
+        {
+          "message": 2,
+          "chunk": 0,
+          "textSha256": "7631348dadb176baafa7c4a029076e9fb06230f383007da51d0254122dfb2523"
+        },
+        {
+          "message": 42,
+          "chunk": 0,
+          "textSha256": "7631348dadb176baafa7c4a029076e9fb06230f383007da51d0254122dfb2523"
+        },
+        {
+          "message": 26,
+          "chunk": 0,
+          "textSha256": "7631348dadb176baafa7c4a029076e9fb06230f383007da51d0254122dfb2523"
+        },
+        {
+          "message": 10,
+          "chunk": 0,
+          "textSha256": "7631348dadb176baafa7c4a029076e9fb06230f383007da51d0254122dfb2523"
+        },
+        {
+          "message": 34,
+          "chunk": 0,
+          "textSha256": "7631348dadb176baafa7c4a029076e9fb06230f383007da51d0254122dfb2523"
+        },
+        {
+          "message": 18,
+          "chunk": 0,
+          "textSha256": "7631348dadb176baafa7c4a029076e9fb06230f383007da51d0254122dfb2523"
+        },
+        {
+          "message": 50,
+          "chunk": 0,
+          "textSha256": "7631348dadb176baafa7c4a029076e9fb06230f383007da51d0254122dfb2523"
+        },
+        {
+          "message": 1,
+          "chunk": 0,
+          "textSha256": "c6559135ae7f12cc4ac4ed20137df5f9b1c797b10740c5a3e7f21e5d29e5d55e"
+        },
+        {
+          "message": 15,
+          "chunk": 0,
+          "textSha256": "4174826ac1c2f715a4703361b7bfd31144961dd57e85bd391f797a7edfb2ddf9"
+        },
+        {
+          "message": 7,
+          "chunk": 0,
+          "textSha256": "4174826ac1c2f715a4703361b7bfd31144961dd57e85bd391f797a7edfb2ddf9"
+        },
+        {
+          "message": 23,
+          "chunk": 0,
+          "textSha256": "4174826ac1c2f715a4703361b7bfd31144961dd57e85bd391f797a7edfb2ddf9"
+        },
+        {
+          "message": 31,
+          "chunk": 0,
+          "textSha256": "4174826ac1c2f715a4703361b7bfd31144961dd57e85bd391f797a7edfb2ddf9"
+        },
+        {
+          "message": 39,
+          "chunk": 0,
+          "textSha256": "4174826ac1c2f715a4703361b7bfd31144961dd57e85bd391f797a7edfb2ddf9"
+        },
+        {
+          "message": 47,
+          "chunk": 0,
+          "textSha256": "4174826ac1c2f715a4703361b7bfd31144961dd57e85bd391f797a7edfb2ddf9"
+        },
+        {
+          "message": 0,
+          "chunk": 0,
+          "textSha256": "d12b4d65fdcb6a3f4637af1f0297b56feb0cb95eec9c2a7d4280a3dec7a4a294"
+        },
+        {
+          "message": 16,
+          "chunk": 0,
+          "textSha256": "9a0b05828bac8efbf61c6b60a4c58fb1e08d5e22ba2f58b2769d7b778ab0377f"
+        },
+        {
+          "message": 24,
+          "chunk": 0,
+          "textSha256": "9a0b05828bac8efbf61c6b60a4c58fb1e08d5e22ba2f58b2769d7b778ab0377f"
+        },
+        {
+          "message": 8,
+          "chunk": 0,
+          "textSha256": "9a0b05828bac8efbf61c6b60a4c58fb1e08d5e22ba2f58b2769d7b778ab0377f"
+        },
+        {
+          "message": 40,
+          "chunk": 0,
+          "textSha256": "9a0b05828bac8efbf61c6b60a4c58fb1e08d5e22ba2f58b2769d7b778ab0377f"
+        },
+        {
+          "message": 32,
+          "chunk": 0,
+          "textSha256": "9a0b05828bac8efbf61c6b60a4c58fb1e08d5e22ba2f58b2769d7b778ab0377f"
+        },
+        {
+          "message": 48,
+          "chunk": 0,
+          "textSha256": "9a0b05828bac8efbf61c6b60a4c58fb1e08d5e22ba2f58b2769d7b778ab0377f"
+        },
+        {
+          "message": 51,
+          "chunk": 0,
+          "textSha256": "10380613c05cb31e1db71aded56326a03f48ab0be3d403b4549360e35cc1852e"
+        },
+        {
+          "message": 27,
+          "chunk": 0,
+          "textSha256": "10380613c05cb31e1db71aded56326a03f48ab0be3d403b4549360e35cc1852e"
+        },
+        {
+          "message": 3,
+          "chunk": 0,
+          "textSha256": "10380613c05cb31e1db71aded56326a03f48ab0be3d403b4549360e35cc1852e"
+        },
+        {
+          "message": 43,
+          "chunk": 0,
+          "textSha256": "10380613c05cb31e1db71aded56326a03f48ab0be3d403b4549360e35cc1852e"
+        },
+        {
+          "message": 35,
+          "chunk": 0,
+          "textSha256": "10380613c05cb31e1db71aded56326a03f48ab0be3d403b4549360e35cc1852e"
+        },
+        {
+          "message": 19,
+          "chunk": 0,
+          "textSha256": "10380613c05cb31e1db71aded56326a03f48ab0be3d403b4549360e35cc1852e"
+        },
+        {
+          "message": 11,
+          "chunk": 0,
+          "textSha256": "10380613c05cb31e1db71aded56326a03f48ab0be3d403b4549360e35cc1852e"
+        },
+        {
+          "message": 52,
+          "chunk": 0,
+          "textSha256": "b545551902888dd9ad211b80e5f25094c94e9a1bd206e5e95710b808d1a18bb3"
+        },
+        {
+          "message": 4,
+          "chunk": 0,
+          "textSha256": "b545551902888dd9ad211b80e5f25094c94e9a1bd206e5e95710b808d1a18bb3"
+        }
+      ]
+    },
+    {
+      "query": "산호색 호루라기를 누가 언제 돌려주겠다고 했나요?",
+      "hits": [
+        {
+          "message": 1,
+          "chunk": 0,
+          "textSha256": "c6559135ae7f12cc4ac4ed20137df5f9b1c797b10740c5a3e7f21e5d29e5d55e"
+        },
+        {
+          "message": 27,
+          "chunk": 0,
+          "textSha256": "10380613c05cb31e1db71aded56326a03f48ab0be3d403b4549360e35cc1852e"
+        },
+        {
+          "message": 3,
+          "chunk": 0,
+          "textSha256": "10380613c05cb31e1db71aded56326a03f48ab0be3d403b4549360e35cc1852e"
+        },
+        {
+          "message": 43,
+          "chunk": 0,
+          "textSha256": "10380613c05cb31e1db71aded56326a03f48ab0be3d403b4549360e35cc1852e"
+        },
+        {
+          "message": 35,
+          "chunk": 0,
+          "textSha256": "10380613c05cb31e1db71aded56326a03f48ab0be3d403b4549360e35cc1852e"
+        },
+        {
+          "message": 19,
+          "chunk": 0,
+          "textSha256": "10380613c05cb31e1db71aded56326a03f48ab0be3d403b4549360e35cc1852e"
+        },
+        {
+          "message": 11,
+          "chunk": 0,
+          "textSha256": "10380613c05cb31e1db71aded56326a03f48ab0be3d403b4549360e35cc1852e"
+        },
+        {
+          "message": 51,
+          "chunk": 0,
+          "textSha256": "10380613c05cb31e1db71aded56326a03f48ab0be3d403b4549360e35cc1852e"
+        },
+        {
+          "message": 0,
+          "chunk": 0,
+          "textSha256": "d12b4d65fdcb6a3f4637af1f0297b56feb0cb95eec9c2a7d4280a3dec7a4a294"
+        },
+        {
+          "message": 21,
+          "chunk": 0,
+          "textSha256": "27c2a76675801aefa2145c08dd62f676a9dbf0ccb5cad3bf2e09c552249777ed"
+        },
+        {
+          "message": 37,
+          "chunk": 0,
+          "textSha256": "27c2a76675801aefa2145c08dd62f676a9dbf0ccb5cad3bf2e09c552249777ed"
+        },
+        {
+          "message": 29,
+          "chunk": 0,
+          "textSha256": "27c2a76675801aefa2145c08dd62f676a9dbf0ccb5cad3bf2e09c552249777ed"
+        },
+        {
+          "message": 5,
+          "chunk": 0,
+          "textSha256": "27c2a76675801aefa2145c08dd62f676a9dbf0ccb5cad3bf2e09c552249777ed"
+        },
+        {
+          "message": 45,
+          "chunk": 0,
+          "textSha256": "27c2a76675801aefa2145c08dd62f676a9dbf0ccb5cad3bf2e09c552249777ed"
+        },
+        {
+          "message": 13,
+          "chunk": 0,
+          "textSha256": "27c2a76675801aefa2145c08dd62f676a9dbf0ccb5cad3bf2e09c552249777ed"
+        },
+        {
+          "message": 14,
+          "chunk": 0,
+          "textSha256": "5f100ff3159af7381c59988002989a3ce7bdac5f33d7f3721f1a968838daa2e7"
+        },
+        {
+          "message": 38,
+          "chunk": 0,
+          "textSha256": "5f100ff3159af7381c59988002989a3ce7bdac5f33d7f3721f1a968838daa2e7"
+        },
+        {
+          "message": 46,
+          "chunk": 0,
+          "textSha256": "5f100ff3159af7381c59988002989a3ce7bdac5f33d7f3721f1a968838daa2e7"
+        },
+        {
+          "message": 30,
+          "chunk": 0,
+          "textSha256": "5f100ff3159af7381c59988002989a3ce7bdac5f33d7f3721f1a968838daa2e7"
+        },
+        {
+          "message": 22,
+          "chunk": 0,
+          "textSha256": "5f100ff3159af7381c59988002989a3ce7bdac5f33d7f3721f1a968838daa2e7"
+        },
+        {
+          "message": 6,
+          "chunk": 0,
+          "textSha256": "5f100ff3159af7381c59988002989a3ce7bdac5f33d7f3721f1a968838daa2e7"
+        },
+        {
+          "message": 44,
+          "chunk": 0,
+          "textSha256": "b545551902888dd9ad211b80e5f25094c94e9a1bd206e5e95710b808d1a18bb3"
+        },
+        {
+          "message": 28,
+          "chunk": 0,
+          "textSha256": "b545551902888dd9ad211b80e5f25094c94e9a1bd206e5e95710b808d1a18bb3"
+        },
+        {
+          "message": 36,
+          "chunk": 0,
+          "textSha256": "b545551902888dd9ad211b80e5f25094c94e9a1bd206e5e95710b808d1a18bb3"
+        },
+        {
+          "message": 12,
+          "chunk": 0,
+          "textSha256": "b545551902888dd9ad211b80e5f25094c94e9a1bd206e5e95710b808d1a18bb3"
+        },
+        {
+          "message": 20,
+          "chunk": 0,
+          "textSha256": "b545551902888dd9ad211b80e5f25094c94e9a1bd206e5e95710b808d1a18bb3"
+        },
+        {
+          "message": 4,
+          "chunk": 0,
+          "textSha256": "b545551902888dd9ad211b80e5f25094c94e9a1bd206e5e95710b808d1a18bb3"
+        },
+        {
+          "message": 52,
+          "chunk": 0,
+          "textSha256": "b545551902888dd9ad211b80e5f25094c94e9a1bd206e5e95710b808d1a18bb3"
+        },
+        {
+          "message": 7,
+          "chunk": 0,
+          "textSha256": "4174826ac1c2f715a4703361b7bfd31144961dd57e85bd391f797a7edfb2ddf9"
+        },
+        {
+          "message": 23,
+          "chunk": 0,
+          "textSha256": "4174826ac1c2f715a4703361b7bfd31144961dd57e85bd391f797a7edfb2ddf9"
+        }
+      ]
+    }
+  ]
+}
