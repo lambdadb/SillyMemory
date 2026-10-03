@@ -8,7 +8,8 @@ import { readFile, writeFile, mkdir, mkdtemp, rm, realpath } from 'node:fs/promi
 import { spawn, execFileSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-const checkpoints = process.argv.includes('--checkpoints');
+const recovery = process.argv.includes('--checkpoint-recovery');
+const checkpoints = process.argv.includes('--checkpoints') || recovery;
 const versioned = process.argv.includes('--versioned') || checkpoints;
 const root = path.resolve(new URL('..', import.meta.url).pathname);
 const source = process.env.ST_SOURCE || '/tmp/sillymemory-st-source';
@@ -19,17 +20,18 @@ const env = parseEnv(await readFile(process.env.SM_ENV_FILE || path.join(root, '
 const credentials = { endpoint: env.LAMBDADB_BASE_URL, project: env.LAMBDADB_PROJECT_NAME, key: env.LAMBDADB_PROJECT_API_KEY };
 assert(Object.values(credentials).every(Boolean), 'Missing LambdaDB credentials');
 const work = await mkdtemp(path.join(tmpdir(), 'sm-chat-collections-'));
-const artifactTag = process.env.SM_ARTIFACT_TAG || (checkpoints ? 'checkpoint-host' : versioned ? 'versioned-host' : 'collections-host');
+const artifactTag = process.env.SM_ARTIFACT_TAG || (recovery ? 'checkpoint-recovery' : checkpoints ? 'checkpoint-host' : versioned ? 'versioned-host' : 'collections-host');
 assert(/^[a-zA-Z0-9][a-zA-Z0-9._-]{0,79}$/.test(artifactTag));
 const artifacts = path.join(root, 'artifacts', artifactTag); await mkdir(artifacts, { recursive: true });
 const pendingPath = path.join(artifacts, 'chat-collections-live-pending.json');
 const pending = []; await writeFile(pendingPath, '[]', { flag: 'wx' });
 const sourceSha256 = {};
 for (const file of ['index.js', 'settings.html', 'src/chat-collections.js', 'src/client.js', 'src/memory.js', 'src/status.js', 'src/checkpoints.js', 'scripts/chat-collections-live.mjs']) sourceSha256[file] = createHash('sha256').update(await readFile(path.join(root, file))).digest('hex');
-const report = { checkpoints, versioned, upserts: [], time: new Date().toISOString(), host: revision, sourceSha256, checks: [], responses: [], proxyRequests: 0, pageErrors: [], cleanup: false, passed: false };
+const report = { recovery, checkpoints, versioned, upserts: [], time: new Date().toISOString(), host: revision, sourceSha256, checks: [], responses: [], proxyRequests: 0, pageErrors: [], cleanup: false, passed: false };
 const check = (name, ok) => { assert(ok, name); report.checks.push(name); console.log(`PASS ${name}`); };
 const url = `http://127.0.0.1:${Number(process.env.ST_LIVE_PORT || 18147)}`;
-let server, browser, page, panel, stage = 'startup';
+let server, browser, page, panel, connect, stage = 'startup';
+let loseBranch = false, holdDocs, blockReady = false, loseResume = false, blockedResume;
 try {
     const config = path.join(work, 'config.yaml'); await writeFile(config, await readFile(path.join(source, 'default/config.yaml')));
     server = spawn(process.execPath, ['server.js', '--configPath', config, '--dataRoot', path.join(work, 'data'), '--port', new URL(url).port, '--listen', 'false', '--browserLaunchEnabled', 'false', '--corsProxy', 'false'], { cwd: source, stdio: 'ignore' });
@@ -52,9 +54,28 @@ try {
             await writeFile(pendingPath, JSON.stringify(pending, null, 2));
         }
         if (req.method() === 'POST' && target.pathname.endsWith('/docs/upsert')) report.upserts.push({ stage, branch: req.postDataJSON().branch, documents: req.postDataJSON().docs.length });
+        if (loseBranch && req.method() === 'POST' && target.pathname.endsWith('/branches')) {
+            loseBranch = false; const response = await route.fetch(); assert(response.ok()); await route.abort(); return;
+        }
+        if (holdDocs && req.method() === 'GET' && target.pathname.endsWith('/docs')) {
+            const hold = holdDocs; holdDocs = undefined; await hold();
+        }
         await route.continue();
         } catch (error) { report.pageErrors.push(error.name); await route.abort().catch(() => {}); }
     });
+    if (recovery) {
+        await page.route('**/api/chats/save', async route => {
+            const body = route.request().postDataJSON();
+            if (blockReady && body.chat?.[0]?.chat_metadata?.sillymemory?.checkpoint?.state === 'ready') return route.fulfill({ status: 503, contentType: 'application/json', body: '{}' });
+            if (loseResume && body.file_name.startsWith('SillyMemory resume')) {
+                loseResume = false; blockedResume = body.file_name;
+                const response = await route.fetch(); assert(response.ok()); return route.abort();
+            }
+            return route.continue();
+        });
+        await page.route('**/api/chats/get', route => route.request().postDataJSON().file_name === blockedResume
+            ? route.fulfill({ status: 503, contentType: 'application/json', body: '{}' }) : route.continue());
+    }
     page.on('response', r => { if (new URL(r.url()).origin === new URL(credentials.endpoint).origin) report.responses.push({ stage, status: r.status() }); });
     await page.goto(url); await page.getByText('Welcome to SillyTavern!', { exact: true }).waitFor(); await page.getByText('Save', { exact: true }).last().click();
     const field = name => page.locator(`#sillymemory [data-sm="${name}"]`);
@@ -64,7 +85,7 @@ try {
         if (!await page.locator('#sillymemory .inline-drawer-toggle').isVisible()) await page.locator('#extensions-settings-button .drawer-toggle').click();
         if (!await field('endpoint').isVisible()) await page.locator('#sillymemory .inline-drawer-toggle').click();
     };
-    const connect = async () => { await panel(); await field('endpoint').fill(credentials.endpoint); await field('project').fill(credentials.project); await field('key').fill(credentials.key); await field('connect').click(); };
+    connect = async () => { await panel(); await field('endpoint').fill(credentials.endpoint); await field('project').fill(credentials.project); await field('key').fill(credentials.key); await field('connect').click(); };
     const identity = () => page.evaluate(async () => {
         const c = SillyTavern.getContext(), { capture } = await import('/scripts/extensions/third-party/sillymemory/src/memory.js');
         const { chatCollection } = await import('/scripts/extensions/third-party/sillymemory/src/chat-collections.js');
@@ -158,12 +179,46 @@ try {
             c.chat[0].swipe_info = [{ extra: {} }, { extra: { checkpointTest: 'retained' } }];
             c.chatMetadata.variables = { checkpointTest: 'before' }; await c.saveChat();
         }, renamed.file);
-        await panel(); await field('checkpoint-save').click(); await status('Checkpoint saved:');
-        const checkpointFile = await page.evaluate(async () => {
+        const files = () => page.evaluate(async () => {
             const c = SillyTavern.getContext(); const r = await fetch('/api/characters/chats', { method: 'POST', headers: c.getRequestHeaders(), body: JSON.stringify({ avatar_url: c.characters[c.characterId].avatar, metadata: true }) });
-            return (await r.json()).find(x => x.chat_metadata?.sillymemory?.checkpoint?.state === 'ready').file_name.replace(/\.jsonl$/, '');
+            return r.json();
         });
+        const readChat = name => page.evaluate(async name => {
+            const c = SillyTavern.getContext(); const r = await fetch('/api/chats/get', { method: 'POST', headers: c.getRequestHeaders(), body: JSON.stringify({ avatar_url: c.characters[c.characterId].avatar, file_name: name }) }); return r.json();
+        }, name);
+        const reopen = async name => {
+            await page.reload(); await page.locator('#sillymemory').waitFor({ state: 'attached' });
+            check('recovery reload clears key and disables memory', await field('key').inputValue() === '' && !await field('enabled').isChecked());
+            await page.locator('#rightNavHolder .drawer-toggle').click();
+            await page.locator('.character_select').filter({ hasText: 'Collection Lifecycle' }).click();
+            await page.evaluate(async name => SillyTavern.getContext().openCharacterChat(name), name); await connect();
+        };
+        loseBranch = recovery;
+        await panel(); await field('checkpoint-save').click();
+        await status(recovery ? 'Memory request failed' : 'Checkpoint saved:');
+        const checkpointFile = (await files()).find(x => x.chat_metadata?.sillymemory?.checkpoint)?.file_name.replace(/\.jsonl$/, '');
         check('checkpoint creation leaves source chat active and submits no inherited documents', (await identity()).file === renamed.file && !report.upserts.some(r => r.stage === 'checkpoint'));
+        if (recovery) {
+            check('accepted branch with lost response leaves durable pending checkpoint', (await readChat(checkpointFile))[0].chat_metadata.sillymemory.checkpoint.state === 'pending');
+            await reopen(checkpointFile); blockReady = true;
+            await field('checkpoint-save').click(); await status('Checkpoint chat save failed'); blockReady = false;
+            check('rejected ready save preserves pending transcript', (await readChat(checkpointFile))[0].chat_metadata.sillymemory.checkpoint.state === 'pending');
+            await reopen(checkpointFile); await field('checkpoint-save').click(); await status('Checkpoint verified and ready');
+            check('reload finishes the same checkpoint without re-embedding', (await readChat(checkpointFile))[0].chat_metadata.sillymemory.checkpoint.state === 'ready' && !report.upserts.some(r => r.stage === 'checkpoint'));
+            await page.evaluate(async name => SillyTavern.getContext().openCharacterChat(name), renamed.file);
+            loseBranch = true; await field('checkpoint-save').click(); await status('Memory request failed');
+            const editFile = (await files()).find(x => x.chat_metadata?.sillymemory?.checkpoint?.state === 'pending').file_name.replace(/\.jsonl$/, '');
+            await page.evaluate(async name => SillyTavern.getContext().openCharacterChat(name), editFile);
+            let reached, release; const reachedPromise = new Promise(r => { reached = r; }), releasePromise = new Promise(r => { release = r; });
+            holdDocs = async () => { reached(); await releasePromise; };
+            await field('checkpoint-save').click(); await reachedPromise;
+            try { await page.evaluate(async () => { const c = SillyTavern.getContext(); c.chat[0].mes = 'Concurrent user edit must survive'; await c.saveChat(); await c.eventSource.emit(c.eventTypes.MESSAGE_EDITED, 0); }); }
+            finally { release(); }
+            await status('Chat changed during checkpoint preparation');
+            const edited = await readChat(editFile);
+            check('edit during remote preparation survives without ready overwrite', edited[1].mes === 'Concurrent user edit must survive' && edited[0].chat_metadata.sillymemory.checkpoint.state === 'pending');
+            await page.evaluate(async name => SillyTavern.getContext().openCharacterChat(name), renamed.file);
+        }
         stage = 'parent after checkpoint';
         await page.evaluate(async () => { const c = SillyTavern.getContext(); c.chat[0].mes = 'The compass moved to a future harbor.'; c.chatMetadata.variables.checkpointTest = 'after'; await c.saveChat(); });
         await field('enabled').check(); await status('synchronized');
@@ -173,7 +228,15 @@ try {
         await field('enabled').check(); await status('This is a saved checkpoint'); await field('enabled').uncheck();
         check('opening a checkpoint refuses ordinary memory writes', (await inspect(checkpoint)).some(d => d.text.includes('cedar tree')));
         stage = 'checkpoint resume';
-        await field('checkpoint-resume').click(); await status('Checkpoint resumed as');
+        loseResume = recovery;
+        await field('checkpoint-resume').click();
+        if (recovery) {
+            await status('Could not read the saved checkpoint');
+            const savedResume = blockedResume; blockedResume = undefined;
+            const countBefore = (await files()).filter(x => x.file_name.startsWith('SillyMemory resume')).length;
+            await reopen(checkpointFile); await field('checkpoint-resume').click(); await status('Checkpoint resumed as');
+            check('resume response loss and reload reuse one saved path', (await identity()).file === savedResume && (await files()).filter(x => x.file_name.startsWith('SillyMemory resume')).length === countBefore);
+        } else await status('Checkpoint resumed as');
         const resumed = await identity();
         const restored = await page.evaluate(() => { const c = SillyTavern.getContext(); return c.chat[0].mes.includes('cedar tree') && c.chat[0].swipes[1] === 'Unselected synthetic alternative' && c.chat[0].swipe_info[1].extra.checkpointTest === 'retained' && c.chatMetadata.variables.checkpointTest === 'before'; });
         check('resume restores old text, hidden swipes and chat variables in a new chat', restored && resumed.file !== checkpointFile && resumed.collection === parent.collection && resumed.branch !== checkpoint.branch);
@@ -206,7 +269,7 @@ finally {
     if (page && !page.isClosed()) {
         try {
             if (pending.length) {
-                await panel();
+                await connect(); await panel();
                 await page.locator('[data-sm="delete"]').click();
                 await page.waitForFunction(() => document.querySelector('[data-sm="status"]')?.textContent.includes('no longer accessible'), null, { timeout: 180000 });
             }

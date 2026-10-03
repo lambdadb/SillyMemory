@@ -91,3 +91,52 @@ test('lost ready-save acknowledgement retains a finishable checkpoint; canceled 
     await assert.rejects(resumeCheckpoint({ ...f, file, valid: () => false }), /Chat changed/);
     assert.equal(f.files.size, 1); assert.equal(f.opened, undefined);
 });
+
+test('finishing a pending checkpoint never overwrites edits saved during remote preparation', async () => {
+    const f = await fixture(), create = f.client.createBranch;
+    f.client.createBranch = async (...args) => { await create(...args); throw new Error('Interrupted'); };
+    await assert.rejects(createCheckpoint(f), /Interrupted/);
+    const file = [...f.files.keys()][0]; f.client.createBranch = create;
+    const list = f.client.listDocs; let edited = false;
+    f.client.listDocs = async (...args) => {
+        const result = await list(...args);
+        if (!edited) { f.files.get(file)[1].mes = 'User edit must survive'; edited = true; }
+        return result;
+    };
+    await assert.rejects(finishCheckpoint({ ...f, file }), /changed/);
+    assert.equal(f.files.get(file)[1].mes, 'User edit must survive');
+    assert.equal(f.files.get(file)[0].chat_metadata.sillymemory.checkpoint.state, 'pending');
+});
+
+test('resume retry reuses an unchanged saved path and preserves an edited path before another explicit attempt', async () => {
+    for (const edited of [false, true]) {
+        const f = await fixture(), file = await createCheckpoint(f), intents = new Map(), save = f.host.save, read = f.host.read;
+        let loseRead = false;
+        f.host.save = async (...args) => { await save(...args); loseRead = true; throw new Error('Lost save response'); };
+        f.host.read = async name => { if (loseRead && name.startsWith('SillyMemory resume')) throw new Error('Read unavailable'); return read(name); };
+        await assert.rejects(resumeCheckpoint({ ...f, file, intents }), /Read unavailable/);
+        const target = [...f.files.keys()].find(name => name.startsWith('SillyMemory resume'));
+        assert(target); assert.equal(intents.size, 1);
+        f.host.read = read; f.host.save = async () => assert.fail('Existing resume must not be written again');
+        if (edited) {
+            f.files.get(target)[1].mes = 'User continued this saved resume';
+            await assert.rejects(resumeCheckpoint({ ...f, file, intents }), /Pending resume chat changed/);
+            assert.equal(f.files.get(target)[1].mes, 'User continued this saved resume');
+            assert.equal(f.files.size, 2); assert.equal(intents.size, 0);
+            f.host.save = save;
+            assert.notEqual(await resumeCheckpoint({ ...f, file, intents }), target);
+            assert.equal(f.files.get(target)[1].mes, 'User continued this saved resume');
+            assert.equal(f.files.size, 3);
+        } else {
+            assert.equal(await resumeCheckpoint({ ...f, file, intents }), target);
+            assert.equal(f.files.size, 2); assert.equal(intents.size, 0);
+        }
+    }
+});
+
+test('lost resume acknowledgement can be verified immediately without creating another path', async () => {
+    const f = await fixture(), file = await createCheckpoint(f), save = f.host.save, intents = new Map();
+    f.host.save = async (...args) => { await save(...args); throw new Error('Lost response'); };
+    const target = await resumeCheckpoint({ ...f, file, intents });
+    assert.equal(f.opened, target); assert.equal(f.files.size, 2); assert.equal(intents.size, 0);
+});
