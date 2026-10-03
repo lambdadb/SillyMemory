@@ -42,7 +42,7 @@ export async function ensureChatIdentity(ctx, saveChat, valid = () => true, fetc
         changed = true;
     }
     const saved = inventory.find(chat => chat.file_name === `${file}.jsonl`)?.chat_metadata;
-    if (changed || saved?.sillymemory?.id !== id || saved?.integrity !== ctx.chatMetadata.integrity) {
+    if (changed || JSON.stringify(saved?.sillymemory) !== JSON.stringify(ctx.chatMetadata.sillymemory) || saved?.integrity !== ctx.chatMetadata.integrity) {
         // saveChat captures filename, metadata, avatar and chat before its first
         // await. Unlike the debounced metadata helper it cannot switch targets.
         await saveChat();

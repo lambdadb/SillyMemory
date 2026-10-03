@@ -178,3 +178,29 @@ each member's checksum; all 335 archive members were read back byte-for-byte.
 Only the archive reference and final documentation follow this source snapshot.
 Keep this bundle when detaching/removing the worktree; no previous evidence was
 deleted. No credentials or personal conversations are archive inputs.
+
+
+## Review follow-up — identity persistence
+
+PR #53's identity-save review exposed a failed/ambiguous-save recovery gap.
+Verification caching now includes all extension metadata and is invalidated before
+conversion writes. An already-versioned opt-in retries disk verification instead
+of returning early. Identity persistence compares the complete metadata, so an
+unchanged ID with a new story/version is saved and verified before remote use.
+
+All 285 unit tests passed, including rejected saves, silently unpersisted saves,
+and accepted writes with a lost response. The pinned host/Chromium emulator run
+passed 31 checks: forcing the host save endpoint to return 503 blocked all remote
+requests on re-enable; retry then persisted the full identity before showing
+ready. Cleanup left zero emulator collections. Syntax and release checks passed.
+No live LambdaDB/generation calls were repeated for this host persistence fix;
+the earlier live evidence applies to the branch lifecycle, with this source
+boundary stated explicitly.
+
+The follow-up report, exact measured sources, tests, logs and patch against
+`c9c2b45ac3e52c9824865f6d023bbeeeaab8eba3` are retained locally at
+`/Users/steven/Dev/sillymemory-versioned-memory/artifacts/archive/versioned-memory-review/evidence.tar.gz`
+(SHA-256 `82eb2e86a59782988b64e70fe7b86894771b52c11c6353984e54ef3a346d6a12`).
+All 21 members were verified byte-for-byte against the archive; availability is
+local-only. The original live evidence bundle remains unchanged. Only this
+completion note follows the measured source snapshot.

@@ -39,7 +39,7 @@ function prepareMemory(valid, progress = () => {}) {
         if (!valid() || !collections) return null;
         const ctx = context(), file = ctx.getCurrentChatId(), avatar = ctx.characters[ctx.characterId]?.avatar;
         if (!capture(ctx)) throw new ConnectionError('Select a supported character chat.');
-        const key = () => JSON.stringify([avatar, file, ctx.chatMetadata.sillymemory?.id, ctx.chatMetadata.integrity]);
+        const key = () => JSON.stringify([avatar, file, ctx.chatMetadata.sillymemory, ctx.chatMetadata.integrity]);
         if (identityKey !== key()) {
             const { saveChat } = await import('/script.js');
             if (!valid() || !await ensureChatIdentity(ctx, saveChat, valid)) return null;
@@ -255,16 +255,18 @@ async function initialize() {
     });
     element('versioned').onclick = () => action(async () => {
         if (!client || !state.ready || !capture(context())) throw new ConnectionError('Connect, prepare memory and select a character chat first.');
-        if (context().chatMetadata.sillymemory?.version === 1) { status('This story already uses versioned memory.'); return; }
-        if (!confirm('Use versioned memory for this story? First sync indexes its history into a new collection. Existing remote memory is retained for all-owned cleanup. Future native branches reuse committed memory.')) return;
+        if (context().chatMetadata.sillymemory?.version !== 1 && !confirm('Use versioned memory for this story? First sync indexes its history into a new collection. Existing remote memory is retained for all-owned cleanup. Future native branches reuse committed memory.')) return;
         const ctx = context(), file = ctx.getCurrentChatId(), avatar = ctx.characters[ctx.characterId]?.avatar;
         const valid = () => context().getCurrentChatId() === file && context().characters[context().characterId]?.avatar === avatar;
         state.enabled = false; element('enabled').checked = false; persist(); invalidate(); clearTimeout(timer);
         await drain();
         const { saveChat } = await import('/script.js');
         if (!valid() || !await ensureChatIdentity(ctx, saveChat, valid)) return;
-        ctx.chatMetadata.sillymemory = { id: ctx.chatMetadata.sillymemory.id, integrity: ctx.chatMetadata.integrity, version: 1, story: ctx.chatMetadata.sillymemory.id };
-        await saveChat(); identityKey = undefined;
+        identityKey = undefined; // A failed or ambiguous save must never reuse the legacy verification.
+        if (ctx.chatMetadata.sillymemory.version !== 1) {
+            ctx.chatMetadata.sillymemory = { id: ctx.chatMetadata.sillymemory.id, integrity: ctx.chatMetadata.integrity, version: 1, story: ctx.chatMetadata.sillymemory.id };
+            await saveChat();
+        }
         if (!valid() || !await ensureChatIdentity(ctx, saveChat, valid)) return;
         status('Versioned story memory is ready. Enable memory to synchronize; native branches will share unchanged committed history.');
     });
