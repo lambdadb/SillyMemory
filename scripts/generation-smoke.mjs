@@ -309,7 +309,7 @@ try {
         const baseline = execFileSync('git', ['show', `${chunkingBaseline}:src/memory.js`], { cwd: root, encoding: 'utf8' });
         await page.route('**/src/memory-baseline.js', route => route.fulfill({ contentType: 'text/javascript', body: baseline }));
     }
-    await page.route(`${credentials.endpoint}/**`, async route => {
+    await page.route(`${new URL(credentials.endpoint).origin}/**`, async route => {
         const req = route.request(); const target = new URL(req.url());
         if (natural || retrievalExperiment) { const entry = { stage, method: req.method(), path: target.pathname.replace(/^\/projects\/[^/]+/, ''), started: performance.now() }; lambdaRequests.push(entry); lambdaRequestMap.set(req, entry); }
         if (req.method() === 'POST' && target.pathname.endsWith('/collections')) {

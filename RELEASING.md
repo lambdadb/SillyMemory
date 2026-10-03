@@ -8,8 +8,8 @@ commit to preserve long-lived branch ancestry.
 
 The published pre-release is **0.1.0**. The next development candidate is
 **0.2.0**, with [candidate notes](docs/releases/0.2.0.md) and an `Unreleased`
-changelog entry. Review its managed-path results and known attribution limitation
-before choosing a promotion date. Version preparation does not authorize a main
+changelog entry. Review its installation/lifecycle evidence, reindexing costs,
+rollback limits and historical quality results before choosing a promotion date. Version preparation does not authorize a main
 merge, tag or GitHub Release; publication remains a separate approval.
 
 ## Version and changelog rules
@@ -116,9 +116,10 @@ fetch `git fetch origin main:refs/remotes/origin/main`, then use
 that tag exists. Check GitHub Releases before choosing a rollback target.
 
 Code rollback does not undo LambdaDB writes, chat edits or data migrations.
-Review each release's compatibility notes before downgrading. The current
-installation smoke test rolls back between two 0.1.0 commits without a schema
-change; it does not prove arbitrary future-version downgrade safety.
+Review each release's compatibility notes before downgrading. The installation
+smoke test checks 0.1.0 → candidate → 0.1.0 → candidate code changes. In live
+mode it removes the test's remote data before rollback; it does not prove that
+0.1.0 can manage 0.2.0 per-chat collections or reverse data/metadata changes.
 
 ## Installation smoke test
 
@@ -136,7 +137,7 @@ Update button. This avoids the divergent merge-commit history of the two
 long-lived branches while preserving exactly the installed files. This
 checks real GitHub fetch/pull without promoting public main or publishing a tag.
 It also checks version display, settings/owner preservation, key clearing and
-commit rollback/return. It makes no LambdaDB/model calls.
+commit rollback/return. By default it makes no LambdaDB/model calls.
 
 ```sh
 ST_SOURCE=/path/to/isolated/pinned/SillyTavern \
@@ -148,3 +149,33 @@ The test branch must exist on GitHub and differ from main. The report identifies
 the exact commits; it must not be presented as a published main-to-main release
 upgrade. Artifact tags must be unique. Reports/screenshots stay in ignored local
 `artifacts/`; checked-in validation records retain results and limits.
+
+For the bounded real managed-memory upgrade check, use the same isolated host:
+
+```sh
+ST_SOURCE=/path/to/isolated/pinned/SillyTavern \
+SM_ENV_FILE=/absolute/path/to/.env.local \
+SM_UPDATE_BRANCH=your-published-candidate-branch SM_ARTIFACT_TAG=upgrade-unique \
+  npm run test:install -- --live-memory
+```
+
+This reads the existing `LAMBDADB_BASE_URL`, `LAMBDADB_PROJECT_NAME` and
+`LAMBDADB_PROJECT_API_KEY` values. It creates at most four synthetic owned
+collections: transport gate, 0.1.0 shared memory, upgraded parent and native
+branch. Only the old 0.1.0 setup uses the proxy. After the UI update the runner
+restarts the isolated host with its proxy disabled, then records direct requests
+and collection intent at the canonical endpoint origin. This restart is a test
+assertion, not a requirement for users updating the extension. It verifies
+first-sync reindexing, legacy preservation, rename/branch/edit
+isolation, managed queryText through the interceptor, key re-entry and both
+remote deletion controls. No generation model is called; this is not a complete
+provider-generation or answer-quality test. Screenshots are disabled in live
+mode, credentials are redacted from reports, and keys must be absent from
+persistent browser/host settings.
+
+Cleanup confirms each recorded collection is unavailable. A failed cleanup
+preserves `artifacts/<tag>-pending.json` and the isolated host profile named in
+the report. Resolve those owned resources before rerunning; never discard the
+pending record while remote cleanup is uncertain. Raw reports stay local and
+ignored; archive exact reports/producer source with checksums and record their
+availability in the release validation document.

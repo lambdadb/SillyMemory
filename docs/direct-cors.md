@@ -52,8 +52,9 @@ without checking their requirements.
 
 PR #47 records the previous proxy-based 0.2.0 installation/upgrade acceptance.
 Those results remain valid for that tested commit, not for this new transport.
-Review this change separately, then reconcile the final release notes and run the
-Git URL upgrade acceptance on the combined release tree before main promotion.
+PR #47 has been merged into develop and integrated here. The release notes and
+optional upgrade runner now cover the legacy proxy and new direct paths together.
+See the combined acceptance below before main promotion.
 Neither PR preparation authorizes main promotion, a tag or a Release.
 
 ## Results
@@ -99,8 +100,8 @@ their original proxy/runtime attribution. Group chats, multi-device writers,
 other browsers, remote HTTPS page origins, production outages and all regional
 CORS deployments are not newly certified by this bounded localhost acceptance.
 
-All reported producer hashes were compared with the final files. Only result
-documentation follows the tested commit. Exact reports, available failed-attempt
+All reported producer hashes were compared with the final files. Those results describe the original reviewed candidate. The combined acceptance
+below records the later integration and review corrections. Exact reports, available failed-attempt
 outputs and producer sources were archived and read back byte-for-byte:
 
 - Local archive: `artifacts/archive/direct-cors-v1/evidence.tar.gz`
@@ -111,3 +112,19 @@ outputs and producer sources were archived and read back byte-for-byte:
 
 These files are local-only in the `sillymemory-direct-cors` worktree, ignored by
 Git and unavailable in a fresh clone. No pending live cleanup record remains.
+
+## Combined upgrade acceptance
+
+The integrated runner indexes synthetic history with published 0.1.0 using its
+required proxy, updates through the real Git UI, restarts the isolated host with
+the proxy disabled, then exercises new direct-CORS memory and cleanup. Collection
+intent is recorded before both proxy and direct creation, with a shared limit of
+four owned collections. No generation provider is called. The restart proves
+independence from the proxy; users need only reload the extension after updating.
+
+The review also corrected the generation runner's route glob to use the canonical
+endpoint origin (including when configuration has a trailing slash), and removed
+a stale settings disclosure claiming that memory requests pass through the host.
+These preserve the existing direct client and memory semantics.
+
+Combined results pending the bounded validation.

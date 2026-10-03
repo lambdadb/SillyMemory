@@ -100,6 +100,12 @@ reload, re-enter the LambdaDB key and re-enable memory. Budget, recent-message
 settings and installation ownership are retained. Normal updates do not require
 deleting the owned memory collection or reinstalling the extension.
 
+When updating from 0.1.0 to 0.2.0, the first enabled sync builds a separate
+collection for each opened chat from local history. The old shared collection
+remains; new indexing consumes managed embedding and storage usage. All-owned
+cleanup includes both old and new collections. Review the
+[0.2.0 update and rollback notes](docs/releases/0.2.0.md) before upgrading.
+
 For rollback and maintainer publication steps, see [RELEASING.md](RELEASING.md).
 Use only a tag listed in the published releases for rollback. Disable memory
 first if an update causes a problem; code rollback does not restore chat edits
