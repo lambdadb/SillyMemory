@@ -8,7 +8,7 @@ An installable, experimental UI extension for character chats. SillyMemory keeps
 
 **0.3.0 is an unreleased development candidate.** Its opt-in
 [versioned story memory](docs/versioned-memory.md) reuses committed history across
-native branches. Public `main` remains the experimental **0.2.0** release.
+native branches and supports [saved transcript/memory checkpoints](docs/checkpoints.md). Public `main` remains the experimental **0.2.0** release.
 
 **0.2.0 is experimental.** See the [release notes](docs/releases/0.2.0.md) for
 installation evidence and limitations. This version preserves native
@@ -67,6 +67,8 @@ The development baseline is **SillyTavern 1.19.0**, pinned to commit [`06bde939f
 6. Click **Test synthetic upsert / query / delete**. This creates a dedicated `smtest_<random>` collection, upserts a synthetic story, queries `knn.queryText`, deletes its document, verifies it no longer appears, then deletes the owned test collection. This consumes LambdaDB resources and inference usage. The test must pass before **Prepare chat memory** becomes available.
 7. If a test fails, use **Clean up test collection**. Pending test identity is preserved across reloads so cleanup can be retried after reconnecting. A failed cleanup is not reported as successful.
 8. Click **Prepare chat memory**, select a character chat, then enable memory. By default, the extension creates a separate owned collection on first use of each chat or native branch. For the 0.3.0 candidate, optionally select **Use versioned memory for this story** before enabling; future native branches then reuse unchanged history in separate LambdaDB branches within one story collection. Default settings retain 12 recent messages and allow 800 memory tokens, including excerpt content and source labels; provider message-envelope overhead is managed by the host. Configure the bounds in the panel. Disable built-in Vector Storage chat vectorization and other prompt-rewriting memory extensions for this prototype.
+
+For an opted-in story, **Save / finish checkpoint** saves the current transcript and memory state. Select that saved chat from the native chat list and use **Resume checkpoint in new chat** to start a separate path. See [recovery, integrity and restore limits](docs/checkpoints.md).
 
 The memory budget applies **per generated answer**, not cumulatively across a
 chat. Recent messages and character instructions are separate from that budget.
@@ -134,7 +136,7 @@ or undo remote data changes.
 
 A LambdaDB project/API key with collection create/read/delete, document write/query and (for versioned stories) branch list/create/delete access is required. Source text, speaker labels, message/chunk positions, hashed scope/revision identities, and query text go directly from your browser to LambdaDB. LambdaDB sends embedding inputs to its managed embedding provider (currently configured here as OpenAI `text-embedding-3-small`). Each retrieval submits up to two distinct queries concurrently. Managed embeddings incur inference usage; storage and retrieval have service costs. See [managed embeddings](https://docs.lambdadb.ai/guides/collections/managed-embeddings) and [LambdaDB costs](https://docs.lambdadb.ai/guides/costs/understanding-costs).
 
-Ordinary document deletion removes current retrievable records; snapshot retention and provider backup policies are separate. The extension requests one-day snapshot retention and creates no frozen checkpoint savepoints. Removing the extension or deleting a native SillyTavern chat does **not** delete its remote collection automatically. Use current-chat deletion before removing the local chat, or all-owned cleanup afterward. Renaming preserves the same memory. Delete all owned memory and any pending test collection before uninstalling or changing connection settings.
+Ordinary document deletion removes current retrievable records; snapshot retention and provider backup policies are separate. The extension requests one-day historical snapshot retention. Explicitly saved checkpoints retain their own unchanged branch for future forks; see [checkpoint usage and cleanup](docs/checkpoints.md). Removing the extension or deleting a native SillyTavern chat does **not** delete its remote collection automatically. Use current-chat deletion before removing the local chat, or all-owned cleanup afterward. Renaming preserves the same memory. Delete all owned memory and any pending test collection before uninstalling or changing connection settings.
 
 Browser storage loss does not delete chat metadata or account ownership stored by SillyTavern. Re-enter the endpoint/project/key and prepare memory to reconnect the same saved chat; all-owned cleanup can discover tagged `smstory_*` and `smchat_*` collections and earlier `sillymemory_*` collections. If the account owner metadata is lost too, inspect ownership tags manually; the extension must not adopt another owner’s data. Pending `smtest_*` collections have a separate cleanup button. Simultaneous writers on different devices are unsupported; browser locks do not coordinate them. See [lifecycle and recovery limits](docs/chat-collections.md).
 
