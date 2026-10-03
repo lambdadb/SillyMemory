@@ -6,11 +6,13 @@ Release or highest version tag. Keep `main` at reviewed release boundaries.
 `develop` integrates ongoing work. Merge `develop` into `main` with a merge
 commit to preserve long-lived branch ancestry.
 
-The published pre-release is **0.1.0**. The next development candidate is
-**0.2.0**, with [candidate notes](docs/releases/0.2.0.md) and an `Unreleased`
-changelog entry. Review its installation/lifecycle evidence, reindexing costs,
-rollback limits and historical quality results before choosing a promotion date. Version preparation does not authorize a main
-merge, tag or GitHub Release; publication remains a separate approval.
+The current release boundary is **0.2.0 (experimental)**, dated **2026-10-03**.
+See the [release notes](docs/releases/0.2.0.md) and
+[GitHub Releases](https://github.com/lambdadb/SillyMemory/releases) to confirm
+publication. No later candidate version is assigned yet. Start the next version
+with an `Unreleased` entry; never reuse a published version. Main promotion, tag
+push and GitHub Release publication require maintainer authorization, which may
+cover the full sequence in one request.
 
 ## Version and changelog rules
 
@@ -58,7 +60,7 @@ version advancement is checked for every PR targeting main, including hotfixes
 and documentation changes. These checks rely on the PR workflow and do not
 prevent direct main pushes without branch protection.
 
-## Tag and announce (separate maintainer approval)
+## Tag and announce (maintainer authorization required)
 
 After approval, in a clean checkout synchronized with the reviewed remote main:
 
@@ -123,9 +125,9 @@ mode it removes the test's remote data before rollback; it does not prove that
 
 ## Installation smoke test
 
-The current direct-CORS candidate is tested with the host proxy disabled. Its
+The 0.2.0 direct-CORS release is tested with the host proxy disabled. Its
 [current transport evidence](docs/direct-cors.md) supplements earlier proxy-path
-release checks; run final installation acceptance on the combined release tree.
+release checks; the [final acceptance record](docs/releases/0.2.0-validation.md#final-publication-acceptance) covers the combined release tree.
 
 Use an isolated pinned host checkout with no global SillyMemory symlink. The
 script creates/removes its own host data directory and browser profile. It

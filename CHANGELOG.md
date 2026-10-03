@@ -4,7 +4,7 @@ Versions describe the extension, independently of the SillyTavern host version.
 An `Unreleased` entry is a development candidate. A dated entry records a release
 boundary; publication is confirmed by the corresponding Git tag and GitHub Release.
 
-## [0.2.0] - Unreleased
+## [0.2.0] - 2026-10-03
 
 ### Added
 
