@@ -18,6 +18,13 @@ boundary; publication is confirmed by the corresponding Git tag and GitHub Relea
   verify and resume it into independent new chats. Interrupted pending preparation
   can be retried; altered transcripts or remote snapshots are rejected.
 
+### Fixed
+
+- Reject edits made during pending checkpoint preparation before readiness writes,
+  and protect the final host write with a short UI lock and saved-file recheck.
+- Recover ambiguous resume saves through a durable browser intent, reusing the
+  unchanged target after reload without overwriting an existing edited path.
+
 ### Requirements and limits
 
 - Existing chats keep per-chat collections until **Use versioned memory for this
