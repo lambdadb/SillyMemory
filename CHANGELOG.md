@@ -35,16 +35,21 @@ boundary; publication is confirmed by the corresponding Git tag and GitHub Relea
 
 ### Validation and limits
 
-- A complete 64-answer actual-host run used live LambdaDB managed embeddings and
+- A historical 64-answer actual-host run used live LambdaDB managed embeddings and
   the fixed OpenAI generation model, with zero service failures/retries and
   verified cleanup. Provisional scores were off 4/32 and on 30/32; all 28
   known-answer on samples received complete required evidence.
 - Two Korean quotation answers still omitted the author despite source delivery.
   Guidance candidates did not reliably fix this and were not adopted.
   Actor-attribution reliability and independent human review remain open.
-- No collection migration or new embedding-provider setup. Updating requires
-  reload, key re-entry and re-enabling memory. SillyTavern 1.19.0 remains the
-  only validated host version; this is not a stable release.
+- Updating from 0.1.0 rebuilds opened chats from local history into new per-chat
+  collections, consuming managed embedding/storage usage. The old shared
+  collection remains available for all-owned cleanup; it is not migrated or
+  deleted automatically. No separate embedding-provider setup is needed.
+- Updating requires reload, key re-entry and re-enabling memory. SillyTavern
+  1.19.0 remains the only validated host version; this is not a stable release.
+  See [update/rollback notes](docs/releases/0.2.0.md) and the separate
+  [installation/lifecycle validation](docs/releases/0.2.0-validation.md).
 
 ## [0.1.0] - 2026-09-28
 
