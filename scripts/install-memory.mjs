@@ -1,5 +1,6 @@
 // Optional real-LambdaDB upgrade acceptance inside the Git URL installation run.
 // Only synthetic history and this profile's recorded owned collections are used.
+import { isDeepStrictEqual } from 'node:util';
 export function installMemory({ page, field, settings, check, credentials, entries }) {
     const base = '/scripts/extensions/third-party/SillyMemory';
     const status = text => page.waitForFunction(text => document.querySelector('[data-sm="status"]')?.textContent.includes(text), text, { timeout: 90000 });
@@ -53,15 +54,18 @@ export function installMemory({ page, field, settings, check, credentials, entri
         async afterUpdate() {
             const before = await state();
             check('upgrade preserves the legacy shared collection cleanup pointer', before.collection === legacy.collection && before.ready && before.chatCollections.length === 0);
-            check('upgrade leaves all legacy remote documents byte-equivalent', JSON.stringify(sorted(await inspect(legacy.collection, legacy.owner))) === JSON.stringify(legacyDocs));
+            check('upgrade leaves all legacy remote documents unchanged', isDeepStrictEqual(sorted(await inspect(legacy.collection, legacy.owner)), legacyDocs));
+            await page.locator('#rightNavHolder .drawer-toggle').click();
+            await page.locator('.character_select').filter({ hasText: 'Upgrade Acceptance' }).click();
+            await page.waitForFunction(() => SillyTavern.getContext().chat.length === 18);
             await connect(); await field('enabled').check(); await status('synchronized'); parent = await identity();
             const actual = await inspect(parent.collection, legacy.owner);
             const expected = await page.evaluate(async base => {
                 const c = SillyTavern.getContext(), { capture, documents } = await import(`${base}/src/memory.js`);
                 return (await documents(capture(c), c.extensionSettings.sillymemory.owner, { recent: 14, chunkChars: 800 })).docs;
             }, base);
-            check('first upgraded sync builds a separate chat collection with exact boundary-aware documents', parent.collection !== legacy.collection && JSON.stringify(sorted(actual)) === JSON.stringify(sorted(expected)) && actual.every(d => d.id.includes('_boundary-v1_')));
-            check('new indexing preserves the legacy shared remote data', JSON.stringify(sorted(await inspect(legacy.collection, legacy.owner))) === JSON.stringify(legacyDocs));
+            check('first upgraded sync builds a separate chat collection with exact boundary-aware documents', parent.collection !== legacy.collection && isDeepStrictEqual(sorted(actual), sorted(expected)) && actual.every(d => d.id.includes('_boundary-v1_')));
+            check('new indexing preserves the legacy shared remote data', isDeepStrictEqual(sorted(await inspect(legacy.collection, legacy.owner)), legacyDocs));
             await page.evaluate(async () => { const { renameChat } = await import('/script.js'); await renameChat(SillyTavern.getContext().getCurrentChatId(), 'Upgrade renamed'); });
             await status('synchronized'); parent = { ...parent, file: (await identity()).file };
             check('renaming upgraded chat preserves its collection', (await identity()).collection === parent.collection);
@@ -71,7 +75,7 @@ export function installMemory({ page, field, settings, check, credentials, entri
             await page.evaluate(async () => { const c = SillyTavern.getContext(); c.chat[0].mes = 'The blue compass is in the stone tower.'; await c.saveChat(); await c.eventSource.emit(c.eventTypes.MESSAGE_UPDATED, 0); });
             await status('synchronized');
             const branchDocs = await inspect(branch.collection, legacy.owner);
-            check('branch edit removes old chunks without changing parent or legacy facts', branchDocs.some(d => d.text.includes('stone tower')) && !branchDocs.some(d => d.text.includes('cedar tree')) && (await inspect(parent.collection, legacy.owner)).some(d => d.text.includes('cedar tree')) && JSON.stringify(sorted(await inspect(legacy.collection, legacy.owner))) === JSON.stringify(legacyDocs));
+            check('branch edit removes old chunks without changing parent or legacy facts', branchDocs.some(d => d.text.includes('stone tower')) && !branchDocs.some(d => d.text.includes('cedar tree')) && (await inspect(parent.collection, legacy.owner)).some(d => d.text.includes('cedar tree')) && isDeepStrictEqual(sorted(await inspect(legacy.collection, legacy.owner)), legacyDocs));
             const recalled = await page.evaluate(async () => {
                 const c = SillyTavern.getContext(), chat = c.chat.map((m, index) => ({ ...m, index })); let aborted = false;
                 await globalThis.sillymemory_intercept(chat, 4096, () => { aborted = true; }, 'normal');
@@ -81,7 +85,7 @@ export function installMemory({ page, field, settings, check, credentials, entri
             });
             check('upgraded interceptor recalls branch facts through managed queryText and keeps recent history', !recalled.aborted && recalled.text.includes('stone tower') && !recalled.text.includes('cedar tree') && recalled.recent.includes('turn 17'));
             page.once('dialog', d => d.accept()); await field('delete-chat').click(); await status('no longer accessible');
-            check('current-chat deletion preserves the upgraded parent and legacy data', (await inspect(parent.collection, legacy.owner)).length === actual.length && JSON.stringify(sorted(await inspect(legacy.collection, legacy.owner))) === JSON.stringify(legacyDocs));
+            check('current-chat deletion preserves the upgraded parent and legacy data', (await inspect(parent.collection, legacy.owner)).length === actual.length && isDeepStrictEqual(sorted(await inspect(legacy.collection, legacy.owner)), legacyDocs));
             await page.reload(); await page.locator('#sillymemory').waitFor({ state: 'attached' });
             await page.locator('#rightNavHolder .drawer-toggle').click(); await page.locator('.character_select').filter({ hasText: 'Upgrade Acceptance' }).click();
             await page.evaluate(async file => SillyTavern.getContext().openCharacterChat(file), parent.file);

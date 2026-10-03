@@ -157,6 +157,7 @@ try {
     report.passed = true;
 } catch (error) {
     report.failure = error.message;
+    report.lastStatus = await page?.locator('[data-sm="status"]').textContent().catch(() => 'unavailable');
     console.error('FAIL', liveMemory ? error.name : error.message);
     if (!liveMemory) await page?.screenshot({ path: path.join(artifacts, `${artifactTag}-failure.png`) }).catch(() => {});
     process.exitCode = 1;
