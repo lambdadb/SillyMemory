@@ -14,6 +14,7 @@ let promptSequence = 0;
 let retrievalSequence = 0, retrievalOperation;
 let statusView, collections, identityKey;
 let preparation = Promise.resolve();
+let checkpointRevision = 0;
 const engines = new Map();
 const entryKey = entry => `${entry.collection}:${entry.branch || 'main'}`;
 const delivery = new PromptDelivery();
@@ -275,27 +276,42 @@ async function initialize() {
     async function checkpointAction(resume) {
         if (!client || !collections || !state.ready || !capture(context())) throw new ConnectionError('Connect, prepare memory and select a versioned chat first.');
         const ctx = context(), file = ctx.getCurrentChatId(), avatar = ctx.characters[ctx.characterId]?.avatar;
-        const valid = () => context().getCurrentChatId() === file && context().characters[context().characterId]?.avatar === avatar;
+        const revision = checkpointRevision;
+        const valid = () => revision === checkpointRevision && context().getCurrentChatId() === file && context().characters[context().characterId]?.avatar === avatar;
         state.enabled = false; element('enabled').checked = false; persist(); invalidate(); clearTimeout(timer);
         await drain();
-        const { saveChat } = await import('/script.js');
+        const { saveChat, isGenerating } = await import('/script.js');
+        if (isGenerating()) throw new ConnectionError('Wait for generation to finish before preparing a checkpoint.');
         const host = {
             read: async name => {
-                const response = await fetch('/api/chats/get', { method: 'POST', headers: ctx.getRequestHeaders(), body: JSON.stringify({ avatar_url: avatar, file_name: name }) });
+                const response = await fetch('/api/chats/get', { method: 'POST', signal: AbortSignal.timeout(15000), headers: ctx.getRequestHeaders(), body: JSON.stringify({ avatar_url: avatar, file_name: name }) });
                 if (!response.ok) throw new ConnectionError('Could not read the saved checkpoint.');
                 return response.json();
             },
             save: async (name, messages, metadata) => {
-                const response = await fetch('/api/chats/save', { method: 'POST', headers: ctx.getRequestHeaders(), body: JSON.stringify({
+                const response = await fetch('/api/chats/save', { method: 'POST', signal: AbortSignal.timeout(15000), headers: ctx.getRequestHeaders(), body: JSON.stringify({
                     ch_name: ctx.characters[ctx.characterId].name, avatar_url: avatar, file_name: name, force: false,
                     chat: [{ user_name: 'unused', character_name: 'unused', chat_metadata: metadata }, ...messages],
                 }) });
                 if (!response.ok) throw new ConnectionError('Checkpoint chat save failed. Select the saved checkpoint to retry if it exists.');
             },
-            open: name => context().openCharacterChat(name),
+            withWriteLock: async job => {
+                if (isGenerating()) throw new ConnectionError('Wait for generation to finish before completing the checkpoint.');
+                const handle = ctx.loader.show({ blocking: true, toastMode: 'static', message: 'Verifying and saving checkpoint…' });
+                try { return await job(); } finally { await handle.hide(); }
+            },
+            open: async name => {
+                await context().openCharacterChat(name);
+                if (context().getCurrentChatId() !== name) throw new ConnectionError('Resume chat was saved but could not be opened. Retry to open the same chat.');
+            },
         };
         if (!valid()) return;
-        const args = { host, client, collections, owner, file, avatar, valid, progress: status };
+        const intents = {
+            get: key => JSON.parse(localStorage.getItem(`sillymemory:resume:${key}`) || 'null'),
+            set: (key, value) => localStorage.setItem(`sillymemory:resume:${key}`, JSON.stringify(value)),
+            delete: key => localStorage.removeItem(`sillymemory:resume:${key}`),
+        };
+        const args = { host, client, collections, owner, file, avatar, intents, valid, progress: status };
         if (resume) {
             const name = await resumeCheckpoint(args);
             status(`Checkpoint resumed as ${name}. Enable memory to continue.`);
@@ -385,6 +401,7 @@ async function initialize() {
     });
     for (const name of ['CHAT_CHANGED', 'MESSAGE_SENT', 'MESSAGE_RECEIVED', 'MESSAGE_EDITED', 'MESSAGE_UPDATED', 'MESSAGE_SWIPED', 'MESSAGE_DELETED', 'GENERATION_ENDED', 'CHAT_RENAMED']) {
         if (events[name]) ctx.eventSource.on(events[name], () => {
+            checkpointRevision++;
             if (name === 'CHAT_CHANGED' || name === 'CHAT_RENAMED') {
                 identityKey = undefined;
                 element('inspection').textContent = 'No memory injected in this chat.';
