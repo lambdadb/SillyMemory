@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { ChatCollections, chatCollection, ensureChatIdentity } from '../src/chat-collections.js';
 import { MemoryEngine, Journal, documents, options } from '../src/memory.js';
 import { ConnectionError } from '../src/client.js';
+import { waitForCommit } from '../src/commit.js';
 const owner = 'a'.repeat(32), root = 'b'.repeat(32), child = 'c'.repeat(32);
 const config = options({ recent: 2 });
 const snapshot = (id = root) => ({ character: 'Mira.png', chat: id, memory: { story: root, ...(id !== root ? { source: root } : {}) }, messages: Array.from({ length: 6 }, (_, index) => ({ index, text: `Fact ${index}: the compass is blue.`, name: index % 2 ? 'Mira' : 'User', user: !(index % 2), swipe: 0, eligible: true })) });
@@ -117,7 +118,123 @@ test('fork waits for committed matching content and cancellation never creates a
     let valid = true;
     f.client.fetchDocs = async function (...args) { const rows = await fetch.apply(this, args); valid = false; return rows; };
     const other = snapshot('d'.repeat(32));
-    await assert.rejects(f.manager.ensure(other, () => valid, config), /Chat changed/);
+    const reloaded = new ChatCollections({ ...f.client }, owner, () => {}, () => {});
+    await assert.rejects(reloaded.ensure(other, () => valid, config), /Chat changed/);
     const entry = await chatCollection(other, owner);
     assert(!(await f.client.branches(entry.collection)).some(b => b.name === entry.branch));
+});
+
+
+test('ordered commit barrier fetches one actual last write across batches and reuses confirmed state', async () => {
+    const f = fixture(), a = snapshot();
+    a.messages = Array.from({ length: 152 }, (_, index) => ({ ...a.messages[0], index, text: `Fact ${index}` }));
+    const parent = await f.engine(a); await parent.sync(a, config);
+    const calls = [], fetch = f.client.fetchDocs;
+    f.client.fetchDocs = async function (name, ids, branch, consistent) { calls.push({ ids, consistent }); return fetch.call(this, name, ids, branch); };
+    const b = { ...a, chat: child, memory: { story: root, source: root } };
+    await f.manager.ensure(b, undefined, config);
+    assert.deepEqual(calls, [{ ids: [f.writes.at(-1).id], consistent: false }]);
+    calls.length = 0;
+    await f.manager.ensure({ ...b, chat: 'd'.repeat(32) }, undefined, config);
+    assert.equal(calls.length, 0, 'confirmed source has no intervening writes');
+    a.messages[0].text = 'The oldest fact was changed last.';
+    await parent.sync(a, config); calls.length = 0;
+    await f.manager.ensure({ ...b, chat: 'e'.repeat(32) }, undefined, config);
+    assert.deepEqual(calls, [{ ids: [f.writes.at(-1).id], consistent: false }]);
+    assert.equal(f.writes.at(-1).message, 0);
+});
+
+test('reload and deletion-only sync retain full inherited-content checks', async () => {
+    const f = fixture(), a = snapshot(), parent = await f.engine(a); await parent.sync(a, config);
+    const calls = [], fetch = f.client.fetchDocs;
+    f.client.fetchDocs = async function (name, ids, branch, consistent) { calls.push({ ids, consistent }); return fetch.call(this, name, ids, branch); };
+    const fresh = new ChatCollections({ ...f.client }, owner, () => {}, () => {});
+    await fresh.ensure(snapshot(child), undefined, config);
+    assert.deepEqual(calls.map(x => [x.ids.length, x.consistent]), [[4, undefined], [4, false]]);
+    await parent.sync(a, options({ recent: 3 })); calls.length = 0;
+    await f.manager.ensure(snapshot('d'.repeat(32)), undefined, options({ recent: 3 }));
+    assert.deepEqual(calls.map(x => [x.ids.length, x.consistent]), [[3, undefined], [3, false]]);
+});
+
+test('lost write acknowledgement invalidates fast commit knowledge even if retry adopts its documents', async () => {
+    const f = fixture(), a = snapshot(), parent = await f.engine(a), upsert = f.client.upsert;
+    f.client.upsert = async function (...args) { await upsert.apply(this, args); throw new Error('Lost reply'); };
+    await assert.rejects(parent.sync(a, config), /Lost reply/);
+    f.client.upsert = upsert; await parent.sync(a, config);
+    const calls = [], fetch = f.client.fetchDocs;
+    f.client.fetchDocs = async function (name, ids, branch, consistent) { calls.push(ids.length); return fetch.call(this, name, ids, branch, consistent); };
+    await f.manager.ensure(snapshot(child), undefined, config);
+    assert.deepEqual(calls, [4, 4]); assert.equal(f.writes.length, 4);
+});
+
+test('stale revision and cancellation cannot confirm an ordered commit witness', async () => {
+    const f = fixture(), a = snapshot(); await (await f.engine(a)).sync(a, config);
+    const fetch = f.client.fetchDocs; let valid = true;
+    f.client.fetchDocs = async function (name, ids, branch, consistent) {
+        const rows = await fetch.call(this, name, ids, branch);
+        if (consistent === false) { valid = false; return rows.map(d => ({ ...d, revision: 'stale' })); }
+        return rows;
+    };
+    await assert.rejects(f.manager.ensure(snapshot(child), () => valid, config), /Chat changed/);
+    const entry = await chatCollection(a, owner);
+    assert(!(await f.client.branches(entry.collection)).some(b => b.name === `chat_${child}`));
+});
+
+test('a pending reinsert identical to old committed content is not a new-write witness', async () => {
+    const f = fixture(), a = snapshot(), parent = await f.engine(a); await parent.sync(a, config);
+    assert.equal(await waitForCommit(f.client, parent.collection, parent.branch), true);
+    const old = structuredClone(f.writes[0]), fetch = f.client.fetchDocs;
+    a.messages[0].text = 'An intermediate update.'; await parent.sync(a, config);
+    // The committed read still shows the original revision; its deletion and
+    // intermediate replacement are pending, then the original text is restored.
+    f.client.fetchDocs = async function (name, ids, branch, consistent) {
+        return consistent === false && ids.includes(old.id) ? [old] : fetch.call(this, name, ids, branch);
+    };
+    a.messages[0].text = 'Fact 0: the compass is blue.'; await parent.sync(a, config);
+    const calls = [];
+    f.client.fetchDocs = async function (name, ids, branch, consistent) { calls.push(ids.length); return fetch.call(this, name, ids, branch, consistent); };
+    await f.manager.ensure(snapshot(child), undefined, config);
+    assert.deepEqual(calls, [4, 4], 'use full reconciliation when an old committed value already matches');
+});
+
+
+test('commit polling requires the expected revision rather than document existence', async () => {
+    const f = fixture(), a = snapshot(); await (await f.engine(a)).sync(a, config);
+    const fetch = f.client.fetchDocs, create = f.client.createBranch; let reads = 0;
+    f.client.fetchDocs = async function (name, ids, branch, consistent) {
+        const rows = await fetch.call(this, name, ids, branch);
+        if (consistent === false && ++reads === 1) return rows.map(d => ({ ...d, revision: 'old' }));
+        return rows;
+    };
+    f.client.createBranch = async function (...args) { assert.equal(reads, 2); return create.apply(this, args); };
+    await f.manager.ensure(snapshot(child), undefined, config);
+});
+
+
+test('a repeated pending value cannot serve as a later write witness before a confirmed frontier', async () => {
+    const f = fixture(), a = snapshot(), parent = await f.engine(a);
+    const fetch = f.client.fetchDocs;
+    // Consistent reads see the accepted ordered writes, but none have committed.
+    f.client.fetchDocs = async function (name, ids, branch, consistent) {
+        return consistent === false ? [] : fetch.call(this, name, ids, branch);
+    };
+    await parent.sync(a, config);
+    a.messages[0].text = 'Intermediate value'; await parent.sync(a, config);
+    a.messages[0].text = 'Fact 0: the compass is blue.'; await parent.sync(a, config);
+    let reads = 0;
+    f.client.fetchDocs = async function (...args) { reads++; return fetch.apply(this, args); };
+    // Seeing the first upsert's original value now would not prove the later
+    // delete/update/delete/reinsert committed. Fall back instead of probing it.
+    assert.equal(await waitForCommit(f.client, parent.collection, parent.branch), false);
+    assert.equal(reads, 0);
+});
+
+test('an edited branch loaded in a fresh client cannot invent write-order knowledge', async () => {
+    const f = fixture(), a = snapshot(); await (await f.engine(a)).sync(a, config);
+    const client = { ...f.client }, manager = new ChatCollections(client, owner, () => {}, () => {});
+    const entry = await manager.ensure(a, undefined, config);
+    const engine = new MemoryEngine({ client, owner, ...entry, journal: new Journal({ getItem: () => null, setItem: () => {} }, 'fresh') });
+    await engine.sync(a, config);
+    a.messages[0].text = 'Edited after reconnect'; await engine.sync(a, config);
+    assert.equal(await waitForCommit(client, entry.collection, entry.branch), false);
 });

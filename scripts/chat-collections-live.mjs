@@ -28,8 +28,8 @@ const artifacts = path.join(root, 'artifacts', artifactTag); await mkdir(artifac
 const pendingPath = path.join(artifacts, 'chat-collections-live-pending.json');
 const pending = []; await writeFile(pendingPath, '[]', { flag: 'wx' });
 const sourceSha256 = {};
-for (const file of ['index.js', 'settings.html', 'style.css', 'src/chat-collections.js', 'src/client.js', 'src/memory.js', 'src/status.js', 'src/checkpoints.js', 'scripts/chat-collections-live.mjs']) sourceSha256[file] = createHash('sha256').update(await readFile(path.join(root, file))).digest('hex');
-const report = { large, manager, recovery, checkpoints, versioned, upserts: [], time: new Date().toISOString(), host: revision, sourceSha256, checks: [], responses: [], proxyRequests: 0, pageErrors: [], cleanup: false, passed: false };
+for (const file of ['index.js', 'settings.html', 'style.css', 'src/chat-collections.js', 'src/client.js', 'src/commit.js', 'src/memory.js', 'src/status.js', 'src/checkpoints.js', 'scripts/chat-collections-live.mjs']) sourceSha256[file] = createHash('sha256').update(await readFile(path.join(root, file))).digest('hex');
+const report = { large, manager, recovery, checkpoints, versioned, upserts: [], fetches: [], time: new Date().toISOString(), host: revision, sourceSha256, checks: [], responses: [], proxyRequests: 0, pageErrors: [], cleanup: false, passed: false };
 const check = (name, ok) => { assert(ok, name); report.checks.push(name); console.log(`PASS ${name}`); };
 const url = `http://127.0.0.1:${Number(process.env.ST_LIVE_PORT || 18147)}`;
 let server, browser, page, panel, connect, stage = 'startup';
@@ -56,6 +56,9 @@ try {
             await writeFile(pendingPath, JSON.stringify(pending, null, 2));
         }
         if (req.method() === 'POST' && target.pathname.endsWith('/docs/upsert')) report.upserts.push({ stage, branch: req.postDataJSON().branch, documents: req.postDataJSON().docs.length });
+        if (req.method() === 'POST' && target.pathname.endsWith('/docs/fetch')) {
+            const body = req.postDataJSON(); report.fetches.push({ stage, ids: body.ids.length, consistentRead: body.consistentRead });
+        }
         if (large) assert(report.upserts.reduce((n, x) => n + x.documents, 0) <= 1100, 'Bounded large-history document submissions');
         if (loseBranch && req.method() === 'POST' && target.pathname.endsWith('/branches')) {
             loseBranch = false; const response = await route.fetch(); assert(response.ok()); await route.abort(); return;

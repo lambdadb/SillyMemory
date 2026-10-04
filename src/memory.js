@@ -1,3 +1,4 @@
+import { beginWrites, clearCommit, recordWrite, sameDocument } from './commit.js';
 import { preferAssistantContext } from './context.js';
 import { chunkSpans, CHUNKING_POLICY } from './chunking.js';
 
@@ -201,11 +202,12 @@ export class MemoryEngine {
             if (!current()) return null;
             const { scope, docs } = prepared;
             const ids = docs.map(d => d.id); const desired = new Set(ids);
-            let previous = this.journal.read(scope);
+            let previous = this.journal.read(scope), committed;
             if (this.branch && !this.remoteLoaded) {
                 // A journal is not an acknowledgement. Inspect remote content after
                 // fork/reload or an uncertain write before deciding what to resubmit.
                 const remote = await this.client.listDocs(this.collection, this.branch);
+                committed = new Map(remote.map(d => [d.id, d]));
                 if (!current()) return null;
                 if (remote.some(d => d.owner !== this.owner || d.scope !== scope || typeof d.id !== 'string')) throw new Error('Unexpected document ownership in memory branch.');
                 previous = [...new Set([...previous, ...remote.map(d => d.id)])];
@@ -224,6 +226,20 @@ export class MemoryEngine {
             // Persist intent BEFORE requests; include uncertain writes after a timeout/reload.
             this.journal.write(scope, [...previous, ...ids]);
             const removed = previous.filter(id => !desired.has(id));
+            const pending = docs.filter(d => !this.acknowledged.has(d.id));
+            let witness;
+            if (this.branch && (removed.length || pending.length)) {
+                const usable = beginWrites(this.client, this.collection, this.branch, pending);
+                const last = pending.at(-1); // Last actual upsert, not last transcript chunk.
+                if (usable) {
+                    const old = committed ? committed.get(last.id)
+                        : (await this.client.fetchDocs(this.collection, [last.id], this.branch, false)).find(d => d.id === last.id);
+                    if (!current()) return null;
+                    // A reinsert may already be visible in old committed data while
+                    // its deletion/reinsert is pending. It cannot prove this write.
+                    if (!sameDocument(last, old)) witness = last;
+                }
+            }
             if (removed.length) report({ phase: 'deleting', completed: 0, total: removed.length });
             for (let i = 0; i < removed.length; i += 100) {
                 if (!current()) return null;
@@ -232,7 +248,6 @@ export class MemoryEngine {
                 batch.forEach(id => this.acknowledged.delete(id));
                 report({ phase: 'deleting', completed: i + batch.length, total: removed.length });
             }
-            const pending = docs.filter(d => !this.acknowledged.has(d.id));
             const confirmed = docs.length - pending.length;
             report({ phase: 'uploading', completed: confirmed, total: docs.length });
             for (let i = 0; i < pending.length; i += 50) {
@@ -244,8 +259,9 @@ export class MemoryEngine {
             }
             if (!current()) return null;
             this.journal.write(scope, ids);
+            if (witness) recordWrite(this.client, this.collection, this.branch, witness);
             return prepared;
-        }).catch(error => { this.remoteLoaded = false; throw error; });
+        }).catch(error => { this.remoteLoaded = false; if (this.branch) clearCommit(this.client, this.collection, this.branch); throw error; });
     }
     async retrieve(snapshot, config, countTokens, valid = () => true, progress = () => {}, type = 'normal') {
         const generation = this.generation;

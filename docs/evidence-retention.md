@@ -147,3 +147,11 @@ change. Several retained hosts share dependency symlinks, and ignored directorie
 can contain unique receipts/recovery state. Their physical consolidation remains
 a separate storage operation after stable evidence locations and dependencies
 are verified. API keys and personal chats are not migration inputs.
+
+## Ordered commit confirmation
+
+The [commit-confirmation record](commit-confirmation.md) preserves the request-count
+comparison, failed/corrected manager runs, final guard regressions, emulator/live
+boundaries and local-only archive location/checksum. All 329 files and six runtime
+producer records were verified before completion. No historical evidence was
+removed and no retention-expiry experiment was required.

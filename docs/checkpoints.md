@@ -28,7 +28,9 @@ Connect, prepare memory and opt the selected story into versioned memory first.
    The original chat stays selected. Re-enable memory to continue that original
    path after saving, or resume the saved checkpoint from the manager below.
 2. A checkpoint is ready only after its intended older documents are committed
-   and the matching snapshot ID is saved and read back from the host. Creation
+   and the matching snapshot ID is saved and read back from the host. A
+   [last-write commit check](commit-confirmation.md) can shorten polling; the final
+   complete document comparison remains required. Creation
    can take minutes while waiting for commits. No generation model is called.
 3. Click **Resume** on that checkpoint in the current-story list. Alternatively,
    select it in the native chat list and click **Resume checkpoint in new chat**.

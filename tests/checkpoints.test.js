@@ -223,3 +223,28 @@ test('deletion and rename preserve edits that arrive between reads', async () =>
     await assert.rejects(renameCheckpoint({ ...f, file: other }, 'New name'), /changed/);
     assert.equal(f.files.get(other)[1].mes, 'Edit before rename');
 });
+
+
+test('a committed branch still requires complete checkpoint contents before readiness', async () => {
+    const f = await fixture(), list = f.client.listDocs; let checkpointLists = 0;
+    f.client.listDocs = async (collection, branch) => {
+        const rows = await list(collection, branch);
+        if (branch !== `chat_${chat}` && ++checkpointLists === 2) return rows.slice(1);
+        return rows;
+    };
+    await assert.rejects(createCheckpoint(f), /content does not match/);
+    assert.equal(checkpointLists, 2, 'one reconciliation list and one full final verification');
+    assert.equal([...f.files.values()][0][0].chat_metadata.sillymemory.checkpoint.state, 'pending');
+});
+
+
+test('canceled checkpoint reconciliation retains pending state and reports checkpoint cancellation', async () => {
+    const f = await fixture(), create = f.client.createBranch;
+    f.client.createBranch = async (...args) => { await create(...args); throw new Error('Interrupted'); };
+    await assert.rejects(createCheckpoint(f), /Interrupted/);
+    f.client.createBranch = create;
+    const file = [...f.files.keys()][0], list = f.client.listDocs; let valid = true;
+    f.client.listDocs = async (...args) => { const rows = await list(...args); valid = false; return rows; };
+    await assert.rejects(finishCheckpoint({ ...f, file, valid: () => valid }), /Chat changed during checkpoint preparation/);
+    assert.equal(f.files.get(file)[0].chat_metadata.sillymemory.checkpoint.state, 'pending');
+});

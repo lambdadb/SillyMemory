@@ -1,3 +1,4 @@
+import { clearCommit, recordCommitted, waitForCommit } from './commit.js';
 import { ConnectionError } from './client.js';
 import { poll } from './gate.js';
 import { digest, documents, options } from './memory.js';
@@ -75,7 +76,7 @@ export class ChatCollections {
             if (!valid()) return null;
             if (!branches.some(b => b.name === entry.branch)) {
                 const source = branches.some(b => b.name === entry.source) ? entry.source : 'main';
-                if (source !== 'main') {
+                if (source !== 'main' && !await waitForCommit(this.client, entry.collection, source, valid)) {
                     progress({ phase: 'committing' });
                     const { docs } = await documents(snapshot, this.owner, config);
                     // Wait for acknowledged, matching inherited text to commit. A
@@ -93,14 +94,18 @@ export class ChatCollections {
                     }
                 }
                 if (!valid()) return null;
-                try { await this.client.createBranch(entry.collection, entry.branch, source); }
+                clearCommit(this.client, entry.collection, entry.branch);
+                let created = false;
+                try { await this.client.createBranch(entry.collection, entry.branch, source); created = true; }
                 catch (error) { if (error.status !== 409) throw error; }
                 if (!(await this.client.branches(entry.collection)).some(b => b.name === entry.branch)) throw new ConnectionError('Memory branch creation is not confirmed. Retry synchronization.');
+                if (created) recordCommitted(this.client, entry.collection, entry.branch);
             }
         }
         return valid() ? entry : null;
     }
     async delete(entry) {
+        clearCommit(this.client, entry.collection, entry.branch);
         if (entry.branch) {
             try {
                 await this.client.assertOwned(entry.collection, this.owner, undefined, entry.scope);
