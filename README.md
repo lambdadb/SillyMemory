@@ -8,7 +8,8 @@ An installable, experimental UI extension for character chats. SillyMemory keeps
 
 **0.3.0 is an unreleased development candidate.** Its opt-in
 [versioned story memory](docs/versioned-memory.md) reuses committed history across
-native branches and supports [saved transcript/memory checkpoints](docs/checkpoints.md). Public `main` remains the experimental **0.2.0** release.
+native branches and supports [saved transcript/memory checkpoints](docs/checkpoints.md). Public `main` remains the experimental **0.2.0** release. See the
+[0.3.0 preparation notes](docs/releases/0.3.0.md) for opt-in, cleanup and rollback.
 
 **0.2.0 is experimental.** See the [release notes](docs/releases/0.2.0.md) for
 installation evidence and limitations. This version preserves native
