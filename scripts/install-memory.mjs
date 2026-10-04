@@ -70,7 +70,7 @@ export function installMemory({ page, field, settings, check, credentials, entri
             await select(); await connect();
             let count = submitted(); await field('enabled').check(); await status('synchronized');
             check('ordinary upgraded sync preserves the existing per-chat collection without automatic story opt-in', (await identity()).collection === baseline.collection && isDeepStrictEqual(sorted(await inspect(baseline)), baselineDocs));
-            await field('enabled').uncheck(); await field('versioned').click(); await status('Versioned story memory is ready');
+            await settings(); await field('enabled').uncheck(); await field('versioned').click(); await status('Versioned story memory is ready');
             await field('enabled').check(); await status('synchronized'); parent = await identity();
             const actual = await inspect(parent);
             const expected = await page.evaluate(async base => {
@@ -90,7 +90,7 @@ export function installMemory({ page, field, settings, check, credentials, entri
             const row = field('checkpoint-list').locator('.sm-checkpoint').filter({ has: page.locator('strong', { hasText: 'Upgrade checkpoint' }) });
             check('upgraded manager saves a ready checkpoint without re-embedding', (await row.innerText()).includes('Ready') && submitted() === count);
             await row.getByRole('button', { name: 'Resume', exact: true }).click(); await status('Checkpoint resumed as'); await idle();
-            await field('enabled').check(); await status('synchronized');
+            await settings(); await field('enabled').check(); await status('synchronized');
             const resumed = await identity();
             check('checkpoint resume creates an independent path with zero inherited upserts', resumed.collection === parent.collection && resumed.branch !== branch.branch && submitted() === count && (await inspect(resumed)).some(d => d.text.includes('stone tower')));
             const recalled = await page.evaluate(async () => {
