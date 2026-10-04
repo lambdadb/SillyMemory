@@ -119,3 +119,48 @@ command incurs LambdaDB/managed-embedding usage. It allows at most four small
 owned collections, preserves pending cleanup identities, and never copies the
 credential file. See [fresh installation checks](../RELEASING.md#fresh-installation-smoke-test)
 for testing a pushed candidate through the Git URL UI.
+
+## Final review follow-up — 2026-10-04
+
+Review of `develop...28cdb0f` traced identity persistence, first-use preparation,
+checkpoint save/resume, branch selection, reconciliation, commit confirmation,
+current-source validation, cancellation, and scoped/all-owned deletion. No new
+production-runtime defect was found within those paths. Format/ownership guards,
+commit fallback checks and branch-versus-family deletion remain necessary current
+semantics, not legacy support. All production runtime files are unchanged by this
+follow-up; the earlier managed acceptance still applies to those exact files.
+
+Three remaining development-harness problems were addressed:
+
+- The hybrid comparison hook discarded the engine's branch in both vector and
+  hybrid modes, defaulting queries to `main`. Executing the original committed
+  hook with a fake HTTP response reproduced both wrong refs. The hook now
+  preserves the selected branch and cancellation, rejects missing/main branches,
+  and has a regression through the real request builder for both modes.
+- The historical chunking comparison replaced the current engine's sync/retrieve
+  methods with an old engine that did not route chat branches. Retire that
+  execution adapter and baseline-loading route instead of reintroducing storage
+  compatibility. `--chunking` stops before credentials/host/network setup with a
+  recorded-producer explanation. Frozen input and result documents remain. The
+  removed adapter and original generation runner were verified byte-for-byte in
+  the pre-default archive before removal; reproduction uses the recorded tree.
+- The final-prompt emulator lacked branch and document reconciliation routes.
+  Add branch-isolated maps and list/fetch operations, then run its actual pinned
+  host generation path: all 13 delivery cases and repeated-passage packing passed,
+  with zero remaining collections. This checks token-pressure stopping/warning,
+  streaming, swipe/regenerate/continue, disabled/no-hit behavior and unchanged
+  stored history using local completion/remote emulators, not paid providers.
+
+The updated unit suite passed 310 tests; runtime/development syntax, static
+relative-import resolution, release metadata and diff checks passed. No new
+answer-quality or paid hybrid evaluation was run. The current live hybrid adapter
+is covered by mocked request-routing regression only; its original quality
+results remain tied to their historical producer.
+
+The follow-up reports, exact prompt-delivery sources, hybrid regression/reproducer
+and review patch are retained at
+`/Users/steven/Dev/sillymemory-versioned-default/artifacts/archive/default-story-review/evidence.tar.gz`.
+It is local-only: 109,523 bytes, 31 members, SHA-256
+`c808f25ce14024ed7b7f4a5518066ff5265bcf06aa3addd17af6a8e28e6b07bf`.
+All members were read back byte-for-byte; prompt-delivery producer hashes match
+the measured files. The previous evidence bundles remain intact.

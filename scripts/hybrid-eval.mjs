@@ -49,15 +49,9 @@ export async function runHybrid({ page, field, openSettings, waitStatus, generat
     await page.evaluate(async () => {
         const runtime = await import('/scripts/extensions/third-party/sillymemory/src/memory.js');
         const { LambdaClient } = await import('/scripts/extensions/third-party/sillymemory/src/client.js');
-        const { hybridQuery } = await import('/scripts/extensions/third-party/sillymemory/scripts/hybrid-query.mjs');
+        const { comparisonSearch } = await import('/scripts/extensions/third-party/sillymemory/scripts/hybrid-query.mjs');
         const t = globalThis.hybridTest = { runtime, LambdaClient, search: LambdaClient.prototype.search, retrieve: runtime.MemoryEngine.prototype.retrieve, queries: [] };
-        LambdaClient.prototype.search = async function (collection, owner, scope, text, signal) {
-            const start = performance.now(), query = hybridQuery(owner, scope, text);
-            const hits = await (t.mode === 'hybrid' ? this.query(collection, query, { signal }) : t.search.call(this, collection, owner, scope, text, signal));
-            if (hits.some(d => d.owner !== owner || d.scope !== scope)) throw new Error('Unfiltered candidate in comparison');
-            t.queries.push({ text, query: t.mode === 'hybrid' ? query : query.rrf?.[0] || query, hits, elapsedMs: performance.now() - start });
-            return hits;
-        };
+        LambdaClient.prototype.search = comparisonSearch(t.search, t);
         runtime.MemoryEngine.prototype.retrieve = async function (...args) {
             const expected = await runtime.documents(args[0], this.owner, args[1]), start = performance.now();
             const selected = await t.retrieve.apply(this, args);
