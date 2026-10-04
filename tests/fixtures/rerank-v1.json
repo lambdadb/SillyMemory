@@ -1,0 +1,177 @@
+{
+  "version": "rerank-v1",
+  "cases": [
+    {
+      "id": "current-location",
+      "category": "current-state",
+      "facts": [
+        "At the start of spring, Mira kept the brass compass in the cedar chest.",
+        "Mira moved the brass compass from the cedar chest to the attic cabinet. The cabinet is its current home."
+      ],
+      "question": "Where does Mira keep the brass compass now? Reply only with the answer, without explanation.",
+      "answer": "attic cabinet",
+      "evidence": [
+        "attic cabinet"
+      ],
+      "distractor": "Mira discussed polishing a brass compass and cataloguing cabinet hinges."
+    },
+    {
+      "id": "earlier-location",
+      "category": "historical-state",
+      "facts": [
+        "In April, Mira stored the woven map in the kitchen drawer.",
+        "In June, Mira moved the woven map to the study shelf. It has remained on the study shelf since then."
+      ],
+      "question": "Where was the woven map stored in April, before the June move? Reply only with the answer, without explanation.",
+      "answer": "kitchen drawer",
+      "evidence": [
+        "kitchen drawer"
+      ],
+      "distractor": "Mira discussed weaving maps and measuring drawers in the workshop."
+    },
+    {
+      "id": "revoked-access",
+      "category": "revocation",
+      "facts": [
+        "Mira authorized Theo to open the observatory with the amber badge.",
+        "Mira revoked Theo's observatory access. The amber badge is invalid, and no replacement access was granted."
+      ],
+      "question": "Does Theo currently have permission to enter the observatory? Answer YES or NO. Reply only with the answer, without explanation.",
+      "answer": "NO",
+      "evidence": [
+        "revoked Theo"
+      ],
+      "distractor": "The observatory staff discussed amber badge designs and cleaning the telescope."
+    },
+    {
+      "id": "canceled-meeting",
+      "category": "revocation",
+      "facts": [
+        "Mira confirmed a Thursday meeting with Theo at the west pavilion.",
+        "Mira canceled the Thursday meeting with Theo. No replacement meeting has been arranged."
+      ],
+      "question": "Is a meeting with Theo currently arranged? Answer YES or NO. Reply only with the answer, without explanation.",
+      "answer": "NO",
+      "evidence": [
+        "canceled the Thursday meeting"
+      ],
+      "distractor": "The pavilion staff discussed Thursday schedules and meeting-room curtains."
+    },
+    {
+      "id": "flashback-current",
+      "category": "flashback",
+      "facts": [
+        "After the flood, Mira settled in the hill cottage, where she still lives.",
+        "Mira reminisced: years before the flood I lived in the riverside house. That is a memory of my old home, not a move back."
+      ],
+      "question": "Where does Mira live now? Reply only with the answer, without explanation.",
+      "answer": "hill cottage",
+      "evidence": [
+        "hill cottage",
+        "years before the flood"
+      ],
+      "distractor": "Mira discussed village houses, flood memorials, and cottages on postcards."
+    },
+    {
+      "id": "flashback-past",
+      "category": "flashback",
+      "facts": [
+        "Theo now works as the harbor librarian and has done so since the winter festival.",
+        "Theo recalled his summer job before the winter festival: he was the orchard gardener. He is describing his former job, not his present one."
+      ],
+      "question": "What was Theo's job in the summer before the winter festival? Reply only with the answer, without explanation.",
+      "answer": "orchard gardener",
+      "evidence": [
+        "orchard gardener"
+      ],
+      "distractor": "Theo discussed harbor books, orchard tools, and festival posters."
+    },
+    {
+      "id": "future-location",
+      "category": "future-versus-completed",
+      "facts": [
+        "Mira placed the silver lantern in the pantry, and it is still there.",
+        "Next autumn, Mira plans to move the silver lantern to the garden shed. She has not moved it yet."
+      ],
+      "question": "Where is the silver lantern now? Reply only with the answer, without explanation.",
+      "answer": "pantry",
+      "evidence": [
+        "pantry",
+        "has not moved it yet"
+      ],
+      "distractor": "Mira discussed garden sheds and silver lantern designs for an autumn fair."
+    },
+    {
+      "id": "completed-location",
+      "category": "future-versus-completed",
+      "facts": [
+        "Mira planned to put the painted bowl on the balcony after the festival.",
+        "The festival has ended. Mira has now carried the painted bowl to the balcony and left it there."
+      ],
+      "question": "Where is the painted bowl after the completed move? Reply only with the answer, without explanation.",
+      "answer": "balcony",
+      "evidence": [
+        "has now carried the painted bowl"
+      ],
+      "distractor": "Mira discussed painted bowls, festival decorations, and balcony railings."
+    },
+    {
+      "id": "speaker-preference",
+      "category": "attribution",
+      "facts": [
+        "Mira says: my favorite tea is jasmine. Theo's favorite tea is mint.",
+        "Theo says: I still prefer mint tea. Mira still prefers jasmine; we have different favorites."
+      ],
+      "question": "What is Mira's favorite tea? Reply only with the answer, without explanation.",
+      "answer": "jasmine",
+      "evidence": [
+        "Mira still prefers jasmine"
+      ],
+      "distractor": "The tea shop discussed teacups, mint plant pots, and jasmine decorations."
+    },
+    {
+      "id": "speaker-possession",
+      "category": "attribution",
+      "facts": [
+        "The wool scarf belongs to Theo. Mira owns the cotton scarf.",
+        "Mira borrowed Theo's wool scarf for the walk and then returned it to him. The loan did not change who owns either scarf."
+      ],
+      "question": "Who owns the wool scarf after the loan? Reply only with the answer, without explanation.",
+      "answer": "Theo",
+      "evidence": [
+        "belongs to Theo",
+        "returned it to him"
+      ],
+      "distractor": "The market displayed cotton scarves, wool blankets, and borrowed walking sticks."
+    },
+    {
+      "id": "stable-fact",
+      "category": "unchanged-control",
+      "facts": [
+        "Mira's childhood dog was named Willow.",
+        "Mira still remembers Willow, her childhood dog, fondly."
+      ],
+      "question": "What was Mira's childhood dog named? Reply only with the answer, without explanation.",
+      "answer": "Willow",
+      "evidence": [
+        "childhood dog was named Willow"
+      ],
+      "distractor": "Mira discussed childhood gardens, dog toys, and willow-patterned blankets."
+    },
+    {
+      "id": "two-facts",
+      "category": "multi-fact-control",
+      "facts": [
+        "Mira keeps the astronomy journal in the desk drawer.",
+        "Mira keeps the journal key in the blue tin. Both the journal and its key remain where she placed them."
+      ],
+      "question": "Where are the astronomy journal and its key? Reply as JOURNAL LOCATION; KEY LOCATION.",
+      "answer": "desk drawer; blue tin",
+      "evidence": [
+        "journal in the desk drawer",
+        "key in the blue tin"
+      ],
+      "distractor": "Mira discussed astronomy books, blue paint tins, desk repairs, and spare keys."
+    }
+  ]
+}
