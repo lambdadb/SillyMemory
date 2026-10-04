@@ -6,15 +6,13 @@ Long-term memory for SillyTavern.
 
 An installable, experimental UI extension for character chats. SillyMemory keeps recent messages intact at its prompt hook and replaces older plain-text history with relevant source passages under a fixed memory token budget. SillyTavern may subsequently truncate the prompt to fit its context limit. It uses LambdaDB managed embeddings over direct browser HTTPS/CORS. No server plugin or LambdaDB modification is required.
 
-**0.3.0 is an unreleased development candidate.** Its opt-in
+**0.3.0 is experimental.** Its opt-in
 [versioned story memory](docs/versioned-memory.md) reuses committed history across
-native branches and supports [saved transcript/memory checkpoints](docs/checkpoints.md). Public `main` remains the experimental **0.2.0** release. See the
-[0.3.0 preparation notes](docs/releases/0.3.0.md) for opt-in, cleanup and rollback.
-
-**0.2.0 is experimental.** See the [release notes](docs/releases/0.2.0.md) for
-installation evidence and limitations. This version preserves native
-speaker roles, improves context retrieval, packs repeated excerpts, and stops
-generation when prepared memory or recent messages disappear during host packing.
+native branches and supports [saved transcript/memory checkpoints](docs/checkpoints.md).
+See the [release notes](docs/releases/0.3.0.md) for installation evidence, opt-in,
+cleanup and rollback, and [GitHub Releases](https://github.com/lambdadb/SillyMemory/releases)
+to confirm publication. Normal updates preserve the existing per-chat layout until
+you explicitly opt a story in.
 
 The [managed recall validation](docs/managed-packed-results.md) completed 64 real
 SillyTavern/LambdaDB/model responses. All 28 known-answer memory-on samples
@@ -67,7 +65,7 @@ The development baseline is **SillyTavern 1.19.0**, pinned to commit [`06bde939f
 5. Click **Use key for this session**. The input is immediately cleared. The key lives only in the client instance's browser memory, never in saved settings, local/session storage, a URL, or extension logs. A reload or **Forget key** requires re-entry. Other trusted extensions and the browser runtime can still observe network requests; this is not an isolation boundary against malicious extensions.
 6. Click **Test synthetic upsert / query / delete**. This creates a dedicated `smtest_<random>` collection, upserts a synthetic story, queries `knn.queryText`, deletes its document, verifies it no longer appears, then deletes the owned test collection. This consumes LambdaDB resources and inference usage. The test must pass before **Prepare chat memory** becomes available.
 7. If a test fails, use **Clean up test collection**. Pending test identity is preserved across reloads so cleanup can be retried after reconnecting. A failed cleanup is not reported as successful.
-8. Click **Prepare chat memory**, select a character chat, then enable memory. By default, the extension creates a separate owned collection on first use of each chat or native branch. For the 0.3.0 candidate, optionally select **Use versioned memory for this story** before enabling; future native branches then reuse unchanged history in separate LambdaDB branches within one story collection. Default settings retain 12 recent messages and allow 800 memory tokens, including excerpt content and source labels; provider message-envelope overhead is managed by the host. Configure the bounds in the panel. Disable built-in Vector Storage chat vectorization and other prompt-rewriting memory extensions for this prototype.
+8. Click **Prepare chat memory**, select a character chat, then enable memory. By default, the extension creates a separate owned collection on first use of each chat or native branch. Optionally select **Use versioned memory for this story** before enabling; future native branches then reuse unchanged history in separate LambdaDB branches within one story collection. Default settings retain 12 recent messages and allow 800 memory tokens, including excerpt content and source labels; provider message-envelope overhead is managed by the host. Configure the bounds in the panel. Disable built-in Vector Storage chat vectorization and other prompt-rewriting memory extensions for this prototype.
 
 For an opted-in story, optionally enter a checkpoint name and use **Save / finish checkpoint** to save the current transcript and memory state. **Refresh story checkpoints** shows names, creation times and verified states, with controls to finish pending saves, resume a new path, rename or delete individual checkpoints. See [recovery, integrity and restore limits](docs/checkpoints.md).
 
@@ -94,7 +92,7 @@ Git-based update flow.
 
 ## Version and updates
 
-**0.2.0 is an experimental pre-release.** See [CHANGELOG.md](CHANGELOG.md) for changes and
+**0.3.0 is an experimental pre-release.** See [CHANGELOG.md](CHANGELOG.md) for changes and
 [GitHub Releases](https://github.com/lambdadb/SillyMemory/releases) for published
 versions. A dated changelog entry can precede publication. The `main` branch is
 the public installation baseline; `develop` contains ongoing work. The version
@@ -107,11 +105,14 @@ reload, re-enter the LambdaDB key and re-enable memory. Budget, recent-message
 settings and installation ownership are retained. Normal updates do not require
 deleting the owned memory collection or reinstalling the extension.
 
-When updating from 0.1.0 to 0.2.0, the first enabled sync builds a separate
-collection for each opened chat from local history. The old shared collection
-remains; new indexing consumes managed embedding and storage usage. All-owned
-cleanup includes both old and new collections. Review the
-[0.2.0 update and rollback notes](docs/releases/0.2.0.md) before upgrading.
+Updating from 0.2.0 preserves per-chat memory. Explicit versioned-story opt-in
+indexes older local history once into a new family collection and retains the old
+memory for all-owned cleanup. Initial opt-in consumes managed embedding/storage
+usage; future unchanged native branches and checkpoints reuse committed documents.
+Review the [0.3.0 update and rollback notes](docs/releases/0.3.0.md), especially
+before downgrading: 0.2.0 cannot manage the new story/checkpoint layout. For older
+0.1.0 installations, the earlier [per-chat migration notes](docs/releases/0.2.0.md)
+also apply.
 
 For rollback and maintainer publication steps, see [RELEASING.md](RELEASING.md).
 Use only a tag listed in the published releases for rollback. Disable memory

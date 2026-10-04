@@ -19,7 +19,7 @@ or large-history performance. Preserve complete failed/successful run evidence.
 
 ## Use
 
-Use the unreleased 0.3.0 candidate with the validated SillyTavern 1.19.0 host.
+Use 0.3.0 with the validated SillyTavern 1.19.0 host.
 Connect, prepare memory and opt the selected story into versioned memory first.
 
 1. Click **Save / finish checkpoint** on a normal versioned chat. The extension
