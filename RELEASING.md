@@ -171,7 +171,7 @@ proxy disabled. The fixture explicitly requires the published 0.2.0 baseline;
 review it when that baseline changes rather than silently reusing old expectations.
 
 It verifies settings/ownership and old per-chat data preservation, no automatic
-opt-in/reindexing, explicit story indexing, zero-upsert native forks and checkpoint
+story opt-in, explicit story indexing, zero-upsert native forks and checkpoint
 save/resume, edit isolation, managed queryText through the interceptor, key re-entry,
 scoped/all-owned deletion, and code rollback/return after remote cleanup. No
 generation model is called; the final-prompt event is synthetic. This does not

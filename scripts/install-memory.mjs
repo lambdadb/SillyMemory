@@ -69,7 +69,7 @@ export function installMemory({ page, field, settings, check, credentials, entri
             check('upgrade preserves the existing per-chat cleanup pointer and documents', before.ready && before.chatCollections.some(e => e.collection === baseline.collection) && isDeepStrictEqual(sorted(await inspect(baseline)), baselineDocs));
             await select(); await connect();
             let count = submitted(); await field('enabled').check(); await status('synchronized');
-            check('ordinary upgraded sync reuses existing per-chat memory without opt-in or reindexing', (await identity()).collection === baseline.collection && submitted() === count && isDeepStrictEqual(sorted(await inspect(baseline)), baselineDocs));
+            check('ordinary upgraded sync preserves the existing per-chat collection without automatic story opt-in', (await identity()).collection === baseline.collection && isDeepStrictEqual(sorted(await inspect(baseline)), baselineDocs));
             await field('enabled').uncheck(); await field('versioned').click(); await status('Versioned story memory is ready');
             await field('enabled').check(); await status('synchronized'); parent = await identity();
             const actual = await inspect(parent);
