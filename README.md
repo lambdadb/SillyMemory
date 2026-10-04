@@ -302,11 +302,11 @@ for the [assistant-topic query comparison](docs/assistant-topic-evaluation.md).
 It shares each distinct query response across the frozen policies and makes no
 generation calls; its integrity pass is separate from candidate qualification.
 
-The [assistant fallback protocol](docs/assistant-fallback-evaluation.md) runs with
+At its recorded revision, the [assistant fallback protocol](docs/assistant-fallback-evaluation.md) runs with
 `SM_ARTIFACT_TAG=next-fallback node scripts/live-smoke.mjs --assistant-fallback`.
 See its [results and generation commands](docs/assistant-fallback-results.md).
 
-The [context-turn protocol](docs/context-turn-evaluation.md) runs with
+At its recorded revision, the [context-turn protocol](docs/context-turn-evaluation.md) runs with
 `SM_ARTIFACT_TAG=next-turn node scripts/live-smoke.mjs --context-turn`.
 See its [results and amended generation commands](docs/context-turn-results.md).
 The subsequent [fixed-budget passage-selection replay](docs/budget-selection-results.md)

@@ -2,32 +2,33 @@
 
 ## Boundaries
 
-`index.js` adapts the pinned SillyTavern context, events, prompt interceptor, and settings panel. `src/client.js` sends same-origin proxy requests; it has a private in-memory key and sanitizes errors without logging response bodies. `src/gate.js` validates a synthetic lifecycle before memory collection creation. `src/status.js` formats progress and recovery guidance and ensures only the current operation owns the status display. `src/memory.js` is independent synchronization and selection logic.
+`index.js` adapts the pinned SillyTavern context, events, prompt interceptor, and settings panel. `src/client.js` sends direct browser HTTPS/CORS requests; it has a private in-memory key and sanitizes errors without logging response bodies. `src/gate.js` validates a synthetic lifecycle before memory collection creation. `src/status.js` formats progress and recovery guidance and ensures only the current operation owns the status display. `src/memory.js` is independent synchronization and selection logic.
 
 There is no server plugin. Runtime modules have no external dependencies. Playwright is development-only. The extension source and development tools are distributed under AGPL-3.0-only; see the root LICENSE.
 
 ## Identity and source authority
 
-The current SillyTavern chat is authoritative. The owner is a random per-account identity kept in extension settings; its initial save is awaited and read back before the UI permits remote operations. Browser-local configuration and journals are keyed by that owner. Scope is SHA-256 of owner, character avatar filename, and chat filename. Branches have distinct chat filenames. The source revision hashes message position, speaker, role, selected swipe, and full text. A chunk ID contains scope, revision, and chunk ordinal. Insertion/deletion can renumber subsequent messages and require reindexing; content is never deduplicated across scopes.
+The current SillyTavern chat is authoritative. The owner is a random per-account identity kept in extension settings; its initial save is awaited and read back before the UI permits remote operations. Browser-local configuration and journals are keyed by that owner. Scope is SHA-256 of owner, character avatar filename, and the saved story ID. Every story has one owned collection; each chat path has its own writable branch. Native metadata is persisted and read back before remote use. Verified native forks inherit the story scope; independent copies start new stories. The source revision hashes message position, speaker, role, selected swipe, and full text. A chunk ID contains scope, revision, chunking policy, ordinal and source offsets. Insertion/deletion can renumber subsequent messages and require reindexing; content is never deduplicated across scopes.
 
-Only older eligible text is indexed. Chunks are up to 800 Unicode code points by default. They retain message and chunk provenance. The current implementation selects whole chunks and does not perform neighbor expansion. Renaming a chat/character creates a new scope; old remote scopes remain for full collection cleanup.
+Only older eligible text is indexed. Chunks are up to 800 Unicode code points by default. They retain message and chunk provenance. The current implementation selects whole chunks and does not perform neighbor expansion. Renaming a chat preserves its saved identity. Changing the character avatar identity is not a continuity guarantee.
 
 ## Write ordering and recovery
 
 Accessing the same SillyTavern server/account from another device shares host
 chats and the owner ID, but not the browser-local collection mapping or journal.
-The current UI cannot discover and reconnect an existing collection on a fresh
-browser merely by entering the API key. Remote excerpts also cannot replace the
-authoritative source chat. See [device-continuity follow-ups](evaluation-and-device-followups.md#same-server-device-continuity-current-limits-and-follow-up)
-for the proposed sequential-handoff scope and the unresolved coordination work.
+Reconnect with the endpoint/project/key and prepare memory to reuse the saved
+story identity. On first use/reload, remote reconciliation supplements the local
+journal. Remote excerpts cannot replace the authoritative source chat. Sequential
+access to the same server is possible; concurrent writers across devices remain
+unsupported because browser locks do not coordinate them.
 
-A per-engine promise queue serializes mutations. A session-long Web Lock prevents a second active tab for that account/browser. The local journal writes the union of prior and desired IDs **before** remote requests. Obsolete IDs are deleted; missing current IDs use normal upsert batches of 50. A successful pass replaces the journal with the desired IDs. In-memory acknowledgements skip duplicate writes during the session. Reload conservatively re-upserts current records and deletes obsolete recorded IDs, including writes whose response was lost.
+A per-engine promise queue serializes mutations. A session-long Web Lock prevents a second active tab for that account/browser. The local journal writes the union of prior and desired IDs **before** remote requests. Obsolete IDs are deleted; missing current IDs use normal upsert batches of 50. A successful pass replaces the journal with the desired IDs. In-memory acknowledgements skip duplicate writes during the session. On first use/reload or an uncertain write, list committed branch documents and fetch expected IDs consistently. Reuse exact field matches, delete obsolete IDs and submit only missing/changed documents, including recovery after lost responses. Native forks first confirm committed source state; see [commit confirmation](commit-confirmation.md).
 
 No chat text or API key is persisted in the journal. If local storage fails, remote writes do not begin. An interrupted mutation may still reach the service; the durable intent and next reconciliation repair it. There is no background retry loop against a failing service. A new event, explicit Sync, or next generation retries. The synthetic gate polls readiness with a bounded attempt count; ordinary queries use a 15-second per-request timeout. Full initial indexing can require multiple requests and take longer.
 
 ## Retrieval and prompt application
 
-Queries use the default `main` Branch with `consistentRead: true`, not versioning Tags/Aliases. Managed embedding `knn.queryText` uses an owner/scope prefilter. Remote hits are ranking signals: only exact current IDs, ownership, scope, revision, and source text are accepted; injection uses the locally reconstructed text. This prevents eventual-index lag, deleted records, malicious remote text changes, and sibling-chat results from resurrecting stale content.
+Queries use the selected `chat_<ID>` branch with `consistentRead: true`, not Tags/Aliases. The empty `main` branch is an independent-story fork source. Managed embedding `knn.queryText` uses an owner/scope prefilter. Remote hits are ranking signals: only exact current IDs, ownership, scope, revision, and source text are accepted; injection uses the locally reconstructed text. This prevents eventual-index lag, deleted records, malicious remote text changes, and sibling-chat results from resurrecting stale content.
 
 The `latest-anchor-with-context-selection-v5` query policy normally anchors on the
 last non-empty user message (or the last non-empty message if no user exists).
@@ -57,14 +58,14 @@ The pinned host scans `coreChat` for World Info after interceptors. Recalled exc
 
 ## Ownership and deletion
 
-Production and synthetic test collections have `application=sillymemory` and the random owner metadata tag. Sync and deletion check these tags. Deletion never adopts a mismatched collection. Full deletion first disables further work, invalidates reads, drains writes, deletes only the owned collection, and verifies API disappearance. Tags are ownership safeguards against accidental selection, not an authorization boundary against another holder of the project API key.
+Production and synthetic test collections have `application=sillymemory` and the random owner metadata tag. Sync and deletion check these tags. Deletion never adopts a mismatched collection. Full deletion first disables further work, invalidates reads, drains writes, deletes the selected owned branch or all discovered owned story collections, and verifies API absence. Branch deletion preserves siblings; family deletion removes every branch. Tags are ownership safeguards against accidental selection, not an authorization boundary against another holder of the project API key.
 
 After confirmed collection deletion, local cleanup snapshots all matching journal
 keys before removing them. It preserves other namespaces and host settings;
 [Web Storage enumeration order](https://html.spec.whatwg.org/multipage/webstorage.html)
 may change during removal, so deleting while enumerating can skip entries.
 
-The extension retains target identity before creation so timeout cleanup is retryable. Collection deletion is an API visibility check; physical backup erasure is not established. Browser storage loss, multiple devices, deleted/renamed chats, and account resets can leave orphaned remote scopes requiring project-side cleanup. Cross-device concurrent editing is not supported.
+The extension retains target identity before creation so timeout cleanup is retryable. Collection deletion is an API visibility check; physical backup erasure is not established. Native chat deletion does not delete remote memory. All-owned discovery can recover cleanup after browser registry loss; loss of the account owner ID requires manual project-side inspection. Cross-device concurrent editing is not supported.
 
 ## Progress and failure display
 

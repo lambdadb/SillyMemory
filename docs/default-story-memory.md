@@ -48,7 +48,7 @@ the host proxy disabled. Local emulator failures are not LambdaDB outages.
 | Real pinned host + Chromium + local HTTPS emulator | 37 checks passed; zero remaining collections. First identity save failure prevents all remote access; retry persists the default story identity. |
 | Same host + emulator, faults and recovery | 189 checks passed; zero remaining collections and no uncaught page errors. Includes 429/503, actual timeout, partial batches, races, reload/restart and repeated edit/swipe/delete cycles. |
 | Real pinned host + Chromium + LambdaDB managed embeddings | 41 checks passed; all owned collections deleted, source hashes unchanged during the run. Includes native branches/copies, earlier forks, checkpoint manager, lost response/reload recovery, queryText interceptor and scoped/discovery cleanup. |
-| Fresh Git URL installation | Pending candidate-branch publication and installation check. |
+| Fresh Git URL installation | 14 checks passed through the actual Git URL UI at candidate `0d13811`; correct branch/version, key clearing and saved preferences verified. No provider calls; disposable profile removed. |
 
 The managed run submitted 12 documents in total, including the transport test.
 Unchanged inherited native branches, checkpoint save/resume and parent reload
@@ -85,6 +85,20 @@ Current raw reports are ignored local evidence under
 `default-story/chat-collections-live.json`. Preserve them and their measured
 producer sources before removing this worktree. A checksum does not imply public
 artifact availability.
+
+The verified final evidence bundle is
+`/Users/steven/Dev/sillymemory-versioned-default/artifacts/archive/default-story-v1/evidence.tar.gz`:
+1,835,965 bytes, 58 members, SHA-256
+`478f2415b61854c49f9122aaaef76b3e00bece79a788f6c39faed9d8efcaf66e`.
+Every member was read back byte-for-byte. It includes the preserved originals,
+current reports/logs, candidate source and documentation patch, plus exact producer
+overlays verified against every measured source hash. It is local-only.
+
+The first browser run preceded the manifest bump; the recovery run recorded a
+wording-only checkpoint error-string edit, subsequently reverted. Those exact
+sources are retained. The managed run matches the final runtime files; fresh
+installation tested commit `0d13811`. Later edits only update documentation.
+No old run is relabeled as a paid test of an unmeasured runtime.
 
 ## Reproduction
 

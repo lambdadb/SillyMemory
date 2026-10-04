@@ -38,3 +38,12 @@ development client uses direct HTTPS/CORS with credentials omitted and redirects
 rejected; it does not call `/proxy/` or use host CSRF headers. Host chat/settings
 requests remain same-origin. See [direct CORS](direct-cors.md) for configuration,
 error/cleanup semantics and separately labeled live evidence.
+
+## Current default storage contract
+
+The original request table above used `main` in the initial transport fixture.
+The current product always sends the selected `chat_<ID>` branch, uses an
+owner/story scope filter and verifies the collection’s owner/story tags. Generic
+transport tests still use `main`. Branch list/create/delete, committed-list and
+consistent-fetch contracts are exercised by the [default story acceptance](default-story-memory.md).
+No old per-chat or shared-collection mode remains.
