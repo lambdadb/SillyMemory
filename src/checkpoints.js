@@ -1,3 +1,4 @@
+import { sameDocument, waitForCommit } from './commit.js';
 import { ConnectionError } from './client.js';
 import { capture, digest, documents, Journal, MemoryEngine, options } from './memory.js';
 import { chatCollection } from './chat-collections.js';
@@ -67,12 +68,19 @@ export async function finishCheckpoint({ host, client, collections, owner, file,
     const journal = new Journal({ getItem: k => storage.get(k), setItem: (k, v) => storage.set(k, v) }, 'checkpoint');
     const engine = new MemoryEngine({ client, owner, ...entry, journal });
     await engine.sync(snapshot, config, valid);
+    current(valid);
     const desired = (await documents(snapshot, owner, config)).docs;
-    await poll(async () => {
+    const matches = async () => {
         current(valid);
         const committed = await client.listDocs(entry.collection, entry.branch);
-        return committed.length === desired.length && desired.every(d => committed.some(c => Object.keys(d).every(k => c[k] === d[k])));
-    }, { attempts: 120, delayMs: 1000 });
+        current(valid);
+        const byId = new Map(committed.map(d => [d.id, d]));
+        return committed.length === desired.length && desired.every(d => sameDocument(d, byId.get(d.id)));
+    };
+    if (await waitForCommit(client, entry.collection, entry.branch, valid)) {
+        // The small commit barrier never replaces this complete snapshot check.
+        if (!await matches()) fail('Committed checkpoint content does not match the saved transcript. Retry preparation.');
+    } else await poll(matches, { attempts: 120, delayMs: 1000 });
     current(valid);
     const branch = (await client.branches(entry.collection)).find(b => b.name === entry.branch);
     if (!branch) fail('Checkpoint branch is not confirmed. Retry preparation.');

@@ -50,11 +50,16 @@ saved in native chat metadata; it is not a browser-only preference.
   preserves identity. Copies and unverifiable parent references get an independent
   story, so missing/renamed/deleted parents can cost another initial indexing.
   Branching an already-versioned branch follows the same rule.
-- Before a fork, fetch matching source documents with `consistentRead: true`,
-  then poll them with `false` until committed. An upsert acknowledgement alone is
-  not sufficient. Polling allows 120 attempts with one-second intervals **per
-  batch of up to 100 matching documents**; each HTTP request retains the normal
-  15-second timeout. This is not a two-minute whole-operation deadline.
+- Before a fork, confirm committed state. When the current client observed the
+  actual final write and its expected value was not already committed beforehand,
+  poll just that document with `consistentRead: false`. Ordered branch commits
+  make its arrival evidence for earlier writes. Reuse that confirmation until
+  another write; a new successfully created branch already contains committed
+  state. An upsert acknowledgement alone is not enough. Unknown/reloaded,
+  ambiguous or deletion-only histories keep the original full inherited-document
+  checks. See [commit confirmation and its limits](commit-confirmation.md).
+  Polling allows 120 attempts with one-second intervals per witness/fallback batch;
+  each request retains its 15-second timeout. This is not a whole-operation deadline.
 - Fork the committed source branch. On first use, reload or an uncertain request,
   list committed documents and fetch expected IDs consistently. Adopt only exact
   field matches; delete obsolete/future/protected-recent chunks, then upsert only
