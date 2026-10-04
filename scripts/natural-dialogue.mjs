@@ -73,7 +73,7 @@ export async function auditNaturalDialogue(fixture = loadNaturalFixture()) {
     const cases = naturalCases(fixture), config = options(fixture.settings), rows = [];
     for (const item of cases) {
         const chat = [...item.input.source, { mes: item.input.question, name: 'User', is_user: true, is_system: false, extra: {} }];
-        const snapshot = capture({ chat, characterId: 0, characters: [{ avatar: `${item.story}.png` }], getCurrentChatId: () => item.id });
+        const snapshot = capture({ chat, characterId: 0, characters: [{ avatar: `${item.story}.png` }], chatMetadata: { sillymemory: { version: 1, id: item.id, story: item.id } }, getCurrentChatId: () => item.id });
         const prepared = await documents(snapshot, 'synthetic-natural-protocol-owner', config);
         const evidence = item.rubric.requiredEvidence.map(ref => {
             const matches = prepared.docs.filter(doc => doc.message === ref.message && doc.text.includes(ref.quote));

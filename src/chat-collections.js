@@ -4,13 +4,11 @@ import { poll } from './gate.js';
 import { digest, documents, options } from './memory.js';
 
 const idPattern = /^[a-f0-9]{32}$/;
-export const ownedMemoryName = name => /^(smchat_[a-f0-9]{40}|smstory_[a-f0-9]{40}|sillymemory_[a-f0-9]{32})$/.test(name);
+export const ownedMemoryName = name => /^smstory_[a-f0-9]{40}$/.test(name);
 export async function chatCollection(snapshot, owner) {
-    if (snapshot.memory && (!idPattern.test(snapshot.memory.story || '') || !idPattern.test(snapshot.chat || '') || (snapshot.memory.source && !idPattern.test(snapshot.memory.source)))) throw new ConnectionError('Invalid story memory identity.');
-    const scope = await digest(JSON.stringify([owner, snapshot.character, snapshot.memory?.story || snapshot.chat]));
-    return snapshot.memory
-        ? { collection: `smstory_${scope.slice(0, 40)}`, scope, branch: `chat_${snapshot.chat}`, ...(snapshot.memory.source ? { source: `chat_${snapshot.memory.source}` } : {}) }
-        : { collection: `smchat_${scope.slice(0, 40)}`, scope };
+    if (!snapshot.memory || (!idPattern.test(snapshot.memory.story || '') || !idPattern.test(snapshot.chat || '') || (snapshot.memory.source && !idPattern.test(snapshot.memory.source)))) throw new ConnectionError('Invalid story memory identity.');
+    const scope = await digest(JSON.stringify([owner, snapshot.character, snapshot.memory.story]));
+    return { collection: `smstory_${scope.slice(0, 40)}`, scope, branch: `chat_${snapshot.chat}`, ...(snapshot.memory.source ? { source: `chat_${snapshot.memory.source}` } : {}) };
 }
 
 // Native branches change integrity but can inherit extension metadata. Imports
@@ -26,20 +24,21 @@ export async function ensureChatIdentity(ctx, saveChat, valid = () => true, fetc
     const inventory = await request('/api/characters/chats', { avatar_url: avatar, metadata: true });
     if (!Array.isArray(inventory)) throw new ConnectionError('Could not read the chat inventory. Save the chat and retry.');
     if (!valid()) return false;
-    let id = ctx.chatMetadata.sillymemory?.id;
+    const memory = ctx.chatMetadata.sillymemory;
+    if (memory && (memory.version !== 1 || !idPattern.test(memory.id || '') || !idPattern.test(memory.story || '') || (memory.source && !idPattern.test(memory.source)))) throw new ConnectionError('Invalid story memory identity.');
+    let id = memory?.id;
     const duplicate = inventory.some(chat => chat.file_name !== `${file}.jsonl` && chat.chat_metadata?.sillymemory?.id === id
         && chat.chat_metadata?.sillymemory?.integrity === chat.chat_metadata?.integrity);
     let changed = false;
     if (!idPattern.test(id || '') || duplicate || ctx.chatMetadata.sillymemory?.integrity !== ctx.chatMetadata.integrity) {
         const old = ctx.chatMetadata.sillymemory;
         const parent = inventory.find(c => c.file_name === `${ctx.chatMetadata.main_chat}.jsonl`)?.chat_metadata;
-        const inherited = old?.version === 1 && idPattern.test(old.story || '') && idPattern.test(old.id || '');
-        const nativeFork = inherited && old.integrity !== ctx.chatMetadata.integrity
+        const nativeFork = old && old.integrity !== ctx.chatMetadata.integrity
             && parent?.sillymemory?.id === old.id && parent?.integrity === old.integrity
             && parent?.sillymemory?.story === old.story;
         id = crypto.randomUUID().replaceAll('-', '');
-        ctx.chatMetadata.sillymemory = { id, integrity: ctx.chatMetadata.integrity,
-            ...(inherited ? { version: 1, story: nativeFork ? old.story : id, ...(nativeFork ? { source: old.id } : {}) } : {}) };
+        ctx.chatMetadata.sillymemory = { version: 1, id, story: nativeFork ? old.story : id, integrity: ctx.chatMetadata.integrity,
+            ...(nativeFork ? { source: old.id } : {}) };
         changed = true;
     }
     const saved = inventory.find(chat => chat.file_name === `${file}.jsonl`)?.chat_metadata;
@@ -71,7 +70,7 @@ export class ChatCollections {
             catch (error) { if (error.status !== 409) throw error; }
             await this.client.assertOwned(entry.collection, this.owner, undefined, entry.scope);
         }
-        if (entry.branch) {
+        {
             const branches = await this.client.branches(entry.collection);
             if (!valid()) return null;
             if (!branches.some(b => b.name === entry.branch)) {

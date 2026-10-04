@@ -342,7 +342,7 @@ record remains. Browser storage and persisted settings contained no real key.
 The final source/report scan found neither configured API key, and `.env.local`
 remained unchanged, ignored, and untracked. The report's tested source hashes
 match the final runtime and harness files. Review live-faults.json (`artifacts/live-faults.json`, local-only),
-the [live runner](../scripts/live-smoke.mjs), and [live fault scenarios](../scripts/live-fault-scenarios.mjs).
+the [live runner](https://github.com/lambdadb/SillyMemory/blob/ae53978bf1d27950b12922340a6ea1ac8d1b4baf/scripts/live-smoke.mjs), and [live fault scenarios](https://github.com/lambdadb/SillyMemory/blob/ae53978bf1d27950b12922340a6ea1ac8d1b4baf/scripts/live-fault-scenarios.mjs).
 
 These checks establish bounded recovery for the tested cases. They do not test
 long-duration load, a genuine LambdaDB outage, server restart during a request,

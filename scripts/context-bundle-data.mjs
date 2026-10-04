@@ -8,7 +8,7 @@ import { validateSemanticCase, sourceExcerpt, evidenceCoverage } from './semanti
 
 async function sourceDocuments(item, id, recent) {
     const chat = hostSource(item); chat.push({ mes: item.question, name: 'User', is_user: true });
-    const snapshot = capture({ chat, characterId: 0, characters: [{ avatar: 'synthetic.png' }], getCurrentChatId: () => id });
+    const snapshot = capture({ chat, characterId: 0, characters: [{ avatar: 'synthetic.png' }], chatMetadata: { sillymemory: { version: 1, id: id, story: id } }, getCurrentChatId: () => id });
     return { snapshot, ...(await documents(snapshot, 'offline-context-bundle', { recent, chunkChars: 800 })) };
 }
 export async function freshBundleInputs() {

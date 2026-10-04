@@ -12,7 +12,6 @@ const large = process.argv.includes('--large-history');
 const manager = process.argv.includes('--checkpoint-manager');
 const recovery = process.argv.includes('--checkpoint-recovery') || manager;
 const checkpoints = process.argv.includes('--checkpoints') || recovery;
-const versioned = process.argv.includes('--versioned') || checkpoints;
 const root = path.resolve(new URL('..', import.meta.url).pathname);
 const source = process.env.ST_SOURCE || '/tmp/sillymemory-st-source';
 const revision = '06bde939fb1e9c4c8d8641d810f0a916b5bce127';
@@ -22,14 +21,14 @@ const env = parseEnv(await readFile(process.env.SM_ENV_FILE || path.join(root, '
 const credentials = { endpoint: env.LAMBDADB_BASE_URL, project: env.LAMBDADB_PROJECT_NAME, key: env.LAMBDADB_PROJECT_API_KEY };
 assert(Object.values(credentials).every(Boolean), 'Missing LambdaDB credentials');
 const work = await mkdtemp(path.join(tmpdir(), 'sm-chat-collections-'));
-const artifactTag = process.env.SM_ARTIFACT_TAG || (recovery ? 'checkpoint-recovery' : checkpoints ? 'checkpoint-host' : versioned ? 'versioned-host' : 'collections-host');
+const artifactTag = process.env.SM_ARTIFACT_TAG || (recovery ? 'checkpoint-recovery' : checkpoints ? 'checkpoint-host' : 'collections-host');
 assert(/^[a-zA-Z0-9][a-zA-Z0-9._-]{0,79}$/.test(artifactTag));
 const artifacts = path.join(root, 'artifacts', artifactTag); await mkdir(artifacts, { recursive: true });
 const pendingPath = path.join(artifacts, 'chat-collections-live-pending.json');
 const pending = []; await writeFile(pendingPath, '[]', { flag: 'wx' });
 const sourceSha256 = {};
 for (const file of ['index.js', 'settings.html', 'style.css', 'src/chat-collections.js', 'src/client.js', 'src/commit.js', 'src/memory.js', 'src/status.js', 'src/checkpoints.js', 'scripts/chat-collections-live.mjs']) sourceSha256[file] = createHash('sha256').update(await readFile(path.join(root, file))).digest('hex');
-const report = { large, manager, recovery, checkpoints, versioned, upserts: [], fetches: [], time: new Date().toISOString(), host: revision, sourceSha256, checks: [], responses: [], proxyRequests: 0, pageErrors: [], cleanup: false, passed: false };
+const report = { large, manager, recovery, checkpoints, upserts: [], fetches: [], time: new Date().toISOString(), host: revision, sourceSha256, checks: [], responses: [], proxyRequests: 0, pageErrors: [], cleanup: false, passed: false };
 const check = (name, ok) => { assert(ok, name); report.checks.push(name); console.log(`PASS ${name}`); };
 const url = `http://127.0.0.1:${Number(process.env.ST_LIVE_PORT || 18147)}`;
 let server, browser, page, panel, connect, stage = 'startup';
@@ -134,7 +133,7 @@ try {
             c.chat.splice(0, c.chat.length, ...Array.from({ length: 1000 }, (_, i) => ({ mes: `Synthetic expedition entry ${i}. ${text.repeat(3).slice(0, 450)}`, name: i % 2 ? 'Mira' : 'User', is_user: !(i % 2), is_system: false, send_date: 0, extra: {} })));
             await c.saveChat();
         });
-        await panel(); await field('versioned').click(); await status('Versioned story memory is ready');
+        await panel();
         await measure('large initial sync', async () => {
             await field('enabled').check(); await status('synchronized'); await field('enabled').uncheck();
         });
@@ -165,7 +164,7 @@ try {
         const c = SillyTavern.getContext(); c.chat.splice(0, c.chat.length, ...Array.from({ length: 6 }, (_, i) => ({ mes: i === 0 ? 'The blue compass is beneath the cedar tree.' : `Synthetic turn ${i}: tell me about the blue compass.`, name: i % 2 ? 'Mira' : 'User', is_user: !(i % 2), is_system: false, send_date: 0, extra: {} })));
         await c.saveChat();
     });
-    if (versioned) { await panel(); await field('versioned').click(); await status('Versioned story memory is ready'); }
+    check('story branches are the only storage mode; no opt-in control', await field('versioned').count() === 0);
     stage = 'parent'; await field('enabled').check(); await status('synchronized');
     const parent = await identity(), parentRows = await inspect(parent);
     check('parent managed collection contains four current documents', parentRows.length === 4);
@@ -180,8 +179,8 @@ try {
     stage = 'branch';
     await page.evaluate(async () => { const c = SillyTavern.getContext(), { createBranch } = await import('/scripts/bookmarks.js'); const branch = await createBranch(c.chat.length - 1); await c.openCharacterChat(branch); });
     await status('synchronized'); const branch = await identity();
-    check('native branch gets isolated memory and complete source', (versioned ? branch.collection === parent.collection && branch.branch !== parent.branch : branch.collection !== parent.collection) && (await inspect(branch)).length === 4);
-    if (versioned) check('unchanged native fork performs zero document upserts', !report.upserts.some(r => r.stage === 'branch'));
+    check('native branch gets isolated memory and complete source', (branch.collection === parent.collection && branch.branch !== parent.branch) && (await inspect(branch)).length === 4);
+    check('unchanged native fork performs zero document upserts', !report.upserts.some(r => r.stage === 'branch'));
     stage = 'branch edit';
     await page.evaluate(async () => { const c = SillyTavern.getContext(); c.chat[0].mes = 'The silver compass is in the stone tower.'; await c.saveChat(); await c.eventSource.emit(c.eventTypes.MESSAGE_UPDATED, 0); });
     await status('synchronized');
@@ -207,9 +206,9 @@ try {
     await page.locator('#rightNavHolder .drawer-toggle').click(); await page.locator('.character_select').filter({ hasText: 'Collection Lifecycle' }).click();
     await page.evaluate(async name => SillyTavern.getContext().openCharacterChat(name), renamed.file);
     await connect(); await field('enabled').check(); await status('synchronized');
-    check('reload reconnects renamed parent without another collection', (await identity()).collection === parent.collection && pending.length === (versioned ? 3 : 4));
-    if (versioned) check('reload performs zero unchanged document upserts', !report.upserts.some(r => r.stage === 'reload'));
-    if (versioned) {
+    check('reload reconnects renamed parent without another collection', (await identity()).collection === parent.collection && pending.length === 3);
+    check('reload performs zero unchanged document upserts', !report.upserts.some(r => r.stage === 'reload'));
+    {
         stage = 'earlier branch';
         await page.evaluate(async () => { const c = SillyTavern.getContext(), { createBranch } = await import('/scripts/bookmarks.js'); const file = await createBranch(3); await c.openCharacterChat(file); });
         await status('synchronized'); const earlier = await identity(), rows = await inspect(earlier);

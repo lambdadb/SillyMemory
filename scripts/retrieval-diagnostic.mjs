@@ -74,7 +74,7 @@ try {
     for(const scenario of scenarios) {
         for(const item of scenario.cases) {
             const variants=queryVariants(scenario.messages,item.question);
-            const snapshot={character:'diagnostic-mira.png',chat:scenario.id,messages:[...scenario.messages,{name:'User',is_user:true,mes:variants.latest}].map((m,index)=>({index,text:m.mes,name:m.name,user:m.is_user,swipe:0,eligible:true}))};
+            const snapshot={character:'diagnostic-mira.png',chat:scenario.id,memory:{story:scenario.id},messages:[...scenario.messages,{name:'User',is_user:true,mes:variants.latest}].map((m,index)=>({index,text:m.mes,name:m.name,user:m.is_user,swipe:0,eligible:true}))};
             const prepared=await documents(snapshot,owner,report.config);
             if(!corpus.some(d=>d.scope===prepared.scope))corpus.push(...prepared.docs);
             const targets=item.required?prepared.docs.filter(d=>item.required.every(p=>normalize(d.text).includes(normalize(p)))).map(d=>d.id):[];

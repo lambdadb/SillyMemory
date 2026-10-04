@@ -52,6 +52,14 @@ Keep manifest, package and root lockfile versions equal. Development candidates
 use an `Unreleased` changelog date; main promotion requires a reviewed date.
 A main merge makes code available to branch-based installers immediately.
 
+## Pre-release storage scope
+
+There are no installed users or existing user chats to migrate. Story collections
+and chat branches are the only supported storage model. Do not add legacy modes,
+conversion UI or previous-layout cleanup paths without a new product requirement.
+Keep format/ownership checks and failure recovery; these are current safety
+invariants, not compatibility support. Preserve historical experiment evidence.
+
 ## Validation and evidence
 
 Run `npm test`, `npm run check`, and `npm run check:release`. CI checks all runtime, script, and test syntax

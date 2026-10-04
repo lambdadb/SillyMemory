@@ -4,6 +4,21 @@ Versions describe the extension, independently of the SillyTavern host version.
 An `Unreleased` entry is a development candidate. A dated entry records a release
 boundary; publication is confirmed by the corresponding Git tag and GitHub Release.
 
+## [0.4.0] - Unreleased
+
+### Changed
+
+- Story collections and isolated chat branches are now the only memory storage
+  model. Enabling a fresh chat persists its complete story identity before any
+  remote request; native forks automatically reuse committed history.
+- Removed the opt-in conversion button, per-chat/shared collection paths and
+  previous-release upgrade adapter. This experimental project has no installed
+  user data to migrate; unsupported metadata fails safely without conversion.
+- Checkpoints remain explicitly saved and resumed. Session-only keys, managed
+  embeddings, current-source validation and scoped cleanup remain unchanged.
+- Fresh installation and current story lifecycle checks replace the historical
+  upgrade compatibility test. Original experiment evidence is retained.
+
 ## [0.3.0] - 2026-10-04
 
 ### Added

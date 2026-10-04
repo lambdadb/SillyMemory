@@ -33,7 +33,7 @@ const rows = []; let reproduced = 0;
 try {
     for (const row of evaluation.rows.filter(row => row.mode === 'on')) {
         const item = cases.get(row.case), messages = [...item.input.source, { mes: item.input.question, name: 'User', is_user: true }];
-        const snapshot = capture({ chat: messages, characterId: 0, characters: [{ avatar: 'synthetic.png' }], getCurrentChatId: () => row.id });
+        const snapshot = capture({ chat: messages, characterId: 0, characters: [{ avatar: 'synthetic.png' }], chatMetadata: { sillymemory: { version: 1, id: row.id, story: row.id } }, getCurrentChatId: () => row.id });
         // Telemetry appends requests on completion. Restore runtime query order.
         const queries = retrievalQueries(snapshot), hits = queries.map(query => row.queries.find(search => search.query === query).hits);
         const docs = [...new Map(hits.flat().map(hit => [hit.id, hit])).values()];

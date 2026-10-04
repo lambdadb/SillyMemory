@@ -22,8 +22,7 @@ export function capture(context) {
         eligible: !m.extra?.file && !m.extra?.media?.length && !m.extra?.tool_invocations?.length,
     }));
     const metadata = context.chatMetadata?.sillymemory;
-    return { character: avatar, chat: metadata?.id || context.getCurrentChatId(), messages,
-        ...(metadata?.version === 1 ? { memory: { story: metadata.story, source: metadata.source } } : {}) };
+    return { character: avatar, chat: metadata?.id, messages, memory: { story: metadata?.story, source: metadata?.source } };
 }
 export function fingerprint(snapshot) { return JSON.stringify(snapshot); }
 export const RETRIEVAL_POLICY = 'latest-anchor-with-context-selection-v5';
@@ -59,7 +58,8 @@ export function interleaveHits(lists) {
 }
 export function chunks(text, limit) { return chunkSpans(text, limit).map(span => span.text); }
 export async function documents(snapshot, owner, config) {
-    const scope = await digest(JSON.stringify([owner, snapshot.character, snapshot.memory?.story || snapshot.chat]));
+    if (!snapshot.memory?.story || !snapshot.chat) throw new Error('Missing story memory identity.');
+    const scope = await digest(JSON.stringify([owner, snapshot.character, snapshot.memory.story]));
     const docs = [];
     for (const m of snapshot.messages.slice(0, -config.recent)) {
         if (!m.eligible || !m.text.trim()) continue;
@@ -175,6 +175,7 @@ export class Journal {
 
 export class MemoryEngine {
     constructor({ client, owner, collection, scope, branch, journal, lock = job => job() }) {
+        if (!branch || branch === 'main') throw new Error('A chat memory branch is required.');
         Object.assign(this, { client, owner, collection, scope, branch, journal, lock });
         this.queue = Promise.resolve(); this.acknowledged = new Set(); this.generation = 0;
         this.pendingReads = new AbortController();
@@ -203,7 +204,7 @@ export class MemoryEngine {
             const { scope, docs } = prepared;
             const ids = docs.map(d => d.id); const desired = new Set(ids);
             let previous = this.journal.read(scope), committed;
-            if (this.branch && !this.remoteLoaded) {
+            if (!this.remoteLoaded) {
                 // A journal is not an acknowledgement. Inspect remote content after
                 // fork/reload or an uncertain write before deciding what to resubmit.
                 const remote = await this.client.listDocs(this.collection, this.branch);
@@ -228,7 +229,7 @@ export class MemoryEngine {
             const removed = previous.filter(id => !desired.has(id));
             const pending = docs.filter(d => !this.acknowledged.has(d.id));
             let witness;
-            if (this.branch && (removed.length || pending.length)) {
+            if (removed.length || pending.length) {
                 const usable = beginWrites(this.client, this.collection, this.branch, pending);
                 const last = pending.at(-1); // Last actual upsert, not last transcript chunk.
                 if (usable) {
@@ -261,7 +262,7 @@ export class MemoryEngine {
             this.journal.write(scope, ids);
             if (witness) recordWrite(this.client, this.collection, this.branch, witness);
             return prepared;
-        }).catch(error => { this.remoteLoaded = false; if (this.branch) clearCommit(this.client, this.collection, this.branch); throw error; });
+        }).catch(error => { this.remoteLoaded = false; clearCommit(this.client, this.collection, this.branch); throw error; });
     }
     async retrieve(snapshot, config, countTokens, valid = () => true, progress = () => {}, type = 'normal') {
         const generation = this.generation;
@@ -294,10 +295,8 @@ export class MemoryEngine {
     async deleteAll() {
         this.invalidate();
         await this.serial(async () => {
-            if (this.branch) {
-                await this.client.assertOwned(this.collection, this.owner, undefined, this.scope);
-                await this.client.deleteBranch(this.collection, this.branch);
-            } else await this.client.deleteOwnedCollection(this.collection, this.owner, this.scope);
+            await this.client.assertOwned(this.collection, this.owner, undefined, this.scope);
+            await this.client.deleteBranch(this.collection, this.branch);
             this.journal.clear(); this.acknowledged.clear();
         });
     }

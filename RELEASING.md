@@ -116,75 +116,30 @@ fetch `git fetch origin main:refs/remotes/origin/main`, then use
 `git switch -c main --track origin/main` instead. These examples only work after
 that tag exists. Check GitHub Releases before choosing a rollback target.
 
-Code rollback does not undo LambdaDB writes, chat edits or data migrations.
-Review each release's compatibility notes before downgrading. The installation
-smoke test checks the published 0.2.0 → candidate → 0.2.0 → candidate code changes. In live
-mode it removes the test's remote data before rollback; it does not prove that
-0.2.0 can manage 0.3.0 story branches or reverse data/metadata changes.
+Code rollback does not restore local or remote data. This pre-release project
+has no user data migration contract; do not make storage compatibility claims
+from code installation checks. Historical release acceptance remains in
+[0.3.0 validation](docs/releases/0.3.0-validation.md).
 
-## Installation smoke test
-
-The [0.3.0 acceptance record](docs/releases/0.3.0-validation.md) verifies the
-0.2.0-to-0.3.0 UI upgrade, opt-in branch/checkpoint lifecycle and complete cleanup.
-The runner is intentionally locked to the historical 0.2.0 public baseline. After
-0.3.0 promotion, review that baseline before using it for another release; do not
-present an old run as a fresh installation test.
-
-The 0.2.0 direct-CORS release is tested with the host proxy disabled. Its
-[current transport evidence](docs/direct-cors.md) supplements earlier proxy-path
-release checks; the [final acceptance record](docs/releases/0.2.0-validation.md#final-publication-acceptance) covers the combined release tree.
+## Fresh installation smoke test
 
 Use an isolated pinned host checkout with no global SillyMemory symlink. The
-script creates/removes its own host data directory and browser profile. It
-installs public main from the actual GitHub URL through the UI. In the disposable
-installed clone, it finds the common ancestor of main and the candidate and
-requires its tree to equal the installed main tree. It creates a local branch
-there tracking the published candidate PR branch, then clicks the actual UI
-Update button. This avoids the divergent merge-commit history of the two
-long-lived branches while preserving exactly the installed files. This
-checks real GitHub fetch/pull without promoting public main or publishing a tag.
-It also checks version display, settings/owner preservation, key clearing and
-commit rollback/return. By default it makes no LambdaDB/model calls.
+runner installs the requested GitHub branch through the actual installation UI,
+checks its exact commit, branding/version, saved preferences and session-key
+clearing, then removes its disposable profile. It makes no provider/model calls.
 
 ```sh
 ST_SOURCE=/path/to/isolated/pinned/SillyTavern \
-SM_UPDATE_BRANCH=your-published-candidate-branch SM_ARTIFACT_TAG=install-unique \
+SM_INSTALL_BRANCH=your-published-candidate-branch SM_ARTIFACT_TAG=install-unique \
   npm run test:install
 ```
 
-The test branch must exist on GitHub and differ from main. The report identifies
-the exact commits; it must not be presented as a published main-to-main release
-upgrade. Artifact tags must be unique. Reports/screenshots stay in ignored local
-`artifacts/`; checked-in validation records retain results and limits.
+The branch must exist on GitHub. Omit `SM_INSTALL_BRANCH` to test public main.
+A candidate-branch installation is not a main deployment. Reports/screenshots
+stay under ignored `artifacts/`; retain concise results and exact source hashes.
 
-For the bounded real managed-memory upgrade check, use the same isolated host:
-
-```sh
-ST_SOURCE=/path/to/isolated/pinned/SillyTavern \
-SM_ENV_FILE=/absolute/path/to/.env.local \
-SM_UPDATE_BRANCH=your-published-candidate-branch SM_ARTIFACT_TAG=upgrade-unique \
-  npm run test:install -- --live-memory
-```
-
-This reads the existing `LAMBDADB_BASE_URL`, `LAMBDADB_PROJECT_NAME` and
-`LAMBDADB_PROJECT_API_KEY` values. It creates at most three synthetic owned
-collections (transport gate, published per-chat memory, opted-in story family)
-and submits at most 50 documents. Both baseline and candidate run with the host
-proxy disabled. The fixture explicitly requires the published 0.2.0 baseline;
-review it when that baseline changes rather than silently reusing old expectations.
-
-It verifies settings/ownership and old per-chat data preservation, no automatic
-story opt-in, explicit story indexing, zero-upsert native forks and checkpoint
-save/resume, edit isolation, managed queryText through the interceptor, key re-entry,
-scoped/all-owned deletion, and code rollback/return after remote cleanup. No
-generation model is called; the final-prompt event is synthetic. This does not
-establish answer quality, provider-generation reliability, or rollback of opted-in
-metadata. Screenshots are disabled in live mode, credentials are redacted from
-reports, and keys must be absent from persistent browser/host settings.
-
-Cleanup confirms each recorded collection is unavailable. A failed cleanup
-preserves `artifacts/<tag>-pending.json` and the isolated host profile named in
-the report. Resolve those owned resources before rerunning; never discard the
-pending record while remote cleanup is uncertain. Raw reports stay local and
-ignored; archive exact reports/producer source with checksums and record their
-availability in the release validation document.
+Use `scripts/chat-collections-live.mjs --checkpoint-manager` for bounded current
+story/branch/checkpoint acceptance with real managed embeddings. See
+[default story memory](docs/default-story-memory.md) for the current acceptance
+scope and retained evidence. The previous 0.2.0 upgrade/rollback adapter is
+archived; it is no longer a compatibility requirement.
