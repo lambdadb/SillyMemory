@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import assert from 'node:assert/strict';
-export const rerankFiles = ['src/commit.js', 'src/checkpoints.js', 'scripts/rerank-query.mjs', 'scripts/rerank-eval.mjs', 'tests/fixtures/rerank-v1.json', 'docs/managed-reranking-protocol.md'];
+export const rerankFiles = ['src/commit.js', 'src/checkpoints.js', 'scripts/rerank-query.mjs', 'scripts/hybrid-query.mjs', 'scripts/rerank-eval.mjs', 'tests/fixtures/rerank-v1.json', 'docs/managed-reranking-protocol.md'];
 const bytes = readFileSync(new URL('../tests/fixtures/rerank-v1.json', import.meta.url));
 export const rerankFixtureHash = createHash('sha256').update(bytes).digest('hex');
 export const rerankCases = JSON.parse(bytes).cases.map(item => ({ ...item,
@@ -25,10 +25,10 @@ export function compareCandidateSets(left, right) {
     return a.every((query, index) => query.text === b[index].text &&
         JSON.stringify(query.hits.map(d => d.id).sort()) === JSON.stringify(b[index].hits.map(d => d.id).sort()));
 }
-export async function runRerank({ page, field, openSettings, waitStatus, generate, setStage, result, checkpoint, credentials }) {
+export async function runRerank({ page, field, openSettings, waitStatus, generate, setStage, result, checkpoint, credentials, contractOnly = false, preflightModes = ['rerank'] }) {
     Object.assign(result, { version: 'rerank-v1', fixtureSha256: rerankFixtureHash, settings: { context: 32768, recent: 4, budget: 800, size: 30, k: 30, candidateSize: 30 }, rows: [], complete: false });
     setStage('rerank/contract-preflight');
-    result.preflight = await page.evaluate(async credentials => {
+    result.preflight = await page.evaluate(async ({ credentials, preflightModes }) => {
         const { LambdaClient, scopeFilter } = await import('/scripts/extensions/third-party/sillymemory/src/client.js');
         const { rerankSearch } = await import('/scripts/extensions/third-party/sillymemory/scripts/rerank-query.mjs');
         const owner = SillyTavern.getContext().extensionSettings.sillymemory.owner;
@@ -43,17 +43,21 @@ export async function runRerank({ page, field, openSettings, waitStatus, generat
             await client.createBranch(collection, branch);
             await client.upsert(collection, [{ id: 'sibling-only', owner, scope, text: 'The brass compass is in the attic cabinet.' }]);
             await client.upsert(collection, docs, undefined, branch);
-            const hits = await rerankSearch(trace).call(client, collection, owner, scope, 'Where is the brass compass?', undefined, branch);
-            if (hits.length !== 1 || hits[0].id !== 'allowed') throw new Error('Reranking isolation failed');
-            if (trace.queries[0].rerank.status !== 'applied') throw new Error('Preflight reranking was not applied');
+            for (const mode of preflightModes) {
+                trace.mode = mode;
+                const hits = await rerankSearch(trace).call(client, collection, owner, scope, 'Where is the brass compass?', undefined, branch);
+                if (hits.length !== 1 || hits[0].id !== 'allowed') throw new Error('Reranking isolation failed');
+                if (trace.queries.at(-1).rerank.status !== 'applied') throw new Error('Preflight reranking was not applied');
+            }
             await client.deleteIds(collection, docs.map(d => d.id), undefined, branch);
             if ((await client.query(collection, scopeFilter(owner, scope), { branch })).length) throw new Error('Deleted preflight evidence remains visible');
         } catch (e) { error = { message: e.message, status: e.status, code: e.code }; }
         finally { try { await client.deleteOwnedCollection(collection, owner); } finally { client.forget(); } }
         return { passed: !error, error, queries: trace.queries, cleanup: true };
-    }, credentials);
+    }, { credentials, preflightModes });
     await checkpoint(); assert(result.preflight.passed, `Rerank preflight failed: ${result.preflight.error?.message}`);
     console.log('PASS managed Jev score metadata, owner/scope/branch isolation and deletion');
+    if (contractOnly) return;
     await field('recent').fill('4'); await field('recent').dispatchEvent('change');
     await field('budget').fill('800'); await field('budget').dispatchEvent('change');
     await page.evaluate(async () => {
