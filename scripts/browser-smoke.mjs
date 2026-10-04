@@ -256,6 +256,42 @@ try {
         // Restore the synthetic legacy fixture for this emulator's existing cleanup.
         await page.evaluate(async legacy => { const c = SillyTavern.getContext(); c.chatMetadata.sillymemory = legacy; await c.saveChat(); }, legacy);
     }
+    if (!faultMode) {
+        // Native chat-list entry must enforce the same identity checks as manager rows.
+        const originalFile = await page.evaluate(() => SillyTavern.getContext().getCurrentChatId());
+        for (const state of ['ready', 'pending']) {
+            await page.evaluate(async state => {
+                const c = SillyTavern.getContext();
+                const { checkpointDigest } = await import('/scripts/extensions/third-party/sillymemory/src/checkpoints.js');
+                const rows = [{ chat_metadata: { integrity: 'duplicate-native', sillymemory: {
+                    id: 'd'.repeat(32), story: 'e'.repeat(32), version: 1, integrity: 'duplicate-native',
+                    checkpoint: { state, snapshot: null, createdAt: '2026-01-01T00:00:00Z' },
+                } } }, { mes: 'Synthetic duplicate checkpoint.', name: 'Mira', is_user: false }];
+                rows[0].chat_metadata.sillymemory.checkpoint.hash = await checkpointDigest(rows);
+                for (const name of ['Duplicate checkpoint A', 'Duplicate checkpoint B']) {
+                    const response = await fetch('/api/chats/save', { method: 'POST', headers: c.getRequestHeaders(), body: JSON.stringify({ avatar_url: c.characters[c.characterId].avatar, file_name: name, force: false, chat: rows }) });
+                    if (!response.ok) throw new Error('Duplicate checkpoint fixture save failed');
+                }
+                await c.openCharacterChat('Duplicate checkpoint A');
+            }, state);
+            const before = calls.length;
+            await field('checkpoint-refresh').click();
+            await page.waitForFunction(() => !document.querySelector('[data-sm="checkpoint-refresh"]').disabled);
+            check(`${state} duplicate checkpoints are blocked in the manager`, (await field('checkpoint-list').innerText()).match(/Duplicate identity/g)?.length === 2 && await field('checkpoint-list').locator('button').count() === 0);
+            for (const button of ['checkpoint-save', 'checkpoint-resume']) {
+                await field(button).click();
+                await page.waitForFunction(button => !document.querySelector(`[data-sm="${button}"]`).disabled, button);
+                check(`${state} duplicate native checkpoint ${button} is rejected before remote access`, (await status()).includes('duplicated') && calls.length === before);
+            }
+        }
+        await page.evaluate(async originalFile => {
+            const c = SillyTavern.getContext(); await c.openCharacterChat(originalFile);
+            for (const name of ['Duplicate checkpoint A', 'Duplicate checkpoint B']) {
+                const response = await fetch('/api/chats/delete', { method: 'POST', headers: c.getRequestHeaders(), body: JSON.stringify({ avatar_url: c.characters[c.characterId].avatar, chatfile: `${name}.jsonl` }) });
+                if (!response.ok) throw new Error('Duplicate fixture cleanup failed');
+            }
+        }, originalFile);
+    }
     if (faultMode) { staleHits = []; faultResults = await runFaultScenarios({ page, field, waitStatus, prompt, check, faults, collections, calls, restartHost: recoveryMode ? async () => { const exited = new Promise(resolve => server.once('exit', resolve)); server.kill('SIGKILL'); await exited; await start(false); } : undefined, screenshot: name => page.screenshot({ path: path.join(artifacts, `${name}${artifactTag ? `-${artifactTag}` : ''}.png`) }) }); }
     else { page.once('dialog', dialog => dialog.accept()); await field('delete').click(); await waitStatus('no longer accessible'); }
     check('owned remote deletion leaves no collections', collections.size === 0);
@@ -263,7 +299,7 @@ try {
     check('final reload again requires key entry', await field('key').inputValue() === '' && !await field('enabled').isChecked());
     if (faultMode) check('fault run has no uncaught browser page errors', errors.length === 0);
     const sourceSha256 = {};
-    for (const file of ['index.js', 'manifest.json', 'settings.html', 'style.css', 'src/chunking.js', 'src/client.js', 'src/chat-collections.js', 'src/gate.js', 'src/memory.js', 'src/context.js', 'src/status.js', 'scripts/browser-smoke.mjs', 'scripts/emulator-cors.mjs', 'scripts/fault-scenarios.mjs', 'scripts/recovery-scenarios.mjs']) {
+    for (const file of ['index.js', 'manifest.json', 'settings.html', 'style.css', 'src/chunking.js', 'src/client.js', 'src/chat-collections.js', 'src/checkpoints.js', 'src/gate.js', 'src/memory.js', 'src/context.js', 'src/status.js', 'scripts/browser-smoke.mjs', 'scripts/emulator-cors.mjs', 'scripts/fault-scenarios.mjs', 'scripts/recovery-scenarios.mjs']) {
         sourceSha256[file] = createHash('sha256').update(await readFile(path.join(root, file))).digest('hex');
     }
     await writeFile(path.join(artifacts, artifactName), JSON.stringify({ passed: true, faultResults, sourceSha256, time: new Date().toISOString(), sillyTavern: revision, node: process.version, browser: browser.version(), upstream: 'Local HTTPS LambdaDB emulator; no live managed embeddings', checks, pageErrors: errors, requestCount: calls.length, preflights, proxyRequests, remainingCollections: collections.size }, null, 2));
