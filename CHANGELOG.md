@@ -4,6 +4,50 @@ Versions describe the extension, independently of the SillyTavern host version.
 An `Unreleased` entry is a development candidate. A dated entry records a release
 boundary; publication is confirmed by the corresponding Git tag and GitHub Release.
 
+## [0.3.0] - 2026-10-04
+
+### Added
+
+- Opt-in versioned story memory: one LambdaDB collection per story family and a
+  writable branch per native chat path. Unchanged committed history is inherited
+  without resubmitting documents, including after reload.
+- Remote reconciliation removes future/deleted/changed chunks from the selected
+  branch; current-chat deletion preserves its parent and siblings. All-owned
+  cleanup includes versioned story collections.
+- Save a native transcript/swipe checkpoint with a retained LambdaDB branch;
+  verify and resume it into independent new chats. Interrupted pending preparation
+  can be retried; altered transcripts or remote snapshots are rejected.
+
+- A current-story checkpoint manager with names, creation times, verified local/remote
+  states, pending retry, resume, rename and individually scoped deletion.
+
+### Changed
+
+- Confirm ordered branch commits using a session-known final write, avoiding
+  repeated full source reads. Reload, uncertain writes, deletion-only sync and
+  already-visible old values retain full checks; checkpoint contents are still
+  verified in full before readiness.
+
+### Fixed
+
+- Reject edits made during pending checkpoint preparation before readiness writes,
+  and protect the final host write with a short UI lock and saved-file recheck.
+- Recover ambiguous resume saves through a durable browser intent, reusing the
+  unchanged target after reload without overwriting an existing edited path.
+
+### Requirements and limits
+
+- Existing chats keep per-chat collections until **Use versioned memory for this
+  story** is selected. The first sync builds new managed memory; old collections
+  remain for explicit all-owned cleanup. Keys still clear on reload.
+- Forks may wait for acknowledged source documents to commit. Retrieval continues
+  to use direct-branch consistent reads and validation against local history.
+- Validated on SillyTavern 1.19.0 with synthetic managed-memory lifecycle cases.
+  Bounded 1,000-message reuse timings are recorded; no latency guarantee, new
+  answer-quality result or multi-device writer support is claimed.
+  Checkpoints cover chat state, not character cards or external/global state.
+  Version 0.2.0 cannot manage the new layout; see [usage, evidence and rollback](docs/versioned-memory.md).
+
 ## [0.2.0] - 2026-10-03
 
 ### Added

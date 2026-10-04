@@ -6,13 +6,12 @@ Release or highest version tag. Keep `main` at reviewed release boundaries.
 `develop` integrates ongoing work. Merge `develop` into `main` with a merge
 commit to preserve long-lived branch ancestry.
 
-The current release boundary is **0.2.0 (experimental)**, dated **2026-10-03**.
-See the [release notes](docs/releases/0.2.0.md) and
-[GitHub Releases](https://github.com/lambdadb/SillyMemory/releases) to confirm
-publication. No later candidate version is assigned yet. Start the next version
-with an `Unreleased` entry; never reuse a published version. Main promotion, tag
-push and GitHub Release publication require maintainer authorization, which may
-cover the full sequence in one request.
+The current release boundary is **0.3.0 (experimental)**, dated **2026-10-04**.
+See the [release notes](docs/releases/0.3.0.md), [validation record](docs/releases/0.3.0-validation.md)
+and [GitHub Releases](https://github.com/lambdadb/SillyMemory/releases) to confirm
+publication. Never reuse a published version. Main promotion, tag push and GitHub
+Release publication require maintainer authorization, which may cover the full
+sequence in one request.
 
 ## Version and changelog rules
 
@@ -68,19 +67,19 @@ After approval, in a clean checkout synchronized with the reviewed remote main:
 git fetch origin --tags
 git switch main
 git merge --ff-only origin/main
-npm run check:release -- --tag v0.2.0
+npm run check:release -- --tag v0.3.0
 # Confirm HEAD is the approved main commit before creating the tag.
-git tag -a v0.2.0 -m 'SillyMemory 0.2.0 (experimental)'
-git push origin refs/tags/v0.2.0
+git tag -a v0.3.0 -m 'SillyMemory 0.3.0 (experimental)'
+git push origin refs/tags/v0.3.0
 ```
 
 Use the actual approved version in these commands. The tag CI checks metadata,
 the dated changelog, tests and whether the tagged commit is contained in
 `origin/main`. Wait for it to pass before publishing the GitHub Release at that
-existing tag. Mark the experimental 0.2.0 release as **pre-release**, describing it as
+existing tag. Mark the experimental 0.3.0 release as **pre-release**, describing it as
 experimental and linking the installation guide. Use a reviewed release-notes
-file with `gh release create v0.2.0 --verify-tag --prerelease --title
-'SillyMemory 0.2.0 (experimental)' --notes-file docs/releases/0.2.0.md`.
+file with `gh release create v0.3.0 --verify-tag --prerelease --title
+'SillyMemory 0.3.0 (experimental)' --notes-file docs/releases/0.3.0.md`.
 
 Tags and Releases are not published automatically. CI detects mistakes after a
 push; it is not a server-side prohibition on changing branches or tags. Branch
@@ -107,7 +106,7 @@ in the installed extension's Git directory (normally
 git status --short
 # Stop if there are local modifications; preserve them rather than discarding them.
 git fetch origin --tags
-git switch --detach v0.1.0
+git switch --detach v0.2.0
 ```
 
 Reload afterward. A detached tag is a fixed build; do not use the Update button
@@ -119,11 +118,17 @@ that tag exists. Check GitHub Releases before choosing a rollback target.
 
 Code rollback does not undo LambdaDB writes, chat edits or data migrations.
 Review each release's compatibility notes before downgrading. The installation
-smoke test checks 0.1.0 → candidate → 0.1.0 → candidate code changes. In live
+smoke test checks the published 0.2.0 → candidate → 0.2.0 → candidate code changes. In live
 mode it removes the test's remote data before rollback; it does not prove that
-0.1.0 can manage 0.2.0 per-chat collections or reverse data/metadata changes.
+0.2.0 can manage 0.3.0 story branches or reverse data/metadata changes.
 
 ## Installation smoke test
+
+The [0.3.0 acceptance record](docs/releases/0.3.0-validation.md) verifies the
+0.2.0-to-0.3.0 UI upgrade, opt-in branch/checkpoint lifecycle and complete cleanup.
+The runner is intentionally locked to the historical 0.2.0 public baseline. After
+0.3.0 promotion, review that baseline before using it for another release; do not
+present an old run as a fresh installation test.
 
 The 0.2.0 direct-CORS release is tested with the host proxy disabled. Its
 [current transport evidence](docs/direct-cors.md) supplements earlier proxy-path
@@ -162,18 +167,20 @@ SM_UPDATE_BRANCH=your-published-candidate-branch SM_ARTIFACT_TAG=upgrade-unique 
 ```
 
 This reads the existing `LAMBDADB_BASE_URL`, `LAMBDADB_PROJECT_NAME` and
-`LAMBDADB_PROJECT_API_KEY` values. It creates at most four synthetic owned
-collections: transport gate, 0.1.0 shared memory, upgraded parent and native
-branch. Only the old 0.1.0 setup uses the proxy. After the UI update the runner
-restarts the isolated host with its proxy disabled, then records direct requests
-and collection intent at the canonical endpoint origin. This restart is a test
-assertion, not a requirement for users updating the extension. It verifies
-first-sync reindexing, legacy preservation, rename/branch/edit
-isolation, managed queryText through the interceptor, key re-entry and both
-remote deletion controls. No generation model is called; this is not a complete
-provider-generation or answer-quality test. Screenshots are disabled in live
-mode, credentials are redacted from reports, and keys must be absent from
-persistent browser/host settings.
+`LAMBDADB_PROJECT_API_KEY` values. It creates at most three synthetic owned
+collections (transport gate, published per-chat memory, opted-in story family)
+and submits at most 50 documents. Both baseline and candidate run with the host
+proxy disabled. The fixture explicitly requires the published 0.2.0 baseline;
+review it when that baseline changes rather than silently reusing old expectations.
+
+It verifies settings/ownership and old per-chat data preservation, no automatic
+story opt-in, explicit story indexing, zero-upsert native forks and checkpoint
+save/resume, edit isolation, managed queryText through the interceptor, key re-entry,
+scoped/all-owned deletion, and code rollback/return after remote cleanup. No
+generation model is called; the final-prompt event is synthetic. This does not
+establish answer quality, provider-generation reliability, or rollback of opted-in
+metadata. Screenshots are disabled in live mode, credentials are redacted from
+reports, and keys must be absent from persistent browser/host settings.
 
 Cleanup confirms each recorded collection is unavailable. A failed cleanup
 preserves `artifacts/<tag>-pending.json` and the isolated host profile named in

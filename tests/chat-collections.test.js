@@ -94,3 +94,21 @@ test('a collection engine refuses another chat before any remote operation', asy
     await assert.rejects(engine.sync({ ...snapshot, chat: 'another', messages: [] }, options()), /scope changed/);
     assert.equal(remote, false);
 });
+
+
+test('version metadata with an unchanged ID is persisted and verified after failed or ambiguous saves', async () => {
+    for (const mode of ['rejected', 'unpersisted', 'lost-response']) {
+        const f = identityFixture({ metadata: { integrity, sillymemory: { id, integrity } } });
+        f.ctx.chatMetadata.sillymemory = { id, integrity, version: 1, story: id };
+        if (mode === 'unpersisted') f.failSave();
+        const save = async () => {
+            if (mode !== 'rejected') await f.save();
+            if (mode !== 'unpersisted') throw new Error('Synthetic save failure');
+        };
+        await assert.rejects(ensureChatIdentity(f.ctx, save, undefined, f.fetcher), /save failure|not saved/);
+        f.recoverSave();
+        assert(await ensureChatIdentity(f.ctx, f.save, undefined, f.fetcher));
+        assert.deepEqual(f.ctx.chatMetadata.sillymemory, { id, integrity, version: 1, story: id });
+        assert.equal(f.saves, mode === 'unpersisted' ? 2 : 1, 'persist once or reuse the accepted save');
+    }
+});

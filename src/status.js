@@ -5,6 +5,7 @@ export function progressText(value) {
     switch (value.phase) {
         case 'preparing': return 'Preparing older messages for synchronization…';
         case 'queued': return 'Waiting for an earlier memory write to finish…';
+        case 'committing': return 'Preparing memory branch; waiting for inherited writes to commit…';
         case 'checking': return 'Checking memory collection ownership…';
         case 'deleting': return `Removing outdated memory: ${count} chunks confirmed.`;
         case 'uploading': return `Uploading memory: ${count} chunks confirmed.`;
