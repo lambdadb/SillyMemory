@@ -100,7 +100,8 @@ export async function runRerank({ page, field, openSettings, waitStatus, generat
             return { case: item.id, gained: !vector.correct && rerank.correct, lost: vector.correct && !rerank.correct, sameCandidates: compareCandidateSets(vector.queries, rerank.queries) };
         });
         result.complete = result.rows.length === 24;
-        result.adoptionGate = result.complete && result.pairs.some(p => p.gained) && !result.pairs.some(p => p.lost) && result.rows.filter(r => r.mode === 'rerank').every(r => r.queries.length && r.queries.every(q => q.rerank?.status === 'applied'));
+        // Exact matches are a format-sensitive screen; adoption requires semantic review.
+        result.exactMatchGate = result.complete && result.pairs.some(p => p.gained) && !result.pairs.some(p => p.lost) && result.rows.filter(r => r.mode === 'rerank').every(r => r.queries.length && r.queries.every(q => q.rerank?.status === 'applied'));
     } finally {
         await openSettings(); if (await field('enabled').isChecked()) await field('enabled').uncheck();
         await page.evaluate(() => { const t = globalThis.rerankTest; t.LambdaClient.prototype.search = t.search; t.runtime.MemoryEngine.prototype.retrieve = t.retrieve; });

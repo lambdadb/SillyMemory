@@ -58,7 +58,11 @@ response fields. These are synthetic fixtures, not permissive runtime fallbacks.
 Historical reports retain their original producers. The maintained diagnostic
 runner also uses SDK operations rather than the removed raw-request interface.
 
-## Next experiment design — not executed
+## Next experiment design — not executed during the SDK migration
+
+Follow-up: the [managed reranking evaluation](managed-reranking.md) records the
+completed comparison, shared unsupported elaboration and decision to retain vector
+retrieval. The original migration design below is preserved for context.
 
 Question: does managed Jev reranking improve evidence delivery and final English
 answers at the same memory budget, without losing existing correct answers?

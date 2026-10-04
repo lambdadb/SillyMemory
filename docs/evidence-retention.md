@@ -171,3 +171,10 @@ URL/UI upgrade results, opt-in story/checkpoint lifecycle, failed navigation
 attempt, interpretation and publication boundary. Its local-only archive contains
 319 verified files and three exact installation producers. Existing historical
 archives remain intact; all owned test resources were cleaned up.
+
+## Managed reranking comparison
+
+The [managed reranking record](managed-reranking.md) retains the frozen protocol,
+paired answers, format-versus-content interpretation, shared unsupported detail,
+cleanup verification and exact producer/archive identity. Raw reports stay ignored;
+no earlier experiment evidence is removed.
