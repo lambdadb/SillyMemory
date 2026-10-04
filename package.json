@@ -21,17 +21,23 @@
     "test:heldout:live": "node scripts/generation-smoke.mjs --heldout",
     "test:recovery": "node scripts/browser-smoke.mjs --recovery",
     "test:challenges:live": "node scripts/generation-smoke.mjs --challenges",
-    "test:natural:live": "node scripts/generation-smoke.mjs --natural"
+    "test:natural:live": "node scripts/generation-smoke.mjs --natural",
+    "build:sdk": "node scripts/build-sdk.mjs",
+    "check:sdk": "node scripts/build-sdk.mjs --check"
   },
   "engines": {
     "node": ">=20.12"
   },
   "devDependencies": {
-    "@playwright/test": "^1.63.0"
+    "@playwright/test": "^1.63.0",
+    "esbuild": "0.28.2"
   },
   "license": "AGPL-3.0-only",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/lambdadb/SillyMemory.git"
+  },
+  "dependencies": {
+    "@functional-systems/lambdadb": "0.7.0"
   }
 }

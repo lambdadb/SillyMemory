@@ -86,7 +86,8 @@ push; it is not a server-side prohibition on changing branches or tags. Branch
 and tag protection/rulesets are separate repository administration settings.
 If tag checks fail, stop publication and investigate; do not silently move a
 public tag. GitHub's pre-release flag does not prevent main-branch installation.
-No npm package or compiled bundle is required for installation.
+No npm install or local compilation is required for users. The locked SDK browser
+bundle and third-party licenses ship in Git; run `npm run check:sdk` before promotion.
 
 ## User updates and rollback
 

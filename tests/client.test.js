@@ -1,3 +1,4 @@
+import { collectionResponse, documentResponse, accepted } from './helpers/lambdadb-responses.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { LambdaClient, connectionConfig, scopeFilter } from '../src/client.js';
@@ -7,7 +8,7 @@ const owner = 'a'.repeat(32), scope = 'b'.repeat(64);
 test('direct CORS preserves auth/body and query scope without host credentials', async () => {
     const calls = [];
     const client = new LambdaClient(config, 'secret-test-only', { headers: () => ({ 'X-CSRF-Token': 'csrf' }), fetcher: async (url, init) => {
-        calls.push({ url, init }); return new Response(JSON.stringify({ docs: [], isDocsInline: true }));
+        calls.push({ url, init }); return url.endsWith('/query') ? Response.json(documentResponse()) : accepted();
     } });
     await client.upsert('test', [{ id: '1', text: 'synthetic' }]);
     await client.search('test', owner, scope, 'compass');
@@ -35,7 +36,7 @@ test('reject unsafe config and no key; response errors never leak body', async (
 test('ownership mismatch blocks deletion; external result URL receives no key', async () => {
     const calls = [];
     const client = new LambdaClient(config, 'test-key', { fetcher: async (url, init) => {
-        calls.push(init.method); return new Response(JSON.stringify({ collection: { tags: { owner: 'someoneelse' } }, docs: [], isDocsInline: false, docsUrl: 'https://untrusted.test' }));
+        calls.push(init.method); return Response.json({ collection: collectionResponse({ tags: { owner: 'someoneelse' } }), ...documentResponse(), isDocsInline: false, docsUrl: 'https://untrusted.test' });
     } });
     await assert.rejects(client.deleteOwnedCollection('test', owner), /Ownership/); assert.deepEqual(calls, ['GET']);
     await assert.rejects(client.search('test', owner, scope, 'query'), /external download/); assert.equal(calls.length, 2);
@@ -99,7 +100,7 @@ test('network failure, timeout and explicit cancellation have distinct safe erro
 test('a response-body deadline is reported as timeout instead of invalid JSON', async () => {
     const keeper = setTimeout(() => {}, 1000);
     try {
-        const client = new LambdaClient(config, 'test-key', { timeoutMs: 10, fetcher: async (_, { signal }) => ({ ok: true, status: 200, json: () => new Promise((resolve, reject) => signal.addEventListener('abort', () => reject(signal.reason), { once: true })) }) });
+        const client = new LambdaClient(config, 'test-key', { timeoutMs: 10, fetcher: async (_, { signal }) => new Response(new ReadableStream({ start(controller) { signal.addEventListener('abort', () => controller.error(signal.reason), { once: true }); } }), { headers: { 'Content-Type': 'application/json' } }) });
         await assert.rejects(client.get('test'), e => e.code === 'timeout');
     } finally { clearTimeout(keeper); }
 });
@@ -108,7 +109,7 @@ test('versioned read/write operations select a direct branch and preserve safe t
     const requests = [];
     const client = new LambdaClient(config, 'synthetic', { fetcher: async (url, init) => {
         requests.push({ url, init, body: init.body ? JSON.parse(init.body) : undefined });
-        return new Response(JSON.stringify({ docs: [], isDocsInline: true, branches: [] }));
+        return /\/docs\/(upsert|delete)$/.test(url) ? accepted() : Response.json(documentResponse([], 'memory'));
     } });
     await client.upsert('memory', [{ id: 'doc' }], undefined, 'chat_child');
     await client.deleteIds('memory', ['doc'], undefined, 'chat_child');
@@ -123,4 +124,57 @@ test('versioned read/write operations select a direct branch and preserve safe t
     assert(requests.every(r => r.init.credentials === 'omit' && !Object.hasOwn(r.init.headers, 'X-CSRF-Token')));
     await assert.rejects(client.deleteBranch('memory', 'main'), /default branch/);
     assert.throws(() => client.upsert('memory', [], undefined, '../other'), /Invalid memory branch/);
+});
+
+test('SDK validates responses and never exposes malformed payloads or response bodies', async () => {
+    for (const payload of ['private-invalid-json', JSON.stringify({ collection: { secret: 'private-invalid-shape' } })]) {
+        const client = new LambdaClient(config, 'test-key', { fetcher: async () => new Response(payload, { headers: { 'Content-Type': 'application/json' } }) });
+        await assert.rejects(client.get('test'), error => error.code === 'validation' && !JSON.stringify(error).includes('private') && !error.cause);
+    }
+});
+
+test('SDK retries stay disabled for reads and writes, including ambiguous failures', async () => {
+    for (const status of [429, 503]) {
+        let count = 0;
+        const client = new LambdaClient(config, 'test-key', { fetcher: async () => { count++; return new Response('private', { status }); } });
+        await assert.rejects(client.get('test'), error => error.status === status);
+        await assert.rejects(client.upsert('test', [{ id: 'one' }]), error => error.status === status);
+        assert.equal(count, 2);
+    }
+});
+
+test('forget cancels an in-flight SDK request and prevents later authentication', async () => {
+    let started; const ready = new Promise(resolve => { started = resolve; }); let calls = 0;
+    const client = new LambdaClient(config, 'test-key', { fetcher: async (_, { signal }) => {
+        calls++; started(); return new Promise((resolve, reject) => signal.addEventListener('abort', () => reject(signal.reason), { once: true }));
+    } });
+    const pending = client.get('test'); await ready; client.forget();
+    await assert.rejects(pending, error => error.code === 'canceled');
+    await assert.rejects(client.get('test'), /Enter your API key again/);
+    assert.equal(calls, 1); assert(!JSON.stringify(client).includes('test-key'));
+});
+
+test('external downloads are blocked for query, fetch, and list before any storage request', async () => {
+    let calls = 0;
+    const client = new LambdaClient(config, 'test-key', { fetcher: async url => {
+        calls++; assert(url.startsWith(config.endpoint));
+        return Response.json({ ...documentResponse(), isDocsInline: false, docsUrl: 'https://storage.example.test/private' });
+    } });
+    for (const run of [() => client.query('test', {}), () => client.fetchDocs('test', ['one']), () => client.listDocs('test')]) {
+        await assert.rejects(run(), /external download/);
+    }
+    assert.equal(calls, 3);
+});
+
+test('SDK diagnostics remain silent even when environment debugging is requested', async () => {
+    const old = process.env.LAMBDADB_DEBUG, log = console.log, group = console.group, end = console.groupEnd;
+    const logged = []; process.env.LAMBDADB_DEBUG = 'true';
+    console.log = console.group = console.groupEnd = (...args) => logged.push(args);
+    try {
+        const client = new LambdaClient(config, 'synthetic-secret', { fetcher: async () => Response.json({ collection: collectionResponse() }) });
+        await client.get('test'); assert.deepEqual(logged, []);
+    } finally {
+        console.log = log; console.group = group; console.groupEnd = end;
+        if (old === undefined) delete process.env.LAMBDADB_DEBUG; else process.env.LAMBDADB_DEBUG = old;
+    }
 });

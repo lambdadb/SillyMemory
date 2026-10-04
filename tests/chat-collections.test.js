@@ -71,15 +71,15 @@ test('cleanup discovers only owned memory names across opaque pagination and rej
     const name = (await chatCollection(snapshot, owner)).collection;
     const tags = { application: 'sillymemory', owner, chat: 'e'.repeat(64) };
     let calls = 0;
-    client.request = async (path, options) => {
-        assert.equal(options.method, 'GET'); calls++;
+    client.call = async operation => operation({ listCollections: async params => {
+        calls++;
         if (calls === 1) return { collections: [{ collectionName: 'unrelated', tags }, { collectionName: name, tags: { ...tags, owner: 'other' } }], nextPageToken: 'opaque+/=' };
-        assert.equal(new URL(`https://example.test${path}`).searchParams.get('pageToken'), 'opaque+/=');
+        assert.equal(params.pageToken, 'opaque+/=');
         return { collections: [{ collectionName: name, tags }, { collectionName: `sillymemory_${id}`, tags }] };
-    };
+    } });
     const manager = new ChatCollections(client, owner, () => {}, () => {});
     assert.equal((await manager.discover()).length, 1); assert.equal(calls, 2);
-    client.request = async () => ({ collections: [], nextPageToken: 'cycle' });
+    client.call = async () => ({ collections: [], nextPageToken: 'cycle' });
     await assert.rejects(client.listOwned(owner), /pagination/);
 });
 test('collection tags prevent adoption or deletion of another chat within the same owner', async () => {

@@ -8,6 +8,10 @@ boundary; publication is confirmed by the corresponding Git tag and GitHub Relea
 
 ### Changed
 
+- Use the official LambdaDB TypeScript SDK 0.7.0 through a pinned browser bundle.
+  Preserve session-only keys, direct CORS, cancellation, safe errors and explicit
+  retry/inline-result policies; Git URL installation needs no user build step.
+
 - Story collections and isolated chat branches are now the only memory storage
   model. Enabling a fresh chat persists its complete story identity before any
   remote request; native forks automatically reuse committed history.

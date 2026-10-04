@@ -1,3 +1,4 @@
+import { collectionResponse, branchResponse, documentResponse } from '../tests/helpers/lambdadb-responses.js';
 import { emulatorCors } from './emulator-cors.mjs';
 // Real pinned host/Chromium/direct CORS, local LambdaDB and completion emulators only.
 // Does not load .env.local. Never supply a personal profile or real credentials.
@@ -40,7 +41,7 @@ const source = process.env.ST_SOURCE || '/tmp/sillymemory-st-prompt-delivery';
 const output = path.resolve(process.argv[2] || path.join(root, 'artifacts/prompt-delivery.json'));
 assert.equal(execFileSync('git', ['-C', source, 'rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(), plan.host);
 assert.equal(await realpath(path.join(source, 'public/scripts/extensions/third-party/sillymemory')), root);
-const sourceFiles = ['index.js', 'src/chat-collections.js', 'manifest.json', 'src/chunking.js', 'src/client.js', 'src/context.js', 'src/gate.js', 'src/memory.js', 'src/status.js', 'scripts/prompt-delivery-smoke.mjs', 'scripts/emulator-cors.mjs', 'src/delivery.js', 'settings.html', 'scripts/prompt-capacity-cases.mjs'];
+const sourceFiles = ['vendor/lambdadb.js', 'package-lock.json', 'tests/helpers/lambdadb-responses.js', 'index.js', 'src/chat-collections.js', 'manifest.json', 'src/chunking.js', 'src/client.js', 'src/context.js', 'src/gate.js', 'src/memory.js', 'src/status.js', 'scripts/prompt-delivery-smoke.mjs', 'scripts/emulator-cors.mjs', 'src/delivery.js', 'settings.html', 'scripts/prompt-capacity-cases.mjs'];
 sourceFiles.push('scripts/semantic-long.mjs', 'tests/fixtures/semantic-long-v1.json', 'tests/fixtures/packing-ranks.json');
 const hostFiles = ['public/script.js', 'public/scripts/openai.js', 'public/scripts/PromptManager.js', 'public/scripts/tokenizers.js', 'src/endpoints/tokenizers.js', 'src/endpoints/backends/chat-completions.js', 'package-lock.json'];
 async function hashes() {
@@ -61,7 +62,7 @@ const work = await mkdtemp(path.join(tmpdir(), 'sillymemory-capacity-'));
 const cert = path.join(work, 'cert.pem'), key = path.join(work, 'key.pem');
 execFileSync('openssl', ['req', '-x509', '-newkey', 'rsa:2048', '-nodes', '-keyout', key, '-out', cert, '-days', '1', '-subj', '/CN=localhost', '-addext', 'subjectAltName=DNS:localhost,IP:127.0.0.1'], { stdio: 'ignore' });
 const collections = new Map(), requests = [], generations = [], rows = [], errors = [];
-const send = (res, status, body = {}) => { res.writeHead(status, { 'Content-Type': 'application/json' }); res.end(JSON.stringify(body)); };
+const send = (res, status, body = { message: 'OK' }) => { res.writeHead(status, { 'Content-Type': 'application/json' }); res.end(JSON.stringify(body)); };
 async function json(req) { const buffers = []; for await (const b of req) buffers.push(b); return buffers.length ? JSON.parse(Buffer.concat(buffers).toString()) : {}; }
 const remote = httpsServer({ key: await readFile(key), cert: await readFile(cert) }, async (req, res) => {
     if (emulatorCors(req, res)) return;
@@ -74,25 +75,25 @@ const remote = httpsServer({ key: await readFile(key), cert: await readFile(cert
         if (!name && req.method === 'POST') {
             assert.equal(body.indexConfigs.embedding.managedEmbedding, true);
             assert.ok(!collections.has(body.collectionName));
-            collections.set(body.collectionName, { definition: body, branches: new Map([['main', new Map()]]) });
-            return send(res, 201, { collection: body });
+            collections.set(body.collectionName, { definition: collectionResponse(body), branches: new Map([['main', new Map()]]) });
+            return send(res, 201, { collection: collectionResponse(body) });
         }
         if (!name && req.method === 'GET') return send(res, 200, { collections: [...collections.values()].map(c => c.definition) });
         const c = collections.get(name); if (!c) return send(res, 404);
         if (parts.length === 4 && req.method === 'GET') return send(res, 200, { collection: c.definition });
         if (parts.length === 4 && req.method === 'DELETE') { collections.delete(name); return send(res, 200); }
         if (parts[4] === 'branches') {
-            if (req.method === 'GET') return send(res, 200, { branches: [...c.branches.keys()].map(name => ({ name })) });
+            if (req.method === 'GET') return send(res, 200, { branches: [...c.branches.keys()].map(name => branchResponse(name)) });
             if (req.method === 'POST') {
                 if (c.branches.has(body.branchName)) return send(res, 409);
                 const source = c.branches.get(body.source.name); if (!source) return send(res, 404);
-                c.branches.set(body.branchName, new Map(source)); return send(res, 201);
+                c.branches.set(body.branchName, new Map(source)); return send(res, 201, { branch: branchResponse(body.branchName, body.source.name) });
             }
             if (req.method === 'DELETE') { c.branches.delete(parts[5]); return send(res, 200); }
         }
         const branch = body.branch || body.ref?.name || new URL(req.url, 'https://localhost').searchParams.get('refName') || 'main';
         const branchDocs = c.branches.get(branch); if (!branchDocs) return send(res, 404);
-        const inline = docs => ({ docs: docs.map(doc => ({ doc })), isDocsInline: true });
+        const inline = docs => documentResponse(docs, name);
         if (parts[4] === 'docs' && req.method === 'GET') return send(res, 200, inline([...branchDocs.values()]));
         if (parts[4] === 'docs' && parts[5] === 'fetch') return send(res, 200, inline(body.ids.map(id => branchDocs.get(id)).filter(Boolean)));
         if (parts[4] === 'docs' && parts[5] === 'upsert') { body.docs.forEach(d => branchDocs.set(d.id, d)); return send(res, 202); }

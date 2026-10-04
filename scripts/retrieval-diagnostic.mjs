@@ -35,7 +35,17 @@ const check=(condition,name)=>{assert(condition,name);report.checks.push(name);}
 let browser,page,server,stage='startup',failed=false;
 async function request(collection,suffix,body,method='POST') {
     const out=await page.evaluate(async ({collection,suffix,body,method})=>{
-        try {const c=globalThis.retrievalClient;return {ok:true,data:await c.request(c.path(collection,suffix),{body,method})};}
+        try {
+            const c=globalThis.retrievalClient;
+            const data=await c.call((sdk, options)=>{
+                const handle=sdk.collection(collection);
+                if(suffix==='/docs/upsert')return handle.docs.upsert(body,options);
+                if(suffix==='/docs/fetch')return handle.docs.fetch(body,options);
+                if(suffix==='/query')return handle.query(body,options);
+                throw new Error('Unsupported diagnostic operation');
+            });
+            return {ok:true,data};
+        }
         catch(e){return {ok:false,status:Number(e.status)||0};}
     },{collection,suffix,body,method});
     report.requests.push({stage,operation:suffix||method,status:out.ok?200:out.status});
@@ -68,7 +78,7 @@ try {
     await page.evaluate(async credentials=>{const {LambdaClient}=await import('/scripts/extensions/third-party/sillymemory/src/client.js');globalThis.retrievalClient=new LambdaClient(credentials,credentials.key,{timeoutMs:30000});},credentials);
     stage='create owned collections';
     for(const [name,indexConfigs] of [[managed,schema],[mirror,{...schema,embedding:{type:'vector',dimensions:1536,similarity:'cosine'}}]]) {
-        await page.evaluate(async ({name,indexConfigs,owner})=>{await globalThis.retrievalClient.request('/collections',{body:{collectionName:name,indexConfigs,tags:{application:'sillymemory',owner},description:'Synthetic retrieval diagnosis',snapshotRetentionInDays:1}});},{name,indexConfigs,owner});
+        await page.evaluate(async ({name,indexConfigs,owner})=>{await globalThis.retrievalClient.call((sdk,options)=>sdk.createCollection({collectionName:name,indexConfigs,tags:{application:'sillymemory',owner},description:'Synthetic retrieval diagnosis',snapshotRetentionInDays:1},options));},{name,indexConfigs,owner});
     }
     const jobs=[], corpus=[];const probeScope='f'.repeat(64);
     for(const scenario of scenarios) {
