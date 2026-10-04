@@ -1,7 +1,7 @@
 # Versioned story memory
 
-This records the branch-inheritance scope validated in PR #53. The current
-0.3.0 candidate also includes optional [frozen checkpoints](checkpoints.md), with
+This records the branch-inheritance scope validated in PR #53. Version
+0.3.0 also includes optional [frozen checkpoints](checkpoints.md), with
 a separate acceptance record and transcript/restore boundaries.
 
 ## Decision and acceptance boundary
@@ -34,7 +34,7 @@ this first branch-inheritance implementation.
 
 ## Use and storage model
 
-This is opt-in in the unreleased 0.3.0 candidate. Connect with a session key, pass
+This is opt-in in 0.3.0. Connect with a session key, pass
 its synthetic transport test, prepare memory and select a saved character chat.
 Click **Use versioned memory for this story**, confirm, then enable memory. The
 first sync indexes older local history into a new collection. Existing legacy
