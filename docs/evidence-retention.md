@@ -178,3 +178,7 @@ The [managed reranking record](managed-reranking.md) retains the frozen protocol
 paired answers, format-versus-content interpretation, shared unsupported detail,
 cleanup verification and exact producer/archive identity. Raw reports stay ignored;
 no earlier experiment evidence is removed.
+
+The [staged rescue record](rerank-rescue.md) separately preserves the later diagnostic
+gains, confirmation regression, pre-rerank tied scores, successful teardown and exact
+producer/archive identity. The original v1 archive is retained unchanged.
