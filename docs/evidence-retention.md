@@ -155,3 +155,11 @@ comparison, failed/corrected manager runs, final guard regressions, emulator/liv
 boundaries and local-only archive location/checksum. All 329 files and six runtime
 producer records were verified before completion. No historical evidence was
 removed and no retention-expiry experiment was required.
+
+## 0.3.0 installation acceptance
+
+The [0.3.0 validation record](releases/0.3.0-validation.md) retains the real Git
+URL/UI upgrade results, opt-in story/checkpoint lifecycle, failed navigation
+attempt, interpretation and publication boundary. Its local-only archive contains
+319 verified files and three exact installation producers. Existing historical
+archives remain intact; all owned test resources were cleaned up.
