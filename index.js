@@ -352,7 +352,7 @@ async function initialize() {
             delete: key => localStorage.removeItem(`sillymemory:resume:${key}`),
         };
         const args = { host, client, collections, owner, file: selected || file, avatar, intents, valid, progress: status, story: ctx.chatMetadata.sillymemory?.story };
-        if (selected) await checkpointRows(args);
+        if (selected || ctx.chatMetadata.sillymemory?.checkpoint) await checkpointRows(args);
         if (command === 'rename' || command === 'delete') {
             if (selected === file) throw new ConnectionError('Open another story path before renaming or deleting this checkpoint.');
             if (command === 'rename') {
