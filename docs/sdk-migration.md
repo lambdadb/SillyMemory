@@ -138,4 +138,20 @@ source modification or LambdaDB/SillyTavern core change was required. This does
 not certify new snapshot-retention behavior, concurrent devices, improved answer
 quality, lower latency or future SDK versions.
 
-Fresh Git URL installation is the remaining packaging check before completion.
+Fresh Git URL installation through the pinned host UI passed 14 checks at
+candidate `a99507ac883396f3a698ddf9ae1e6db7734f8960`. The extension loaded its committed
+SDK bundle without an extension npm install/build, preserved preferences, cleared
+the key on reload, made no provider requests and removed its disposable profile.
+Later changes only complete this validation/evidence record.
+
+## Retained evidence
+
+Local-only archive:
+`/Users/steven/Dev/sillymemory-official-sdk/artifacts/archive/sdk-migration-v1/evidence.tar.gz`
+
+SHA-256 `292c2c9a156af151216c35b8a1b9a7b2f6a85c0047165a30b3b662357008784f`; 1,851,294 bytes, 28 members.
+Every member was read back byte-for-byte and checked against its manifest. The
+bundle retains reports/logs, exact candidate source, the initial-browser producer
+overlay and the validation patch. Configured-secret scans passed on candidate
+files and decompressed archive entries. No historical evidence was deleted.
+The archive pointer was appended after capture; runtime files are unchanged.
