@@ -1,3 +1,4 @@
+import { collectionResponse, branchResponse, documentResponse } from '../tests/helpers/lambdadb-responses.js';
 // Real pinned SillyTavern + real Chromium + direct browser CORS; LambdaDB is emulated.
 // Never use this harness with personal data or a real API key.
 import { emulatorCors } from './emulator-cors.mjs';
@@ -35,7 +36,7 @@ const remote = createServer({ key: await readFile(key), cert: await readFile(cer
     const buffers = []; for await (const b of req) buffers.push(b);
     const body = buffers.length ? JSON.parse(Buffer.concat(buffers).toString()) : {};
     calls.push({ method: req.method, path: req.url, body, keyPresent: req.headers['x-api-key'] === 'synthetic-session-key', cookiePresent: Boolean(req.headers.cookie), csrfPresent: Boolean(req.headers['x-csrf-token']), origin: req.headers.origin });
-    const send = (status, value = {}) => { res.writeHead(status, { 'Content-Type': 'application/json' }); res.end(JSON.stringify(value)); };
+    const send = (status, value = { message: 'OK' }) => { res.writeHead(status, { 'Content-Type': 'application/json' }); res.end(JSON.stringify(value)); };
     if (req.headers['x-api-key'] !== 'synthetic-session-key') return send(401, { message: 'synthetic auth failure' });
     const parts = new URL(req.url, 'https://localhost').pathname.split('/').filter(Boolean);
     if (parts[0] !== 'projects' || parts[1] !== 'synthetic' || parts[2] !== 'collections') return send(404);
@@ -44,27 +45,27 @@ const remote = createServer({ key: await readFile(key), cert: await readFile(cer
     if (!name && req.method === 'POST') {
         if (collections.has(body.collectionName)) return send(409);
         assert.equal(body.indexConfigs.embedding.managedEmbedding, true);
-        return faults.respond('create', () => { collections.set(body.collectionName, { definition: body, branches: new Map([['main', new Map()]]) }); return [201, { collection: body }]; }, send);
+        return faults.respond('create', () => { collections.set(body.collectionName, { definition: collectionResponse(body), branches: new Map([['main', new Map()]]) }); return [201, { collection: collectionResponse(body) }]; }, send);
     }
     const c = collections.get(name); if (!c) return send(404);
     if (parts.length === 4 && req.method === 'GET') return send(200, { collection: c.definition });
-    if (parts.length === 4 && req.method === 'DELETE') return faults.respond('delete-collection', () => { collections.delete(name); return [200, {}]; }, send);
+    if (parts.length === 4 && req.method === 'DELETE') return faults.respond('delete-collection', () => { collections.delete(name); return [200, { message: 'OK' }]; }, send);
     if (parts[4] === 'branches') {
-        if (req.method === 'GET') return send(200, { branches: [...c.branches.keys()].map(name => ({ name })) });
+        if (req.method === 'GET') return send(200, { branches: [...c.branches.keys()].map(name => branchResponse(name)) });
         if (req.method === 'POST') {
             if (c.branches.has(body.branchName)) return send(409);
             const source = c.branches.get(body.source.name); if (!source) return send(404);
-            c.branches.set(body.branchName, new Map(source)); return send(201);
+            c.branches.set(body.branchName, new Map(source)); return send(201, { branch: branchResponse(body.branchName, body.source.name) });
         }
-        if (req.method === 'DELETE') return faults.respond('delete-branch', () => { c.branches.delete(parts[5]); return [200, {}]; }, send);
+        if (req.method === 'DELETE') return faults.respond('delete-branch', () => { c.branches.delete(parts[5]); return [200, { message: 'OK' }]; }, send);
     }
     const branch = body.branch || body.ref?.name || new URL(req.url, 'https://localhost').searchParams.get('refName') || 'main';
     const docs = c.branches.get(branch); if (!docs) return send(404);
-    const inline = docs => ({ docs: docs.map(doc => ({ doc })), isDocsInline: true });
+    const inline = docs => documentResponse(docs, name);
     if (parts[4] === 'docs' && req.method === 'GET') return send(200, inline([...docs.values()]));
     if (parts[4] === 'docs' && parts[5] === 'fetch') return send(200, inline(body.ids.map(id => docs.get(id)).filter(Boolean)));
-    if (parts[4] === 'docs' && parts[5] === 'upsert') return faults.respond('upsert', () => { body.docs.forEach(d => docs.set(d.id, d)); return [202, {}]; }, send);
-    if (parts[4] === 'docs' && parts[5] === 'delete') return faults.respond('delete-docs', () => { body.ids.forEach(id => docs.delete(id)); return [202, {}]; }, send);
+    if (parts[4] === 'docs' && parts[5] === 'upsert') return faults.respond('upsert', () => { body.docs.forEach(d => docs.set(d.id, d)); return [202, { message: 'Accepted' }]; }, send);
+    if (parts[4] === 'docs' && parts[5] === 'delete') return faults.respond('delete-docs', () => { body.ids.forEach(id => docs.delete(id)); return [202, { message: 'Accepted' }]; }, send);
     if (parts[4] === 'query') {
         if (failQuery) return send(503);
         if (delayedQuery) await new Promise(r => setTimeout(r, delayedQuery));

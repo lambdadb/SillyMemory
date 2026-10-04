@@ -1,3 +1,4 @@
+import { documentResponse } from './helpers/lambdadb-responses.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { hybridQuery } from '../scripts/hybrid-query.mjs';
@@ -7,7 +8,7 @@ const owner = 'a'.repeat(32), scope = 'b'.repeat(64);
 test('hybrid keeps identical scope filters, managed text, result bound and cancellation', async () => {
     const controller = new AbortController(), text = 'Where is QX-741?'; let body, signal;
     const client = new LambdaClient({ endpoint: 'https://region.example.test', project: 'synthetic' }, 'synthetic', { fetcher: async (_, init) => {
-        body = JSON.parse(init.body); signal = init.signal; return Response.json({ docs: [] });
+        body = JSON.parse(init.body); signal = init.signal; return Response.json(documentResponse());
     } });
     await client.query('test', hybridQuery(owner, scope, text), { signal: controller.signal });
     const [vector, lexical] = body.query.rrf;
@@ -41,7 +42,7 @@ test('comparison hook preserves chat branch routing and cancellation in both mod
         const client = new LambdaClient({ endpoint: 'https://region.example.test', project: 'synthetic' }, 'synthetic', {
             fetcher: async (_, init) => {
                 const body = JSON.parse(init.body); requests.push(body); signals.push(init.signal);
-                return Response.json({ docs: [{ doc: { id: body.ref.name, owner, scope } }] });
+                return Response.json(documentResponse([{ id: body.ref.name, owner, scope }], 'story'));
             },
         });
         client.search = comparisonSearch(client.search, trace);

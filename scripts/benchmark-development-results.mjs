@@ -10,7 +10,7 @@ import { validateObservation } from './benchmark-observation.mjs';
 export const producers = ['scripts/benchmark-development-preflight.mjs', 'scripts/benchmark-development-input.mjs',
     'scripts/benchmark-checkpoint.mjs', 'scripts/benchmark-native-barrier.mjs', 'scripts/benchmark-observation.mjs', 'scripts/benchmark-retrieval-observer.mjs',
     'scripts/benchmark-host-input.mjs', 'scripts/benchmark-loopback-guard.cjs', 'scripts/benchmark-audit.mjs',
-    'index.js', 'src/chat-collections.js', 'manifest.json', 'src/memory.js', 'src/context.js', 'src/client.js', 'src/gate.js', 'src/delivery.js', 'src/status.js'];
+    'index.js', 'src/chat-collections.js', 'manifest.json', 'src/memory.js', 'src/context.js', 'src/client.js', 'vendor/lambdadb.js', 'package-lock.json', 'src/gate.js', 'src/delivery.js', 'src/status.js'];
 export function validateDevelopmentReport(report, plan) {
     assert.equal(report.version, 'longmemeval-development-preflight-v1');
     assert(report.passed && report.cleanup); assert.equal(report.failure, undefined); assert.deepEqual(report.errors, []);

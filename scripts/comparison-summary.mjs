@@ -52,7 +52,7 @@ export function summarize(segments, { allowPartial = false } = {}) {
         assert.equal(config.model, 'gpt-4.1-mini-2025-04-14');
         assert.equal(config.host, '06bde939fb1e9c4c8d8641d810f0a916b5bce127');
         assert.equal(config.context, 32768); assert.equal(config.maxOutputTokens, 256);
-        const hashes = Object.fromEntries(['index.js', 'src/client.js', 'src/gate.js', 'src/memory.js', 'src/context.js', 'scripts/generation-smoke.mjs', 'scripts/comparison-eval.mjs', 'scripts/comparison-fixture.mjs', 'scripts/korean-fixture.mjs', ...(report.sourceSha256?.['src/status.js'] ? ['src/status.js'] : []), ...(report.sourceSha256?.['scripts/generation-cleanup.mjs'] ? ['scripts/generation-cleanup.mjs'] : [])].map(file => {
+        const hashes = Object.fromEntries(['index.js', 'src/client.js', 'vendor/lambdadb.js', 'package-lock.json', 'src/gate.js', 'src/memory.js', 'src/context.js', 'scripts/generation-smoke.mjs', 'scripts/comparison-eval.mjs', 'scripts/comparison-fixture.mjs', 'scripts/korean-fixture.mjs', ...(report.sourceSha256?.['src/status.js'] ? ['src/status.js'] : []), ...(report.sourceSha256?.['scripts/generation-cleanup.mjs'] ? ['scripts/generation-cleanup.mjs'] : [])].map(file => {
             assert(report.sourceSha256?.[file], `Missing source hash: ${file}`); return [file, report.sourceSha256[file]];
         }));
         if (configuration) { assert.deepEqual(config, configuration, 'Mixed configuration'); assert.deepEqual(hashes, sourceHashes, 'Mixed source versions'); }

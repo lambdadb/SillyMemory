@@ -58,7 +58,7 @@ The development baseline is **SillyTavern 1.19.0**, pinned to commit [`06bde939f
 ## Install
 
 1. Prepare SillyTavern **1.19.0** and Git on the host. Other host revisions are unverified.
-2. Open **Extensions → Install extension**, enter `https://github.com/lambdadb/SillyMemory`, leave the optional branch/tag field empty, and choose **Install just for me** (or **Install** for a non-admin account). Review SillyTavern's third-party-extension prompt and confirm. The default branch is `main`; `develop` and PR branches are for development. The extension has no runtime npm dependencies or build step. Do not install two copies.
+2. Open **Extensions → Install extension**, enter `https://github.com/lambdadb/SillyMemory`, leave the optional branch/tag field empty, and choose **Install just for me** (or **Install** for a non-admin account). Review SillyTavern's third-party-extension prompt and confirm. The default branch is `main`; `develop` and PR branches are for development. The extension includes its pinned browser SDK bundle; users do not run npm or a build step. Do not install two copies.
 3. Allow your SillyTavern page origin in LambdaDB CORS settings where required. Include scheme, host and port (for example, `http://localhost:8000`); `127.0.0.1` is a different origin. SillyMemory connects directly from the browser. No `enableCorsProxy` setting or SillyTavern restart is required. See [direct CORS configuration and validation](docs/direct-cors.md).
 4. Reload SillyTavern. Open **Extensions → SillyMemory**. Enter your region-specific HTTPS base origin, project name, and project API key from LambdaDB. The endpoint field accepts an origin such as `https://<regional-host>`, without `/projects/...`. The extension adds the project path. There is no hardcoded global endpoint.
 5. Click **Use key for this session**. The input is immediately cleared. The key lives only in the client instance's browser memory, never in saved settings, local/session storage, a URL, or extension logs. A reload or **Forget key** requires re-entry. Other trusted extensions and the browser runtime can still observe network requests; this is not an isolation boundary against malicious extensions.
@@ -191,6 +191,8 @@ does not use LambdaDB or model credentials.
 Browser/emulator checks and paid live integration runs remain separate commands
 below; a green CI result alone does not establish live integration success.
 
+See the [SDK migration and next experiment design](docs/sdk-migration.md) for the official client integration and validation boundary.
+
 See the [final local review](docs/review.md) for the commit scope, review fixes,
 verification boundaries, and file inventory. Raw `artifacts/` reports are ignored
 local evidence and are not included in a fresh clone; checked-in documents retain
@@ -199,6 +201,7 @@ new reports. Historical summaries require their exact recorded source versions.
 
 ```sh
 npm ci
+npm run check:sdk
 npm test
 npm run check
 npm run check:release
@@ -350,4 +353,4 @@ the complete terms. SillyMemory uses the same license family as its
 [SillyTavern host](https://github.com/SillyTavern/SillyTavern/blob/06bde939fb1e9c4c8d8641d810f0a916b5bce127/LICENSE).
 
 This repository contains the extension's source and development tools; the
-SillyTavern host and development dependencies retain their own licenses.
+SillyTavern host and development dependencies retain their own licenses. The bundled LambdaDB SDK and Zod retain their licenses in [vendor/LICENSES.txt](vendor/LICENSES.txt).

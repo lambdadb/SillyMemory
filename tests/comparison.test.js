@@ -34,7 +34,7 @@ function evidence() {
         for (const text of ['identical source restored', 'source preserved', 'recent messages retained', 'provider usage including cache available', 'full baseline fits without injection', 'native memory disabled', 'memory budget respected', 'native query completed without SillyMemory']) checks.push(`${name}: ${text}`);
         return { messages: [], comparison: row, upstreamStatus: 200, finishReason: 'stop', providerAnswer: 'UNKNOWN', answer: 'UNKNOWN', requestOptions: { model: 'gpt-4.1-mini-2025-04-14', temperature: 0 }, providerUsage: { prompt_tokens: 100, prompt_tokens_details: { cached_tokens: 0 }, completion_tokens: 2 }, generationMs: 20, responseMs: 10 };
     });
-    return { cleanupComplete: true, nativeCleanupComplete: true, evaluation: { version, nativeSettings, rows: generations.map(g => g.comparison) }, model: 'gpt-4.1-mini-2025-04-14', sillyTavern: '06bde939fb1e9c4c8d8641d810f0a916b5bce127', hostContextTokens: 32768, maxOutputTokens: 256, sourceSha256: Object.fromEntries(['index.js','src/client.js','src/gate.js','src/memory.js','src/context.js','scripts/generation-smoke.mjs','scripts/comparison-eval.mjs','scripts/comparison-fixture.mjs','scripts/korean-fixture.mjs'].map(p => [p, 'test-only-hash'])), checks, generations };
+    return { cleanupComplete: true, nativeCleanupComplete: true, evaluation: { version, nativeSettings, rows: generations.map(g => g.comparison) }, model: 'gpt-4.1-mini-2025-04-14', sillyTavern: '06bde939fb1e9c4c8d8641d810f0a916b5bce127', hostContextTokens: 32768, maxOutputTokens: 256, sourceSha256: Object.fromEntries(['index.js','src/client.js', 'vendor/lambdadb.js', 'package-lock.json','src/gate.js','src/memory.js','src/context.js','scripts/generation-smoke.mjs','scripts/comparison-eval.mjs','scripts/comparison-fixture.mjs','scripts/korean-fixture.mjs'].map(p => [p, 'test-only-hash'])), checks, generations };
 }
 test('summary rejects incomplete, duplicated, mixed, or unverified evidence', () => {
     const report = evidence();
@@ -98,6 +98,12 @@ test('comparison aggregation binds the context-selection module across resumed s
     for (const report of [first, resumed]) report.evaluation.rows = report.generations.map(g => g.comparison);
     const segments = [{report:first}, {report:resumed}];
     assert.equal(summarize(segments).complete, true);
+    for (const file of ['vendor/lambdadb.js', 'package-lock.json']) {
+        const changed = structuredClone(resumed); changed.sourceSha256[file] = 'changed';
+        assert.throws(() => summarize([{ report: first }, { report: changed }]), /Mixed source versions|Missing source hash/);
+        delete changed.sourceSha256[file];
+        assert.throws(() => summarize([{ report: first }, { report: changed }]), /Mixed source versions|Missing source hash/);
+    }
     resumed.sourceSha256['src/context.js'] = 'different-context-policy';
     assert.throws(() => summarize(segments), /Mixed source versions/);
     delete resumed.sourceSha256['src/context.js'];

@@ -27,7 +27,7 @@ const artifacts = path.join(root, 'artifacts', artifactTag); await mkdir(artifac
 const pendingPath = path.join(artifacts, 'chat-collections-live-pending.json');
 const pending = []; await writeFile(pendingPath, '[]', { flag: 'wx' });
 const sourceSha256 = {};
-for (const file of ['index.js', 'settings.html', 'style.css', 'src/chat-collections.js', 'src/client.js', 'src/commit.js', 'src/memory.js', 'src/status.js', 'src/checkpoints.js', 'scripts/chat-collections-live.mjs']) sourceSha256[file] = createHash('sha256').update(await readFile(path.join(root, file))).digest('hex');
+for (const file of ['vendor/lambdadb.js', 'package-lock.json', 'tests/helpers/lambdadb-responses.js', 'index.js', 'settings.html', 'style.css', 'src/chat-collections.js', 'src/client.js', 'src/commit.js', 'src/memory.js', 'src/status.js', 'src/checkpoints.js', 'scripts/chat-collections-live.mjs']) sourceSha256[file] = createHash('sha256').update(await readFile(path.join(root, file))).digest('hex');
 const report = { large, manager, recovery, checkpoints, upserts: [], fetches: [], time: new Date().toISOString(), host: revision, sourceSha256, checks: [], responses: [], proxyRequests: 0, pageErrors: [], cleanup: false, passed: false };
 const check = (name, ok) => { assert(ok, name); report.checks.push(name); console.log(`PASS ${name}`); };
 const url = `http://127.0.0.1:${Number(process.env.ST_LIVE_PORT || 18147)}`;
