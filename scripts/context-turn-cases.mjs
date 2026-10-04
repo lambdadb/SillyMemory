@@ -5,7 +5,7 @@ export function contextTurnCases() {
     const fixture = loadNaturalFixture('context-turn-v1');
     return [...assistantFallbackCases(), ...naturalCases(fixture).map(item => ({
         id: `context-turn-v1/${item.id}`, fixture: fixture.version, fixtureHash: hash(fixture), kind: item.kind, shape: fixture.cases.find(c => c.id === item.id).shape, language: item.language,
-        snapshot: capture({ chat: [...item.input.source, { mes: item.input.question, name: 'User', is_user: true }], characterId: 0, characters: [{ avatar: `${item.story}.png` }], getCurrentChatId: () => `${fixture.version}/${item.id}` }),
+        snapshot: capture({ chat: [...item.input.source, { mes: item.input.question, name: 'User', is_user: true }], characterId: 0, characters: [{ avatar: `${item.story}.png` }], chatMetadata: { sillymemory: { version: 1, id: `${fixture.version}/${item.id}`, story: `${fixture.version}/${item.id}` } }, getCurrentChatId: () => `${fixture.version}/${item.id}` }),
         config: { recent: fixture.settings.recent, budget: fixture.settings.budget, chunkChars: 800 }, evidence: item.rubric.requiredEvidence,
     }))];
 }

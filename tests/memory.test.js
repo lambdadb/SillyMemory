@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { capture, documents, selectMemory, MemoryEngine, Journal, options, chunks, literal, retrievalQueries, interleaveHits } from '../src/memory.js';
 const owner = 'a'.repeat(32);
 const config = { recent: 2, budget: 400, chunkChars: 200 };
-const snapshot = (chat = 'chat', character = 'alice.png') => ({ chat, character, messages: Array.from({ length: 6 }, (_, index) => ({ index, text: `Synthetic message ${index}: the blue compass is under the tree.`, name: index % 2 ? 'Alice' : 'User', user: !(index % 2), swipe: 0, eligible: true })) });
+const snapshot = (chat = 'chat', character = 'alice.png') => ({ chat, character, memory: { story: chat }, messages: Array.from({ length: 6 }, (_, index) => ({ index, text: `Synthetic message ${index}: the blue compass is under the tree.`, name: index % 2 ? 'Alice' : 'User', user: !(index % 2), swipe: 0, eligible: true })) });
 class Storage {
     values = new Map(); get length() { return this.values.size; } key(i) { return [...this.values.keys()][i]; }
     getItem(k) { return this.values.get(k) ?? null; } setItem(k, v) { this.values.set(k, v); } removeItem(k) { this.values.delete(k); }
@@ -12,12 +12,14 @@ function setup(storage = new Storage()) {
     const remote = new Map(); const writes = []; const deletes = [];
     const client = {
         async assertOwned() {},
+        async listDocs() { return [...remote.values()]; },
+        async fetchDocs(_, ids) { return ids.map(id => remote.get(id)).filter(Boolean); },
         async upsert(_, docs) { writes.push(docs); docs.forEach(x => remote.set(x.id, x)); },
         async deleteIds(_, ids) { deletes.push(ids); ids.forEach(x => remote.delete(x)); },
         async search(_, o, scope) { return [...remote.values()].filter(x => x.owner === o && x.scope === scope); },
-        async deleteOwnedCollection() { remote.clear(); },
+        async deleteBranch() { remote.clear(); },
     };
-    const engine = new MemoryEngine({ client, owner, collection: 'test', journal: new Journal(storage, 'test') });
+    const engine = new MemoryEngine({ client, owner, collection: 'test', branch: 'chat_test', journal: new Journal(storage, 'test') });
     return { engine, client, writes, deletes, remote, storage };
 }
 test('stable content IDs, unique character/chat/branch scopes, and only older messages', async () => {
@@ -37,7 +39,7 @@ test('deduplication, edits, swipe, deletion and reload reconcile uncertain write
     snap.messages.splice(1, 1); snap.messages.forEach((m, i) => { m.index = i; });
     await s.engine.sync(snap, config); assert.equal(s.remote.size, 3);
     // Reload loses in-memory acknowledgements, but journal preserves remote IDs.
-    const reloaded = new MemoryEngine({ client: s.client, owner, collection: 'test', journal: new Journal(s.storage, 'test') });
+    const reloaded = new MemoryEngine({ client: s.client, owner, collection: 'test', branch: 'chat_test', journal: new Journal(s.storage, 'test') });
     snap.messages[0].text = 'Edited while extension was not loaded';
     await reloaded.sync(snap, config);
     assert.deepEqual([...s.remote.keys()].sort(), (await documents(snap, owner, config)).docs.map(x => x.id).sort());
@@ -194,11 +196,11 @@ test('progress counts only acknowledged batches and retry skips earlier successf
     assert.deepEqual(events.filter(e => e.phase === 'uploading'), [
         { phase: 'uploading', completed: 0, total: 120 }, { phase: 'uploading', completed: 50, total: 120 },
     ]);
-    const firstBatch = new Set(s.writes[0].map(d => d.id));
+    const accepted = new Set(s.writes.flat().map(d => d.id));
     const retried = [];
     await s.engine.sync(snap, config, () => true, e => retried.push(e));
-    assert.deepEqual(retried.filter(e => e.phase === 'uploading').map(e => e.completed), [50, 100, 120]);
-    assert(s.writes.slice(2).every(batch => batch.every(d => !firstBatch.has(d.id))));
+    assert.deepEqual(retried.filter(e => e.phase === 'uploading').map(e => e.completed), [100, 120]);
+    assert(s.writes.slice(2).every(batch => batch.every(d => !accepted.has(d.id))));
     assert.equal(s.remote.size, 120);
     assert.deepEqual(new Set(s.engine.journal.read((await documents(snap, owner, config)).scope)), new Set(s.remote.keys()));
     assert(!JSON.stringify(events).includes('Synthetic chunk'));

@@ -40,7 +40,9 @@ export async function runFaultScenarios({ page, field, waitStatus, prompt, check
     const timings = {};
     const activeCollection = async () => {
         const expected = await expectedRemote();
-        return [...collections.values()].find(c => c.definition.tags.chat === expected.scope);
+        const branch = await page.evaluate(() => `chat_${SillyTavern.getContext().chatMetadata.sillymemory.id}`);
+        const collection = [...collections.values()].find(c => c.definition.tags.chat === expected.scope);
+        return { definition: collection.definition, docs: collection.branches.get(branch) };
     };
     const sync = async () => { await field('sync').click(); await waitStatus('synchronized'); };
     async function seed() {

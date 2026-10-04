@@ -1,6 +1,6 @@
 {
   "name": "sillymemory",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "private": true,
   "description": "Long-term memory for SillyTavern.",
   "type": "module",
@@ -12,8 +12,8 @@
     "test:browser": "node scripts/browser-smoke.mjs",
     "test:faults": "node scripts/browser-smoke.mjs --faults",
     "test:collections:live": "node scripts/chat-collections-live.mjs",
-    "test:live": "node scripts/live-smoke.mjs",
-    "test:live:faults": "node scripts/live-smoke.mjs --faults",
+    "test:live": "node scripts/chat-collections-live.mjs",
+    "test:live:faults": "node scripts/chat-collections-live.mjs --checkpoint-recovery",
     "test:generation": "node scripts/generation-smoke.mjs",
     "test:generation:live": "node scripts/generation-smoke.mjs --live-model",
     "test:korean:live": "node scripts/generation-smoke.mjs --korean-eval",

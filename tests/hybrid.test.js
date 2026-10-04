@@ -33,3 +33,30 @@ test('frozen comparison has paired answer-bearing old source and neutral recent 
         assert(gradeHybrid(`"${item.answer}."`, item.answer)); assert(!gradeHybrid(`Maybe ${item.answer}`, item.answer));
     }
 });
+
+test('comparison hook preserves chat branch routing and cancellation in both modes', async () => {
+    const { comparisonSearch } = await import('../scripts/hybrid-query.mjs');
+    for (const mode of ['vector', 'hybrid']) {
+        const trace = { mode, queries: [] }, requests = [], signals = [];
+        const client = new LambdaClient({ endpoint: 'https://region.example.test', project: 'synthetic' }, 'synthetic', {
+            fetcher: async (_, init) => {
+                const body = JSON.parse(init.body); requests.push(body); signals.push(init.signal);
+                return Response.json({ docs: [{ doc: { id: body.ref.name, owner, scope } }] });
+            },
+        });
+        client.search = comparisonSearch(client.search, trace);
+        const controller = new AbortController();
+        for (const branch of ['chat_parent', 'chat_child']) {
+            const hits = await client.search('story', owner, scope, 'Where is QX-741?', controller.signal, branch);
+            assert.equal(hits[0].id, branch);
+            assert.deepEqual(requests.at(-1).ref, { kind: 'branch', name: branch });
+            assert.equal(requests.at(-1).consistentRead, true);
+            assert.equal(Boolean(requests.at(-1).query.rrf), mode === 'hybrid');
+        }
+        controller.abort(); assert(signals.every(signal => signal.aborted));
+        assert.equal(trace.queries.length, 2);
+        await assert.rejects(client.search('story', owner, scope, 'question'), /active chat branch/);
+        await assert.rejects(client.search('story', owner, scope, 'question', undefined, 'main'), /active chat branch/);
+        assert.equal(requests.length, 2, 'missing branch cannot send a request to main');
+    }
+});

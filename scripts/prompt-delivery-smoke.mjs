@@ -74,22 +74,36 @@ const remote = httpsServer({ key: await readFile(key), cert: await readFile(cert
         if (!name && req.method === 'POST') {
             assert.equal(body.indexConfigs.embedding.managedEmbedding, true);
             assert.ok(!collections.has(body.collectionName));
-            collections.set(body.collectionName, { definition: body, docs: new Map() });
+            collections.set(body.collectionName, { definition: body, branches: new Map([['main', new Map()]]) });
             return send(res, 201, { collection: body });
         }
         if (!name && req.method === 'GET') return send(res, 200, { collections: [...collections.values()].map(c => c.definition) });
         const c = collections.get(name); if (!c) return send(res, 404);
         if (parts.length === 4 && req.method === 'GET') return send(res, 200, { collection: c.definition });
         if (parts.length === 4 && req.method === 'DELETE') { collections.delete(name); return send(res, 200); }
-        if (parts[4] === 'docs' && parts[5] === 'upsert') { body.docs.forEach(d => c.docs.set(d.id, d)); return send(res, 202); }
-        if (parts[4] === 'docs' && parts[5] === 'delete') { body.ids.forEach(id => c.docs.delete(id)); return send(res, 202); }
+        if (parts[4] === 'branches') {
+            if (req.method === 'GET') return send(res, 200, { branches: [...c.branches.keys()].map(name => ({ name })) });
+            if (req.method === 'POST') {
+                if (c.branches.has(body.branchName)) return send(res, 409);
+                const source = c.branches.get(body.source.name); if (!source) return send(res, 404);
+                c.branches.set(body.branchName, new Map(source)); return send(res, 201);
+            }
+            if (req.method === 'DELETE') { c.branches.delete(parts[5]); return send(res, 200); }
+        }
+        const branch = body.branch || body.ref?.name || new URL(req.url, 'https://localhost').searchParams.get('refName') || 'main';
+        const branchDocs = c.branches.get(branch); if (!branchDocs) return send(res, 404);
+        const inline = docs => ({ docs: docs.map(doc => ({ doc })), isDocsInline: true });
+        if (parts[4] === 'docs' && req.method === 'GET') return send(res, 200, inline([...branchDocs.values()]));
+        if (parts[4] === 'docs' && parts[5] === 'fetch') return send(res, 200, inline(body.ids.map(id => branchDocs.get(id)).filter(Boolean)));
+        if (parts[4] === 'docs' && parts[5] === 'upsert') { body.docs.forEach(d => branchDocs.set(d.id, d)); return send(res, 202); }
+        if (parts[4] === 'docs' && parts[5] === 'delete') { body.ids.forEach(id => branchDocs.delete(id)); return send(res, 202); }
         if (parts[4] === 'query') {
             const filter = body.query.knn?.filter || body.query;
             const match = /^owner:([a-f0-9]+) AND scope:([a-f0-9]+)$/.exec(filter.queryString?.query || '');
             assert.ok(match);
             if (body.query.knn) assert.equal(typeof body.query.knn.queryText, 'string');
             // Fixed source order, deliberately no embeddings or ANN simulation.
-            let docs = body.query.knn && noHits ? [] : [...c.docs.values()].filter(d => d.owner === match[1] && d.scope === match[2]);
+            let docs = body.query.knn && noHits ? [] : [...branchDocs.values()].filter(d => d.owner === match[1] && d.scope === match[2]);
             if (body.query.knn && packing) {
                 const recorded = packingFixture.original.queries.find(query => query.query === body.query.knn.queryText);
                 assert.ok(recorded, 'Actual host query matches the recorded synthetic query');

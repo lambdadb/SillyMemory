@@ -44,13 +44,27 @@ const remote = createServer({ key: await readFile(key), cert: await readFile(cer
     if (!name && req.method === 'POST') {
         if (collections.has(body.collectionName)) return send(409);
         assert.equal(body.indexConfigs.embedding.managedEmbedding, true);
-        return faults.respond('create', () => { collections.set(body.collectionName, { definition: body, docs: new Map() }); return [201, { collection: body }]; }, send);
+        return faults.respond('create', () => { collections.set(body.collectionName, { definition: body, branches: new Map([['main', new Map()]]) }); return [201, { collection: body }]; }, send);
     }
     const c = collections.get(name); if (!c) return send(404);
     if (parts.length === 4 && req.method === 'GET') return send(200, { collection: c.definition });
     if (parts.length === 4 && req.method === 'DELETE') return faults.respond('delete-collection', () => { collections.delete(name); return [200, {}]; }, send);
-    if (parts[4] === 'docs' && parts[5] === 'upsert') return faults.respond('upsert', () => { body.docs.forEach(d => c.docs.set(d.id, d)); return [202, {}]; }, send);
-    if (parts[4] === 'docs' && parts[5] === 'delete') return faults.respond('delete-docs', () => { body.ids.forEach(id => c.docs.delete(id)); return [202, {}]; }, send);
+    if (parts[4] === 'branches') {
+        if (req.method === 'GET') return send(200, { branches: [...c.branches.keys()].map(name => ({ name })) });
+        if (req.method === 'POST') {
+            if (c.branches.has(body.branchName)) return send(409);
+            const source = c.branches.get(body.source.name); if (!source) return send(404);
+            c.branches.set(body.branchName, new Map(source)); return send(201);
+        }
+        if (req.method === 'DELETE') return faults.respond('delete-branch', () => { c.branches.delete(parts[5]); return [200, {}]; }, send);
+    }
+    const branch = body.branch || body.ref?.name || new URL(req.url, 'https://localhost').searchParams.get('refName') || 'main';
+    const docs = c.branches.get(branch); if (!docs) return send(404);
+    const inline = docs => ({ docs: docs.map(doc => ({ doc })), isDocsInline: true });
+    if (parts[4] === 'docs' && req.method === 'GET') return send(200, inline([...docs.values()]));
+    if (parts[4] === 'docs' && parts[5] === 'fetch') return send(200, inline(body.ids.map(id => docs.get(id)).filter(Boolean)));
+    if (parts[4] === 'docs' && parts[5] === 'upsert') return faults.respond('upsert', () => { body.docs.forEach(d => docs.set(d.id, d)); return [202, {}]; }, send);
+    if (parts[4] === 'docs' && parts[5] === 'delete') return faults.respond('delete-docs', () => { body.ids.forEach(id => docs.delete(id)); return [202, {}]; }, send);
     if (parts[4] === 'query') {
         if (failQuery) return send(503);
         if (delayedQuery) await new Promise(r => setTimeout(r, delayedQuery));
@@ -58,8 +72,8 @@ const remote = createServer({ key: await readFile(key), cert: await readFile(cer
         const match = /^owner:([a-f0-9]+) AND scope:([a-f0-9]+)$/.exec(filter.queryString?.query || '');
         assert.ok(match, 'owner and scope query filters required');
         if (body.query.knn) assert.equal(typeof body.query.knn.queryText, 'string');
-        const docs = [...c.docs.values()].filter(d => d.owner === match[1] && d.scope === match[2]);
-        return faults.respond('query', () => [200, { docs: [...docs, ...staleHits].map(doc => ({ collection: name, doc })), isDocsInline: true, total: docs.length, took: 1 }], send);
+        const found = [...docs.values()].filter(d => d.owner === match[1] && d.scope === match[2]);
+        return faults.respond('query', () => [200, { docs: [...found, ...staleHits].map(doc => ({ collection: name, doc })), isDocsInline: true, total: found.length, took: 1 }], send);
     }
     send(400);
 });
@@ -184,7 +198,8 @@ try {
     const newerGeneration = prompt();
     const [older, newer] = await Promise.all([olderGeneration, newerGeneration]); delayedQuery = 0;
     check('overlapping generations cannot overwrite the newest injection', older.aborted && !newer.aborted && Boolean(newer.injection));
-    const collection = [...collections.values()][0]; const old = [...collection.docs.values()][0];
+    const parentBranch = await page.evaluate(() => `chat_${SillyTavern.getContext().chatMetadata.sillymemory.id}`);
+    const collection = { docs: [...collections.values()][0].branches.get(parentBranch) }; const old = [...collection.docs.values()][0];
     await page.evaluate(async () => { const c = SillyTavern.getContext(); c.chat[0].mes = 'Edited: the compass is in the tower.'; await c.eventSource.emit(c.eventTypes.MESSAGE_UPDATED, 0); });
     await waitStatus('synchronized'); staleHits = [old];
     const edited = await prompt();
@@ -203,24 +218,24 @@ try {
     check('chat switch rejects late result and aborts old generation', raced.aborted && !raced.injection);
     await waitStatus('synchronized'); staleHits = [old];
     const branch = await prompt();
-    check('native branch scope excludes original chat results', !branch.injection.includes('Edited:') && collections.size === 2 && [...collections.values()].every(c => new Set([...c.docs.values()].map(d => d.scope)).size === 1));
+    check('native branch shares its story collection and rejects stale source', !branch.injection.includes('Edited:') && collections.size === 1 && [...collections.values()][0].branches.size === 3);
     if (!faultMode) {
         const beforeCopy = await page.evaluate(() => SillyTavern.getContext().chatMetadata.sillymemory.id);
         await field('enabled').uncheck();
         await page.evaluate(async () => { const c = SillyTavern.getContext(), { saveChat } = await import('/script.js'); await saveChat({ chatName: 'Synthetic copied' }); await c.openCharacterChat('Synthetic copied'); });
         page.once('dialog', d => d.accept()); await field('delete-chat').click(); await waitStatus('no longer accessible');
-        check('deleting an unactivated copy cannot delete its parent', collections.size === 2);
+        check('deleting an unactivated copy cannot delete its parent', collections.size === 1);
         const uncertainCreate = faults.arm('create', 'hold'); await field('enabled').check();
         await uncertainCreate.entered; await waitStatus('timed out'); uncertainCreate.release();
-        check('uncertain creation retains one pending owned collection', collections.size === 3);
+        check('uncertain creation retains one pending owned collection', collections.size === 2);
         await field('sync').click(); await waitStatus('synchronized');
-        check('create retry recovers the same collection', collections.size === 3);
-        check('copied metadata receives a distinct collection', collections.size === 3 && await page.evaluate(() => SillyTavern.getContext().chatMetadata.sillymemory.id) !== beforeCopy);
-        faults.arm('delete-collection', 'http', 503);
+        check('create retry recovers the same collection', collections.size === 2);
+        check('copied metadata receives a distinct collection', collections.size === 2 && await page.evaluate(() => SillyTavern.getContext().chatMetadata.sillymemory.id) !== beforeCopy);
+        faults.arm('delete-branch', 'http', 503);
         page.once('dialog', d => d.accept()); await field('delete-chat').click(); await waitStatus('HTTP 503');
-        check('failed individual deletion keeps remote collection for retry', collections.size === 3);
+        check('failed individual deletion keeps remote collection for retry', collections.size === 2);
         page.once('dialog', d => d.accept()); await field('delete-chat').click(); await waitStatus('no longer accessible');
-        check('individual deletion preserves parent and branch collections', collections.size === 2);
+        check('individual deletion preserves the story collections and sibling branches', collections.size === 2 && [...collections.values()][1].branches.size === 1);
         await field('enabled').check(); await waitStatus('synchronized');
     }
     failQuery = true;
@@ -235,26 +250,27 @@ try {
     await field('inspection').scrollIntoViewIfNeeded();
     if (!faultMode) await page.screenshot({ path: path.join(artifacts, 'settings.png') });
     if (!faultMode) {
-        // The host can swallow save errors. Verify disk metadata, not just the
-        // resolved save promise, before allowing any versioned remote requests.
-        const legacy = await page.evaluate(() => structuredClone(SillyTavern.getContext().chatMetadata.sillymemory));
+        // The host can swallow save errors. No remote access may precede
+        // persistence of the complete default story identity.
+        await field('enabled').uncheck();
+        await page.evaluate(async () => {
+            const c = SillyTavern.getContext(), { saveChat } = await import('/script.js');
+            delete c.chatMetadata.sillymemory;
+            await saveChat({ chatName: 'Fresh default identity' }); await c.openCharacterChat('Fresh default identity');
+        });
         const before = calls.length;
         await page.route('**/api/chats/save', route => route.fulfill({ status: 503, contentType: 'application/json', body: '{}' }));
-        page.once('dialog', dialog => dialog.accept()); await field('versioned').click();
-        await waitStatus('not saved');
         await field('enabled').check(); await waitStatus('not saved');
-        check('failed version opt-in cannot create remote data on re-enable', calls.length === before);
+        check('failed first identity save prevents remote access', calls.length === before);
         await page.unroute('**/api/chats/save');
-        await field('versioned').click(); await waitStatus('Versioned story memory is ready');
+        await field('sync').click(); await waitStatus('synchronized');
         const persisted = await page.evaluate(async () => {
             const c = SillyTavern.getContext();
             const response = await fetch('/api/chats/get', { method: 'POST', headers: c.getRequestHeaders(), body: JSON.stringify({ avatar_url: c.characters[c.characterId].avatar, file_name: c.getCurrentChatId() }) });
-            const rows = await response.json();
-            return JSON.stringify(rows[0].chat_metadata.sillymemory) === JSON.stringify(c.chatMetadata.sillymemory);
+            const rows = await response.json(), memory = c.chatMetadata.sillymemory;
+            return memory.version === 1 && memory.story === memory.id && JSON.stringify(rows[0].chat_metadata.sillymemory) === JSON.stringify(memory);
         });
-        check('version opt-in retry persists full metadata before reporting ready', persisted && !await field('enabled').isChecked() && calls.length === before);
-        // Restore the synthetic legacy fixture for this emulator's existing cleanup.
-        await page.evaluate(async legacy => { const c = SillyTavern.getContext(); c.chatMetadata.sillymemory = legacy; await c.saveChat(); }, legacy);
+        check('retry saves the full default story identity and synchronizes', persisted && await field('versioned').count() === 0);
     }
     if (!faultMode) {
         // Native chat-list entry must enforce the same identity checks as manager rows.

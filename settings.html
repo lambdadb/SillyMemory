@@ -10,8 +10,7 @@
     <p>Connects directly to LambdaDB from this browser. Allow this page’s origin in LambdaDB CORS settings. No SillyTavern proxy setting or restart is needed.</p>
     <div class="sm-actions"><button data-sm="gate" class="menu_button">Test synthetic upsert / query / delete</button><button data-sm="cleanup" class="menu_button">Clean up test collection</button><button data-sm="provision" class="menu_button">Prepare chat memory</button></div>
     <label class="sm-toggle"><input data-sm="enabled" type="checkbox"> Enable memory (isolated chat history)</label>
-    <button data-sm="versioned" class="menu_button">Use versioned memory for this story</button>
-    <p>Opt in once per story. Native branches reuse committed memory in isolated LambdaDB branches. Initial indexing consumes managed embedding usage; earlier collections remain until all-owned cleanup. This is not a chat rollback control.</p>
+    <p>Each story has its own collection. Native branches reuse committed memory in isolated LambdaDB branches automatically. Initial indexing consumes managed embedding usage. Save a checkpoint explicitly when you want to preserve a resumable transcript.</p>
     <label>Checkpoint name (optional)<input data-sm="checkpoint-name" class="text_pole" maxlength="120" placeholder="Before entering the observatory"></label>
     <div class="sm-actions"><button data-sm="checkpoint-save" class="menu_button">Save / finish checkpoint</button><button data-sm="checkpoint-resume" class="menu_button">Resume checkpoint in new chat</button></div>
     <p>Checkpoints save this transcript and its memory branch. Editing a saved transcript invalidates it. Refresh the list after reconnecting to check remote availability.</p>

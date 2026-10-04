@@ -342,7 +342,7 @@ record remains. Browser storage and persisted settings contained no real key.
 The final source/report scan found neither configured API key, and `.env.local`
 remained unchanged, ignored, and untracked. The report's tested source hashes
 match the final runtime and harness files. Review live-faults.json (`artifacts/live-faults.json`, local-only),
-the [live runner](../scripts/live-smoke.mjs), and [live fault scenarios](../scripts/live-fault-scenarios.mjs).
+the [live runner](https://github.com/lambdadb/SillyMemory/blob/ae53978bf1d27950b12922340a6ea1ac8d1b4baf/scripts/live-smoke.mjs), and [live fault scenarios](https://github.com/lambdadb/SillyMemory/blob/ae53978bf1d27950b12922340a6ea1ac8d1b4baf/scripts/live-fault-scenarios.mjs).
 
 These checks establish bounded recovery for the tested cases. They do not test
 long-duration load, a genuine LambdaDB outage, server restart during a request,
@@ -759,7 +759,7 @@ Runtime files remain unchanged from develop. No tag was pushed, so the actual
 tag-triggered GitHub workflow and published-release upgrade remain untested.
 
 Reproduce with the isolated host and a published candidate branch using the
-[installation smoke protocol](../RELEASING.md#installation-smoke-test). The final
+[installation smoke protocol](https://github.com/lambdadb/SillyMemory/blob/ae53978bf1d27950b12922340a6ea1ac8d1b4baf/RELEASING.md#installation-smoke-test). The final
 ignored local evidence is git-install-v3.json (`artifacts/git-install-v3.json`, local-only),
 execution log (`artifacts/git-install-v3.log`, local-only), and
 version display screenshot (`artifacts/git-install-v3.png`, local-only); unit logs are

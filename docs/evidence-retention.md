@@ -6,6 +6,14 @@ managed embeddings, installation and upgrade behavior are unchanged. Experiment
 conclusions, failed candidates, limitations, concise summaries, dataset provenance,
 frozen splits and reusable synthetic regressions stay in Git.
 
+## Default-storage cleanup
+
+The [default story memory decision](default-story-memory.md) records the separate
+0.4.0 cleanup. It removes pre-release storage compatibility and obsolete live
+producer paths, preserves the complete pre-change tree and leaves all previous
+experiment results/archives intact. The unchanged-runtime statement above applies
+only to the original retention cleanup below.
+
 ## Preserved originals
 
 The complete pre-cleanup tree is

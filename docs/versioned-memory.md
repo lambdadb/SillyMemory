@@ -1,16 +1,16 @@
 # Versioned story memory
 
-This records the branch-inheritance scope validated in PR #53. Version
-0.3.0 also includes optional [frozen checkpoints](checkpoints.md), with
-a separate acceptance record and transcript/restore boundaries.
+The current development candidate uses this layout for every chat. The
+[default-storage decision](default-story-memory.md) removes the pre-release
+opt-in and compatibility paths. Checkpoints remain explicitly saved/resumed.
+The dated validation sections below preserve the original PR #53 results.
 
 ## Decision and acceptance boundary
 
 Use a collection for one story family and a writable LambdaDB branch for each
 native SillyTavern chat path. Preserve stable document identities across a shared
 prefix, reconcile the selected local transcript before retrieval, and keep
-unrelated stories isolated. Existing per-chat collections remain available for
-explicit cleanup; do not silently destroy or rewrite them.
+unrelated stories isolated. No previous storage layout or migration path is maintained.
 
 The first implementation covers branch inheritance, reconciliation after edits,
 swipes/deletions and earlier-point forks, reload/uncertain-request recovery, and
@@ -34,12 +34,10 @@ this first branch-inheritance implementation.
 
 ## Use and storage model
 
-This is opt-in in 0.3.0. Connect with a session key, pass
-its synthetic transport test, prepare memory and select a saved character chat.
-Click **Use versioned memory for this story**, confirm, then enable memory. The
-first sync indexes older local history into a new collection. Existing legacy
-remote data stays available for **Delete all owned remote memory**. The choice is
-saved in native chat metadata; it is not a browser-only preference.
+Connect with a session key, pass the synthetic transport test, prepare memory,
+select a character chat and enable memory. Its complete story identity is saved
+and verified on the host before remote use. The first sync indexes older local
+history into the story branch. There is no storage-mode selection or conversion.
 
 - `smstory_<hash(owner, character, story)>` contains the family. Each selected
   chat has a `chat_<saved chat ID>` writable branch. Empty `main` is the root for
@@ -73,7 +71,7 @@ saved in native chat metadata; it is not a browser-only preference.
 
 **Delete this chat's remote memory** deletes only its writable branch. The empty
 family collection can remain; **Delete all owned remote memory** discovers and
-removes entire owned families, legacy collections and their branches. Local chats
+removes entire owned story families and their branches. Local chats
 are preserved. Deleting a native chat or uninstalling the extension does not
 remove remote memory automatically. Snapshot retention/backups remain provider
 policies; branch disappearance is not proof of physical erasure.
@@ -83,16 +81,12 @@ devices remain unsupported. Out-of-line document responses fail safely. Long
 histories need paginated source reconciliation; latency and memory consumption at
 large scale are not established by the small acceptance fixture.
 
-## Migration and rollback
+## Format boundary
 
-No bulk conversion is performed. Opt-in requires new initial embedding/storage
-usage and temporarily retains old collections. Turning memory off does not undo
-that choice. Before reverting to 0.2.0, use 0.3.0's all-owned cleanup if remote
-cleanup is desired: 0.2.0 cannot discover/manage `smstory_*` collections and will
-use its earlier per-chat layout. Keep a native data backup; code rollback does
-not restore transcripts or reverse metadata/data changes. Re-enabling memory can
-rebuild it from local history. Checkpoint controls and their restore limits are documented separately in
-[the checkpoint guide](checkpoints.md).
+No existing user data needs migration in this experimental project. Unsupported
+chat metadata is rejected rather than converted or silently sent to another
+storage layout. Historical release behavior is retained only as evidence.
+The checkpoint guide documents explicit save/resume and its restore limits.
 
 ## Contracts inspected
 
@@ -167,7 +161,7 @@ npm run check:release
 SM_ENV_FILE=/absolute/path/to/.env.local node scripts/versioning-live.mjs
 ST_SOURCE=/path/to/pinned/SillyTavern \
 SM_ENV_FILE=/absolute/path/to/.env.local SM_ARTIFACT_TAG=versioned-unique \
-  node scripts/chat-collections-live.mjs --versioned
+  node scripts/chat-collections-live.mjs
 ```
 
 Each live entry point incurs managed embedding/service usage. Stop after a failed

@@ -10,7 +10,7 @@ test('challenge fixtures cover all language/type pairs and keep target facts out
         assert(item.source[4].mes.includes(item.label));
         assert(!item.source.slice(-12).some(m => m.mes.includes(item.label)));
         assert.equal(item.source.filter(m => m.mes.includes(item.label)).length, 1);
-        const snapshot = capture({ groupId: null, characterId: 0, characters: [{ avatar: 'fixture.png' }], getCurrentChatId: () => item.id, chat: item.source });
+        const snapshot = capture({ groupId: null, characterId: 0, characters: [{ avatar: 'fixture.png' }], chatMetadata: { sillymemory: { version: 1, id: item.id, story: item.id } }, getCurrentChatId: () => item.id, chat: item.source });
         if (item.type === 'continue') {
             assert(snapshot.messages.slice(-7).every(m => !m.user));
             assert(retrievalQueries(snapshot).every(q => !q.includes(item.language === 'ko' ? '수아' : 'Mira')));
