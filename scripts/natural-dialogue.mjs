@@ -91,7 +91,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(realpathSync(process.ar
     const args = process.argv.slice(2);
     assert([2, 4].includes(args.length) && args[0] === '--output' && args[1] && (args.length === 2 || args[2] === '--fixture'), 'Usage: node scripts/natural-dialogue.mjs --output artifacts/unique-plan.json [--fixture version]');
     const fixture = loadNaturalFixture(args[3]), audit = await auditNaturalDialogue(fixture);
-    const sourceFiles = ['index.js', 'src/client.js', 'src/gate.js', 'src/memory.js', 'src/context.js', 'src/status.js', 'scripts/natural-dialogue.mjs', ...fixtureFiles(fixture.version)];
+    const sourceFiles = ['index.js', 'src/client.js', 'vendor/lambdadb.js', 'package-lock.json', 'src/gate.js', 'src/memory.js', 'src/context.js', 'src/status.js', 'scripts/natural-dialogue.mjs', ...fixtureFiles(fixture.version)];
     const sourceSha256 = Object.fromEntries(sourceFiles.map(file => [file, createHash('sha256').update(readFileSync(path.join(root, file))).digest('hex')]));
     const plan = { version: fixture.version, settings: fixture.settings, generation: fixture.generation, sourceSha256, audit, cases: naturalCases(fixture), schedule: naturalSchedule(fixture), results: null };
     const output = path.resolve(args[1]); await mkdir(path.dirname(output), { recursive: true });

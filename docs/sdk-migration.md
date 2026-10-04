@@ -155,3 +155,13 @@ bundle retains reports/logs, exact candidate source, the initial-browser produce
 overlay and the validation patch. Configured-secret scans passed on candidate
 files and decompressed archive entries. No historical evidence was deleted.
 The archive pointer was appended after capture; runtime files are unchanged.
+
+## Final review correction
+
+PR #62 review found that the maintained generation producer omitted the new SDK
+bundle from source identities, allowing an SDK-only change to escape a resume or
+aggregation check. Initial/final maps, frozen plans, summary validators and the
+related benchmark producer maps now include `vendor/lambdadb.js` and
+`package-lock.json`. Regressions reject missing/mixed SDK identities. Historical
+reports retain their original source/validator archives; no report was rewritten
+or paid result relabeled. Runtime and the measured SDK bundle are unchanged.

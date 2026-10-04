@@ -13,7 +13,7 @@ function segment(mode) {
     const item = cases[0], answer = 'UNKNOWN', id = `${item.id}/${mode}`;
     const row = { case: item.id, mode, question: item.question, answer, ...grade(answer, item), promptTokens: 100, generationMs: 20, providerMs: 10, injected: false, memoryTokens: 0 };
     return { cleanupComplete: true, model: 'synthetic-model', sillyTavern: 'synthetic-host', hostContextTokens: 8192, maxOutputTokens: 256,
-        sourceSha256: Object.fromEntries(['index.js', 'src/client.js', 'src/gate.js', 'src/memory.js', 'src/context.js', 'scripts/korean-fixture.mjs'].map(file => [file, createHash('sha256').update(readFileSync(path.join(root, file))).digest('hex')])),
+        sourceSha256: Object.fromEntries(['index.js', 'src/client.js', 'vendor/lambdadb.js', 'package-lock.json', 'src/gate.js', 'src/memory.js', 'src/context.js', 'scripts/korean-fixture.mjs'].map(file => [file, createHash('sha256').update(readFileSync(path.join(root, file))).digest('hex')])),
         checks: ['identical uncontaminated source restored', 'original conversation preserved by generation', 'edited/deleted source text absent from outgoing prompt', mode === 'off' ? 'full source fits the baseline context' : 'recent complete messages retained'].map(s => `${id}: ${s}`),
         generations: [{ evaluation: row, upstreamStatus: 200, finishReason: 'stop', providerAnswer: answer, answer, providerUsage: {prompt_tokens:100}, generationMs:20, responseMs:10, requestOptions:{model:'synthetic-model',temperature:0} }] };
 }

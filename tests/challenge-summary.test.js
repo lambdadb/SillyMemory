@@ -11,7 +11,7 @@ function fixture(heldout = false) {
     if (heldout) row.answerEvidence = answerEvidence(row.answer, row.label);
     const g = { stage: `challenge/${item.id}/off`, upstreamStatus: 200, finishReason: 'stop', providerAnswer: item.label, challenge: row, messages: item.source.map(m => ({role:'user',content:m.mes})), providerUsage: {prompt_tokens: 2000} };
     return { passed: true, cleanupComplete: true, nativeCleanupComplete: true, generator: 'live compatible model', model: 'gpt-4.1-mini-2025-04-14', sillyTavern: '06bde939fb1e9c4c8d8641d810f0a916b5bce127', hostContextTokens: 8192, maxOutputTokens: 256,
-        sourceSha256: Object.fromEntries(['index.js','src/client.js','src/gate.js','src/memory.js','src/context.js','src/status.js','scripts/recall-challenges.mjs','scripts/challenge-eval.mjs','scripts/generation-smoke.mjs','scripts/generation-cleanup.mjs', ...(heldout ? ['scripts/heldout-fixture.mjs'] : [])].map(f=>[f,'0'.repeat(64)])),
+        sourceSha256: Object.fromEntries(['index.js','src/client.js', 'vendor/lambdadb.js', 'package-lock.json','src/gate.js','src/memory.js','src/context.js','src/status.js','scripts/recall-challenges.mjs','scripts/challenge-eval.mjs','scripts/generation-smoke.mjs','scripts/generation-cleanup.mjs', ...(heldout ? ['scripts/heldout-fixture.mjs'] : [])].map(f=>[f,'0'.repeat(64)])),
         evaluation: {version:heldout ? heldoutVersion : challengeVersion,fixtureHash:hash(cases),settings:challengeSettings,rows:[row]}, generations:[g], checks:['identical source restored','intended context boundary verified','original source preserved','recent source retained'].map(s=>`${item.id}/off: ${s}`) };
 }
 test('challenge summary refuses incomplete, duplicated, mixed-source and unverified answer evidence', () => {

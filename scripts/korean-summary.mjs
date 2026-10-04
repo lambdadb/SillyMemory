@@ -20,7 +20,7 @@ for (const path of paths) {
     const text = await readFile(path, 'utf8'); const report = JSON.parse(text);
     assert(report.cleanupComplete, 'Every input run must confirm cleanup');
     const config = { model: report.model, host: report.sillyTavern, hostContextTokens: report.hostContextTokens, maxOutputTokens: report.maxOutputTokens, reasoningEffort: report.reasoningEffort, excludedParameters: report.excludedParameters };
-    const hashes = Object.fromEntries(['index.js', 'src/client.js', 'src/gate.js', 'src/memory.js', 'src/context.js', 'scripts/korean-fixture.mjs', ...(report.sourceSha256?.['src/status.js'] ? ['src/status.js'] : [])].map(file => {
+    const hashes = Object.fromEntries(['index.js', 'src/client.js', 'vendor/lambdadb.js', 'package-lock.json', 'src/gate.js', 'src/memory.js', 'src/context.js', 'scripts/korean-fixture.mjs', ...(report.sourceSha256?.['src/status.js'] ? ['src/status.js'] : [])].map(file => {
         assert(report.sourceSha256?.[file], `Missing source hash: ${file}`); return [file, report.sourceSha256[file]];
     }));
     if (configuration) { assert.deepEqual(config, configuration, 'Cannot combine different host/model settings'); assert.deepEqual(hashes, sourceHashes, 'Cannot combine different runtime or fixture sources'); }

@@ -12,7 +12,7 @@ export const semanticHost = '06bde939fb1e9c4c8d8641d810f0a916b5bce127';
 export const semanticFiles = ['tests/fixtures/semantic-long-v1.json','tests/fixtures/semantic-evidence-v1.json','scripts/semantic-evidence.mjs','scripts/semantic-long.mjs','scripts/semantic-live.mjs','scripts/semantic-results.mjs','docs/semantic-long-evaluation.md'];
 export const sha = bytes => createHash('sha256').update(bytes).digest('hex');
 export const loadLong = () => JSON.parse(readFileSync(new URL('../tests/fixtures/semantic-long-v1.json', import.meta.url)));
-export const sourceFiles = ['index.js','src/client.js','src/gate.js','src/memory.js','src/context.js','src/status.js','scripts/generation-smoke.mjs','scripts/generation-cleanup.mjs','scripts/provider-retry.mjs','scripts/provider-spacing.mjs',...semanticFiles];
+export const sourceFiles = ['index.js','src/client.js', 'vendor/lambdadb.js', 'package-lock.json','src/gate.js','src/memory.js','src/context.js','src/status.js','scripts/generation-smoke.mjs','scripts/generation-cleanup.mjs','scripts/provider-retry.mjs','scripts/provider-spacing.mjs',...semanticFiles];
 export const sourceHashes = () => Object.fromEntries(sourceFiles.map(file=>[file,sha(readFileSync(new URL(`../${file}`,import.meta.url)))]));
 export function longSchedule(fixture) {
     return Array.from({length:fixture.settings.repetitions},(_,r)=>fixture.cases.flatMap((item,i)=>( (i+r)%2 ? ['on','off']:['off','on']).map(mode=>({id:`${item.id}/r${r+1}/${mode}`,case:item.id,repetition:r+1,mode})))).flat();

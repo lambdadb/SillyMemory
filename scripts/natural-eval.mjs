@@ -14,7 +14,7 @@ export async function verifyNaturalPlan(filename) {
     assert.deepEqual(plan.settings, fixture.settings); assert.deepEqual(plan.generation, fixture.generation);
     assert.deepEqual(plan.cases, naturalCases(fixture)); assert.deepEqual(plan.schedule, naturalSchedule(fixture));
     assert.equal(plan.results, null);
-    for (const file of ['index.js', 'src/client.js', 'src/gate.js', 'src/memory.js', 'src/context.js', 'src/status.js', 'scripts/natural-dialogue.mjs', ...fixtureFiles(plan.version)]) {
+    for (const file of ['index.js', 'src/client.js', 'vendor/lambdadb.js', 'package-lock.json', 'src/gate.js', 'src/memory.js', 'src/context.js', 'src/status.js', 'scripts/natural-dialogue.mjs', ...fixtureFiles(plan.version)]) {
         assert.equal(createHash('sha256').update(await readFile(new URL(`../${file}`, import.meta.url))).digest('hex'), plan.sourceSha256[file], `Frozen source changed: ${file}`);
     }
     return { plan, sha256: createHash('sha256').update(bytes).digest('hex') };
