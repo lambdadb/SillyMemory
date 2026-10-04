@@ -371,3 +371,42 @@ ST_SOURCE=/path/to/pinned-host SM_ENV_FILE=/path/to/.env.local \
 
 The host's `third-party/sillymemory` symlink must point to the tested checkout.
 Do not start a retry if a pending ownership file remains without verified cleanup.
+
+### Native-list duplicate protection review (2026-10-04)
+
+After #55 merged as `ff660acc2e682381538377dd7f48715d8f0989a4`, #56 was
+rebased without changing its tree. Review identified a second entry point:
+opening a copied checkpoint in the native chat list bypassed the manager's
+identity check. The old runtime reproduced this against the real pinned host:
+the manager blocked both duplicate rows, but the global finish button contacted
+the emulator instead of rejecting the duplicate. This is a local identity-gate
+failure, not an embedding or provider failure.
+
+Both global checkpoint buttons now run the same saved-inventory/story/duplicate
+check as manager rows. Ready and pending duplicates are rejected before remote
+access. The regression runs in the existing browser suite with two short native
+fixture files; it does not require live credentials or managed embeddings.
+
+Validation at `97f8095d0625952cc9b3b0c0aa37bd975a46cec5`:
+- 298 unit tests, syntax and release metadata checks passed.
+- 37 actual pinned-host/Chromium + local emulator checks passed, including all
+  four ready/pending finish/resume combinations. No emulator collections or
+  browser page errors remained.
+- 21 real GitHub installation/update/rollback checks passed: public main
+  `98d28b136b063f1780fd94472a61b70d08d8b713` installed through the host UI, then
+  updated to the candidate above; published-tag rollback and return to the
+  candidate preserved owned settings. No live memory or generation calls were
+  made in this installation run.
+
+The earlier live results remain evidence for their archived pre-review producer.
+This correction changes the native entry's local validation only; it does not
+change LambdaDB requests for managed embeddings, branch reconciliation or the
+manager row path. The paid lifecycle/1,000-message runs were not repeated for
+this guard. Their originals and archives remain intact.
+
+Review evidence is local-only at
+`/Users/steven/Dev/sillymemory-checkpoint-manager/artifacts/archive/checkpoint-manager-review/evidence.tar.gz`,
+SHA-256 `91b2ed0139467cc204d62948fe38e023290aeb6bfa4a26ef7675bfad68de5ab5`.
+All 305 members were verified byte-for-byte, including the old failing runtime,
+reproduction log, final producer source/patch, unit/browser and installation
+reports. The archive pointer was appended afterward; no runtime changed.
