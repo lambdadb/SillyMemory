@@ -2,7 +2,7 @@
 // default; --live-model requires explicitly supplied compatible-model settings.
 import { runHybrid, hybridFiles } from './hybrid-eval.mjs';
 import { runRerank, rerankFiles } from './rerank-eval.mjs';
-import { runRerankRescue, rescueFiles } from './rerank-rescue.mjs';
+import { runRerankRescue, rescueFiles, intentFiles } from './rerank-rescue.mjs';
 import { chromium } from '@playwright/test';
 import { createServer } from 'node:http';
 import { parseEnv } from 'node:util';
@@ -34,7 +34,9 @@ const revision = '06bde939fb1e9c4c8d8641d810f0a916b5bce127';
 if (process.argv.includes('--chunking')) throw new Error('Historical chunking comparison is archived; use its recorded producer.');
 const env = parseEnv(await readFile(process.env.SM_ENV_FILE || path.join(root, '.env.local'), 'utf8'));
 const hybridMode = process.argv.includes('--hybrid');
-const rescueMode = process.argv.includes('--rerank-rescue');
+const intentMode = process.argv.includes('--rerank-intent');
+if (intentMode && process.argv.includes('--rerank-rescue')) throw new Error('Choose one staged experiment.');
+const rescueMode = process.argv.includes('--rerank-rescue') || intentMode;
 if (rescueMode && process.argv.includes('--rerank')) throw new Error('Choose one reranking experiment.');
 const rerankMode = process.argv.includes('--rerank') || rescueMode;
 const retrievalExperiment = hybridMode || rerankMode;
@@ -91,13 +93,13 @@ if (!summarizeMode && !nativeTuning && !Object.values(credentials).every(Boolean
 if (execFileSync('git', ['-C', source, 'rev-parse', 'HEAD'], { encoding: 'utf8' }).trim() !== revision) throw new Error('Unexpected host revision.');
 if (await realpath(path.join(source, 'public/scripts/extensions/third-party/sillymemory')) !== root) throw new Error('Host extension symlink must point to this checkout.');
 const artifacts = path.join(root, 'artifacts'); await mkdir(artifacts, { recursive: true });
-const modeSuffix = rescueMode ? 'rerank-rescue' : rerankMode ? 'rerank' : hybridMode ? 'hybrid' : natural ? (summarizeMode ? 'summarize' : nativeTuning ? 'native-tuning' : threeModes ? 'three-modes' : semantic ? 'semantic' : 'natural') : challenges ? `${heldout ? 'heldout' : 'challenges'}${challengeStart ? `-from-${challengeStart}` : ''}` : comparison ? `comparison${comparisonStart ? `-from-${comparisonStart}` : ''}${setupOnly ? '-setup' : ''}` : koreanEvaluation ? `korean-eval${process.env.SM_SAMPLE_START ? `-from-sample-${sampleStart}` : caseStart ? `-from-${caseStart}` : ''}` : liveModel ? 'live-model' : 'fixture-model';
+const modeSuffix = intentMode ? 'rerank-intent' : rescueMode ? 'rerank-rescue' : rerankMode ? 'rerank' : hybridMode ? 'hybrid' : natural ? (summarizeMode ? 'summarize' : nativeTuning ? 'native-tuning' : threeModes ? 'three-modes' : semantic ? 'semantic' : 'natural') : challenges ? `${heldout ? 'heldout' : 'challenges'}${challengeStart ? `-from-${challengeStart}` : ''}` : comparison ? `comparison${comparisonStart ? `-from-${comparisonStart}` : ''}${setupOnly ? '-setup' : ''}` : koreanEvaluation ? `korean-eval${process.env.SM_SAMPLE_START ? `-from-sample-${sampleStart}` : caseStart ? `-from-${caseStart}` : ''}` : liveModel ? 'live-model' : 'fixture-model';
 const suffix = modeSuffix + (artifactTag ? `-${artifactTag}` : '');
 const reportPath = path.join(artifacts, `generation-${suffix}.json`);
 if (natural || retrievalExperiment) await writeFile(reportPath, JSON.stringify({ passed: false, incomplete: true }), { flag: 'wx' });
 const naturalSourceFiles = ['src/chunking.js', 'index.js', 'src/chat-collections.js', 'src/client.js', 'vendor/lambdadb.js', 'package-lock.json', 'src/gate.js', 'src/memory.js', 'src/context.js', 'src/status.js', 'scripts/generation-smoke.mjs', 'scripts/provider-spacing.mjs', 'scripts/generation-cleanup.mjs', 'scripts/natural-eval.mjs', 'scripts/natural-dialogue.mjs', ...(semantic ? [...semanticFiles, ...(summarizeMode ? summaryFiles : nativeTuning ? tuningFiles : threeModes ? threeModeFiles : [])] : fixtureFiles(frozenNatural?.plan.version)), ...(retryTransient ? ['scripts/provider-retry.mjs', 'docs/natural-dialogue-retry.md', 'scripts/natural-summary.mjs', 'scripts/natural-score.mjs'] : [])];
 const naturalSourceSha256 = natural ? Object.fromEntries(await Promise.all(naturalSourceFiles.map(async file => [file, createHash('sha256').update(await readFile(path.join(root, file))).digest('hex')]))) : null;
-const experimentHashes = async () => Object.fromEntries(await Promise.all(['index.js', 'src/memory.js', 'src/client.js', 'vendor/lambdadb.js', 'package-lock.json', 'src/chat-collections.js', 'src/context.js', 'scripts/generation-smoke.mjs', ...(rescueMode ? rescueFiles : rerankMode ? rerankFiles : hybridFiles), 'src/chunking.js', 'src/gate.js', 'src/status.js', 'src/delivery.js', 'scripts/provider-retry.mjs', 'scripts/provider-spacing.mjs', 'scripts/generation-cleanup.mjs'].map(async file => [file, createHash('sha256').update(await readFile(path.join(root, file))).digest('hex')])));
+const experimentHashes = async () => Object.fromEntries(await Promise.all(['index.js', 'src/memory.js', 'src/client.js', 'vendor/lambdadb.js', 'package-lock.json', 'src/chat-collections.js', 'src/context.js', 'scripts/generation-smoke.mjs', ...(intentMode ? intentFiles : rescueMode ? rescueFiles : rerankMode ? rerankFiles : hybridFiles), 'src/chunking.js', 'src/gate.js', 'src/status.js', 'src/delivery.js', 'scripts/provider-retry.mjs', 'scripts/provider-spacing.mjs', 'scripts/generation-cleanup.mjs'].map(async file => [file, createHash('sha256').update(await readFile(path.join(root, file))).digest('hex')])));
 const experimentSource = retrievalExperiment ? await experimentHashes() : null;
 if (retrievalExperiment) await writeFile(reportPath + '.plan.json', JSON.stringify({ sourceSha256: experimentSource, baseline: execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim(), model, context: hostContextTokens, maxOutputTokens, budget: 800, recent: 4, samples: rescueMode ? 28 : rerankMode ? 24 : 16, transportProtocol, providerSpacing: PROVIDER_SPACING }, null, 2), { flag: 'wx' });
 const pendingPath = path.join(artifacts, `generation-${suffix}-pending.json`);
@@ -312,7 +314,7 @@ try {
             if (target.pathname.endsWith('/collections') && body) rerankTraffic.collections++;
             if (target.pathname.endsWith('/upsert')) rerankTraffic.documents += body?.docs?.length || 0;
             if (target.pathname.endsWith('/query')) rerankTraffic.queries++;
-            if (rerankTraffic.collections > 3 || rerankTraffic.documents > (rescueMode ? 2500 : 2000) || rerankTraffic.queries > (rescueMode ? 200 : 160)) {
+            if (rerankTraffic.collections > 3 || rerankTraffic.documents > (intentMode ? 4000 : rescueMode ? 2500 : 2000) || rerankTraffic.queries > (rescueMode ? 200 : 160)) {
                 rerankTraffic.blocked = true;
                 failure ||= { stage, reason: 'Frozen reranking traffic bound exceeded' };
                 return route.abort('blockedbyclient');
@@ -363,7 +365,7 @@ try {
     }
     if (retrievalExperiment) {
         evaluation = {};
-        await (rescueMode ? runRerankRescue : rerankMode ? runRerank : runHybrid)({ page, field, openSettings, waitStatus, generate, setStage: value => { stage = value; }, result: evaluation, checkpoint: checkpointNatural, credentials });
+        await (rescueMode ? runRerankRescue : rerankMode ? runRerank : runHybrid)({ page, field, openSettings, waitStatus, generate, setStage: value => { stage = value; }, result: evaluation, checkpoint: checkpointNatural, credentials, intentMode });
         events = await page.evaluate(() => globalThis.generationTestEvents);
     } else if (natural) {
         evaluation = {};
@@ -480,7 +482,7 @@ try {
         } catch { console.log('Cleanup incomplete; keep pending resource record.'); }
     }
     const sourceSha256 = {};
-    for (const file of [...Object.keys(experimentSource || {}), ...(retrievalExperiment ? [...(rescueMode ? rescueFiles : rerankMode ? rerankFiles : hybridFiles), 'scripts/provider-retry.mjs'] : []), 'src/chunking.js', 'index.js', 'src/chat-collections.js','src/client.js', 'vendor/lambdadb.js', 'package-lock.json','src/gate.js','src/memory.js', 'src/context.js','src/status.js','scripts/generation-smoke.mjs','scripts/provider-spacing.mjs','scripts/generation-cleanup.mjs','scripts/korean-eval.mjs','scripts/korean-fixture.mjs','scripts/comparison-fixture.mjs','scripts/comparison-eval.mjs','scripts/challenge-eval.mjs','scripts/recall-challenges.mjs','scripts/heldout-fixture.mjs', ...(natural ? ['scripts/natural-eval.mjs', 'scripts/natural-dialogue.mjs', ...(semantic ? [...semanticFiles, ...(summarizeMode ? summaryFiles : nativeTuning ? tuningFiles : threeModes ? threeModeFiles : [])] : fixtureFiles(frozenNatural?.plan.version)), ...(retryTransient ? ['scripts/provider-retry.mjs', 'docs/natural-dialogue-retry.md', 'scripts/natural-summary.mjs', 'scripts/natural-score.mjs'] : [])] : [])]) sourceSha256[file] = createHash('sha256').update(await readFile(path.join(root, file))).digest('hex');
+    for (const file of [...Object.keys(experimentSource || {}), ...(retrievalExperiment ? [...(intentMode ? intentFiles : rescueMode ? rescueFiles : rerankMode ? rerankFiles : hybridFiles), 'scripts/provider-retry.mjs'] : []), 'src/chunking.js', 'index.js', 'src/chat-collections.js','src/client.js', 'vendor/lambdadb.js', 'package-lock.json','src/gate.js','src/memory.js', 'src/context.js','src/status.js','scripts/generation-smoke.mjs','scripts/provider-spacing.mjs','scripts/generation-cleanup.mjs','scripts/korean-eval.mjs','scripts/korean-fixture.mjs','scripts/comparison-fixture.mjs','scripts/comparison-eval.mjs','scripts/challenge-eval.mjs','scripts/recall-challenges.mjs','scripts/heldout-fixture.mjs', ...(natural ? ['scripts/natural-eval.mjs', 'scripts/natural-dialogue.mjs', ...(semantic ? [...semanticFiles, ...(summarizeMode ? summaryFiles : nativeTuning ? tuningFiles : threeModes ? threeModeFiles : [])] : fixtureFiles(frozenNatural?.plan.version)), ...(retryTransient ? ['scripts/provider-retry.mjs', 'docs/natural-dialogue-retry.md', 'scripts/natural-summary.mjs', 'scripts/natural-score.mjs'] : [])] : [])]) sourceSha256[file] = createHash('sha256').update(await readFile(path.join(root, file))).digest('hex');
     if (natural && Object.entries(naturalSourceSha256).some(([file, digest]) => sourceSha256[file] !== digest)) failure ||= { stage: 'source identity', reason: 'Source changed during execution' };
     if ((natural || retrievalExperiment) && !failure) {
         try { assert(summarizeProviderSpacing(resumeReport ? generations.slice(resumeReport.generations.length) : generations, PROVIDER_SPACING).verified, 'actual provider starts respect the 15-second interval'); }

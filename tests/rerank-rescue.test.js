@@ -37,3 +37,30 @@ test('hybrid reranking preserves literal filtered retrieval and fixed candidate 
         assert(gradeIdentifier(item.answer, item.answer));
     }
 });
+test('shared reranking request changes only evaluation text and preserves UTF-8 bounds', async () => {
+    const { sharedRerankText, rerankSearch } = await import('../scripts/rerank-query.mjs');
+    const owner = 'a'.repeat(32), scope = 'b'.repeat(64);
+    const queries = ['Where did she leave it?', 'Lena has a separate key from Miri.'];
+    const intent = sharedRerankText(queries);
+    assert(intent.includes(queries[0]) && intent.includes(queries[1]));
+    for (const text of queries) {
+        const original = rerankInput(owner, scope, text, 'chat_test', 'hybrid-rerank');
+        const changed = rerankInput(owner, scope, text, 'chat_test', 'hybrid-intent', intent);
+        assert.equal(changed.rerank.queryText, intent);
+        changed.rerank.queryText = text; assert.deepEqual(changed, original);
+    }
+    assert.throws(() => rerankInput(owner, scope, queries[0], 'chat_test', 'hybrid-intent'));
+    assert.throws(() => sharedRerankText([]));
+    assert.throws(() => sharedRerankText(['界'.repeat(3000)]));
+    const limited = sharedRerankText(['The current question?', '🌳'.repeat(3000)]);
+    assert(new TextEncoder().encode(limited).length <= 8192);
+    assert(limited.startsWith('Current request:\nThe current question?'));
+    assert(limited.endsWith(' [context truncated]')); assert(!limited.includes('\uFFFD'));
+    let body;
+    const trace = { mode: 'hybrid-intent', intent, queries: [] };
+    const client = { call: operation => operation({ collection: () => ({ query: input => {
+        body = input; return { docs: [{ doc: { id: 'a', owner, scope }, score: 0.9, retrievalScore: 0.4 }], rerank: { status: 'applied' } };
+    } }) }, {}), inlineDocs: r => r.docs.map(d => d.doc) };
+    await rerankSearch(trace).call(client, 'collection', owner, scope, queries[1], undefined, 'chat_test');
+    assert.equal(body.query.rrf[0].knn.queryText, queries[1]); assert.equal(body.rerank.queryText, intent);
+});

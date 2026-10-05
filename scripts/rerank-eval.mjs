@@ -30,7 +30,7 @@ export async function runRerank({ page, field, openSettings, waitStatus, generat
     setStage('rerank/contract-preflight');
     result.preflight = await page.evaluate(async ({ credentials, preflightModes }) => {
         const { LambdaClient, scopeFilter } = await import('/scripts/extensions/third-party/sillymemory/src/client.js');
-        const { rerankSearch } = await import('/scripts/extensions/third-party/sillymemory/scripts/rerank-query.mjs');
+        const { rerankSearch, sharedRerankText } = await import('/scripts/extensions/third-party/sillymemory/scripts/rerank-query.mjs');
         const owner = SillyTavern.getContext().extensionSettings.sillymemory.owner;
         const client = new LambdaClient(credentials, credentials.key), trace = { mode: 'rerank', queries: [] };
         const collection = `sm_rerank_${crypto.randomUUID().replaceAll('-', '')}`, scope = 'b'.repeat(64), foreign = 'c'.repeat(64), branch = 'chat_preflight';
@@ -45,6 +45,7 @@ export async function runRerank({ page, field, openSettings, waitStatus, generat
             await client.upsert(collection, docs, undefined, branch);
             for (const mode of preflightModes) {
                 trace.mode = mode;
+                if (mode === 'hybrid-intent') trace.intent = sharedRerankText(['Where is the brass compass?', 'We sorted empty baskets.']);
                 const hits = await rerankSearch(trace).call(client, collection, owner, scope, 'Where is the brass compass?', undefined, branch);
                 if (hits.length !== 1 || hits[0].id !== 'allowed') throw new Error('Reranking isolation failed');
                 if (trace.queries.at(-1).rerank.status !== 'applied') throw new Error('Preflight reranking was not applied');
