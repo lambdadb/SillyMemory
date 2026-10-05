@@ -1,5 +1,9 @@
 # Managed reranking evaluation
 
+Latest: [shared-question evaluation](rerank-intent.md) improved the medicine
+secondary rank but failed its answer gate. Production vector retrieval remains
+unchanged; the unexecuted confirmation stage is explicitly recorded.
+
 Follow-up: [the staged rescue comparison](rerank-rescue.md) found benefits from
 hybrid + Jev, but a new baseline-correct answer loss prevents default adoption.
 The original vector + Jev results below remain unchanged.

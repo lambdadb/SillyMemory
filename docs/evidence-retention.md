@@ -182,3 +182,8 @@ no earlier experiment evidence is removed.
 The [staged rescue record](rerank-rescue.md) separately preserves the later diagnostic
 gains, confirmation regression, pre-rerank tied scores, successful teardown and exact
 producer/archive identity. The original v1 archive is retained unchanged.
+
+The [shared-question record](rerank-intent.md) preserves the later rank improvement,
+generation failure despite delivered evidence, cross-run candidate drift, gated-off
+confirmation stage and its own verified local bundle. Both earlier archives remain
+unchanged.

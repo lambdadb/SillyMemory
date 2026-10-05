@@ -69,6 +69,10 @@ in this run. There is no format-only gain or newly invented qualifier.
 | confirmation / new-revocation | UNKNOWN | UNKNOWN |
 | confirmation / new-historical-state | BRONZE-ROOM | BRONZE-ROOM |
 
+The [shared-question follow-up](rerank-intent.md) now tests this hypothesis. It
+retains the secondary ranking improvement but fails the answer gate; the result
+below remains the historical observation from its own frozen run.
+
 ## The confirmation regression
 
 `new-paraphrase-medicine` asks where tablets were stashed after a home burned.

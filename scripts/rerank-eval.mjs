@@ -25,6 +25,12 @@ export function compareCandidateSets(left, right) {
     return a.every((query, index) => query.text === b[index].text &&
         JSON.stringify(query.hits.map(d => d.id).sort()) === JSON.stringify(b[index].hits.map(d => d.id).sort()));
 }
+export function passesExactMatchGate(rows, pairs) {
+    return rows.length === 24 && pairs.length === 12 &&
+        rows.every(r => r.delivered.length && r.delivered.every(Boolean)) &&
+        pairs.some(p => p.gained) && !pairs.some(p => p.lost) &&
+        rows.filter(r => r.mode === 'rerank').every(r => r.queries.length && r.queries.every(q => q.rerank?.status === 'applied'));
+}
 export async function runRerank({ page, field, openSettings, waitStatus, generate, setStage, result, checkpoint, credentials, contractOnly = false, preflightModes = ['rerank'] }) {
     Object.assign(result, { version: 'rerank-v1', fixtureSha256: rerankFixtureHash, settings: { context: 32768, recent: 4, budget: 800, size: 30, k: 30, candidateSize: 30 }, rows: [], complete: false });
     setStage('rerank/contract-preflight');
@@ -106,7 +112,7 @@ export async function runRerank({ page, field, openSettings, waitStatus, generat
         });
         result.complete = result.rows.length === 24;
         // Exact matches are a format-sensitive screen; adoption requires semantic review.
-        result.exactMatchGate = result.complete && result.pairs.some(p => p.gained) && !result.pairs.some(p => p.lost) && result.rows.filter(r => r.mode === 'rerank').every(r => r.queries.length && r.queries.every(q => q.rerank?.status === 'applied'));
+        result.exactMatchGate = passesExactMatchGate(result.rows, result.pairs);
     } finally {
         await openSettings(); if (await field('enabled').isChecked()) await field('enabled').uncheck();
         await page.evaluate(() => { const t = globalThis.rerankTest; t.LambdaClient.prototype.search = t.search; t.runtime.MemoryEngine.prototype.retrieve = t.retrieve; });

@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { rerankInput, rerankSearch } from '../scripts/rerank-query.mjs';
-import { rerankCases, gradeRerank, evidenceCoverage, compareCandidateSets } from '../scripts/rerank-eval.mjs';
+import { rerankCases, gradeRerank, evidenceCoverage, compareCandidateSets, passesExactMatchGate } from '../scripts/rerank-eval.mjs';
 const owner = 'a'.repeat(64), scope = 'b'.repeat(64);
 test('reranking preserves query depth, branch, consistent reads and identity filter', () => {
     const vector = rerankInput(owner, scope, 'Where now?', 'chat_test', 'vector');
@@ -67,4 +67,19 @@ test('official SDK serializes managed reranking and retains response metadata', 
     assert.equal(trace.queries[0].rerank.criteriaVersion, 'default-relevance-v1');
     assert.equal(trace.queries[0].scores[0].retrievalScore, 0.4);
     client.forget();
+});
+
+test('exact-match gain cannot pass when either arm omitted required evidence', () => {
+    const rows = Array.from({ length: 24 }, (_, i) => ({ mode: i % 2 ? 'rerank' : 'vector', delivered: [true, true], queries: [{ rerank: { status: 'applied' } }] }));
+    const pairs = Array.from({ length: 12 }, (_, i) => ({ gained: i === 0, lost: false }));
+    assert(passesExactMatchGate(rows, pairs));
+    for (const index of [0, 1]) {
+        rows[index].delivered[1] = false; assert(!passesExactMatchGate(rows, pairs));
+        rows[index].delivered = []; assert(!passesExactMatchGate(rows, pairs));
+        rows[index].delivered = [true, true];
+    }
+    rows[1].queries[0].rerank.status = 'fallback'; assert(!passesExactMatchGate(rows, pairs));
+    rows[1].queries[0].rerank.status = 'applied';
+    pairs[1].lost = true; assert(!passesExactMatchGate(rows, pairs));
+    pairs[1].lost = false; assert(!passesExactMatchGate(rows.slice(1), pairs));
 });
