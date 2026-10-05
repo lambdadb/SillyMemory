@@ -2,20 +2,140 @@
 
 ## Current adoption decision — 2026-10-05 KST
 
-Keep the existing vector retrieval and 800-token default. Do not introduce a Jev
-setting or shared-question reranking into the product in this change. The official
-SDK/CORS integration works, and hybrid + Jev rescued specific difficult facts, but
-these experiments did not establish a reliable semantic answer improvement without
-regressions. Query latency was not the reason for this decision.
+Keep the existing vector retrieval and 800-token product default. In the latest
+complete 32-case comparison on GPT-6.1 Sol, vector answered 28/32 correctly and
+English raw-text hybrid + Jev answered 31/32. Hybrid gained four answers but lost
+one current-location answer that vector got right. This is a real aggregate gain
+with a regression, so the predeclared gain-with-zero-loss adoption gate still fails.
+Latency is not the reason for retaining the default.
 
-PR #63 records the adoption review, including its generation diagnostic, the
-user-requested native English text comparison, its remaining six controls, and
-retention cleanup. It is not a claim that rerankers are ineffective. Reopening the
-product decision needs a concrete new requirement or evidence, not another rerun
-of these authored cases until the score passes. No temporal schema or message-time
-heuristic is added: message order does not establish the time of an event.
+PR #63 records the full comparison and the earlier diagnostic work. The newer
+model is configured only in the disposable evaluation host; SillyMemory does not
+choose the user's SillyTavern generation model. Product runtime/UI/dependencies
+remain unchanged. No temporal schema or message-time heuristic is added: message
+order does not establish the time of an event.
 
-## Core results
+## Full 32-case comparison on GPT-6.1 Sol
+
+This is the current paired result, not a sum of historical runs. Both arms ran all
+32 unique authored cases in one bounded run through SillyTavern, live LambdaDB and
+OpenAI. The initial 12 and later 8 + 6 + 6 source fixtures/builders are byte/structure
+identical to 763906a. These known synthetic histories are not public-benchmark,
+independent holdout, multilingual or natural 32K-overflow evidence.
+
+| Set | Cases | Vector only | English raw hybrid + Jev |
+| --- | ---: | ---: | ---: |
+| Initial state/temporal/attribution cases | 12 | 12/12 | 11/12 |
+| Retrieval diagnostics | 8 | 6/8 | 8/8 |
+| Additional confirmation | 6 | 4/6 | 6/6 |
+| Reference/topic/temporal controls | 6 | 6/6 | 6/6 |
+| **Total** | **32** | **28/32 (87.5%)** | **31/32 (96.9%)** |
+
+Hybrid wins `rare-name`, `semantic`, `new-rare-name` and `new-exact-ticket`; vector
+wins `current-location`. There are no shared wrong answers in this run. Scoring uses
+the original identifier grader for 20 cases and a source-grounded assistant semantic
+review for all 24 initial-set answers, with explicit per-answer rationales retained.
+All 64 answers were inspected; this is not independent human judging. Initial-set
+exact matches are retained only as diagnostics, not the correctness score.
+
+| Failure | Where the evidence was lost | Actual wrong answer |
+| --- | --- | --- |
+| Hybrid: current compass location | Updated attic-cabinet statement absent from both returned top-30 lists | Superseded cedar chest |
+| Vector: Neralith supplier | Fact absent from both returned lists | UNKNOWN |
+| Vector: compass paraphrase | Primary rank 9, omitted by packing | UNKNOWN |
+| Vector: Velanthir supplier | Primary rank 18, omitted by packing | UNKNOWN |
+| Vector: freight receipt | Secondary rank 16, omitted by packing | UNKNOWN |
+
+All five wrong answers lacked the required fact in the final prompt. Complete
+labeled evidence appeared among candidates for 31/32 cases in each arm, but was
+injected for 28/32 vector cases and 31/32 hybrid cases. The hybrid regression is
+not stale synchronization or a deleted-message leak: the old statement is valid
+historical source text, while the new statement is missing from returned candidates.
+The run does not isolate whether fusion/candidate truncation or another retrieval
+component caused that exclusion. Raising the injection budget cannot recover a
+fact absent from both lists. Preserve this case before any future retrieval change.
+
+The previous topic-switch failure is now correct in both arms: `MAPLE-CABINET`.
+The initial two-fact answers also give `desk drawer; blue tin`, without the previous
+unsupported paint detail. These are favorable observations, not a model-only causal
+result: retrieval ran again, both topic-switch message arrays differ from their
+historical counterparts, and generation settings changed. No old-model arm was
+rerun concurrently. Historical failures remain in the earlier sections and archives.
+
+Both arms use the same physical documents, vectors, branch, owner/scope filters,
+managed text-embedding-3-small, SDK 0.7.0, two queries, k/size/candidateSize=30,
+recent=4, budget=800 and unchanged packing. Hybrid uses English-only `text_en`,
+identical to `text`, with the entire query and `skipSyntax:true`; no word extraction
+or manual OR. Jev-1.13.0 uses each leg's own query and `text` field, with applied
+status verified. Vector request construction matches the shipped client. Probe
+order alternates by case; exact live candidate lists are replayed through host
+answers after source resets and owner/scope/branch/query identity checks.
+
+The pinned host is SillyTavern 1.19.0 at
+`06bde939fb1e9c4c8d8641d810f0a916b5bce127`, with 32K context and nonstreaming Chat
+Completions. [GPT-6.1 Sol](https://developers.openai.com/api/docs/models/gpt-6.1-sol)
+uses `reasoning_effort:low` and `max_completion_tokens:4096` including reasoning.
+Unsupported sampling controls and legacy `max_tokens` are omitted through the
+host's Custom API body settings. This differs from the historical temperature=0,
+256-token contract. The bridge forwards the host request unchanged. All responses
+returned `gpt-6.1-sol`; the official page supplies no dated snapshot for this model.
+
+Vector/hybrid query medians were 365.5/815.4 ms. Answer-input totals were
+30,053/30,229 tokens and output totals 209/229; injected-memory medians were
+770.5/771.5 tokens. These are observed small-run metrics, not cost/latency guarantees.
+The API reported zero reasoning tokens for these answers despite the requested low
+effort. Managed embedding/reranker token usage and cost were not measured.
+
+All 64 scheduled quality answers completed without retries or truncation. One direct
+READY preflight and one actual-host READY preflight are separate from that score:
+66 total generation calls, with 65 in the host report. The 64 probes made 128
+comparison queries; including the transport gate, the run made 130 queries and
+submitted 1,409 documents. All 694 selected passages matched local source. Frozen
+producer hashes, actual final prompts, 15-second provider spacing and session-only
+key handling passed. Both owned collections were deleted and confirmed 404, with no
+pending cleanup ledger. The maintained 315 tests, syntax and release checks passed.
+
+<details>
+<summary>All 32 case outcomes from this run</summary>
+
+| Set | Case | Vector | English raw hybrid + Jev |
+| --- | --- | --- | --- |
+| initial12 | current-location | Correct | Incorrect |
+| initial12 | earlier-location | Correct | Correct |
+| initial12 | revoked-access | Correct | Correct |
+| initial12 | canceled-meeting | Correct | Correct |
+| initial12 | flashback-current | Correct | Correct |
+| initial12 | flashback-past | Correct | Correct |
+| initial12 | future-location | Correct | Correct |
+| initial12 | completed-location | Correct | Correct |
+| initial12 | speaker-preference | Correct | Correct |
+| initial12 | speaker-possession | Correct | Correct |
+| initial12 | stable-fact | Correct | Correct |
+| initial12 | two-facts | Correct | Correct |
+| diagnostic8 | exact-code | Correct | Correct |
+| diagnostic8 | rare-name | Incorrect | Correct |
+| diagnostic8 | exact-expression | Correct | Correct |
+| diagnostic8 | place | Correct | Correct |
+| diagnostic8 | semantic | Incorrect | Correct |
+| diagnostic8 | correction | Correct | Correct |
+| diagnostic8 | speaker | Correct | Correct |
+| diagnostic8 | revoked-unknown | Correct | Correct |
+| confirmation6 | new-rare-name | Incorrect | Correct |
+| confirmation6 | new-exact-ticket | Incorrect | Correct |
+| confirmation6 | new-paraphrase-journal | Correct | Correct |
+| confirmation6 | new-paraphrase-medicine | Correct | Correct |
+| confirmation6 | new-revocation | Correct | Correct |
+| confirmation6 | new-historical-state | Correct | Correct |
+| reference6 | intent-fire-supplies | Correct | Correct |
+| reference6 | intent-journal-reference | Correct | Correct |
+| reference6 | intent-person-reference | Correct | Correct |
+| reference6 | intent-topic-switch | Correct | Correct |
+| reference6 | intent-flashback-control | Correct | Correct |
+| reference6 | intent-revocation-control | Correct | Correct |
+
+</details>
+
+## Earlier GPT-4.1-mini comparisons
 
 | Stage | Comparison | Finding | Interpretation |
 | --- | --- | --- | --- |
@@ -226,7 +346,7 @@ managed embeddings/Jev `jev-1.13.0`. Answers went through the actual host and it
 local test forwarding bridge to OpenAI. The staged answers replayed exact captured
 live candidates with query/owner/scope/branch identity and final-prompt checks.
 
-All stages used gpt-4.1-mini-2025-04-14, temperature 0 and output cap 256. Host runs
+The earlier stages used gpt-4.1-mini-2025-04-14, temperature 0 and output cap 256. Host runs
 kept a 32K context, recent=4, memory budget=800, k/size/candidateSize=30, existing
 chunking/interleaving, explicit chat branch, owner/scope filters and consistent reads.
 Default Jev criteria were used. Tagged-fact coverage is not complete semantic
@@ -281,6 +401,7 @@ historical conclusions remain inspectable.
 | rerank-closeout-v1/evidence.tar.gz | Frozen replay runner/plan; full pre-cleanup source at 76293ab; retired-file index; final checks | 8af324a4388a28c451ed5b87437339f582982c73737a38c8b9af570e9b88e19e |
 | english-text-v1/evidence.tar.gz | Base e968b90 plus frozen one-off producer; four lexical controls, 28 host answers, setup failure/correction, verification | e7afc3835df883c137eef9f9b83fd7fb40035d4c7b34f814d18a52de98f71dee |
 | english-confirmation-v1/evidence.tar.gz | Base e65e539 plus frozen one-off producer; six previously unexecuted controls, three arms, 18 host answers, shared failure and verification | c8242a6df8b0b646167adf9cc95152fda3e1a2882260e240ad5b4ac84c8f447f |
+| gpt61-comparison-v1/evidence.tar.gz | Base 3f80946 plus frozen producer; all 32 cases/two arms, 64 GPT-6.1 Sol answers, source reviews, preflights and verification | 641a16d18c25f61cd35f190387bb3d8e6389ef716e44ffde08fd0a4e7c4d66cf |
 
 The closeout bundle is 1,260,312 bytes with 21 members, all read back byte-for-byte.
 Its pre-cleanup source contains 311 files verified against commit 76293ab; all 15
@@ -297,6 +418,11 @@ The remaining-controls bundle is 1,083,051 bytes with 19 members. Exact readback
 298 base-source files and configured-secret absence were verified; all five
 preceding archives are unchanged. Its protocol and verifier preserve the shared
 wrong answers as quality failures despite successful execution and cleanup.
+
+The GPT-6.1 bundle is 1,480,964 bytes with 27 members and 298 verified base-source
+files. Exact readback and configured-secret absence passed; all six earlier archives
+are unchanged. The full run, case matrix and separate source-grounded reviews are
+preserved, including the hybrid current-location regression.
 
 For historical host reruns, restore the relevant archived source/protocol and pinned
 host; original commands are in those preserved records. The current runner no

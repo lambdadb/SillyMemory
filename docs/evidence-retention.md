@@ -184,7 +184,10 @@ bundle preserves the user-requested English-only/raw-text comparison, its neutra
 failure/correction. A sixth bundle records the remaining six controls: all three
 conditions score 5/6, sharing a topic-switch failure despite delivered evidence. It
 preserves the unchanged fixture, three-arm producer, all 18 answers and cleanup
-receipts. Every preceding bundle remains unchanged.
+receipts. A seventh bundle preserves the full 32-case GPT-6.1 Sol comparison: vector
+28/32 versus English raw hybrid + Jev 31/32, with four gains and one current-location
+regression. The decision record now leads with this complete paired matrix and keeps
+earlier-model results separate. Every preceding bundle remains unchanged.
 
 The current tree keeps the decision and independent generation-harness corrections.
 It does not depend on archived experiment runners or raw output for CI. Historical
