@@ -181,7 +181,10 @@ closeout bundle preserves the fixed-prompt comparison and every retired source,
 fixture, protocol and detailed conclusion before active-tree removal. A fifth
 bundle preserves the user-requested English-only/raw-text comparison, its neutral
 14/14 versus 14/14 answer result, all four lexical controls, and the initial setup
-failure/correction. The preceding four bundles are unchanged.
+failure/correction. A sixth bundle records the remaining six controls: all three
+conditions score 5/6, sharing a topic-switch failure despite delivered evidence. It
+preserves the unchanged fixture, three-arm producer, all 18 answers and cleanup
+receipts. Every preceding bundle remains unchanged.
 
 The current tree keeps the decision and independent generation-harness corrections.
 It does not depend on archived experiment runners or raw output for CI. Historical

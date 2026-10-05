@@ -1,6 +1,6 @@
 # Managed reranker adoption decision
 
-## Closed decision — 2026-10-05 KST
+## Current adoption decision — 2026-10-05 KST
 
 Keep the existing vector retrieval and 800-token default. Do not introduce a Jev
 setting or shared-question reranking into the product in this change. The official
@@ -8,10 +8,11 @@ SDK/CORS integration works, and hybrid + Jev rescued specific difficult facts, b
 these experiments did not establish a reliable semantic answer improvement without
 regressions. Query latency was not the reason for this decision.
 
-This closes PR #63's adoption review, including its generation diagnostic, the
-user-requested native English text comparison, and retention cleanup. It is not a
-claim that rerankers are ineffective. Reopening the product decision needs a concrete new requirement or evidence, not another rerun of
-these authored cases until the score passes. No temporal schema or message-time
+PR #63 records the adoption review, including its generation diagnostic, the
+user-requested native English text comparison, its remaining six controls, and
+retention cleanup. It is not a claim that rerankers are ineffective. Reopening the
+product decision needs a concrete new requirement or evidence, not another rerun
+of these authored cases until the score passes. No temporal schema or message-time
 heuristic is added: message order does not establish the time of an event.
 
 ## Core results
@@ -25,6 +26,7 @@ heuristic is added: message order does not establish the time of an event.
 | Five targeted answer pairs | Original hybrid + Jev / shared-question hybrid + Jev | Correct answers 5/5 / 4/5 | UNKNOWN despite the full medicine fact in the final prompt; answer gate failed |
 | Final fixed-prompt diagnostic | Original full / shared full / shared relevant-only | 6/6 / 6/6 / 6/6 correct | Historical miss did not reproduce; no demonstrated benefit from removing distractors |
 | Native English text, 14 known cases | Dual-analyzer manual OR / English-only raw text, both hybrid + Jev | Correct answers 14/14 each; all four lexical controls injected 14/14 | Tie; manual OR superiority and a quality gain from English-only analysis were not established |
+| Remaining six controls | Vector / original hybrid + Jev / English raw hybrid + Jev | Correct answers 5/6 each, facts injected 6/6 each | Shared topic-switch answer failure with evidence present; no new gains or losses |
 
 The initial answers shared an unsupported elaboration: both changed “blue tin” to
 “blue paint tin.” Eleven other cases had supported answers. The exact-match gain
@@ -61,8 +63,10 @@ Other selected distractors and speaker patterns differed. The original answer wa
 correct; the shared-question answer was UNKNOWN. This is a generation failure with
 evidence present, not missing injection or budget exclusion. Rare-name, correction,
 revocation and historical-state answers remained correct in the other four pairs.
-The six newly frozen reference/temporal confirmation cases were not run because
-the diagnostic answer gate failed.
+The six newly frozen reference/temporal confirmation cases were not run under that
+protocol because the diagnostic answer gate failed. They were later executed in
+the separately authorized English-text confirmation below; the original gate remains
+failed, and the shared-question arm was not carried into the new comparison.
 
 ## Final generation diagnostic
 
@@ -162,6 +166,58 @@ with confirmed 404 responses. There are no unresolved cleanup ledgers. Frozen ha
 request construction, final prompts, provider spacing and session-only key handling
 were verified. The setup failure and correction remain in the evidence bundle.
 
+## Remaining six-case confirmation
+
+At the user's request, execute the six previously frozen but unexecuted
+`rerank-intent-v1` cases, preserving their exact fixture bytes and 44-turn builder
+from 763906a. Compare production vector search, original hybrid + Jev and English
+raw-text hybrid + Jev concurrently. The original shared-question protocol was stopped;
+this is a new bounded comparison of the English-text candidate, not completion or
+passing of that earlier gate. All settings and field-sharing controls above remain
+fixed. Rotate arm order and generate each answer once through the actual host from
+its captured live candidates: 18 probes and 18 answers.
+
+| Condition | Tagged fact retrieved / injected | Correct answers | Median query latency | Total answer-input tokens |
+| --- | --- | --- | --- | --- |
+| Production vector | 6/6 / 6/6 | 5/6 | 356.5 ms | 5,616 |
+| Dual-analyzer manual OR + Jev | 6/6 / 6/6 | 5/6 | 719.5 ms | 5,562 |
+| English-only raw question + Jev | 6/6 / 6/6 | 5/6 | 729.2 ms | 5,566 |
+
+All three answer the paraphrase, object reference, person reference, flashback and
+revocation controls correctly. English raw has zero gains and zero losses against
+either comparator. Direct inspection of all source/context and answers agreed with
+the identifier grader. The flashback also has an earlier statement independently
+supporting its current-venue answer; tagged fact coverage is not complete scoring.
+
+All three fail the **topic-switch** question: “Changing topic: where is the kitchen
+ledger kept?” The expected answer is `MAPLE-CABINET`. Vector answers `UNKNOWN`;
+both hybrid arms answer `CABINET-339`, the location of a different, numbered ledger.
+The exact correct statement is present in all three final prompts. It ranks 1/2 in
+the vector lists and 2/1 in both hybrid lists. Both hybrid prompts also include the
+numbered-ledger distractor associated with their wrong answer. Thus this is an
+answer failure despite delivered evidence, not a top-30 retrieval or 800-token
+exclusion. Distractor/entity confusion is a plausible interpretation, not an isolated
+causal finding: surrounding excerpts differ and there is only one answer per arm.
+Do not repair the score by retrying this answer or changing its fixture.
+
+**Decision:** the six remaining controls show no additional English-raw regression,
+but also no answer improvement over vector. Retain the product defaults. Together
+with the prior comparison, the two hybrid configurations each score 19/20, but these
+known/authored sets are not a general benchmark; vector was rerun on these six only.
+The concrete remaining quality issue is distinguishing the requested entity from
+similar supplied excerpts when switching topics. A future change should address and
+validate that behavior directly, rather than increase candidate count or memory
+budget on the assumption that this fact was missing. Shared-question reranking,
+natural long-history and public-benchmark results for this candidate remain untested.
+
+All 18 provider calls completed without retry; all 24 rerank responses were applied.
+The 180 selected passages matched local source. The run submitted 277 documents,
+made 38 queries including the transport gate, and deleted both owned collections
+with confirmed 404 responses. Frozen hashes, final prompts, session-only keys and
+15-second provider-start spacing passed. No pending cleanup ledger remains. The
+315 maintained tests, syntax and release checks passed again. One-off producers and
+raw output remain archived, without new product code or CI dependencies.
+
 ## Shared method and practical limits
 
 The three earlier stages used real SillyTavern 1.19.0, revision
@@ -224,6 +280,7 @@ historical conclusions remain inspectable.
 | rerank-intent-v1/evidence.tar.gz | 763906a; shared-question run, its frozen stop and post-run guard patch | f16249c031d454fe55a38e405ed583accbc5b37d59f639834e052302a6144df0 |
 | rerank-closeout-v1/evidence.tar.gz | Frozen replay runner/plan; full pre-cleanup source at 76293ab; retired-file index; final checks | 8af324a4388a28c451ed5b87437339f582982c73737a38c8b9af570e9b88e19e |
 | english-text-v1/evidence.tar.gz | Base e968b90 plus frozen one-off producer; four lexical controls, 28 host answers, setup failure/correction, verification | e7afc3835df883c137eef9f9b83fd7fb40035d4c7b34f814d18a52de98f71dee |
+| english-confirmation-v1/evidence.tar.gz | Base e65e539 plus frozen one-off producer; six previously unexecuted controls, three arms, 18 host answers, shared failure and verification | c8242a6df8b0b646167adf9cc95152fda3e1a2882260e240ad5b4ac84c8f447f |
 
 The closeout bundle is 1,260,312 bytes with 21 members, all read back byte-for-byte.
 Its pre-cleanup source contains 311 files verified against commit 76293ab; all 15
@@ -235,6 +292,11 @@ The English text bundle is 1,430,771 bytes with 23 members, verified by exact
 readback and configured-secret scan. Its base source contains 298 verified files;
 all four preceding archives retain their recorded hashes. The extra runner and
 experimental field remain ignored artifacts, with no product or CI dependency.
+
+The remaining-controls bundle is 1,083,051 bytes with 19 members. Exact readback,
+298 base-source files and configured-secret absence were verified; all five
+preceding archives are unchanged. Its protocol and verifier preserve the shared
+wrong answers as quality failures despite successful execution and cleanup.
 
 For historical host reruns, restore the relevant archived source/protocol and pinned
 host; original commands are in those preserved records. The current runner no
