@@ -9,11 +9,147 @@ one current-location answer that vector got right. This is a real aggregate gain
 with a regression, so the predeclared gain-with-zero-loss adoption gate still fails.
 Latency is not the reason for retaining the default.
 
+The subsequent [fusion diagnosis](#fusion-diagnosis-and-local-bayesian-reproduction)
+recovers the lost evidence with locally reproduced Bayesian fusion at the same
+30-candidate budget, but existing weighted Min-Max and a larger RRF rerank window
+also recover it in a focused control. Bayesian support is a promising backend
+option, not a demonstrated prerequisite. Prefer validating an existing-feature
+candidate before making a Lucene upgrade a dependency. No new answer-quality
+result or product default change is implied by the retrieval-only diagnosis.
+
 PR #63 records the full comparison and the earlier diagnostic work. The newer
 model is configured only in the disposable evaluation host; SillyMemory does not
 choose the user's SillyTavern generation model. Product runtime/UI/dependencies
 remain unchanged. No temporal schema or message-time heuristic is added: message
 order does not establish the time of an event.
+
+## Fusion diagnosis and local Bayesian reproduction
+
+This bounded follow-up uses the same 32 authored cases, exact stored source
+documents and two query strings. It makes live LambdaDB managed-embedding and Jev
+requests through the SDK from Node, then runs the production selection code locally.
+It does **not** run SillyTavern/browser generation, generate new answers, upgrade
+Lucene or call a Bayesian LambdaDB API. The user confirmed that API is not deployed.
+
+### What caused the current-location regression
+
+The fresh reproduction locates the loss before reranking:
+
+| Primary-question stage | Updated attic-cabinet fact |
+| --- | --- |
+| Vector k=30 | Rank 2, score 0.76260436 |
+| Full-vector k=41 diagnostic | Rank 2 |
+| Full English lexical result | Rank 40 of 40, score 0.045506224 |
+| RRF size=30, k=30 | Absent |
+| Equal-weight Min-Max size=30, k=30 | Absent |
+| RRF size=100, k=30 | Rank 30 of 40, score 0.7969355 |
+| Local Bayesian, BM25 calibration only | Rank 24 before Jev; rank 1 after Jev |
+| Local Bayesian, both signals calibrated | Rank 2 before Jev; rank 1 after Jev |
+
+The other 39 lexical matches share score 0.049405675. The updated passage is
+longer and scores below this group; document-length normalization is a plausible
+explanation, not a term-level explanation trace. The second/context query also
+misses the fact in its top 30, so it cannot repair the first query's omission.
+
+The observed RRF scores are consistent with equal raw-score ties sharing rank:
+after normalization, a lexical-only tied-top document scores 0.5, whereas vector
+rank 2 with no lexical contribution would score `(1/62)/(2/61) = 0.49193548`.
+There are enough lexical matches to fill all 30 slots above that value. A naive
+local RRF implementation that assigns different ranks to equal BM25 scores gives
+a different result and must not be called an exact LambdaDB reproduction.
+Increasing `size` changes the observed candidate behavior, not just the displayed
+suffix: the size-100 result contains a fact that size-30 omitted even though it is
+rank 30 in the wider result. Do not reconstruct the narrower result by slicing
+the wider response. These observations implicate the lexical candidate window
+and tie-aware fusion; this case provides no evidence of an ANN recall failure.
+
+### Full-set retrieval and packing results
+
+Counts require **all labeled evidence for a case**, across both queries. Every
+method uses the same 800-token budget. These are not answer correctness scores.
+
+| Method | Evidence in returned candidates | Evidence injected before Jev | Evidence injected after Jev |
+| --- | ---: | ---: | ---: |
+| Vector only | 31/32 | 28/32 | Not run |
+| Server RRF | 31/32 | 22/32 | 31/32 |
+| Server equal-weight Min-Max | 31/32 | 29/32 | 31/32 |
+| Local Bayesian: calibrate BM25 only | 32/32 | 27/32 | 32/32 |
+| Local Bayesian: calibrate both signals | 32/32 | 31/32 | 32/32 |
+
+Both Bayesian variants recover current-location with no new post-Jev evidence
+losses. Neither establishes a general replacement for reranking: before Jev,
+BM25-only calibration still loses five cases during packing, and calibrating both
+still loses completed-location. Vector's four injection failures remain rare-name,
+semantic, new-rare-name and new-exact-ticket. RRF/Min-Max + Jev lose only
+current-location. Exact case matrices, rankings, ties and scores are archived.
+
+The local arithmetic follows
+[Lucene PR #15827](https://github.com/apache/lucene/pull/15827) at head
+`ffd1028437e20c8414d3d65a9d817a56dd920b92`: query-level sigmoid calibration followed
+by softplus-gated log-odds fusion, with absent signals contributing zero and
+confidence exponent 0.5. For each calibrated signal, freeze beta to its top-30
+score median and alpha to the inverse population standard deviation; a flat
+signal uses alpha=1. No answer labels enter calibration, and no parameter sweep
+was run. These are experiment choices, **not Lucene defaults**. This is not a
+reproduction of every algorithm in the
+[Python reference library](https://github.com/cognica-io/bayesian-bm25).
+
+Local methods share the captured vector/lexical top-30 union. Server compound
+queries may choose different members of tied lexical groups, so this is not a
+bit-identical comparison of every server-internal candidate pool. Reranking uses
+an explicit synthetic-ID allowlist for each arm's exact selected 30 documents;
+all candidate identities and applied/scored counts are verified. This is a
+controlled candidate-set replay, not an integrated Bayesian query. The two
+queries retain their own original rerank text. A focused direct server-query
+control below separately reproduces RRF's failure and the existing-feature rescues.
+
+Each case has a fresh owned collection, avoiding statistics from previous cases'
+deleted documents. This differs from the earlier host run's index history and
+does not reproduce its exact historical ANN/tie ordering. Source text, managed
+text-embedding-3-small, English-only lexical field, owner/scope filters, explicit
+chat branch, consistent reads, recent=4 and packing remain fixed. All 64 historical
+token counts **and complete selections** were reproduced first with the pinned
+host's Custom API tokenizer behavior: cl100k_base plus six wrapper tokens. This
+preserves that experiment's budgeting behavior, not a claim about the generator's
+native tokenizer. Captured query-completion order is restored to primary/context
+order before interleaving; a failed local preflight exposed this and made no calls.
+
+### Existing-feature control and decision
+
+After observing the full set, rerun only current-location in a fresh collection:
+
+| Direct server query | Rerank candidate limit | Fact retrieved and injected |
+| --- | ---: | --- |
+| RRF + Jev | 30 | No |
+| RRF + Jev | 60 | Yes |
+| Min-Max: vector 0.7, text 0.3 + Jev | 30 | Yes |
+
+The larger RRF request still returns at most 30 documents and keeps vector k=30;
+Jev actually scores 40/41 candidates for the primary/context queries. The weighted
+Min-Max control also injects the fact without Jev. Both are existing-feature
+rescues of this case, not validated full-set defaults. The weight was selected
+after the failure analysis and is not independent confirmation evidence.
+
+Bayesian fusion has a useful fixed-budget signal: both frozen variants improve
+post-Jev evidence from 31/32 to 32/32 relative to equal-weight RRF/Min-Max. That
+supports backend investigation, but does not show a unique advantage over existing
+weighted fusion or a larger rerank pool. Keep product defaults unchanged. The next
+product decision can compare the existing-feature candidate on the full set before
+requiring LambdaDB Bayesian support; generated answers and independent data remain
+necessary before an answer-quality adoption claim.
+
+The run made 602 query calls, submitted 1,394 documents including one failed
+managed upsert, and deleted all 34 owned collections with independent 404 checks.
+After seven completed cases, an HTTP 503 upsert was preserved and its collection
+cleaned; an explicit bounded recovery resumed only unfinished cases. No completed
+quality outcome was retried. The main comparison used 208 managed rerank calls;
+all 6,240 scored candidate identities matched their requested sets. An additional
+six rerank calls belong to the focused control. No generation call was made.
+All 4,798 local Bayesian candidate scores replay exactly; 4,806 arithmetic examples
+agree with four methods extracted from the pinned Java source within 3e-8. This
+verifies score arithmetic, not a full Lucene index integration. Maintained tests
+(315), syntax and release checks pass. One-off tools and full evidence stay ignored
+and archived; no runtime, dependency, schema or settings change is shipped.
 
 ## Full 32-case comparison on GPT-6.1 Sol
 
@@ -51,8 +187,9 @@ labeled evidence appeared among candidates for 31/32 cases in each arm, but was
 injected for 28/32 vector cases and 31/32 hybrid cases. The hybrid regression is
 not stale synchronization or a deleted-message leak: the old statement is valid
 historical source text, while the new statement is missing from returned candidates.
-The run does not isolate whether fusion/candidate truncation or another retrieval
-component caused that exclusion. Raising the injection budget cannot recover a
+That answer run did not isolate which retrieval component caused the exclusion;
+the subsequent fusion diagnosis above supplies a fresh component reproduction.
+Raising the injection budget cannot recover a
 fact absent from both lists. Preserve this case before any future retrieval change.
 
 The previous topic-switch failure is now correct in both arms: `MAPLE-CABINET`.
@@ -402,6 +539,7 @@ historical conclusions remain inspectable.
 | english-text-v1/evidence.tar.gz | Base e968b90 plus frozen one-off producer; four lexical controls, 28 host answers, setup failure/correction, verification | e7afc3835df883c137eef9f9b83fd7fb40035d4c7b34f814d18a52de98f71dee |
 | english-confirmation-v1/evidence.tar.gz | Base e65e539 plus frozen one-off producer; six previously unexecuted controls, three arms, 18 host answers, shared failure and verification | c8242a6df8b0b646167adf9cc95152fda3e1a2882260e240ad5b4ac84c8f447f |
 | gpt61-comparison-v1/evidence.tar.gz | Base 3f80946 plus frozen producer; all 32 cases/two arms, 64 GPT-6.1 Sol answers, source reviews, preflights and verification | 641a16d18c25f61cd35f190387bb3d8e6389ef716e44ffde08fd0a4e7c4d66cf |
+| fusion-analysis-v1/evidence.tar.gz | Base 02ee82d plus one-off producer; 32-case live component scores, local Bayesian/Jev replay, focused server controls, preserved 503/recovery and Java arithmetic verification | 90c8ee5f669d3e98b4c2b7e1a63919d29eedd31367613bbb23f28131a3416b22 |
 
 The closeout bundle is 1,260,312 bytes with 21 members, all read back byte-for-byte.
 Its pre-cleanup source contains 311 files verified against commit 76293ab; all 15
@@ -423,6 +561,13 @@ The GPT-6.1 bundle is 1,480,964 bytes with 27 members and 298 verified base-sour
 files. Exact readback and configured-secret absence passed; all six earlier archives
 are unchanged. The full run, case matrix and separate source-grounded reviews are
 preserved, including the hybrid current-location regression.
+
+The fusion bundle is 6,769,871 bytes with 37 members and 298 verified base-source
+files. It includes the frozen original input report, exact protocols before/after
+the bounded transport recovery, both producers, component scores, candidate sets,
+local/Java arithmetic checks and all cleanup receipts. Exact readback and
+configured-secret scan passed; the seven earlier archives remain unchanged. The
+archive's README separates offline verification from paid live reproduction.
 
 For historical host reruns, restore the relevant archived source/protocol and pinned
 host; original commands are in those preserved records. The current runner no

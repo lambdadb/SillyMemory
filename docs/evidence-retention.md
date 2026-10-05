@@ -186,8 +186,14 @@ conditions score 5/6, sharing a topic-switch failure despite delivered evidence.
 preserves the unchanged fixture, three-arm producer, all 18 answers and cleanup
 receipts. A seventh bundle preserves the full 32-case GPT-6.1 Sol comparison: vector
 28/32 versus English raw hybrid + Jev 31/32, with four gains and one current-location
-regression. The decision record now leads with this complete paired matrix and keeps
-earlier-model results separate. Every preceding bundle remains unchanged.
+regression. An eighth bundle preserves the subsequent 32-case fusion diagnosis:
+live component scores, local Lucene-style Bayesian arithmetic, exact candidate-set
+Jev replay, and a focused existing-feature control. Bayesian + Jev injects complete
+evidence in 32/32 versus RRF/Min-Max + Jev 31/32; existing weighted Min-Max and a
+larger RRF rerank pool also rescue the one loss in a focused control. This stage
+contains no generated answers or deployed Bayesian API. The decision record keeps
+retrieval/packing counts distinct from the complete paired answer matrix and
+earlier-model results. Every preceding bundle remains unchanged.
 
 The current tree keeps the decision and independent generation-harness corrections.
 It does not depend on archived experiment runners or raw output for CI. Historical
