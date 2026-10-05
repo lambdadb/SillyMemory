@@ -193,7 +193,19 @@ evidence in 32/32 versus RRF/Min-Max + Jev 31/32; existing weighted Min-Max and 
 larger RRF rerank pool also rescue the one loss in a focused control. This stage
 contains no generated answers or deployed Bayesian API. The decision record keeps
 retrieval/packing counts distinct from the complete paired answer matrix and
-earlier-model results. Every preceding bundle remains unchanged.
+earlier-model results. A ninth bundle preserves the fixed-pool confirmation: 32
+known plus 24 new authored cases, 112 actual-host/model answers using captured
+live-derived rankings, and all source/prompt/ownership checks. Bayesian gains the
+known current-location answer (32/32 versus RRF 31/32), while both score 24/24 on
+new cases. Weighted Min-Max ties Bayesian's complete evidence injection at the
+same candidate limit; it has no new generation arm. The predeclared new-case-gain
+priority gate fails, so the result does not justify prioritizing Bayesian backend
+support for SillyMemory. Preserve the RRF tie-policy diagnostic as post-result
+candidate-only evidence, and the future-location answer as correct despite its
+stricter all-evidence miss. The four HTTP 503 upserts, initial host transport
+exception, one bounded continuation of unfinished answers and unknown failed-call
+usage remain explicit. All 65 owned collections are verified absent. Every
+preceding bundle remains unchanged.
 
 The current tree keeps the decision and independent generation-harness corrections.
 It does not depend on archived experiment runners or raw output for CI. Historical

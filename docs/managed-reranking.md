@@ -2,26 +2,145 @@
 
 ## Current adoption decision — 2026-10-05 KST
 
-Keep the existing vector retrieval and 800-token product default. In the latest
-complete 32-case comparison on GPT-6.1 Sol, vector answered 28/32 correctly and
+Keep the existing vector retrieval and 800-token product default. In the earlier
+fully live 32-case comparison on GPT-6.1 Sol, vector answered 28/32 correctly and
 English raw-text hybrid + Jev answered 31/32. Hybrid gained four answers but lost
 one current-location answer that vector got right. This is a real aggregate gain
 with a regression, so the predeclared gain-with-zero-loss adoption gate still fails.
 Latency is not the reason for retaining the default.
 
-The subsequent [fusion diagnosis](#fusion-diagnosis-and-local-bayesian-reproduction)
-recovers the lost evidence with locally reproduced Bayesian fusion at the same
-30-candidate budget, but existing weighted Min-Max and a larger RRF rerank window
-also recover it in a focused control. Bayesian support is a promising backend
-option, not a demonstrated prerequisite. Prefer validating an existing-feature
-candidate before making a Lucene upgrade a dependency. No new answer-quality
-result or product default change is implied by the retrieval-only diagnosis.
+The completed [fixed-pool confirmation](#fixed-pool-confirmation-and-backend-priority)
+adds 112 actual-host answers: RRF + Jev scores 31/32 versus Bayesian + Jev 32/32
+on the known regressions, and both score 24/24 on new authored cases. Weighted
+Min-Max also injects all labeled evidence at the same 30-candidate limit. The
+predeclared requirement for a new-case answer gain is not met. Do not prioritize a
+LambdaDB Bayesian implementation or Lucene upgrade on this evidence alone; retain
+it as an optional backend direction. This is not evidence that Bayesian fusion
+has no broader benefit. Close this bounded evaluation without another parameter
+sweep or an automatic expansion of the same synthetic set.
 
 PR #63 records the full comparison and the earlier diagnostic work. The newer
 model is configured only in the disposable evaluation host; SillyMemory does not
 choose the user's SillyTavern generation model. Product runtime/UI/dependencies
 remain unchanged. No temporal schema or message-time heuristic is added: message
 order does not establish the time of an event.
+
+## Fixed-pool confirmation and backend priority
+
+The follow-up asked whether Bayesian support should become a LambdaDB priority for
+SillyMemory. The earlier 32 regressions and 24 new authored English cases were
+frozen before querying. The new set covers identifiers, paraphrases, state/time,
+attribution, recent-context references and modality/negation, four cases each.
+Each new history has 60 turns with varied everyday background instead of repeated
+ledger padding. These are prospective synthetic diagnostics, not an independent
+benchmark or natural 32K-context-overflow test.
+
+For each primary/context query, every method receives the same scored vector and
+lexical top-30 union, using source-coordinate tie breaks. RRF uses k=60 and equal
+raw scores share competition rank. Min-Max fixes vector/text weights at 0.7/0.3;
+Bayesian fixes both-signal median/inverse-standard-deviation calibration and the
+same Float32 arithmetic as the earlier study. Missing signals contribute zero.
+These Bayesian calibration choices are still assumptions, not parameter-free
+probability estimates or Lucene defaults. There is no parameter sweep.
+
+The old cases' frozen component scores were reused; new scores came from live
+managed embeddings and full-vector diagnostics. Each method's top 30 goes
+through live Jev with exact ID allowlists and applied/scored-count verification,
+then production packing at 800 tokens. This controls candidate membership but is
+not a deployed compound-query/ANN performance comparison. Full source, revision,
+coordinate and text identity are checked before remapping disposable host IDs.
+
+### Evidence and actual answers
+
+| Set | Fixed-pool fusion + Jev | All labeled evidence injected | Answers correct |
+| --- | --- | ---: | ---: |
+| Known 32 | RRF | 30/32 | 31/32 |
+| Known 32 | Weighted Min-Max | 32/32 | Not generated |
+| Known 32 | Bayesian, both signals calibrated | 32/32 | 32/32 |
+| New 24 | RRF | 24/24 | 24/24 |
+| New 24 | Weighted Min-Max | 24/24 | Not generated |
+| New 24 | Bayesian, both signals calibrated | 24/24 | 24/24 |
+
+“All evidence” requires every predeclared labeled passage; it is not the answer
+score. RRF loses the current-location update and the later future-location
+clarification. On future-location, it still injects the explicit statement that
+the lantern remains in the pantry and answers correctly. The stricter evidence
+metric must not turn that supported answer into a failure or an unsupported guess.
+
+The additional RRF evidence miss differs from the earlier server-run 31/32 because
+this experiment fixes tied candidate membership by source coordinates. It is a
+controlled comparison, not a newly observed production regression. A post-result
+candidate-only diagnostic assigns sequential ranks to equal scores instead of
+competition ranks; both missing passages then survive, without other candidate
+recall losses across the 56 cases. That alternate tie policy was not run through
+Jev/generation and is not a validated replacement. It shows why the observed gain
+cannot be attributed uniquely to Bayesian mathematics.
+
+Generation runs through pinned SillyTavern 1.19.0 and its actual completion path,
+GPT-6.1 Sol, low reasoning, 4,096 output tokens, 32K context, recent=4. It replays
+the captured rankings through the production selector and validates locally
+constructed source documents instead of repeating every live synchronization.
+Complete final messages, selected text/token counts and model options were
+verified; no gold answer labels entered the browser/provider. This is actual host and
+model evidence with controlled retrieval replay, separate from full live
+synchronization.
+
+All 112 full answers were reviewed against frozen source and required meaning,
+including negation and attribution; the original identifier grader remains a
+separate cross-check. This is assistant source review, not independent human
+judging. The only paired answer gain is the already known current-location case;
+there are no losses and no new-case gains. Seventeen new-case pairs have identical
+complete prompts, and the new set reaches a ceiling for both methods.
+
+The predeclared backend-priority gate requires a new-case answer gain with zero
+losses, no known-case answer losses and no new-case evidence loss versus weighted
+Min-Max. It fails the first requirement. Bayesian is a viable optional candidate,
+but these data do not establish a unique benefit over available weighted fusion,
+robustness to other score distributions, or a reason to block SillyMemory on an
+upgrade. Weighted Min-Max has only retrieval/packing validation here, so it is not
+silently promoted to a product default. Broader priority would need independent,
+representative evidence rather than more tuning on these same known failures.
+
+### Cost, interruptions and scope
+
+The retrieval stage makes 382 queries: 96 new component queries and 286 exact-pool
+Jev calls, with 8,580 scored candidates. Identical candidate sets share Jev calls
+within a query. All methods keep the same candidate limit; these diagnostic
+multi-request totals do not estimate a production query's serving cost.
+
+Local fusion computation has median times of 0.256 ms (RRF), 0.216 ms (Min-Max)
+and 0.261 ms (Bayesian), including common preparation. The maximum is 3.36 ms.
+This small Node implementation does not establish optimized backend latency or
+CPU cost. The 56 quality answers per arm report 54,203 input / 438 output tokens
+for RRF and 54,096 / 435 for Bayesian. The two READY preflights add 162 input /
+8 output tokens. These totals exclude the one failed request with unknown usage. Managed
+embedding/reranking token usage and monetary cost are not reported by this evidence.
+
+Four initial HTTP 503 upserts stopped retrieval after two complete cases. An
+identical 41-document diagnostic upsert then succeeded; it had no embedding field,
+so those failures cannot be assigned to the embedding provider. One bounded
+continuation completed without further upsert errors, retaining the original two
+cases. Including failed submissions and the diagnostic, 2,885 documents were
+submitted and all 61 comparison/diagnostic collections were deleted with 404 checks.
+
+The first host execution completed 47 answers before a transport exception without
+an HTTP response. The report has no provider answer or usage for that request;
+its delivery/billing state and root cause remain unknown. The failure was preserved;
+only the remaining 65 answers were resumed once in a fresh host. The interrupted
+sample's exact request body is unchanged, and no completed answer was regenerated.
+Completion used 115 provider attempts in total: 112 quality answers, two
+successful READY preflights and the preserved failed attempt. All completed
+answers finish normally; provider starts are at least 15 seconds apart. Both host
+runs together create four setup collections, submit two gate documents and issue
+four setup queries; all four collections are deleted and verified absent.
+The original total 121-attempt and 75-minute bounds remain in force; the explicit
+continuation adds two setup collections and one READY preflight. The two producer
+versions and protocols are retained, not rewritten into a clean first-run success.
+
+Maintained tests (315), syntax and release checks pass. The one-off producers,
+full prompts/answers, explicit assistant source reviews, failures and cleanup are
+preserved in the ninth local-only archive; earlier archives remain unchanged.
+No runtime, UI, dependency, default, LambdaDB implementation or release changes.
 
 ## Fusion diagnosis and local Bayesian reproduction
 
@@ -133,10 +252,9 @@ after the failure analysis and is not independent confirmation evidence.
 Bayesian fusion has a useful fixed-budget signal: both frozen variants improve
 post-Jev evidence from 31/32 to 32/32 relative to equal-weight RRF/Min-Max. That
 supports backend investigation, but does not show a unique advantage over existing
-weighted fusion or a larger rerank pool. Keep product defaults unchanged. The next
-product decision can compare the existing-feature candidate on the full set before
-requiring LambdaDB Bayesian support; generated answers and independent data remain
-necessary before an answer-quality adoption claim.
+weighted fusion or a larger rerank pool. This retrieval-only stage motivated the
+fixed-pool confirmation above. Its historical counts remain separate from the
+subsequent generated answers and do not establish an answer-quality adoption claim.
 
 The run made 602 query calls, submitted 1,394 documents including one failed
 managed upsert, and deleted all 34 owned collections with independent 404 checks.
@@ -153,7 +271,7 @@ and archived; no runtime, dependency, schema or settings change is shipped.
 
 ## Full 32-case comparison on GPT-6.1 Sol
 
-This is the current paired result, not a sum of historical runs. Both arms ran all
+This earlier fully live result is not a sum of historical runs. Both arms ran all
 32 unique authored cases in one bounded run through SillyTavern, live LambdaDB and
 OpenAI. The initial 12 and later 8 + 6 + 6 source fixtures/builders are byte/structure
 identical to 763906a. These known synthetic histories are not public-benchmark,
@@ -540,6 +658,7 @@ historical conclusions remain inspectable.
 | english-confirmation-v1/evidence.tar.gz | Base e65e539 plus frozen one-off producer; six previously unexecuted controls, three arms, 18 host answers, shared failure and verification | c8242a6df8b0b646167adf9cc95152fda3e1a2882260e240ad5b4ac84c8f447f |
 | gpt61-comparison-v1/evidence.tar.gz | Base 3f80946 plus frozen producer; all 32 cases/two arms, 64 GPT-6.1 Sol answers, source reviews, preflights and verification | 641a16d18c25f61cd35f190387bb3d8e6389ef716e44ffde08fd0a4e7c4d66cf |
 | fusion-analysis-v1/evidence.tar.gz | Base 02ee82d plus one-off producer; 32-case live component scores, local Bayesian/Jev replay, focused server controls, preserved 503/recovery and Java arithmetic verification | 90c8ee5f669d3e98b4c2b7e1a63919d29eedd31367613bbb23f28131a3416b22 |
+| bayesian-confirmation-v1/evidence.tar.gz | Base ab59ed8 plus frozen producers; 56-case fixed-pool comparison, 112 actual-host answers, explicit reviews, tie diagnostic, preserved failures/continuations and complete cleanup | 210f3f9ce8148c52949e66a52be76e0b1a8c2fe6438dd394fa67642a62716567 |
 
 The closeout bundle is 1,260,312 bytes with 21 members, all read back byte-for-byte.
 Its pre-cleanup source contains 311 files verified against commit 76293ab; all 15
@@ -568,6 +687,14 @@ the bounded transport recovery, both producers, component scores, candidate sets
 local/Java arithmetic checks and all cleanup receipts. Exact readback and
 configured-secret scan passed; the seven earlier archives remain unchanged. The
 archive's README separates offline verification from paid live reproduction.
+
+The confirmation bundle is 11,613,915 bytes with 54 members and 298 verified
+base-source files. Exact readback and configured-secret scan passed; all eight
+preceding archives are unchanged. It includes the original partial host report,
+the separate 65-answer continuation, both producers/protocols, exact failed-request
+identity, all 112 reviews, complete final-prompt checks and the failed priority
+gate. Its README distinguishes offline inspection from separately authorized paid
+reproduction.
 
 For historical host reruns, restore the relevant archived source/protocol and pinned
 host; original commands are in those preserved records. The current runner no
