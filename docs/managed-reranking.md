@@ -8,9 +8,9 @@ SDK/CORS integration works, and hybrid + Jev rescued specific difficult facts, b
 these experiments did not establish a reliable semantic answer improvement without
 regressions. Query latency was not the reason for this decision.
 
-This closes PR #63's adoption review, including its final generation diagnostic and
-retention cleanup. It is not a claim that rerankers are ineffective. Reopening the
-product decision needs a concrete new requirement or evidence, not another rerun of
+This closes PR #63's adoption review, including its generation diagnostic, the
+user-requested native English text comparison, and retention cleanup. It is not a
+claim that rerankers are ineffective. Reopening the product decision needs a concrete new requirement or evidence, not another rerun of
 these authored cases until the score passes. No temporal schema or message-time
 heuristic is added: message order does not establish the time of an event.
 
@@ -24,6 +24,7 @@ heuristic is added: message order does not establish the time of an event.
 | Shared-question, 14 known probes | Original hybrid + Jev / shared-question hybrid + Jev | Tagged fact injected 14/14 each | Medicine secondary rank improved 30 → 1, with no delivery gain in this run |
 | Five targeted answer pairs | Original hybrid + Jev / shared-question hybrid + Jev | Correct answers 5/5 / 4/5 | UNKNOWN despite the full medicine fact in the final prompt; answer gate failed |
 | Final fixed-prompt diagnostic | Original full / shared full / shared relevant-only | 6/6 / 6/6 / 6/6 correct | Historical miss did not reproduce; no demonstrated benefit from removing distractors |
+| Native English text, 14 known cases | Dual-analyzer manual OR / English-only raw text, both hybrid + Jev | Correct answers 14/14 each; all four lexical controls injected 14/14 | Tie; manual OR superiority and a quality gain from English-only analysis were not established |
 
 The initial answers shared an unsupported elaboration: both changed “blue tin” to
 “blue paint tin.” Eleven other cases had supported answers. The exact-match gain
@@ -90,6 +91,77 @@ cannot separate model variability from backend changes across runs, or prove tha
 the surrounding excerpts caused the earlier miss. No further paid sweep is needed
 to close this non-adoption decision.
 
+## Native English text follow-up
+
+The user requested a specific follow-up: delegate the original question to LambdaDB
+with an English-only analyzer instead of regex splitting and quoted OR construction.
+The original configuration already used `['english', 'korean']`; it was not missing
+English analysis. Multiple analyzers apply independently to the field, not as
+language detection. See the official [analyzer guide](https://docs.lambdadb.ai/guides/collections/choose-text-analyzers)
+and [query-string guide](https://docs.lambdadb.ai/guides/search/query-string).
+
+Reuse the exact eight diagnostic and six confirmation dialogues/questions, without
+new cases or post-result tuning. Within one physical story collection, store identical
+content in `text` (English + Korean) and `text_en` (English only). All arms share the
+same document IDs, branch and managed vectors; embedding and Jev continue to read
+`text`. Only the lexical field and query construction differ. The raw lexical clause
+is the following, inside the existing filtered hybrid/RRF query:
+
+```js
+queryString: {
+    query: originalQuestion,
+    defaultField: 'text_en',
+    skipSyntax: true,
+}
+```
+
+`skipSyntax` treats the question as ordinary text instead of Lucene syntax; field
+analysis still applies. Keep each retrieval leg's own text as `rerank.queryText`,
+not the previously tested shared-question target. Rotate the four probe arms, then
+alternate the two answer arms using exact captured-candidate replay through the
+actual host. Keep the shared model, 800-token budget, two top-30 queries, isolation
+filters, branch and consistent reads unchanged.
+
+| Lexical configuration, all hybrid + Jev | Fact retrieved | Fact injected | Correct host answers | Median query latency |
+| --- | --- | --- | --- | --- |
+| English + Korean, manual OR | 14/14 | 14/14 | 14/14 | 818.7 ms |
+| English + Korean, raw question | 14/14 | 14/14 | Not generated | 785.3 ms |
+| English only, manual OR | 14/14 | 14/14 | Not generated | 818.9 ms |
+| English only, raw question | 14/14 | 14/14 | 14/14 | 788.2 ms |
+
+There were zero answer gains and zero losses in the concurrent comparison. All 28
+answers exactly matched their expected identifiers/UNKNOWN; direct inspection of
+the questions, source facts and responses agreed with the automatic grader. The
+original/candidate arms used 13,248/13,266 input tokens and 67/67 output tokens;
+median injected memory was 775.5/775 tokens. These differences do not establish a
+latency or cost advantage. Managed embedding/reranker cost was not measured.
+
+Ranks and surrounding excerpts changed without changing the final answers. For the
+medicine case, primary/secondary target ranks were 30/1 in the original arm and 1/2
+with English raw text. For Neralith they were 1/6 and 5/1 respectively. Therefore this
+is not a uniform ranking improvement. The historical medicine failure did not recur
+in the concurrent original arm either; do not credit that recovery to the new
+configuration or replace the historical failure with this successful repeat.
+
+**Decision:** raw text with English-only analysis is a reasonable, simpler basis
+for any future English hybrid implementation; these cases provide no evidence that
+manual OR is better. This is a neutral quality result, not proof of equivalence or
+reranker adoption. All four arms reached the fact-coverage ceiling, so the controls
+do not establish a quality benefit from either individual setting. These are known,
+compact synthetic diagnostics, not held-out validation, multilingual evidence or a
+new vector-only comparison. Product schema/search defaults remain unchanged.
+
+The first attempt stopped at its schema assertion because a test hook was installed
+before a browser reload. It ran zero comparison probes/answers; both owned
+collections were removed. After moving installation after the reload, the unchanged
+quality protocol completed 56 probes (112 comparison queries), 28 actual-host
+answers, and zero provider retries. All reranks reported `applied`; 588 selected
+passages matched local source exactly. The corrected run submitted 645 documents,
+made 114 queries including its transport gate, and deleted both owned collections
+with confirmed 404 responses. There are no unresolved cleanup ledgers. Frozen hashes,
+request construction, final prompts, provider spacing and session-only key handling
+were verified. The setup failure and correction remain in the evidence bundle.
+
 ## Shared method and practical limits
 
 The three earlier stages used real SillyTavern 1.19.0, revision
@@ -151,12 +223,18 @@ historical conclusions remain inspectable.
 | rerank-rescue-v1/evidence.tar.gz | f2f274a; diagnostic gains and confirmation regression | 35871f24ba6af95f0701cdc48b7fce71ce1749f8a78fcd98e7ea040de01e1393 |
 | rerank-intent-v1/evidence.tar.gz | 763906a; shared-question run, its frozen stop and post-run guard patch | f16249c031d454fe55a38e405ed583accbc5b37d59f639834e052302a6144df0 |
 | rerank-closeout-v1/evidence.tar.gz | Frozen replay runner/plan; full pre-cleanup source at 76293ab; retired-file index; final checks | 8af324a4388a28c451ed5b87437339f582982c73737a38c8b9af570e9b88e19e |
+| english-text-v1/evidence.tar.gz | Base e968b90 plus frozen one-off producer; four lexical controls, 28 host answers, setup failure/correction, verification | e7afc3835df883c137eef9f9b83fd7fb40035d4c7b34f814d18a52de98f71dee |
 
 The closeout bundle is 1,260,312 bytes with 21 members, all read back byte-for-byte.
 Its pre-cleanup source contains 311 files verified against commit 76293ab; all 15
 retired/consolidated paths match the preservation index. Configured secrets were
 absent. The frozen replay verified all 18 request hashes, exact source/options,
 provider-start spacing and completion records.
+
+The English text bundle is 1,430,771 bytes with 23 members, verified by exact
+readback and configured-secret scan. Its base source contains 298 verified files;
+all four preceding archives retain their recorded hashes. The extra runner and
+experimental field remain ignored artifacts, with no product or CI dependency.
 
 For historical host reruns, restore the relevant archived source/protocol and pinned
 host; original commands are in those preserved records. The current runner no

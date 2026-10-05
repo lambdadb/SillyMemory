@@ -174,11 +174,14 @@ archives remain intact; all owned test resources were cleaned up.
 
 ## Managed reranker adoption review
 
-The [completed decision record](managed-reranking.md) retains all four stages' core
+The [completed decision record](managed-reranking.md) retains the completed stages' core
 results, positive findings, answer regressions, execution boundaries and archive
 identities. The three original run bundles remain byte-for-byte unchanged. A fourth
 closeout bundle preserves the fixed-prompt comparison and every retired source,
-fixture, protocol and detailed conclusion before active-tree removal.
+fixture, protocol and detailed conclusion before active-tree removal. A fifth
+bundle preserves the user-requested English-only/raw-text comparison, its neutral
+14/14 versus 14/14 answer result, all four lexical controls, and the initial setup
+failure/correction. The preceding four bundles are unchanged.
 
 The current tree keeps the decision and independent generation-harness corrections.
 It does not depend on archived experiment runners or raw output for CI. Historical
