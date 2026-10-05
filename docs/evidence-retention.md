@@ -172,18 +172,15 @@ attempt, interpretation and publication boundary. Its local-only archive contain
 319 verified files and three exact installation producers. Existing historical
 archives remain intact; all owned test resources were cleaned up.
 
-## Managed reranking comparison
+## Managed reranker adoption review
 
-The [managed reranking record](managed-reranking.md) retains the frozen protocol,
-paired answers, format-versus-content interpretation, shared unsupported detail,
-cleanup verification and exact producer/archive identity. Raw reports stay ignored;
-no earlier experiment evidence is removed.
+The [completed decision record](managed-reranking.md) retains all four stages' core
+results, positive findings, answer regressions, execution boundaries and archive
+identities. The three original run bundles remain byte-for-byte unchanged. A fourth
+closeout bundle preserves the fixed-prompt comparison and every retired source,
+fixture, protocol and detailed conclusion before active-tree removal.
 
-The [staged rescue record](rerank-rescue.md) separately preserves the later diagnostic
-gains, confirmation regression, pre-rerank tied scores, successful teardown and exact
-producer/archive identity. The original v1 archive is retained unchanged.
-
-The [shared-question record](rerank-intent.md) preserves the later rank improvement,
-generation failure despite delivered evidence, cross-run candidate drift, gated-off
-confirmation stage and its own verified local bundle. Both earlier archives remain
-unchanged.
+The current tree keeps the decision and independent generation-harness corrections.
+It does not depend on archived experiment runners or raw output for CI. Historical
+reproduction uses the recorded producer and local-only archive, not the current
+runner. No unresolved ownership or cleanup record was discarded.

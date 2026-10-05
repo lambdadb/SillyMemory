@@ -1,8 +1,6 @@
 // Full SillyTavern Generate/UI path + live LambdaDB. Model is deterministic by
 // default; --live-model requires explicitly supplied compatible-model settings.
 import { runHybrid, hybridFiles } from './hybrid-eval.mjs';
-import { runRerank, rerankFiles } from './rerank-eval.mjs';
-import { runRerankRescue, rescueFiles, intentFiles } from './rerank-rescue.mjs';
 import { chromium } from '@playwright/test';
 import { createServer } from 'node:http';
 import { parseEnv } from 'node:util';
@@ -32,17 +30,11 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const source = process.env.ST_SOURCE || '/tmp/sillymemory-st-source';
 const revision = '06bde939fb1e9c4c8d8641d810f0a916b5bce127';
 if (process.argv.includes('--chunking')) throw new Error('Historical chunking comparison is archived; use its recorded producer.');
+if (process.argv.some(arg => arg.startsWith('--rerank'))) throw new Error('Reranking evaluation is archived; use its recorded producer.');
 const env = parseEnv(await readFile(process.env.SM_ENV_FILE || path.join(root, '.env.local'), 'utf8'));
 const hybridMode = process.argv.includes('--hybrid');
-const intentMode = process.argv.includes('--rerank-intent');
-if (intentMode && process.argv.includes('--rerank-rescue')) throw new Error('Choose one staged experiment.');
-const rescueMode = process.argv.includes('--rerank-rescue') || intentMode;
-if (rescueMode && process.argv.includes('--rerank')) throw new Error('Choose one reranking experiment.');
-const rerankMode = process.argv.includes('--rerank') || rescueMode;
-const retrievalExperiment = hybridMode || rerankMode;
-if (hybridMode && rerankMode) throw new Error('Choose one retrieval experiment.');
 
-if (retrievalExperiment && ['--semantic','--natural','--comparison','--heldout','--challenges','--summarize','--native-tuning','--three-modes','--direct-embeddings','--korean-eval'].some(f => process.argv.includes(f))) throw new Error('Choose the retrieval experiment alone.');
+if (hybridMode && ['--semantic','--natural','--comparison','--heldout','--challenges','--summarize','--native-tuning','--three-modes','--direct-embeddings','--korean-eval'].some(f => process.argv.includes(f))) throw new Error('Choose the retrieval experiment alone.');
 const summarizeMode = process.argv.includes('--summarize');
 if(summarizeMode && ['--semantic','--natural','--native-tuning','--three-modes','--direct-embeddings','--comparison','--korean-eval','--challenges','--heldout'].some(flag=>process.argv.includes(flag))) throw new Error('Choose --summarize without another evaluation mode');
 const nativeTuning = process.argv.includes('--native-tuning');
@@ -51,14 +43,14 @@ const semantic = process.argv.includes('--semantic') || threeModes || summarizeM
 if (semantic && process.argv.includes('--natural')) throw new Error('Choose one evaluation mode.');
 if (process.argv.includes('--direct-embeddings')) throw new Error('Temporary direct embedding experiments are archived; use the recorded producer.');
 const natural = process.argv.includes('--natural') || semantic;
-const retryTransient = process.argv.includes('--retry-transient') || retrievalExperiment;
+const retryTransient = process.argv.includes('--retry-transient') || hybridMode;
 if (semantic && !retryTransient) throw new Error('--semantic requires the frozen --retry-transient policy');
-if (retryTransient && !natural && !retrievalExperiment) throw new Error('--retry-transient requires --natural');
+if (retryTransient && !natural && !hybridMode) throw new Error('--retry-transient requires --natural');
 const retryBudget = { calls: 0, retries: 0 };
 const frozenNatural = natural ? (semantic ? await (summarizeMode ? verifySummaryPlan : nativeTuning ? verifyTuningPlan : threeModes ? verifyThreeModePlan : verifySemanticPlan)(process.env.SM_NATURAL_PLAN) : await verifyNaturalPlan(process.env.SM_NATURAL_PLAN)) : null;
 const comparison = process.argv.includes('--comparison');
 const nativeComparison = comparison || threeModes;
-const transportProtocol = rerankMode ? { ...NATURAL_RETRY, maxCalls: rescueMode ? 36 : 32 } : hybridMode ? { ...NATURAL_RETRY, maxCalls: 24 } : summarizeMode ? summaryRetry : nativeTuning ? tuningRetry : threeModes ? threeModeRetry : NATURAL_RETRY;
+const transportProtocol = hybridMode ? { ...NATURAL_RETRY, maxCalls: 24 } : summarizeMode ? summaryRetry : nativeTuning ? tuningRetry : threeModes ? threeModeRetry : NATURAL_RETRY;
 const setupOnly = process.argv.includes('--comparison-setup');
 const comparisonStart = Number(process.env.SM_COMPARE_START || 0);
 if (!Number.isInteger(comparisonStart) || comparisonStart < 0 || comparisonStart > 53) throw new Error('Invalid SM_COMPARE_START');
@@ -71,8 +63,8 @@ const challengeStart = Number(process.env.SM_CHALLENGE_START || 0);
 if (!Number.isInteger(challengeStart) || challengeStart < 0 || challengeStart >= challengeCount) throw new Error('Invalid SM_CHALLENGE_START');
 const artifactTag = process.env.SM_ARTIFACT_TAG || '';
 if (artifactTag && !/^[a-zA-Z0-9][a-zA-Z0-9._-]{0,79}$/.test(artifactTag)) throw new Error('Invalid SM_ARTIFACT_TAG.');
-const liveModel = retrievalExperiment || process.argv.includes('--live-model') || koreanEvaluation || comparison || challenges || natural;
-const hostContextTokens = natural ? frozenNatural.plan.settings.context : (koreanEvaluation || comparison || retrievalExperiment) ? 32768 : 8192;
+const liveModel = hybridMode || process.argv.includes('--live-model') || koreanEvaluation || comparison || challenges || natural;
+const hostContextTokens = natural ? frozenNatural.plan.settings.context : (koreanEvaluation || comparison || hybridMode) ? 32768 : 8192;
 const caseStart = koreanEvaluation ? Number(process.env.SM_CASE_START || 0) : 0;
 if (!Number.isInteger(caseStart) || caseStart < 0 || caseStart > 7) throw new Error('SM_CASE_START must be an integer from 0 to 7.');
 const sampleStart = koreanEvaluation ? Number(process.env.SM_SAMPLE_START ?? caseStart * 2) : 0;
@@ -80,7 +72,7 @@ if (!Number.isInteger(sampleStart) || sampleStart < 0 || sampleStart > 15) throw
 let transientRetriesRemaining = natural ? 0 : 1;
 if (liveModel && !(env.LLM_BASE_URL && (process.env.SM_MODEL || env.LLM_MODEL) && env.LLM_API_KEY)) throw new Error('Live model requires LLM_BASE_URL, LLM_MODEL, and LLM_API_KEY in .env.local.');
 const model = liveModel ? (process.env.SM_MODEL || env.LLM_MODEL) : 'sillymemory-deterministic-fixture';
-if ((comparison || challenges || natural || retrievalExperiment) && (env.LLM_BASE_URL !== 'https://api.openai.com/v1' || model !== 'gpt-4.1-mini-2025-04-14')) throw new Error('Comparison requires the fixed OpenAI snapshot and endpoint.');
+if ((comparison || challenges || natural || hybridMode) && (env.LLM_BASE_URL !== 'https://api.openai.com/v1' || model !== 'gpt-4.1-mini-2025-04-14')) throw new Error('Comparison requires the fixed OpenAI snapshot and endpoint.');
 const generationIntervalMs = liveModel ? PROVIDER_SPACING.minimumIntervalMs : 0;
 const maxOutputTokens = liveModel ? 256 : 100;
 const reasoningEffort = liveModel ? env.LLM_REASONING_EFFORT : undefined;
@@ -93,15 +85,15 @@ if (!summarizeMode && !nativeTuning && !Object.values(credentials).every(Boolean
 if (execFileSync('git', ['-C', source, 'rev-parse', 'HEAD'], { encoding: 'utf8' }).trim() !== revision) throw new Error('Unexpected host revision.');
 if (await realpath(path.join(source, 'public/scripts/extensions/third-party/sillymemory')) !== root) throw new Error('Host extension symlink must point to this checkout.');
 const artifacts = path.join(root, 'artifacts'); await mkdir(artifacts, { recursive: true });
-const modeSuffix = intentMode ? 'rerank-intent' : rescueMode ? 'rerank-rescue' : rerankMode ? 'rerank' : hybridMode ? 'hybrid' : natural ? (summarizeMode ? 'summarize' : nativeTuning ? 'native-tuning' : threeModes ? 'three-modes' : semantic ? 'semantic' : 'natural') : challenges ? `${heldout ? 'heldout' : 'challenges'}${challengeStart ? `-from-${challengeStart}` : ''}` : comparison ? `comparison${comparisonStart ? `-from-${comparisonStart}` : ''}${setupOnly ? '-setup' : ''}` : koreanEvaluation ? `korean-eval${process.env.SM_SAMPLE_START ? `-from-sample-${sampleStart}` : caseStart ? `-from-${caseStart}` : ''}` : liveModel ? 'live-model' : 'fixture-model';
+const modeSuffix = hybridMode ? 'hybrid' : natural ? (summarizeMode ? 'summarize' : nativeTuning ? 'native-tuning' : threeModes ? 'three-modes' : semantic ? 'semantic' : 'natural') : challenges ? `${heldout ? 'heldout' : 'challenges'}${challengeStart ? `-from-${challengeStart}` : ''}` : comparison ? `comparison${comparisonStart ? `-from-${comparisonStart}` : ''}${setupOnly ? '-setup' : ''}` : koreanEvaluation ? `korean-eval${process.env.SM_SAMPLE_START ? `-from-sample-${sampleStart}` : caseStart ? `-from-${caseStart}` : ''}` : liveModel ? 'live-model' : 'fixture-model';
 const suffix = modeSuffix + (artifactTag ? `-${artifactTag}` : '');
 const reportPath = path.join(artifacts, `generation-${suffix}.json`);
-if (natural || retrievalExperiment) await writeFile(reportPath, JSON.stringify({ passed: false, incomplete: true }), { flag: 'wx' });
+if (natural || hybridMode) await writeFile(reportPath, JSON.stringify({ passed: false, incomplete: true }), { flag: 'wx' });
 const naturalSourceFiles = ['src/chunking.js', 'index.js', 'src/chat-collections.js', 'src/client.js', 'vendor/lambdadb.js', 'package-lock.json', 'src/gate.js', 'src/memory.js', 'src/context.js', 'src/status.js', 'scripts/generation-smoke.mjs', 'scripts/provider-spacing.mjs', 'scripts/generation-cleanup.mjs', 'scripts/natural-eval.mjs', 'scripts/natural-dialogue.mjs', ...(semantic ? [...semanticFiles, ...(summarizeMode ? summaryFiles : nativeTuning ? tuningFiles : threeModes ? threeModeFiles : [])] : fixtureFiles(frozenNatural?.plan.version)), ...(retryTransient ? ['scripts/provider-retry.mjs', 'docs/natural-dialogue-retry.md', 'scripts/natural-summary.mjs', 'scripts/natural-score.mjs'] : [])];
 const naturalSourceSha256 = natural ? Object.fromEntries(await Promise.all(naturalSourceFiles.map(async file => [file, createHash('sha256').update(await readFile(path.join(root, file))).digest('hex')]))) : null;
-const experimentHashes = async () => Object.fromEntries(await Promise.all(['index.js', 'src/memory.js', 'src/client.js', 'vendor/lambdadb.js', 'package-lock.json', 'src/chat-collections.js', 'src/context.js', 'scripts/generation-smoke.mjs', ...(intentMode ? intentFiles : rescueMode ? rescueFiles : rerankMode ? rerankFiles : hybridFiles), 'src/chunking.js', 'src/gate.js', 'src/status.js', 'src/delivery.js', 'scripts/provider-retry.mjs', 'scripts/provider-spacing.mjs', 'scripts/generation-cleanup.mjs'].map(async file => [file, createHash('sha256').update(await readFile(path.join(root, file))).digest('hex')])));
-const experimentSource = retrievalExperiment ? await experimentHashes() : null;
-if (retrievalExperiment) await writeFile(reportPath + '.plan.json', JSON.stringify({ sourceSha256: experimentSource, baseline: execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim(), model, context: hostContextTokens, maxOutputTokens, budget: 800, recent: 4, samples: rescueMode ? 28 : rerankMode ? 24 : 16, transportProtocol, providerSpacing: PROVIDER_SPACING }, null, 2), { flag: 'wx' });
+const experimentHashes = async () => Object.fromEntries(await Promise.all(['index.js', 'src/memory.js', 'src/client.js', 'vendor/lambdadb.js', 'package-lock.json', 'src/chat-collections.js', 'src/context.js', 'scripts/generation-smoke.mjs', ...hybridFiles, 'src/chunking.js', 'src/gate.js', 'src/status.js', 'src/delivery.js', 'scripts/provider-retry.mjs', 'scripts/provider-spacing.mjs', 'scripts/generation-cleanup.mjs'].map(async file => [file, createHash('sha256').update(await readFile(path.join(root, file))).digest('hex')])));
+const experimentSource = hybridMode ? await experimentHashes() : null;
+if (hybridMode) await writeFile(reportPath + '.plan.json', JSON.stringify({ sourceSha256: experimentSource, baseline: execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim(), model, context: hostContextTokens, maxOutputTokens, budget: 800, recent: 4, samples: 16, transportProtocol, providerSpacing: PROVIDER_SPACING }, null, 2), { flag: 'wx' });
 const pendingPath = path.join(artifacts, `generation-${suffix}-pending.json`);
 const pending = { collections: [], connectionHash: createHash('sha256').update(JSON.stringify([credentials.endpoint, credentials.project])).digest('hex') };
 await writeFile(pendingPath, JSON.stringify(pending), { flag: 'wx' });
@@ -112,10 +104,9 @@ if(resumeReport){generations.push(...structuredClone(resumeReport.generations));
 const resumedEvidence=()=>resumeReport?{resume:{...frozenNatural.plan.resume,generations:resumeReport.generations.length,providerCalls:resumeReport.providerCalls}}:{};
 const directEvidence = () => ({ embeddingMode: summarizeMode ? 'none' : nativeTuning ? 'native-openai' : 'managed' });
 const lambdaRequestMap = new Map();
-const rerankTraffic = { collections: 0, documents: 0, queries: 0, blocked: false };
 const redact = value => { let output = JSON.stringify(value, null, 2); for (const secret of [credentials.key, env.LLM_API_KEY, credentials.endpoint, credentials.project, env.LLM_BASE_URL].filter(Boolean)) output = output.replaceAll(secret, "[REDACTED]"); return output; };
 async function checkpointNatural() {
-    if (!natural && !retrievalExperiment) return;
+    if (!natural && !hybridMode) return;
     const temporary = `${reportPath}.tmp`;
     await writeFile(temporary, redact({ passed: false, incomplete: true, ...directEvidence(), evaluation, generations, providerCalls, ...resumedEvidence(), lambdaRequests, embeddings, vectorQueries, ...summaryTrafficEvidence(), transportProtocol: retryTransient ? transportProtocol : null, providerSpacing: PROVIDER_SPACING, sourceSha256: naturalSourceSha256 || experimentSource }));
     await rename(temporary, reportPath);
@@ -158,7 +149,7 @@ const bridge = createServer(async (req, res) => {
         const buffers = []; for await (const b of req) buffers.push(b);
         const body = JSON.parse(Buffer.concat(buffers).toString());
         const entry = { stage, messages: body.messages, stream: body.stream, model, maxOutputTokens: body.max_tokens, reasoningEffort: body.reasoning_effort, startedAt: Date.now() };
-        if ((natural || retrievalExperiment) && (body.model !== model || body.temperature !== 0 || body.max_tokens !== 256)) throw new Error('Frozen model parameters changed');
+        if ((natural || hybridMode) && (body.model !== model || body.temperature !== 0 || body.max_tokens !== 256)) throw new Error('Frozen model parameters changed');
         entry.requestOptions = Object.fromEntries(Object.entries(body).filter(([key]) => key !== 'messages'));
         generations.push(entry);
         if (liveModel) {
@@ -284,7 +275,7 @@ async function generate(name, type = 'normal', streaming = false, evaluationOpti
     return { ...result, request, prompt: JSON.stringify(request.messages) };
 }
 try {
-    if (natural || retrievalExperiment) {
+    if (natural || hybridMode) {
         stage = 'fixed model availability';
         const response = await fetch(`${env.LLM_BASE_URL}/models/${encodeURIComponent(model)}`, { headers: { Authorization: `Bearer ${env.LLM_API_KEY}` }, signal: AbortSignal.timeout(30000) });
         assert(response.ok && (await response.json()).id === model, 'fixed model is available; no substitution');
@@ -295,7 +286,7 @@ try {
     for (let i = 0; i < 90; i++) { if (server.exitCode !== null) throw new Error('Host exited'); try { if ((await fetch(url)).ok) { ready = true; break; } } catch {} await new Promise(r => setTimeout(r, 500)); }
     if (!ready) throw new Error('Host startup timeout');
     browser = await chromium.launch(); page = await browser.newPage({ viewport: { width: 1440, height: 1000 } }); page.setDefaultTimeout(20000);
-    if (natural || retrievalExperiment) {
+    if (natural || hybridMode) {
         const finishRequest = (request, failed = false) => {
             const entry = lambdaRequestMap.get(request); if (!entry) return;
             if (failed) { entry.failed = true; entry.controller?.abort(); }
@@ -309,18 +300,7 @@ try {
     // Persist only non-secret ownership metadata before any collection creation.
     await page.route(`${new URL(credentials.endpoint).origin}/**`, async route => {
         const req = route.request(); const target = new URL(req.url());
-        if (rerankMode && stage !== 'cleanup') {
-            const body = req.method() === 'POST' ? req.postDataJSON() : null;
-            if (target.pathname.endsWith('/collections') && body) rerankTraffic.collections++;
-            if (target.pathname.endsWith('/upsert')) rerankTraffic.documents += body?.docs?.length || 0;
-            if (target.pathname.endsWith('/query')) rerankTraffic.queries++;
-            if (rerankTraffic.collections > 3 || rerankTraffic.documents > (intentMode ? 4000 : rescueMode ? 2500 : 2000) || rerankTraffic.queries > (rescueMode ? 200 : 160)) {
-                rerankTraffic.blocked = true;
-                failure ||= { stage, reason: 'Frozen reranking traffic bound exceeded' };
-                return route.abort('blockedbyclient');
-            }
-        }
-        if (natural || retrievalExperiment) { const entry = { stage, method: req.method(), path: target.pathname.replace(/^\/projects\/[^/]+/, ''), started: performance.now() }; lambdaRequests.push(entry); lambdaRequestMap.set(req, entry); }
+        if (natural || hybridMode) { const entry = { stage, method: req.method(), path: target.pathname.replace(/^\/projects\/[^/]+/, ''), started: performance.now() }; lambdaRequests.push(entry); lambdaRequestMap.set(req, entry); }
         if (req.method() === 'POST' && target.pathname.endsWith('/collections')) {
             const body = req.postDataJSON(); pending.collections.push({ name: body.collectionName, owner: body.tags.owner });
             await writeFile(pendingPath, JSON.stringify(pending, null, 2));
@@ -363,9 +343,9 @@ try {
     await field('connect').click(); await field('gate').click(); await waitStatus('Transport gate passed');
     await field('provision').click(); await waitStatus('Chat memory is ready');
     }
-    if (retrievalExperiment) {
+    if (hybridMode) {
         evaluation = {};
-        await (rescueMode ? runRerankRescue : rerankMode ? runRerank : runHybrid)({ page, field, openSettings, waitStatus, generate, setStage: value => { stage = value; }, result: evaluation, checkpoint: checkpointNatural, credentials, intentMode });
+        await runHybrid({ page, field, openSettings, waitStatus, generate, setStage: value => { stage = value; }, result: evaluation, checkpoint: checkpointNatural, credentials });
         events = await page.evaluate(() => globalThis.generationTestEvents);
     } else if (natural) {
         evaluation = {};
@@ -482,14 +462,14 @@ try {
         } catch { console.log('Cleanup incomplete; keep pending resource record.'); }
     }
     const sourceSha256 = {};
-    for (const file of [...Object.keys(experimentSource || {}), ...(retrievalExperiment ? [...(intentMode ? intentFiles : rescueMode ? rescueFiles : rerankMode ? rerankFiles : hybridFiles), 'scripts/provider-retry.mjs'] : []), 'src/chunking.js', 'index.js', 'src/chat-collections.js','src/client.js', 'vendor/lambdadb.js', 'package-lock.json','src/gate.js','src/memory.js', 'src/context.js','src/status.js','scripts/generation-smoke.mjs','scripts/provider-spacing.mjs','scripts/generation-cleanup.mjs','scripts/korean-eval.mjs','scripts/korean-fixture.mjs','scripts/comparison-fixture.mjs','scripts/comparison-eval.mjs','scripts/challenge-eval.mjs','scripts/recall-challenges.mjs','scripts/heldout-fixture.mjs', ...(natural ? ['scripts/natural-eval.mjs', 'scripts/natural-dialogue.mjs', ...(semantic ? [...semanticFiles, ...(summarizeMode ? summaryFiles : nativeTuning ? tuningFiles : threeModes ? threeModeFiles : [])] : fixtureFiles(frozenNatural?.plan.version)), ...(retryTransient ? ['scripts/provider-retry.mjs', 'docs/natural-dialogue-retry.md', 'scripts/natural-summary.mjs', 'scripts/natural-score.mjs'] : [])] : [])]) sourceSha256[file] = createHash('sha256').update(await readFile(path.join(root, file))).digest('hex');
+    for (const file of [...Object.keys(experimentSource || {}), ...(hybridMode ? [...hybridFiles, 'scripts/provider-retry.mjs'] : []), 'src/chunking.js', 'index.js', 'src/chat-collections.js','src/client.js', 'vendor/lambdadb.js', 'package-lock.json','src/gate.js','src/memory.js', 'src/context.js','src/status.js','scripts/generation-smoke.mjs','scripts/provider-spacing.mjs','scripts/generation-cleanup.mjs','scripts/korean-eval.mjs','scripts/korean-fixture.mjs','scripts/comparison-fixture.mjs','scripts/comparison-eval.mjs','scripts/challenge-eval.mjs','scripts/recall-challenges.mjs','scripts/heldout-fixture.mjs', ...(natural ? ['scripts/natural-eval.mjs', 'scripts/natural-dialogue.mjs', ...(semantic ? [...semanticFiles, ...(summarizeMode ? summaryFiles : nativeTuning ? tuningFiles : threeModes ? threeModeFiles : [])] : fixtureFiles(frozenNatural?.plan.version)), ...(retryTransient ? ['scripts/provider-retry.mjs', 'docs/natural-dialogue-retry.md', 'scripts/natural-summary.mjs', 'scripts/natural-score.mjs'] : [])] : [])]) sourceSha256[file] = createHash('sha256').update(await readFile(path.join(root, file))).digest('hex');
     if (natural && Object.entries(naturalSourceSha256).some(([file, digest]) => sourceSha256[file] !== digest)) failure ||= { stage: 'source identity', reason: 'Source changed during execution' };
-    if ((natural || retrievalExperiment) && !failure) {
+    if ((natural || hybridMode) && !failure) {
         try { assert(summarizeProviderSpacing(resumeReport ? generations.slice(resumeReport.generations.length) : generations, PROVIDER_SPACING).verified, 'actual provider starts respect the 15-second interval'); }
         catch (error) { failure = { stage: 'provider spacing', reason: error.message }; }
     }
-    if (retrievalExperiment && JSON.stringify(await experimentHashes()) !== JSON.stringify(experimentSource)) failure ||= { stage, reason: 'Experiment producer changed during run' };
-    const report = { ...(rerankMode ? { rerankTraffic } : {}), ...(retrievalExperiment ? { initialSourceSha256: experimentSource, lambdaRequests, transportProtocol, providerSpacing: PROVIDER_SPACING } : {}), ...directEvidence(), ...resumedEvidence(), ...summaryTrafficEvidence(), time:new Date().toISOString(), sillyTavern:revision, lambdaDB:summarizeMode ? 'unused' : 'live', generator:liveModel?'live compatible model':'deterministic test fixture, not a real LLM', model, generationIntervalMs, maxOutputTokens, reasoningEffort, excludedParameters, hostContextTokens, evaluation, embeddings, vectorQueries, ...(natural ? { lambdaRequests, transportProtocol: retryTransient ? transportProtocol : null, providerSpacing: PROVIDER_SPACING, initialSourceSha256: naturalSourceSha256, managedEmbeddingUsage: null, managedEmbeddingCost: null, semanticScores: null } : {}), nativeCleanupComplete, ...(threeModes ? { nativeCleanup } : {}), providerCalls, checks, failure, events, generations, cleanupComplete, sourceSha256, passed:!failure&&cleanupComplete&&nativeCleanupComplete };
+    if (hybridMode && JSON.stringify(await experimentHashes()) !== JSON.stringify(experimentSource)) failure ||= { stage, reason: 'Experiment producer changed during run' };
+    const report = { ...(hybridMode ? { initialSourceSha256: experimentSource, lambdaRequests, transportProtocol, providerSpacing: PROVIDER_SPACING } : {}), ...directEvidence(), ...resumedEvidence(), ...summaryTrafficEvidence(), time:new Date().toISOString(), sillyTavern:revision, lambdaDB:summarizeMode ? 'unused' : 'live', generator:liveModel?'live compatible model':'deterministic test fixture, not a real LLM', model, generationIntervalMs, maxOutputTokens, reasoningEffort, excludedParameters, hostContextTokens, evaluation, embeddings, vectorQueries, ...(natural ? { lambdaRequests, transportProtocol: retryTransient ? transportProtocol : null, providerSpacing: PROVIDER_SPACING, initialSourceSha256: naturalSourceSha256, managedEmbeddingUsage: null, managedEmbeddingCost: null, semanticScores: null } : {}), nativeCleanupComplete, ...(threeModes ? { nativeCleanup } : {}), providerCalls, checks, failure, events, generations, cleanupComplete, sourceSha256, passed:!failure&&cleanupComplete&&nativeCleanupComplete };
     let output = JSON.stringify(report,null,2);
     for (const value of [credentials.key,env.LLM_API_KEY,credentials.endpoint,credentials.project,env.LLM_BASE_URL].filter(Boolean)) output=output.replaceAll(value,'[REDACTED]');
     await writeFile(reportPath,output);
