@@ -165,3 +165,10 @@ related benchmark producer maps now include `vendor/lambdadb.js` and
 `package-lock.json`. Regressions reject missing/mixed SDK identities. Historical
 reports retain their original source/validator archives; no report was rewritten
 or paid result relabeled. Runtime and the measured SDK bundle are unchanged.
+
+## Deployed Bayesian follow-up
+
+The subsequent [deployed API evaluation](bayesian-sdk-validation.md) pins the
+current dev SDK and records actual server Bayesian/Jev requests, preserved
+transport semantics, English long-dialogue results and remaining temporal failures.
+The original 0.7.0 migration results above retain their historical version boundary.

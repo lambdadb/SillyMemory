@@ -192,6 +192,8 @@ Browser/emulator checks and paid live integration runs remain separate commands
 below; a green CI result alone does not establish live integration success.
 
 See the [SDK migration and next experiment design](docs/sdk-migration.md) for the official client integration and validation boundary.
+The [deployed Bayesian evaluation](docs/bayesian-sdk-validation.md) records the
+locked dev SDK contract, English update/temporal diagnostics and remaining failures.
 
 See the [final local review](docs/review.md) for the commit scope, review fixes,
 verification boundaries, and file inventory. Raw `artifacts/` reports are ignored

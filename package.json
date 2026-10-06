@@ -38,6 +38,6 @@
     "url": "git+https://github.com/lambdadb/SillyMemory.git"
   },
   "dependencies": {
-    "@functional-systems/lambdadb": "0.7.0"
+    "@functional-systems/lambdadb": "0.7.0-dev.37433431398001"
   }
 }

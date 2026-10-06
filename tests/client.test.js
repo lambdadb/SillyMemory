@@ -5,6 +5,38 @@ import { LambdaClient, connectionConfig, scopeFilter } from '../src/client.js';
 import { runTransportGate } from '../src/gate.js';
 const config = { endpoint: 'https://region.example.test', project: 'synthetic' };
 const owner = 'a'.repeat(32), scope = 'b'.repeat(64);
+test('Bayesian SDK transport preserves explicit budgets, filters and rerank score metadata', async () => {
+    const requests = [];
+    const query = { bayesian: [
+        { knn: { field: 'embedding', queryText: 'updated meeting time', k: 30, filter: scopeFilter(owner, scope) } },
+        { bool: [{ ...scopeFilter(owner, scope), occur: 'filter' },
+            { queryString: { query: 'updated meeting time', defaultField: 'text', skipSyntax: true }, occur: 'must' }] },
+    ] };
+    const client = new LambdaClient(config, 'synthetic-session-key', { fetcher: async (url, init) => {
+        const body = JSON.parse(init.body); requests.push({ url, init, body });
+        return Response.json({ ...documentResponse([{ id: 'updated' }], 'memory'),
+            docs: [{ collection: 'memory', doc: { id: 'updated' }, score: body.rerank ? 0.9 : 0.7,
+                ...(body.rerank ? { retrievalScore: 0.7 } : {}) }],
+            ...(body.rerank ? { rerank: { status: 'applied', provider: 'typesafe', model: 'jev-1.13.0',
+                candidateCount: 1, scoredCount: 1, took: 1, criteriaVersion: 'default-relevance-v1' } } : {}),
+        });
+    } });
+    const common = { query, size: 1, consistentRead: true, ref: { kind: 'branch', name: 'chat_eval' } };
+    const baseline = await client.call((sdk, opts) => sdk.collection('memory').query({ ...common, candidateSize: 30 }, opts));
+    const ranked = await client.call((sdk, opts) => sdk.collection('memory').query({ ...common,
+        rerank: { provider: 'typesafe', model: 'jev-1.13.0', queryText: 'updated meeting time',
+            fields: ['text'], candidateSize: 30, onFailure: 'error' },
+    }, opts));
+    assert.equal(requests[0].body.candidateSize, 30);
+    assert(!Object.hasOwn(requests[1].body, 'candidateSize'));
+    assert.equal(requests[1].body.rerank.candidateSize, 30);
+    assert(requests.every(r => JSON.stringify(r.body.query) === JSON.stringify(query)));
+    assert(requests.every(r => r.init.credentials === 'omit' && r.init.redirect === 'error'
+        && !Object.hasOwn(r.init.headers, 'X-CSRF-Token')));
+    assert.equal(ranked.rerank.status, 'applied');
+    assert.equal(ranked.docs[0].retrievalScore, baseline.docs[0].score);
+    assert.equal(ranked.docs[0].score, 0.9);
+});
 test('direct CORS preserves auth/body and query scope without host credentials', async () => {
     const calls = [];
     const client = new LambdaClient(config, 'secret-test-only', { headers: () => ({ 'X-CSRF-Token': 'csrf' }), fetcher: async (url, init) => {
