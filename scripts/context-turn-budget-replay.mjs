@@ -18,7 +18,7 @@ assert.equal(report.sillyTavern, revision);
 const evaluation = report.evaluation ?? { version: report.summary?.version, rows: report.rows };
 assert.equal(evaluation.version, 'context-turn-generation-v1');
 const sha = bytes => createHash('sha256').update(bytes).digest('hex');
-for (const file of ['index.js', 'src/memory.js', 'src/context.js']) {
+for (const file of ['index.js', 'src/memory.js', 'src/time.js', 'src/context.js']) {
     assert.equal(sha(readFileSync(new URL(`../${file}`, import.meta.url))), report.sourceSha256[file], 'Use the recorded runtime');
 }
 const fixture = loadNaturalFixture(evaluation.version);

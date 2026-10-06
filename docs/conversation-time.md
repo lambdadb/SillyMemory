@@ -54,7 +54,7 @@ interval is not evidence that this host-metadata feature fixes that benchmark.
 Deterministic checks use synthetic inputs and the pinned actual host with a local
 HTTPS LambdaDB emulator. They do not measure deployed retrieval quality:
 
-- `npm test`: 321 passing unit tests, including parser rejection, unchanged remote
+- `npm test`: 322 passing unit tests, including parser rejection, unchanged remote
   documents, repeated occurrence coordinates, exact/partial token limits,
   timestamp-only edits/reload and asynchronous prompt invalidation.
 - `npm run check`, `npm run check:release`, `npm run check:sdk`: pass; SDK 0.8.0
@@ -110,6 +110,12 @@ setup collections are deleted and verified 404. Keys are absent from persisted
 host/browser settings. The final producer hashes match the pre-call freeze.
 No new language, hybrid/reranker, embedding or capacity setting is adopted.
 
+All maintained producer source locks and result aggregators require the new
+runtime module hash. Missing/mixed timestamp-code hashes are rejected by local
+regressions. This review follow-up changes evidence validation only; the measured
+runtime and completed provider answers remain identical. The older paid run uses
+its archived producer, rather than adapting it to current source locks.
+
 ## Evidence retention
 
 Base: `cf8c70a81a4e4036b529a0bf9e3c4cbd3fbdd278`; exact runtime patch/new files,
@@ -130,3 +136,11 @@ Existing historical archives and detached evidence worktrees remain intact.
 
 This feature supplies provenance; it is not an event-state resolver, a new
 retrieval strategy or a general temporal benchmark.
+
+
+Source-lock review follow-up is retained separately as the local-only
+`artifacts/archive/host-time-locks-v1/evidence.tar.gz` in both worktrees:
+18,197 bytes, three files plus manifest, SHA-256
+`d9fd4efc29e2fc80d3485b0db121e20f53bc00a5f322d5525425c44adc39d0e8`.
+Its patch against 8504101 and 322-test log are byte-verified with the backup.
+Measured runtime files match the paid run exactly; original archives are unchanged.

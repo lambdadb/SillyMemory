@@ -18,7 +18,7 @@ const source = process.env.ST_SOURCE || '/tmp/sillymemory-st-prompt-capacity';
 const output = path.resolve(process.argv[2] || path.join(root, 'artifacts/prompt-capacity.json'));
 assert.equal(execFileSync('git', ['-C', source, 'rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(), plan.host);
 assert.equal(await realpath(path.join(source, 'public/scripts/extensions/third-party/sillymemory')), root);
-const sourceFiles = ['index.js', 'src/chat-collections.js', 'manifest.json', 'src/client.js', 'src/context.js', 'src/gate.js', 'src/memory.js', 'src/status.js', 'scripts/prompt-capacity.mjs', 'scripts/emulator-cors.mjs', 'scripts/prompt-capacity-cases.mjs'];
+const sourceFiles = ['index.js', 'src/chat-collections.js', 'manifest.json', 'src/client.js', 'src/context.js', 'src/gate.js', 'src/memory.js', 'src/time.js', 'src/status.js', 'scripts/prompt-capacity.mjs', 'scripts/emulator-cors.mjs', 'scripts/prompt-capacity-cases.mjs'];
 const hostFiles = ['public/script.js', 'public/scripts/openai.js', 'public/scripts/PromptManager.js', 'public/scripts/tokenizers.js', 'src/endpoints/tokenizers.js', 'src/endpoints/backends/chat-completions.js', 'package-lock.json'];
 async function hashes() {
     return Object.fromEntries(await Promise.all(sourceFiles.map(async file => [file, createHash('sha256').update(await readFile(path.join(root, file))).digest('hex')])));

@@ -296,3 +296,11 @@ failed recovery producer was not independently hashed and documents the local
 review-verifier continuation. Raw-output v1 and all prior archives are preserved.
 Fresh clones cannot retrieve these local archives; preserve them before removing
 an evidence worktree. No one-off quality harness or raw dialogue is added to CI.
+
+
+Source-lock review follow-up is retained separately as the local-only
+`artifacts/archive/host-time-locks-v1/evidence.tar.gz` in both worktrees:
+18,197 bytes, three files plus manifest, SHA-256
+`d9fd4efc29e2fc80d3485b0db121e20f53bc00a5f322d5525425c44adc39d0e8`.
+Its patch against 8504101 and 322-test log are byte-verified with the backup.
+Measured runtime files match the paid run exactly; original archives are unchanged.

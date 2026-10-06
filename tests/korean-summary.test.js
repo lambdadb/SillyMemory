@@ -13,7 +13,7 @@ function segment(mode) {
     const item = cases[0], answer = 'UNKNOWN', id = `${item.id}/${mode}`;
     const row = { case: item.id, mode, question: item.question, answer, ...grade(answer, item), promptTokens: 100, generationMs: 20, providerMs: 10, injected: false, memoryTokens: 0 };
     return { cleanupComplete: true, model: 'synthetic-model', sillyTavern: 'synthetic-host', hostContextTokens: 8192, maxOutputTokens: 256,
-        sourceSha256: Object.fromEntries(['index.js', 'src/client.js', 'vendor/lambdadb.js', 'package-lock.json', 'src/gate.js', 'src/memory.js', 'src/context.js', 'scripts/korean-fixture.mjs'].map(file => [file, createHash('sha256').update(readFileSync(path.join(root, file))).digest('hex')])),
+        sourceSha256: Object.fromEntries(['index.js', 'src/client.js', 'vendor/lambdadb.js', 'package-lock.json', 'src/gate.js', 'src/memory.js', 'src/time.js', 'src/context.js', 'scripts/korean-fixture.mjs'].map(file => [file, createHash('sha256').update(readFileSync(path.join(root, file))).digest('hex')])),
         checks: ['identical uncontaminated source restored', 'original conversation preserved by generation', 'edited/deleted source text absent from outgoing prompt', mode === 'off' ? 'full source fits the baseline context' : 'recent complete messages retained'].map(s => `${id}: ${s}`),
         generations: [{ evaluation: row, upstreamStatus: 200, finishReason: 'stop', providerAnswer: answer, answer, providerUsage: {prompt_tokens:100}, generationMs:20, responseMs:10, requestOptions:{model:'synthetic-model',temperature:0} }] };
 }
@@ -28,6 +28,12 @@ test('Korean CLI rejects missing, mixed and outdated context hashes while accept
             return spawnSync(process.execPath, ['scripts/korean-summary.mjs', ...inputs, '--allow-partial', '--output', path.join(dir, 'summary.json')], {cwd:root,encoding:'utf8'});
         };
         assert.equal(run().status, 0);
+        const timeHash = second.sourceSha256['src/time.js'];
+        second.sourceSha256['src/time.js'] = '0'.repeat(64);
+        let timeResult = run(); assert.notEqual(timeResult.status, 0); assert.match(timeResult.stderr, /Cannot combine different runtime or fixture sources/);
+        delete second.sourceSha256['src/time.js'];
+        timeResult = run(); assert.notEqual(timeResult.status, 0); assert.match(timeResult.stderr, /Missing source hash: src\/time.js/);
+        second.sourceSha256['src/time.js'] = timeHash;
         second.sourceSha256['src/context.js'] = '0'.repeat(64);
         let result = run(); assert.notEqual(result.status,0); assert.match(result.stderr,/Cannot combine different runtime or fixture sources/);
         delete second.sourceSha256['src/context.js'];

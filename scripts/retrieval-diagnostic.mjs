@@ -148,7 +148,7 @@ finally {
     report.cleanupComplete=report.cleanup.length===2&&report.cleanup.every(x=>x.absent);
     if(report.cleanupComplete)await rm(pendingPath,{force:true});
     report.passed=!failed&&report.complete&&report.cleanupComplete;report.completedAt=new Date().toISOString();report.sourceSha256={};
-    for(const file of ['src/client.js','src/memory.js','scripts/comparison-fixture.mjs','scripts/retrieval-analysis.mjs','scripts/retrieval-diagnostic.mjs'])report.sourceSha256[file]=createHash('sha256').update(await readFile(path.join(root,file))).digest('hex');
+    for(const file of ['src/client.js','src/memory.js', 'src/time.js','scripts/comparison-fixture.mjs','scripts/retrieval-analysis.mjs','scripts/retrieval-diagnostic.mjs'])report.sourceSha256[file]=createHash('sha256').update(await readFile(path.join(root,file))).digest('hex');
     const vectorText=JSON.stringify(vectors);report.vectorArtifact=`retrieval-vectors-${tag}.json`;report.vectorSha256=createHash('sha256').update(vectorText).digest('hex');
     let output=JSON.stringify(report,null,2);
     for(const secret of [credentials.key,env.LLM_API_KEY,credentials.endpoint,credentials.project].filter(Boolean)){assert(!vectorText.includes(secret),'Vector artifact secret guard');output=output.replaceAll(secret,'[REDACTED]');}
