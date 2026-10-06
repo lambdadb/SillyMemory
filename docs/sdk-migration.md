@@ -175,5 +175,6 @@ or paid result relabeled. Runtime and the measured SDK bundle are unchanged.
 The subsequent [deployed API evaluation](bayesian-sdk-validation.md) temporarily
 uses the dev SDK for actual server Bayesian/Jev requests, English long-dialogue
 results and remaining temporal failures. The dependency, bundle and SDK-specific
-test are archived experiment inputs, not product changes. The maintained SDK
-stays at 0.7.0; stable-SDK adoption is a separate implementation decision.
+test are archived experiment inputs, not product changes. That evaluation leaves its producing revision on SDK 0.7.0; it does not pin the
+current product version. See the current SDK section above for separately
+reviewed stable upgrades.

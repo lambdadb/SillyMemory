@@ -715,6 +715,8 @@ three arms. These diagnostics do not establish independent general superiority.
 
 All sixteen owned Collections were deleted and checked absent. The temporary dev
 dependency, browser bundle and SDK-specific test are archived with the run and
-are excluded from the product diff. Maintained SDK 0.7.0 and vector defaults remain
-unchanged. A future stable SDK upgrade or search-policy adoption must be justified
-by an explicit product decision; a temporary test alone does not require it.
+are excluded from this evaluation's product diff. Its producing revision remains
+on SDK 0.7.0 with vector defaults unchanged; this is not the current SDK pin.
+See [SDK migration](sdk-migration.md) for separately reviewed stable upgrades.
+Search-policy adoption remains a separate product decision; a temporary test
+alone does not require it.
