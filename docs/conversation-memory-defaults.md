@@ -100,6 +100,67 @@ fresh preservation support the search default. The fresh run alone would not
 justify paying for reranking as an accuracy improvement. Neither comparison is a
 broad multilingual or long-context quality guarantee.
 
+## Memory interpretation instruction: not adopted
+
+A follow-up at baseline `c7edad18d2357acc433e47c478f918176444e983`
+tested one short system instruction: distinguish message dates from event dates,
+require explicit corrections before replacing facts, preserve historical states,
+separate plans/cancellations from completed events, and report unresolved conflicts
+or missing dates. The pre-call gate required more complete source-supported
+answers with no loss of previously correct answers. Equal scores were insufficient.
+
+Both arms use the deployed managed retrieval and actual host/model settings above,
+with Bayesian+Jev, 1,600 tokens and four recent messages. Twenty-four new query
+captures supply identical rankings to the two arms after current source validation.
+The guided arm adds the frozen instruction once as a system extension prompt at
+`IN_CHAT`, depth 0, with scanning disabled. Instruction, separator and complete
+source-labeled excerpts share the same 1,600-token budget. This tests the combined
+instruction/placement/budget package; selected excerpts need not be identical.
+Inputs, targets and instruction were frozen before calls; arm order alternates.
+
+Six controls reuse the exposed UTC interval, recalled event, future plan, previous
+tutor, six approved supply codes and unresolved loan amounts. Six new controls
+cover historical versus current pendant locations, an old quoted relative date,
+corrected ticket quantity versus later recollection, canceled renovation, conflicting
+attendance counts and an unknown original timezone. These are authored controls,
+not an independent benchmark; histories fit 32K. Explicit source wording often
+already resolves the ambiguity, limiting the difficulty and available improvement.
+
+| Arm | Complete correct answers | Median provider input | Median memory including instruction | Median output |
+| --- | ---: | ---: | ---: | ---: |
+| Current memory | 12/12 | 1,751.5 | 1,567.5 | 37.5 |
+| Memory plus instruction | 12/12 | 1,761.5 | 1,577 | 38.5 |
+
+Assistant semantic review checked all 24 full answers against frozen source and
+target meanings, rather than exact-string matching. There were zero gains and
+zero losses; no independent human or official judge result is claimed. Both arms
+retain historical/current locations, interpret the workshop as May 4 rather than
+the May 9 quotation date, preserve the six-ticket correction, recognize canceled
+work, report both unresolved counts and decline to infer a local date from UTC.
+Every required source is selected in both arms. Paying for the instruction removes
+one irrelevant filler message per case; its cost can displace useful evidence in
+other histories. The small net token increase includes that selection change.
+
+Do not add the instruction, another setting, metadata fields or maintained test
+infrastructure. Keep the current defaults and runtime. This result does not show
+that instructions never help other models or harder conversations; a new comparison
+needs a demonstrated failure and a bounded decision, not more retries of these
+already correct answers. The raw run's `semanticReviewPending` flag is retained;
+the completed separate review is archived with it.
+
+Quality generation completed 24 answers plus READY: 25 actual provider calls,
+zero retries, 42,234 input and 901 output tokens including READY. Corpus work used
+780 submitted documents and 24 successful query calls, including a bounded
+continuation after one consistent document-fetch HTTP 503. The first six rankings
+and all completed answers were preserved. All 17 owned collections across corpus,
+fixture preflight and paid setup were confirmed absent (404). The fixture run
+completed all prompt assertions and cleanup but its overall report failed because
+zero-delay fixture calls were checked against real-provider spacing; that harness
+error remains recorded. The paid run passes the real 15-second spacing check.
+No product failure or OpenAI retry is inferred from either preflight error.
+Full evidence, producer bytes, cleanup and validation are in the
+[evidence index](evidence-retention.md#memory-interpretation-guidance-decision).
+
 ## Whole-pair rejection and retained evidence
 
 Keep the earlier whole-pair decision: on twelve exposed English diagnostics at

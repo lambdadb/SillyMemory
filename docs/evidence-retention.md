@@ -397,3 +397,43 @@ It preserves the patch against `18b0ca18fe51e74f90dd0c4d23b5364068a5b000`, final
 client/tests and check/replay logs. All entries were extracted and verified, and
 an identical local-only archive/receipt is retained in the primary worktree.
 Neither original archive was replaced.
+
+## Memory interpretation guidance decision
+
+The [bounded instruction comparison](conversation-memory-defaults.md#memory-interpretation-instruction-not-adopted)
+uses producer baseline `c7edad18d2357acc433e47c478f918176444e983` and pinned
+SillyTavern `06bde939fb1e9c4c8d8641d810f0a916b5bce127`. Both arms answer 12/12;
+no instruction or runtime change is adopted. No completed answer was regenerated.
+
+- Archive: `artifacts/archive/memory-interpretation-guidance-v1/evidence.tar.gz`.
+  It contains 58 entries, 1,485,895 bytes; SHA-256
+  `23158f04281d5656ff59a279f67e6ab20951b8e6f1a215140bad534856e8055b`.
+- Embedded manifest SHA-256:
+  `e75cca470c089a910f235de7540f329710a102e2285c7ac5430856a79342e09e`.
+  Every entry was extracted and its length/checksum verified. Configured keys
+  were scanned in memory and are absent from the bundle.
+- Identical archive/receipt copies exist under `artifacts/archive/` in
+  `/Users/steven/Dev/sillymemory` and
+  `/Users/steven/Dev/sillymemory-memory-guidance`. These are two local copies on
+  one machine, not a remote backup; ignored and unavailable in a fresh clone.
+- Includes the producer base and measured module bytes, frozen sources/targets,
+  settings/instruction, exact requests/rankings/selections, all 24 actual answers
+  and READY with usage, separate completed semantic review, original fetch-503
+  continuation and fixture-spacing failure, prompt assertions, all 17 owned-data
+  cleanup receipts, one-off scripts and validation logs. No environment file,
+  credential or host/browser profile is included. Original evidence and older
+  archives remain intact; these one-off producers are not maintained CI.
+
+`harness.mjs --hybrid` completes actual-host/provider delivery, source locks,
+real 15-second start spacing and cleanup. `dry-harness.mjs --hybrid` completes
+24 fixture prompt checks and cleanup with zero OpenAI calls, but its raw overall
+result remains failed for an inapplicable provider-spacing assertion; the separate
+assessment explains this boundary. `retrieve.mjs` completes deployed managed
+retrieval after the retained bounded continuation. See the archived protocol for
+cost bounds, and the decision document for interpretation and quality limitations.
+
+Validation of the unchanged runtime: `npm test` (Node 24.15.0) and
+`npx --yes --package=node@20.12.0 node --test tests/*.test.js` both pass 325/325.
+`npm run check`, `npm run check:release` and `npm run check:sdk` pass. All
+`scripts/*.mjs` and `tests/*.js` pass `node --check`; `git diff --check` passes.
+No new isolation/recovery suite, model sweep, release or deployment is claimed.
