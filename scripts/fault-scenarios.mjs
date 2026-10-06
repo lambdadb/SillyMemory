@@ -174,7 +174,7 @@ export async function runFaultScenarios({ page, field, waitStatus, prompt, check
         const result = await prompt(); await entered(failure);
         check(`HTTP ${status} clears previous memory and preserves source/full prompt`, !result.injection && result.before === result.after && result.chat.length === 8 && !result.aborted);
         check(`HTTP ${status} explains how to retry and clears progress`, (await field('status').innerText()).includes('Sync this chat') && await field('progress').isHidden());
-        const queries = calls.filter(c => c.path.endsWith('/query')).slice(before).map(c => c.body.query.knn.queryText);
+        const queries = calls.filter(c => c.path.endsWith('/query')).slice(before).map(c => (c.body.query.bayesian?.[0]?.knn || c.body.query.knn).queryText);
         check(`HTTP ${status} does not immediately retry retrieval`, queries.length >= 1 && queries.length <= 2 && new Set(queries).size === queries.length);
         check(`HTTP ${status} recovers on the next generation`, Boolean((await prompt()).injection));
     }

@@ -12,3 +12,11 @@ export function documentResponse(docs = [], collection = 'test') {
     return { docs: docs.map(doc => ({ collection, doc })), total: docs.length, took: 1, isDocsInline: true };
 }
 export const accepted = () => Response.json({ message: 'Accepted' }, { status: 202 });
+
+// Deterministic transport metadata only; this does not evaluate relevance.
+export function rerankedResponse(docs = [], collection = 'test') {
+    return { ...documentResponse(docs, collection), docs: docs.map(doc => ({ collection, doc, score: 0.8, retrievalScore: 0.7 })),
+        rerank: { status: docs.length ? 'applied' : 'skipped', provider: 'typesafe', model: 'jev-1.13.0',
+            candidateCount: docs.length, scoredCount: docs.length, took: 1,
+            ...(docs.length ? { criteriaVersion: 'default-relevance-v1' } : { reason: 'noCandidates' }) } };
+}

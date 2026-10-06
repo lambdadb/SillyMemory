@@ -1,4 +1,4 @@
-import { collectionResponse, branchResponse, documentResponse } from '../tests/helpers/lambdadb-responses.js';
+import { collectionResponse, branchResponse, documentResponse, rerankedResponse } from '../tests/helpers/lambdadb-responses.js';
 // Real pinned SillyTavern + real Chromium + direct browser CORS; LambdaDB is emulated.
 // Never use this harness with personal data or a real API key.
 import { emulatorCors } from './emulator-cors.mjs';
@@ -69,12 +69,14 @@ const remote = createServer({ key: await readFile(key), cert: await readFile(cer
     if (parts[4] === 'query') {
         if (failQuery) return send(503);
         if (delayedQuery) await new Promise(r => setTimeout(r, delayedQuery));
-        const filter = body.query.knn?.filter || body.query;
+        const knn = body.query.bayesian?.[0]?.knn || body.query.knn;
+        const filter = knn?.filter || body.query;
+        if (body.query.bayesian) assert.deepEqual(body.query.bayesian[1].bool[0], { ...filter, occur: 'filter' });
         const match = /^owner:([a-f0-9]+) AND scope:([a-f0-9]+)$/.exec(filter.queryString?.query || '');
         assert.ok(match, 'owner and scope query filters required');
-        if (body.query.knn) assert.equal(typeof body.query.knn.queryText, 'string');
+        if (knn) assert.equal(typeof knn.queryText, 'string');
         const found = [...docs.values()].filter(d => d.owner === match[1] && d.scope === match[2]);
-        return faults.respond('query', () => [200, { docs: [...found, ...staleHits].map(doc => ({ collection: name, doc })), isDocsInline: true, total: found.length, took: 1 }], send);
+        return faults.respond('query', () => [200, body.rerank ? rerankedResponse([...found, ...staleHits], name) : documentResponse([...found, ...staleHits], name)], send);
     }
     send(400);
 });
@@ -132,6 +134,7 @@ try {
     const field = name => page.locator(`#sillymemory [data-sm="${name}"]`);
     const status = () => field('status').innerText();
     const waitStatus = async text => { await page.waitForFunction(text => document.querySelector('#sillymemory [data-sm="status"]')?.textContent.includes(text), text, { timeout: 30000 }); };
+    check('fresh settings use the adopted 1600-token initial budget', await field('budget').inputValue() === '1600');
     await field('endpoint').fill(endpoint); await field('project').fill('synthetic');
     corsEnabled = false;
     await field('key').fill('synthetic-session-key'); await field('connect').click();
@@ -309,7 +312,7 @@ try {
             }
         }, originalFile);
     }
-    // Current host metadata is prompt-only: timestamp edits must not re-embed.
+    // Time provenance is synchronized metadata and budgeted with each excerpt.
     await field('enabled').uncheck();
     await field('budget').fill('2000'); await field('budget').dispatchEvent('change');
     await page.evaluate(async () => {
@@ -320,13 +323,14 @@ try {
     });
     await field('enabled').check(); await waitStatus('synchronized');
     const timed = await prompt();
-    check('host timestamp reaches interceptor with explicit non-event attribution', timed.chat.some(m => m.mes.includes('1=2024-02-29T12:34:56.123Z') && m.mes.includes('not story/event dates')));
+    check('host timestamp reaches interceptor with explicit non-event attribution', timed.chat.some(m => m.mes.includes('2024-02-29T12:34:56.123Z') && m.mes.includes('not story/event date')));
     const beforeTimestampEdit = calls.filter(call => call.path.endsWith('/upsert')).length;
     await page.evaluate(async () => { const c = SillyTavern.getContext(); c.chat[0].send_date = '2024-03-01T00:00:00.000Z'; await c.saveChat(); });
     const changedTime = await prompt();
-    check('timestamp-only edit uses current source without another remote upsert', changedTime.chat.some(m => m.mes.includes('1=2024-03-01T00:00:00.000Z')) && !JSON.stringify(changedTime.chat).includes('2024-02-29T12:34:56.123Z') && calls.filter(call => call.path.endsWith('/upsert')).length === beforeTimestampEdit);
+    check('timestamp-only edit replaces stale remote provenance', changedTime.chat.some(m => m.mes.includes('2024-03-01T00:00:00.000Z')) && !JSON.stringify(changedTime.chat).includes('2024-02-29T12:34:56.123Z') && calls.filter(call => call.path.endsWith('/upsert')).length > beforeTimestampEdit);
     const timestampSource = await page.evaluate(() => SillyTavern.getContext().chat.map(m => m.mes));
-    check('time annotations never enter stored conversation or remote documents', timestampSource.every(text => !text.includes('[Host message timestamps')) && [...collections.values()].every(c => [...c.branches.values()].every(branch => [...branch.values()].every(doc => !('recordedAt' in doc) && !doc.text.includes('[Host message timestamps')))));
+    check('time labels never enter source or embedding text', timestampSource.every(text => !text.includes('[Conversation timestamp:')) && [...collections.values()].every(c => [...c.branches.values()].every(branch => [...branch.values()].every(doc => !doc.text.includes('[Conversation timestamp:')))));
+    check('current host timestamp is stored on indexed source chunks', [...collections.values()].some(c => [...c.branches.values()].some(branch => [...branch.values()].some(doc => doc.conversationTimestamp === '2024-03-01T00:00:00.000Z' && doc.timestampSource === 'host_message'))));
     // Restore the ordinary test budget before existing fault/cleanup scenarios.
     await field('budget').fill('400'); await field('budget').dispatchEvent('change');
     if (faultMode) { staleHits = []; faultResults = await runFaultScenarios({ page, field, waitStatus, prompt, check, faults, collections, calls, restartHost: recoveryMode ? async () => { const exited = new Promise(resolve => server.once('exit', resolve)); server.kill('SIGKILL'); await exited; await start(false); } : undefined, screenshot: name => page.screenshot({ path: path.join(artifacts, `${name}${artifactTag ? `-${artifactTag}` : ''}.png`) }) }); }

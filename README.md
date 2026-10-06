@@ -64,25 +64,28 @@ The development baseline is **SillyTavern 1.19.0**, pinned to commit [`06bde939f
 5. Click **Use key for this session**. The input is immediately cleared. The key lives only in the client instance's browser memory, never in saved settings, local/session storage, a URL, or extension logs. A reload or **Forget key** requires re-entry. Other trusted extensions and the browser runtime can still observe network requests; this is not an isolation boundary against malicious extensions.
 6. Click **Test synthetic upsert / query / delete**. This creates a dedicated `smtest_<random>` collection, upserts a synthetic story, queries `knn.queryText`, deletes its document, verifies it no longer appears, then deletes the owned test collection. This consumes LambdaDB resources and inference usage. The test must pass before **Prepare chat memory** becomes available.
 7. If a test fails, use **Clean up test collection**. Pending test identity is preserved across reloads so cleanup can be retried after reconnecting. A failed cleanup is not reported as successful.
-8. Click **Prepare chat memory**, select a character chat, then enable memory. Native branches automatically reuse committed history in separate LambdaDB branches within one story collection. Default settings retain 12 recent messages and allow 800 memory tokens, including excerpt content and source labels; provider message-envelope overhead is managed by the host. Configure the bounds in the panel. Disable built-in Vector Storage chat vectorization and other prompt-rewriting memory extensions for this prototype.
+8. Click **Prepare chat memory**, select a character chat, then enable memory. Native branches automatically reuse committed history in separate LambdaDB branches within one story collection. Default settings retain 12 recent messages and allow 1,600 memory tokens, including excerpt content, source labels and available conversation timestamps; provider message-envelope overhead is managed by the host. Configure the bounds in the panel. Disable built-in Vector Storage chat vectorization and other prompt-rewriting memory extensions for this prototype.
 
 Optionally enter a checkpoint name and use **Save / finish checkpoint** to save the current transcript and memory state. **Refresh story checkpoints** shows names, creation times and verified states, with controls to finish pending saves, resume a new path, rename or delete individual checkpoints. See [recovery, integrity and restore limits](docs/checkpoints.md).
 
 The memory budget applies **per generated answer**, not cumulatively across a
 chat. Recent messages and character instructions are separate from that budget.
 You can set 64–4,096 memory tokens; the effective limit is also capped at one
-quarter of the context size passed by the host. The default 800 is a heuristic,
+quarter of the context size passed by the host. The default 1,600 is a heuristic,
 not an established optimum. It is unrelated to the current 800-**character**
 indexing chunks: long messages now prefer paragraph, sentence and word boundaries within that ceiling, without overlap. Exact source text is retained; a sentence longer than the ceiling can still be split. See the
 [controlled budget comparison](docs/memory-budget-calibration.md) for evidence
 and limitations, and the [design review](docs/memory-design-followups.md) for
 chunking and hybrid-search work. The [chat collection lifecycle](docs/chat-collections.md) describes the implemented isolation and cleanup behavior.
-The [controlled hybrid comparison](docs/hybrid-retrieval.md) found an answer
-regression despite broader candidate coverage, so production retrieval remains
-vector-only.
-The [budget follow-up](docs/budget-confirmation.md) distinguishes missing
-candidates, budget exclusions and wrong answers despite complete evidence;
-it does not justify changing the adjustable 800-token default.
+Current retrieval combines managed vector and raw English text search with
+Bayesian fusion, followed by managed Typesafe Jev reranking. Both signals use the
+same owner/scope filter and explicit chat branch. Reranking failure or unconfirmed
+rerank metadata rejects injection; there is no silent fallback. The user supplies
+only a LambdaDB project key. Managed embedding and reranking may incur additional
+LambdaDB inference usage. See [the default decision and bounded English evaluation](docs/conversation-memory-defaults.md).
+The earlier [hybrid comparison](docs/hybrid-retrieval.md) and
+[budget follow-up](docs/budget-confirmation.md) describe historical configurations;
+their adverse results remain evidence rather than current-default claims.
 
 For local development, symlink the checkout into
 `SillyTavern/public/scripts/extensions/third-party/sillymemory`; do not also install
@@ -120,9 +123,9 @@ release notes describe their original versions, not the current contract.
 - Before generation, the extension synchronizes current source text and retrieves matching chunks with `knn.queryText`: the latest user message and the preceding nonempty user message are searched independently. A first user turn has only one query; generic assistant acknowledgments are not concatenated into the topic query. Explicit **Continue** generation instead anchors on the latest message being extended; regenerate and swipe still use the user question. It interleaves the two result lists, validates every result against current local text and IDs, and token-counts the complete injected string using the host tokenizer. Macro braces and legacy macro markers are shown with fullwidth delimiters so recalled dialogue stays literal during host prompt assembly.
 - If at least one valid passage fits, older eligible full messages are removed from the ephemeral prompt array and the selected passages are injected. Source chat messages on disk are not modified. If nothing fits or an operation fails, the original prompt remains. A mid-request chat change aborts that generation; generate again in the new chat.
 - Identical selected passages from the same speaker and role share one full body with every selected source position listed. If this saves tokens, additional distinct retrieved passages may fit; no already-selected source is dropped. Repeated groups appear at their latest selected occurrence. The inspection panel exposes these labels.
-- Selected excerpts can include UTC **host message timestamps**, using only current local `send_date` metadata and spare memory tokens. These are explicitly not story/event dates; unsupported or missing timestamps are omitted. Time labels never evict selected passages or enter remote embeddings. See [provenance, budget and validation](docs/conversation-time.md).
+- Every indexed chunk stores available UTC **host message timestamps** from current `send_date` metadata, separately from embedding text. Selection budgets the complete excerpt and its timestamp together. These are explicitly not story/event dates; unsupported or missing timestamps remain unknown. Time edits update document revisions and can trigger embedding again. See [provenance, budget and validation](docs/conversation-time.md).
 - **Memory in the last prompt** separates prepared excerpts from those verified in the final host prompt. **Stop on missing context** is enabled by default: if prepared memory or verifiable recent messages are missing or changed, generation is canceled before the completion request. Increase context, reduce reserved output or recent-message count, then generate again; the submitted user message remains in the chat. Turn the option off to proceed with a visible warning. There is no automatic retry. See [behavior, limits and validation](docs/prompt-delivery.md).
-- Verification uses the pinned host's Chat Completion prompt boundary, not provider receipt or billed tokens. Name macros are supported; arbitrary macros and the final continuation prefix are explicitly unverified rather than falsely counted as missing. Other completion formats report verification unavailable. Later provider transformations and other prompt-rewriting extensions are outside this check. The default 800-token allocation and one-quarter cap remain heuristics, not exact remaining capacity; the [capacity audit](docs/prompt-capacity-results.md) records why.
+- Verification uses the pinned host's Chat Completion prompt boundary, not provider receipt or billed tokens. Name macros are supported; arbitrary macros and the final continuation prefix are explicitly unverified rather than falsely counted as missing. Other completion formats report verification unavailable. Later provider transformations and other prompt-rewriting extensions are outside this check. The default 1,600-token allocation and one-quarter cap remain heuristics, not exact remaining capacity; the [capacity audit](docs/prompt-capacity-results.md) records why.
 - **Disable** stops synchronization/retrieval and clears the injection. It retains remote data. **Forget key** also disables memory. Reload starts disabled and requires key re-entry.
 - **Delete this chat’s remote memory** removes its writable branch; parent and sibling branches remain. **Delete all owned remote memory** discovers and deletes this installation’s story collections, including those absent from browser bookkeeping. Both drain pending writes and verify ownership and API absence. Local chats remain; this does not prove physical erasure from provider backups.
 

@@ -51,7 +51,7 @@ export async function runHybrid({ page, field, openSettings, waitStatus, generat
         const { LambdaClient } = await import('/scripts/extensions/third-party/sillymemory/src/client.js');
         const { comparisonSearch } = await import('/scripts/extensions/third-party/sillymemory/scripts/hybrid-query.mjs');
         const t = globalThis.hybridTest = { runtime, LambdaClient, search: LambdaClient.prototype.search, retrieve: runtime.MemoryEngine.prototype.retrieve, queries: [] };
-        LambdaClient.prototype.search = comparisonSearch(t.search, t);
+        LambdaClient.prototype.search = comparisonSearch(t);
         runtime.MemoryEngine.prototype.retrieve = async function (...args) {
             const expected = await runtime.documents(args[0], this.owner, args[1]), start = performance.now();
             const selected = await t.retrieve.apply(this, args);

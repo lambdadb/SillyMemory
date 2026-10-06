@@ -8,12 +8,17 @@ boundary; publication is confirmed by the corresponding Git tag and GitHub Relea
 
 ### Added
 
-- Add UTC host-message provenance to recalled excerpts when budget permits, using local
-  timestamps and spare memory tokens after passage selection. Missing or unsupported
-  dates are omitted; timestamp-only edits do not re-embed source text. Host time is
-  explicitly distinguished from story/event dates.
+- Store available UTC host-message provenance on every chunk, separately from
+  embedding text. Budget the complete excerpt and date together; reject stale or
+  mismatched remote dates. Missing dates remain unknown, and host time is explicitly
+  distinguished from story/event dates. Timestamp edits update document revisions.
 
 ### Changed
+
+- Use Bayesian vector/English-text fusion with managed Typesafe Jev reranking and
+  a 1,600-token initial memory budget. Keep the 4,096-token maximum and host context
+  cap. Reject unconfirmed reranking instead of silently injecting fallback results.
+  Preserve boundary-aware per-message chunks and session-only project keys.
 
 - Use the official LambdaDB TypeScript SDK 0.8.0 through a pinned browser bundle.
   Preserve session-only keys, direct CORS, cancellation, safe errors and explicit

@@ -1,4 +1,4 @@
-import { collectionResponse, branchResponse, documentResponse } from '../tests/helpers/lambdadb-responses.js';
+import { collectionResponse, branchResponse, documentResponse, rerankedResponse } from '../tests/helpers/lambdadb-responses.js';
 import { emulatorCors } from './emulator-cors.mjs';
 // Real pinned host/Chromium/direct CORS, local LambdaDB and completion emulators only.
 // Does not load .env.local. Never supply a personal profile or real credentials.
@@ -99,14 +99,16 @@ const remote = httpsServer({ key: await readFile(key), cert: await readFile(cert
         if (parts[4] === 'docs' && parts[5] === 'upsert') { body.docs.forEach(d => branchDocs.set(d.id, d)); return send(res, 202); }
         if (parts[4] === 'docs' && parts[5] === 'delete') { body.ids.forEach(id => branchDocs.delete(id)); return send(res, 202); }
         if (parts[4] === 'query') {
-            const filter = body.query.knn?.filter || body.query;
+            const knn = body.query.bayesian?.[0]?.knn || body.query.knn;
+            const filter = knn?.filter || body.query;
+            if (body.query.bayesian) assert.deepEqual(body.query.bayesian[1].bool[0], { ...filter, occur: 'filter' });
             const match = /^owner:([a-f0-9]+) AND scope:([a-f0-9]+)$/.exec(filter.queryString?.query || '');
             assert.ok(match);
-            if (body.query.knn) assert.equal(typeof body.query.knn.queryText, 'string');
+            if (knn) assert.equal(typeof knn.queryText, 'string');
             // Fixed source order, deliberately no embeddings or ANN simulation.
-            let docs = body.query.knn && noHits ? [] : [...branchDocs.values()].filter(d => d.owner === match[1] && d.scope === match[2]);
-            if (body.query.knn && packing) {
-                const recorded = packingFixture.original.queries.find(query => query.query === body.query.knn.queryText);
+            let docs = knn && noHits ? [] : [...branchDocs.values()].filter(d => d.owner === match[1] && d.scope === match[2]);
+            if (knn && packing) {
+                const recorded = packingFixture.original.queries.find(query => query.query === knn.queryText);
                 assert.ok(recorded, 'Actual host query matches the recorded synthetic query');
                 docs = recorded.hits.map(hit => {
                     const doc = docs.find(doc => doc.message === hit.message && doc.chunk === hit.chunk);
@@ -115,7 +117,7 @@ const remote = httpsServer({ key: await readFile(key), cert: await readFile(cert
                     return doc;
                 });
             }
-            return send(res, 200, { docs: docs.map(doc => ({ collection: name, doc })), isDocsInline: true, total: docs.length, took: 1 });
+            return send(res, 200, body.rerank ? rerankedResponse(docs, name) : documentResponse(docs, name));
         }
         throw new Error('Unexpected emulator operation');
     } catch (error) { errors.push(error.message); send(res, 500); }
@@ -252,14 +254,14 @@ try {
         }
         if (spec.type === 'normal') assert.deepEqual(observation.chat.slice(0, 12), chat.map(m => m.mes), 'Original chat text preserved');
         if (spec.id === 'included') {
-            assert.match(observation.delivery, /3\/3 memory passages and 4\/4 recent messages verified/);
-            assert.equal(sent[0].messages.filter(m => m.content.startsWith('[Past conversation excerpt:')).length, 3);
+            assert.match(observation.delivery, /2\/2 memory passages and 4\/4 recent messages verified/);
+            assert.equal(sent[0].messages.filter(m => m.content.startsWith('[Past conversation excerpt:')).length, 2);
         }
         if (spec.id === 'pressure-warning') {
-            assert.match(observation.delivery, /3 memory passages and 2 recent messages are missing/);
+            assert.match(observation.delivery, /2 memory passages and 2 recent messages are missing/);
             assert.equal(sent[0].messages.filter(m => m.content.startsWith('[Past conversation excerpt:')).length, 0);
         }
-        if (spec.id === 'recovered-context') assert.match(observation.delivery, /8\/8 memory passages and 4\/4 recent messages verified/);
+        if (spec.id === 'recovered-context') assert.match(observation.delivery, /6\/6 memory passages and 4\/4 recent messages verified/);
         if (spec.id === 'continue') assert.match(observation.delivery, /could not be verified/);
         if (spec.id === 'disabled') assert.doesNotMatch(observation.delivery, /Generation stopped|verified/);
         if (spec.id === 'pressure-stopped') {
@@ -278,7 +280,7 @@ try {
             assert.equal(generations.length, recoveryStart + 1);
             assert.deepEqual(recovered.after.slice(0, -1), recovered.before);
             assert.equal(recovered.after.at(-1), 'LOCAL_FIXTURE_OK');
-            assert.match(recovered.delivery, /8\/8 memory passages and 4\/4 recent messages verified/);
+            assert.match(recovered.delivery, /6\/6 memory passages and 4\/4 recent messages verified/);
             rows.at(-1).manualRecovery = { ...recovered, request: generations.at(-1) };
         }
     }
