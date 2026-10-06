@@ -383,3 +383,17 @@ It records the patch against `fa49b55974f2fa6a9a0938a09ce7bc18291e3cce`, final
 client/test bytes, request-equivalence receipt and final check logs, and links the
 original archive checksum. Identical local-only copies and receipts exist in the
 same two worktrees; every manifest entry was extracted and verified.
+
+A subsequent review added exact provider/model identity checks for applied and
+empty-candidate rerank metadata. Mismatches fail closed. Both Node suites remain
+325/325, syntax/release/SDK checks pass, and the same 24 captured deployed requests
+and responses pass the final client without new network/provider calls. Actual
+host/paid runs were not repeated for this validation-only change.
+The supplemental archive is
+`artifacts/archive/conversation-memory-review-identity-v1/evidence.tar.gz`:
+9 entries, 37,550 bytes; SHA-256
+`bc61748e51a2f5b9fd2619bcd57c4821b59081e59d4ba78de791ecb4bcce84f8`.
+It preserves the patch against `18b0ca18fe51e74f90dd0c4d23b5364068a5b000`, final
+client/tests and check/replay logs. All entries were extracted and verified, and
+an identical local-only archive/receipt is retained in the primary worktree.
+Neither original archive was replaced.

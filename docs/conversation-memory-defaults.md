@@ -34,7 +34,8 @@ final `size=30`. Search uses one shared UTF-8-safe prefix for all signals, cappe
 at the reranker SDK limit of 8,192 bytes; queries below that limit remain unchanged.
 Bayesian combines two unboosted vector/text signals, followed by
 Typesafe `jev-1.13.0`, `candidateSize=30`, `fields=['text']`, `onFailure='error'`.
-Applied rerank metadata and exact source/time readback are required. These are not
+Applied rerank metadata must match the requested provider/model, and exact
+source/time readback is required. These are not
 RRF or manually OR-expanded lexical queries. No additional provider key is needed;
 managed embedding and reranking may add LambdaDB inference usage.
 
@@ -138,7 +139,10 @@ final guard truncates oversized queries at a complete UTF-8 code point for all
 three signals. All 24 captured Bayesian requests remain byte-for-byte unchanged
 (the largest query was 144 bytes); no paid answer was regenerated. The final unit
 suite passes 325 tests on both supported Node versions. The actual-host and paid
-runs precede this boundary-only fix; their producing modules remain archived.
+runs precede this boundary-only fix and the subsequent provider/model identity
+guard; their producing modules remain archived. The identity guard also passes
+the same 24 captured deployed responses and rejects mismatches for both applied
+and empty-candidate responses.
 
 No source time is invented for imports, no historical timezone is inferred, and
 message time is not automatically treated as event time. Timestamp-only changes

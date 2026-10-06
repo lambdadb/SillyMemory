@@ -174,12 +174,13 @@ export class LambdaClient {
         if (result.isDocsInline === false) throw new ConnectionError('Result requires external download. Reduce the retrieval size; no memory was injected.');
         if (!Array.isArray(result.docs)) throw new ConnectionError('Invalid memory query response.');
         if (rerank) {
+            const identity = result.rerank?.provider === rerank.provider && result.rerank?.model === rerank.model;
             const applied = result.rerank?.status === 'applied' && result.rerank.scoredCount === result.rerank.candidateCount
                 && result.rerank.candidateCount >= result.docs.length && result.rerank.candidateCount <= rerank.candidateSize
                 && result.docs.every(hit => Number.isFinite(hit.score) && Number.isFinite(hit.retrievalScore));
             const empty = result.rerank?.status === 'skipped' && result.rerank.reason === 'noCandidates'
                 && result.rerank.candidateCount === 0 && result.rerank.scoredCount === 0 && result.docs.length === 0;
-            if (!applied && !empty) throw new ConnectionError('Memory reranking was not confirmed. No memory was injected.', 0, 'validation');
+            if (!identity || (!applied && !empty)) throw new ConnectionError('Memory reranking was not confirmed. No memory was injected.', 0, 'validation');
         }
         return result.docs.map(x => x.doc);
     }

@@ -184,9 +184,15 @@ test('SDK diagnostics remain silent even when environment debugging is requested
 
 test('managed rerank metadata must confirm application or an empty candidate pool', async () => {
     for (const change of [r => { delete r.rerank; }, r => { r.rerank.status = 'fallback'; },
+        r => { r.rerank.provider = 'different-provider'; }, r => { r.rerank.model = 'different-model'; },
         r => { r.rerank.scoredCount = 0; }, r => { r.rerank.candidateCount = 31; },
         r => { delete r.docs[0].retrievalScore; }]) {
         const response = rerankedResponse([{ id: 'one' }]); change(response);
+        const client = new LambdaClient(config, 'test-key', { fetcher: async () => Response.json(response) });
+        await assert.rejects(client.search('test', owner, scope, 'What happened?', undefined, 'chat_child'), e => e.code === 'validation');
+    }
+    for (const key of ['provider', 'model']) {
+        const response = rerankedResponse(); response.rerank[key] = 'different';
         const client = new LambdaClient(config, 'test-key', { fetcher: async () => Response.json(response) });
         await assert.rejects(client.search('test', owner, scope, 'What happened?', undefined, 'chat_child'), e => e.code === 'validation');
     }
