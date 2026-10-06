@@ -273,3 +273,26 @@ full prompts/answers/reviews, initial arithmetic and correction, setup failure,
 validation and both cleanup receipts. All four setup Collections are verified 404.
 Host/dependencies and credentials are separately required; fresh clones cannot
 retrieve this local archive. Earlier archives are preserved without modification.
+
+
+## Host-message provenance — 2026-10-06
+
+The [product contract and bounded validation](conversation-time.md) distinguish
+host `send_date` from benchmark session dates and story events. Twelve English
+actual-host/model answers preserve five existing outcomes and make one explicit
+host-date request answerable, without passage eviction; this is not a general
+temporal or search-quality claim. Unit, recovery/emulator and final-prompt checks
+are reported separately. Two real setup collections are deleted and verified 404.
+
+Local-only complete archive: `artifacts/archive/host-time-v2/evidence.tar.gz` in
+both the primary `sillymemory` and `sillymemory-time-provenance` worktrees,
+1,000,227 bytes, 32 files plus manifest, SHA-256
+`292bd6ff18e221bd8802223fd5745f4958980be9e042b71d5a28f2b26b8f5b1f`.
+Every member and the backup are byte-verified, configured-secret matches zero.
+It includes base cf8c70a, exact product patch/new files, one-off producers,
+frozen inputs/selections, full prompts/answers, semantic review, initial failed
+recovery and corrected run, and cleanup receipts. Its README discloses that the
+failed recovery producer was not independently hashed and documents the local
+review-verifier continuation. Raw-output v1 and all prior archives are preserved.
+Fresh clones cannot retrieve these local archives; preserve them before removing
+an evidence worktree. No one-off quality harness or raw dialogue is added to CI.

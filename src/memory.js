@@ -1,6 +1,7 @@
 import { beginWrites, clearCommit, recordWrite, sameDocument } from './commit.js';
 import { preferAssistantContext } from './context.js';
 import { chunkSpans, CHUNKING_POLICY } from './chunking.js';
+import { hostTimestamp, annotateHostTime } from './time.js';
 
 export const DEFAULTS = Object.freeze({ recent: 12, budget: 800, chunkChars: 800 });
 export function options(value = {}) {
@@ -16,11 +17,15 @@ export function capture(context) {
     if (context.chat.some(m => m.is_system && m.extra?.tool_invocations?.length)) return null;
     const avatar = context.characters[context.characterId]?.avatar;
     if (!avatar) return null;
-    const messages = context.chat.filter(x => !x.is_system).map((m, index) => ({
-        index, text: typeof m.mes === 'string' ? m.mes : '', name: String(m.name || (m.is_user ? 'User' : 'Character')),
-        user: Boolean(m.is_user), swipe: m.swipe_id ?? 0,
-        eligible: !m.extra?.file && !m.extra?.media?.length && !m.extra?.tool_invocations?.length,
-    }));
+    const messages = context.chat.filter(x => !x.is_system).map((m, index) => {
+        const recordedAt = hostTimestamp(m.send_date);
+        return {
+            index, text: typeof m.mes === 'string' ? m.mes : '', name: String(m.name || (m.is_user ? 'User' : 'Character')),
+            user: Boolean(m.is_user), swipe: m.swipe_id ?? 0,
+            eligible: !m.extra?.file && !m.extra?.media?.length && !m.extra?.tool_invocations?.length,
+            ...(recordedAt ? { recordedAt } : {}),
+        };
+    });
     const metadata = context.chatMetadata?.sillymemory;
     return { character: avatar, chat: metadata?.id, messages, memory: { story: metadata?.story, source: metadata?.source } };
 }
@@ -289,7 +294,8 @@ export class MemoryEngine {
         } finally { reads.abort(); }
         if (!current()) return null;
         progress({ phase: 'budgeting' });
-        const result = await selectPackedMemory(interleaveHits(results), prepared.docs, config.budget, countTokens);
+        const selected = await selectPackedMemory(interleaveHits(results), prepared.docs, config.budget, countTokens);
+        const result = await annotateHostTime(selected, snapshot, config.budget, countTokens);
         return current() ? result : null;
     }
     async deleteAll() {

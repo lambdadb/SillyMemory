@@ -309,6 +309,26 @@ try {
             }
         }, originalFile);
     }
+    // Current host metadata is prompt-only: timestamp edits must not re-embed.
+    await field('enabled').uncheck();
+    await field('budget').fill('2000'); await field('budget').dispatchEvent('change');
+    await page.evaluate(async () => {
+        const c = SillyTavern.getContext();
+        c.chat.forEach(message => { delete message.send_date; });
+        c.chat[0].send_date = '2024-02-29T12:34:56.123Z';
+        await c.saveChat();
+    });
+    await field('enabled').check(); await waitStatus('synchronized');
+    const timed = await prompt();
+    check('host timestamp reaches interceptor with explicit non-event attribution', timed.chat.some(m => m.mes.includes('1=2024-02-29T12:34:56.123Z') && m.mes.includes('not story/event dates')));
+    const beforeTimestampEdit = calls.filter(call => call.path.endsWith('/upsert')).length;
+    await page.evaluate(async () => { const c = SillyTavern.getContext(); c.chat[0].send_date = '2024-03-01T00:00:00.000Z'; await c.saveChat(); });
+    const changedTime = await prompt();
+    check('timestamp-only edit uses current source without another remote upsert', changedTime.chat.some(m => m.mes.includes('1=2024-03-01T00:00:00.000Z')) && !JSON.stringify(changedTime.chat).includes('2024-02-29T12:34:56.123Z') && calls.filter(call => call.path.endsWith('/upsert')).length === beforeTimestampEdit);
+    const timestampSource = await page.evaluate(() => SillyTavern.getContext().chat.map(m => m.mes));
+    check('time annotations never enter stored conversation or remote documents', timestampSource.every(text => !text.includes('[Host message timestamps')) && [...collections.values()].every(c => [...c.branches.values()].every(branch => [...branch.values()].every(doc => !('recordedAt' in doc) && !doc.text.includes('[Host message timestamps')))));
+    // Restore the ordinary test budget before existing fault/cleanup scenarios.
+    await field('budget').fill('400'); await field('budget').dispatchEvent('change');
     if (faultMode) { staleHits = []; faultResults = await runFaultScenarios({ page, field, waitStatus, prompt, check, faults, collections, calls, restartHost: recoveryMode ? async () => { const exited = new Promise(resolve => server.once('exit', resolve)); server.kill('SIGKILL'); await exited; await start(false); } : undefined, screenshot: name => page.screenshot({ path: path.join(artifacts, `${name}${artifactTag ? `-${artifactTag}` : ''}.png`) }) }); }
     else { page.once('dialog', dialog => dialog.accept()); await field('delete').click(); await waitStatus('no longer accessible'); }
     check('owned remote deletion leaves no collections', collections.size === 0);
@@ -316,7 +336,7 @@ try {
     check('final reload again requires key entry', await field('key').inputValue() === '' && !await field('enabled').isChecked());
     if (faultMode) check('fault run has no uncaught browser page errors', errors.length === 0);
     const sourceSha256 = {};
-    for (const file of ['index.js', 'manifest.json', 'settings.html', 'style.css', 'src/chunking.js', 'src/client.js', 'src/commit.js', 'src/chat-collections.js', 'src/checkpoints.js', 'src/gate.js', 'src/memory.js', 'src/context.js', 'src/status.js', 'scripts/browser-smoke.mjs', 'scripts/emulator-cors.mjs', 'scripts/fault-scenarios.mjs', 'scripts/recovery-scenarios.mjs']) {
+    for (const file of ['index.js', 'manifest.json', 'settings.html', 'style.css', 'src/chunking.js', 'src/client.js', 'src/commit.js', 'src/chat-collections.js', 'src/checkpoints.js', 'src/gate.js', 'src/memory.js', 'src/time.js', 'src/context.js', 'src/status.js', 'scripts/browser-smoke.mjs', 'scripts/emulator-cors.mjs', 'scripts/fault-scenarios.mjs', 'scripts/recovery-scenarios.mjs']) {
         sourceSha256[file] = createHash('sha256').update(await readFile(path.join(root, file))).digest('hex');
     }
     await writeFile(path.join(artifacts, artifactName), JSON.stringify({ passed: true, faultResults, sourceSha256, time: new Date().toISOString(), sillyTavern: revision, node: process.version, browser: browser.version(), upstream: 'Local HTTPS LambdaDB emulator; no live managed embeddings', checks, pageErrors: errors, requestCount: calls.length, preflights, proxyRequests, remainingCollections: collections.size }, null, 2));
