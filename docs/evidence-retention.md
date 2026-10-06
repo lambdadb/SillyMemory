@@ -211,3 +211,22 @@ The current tree keeps the decision and independent generation-harness correctio
 It does not depend on archived experiment runners or raw output for CI. Historical
 reproduction uses the recorded producer and local-only archive, not the current
 runner. No unresolved ownership or cleanup record was discarded.
+
+## Deployed Bayesian evaluation — 2026-10-06
+
+The [decision record](bayesian-sdk-validation.md) preserves actual server
+Bayesian/Jev support using a temporary dev SDK, twelve exposed English
+update/temporal cases, all thirty-six actual-host answers, remaining mortgage/date
+failures, browser CORS validation and confirmed cleanup of sixteen Collections.
+The temporary dependency, bundle and SDK-specific test are retained evidence,
+not maintained product or CI changes. Detailed outputs and one-off producers
+remain local-only in
+`sillymemory-bayesian-sdk-validation/artifacts/archive/bayesian-live-v1/evidence.tar.gz`:
+4,846,316 bytes, forty verified files plus manifest, SHA-256
+`f7ab9bd7ec4f86feab866cc776ac332ef1a6d09c7f7958d00df161e81128971e`.
+The bundle contains base fbae879 and the exact temporary SDK/runtime patch; its
+manifest and README describe restoration. Every archived file was read back and
+checked against its original digest, with zero configured credential matches.
+It is unavailable in a fresh clone and must be retained before worktree removal.
+Earlier archives remain unchanged. Unit/emulator checks, deployed retrieval,
+plain-browser CORS and actual-host ranking replay are separate evidence layers.

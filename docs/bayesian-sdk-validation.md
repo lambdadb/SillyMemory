@@ -1,0 +1,235 @@
+# Deployed Bayesian evaluation with a temporary dev SDK
+
+## Scope and decision
+
+An isolated evaluation temporarily installed
+`@functional-systems/lambdadb@0.7.0-dev.37433431398001`, resolved from the `dev`
+tag on 2026-10-06, and rebuilt its browser bundle. The dev dependency, bundle
+and SDK-specific test are experiment inputs retained in the local evidence archive.
+They are not proposed product changes. The maintained extension remains pinned
+to SDK 0.7.0 and uses vector-only retrieval. Bayesian and Jev were explicitly
+requested by the comparison producers.
+
+The application adapter, source identity, validation order, error classification,
+retry policy, session-only keys, direct CORS, branch/scope isolation, query
+construction and selection limits were unchanged in the temporary checkout.
+
+The product question is whether the deployed API works with this SDK and whether
+Bayesian + Jev preserves or improves current facts and temporal answers at the
+existing 800-token budget. This follows the
+[earlier local-fusion experiment](https://github.com/lambdadb/SillyMemory/pull/63),
+which did not call a deployed Bayesian API.
+
+## Frozen comparison
+
+Twelve exposed English cases were frozen before service calls:
+
+- All six knowledge-update questions from the earlier LongMemEval split, including
+  the weight and mortgage failures and historical-tutor/schedule controls.
+- Two previous temporal failures: elapsed days between ukulele lessons and guitar
+  servicing, and ordering the charity bake sale and gala.
+- Four existing synthetic controls: current location, future location, canceled
+  meeting and the ferry briefing changed from 09:20 to 10:45.
+
+These are consumed diagnostic questions, not fresh held-out validation. Public
+LongMemEval source, original adaptation hashes, released answers and existing
+synthetic source were preserved. Gold answers and evidence labels were excluded
+from queries and provider prompts. Original session-date markers stay on the first
+turn of each session; the question carries its original date marker. They are
+source context, not inferred message creation or ingestion times.
+
+All arms use managed `text-embedding-3-small`, the same English-only `text_en`
+field, source corpus, owner/scope filter and explicit `chat_eval` branch with
+`consistentRead=true`. Original query text is sent with `skipSyntax=true`; there
+is no manual word OR. Compare vector-only, server RRF + Jev, and server Bayesian
++ Jev at `k=30`, `size=30`, and rerank `candidateSize=30`. Jev uses
+`typesafe` / `jev-1.13.0`, `fields=[text]`, default criteria and `onFailure=error`.
+Every rerank result must report `status=applied` and matching candidate/scored
+counts. No fallback counts as a successful comparison.
+
+```js
+const request = {
+  query: {
+    bayesian: [
+      { knn: { field: 'embedding', queryText, k: 30, filter: scopeFilter } },
+      { bool: [
+        { ...scopeFilter, occur: 'filter' },
+        { queryString: { query: queryText, defaultField: 'text_en', skipSyntax: true }, occur: 'must' }
+      ] }
+    ]
+  },
+  size: 30,
+  ref: { kind: 'branch', name: 'chat_eval' },
+  consistentRead: true,
+  includeVectors: false,
+  rerank: {
+    provider: 'typesafe', model: 'jev-1.13.0', queryText,
+    fields: ['text'], candidateSize: 30, onFailure: 'error'
+  }
+};
+```
+
+Bayesian takes exactly two unboosted signals and no caller fusion weights. Without
+reranking it requires top-level `candidateSize`; with reranking that field is
+omitted and `rerank.candidateSize` supplies the budget. The preflight verifies
+fixed-budget result prefixes at output sizes 1 and 3, missing-budget HTTP 400,
+managed writes/reads, applied rerank and preservation of Bayesian `retrievalScore`.
+Heuristic fusion scores are not calibrated relevance probabilities.
+
+Actual answers go through pinned SillyTavern 1.19.0 Generate, GPT-6.1 Sol with
+low reasoning, 4,096 maximum completion tokens, nonstreaming and 32K context.
+Source chunking, two-query interleaving, chronological rendering and the
+800-token selector remain unchanged. LongMemEval keeps 12 recent messages;
+synthetic location/cancellation cases keep 4 and the original briefing keeps 8.
+The host replays captured live server rankings while checking exact source,
+revision, coordinates, selected text/tokens, recent messages and the final API
+prompt. This avoids duplicate uploads and is actual-host retrieval replay,
+separate from a full live synchronization experiment.
+
+## Results
+
+All 36 quality answers completed. Each exact answer was inspected against source
+and the released answer or existing synthetic rule. This is coding-assistant
+review, not independent human review or a new official LongMemEval judge run.
+
+| Cohort / measurement | Vector | RRF + Jev | Bayesian + Jev |
+| --- | ---: | ---: | ---: |
+| LongMemEval answers | 3/8 | 6/8 | 6/8 |
+| Synthetic answers | 4/4 | 3/4 | 4/4 |
+| All answers | **7/12** | **9/12** | **10/12** |
+| All labeled LongMemEval turns selected | 2/8 | 5/8 | 6/8 |
+
+Bayesian gains three answers over vector and one over RRF, with no losses in this
+set. The RRF gain is the previously known current-location regression; on these
+eight natural long-dialogue questions, the two hybrid arms tie. Label overlap is
+not complete semantic evidence and does not necessarily improve answer accuracy.
+
+| Case | Expected answer | Vector | RRF + Jev | Bayesian + Jev |
+| --- | --- | --- | --- | --- |
+| cf22b7bf, weight update | 10 pounds | Fail | Pass | Pass |
+| 852ce960, mortgage update | $400,000 | Fail | Fail | Fail |
+| 8fb83627, magazine count | Five | Fail | Pass | Pass |
+| ce6d2d27, cocktail class | Friday | Pass | Pass | Pass |
+| 603deb26, Negroni attempts | 10 | Pass | Pass | Pass |
+| dfde3500, previous tutor | Wednesday | Pass | Pass | Pass |
+| 4dfccbf7, elapsed days | 24 or 25 days | Fail | Fail | Fail |
+| gpt4_98f46fc6, event order | Bake sale first | Fail | Pass | Pass |
+| current-location | Attic cabinet | Pass | Fail | Pass |
+| future-location | Pantry | Pass | Pass | Pass |
+| canceled-meeting | No current meeting | Pass | Pass | Pass |
+| long-en-correction | 10:45; 09:20 canceled | Pass | Pass | Pass |
+
+There was one transient OpenAI HTTP 500 on the vector future-location request.
+The existing transport policy retried the identical serialized request once and
+received HTTP 200. No completed answer was regenerated. The actual-host setup
+also observed one LambdaDB HTTP 503 during post-upsert visibility polling before
+its successful gate query. Neither failure is hidden or counted as quality loss.
+The earlier long-history run used an older generator/runtime and different
+chunking; changes from that historical result cannot be attributed solely to
+Bayesian or this SDK update.
+
+## Interpretation
+
+The weight update is omitted by vector packing, which answers 5 pounds; both
+hybrid arms include the correction and answer 10. Both hybrid arms also recover
+the bake-sale/gala ordering. The existing current-location regression improves
+with Bayesian: RRF omits the current-location passage, Bayesian retains it.
+
+The mortgage case remains incorrect against the released $400,000 answer:
+
+- The primary result includes the later $400,000 passage at vector rank 3 and
+  post-Jev rank 4 for both hybrid arms. It is not an absent ANN candidate.
+- Interleaving unrelated contextual-query results uses budget before the later
+  passage fits. Both hybrid prompts keep $350,000 and omit $400,000.
+- Vector injects both full statements, including the later date, but the model
+  explicitly chooses the initial $350,000 amount. The wording "when I got my
+  mortgage" admits an initial-event reading; preserve that ambiguity and the
+  released expected answer rather than treating "latest always wins" as a fix.
+- A post-result primary-only packing diagnostic includes both statements in all
+  three arms at 800 tokens. It makes no new query or answer call and does not
+  establish a safe allocation policy. Prior allocation experiments already found
+  regressions; unconditional primary-only selection is not adopted.
+
+The ukulele/guitar question needs February 1 and February 25, a 24-day interval.
+Both hybrid prompts contain the labeled events but neither date anchor. Their
+session dates are on earlier source indices 379 and 407, while the events are at
+383 and 415 (zero-based; UI message labels add one). All arms abstain. Bayesian additionally cites another guitar-related excerpt
+as the event. This is a context/dependency loss, not proof that the generation
+model cannot subtract dates supplied to it. A stronger model cannot reconstruct
+omitted timestamps reliably.
+
+National Geographic illustrates why label overlap is not exact evidence recall:
+RRF omits labeled turn 467 but retains unlabeled turn 463 explicitly saying five
+issues, and answers correctly. Bayesian also selects turn 467; that improves the
+label metric without creating an additional correct answer.
+
+The historical Juan question correctly remains Wednesday even though a later
+exchange partner Maria meets Thursday. Preserve past states and query intent;
+do not globally prefer newest narration or equate message time with event time.
+
+The next useful product experiment is a bounded, source-grounded temporal/context
+representation that preserves the date or correction needed by a selected event.
+It must distinguish current-state questions from historical questions and use new
+English controls after freezing the candidate. Search-default promotion needs
+that answer-level validation; this diagnostic does not establish general Bayesian
+superiority or multilingual quality.
+
+## Temporary-checkout verification and retained evidence
+
+- `npm test`: 316/316 on Node 24.15.0.
+- `npx --yes --package=node@20.12.0 node --test tests/*.test.js`: 316/316.
+- `npm run check`, `npm run check:release`, `npm run check:sdk`, all maintained
+  script/test `node --check` commands and `git diff --check`: passed.
+- Configured `npm run test:browser`: 37 pinned-host/Chromium checks with a local
+  HTTPS emulator, including key reset, isolation and deletion; passed.
+- Configured `npm run test:faults`: 69 pinned-host/emulator checks; passed.
+- Live retrieval: 77 queries, 7,789 document submissions including the three-doc
+  preflight, 13 owned Collections deleted and verified absent; no upsert retry.
+  All 48 quality rerank operations were applied, plus one applied preflight.
+- Separate actual-bundle/browser direct-CORS Bayesian probe: five checks passed,
+  one additional Collection/three documents/two queries, applied Jev with original
+  fusion scores preserved, no cookies/CSRF or browser-storage key, deletion
+  verified by HTTP 404.
+- Actual-host answers: 80 integrity checks, 36 quality answers plus READY,
+  38 provider attempts including the preserved HTTP 500, maximum injection
+  800/800 tokens. Reported successful-call usage including READY: 94,615 input
+  and 821 output tokens. Failed-call usage/billing is unknown.
+- Host setup created two additional Collections, wrote one gate document and
+  made three queries including the transient 503. Both Collections were deleted
+  and verified absent. All **16** owned Collections across the three live stages
+  were removed; no pending cleanup remains.
+
+Use `ST_SOURCE` pointing at a pinned host checkout whose extension symlink points
+to this checkout for browser/emulator commands. The evaluator's 30-second service
+timeout is separate from the unchanged 15-second product timeout. Observed median
+query times were 251 ms vector, 657 ms RRF + Jev and 640 ms Bayesian + Jev on this
+small sequential run; these do not establish serving cost, throughput or a stable
+latency advantage. Managed embedding and reranker charges were not measured.
+No new main promotion, deployment, release, full live synchronization cohort,
+independent benchmark or multilingual experiment was performed.
+
+A temporary SDK-specific regression used a tiny synthetic response to check
+explicit candidate budgets, unchanged owner/scope filters, safe transport,
+applied rerank metadata and retrieval-score preservation. The 316-test counts
+above refer to that temporary dev-SDK checkout. The test remains in the archive
+with the temporary dependency and bundle; it is not added to maintained CI.
+The maintained 315-test suite and SDK 0.7.0 remain unchanged. These unit checks
+are distinct from deployed-server evidence.
+Detailed producers, inputs, candidate scores, prompts, answers, failed setup log,
+packing diagnostic and cleanup receipts remain ignored evidence, not maintained
+CI dependencies. The original failed browser command used an unconfigured default
+host path and stopped before starting a host or making a service/model request;
+the explicitly configured run passed.
+
+The verified local-only archive is
+`artifacts/archive/bayesian-live-v1/evidence.tar.gz` in the
+`sillymemory-bayesian-sdk-validation` worktree: **4,846,316 bytes**, 40 verified
+files plus the manifest, SHA-256
+`f7ab9bd7ec4f86feab866cc776ac332ef1a6d09c7f7958d00df161e81128971e`.
+Read-back checks matched every original file and found zero configured credential
+matches. It contains the base source at fbae879, exact SDK/runtime patch, one-off
+producers, frozen cases/protocols, full results and cleanup evidence. Existing
+historical archives were not changed. This archive is not uploaded and is
+unavailable in a fresh clone; the manifest and README record restoration needs.
+Keep it before removing this worktree. Paid reproduction requires separately
+supplied credentials, the pinned host/dependencies and a newly frozen protocol.

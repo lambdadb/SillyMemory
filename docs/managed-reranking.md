@@ -702,3 +702,19 @@ longer offers the retired reranking modes. The closeout runner's --freeze/--run
 commands and exact retained request bodies live in its bundle. Reproduction is
 paid traffic with possibly different outcomes, not a required CI step or unfinished
 part of this adoption review.
+
+## Deployed Bayesian follow-up — temporary SDK, 2026-10-06
+
+The [deployed evaluation](bayesian-sdk-validation.md) now verifies server-side
+Bayesian + Jev with a temporary dev SDK rather than local fusion. Twelve exposed
+English cases and thirty-six actual-host answers score 7/12 vector, 9/12 RRF + Jev
+and 10/12 Bayesian + Jev. The hybrid arms tie at 6/8 on LongMemEval; Bayesian's
+extra gain is the known current-location control. Mortgage-update use and missing
+event-date context remain unresolved. The ferry briefing correction passes in all
+three arms. These diagnostics do not establish independent general superiority.
+
+All sixteen owned Collections were deleted and checked absent. The temporary dev
+dependency, browser bundle and SDK-specific test are archived with the run and
+are excluded from the product diff. Maintained SDK 0.7.0 and vector defaults remain
+unchanged. A future stable SDK upgrade or search-policy adoption must be justified
+by an explicit product decision; a temporary test alone does not require it.
