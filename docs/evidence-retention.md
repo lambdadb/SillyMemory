@@ -250,3 +250,26 @@ selectors/protocol, full prompts/answers/reviews, historical baseline answers,
 validation and cleanup. Host source/dependencies and credentials are separately
 required as described in the README; the archive is unavailable in a fresh clone.
 Both owned setup Collections were verified 404. Prior archives remain unchanged.
+
+## Compact explicit date provenance — 2026-10-06
+
+The [completed bounded comparison](bayesian-sdk-validation.md#compact-session-provenance-follow-up--2026-10-06)
+preserves 24 existing-case and twelve newly frozen control answers, the unchanged
+800-token cap/rankings, zero previous-answer losses, recovered 24/16-day intervals,
+mortgage/event-selection ambiguity and the boundary between conversation and
+story/event time. It does not adopt production date extraction or a new default.
+The original preparer's question-role fault blocks the first control before
+provider forwarding; a plumbing-only continuation completes unanswered controls
+without changing frozen histories, candidate order, selections or completed answers.
+Both reports and their distinct producer identities are retained.
+
+The local-only archive is `artifacts/archive/compact-date-v1/evidence.tar.gz` in
+both `sillymemory-context-evaluation` and the primary `sillymemory` worktree:
+4,922,433 bytes, 45 verified files plus manifest, SHA-256
+`f0b2afabbbedf3ef825eebcf28f03c84e1a3a3789512bfaea5c3872846a28f6f`.
+Both copies and every archive member are byte-verified; configured-secret matches
+are zero. It contains base fbae879, protocols, all source/ranking/selection locks,
+full prompts/answers/reviews, initial arithmetic and correction, setup failure,
+validation and both cleanup receipts. All four setup Collections are verified 404.
+Host/dependencies and credentials are separately required; fresh clones cannot
+retrieve this local archive. Earlier archives are preserved without modification.

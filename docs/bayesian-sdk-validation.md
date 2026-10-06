@@ -372,3 +372,112 @@ full prompts/answers, explicit reviews, cleanup receipts and historical baseline
 answers are preserved. The earlier Bayesian archive is unchanged. README and
 manifest describe separately required pinned host/dependencies and credentials;
 raw scripts remain ignored and are not added to CI or the product dependency graph.
+
+## Compact session provenance follow-up — 2026-10-06
+
+**Decision: prefer compact explicit session provenance over unconditional paired
+expansion when that provenance is actually available. The bounded quality gate
+passes; production date extraction, indexing, search and the 800-token default
+remain unchanged.** Conversation time is not a general event timestamp, and host
+`send_date` must not become an inferred story date.
+
+### Frozen scope and results
+
+Keep the twelve consumed English diagnostics, captured live vector/Bayesian + Jev
+rankings, query order and 800-token limit. Generate one compact-date answer per
+ranking: 24 answers. Baselines are the historical original-800 completions, not
+concurrent repeats. Add six newly frozen authored temporal controls, comparing
+baseline and compact provenance on identical **synthetic** candidate lists:
+12 answers. They test elapsed days, past-event recollection, future plans,
+cancellation, unknown dates and a fictional story calendar. These controls are
+new representation/interpretation checks, not live retrieval or independent
+holdout evidence. Inspect every exact answer and final prompt against supplied
+source; this is assistant review, not an official or independent benchmark judge.
+
+The candidate adds an inline conversation date to each verbatim excerpt and one
+short session-versus-event explanation per memory block. It adds no adjacent turn,
+changes no body or ranking, and never derives dates from host message timestamps.
+Unknown session markers reset provenance. Dated histories use ordinary whole-chunk
+greedy selection without collapsing excerpts across dates; no-date histories retain
+shipped repetition packing. The marker parser is an ignored benchmark adapter,
+not general extraction of character-story time. SDK 0.7.0 isolates the earlier
+producer; the stable 0.8.0 upgrade is separately validated in PR #65.
+
+| Ranking / source | Original 800 | Compact provenance at 800 | Previously resolved answers lost |
+| --- | ---: | ---: | ---: |
+| Captured vector, existing diagnostics | 7/12 | 8/12 | 0 |
+| Captured Bayesian + Jev, existing diagnostics | 10/12 | 11/12 | 0 |
+| Fixed synthetic lists, six new controls | 5/6 | 6/6 | 0 |
+
+Bayesian correctly computes the previously unresolved **24 days** from the
+February 1/25 session dates while retaining event turns 383/415. The vector arm
+still selects the earlier February 1 plan and answers zero days; the completed
+visit remains absent. Date provenance improves temporal interpretation but cannot
+repair candidate/event selection or remove the question's competing reading.
+Both rankings preserve Juan/Wednesday; Bayesian preserves the five-issue update
+and bake-sale-before-gala answer that the previous combined expansion lost. The
+gala answer has alternate assistant "tonight" evidence plus its session date even
+though the labeled gala user passage is no longer selected.
+
+The extra vector benchmark pass is mortgage $400,000 from the later statement.
+Both amounts are still delivered, but this answer does not explain their
+ambiguity. Bayesian still omits the later amount and answers $350,000. Keep the
+initial-event interpretation and earlier qualified two-amount answers: this
+single narrow-target gain does not justify a latest-always-wins rule or establish
+better discrepancy handling.
+
+On the new elapsed-days control, the baseline safely abstains because "today"
+excerpts have no dates; the candidate correctly computes **16 days** from explicit
+April 3/19 anchors. Both conditions correctly retain the March 12 event date when
+recalled in May, current Harbor House rather than the future move, cancellation
+without a replacement, unknown dates and fictional Frostmonth day 7/year 812.
+Misleading host timestamps are deliberately not forwarded as event metadata;
+this checks the adapter's boundary, not model robustness to visible competing
+host timestamps or every roleplay calendar.
+
+For the sixteen dated diagnostic arms, provenance costs **67–107 tokens** with the
+same selected bodies. It can still displace baseline passages, despite no answer
+loss on this small set. Provider median input is vector 2,737.5 historical → 2,717
+and Bayesian 2,715 → 2,710.5: the hard cap trades passages for provenance, so this
+is not evidence of free extra context, general token savings or measured latency
+improvement. New-control median input is 181.5 → 217.5. Do not retune these now
+consumed questions or promote 1,600 tokens/pair indexing from this comparison.
+
+### Execution, failure and retention
+
+All **36 planned quality answers** complete with two READY checks, **38 provider
+calls, zero transient retries**, 86 actual-host integrity checks and verified
+15-second send spacing. Usage is 65,386 input / 849 output tokens. The original
+run completes 24 diagnostics, then stops before sending the first control to the
+provider: the input preparer wrongly treated its appended question as an assistant
+when deriving replay queries. The prompt-delivery gate blocks forwarding. A
+continuation corrects only that role/query plumbing, verifies identical source,
+candidate order and frozen selections, and completes the twelve unanswered
+controls. No completed answer is repeated; both original/incomplete and completed
+continuation reports remain retained rather than relabeled as one clean run.
+
+Both source identities remain stable throughout their respective execution.
+All four owned setup Collections are verified 404; no pending cleanup remains.
+The completed continuation verifies keys absent from browser/host persistence;
+the interrupted first run did not reach that final persistence check. Archive
+secret auditing covers both producers/reports. Quality retrieval is replayed,
+not freshly issued or full live synchronization. `npm test` executes 315/315
+passing tests; `npm run check`, `npm run check:release` and `npm run check:sdk`
+pass. Local selector checks cover exact-source rejection, budget/counter safety,
+unknown-session reset, no partner expansion and no inferred `send_date`; they are
+ignored evaluator checks, not new maintained production tests.
+
+The local-only `compact-date-v1/evidence.tar.gz` contains 45 verified files plus
+manifest, **4,922,433 bytes**, SHA-256
+`f0b2afabbbedf3ef825eebcf28f03c84e1a3a3789512bfaea5c3872846a28f6f`.
+Byte-identical copies exist under `artifacts/archive/compact-date-v1/` in the
+primary and `sillymemory-context-evaluation` worktrees. Every member was read back;
+configured-secret matches are zero. It preserves base fbae879, both frozen
+producers/protocols, source/rankings/selections, prompts/answers/reviews, setup
+fault, cleanup receipts and validation. Initial local arithmetic output is also
+retained alongside its correction: no-date repetition savings were initially
+misnamed negative date overhead; corrected diagnostics report zero date cost.
+Credentials and pinned host/dependencies remain separately required; this archive
+is unavailable in a fresh clone and is not a remote backup. Earlier evidence is
+unchanged. No scratch harness, product feature, default promotion, merge, release
+or deployment is included.
