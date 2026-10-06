@@ -1,146 +1,79 @@
-# Host-message time provenance
+# Conversation-time metadata
 
-## Product decision and contract
+Each indexed chunk preserves an optional `conversationTimestamp` (canonical UTC
+ISO string) and `timestampSource: 'host_message'`, separately from its verbatim
+`text`. The timestamp is the selected SillyTavern message's `send_date`; it is not
+an inferred event date, import time, current-clock fallback or immutable creation
+time. The parser accepts the pinned host's ISO UTC values and positive integer
+Unix milliseconds; unsupported, malformed and missing values remain unknown.
 
-Recall can identify when a source message was recorded by SillyTavern without
-claiming when a narrated event happened. After the existing packed selection,
-SillyMemory adds a compact header to the first excerpt when spare memory tokens
-permit it, for example:
+```json
+{
+  "text": "I started flute lessons today.",
+  "conversationTimestamp": "2025-04-03T12:00:00.000Z",
+  "timestampSource": "host_message"
+}
+```
+
+The same source metadata accompanies every chunk of that message. LambdaDB stores
+and indexes the timestamp as `datetime` and the source as `keyword`. Managed
+embeddings and Jev evaluate `text`, so time labels are not inserted into the
+embedding source or reranker body. Time metadata does not automatically change
+retrieval ranking, introduce date filters, or make the newest statement authoritative.
+
+## Selection and generation
+
+The complete excerpt, including its provenance label, is counted during whole-
+chunk selection. A dated chunk either fits with its date or is omitted; the
+extension does not silently inject `today` while dropping its available date.
+For example:
 
 ```text
 [Past conversation excerpt: user "User", message 1, passage 1]
-[Host message timestamps (UTC; not story/event dates): 1=2024-02-29T12:34:56.123Z]
-The treaty was signed in Frostmonth, year 812.
+[Conversation timestamp: 2025-04-03T12:00:00.000Z; source=host_message; UTC, not story/event date; original local timezone unknown]
+I started flute lessons today.
 ```
 
-Coordinates use the same one-based message positions as excerpt labels. Repeated
-packed passages retain distinct occurrence coordinates and timestamps. An omitted
-coordinate has no supplied timestamp; it must not inherit another message's date.
-Annotations may cover only some selected sources when the remaining budget is
-small. They preserve every selected passage, its speaker/role, full body, ordering
-and source coordinates. Complete injected text, including labels, must fit the
-existing memory limit; the default remains 800 tokens. A full budget or absent
-supported metadata leaves the shipped selection unchanged. No UI switch is added.
+UTC identifies the supplied clock representation; it does not establish the
+speaker's original local timezone. Do not infer a historical timezone from the
+browser's current location. Literal `today/yesterday/tomorrow` can refer to a
+conversation date, a narrated event, a quotation or a fictional story calendar.
+Explicit narrative dates and story context must remain distinguishable from
+host provenance. A conversation timestamp alone is not an event-state resolver.
 
-Only the current local snapshot supplies timestamps. The parser accepts canonical
-UTC ISO timestamps (optional one-to-three millisecond digits) and positive integer
-epoch milliseconds. Invalid calendar dates, missing timezone, date-only strings,
-old display formats and unknown values are omitted. There is no current-clock
-fallback, timezone guess, narrative date extraction or event chronology inference.
+Missing source timestamps produce no invented labels. Current local source
+remains authoritative: remote time/source fields must match reconstructed source
+metadata before a ranked hit is accepted. An altered remote label cannot override
+local text or timestamps. Duplicate-text packing only combines equal time/source
+metadata; distinct dates and unknown-versus-known dates cannot be collapsed.
+Source roles, speaker, message/chunk coordinates and full bodies are retained.
+The host's overall prompt limit still applies after memory selection.
 
-`recordedAt` exists only in the captured local snapshot. Remote document bodies,
-IDs, revisions, schema, embedding requests, queries and branch identity are
-unchanged. Timestamp-only edits invalidate an outstanding prompt but do not cause
-another upsert or embedding. Reload and selected swipes use current host metadata;
-remote timestamp fields are never trusted. Token-count failures remain fail-closed.
+## Synchronization and checkpoints
 
-## Pinned source inspection
+Time metadata participates in the source revision and chunk identity. A timestamp
+change or removal deletes obsolete IDs and submits the current chunk with its
+metadata. Reload checks full expected fields before reusing a remote document.
+Selected swipes supply their current host date. Native story branches and
+checkpoints retain the existing ownership, transcript and commit checks; metadata
+is reconciled against the current source path, not borrowed from another branch.
+Do not claim an embedding-cost saving for timestamp edits: reconciliation uses
+ordinary managed-embedding upserts and may invoke embedding again.
 
-Supported host: SillyTavern 1.19.0 at
-[`06bde939fb1e9c4c8d8641d810f0a916b5bce127`](https://github.com/SillyTavern/SillyTavern/tree/06bde939fb1e9c4c8d8641d810f0a916b5bce127).
-Its [`getMessageTimeStamp`](https://github.com/SillyTavern/SillyTavern/blob/06bde939fb1e9c4c8d8641d810f0a916b5bce127/public/scripts/RossAscends-mods.js#L192)
-returns ISO UTC. Generation/continue can update `send_date`, and
-[`syncSwipeToMes`](https://github.com/SillyTavern/SillyTavern/blob/06bde939fb1e9c4c8d8641d810f0a916b5bce127/public/script.js#L6954)
-restores the selected swipe's date. Therefore the label is **host message
-timestamp**, not immutable creation time or an in-story event date. This inspection
-establishes the source contract, not a new host compatibility claim.
+No legacy conversion mode is introduced: this project has no installed users.
+Use a fresh owned collection for pre-release experiments with changed index
+configurations; do not modify unrelated collections or infer missing dates.
 
-The earlier [explicit session-date experiment](bayesian-sdk-validation.md#compact-session-provenance-follow-up--2026-10-06)
-used benchmark session dates. Those are a different source. Its recovered 24-day
-interval is not evidence that this host-metadata feature fixes that benchmark.
+## Historical evidence and validation
 
-## Validation and limitations
+PR #66 added local, optional post-selection time labels. This change replaces that
+representation with stored, fully budgeted metadata. Its historical contract and
+complete validation are preserved at
+[28342fd](https://github.com/lambdadb/SillyMemory/blob/28342fdb44cb196027bf8ad1fa7d92bae702704b/docs/conversation-time.md)
+and the local-only host-time archives described in [evidence retention](evidence-retention.md).
+The earlier benchmark experiment used explicit dataset session dates, which are
+not real host timestamps. Imported histories without `send_date` remain unknown;
+this feature does not claim to recover their 24-day answer automatically.
 
-Deterministic checks use synthetic inputs and the pinned actual host with a local
-HTTPS LambdaDB emulator. They do not measure deployed retrieval quality:
-
-- `npm test`: 322 passing unit tests, including parser rejection, unchanged remote
-  documents, repeated occurrence coordinates, exact/partial token limits,
-  timestamp-only edits/reload and asynchronous prompt invalidation.
-- `npm run check`, `npm run check:release`, `npm run check:sdk`: pass; SDK 0.8.0
-  and its locked bundle are unchanged.
-- `ST_SOURCE=... SM_ARTIFACT_TAG=time-provenance-v2 ST_TEST_PORT=18148 npm run test:recovery`:
-  192 host/emulator checks, zero uncaught page errors and zero remaining emulator
-  collections. Timestamp labels reach the interceptor; timestamp-only edits add
-  no upsert; annotations never enter stored source or remote documents.
-- `ST_SOURCE=... ST_DELIVERY_PORT=18150 node scripts/prompt-delivery-smoke.mjs artifacts/time-provenance/prompt-delivery.json`:
-  13 final-provider delivery cases plus repeated-passage packing pass. Existing
-  fixtures without timestamps retain their delivery behavior.
-
-The first recovery attempt failed an existing excerpt detector because the new
-header preceded its identifying first line. The corrected implementation keeps
-that original line first and inserts provenance beneath it. Both failed and
-passing reports are retained, rather than erasing the failure.
-
-## Bounded English answer check — 2026-10-06
-
-Six frozen synthetic histories were run once per arm through actual host
-`Generate`, GPT-6.1 Sol with low reasoning, 4,096 output tokens, 32K context,
-recent=3 and the unchanged 800-token memory cap. Both arms replay the same fixed
-source rankings; local sync validates source documents without uploading quality
-histories. Baseline removes only local `recordedAt` in an ignored evaluator;
-candidate runs the production retrieval method unchanged. Arm order alternates.
-All histories, questions, expected meanings and exact selections were frozen before
-calls. This is a representation/safety check, not deployed retrieval evaluation.
-
-| Case | Baseline | Candidate | Interpretation |
-| --- | --- | --- | --- |
-| Explicit UTC host-message date | Appropriately abstains: timestamp absent | March 2, 2024, correct | Newly supplied provenance makes the request answerable. |
-| Past narrated event | May 12, 2024 | May 12, 2024 | June host timestamps do not replace the event date. |
-| Planned future move | Lantern remains in pantry | Same | A plan is not a completed move. |
-| Canceled rehearsal | Canceled; no replacement date | Same | Cancellation remains authoritative. |
-| Unknown story date | Appropriately unknown | Same | August host time is not invented story time. |
-| Fictional calendar | Frostmonth day 7, year 812 | Same | September UTC does not replace the fictional date. |
-
-Assistant semantic review inspected all twelve complete answers against source,
-not an exact-string grader or independent human/official benchmark judgment. The
-candidate makes one explicit host-date request answerable and preserves the other
-five outcomes. Baseline abstention is expected, not a generation-model defect.
-Every final provider request contains its exact selected excerpts/recent source
-and question. No selected passage changes or disappears. Each candidate adds
-50 host-counted memory tokens in these two-source cases: baseline 57–76, candidate
-107–126; billed input grows by 50 in each pair. This is extra provenance, not a
-token-saving claim. It fits comfortably here; typical full-budget recall may omit
-all timestamps. No more difficult interval or event-resolution benchmark was run.
-
-The run completes 32 host checks and 13 successful provider calls (twelve answers
-plus READY), zero retries, within the frozen maximum of 21 attempts. Real
-LambdaDB is used only for the existing connection gate/story setup; both owned
-setup collections are deleted and verified 404. Keys are absent from persisted
-host/browser settings. The final producer hashes match the pre-call freeze.
-No new language, hybrid/reranker, embedding or capacity setting is adopted.
-
-All maintained producer source locks and result aggregators require the new
-runtime module hash. Missing/mixed timestamp-code hashes are rejected by local
-regressions. This review follow-up changes evidence validation only; the measured
-runtime and completed provider answers remain identical. The older paid run uses
-its archived producer, rather than adapting it to current source locks.
-
-## Evidence retention
-
-Base: `cf8c70a81a4e4036b529a0bf9e3c4cbd3fbdd278`; exact runtime patch/new files,
-frozen inputs/settings, preparer/evaluator, full provider prompts/answers,
-semantic review, both recovery reports and cleanup receipts are retained in
-`artifacts/archive/host-time-v2/evidence.tar.gz` in the primary `sillymemory`
-worktree and the `sillymemory-time-provenance` worktree. Local-only, unavailable
-in a fresh clone: 1,000,227 bytes, 32 files plus manifest, SHA-256
-`292bd6ff18e221bd8802223fd5745f4958980be9e042b71d5a28f2b26b8f5b1f`.
-Both copies and every member are read back and byte-verified; configured-secret
-matches are zero. The README describes restoration and separately required host,
-dependencies and credentials. The first failed recovery report has no independently
-captured producer hash; its known header-position error is not presented as a
-byte-verified original producer. A raw-output v1 archive is also preserved; v2 adds
-the completed semantic review after a local verifier's missing-field correction.
-No provider answer or frozen input was rerun or changed for that correction.
-Existing historical archives and detached evidence worktrees remain intact.
-
-This feature supplies provenance; it is not an event-state resolver, a new
-retrieval strategy or a general temporal benchmark.
-
-
-Source-lock review follow-up is retained separately as the local-only
-`artifacts/archive/host-time-locks-v1/evidence.tar.gz` in both worktrees:
-18,197 bytes, three files plus manifest, SHA-256
-`d9fd4efc29e2fc80d3485b0db121e20f53bc00a5f322d5525425c44adc39d0e8`.
-Its patch against 8504101 and 322-test log are byte-verified with the backup.
-Measured runtime files match the paid run exactly; original archives are unchanged.
+The current bounded evaluation is recorded in [the default-candidate decision](conversation-memory-defaults.md).
+Whole user/assistant pairs and unconditional neighbor expansion are excluded.

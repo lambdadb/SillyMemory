@@ -2,7 +2,7 @@
   <div class="inline-drawer-toggle inline-drawer-header"><b>SillyMemory</b><div class="inline-drawer-icon fa-solid fa-circle-chevron-down down"></div></div>
   <div class="inline-drawer-content">
     <p>Long-term memory for SillyTavern.<br><strong>Powered by LambdaDB</strong></p>
-    <p>Chat excerpts and retrieval queries are sent directly from this browser to LambdaDB and its managed embedding provider. A LambdaDB account and inference usage are required. Disable pauses use; it does not delete remote data.</p>
+    <p>Chat excerpts, available host message timestamps and retrieval queries are sent directly from this browser to LambdaDB. Excerpt text and queries are processed by managed embedding and reranking providers. A LambdaDB account and inference usage are required. Disable pauses use; it does not delete remote data.</p>
     <label>Regional HTTPS endpoint <input data-sm="endpoint" class="text_pole" type="url" placeholder="Regional base URL from your project"></label>
     <label>Project name <input data-sm="project" class="text_pole" autocomplete="off"></label>
     <label>API key (memory only; re-enter after reload) <input data-sm="key" class="text_pole" type="password" autocomplete="off" spellcheck="false"></label>
@@ -18,7 +18,7 @@
     <div data-sm="checkpoint-list" aria-live="polite">Refresh to view checkpoints for this story.</div>
     <p>Deleting a checkpoint removes only that saved transcript and memory branch. To rename or delete the currently open checkpoint, open another story path first. The all-owned remote cleanup below removes every story's memory but keeps native chat files.</p>
     <label>Recent full messages <input data-sm="recent" class="text_pole" type="number" min="2" max="100"></label>
-    <label>Memory token budget (including labels) <input data-sm="budget" class="text_pole" type="number" min="64" max="4096"></label>
+    <label>Memory token budget (including labels and dates) <input data-sm="budget" class="text_pole" type="number" min="64" max="4096"></label>
     <label class="sm-toggle"><input data-sm="stopOnLoss" type="checkbox" checked> Stop on missing context</label>
     <p>Stop generation if the final host prompt omits or changes prepared memory or verifiable recent messages. Turn off to proceed with a warning. Custom macros and continuation prefixes may be unverifiable.</p>
     <p>Group chats, files, tool messages, Data Bank, and World Info are excluded. Turn off other chat vectorization extensions. The first version supports one active SillyMemory tab per browser profile.</p>

@@ -195,7 +195,7 @@ async function initialize() {
         if (JSON.parse(stored.settings).extension_settings?.sillymemory?.owner !== owner) throw new Error('Installation identity was not persisted.');
     }
     stateKey = `sillymemory:state:${owner}`;
-    state = { endpoint: '', project: '', enabled: false, ready: false, recent: 12, budget: 800, stopOnLoss: true, chatCollections: [], ...JSON.parse(localStorage.getItem(stateKey) || '{}') };
+    state = { endpoint: '', project: '', enabled: false, ready: false, recent: 12, budget: 1600, stopOnLoss: true, chatCollections: [], ...JSON.parse(localStorage.getItem(stateKey) || '{}') };
     const folder = new URL('.', import.meta.url).pathname.split('/scripts/extensions/')[1].replace(/\/$/, '');
     const html = await ctx.renderExtensionTemplateAsync(folder, 'settings');
     document.querySelector('#extensions_settings2').insertAdjacentHTML('beforeend', html);

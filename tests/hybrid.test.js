@@ -45,7 +45,7 @@ test('comparison hook preserves chat branch routing and cancellation in both mod
                 return Response.json(documentResponse([{ id: body.ref.name, owner, scope }], 'story'));
             },
         });
-        client.search = comparisonSearch(client.search, trace);
+        client.search = comparisonSearch(trace);
         const controller = new AbortController();
         for (const branch of ['chat_parent', 'chat_child']) {
             const hits = await client.search('story', owner, scope, 'Where is QX-741?', controller.signal, branch);

@@ -16,8 +16,9 @@ export function connectionConfig(input) {
 }
 
 export const schema = Object.freeze({
-    text: { type: 'text', analyzers: ['english', 'korean'] },
+    text: { type: 'text', analyzers: ['english'] },
     embedding: { type: 'vector', managedEmbedding: true, embedding: { provider: 'openai', model: 'text-embedding-3-small', sourceField: 'text' } },
+    conversationTimestamp: { type: 'datetime' }, timestampSource: { type: 'keyword' },
     owner: { type: 'keyword' }, scope: { type: 'keyword' }, revision: { type: 'keyword' },
 });
 
@@ -166,16 +167,28 @@ export class LambdaClient {
         } while (token);
         return collections;
     }
-    async query(collection, query, { signal, size = 30, branch = 'main', consistentRead = true } = {}) {
+    async query(collection, query, { signal, size = 30, branch = 'main', consistentRead = true, rerank } = {}) {
         this.path(collection); this.branchName(branch);
-        const result = await this.call((sdk, opts) => sdk.collection(collection).query({ query, size, consistentRead, ref: { kind: 'branch', name: branch }, includeVectors: false }, opts), signal);
+        const result = await this.call((sdk, opts) => sdk.collection(collection).query({ query, size, consistentRead, ref: { kind: 'branch', name: branch }, includeVectors: false, ...(rerank ? { rerank } : {}) }, opts), signal);
         // Never forward a project key to a presigned download URL. Fail safely for now.
         if (result.isDocsInline === false) throw new ConnectionError('Result requires external download. Reduce the retrieval size; no memory was injected.');
         if (!Array.isArray(result.docs)) throw new ConnectionError('Invalid memory query response.');
+        if (rerank) {
+            const applied = result.rerank?.status === 'applied' && result.rerank.scoredCount === result.rerank.candidateCount
+                && result.rerank.candidateCount >= result.docs.length && result.rerank.candidateCount <= rerank.candidateSize
+                && result.docs.every(hit => Number.isFinite(hit.score) && Number.isFinite(hit.retrievalScore));
+            const empty = result.rerank?.status === 'skipped' && result.rerank.reason === 'noCandidates'
+                && result.rerank.candidateCount === 0 && result.rerank.scoredCount === 0 && result.docs.length === 0;
+            if (!applied && !empty) throw new ConnectionError('Memory reranking was not confirmed. No memory was injected.', 0, 'validation');
+        }
         return result.docs.map(x => x.doc);
     }
     search(collection, owner, scope, text, signal, branch = 'main') {
-        return this.query(collection, { knn: { field: 'embedding', queryText: text, k: 30, filter: scopeFilter(owner, scope) } }, { signal, branch });
+        const filter = scopeFilter(owner, scope);
+        return this.query(collection, { bayesian: [
+            { knn: { field: 'embedding', queryText: text, k: 30, filter } },
+            { bool: [{ ...filter, occur: 'filter' }, { queryString: { query: text, defaultField: 'text', skipSyntax: true }, occur: 'must' }] },
+        ] }, { signal, branch, rerank: { provider: 'typesafe', model: 'jev-1.13.0', queryText: text, fields: ['text'], candidateSize: 30, onFailure: 'error' } });
     }
 }
 

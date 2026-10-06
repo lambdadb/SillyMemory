@@ -304,3 +304,64 @@ Source-lock review follow-up is retained separately as the local-only
 `d9fd4efc29e2fc80d3485b0db121e20f53bc00a5f322d5525425c44adc39d0e8`.
 Its patch against 8504101 and 322-test log are byte-verified with the backup.
 Measured runtime files match the paid run exactly; original archives are unchanged.
+
+## Whole-pair indexing rejection (local-only)
+
+The [current default decision](conversation-memory-defaults.md#whole-pair-rejection-and-retained-evidence)
+preserves the rejected whole-pair result: vector 7/12 → 8/12, Bayesian+Jev
+10/12 → 8/12 at 800 tokens. Long atomic pairs excluded necessary magazine and
+ordering facts. The original local-only decision commit is
+`94597ed6be4930ee9d8b23d860fb600322063f86`; no pair implementation was adopted.
+
+The primary worktree retains `artifacts/archive/paired-indexing-v1/evidence.tar.gz`
+(12,646,929 bytes, 51 files; SHA-256
+`03fa4dd3b97f96faad82b504931938eea81d18d45ae41c90c8b564808226ba86`),
+its embedded manifest, and `decision.bundle` (5,517 bytes; SHA-256
+`5ecda977f6397c43c41c0098f14b2ba9b807de6d0a1aef5f99bcb25e069190ee`).
+The detached `sillymemory-paired-indexing` worktree remains intact. These are
+local evidence, absent from a fresh clone; the bundle preserves both complete
+original decision documents without pretending the commit was published.
+
+## Conversation memory default adoption
+
+[Decision, method, results and limits](conversation-memory-defaults.md) and
+[the time contract](conversation-time.md) are maintained in Git. The producing
+base is `28342fdb44cb196027bf8ad1fa7d92bae702704b` with an archived dirty patch and
+pre-call module hashes. Paid generation confirmed those hashes unchanged. The
+final default-only patch follows the completed explicitly budgeted arms.
+
+- Local archive: `artifacts/archive/conversation-memory-v1/evidence.tar.gz`.
+  2,284,397 bytes, 89 manifest entries; SHA-256
+  `39f98e03efa7d0edddadec30638c5a64260ffeebf8a650361e8116430c379bb7`.
+- Embedded `manifest.json` SHA-256:
+  `c61ad83a1a4c1a748c9836f9fa84c5f7dd4c532d60d48dc72aba5b222c08cc86`.
+- Every manifest entry was extracted and checked. Identical archives and receipts
+  exist in `sillymemory` and `sillymemory-conversation-time` on this machine.
+  They are local-only, ignored, and unavailable in a fresh clone.
+- Includes the producing base tree, measured modules, frozen synthetic sources and
+  protocol, exact deployed requests/rerank responses/selections, actual provider
+  prompts/answers/usage, qualitative review, original failed stages, ownership and
+  cleanup receipts, one-off producers and final validation logs. Environment files,
+  credentials and private host/browser profiles are excluded. Original active-tree
+  evidence and all earlier archives remain intact.
+
+Validation on the final runtime:
+
+| Command | Outcome and boundary |
+| --- | --- |
+| `npm test` (Node 24.15.0) | 324/324 unit tests. |
+| `npx --yes --package=node@20.12.0 node --test tests/*.test.js` | 324/324 unit tests. |
+| `npm run check`, `npm run check:release`, `npm run check:sdk` | Syntax, metadata and locked stable SDK 0.8.0 pass. |
+| `node --check` for every `scripts/*.mjs` and `tests/*.js`; `git diff --check` | Pass. |
+| `ST_SOURCE=<pinned checkout> SM_ARTIFACT_TAG=time-final-v1 ST_TEST_PORT=18160 npm run test:recovery` | Actual SillyTavern/Chromium with LambdaDB emulator: 194 checks, no page errors, zero remaining collections. Includes the fresh 1,600-token UI default. |
+| `ST_SOURCE=<pinned checkout> ST_DELIVERY_PORT=18162 node scripts/prompt-delivery-smoke.mjs artifacts/conversation-time/prompt-delivery-final.json` | Actual host with service/model emulators: 13 delivery cases plus repeated-passage packing pass. |
+| Archived `retrieve.mjs` and `harness.mjs --hybrid` | Deployed managed retrieval: 720 corpus documents, 48 queries; actual host/provider: 48 answers plus READY, zero retries. Quality results in the decision document. |
+| Archived supplemental browser producer and `cleanup-browser.mjs` | Actual deployed direct CORS/Bayesian/time/edit/delete/reload assertions complete; model is a fixture. Original harness failures and separate verified cleanup are disclosed in the decision document. |
+
+Unpack the archive to recover `producer-base.tar`, `final-runtime.patch`,
+`default-only.patch` and the `artifacts/conversation-time/producer/` snapshot.
+The one-off producers use a fresh pinned host profile and require separately
+supplied credentials; they are not maintained CI or a public credential-bearing
+reproduction bundle. Normal unit coverage uses small synthetic inputs. No new
+large fixture or experiment framework is committed, and no release/deployment is
+established by these checks.

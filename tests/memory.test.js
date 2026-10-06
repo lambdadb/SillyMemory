@@ -44,25 +44,27 @@ test('deduplication, edits, swipe, deletion and reload reconcile uncertain write
     await reloaded.sync(snap, config);
     assert.deepEqual([...s.remote.keys()].sort(), (await documents(snap, owner, config)).docs.map(x => x.id).sort());
 });
-test('timestamp-only edits and reload use current local provenance without another remote upsert', async () => {
+test('timestamp-only edits reconcile remote provenance and reload deduplicates the updated documents', async () => {
     const s = setup(), snap = snapshot();
     snap.messages[0].recordedAt = '2024-01-01T00:00:00.000Z';
     await s.engine.sync(snap, config);
     snap.messages[0].recordedAt = '2024-01-02T00:00:00.000Z';
     const result = await s.engine.retrieve(snap, { ...config, budget: 2000 }, t => t.length);
-    assert(result.text.includes('1=2024-01-02T00:00:00.000Z'));
-    assert(!result.text.includes('2024-01-01')); assert.equal(s.writes.length, 1);
+    assert(result.text.includes('2024-01-02T00:00:00.000Z'));
+    assert(!result.text.includes('2024-01-01')); assert.equal(s.writes.length, 2);
+    assert([...s.remote.values()].some(d => d.conversationTimestamp === '2024-01-02T00:00:00.000Z'));
+    assert(![...s.remote.values()].some(d => d.conversationTimestamp === '2024-01-01T00:00:00.000Z'));
     const reloaded = new MemoryEngine({ client: s.client, owner, collection: 'test', branch: 'chat_test', journal: new Journal(s.storage, 'test') });
     assert.equal((await reloaded.retrieve(snap, { ...config, budget: 2000 }, t => t.length)).text, result.text);
-    assert.equal(s.writes.length, 1); assert.equal(s.deletes.length, 0);
+    assert.equal(s.writes.length, 2); assert.equal(s.deletes.length, 1);
 });
 
-test('a timestamp change during asynchronous annotation cannot deliver the old prompt', async () => {
+test('a timestamp change during asynchronous selection cannot deliver the old prompt', async () => {
     const s = setup(), snap = snapshot(); let current = true, release, started;
     snap.messages[0].recordedAt = '2024-01-01T00:00:00.000Z';
     const annotating = new Promise(resolve => { started = resolve; });
     const pending = s.engine.retrieve(snap, { ...config, budget: 2000 }, async text => {
-        if (text.includes('[Host message timestamps')) { started(); await new Promise(resolve => { release = resolve; }); }
+        if (!release && text.includes('[Conversation timestamp:')) { started(); await new Promise(resolve => { release = resolve; }); }
         return text.length;
     }, () => current);
     await annotating; current = false; release();
@@ -156,6 +158,9 @@ test('deletion drains pending writes and clears local journal', async () => {
     assert.equal(s.remote.size, 0); assert.equal(s.storage.length, 0);
 });
 test('settings are clamped and capture refuses group/no character chats', () => {
+    assert.equal(options().budget, 1600);
+    assert.equal(options({ budget: 800 }).budget, 800);
+    assert.equal(options({ budget: NaN }).budget, 1600);
     assert.equal(options({ budget: 999999, recent: 0 }).budget, 4096);
     assert.equal(options({ recent: 0 }).recent, 2);
     assert.equal(capture({ groupId: 'group' }), null);
@@ -426,4 +431,19 @@ test('selected assistant context still cancels sibling failures and rejects resu
     resolvers.forEach(resolve => resolve([...late.remote.values()]));
     assert.equal(await pending, null);
     assert.deepEqual(queries, retrievalQueries(snap));
+});
+
+test('removing source time deletes the old dated revision and never recovers it from stale hits', async () => {
+    const s = setup(), snap = snapshot(); snap.messages[0].recordedAt = '2024-01-01T00:00:00.000Z';
+    await s.engine.sync(snap, config);
+    const old = [...s.remote.values()].find(d => d.message === 0);
+    delete snap.messages[0].recordedAt;
+    await s.engine.sync(snap, config);
+    assert(!s.remote.has(old.id));
+    const current = [...s.remote.values()].find(d => d.message === 0);
+    assert(!('conversationTimestamp' in current));
+    s.client.search = async () => [old, current];
+    const recalled = await s.engine.retrieve(snap, { ...config, budget: 2000 }, t => t.length);
+    assert(!recalled.text.includes('2024-01-01'));
+    assert.deepEqual(recalled.passages, [current]);
 });

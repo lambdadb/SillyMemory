@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { hostTimestamp, annotateHostTime } from '../src/time.js';
-import { capture, fingerprint, documents, selectPackedMemory } from '../src/memory.js';
+import { hostTimestamp } from '../src/time.js';
+import { capture, fingerprint, documents, selectPackedMemory, memoryMessages, packedMemoryMessages } from '../src/memory.js';
 
 const stamp = '2024-02-29T12:34:56.123Z';
 const context = chat => ({ characterId: 0, characters: [{ avatar: 'test.png' }], chat,
@@ -26,55 +26,50 @@ test('host timestamp accepts pinned ISO/epoch values without calendar, timezone 
     }
 });
 
-test('timestamp-only change invalidates a snapshot without changing remote documents or embeddings', async () => {
-    const source = chat(), first = capture(context(source));
-    const original = await documents(first, 'owner', config);
+test('every chunk inherits source time separately from text and timestamp edits change revisions', async () => {
+    const source = chat(); source[0].mes = 'The treaty was signed in Frostmonth, year 812. '.repeat(20);
+    const first = capture(context(source)), original = await documents(first, 'owner', { ...config, chunkChars: 200 });
+    const dated = original.docs.filter(d => d.message === 0);
+    assert(dated.length > 1);
+    assert(dated.every(d => d.conversationTimestamp === stamp && d.timestampSource === 'host_message'));
+    assert.equal(dated.map(d => d.text).join(''), source[0].mes);
+    assert(!('conversationTimestamp' in original.docs.find(d => d.message === 1)));
     source[0].send_date = '2024-03-01T00:00:00Z';
-    const second = capture(context(source));
+    const second = capture(context(source)), changed = await documents(second, 'owner', { ...config, chunkChars: 200 });
     assert.notEqual(fingerprint(first), fingerprint(second));
-    assert.deepEqual(await documents(second, 'owner', config), original);
-    assert.equal(second.messages[0].recordedAt, '2024-03-01T00:00:00.000Z');
-    assert(!('recordedAt' in first.messages[1]));
-    assert(!('recordedAt' in original.docs[0]));
-    assert.equal(source[0].mes, 'The treaty was signed in Frostmonth, year 812.');
+    assert(changed.docs.filter(d => d.message === 0).every(d => !dated.some(old => old.id === d.id)));
     assert.deepEqual(capture(context(JSON.parse(JSON.stringify(source)))), second);
 });
 
-test('provenance uses current source only, preserves roles/bodies and cannot evict selected passages', async () => {
-    const snapshot = capture(context(chat())), { docs } = await documents(snapshot, 'owner', config);
-    const hits = docs.map(doc => ({ ...doc, recordedAt: '2099-01-01T00:00:00.000Z' }));
-    const baseline = await selectPackedMemory(hits, docs, 2000, count);
-    const saved = structuredClone(baseline), source = structuredClone(snapshot);
-    const result = await annotateHostTime(baseline, snapshot, 2000, count);
-    assert.deepEqual(result.passages, baseline.passages);
-    assert.deepEqual(result.messages.map(m => [m.index, m.is_user, m.name]), baseline.messages.map(m => [m.index, m.is_user, m.name]));
-    assert(result.messages[0].mes.startsWith('[Past conversation excerpt: user "User", message 1, passage 1]\n'));
-    assert(result.messages[0].mes.endsWith('\nThe treaty was signed in Frostmonth, year 812.'));
-    assert.equal(result.messages[1].mes, baseline.messages[1].mes);
-    assert(result.text.includes('\n[Host message timestamps (UTC; not story/event dates): 1=2024-02-29T12:34:56.123Z]\n'));
-    assert(!result.text.includes('2099')); assert(!result.text.includes('2='));
-    assert.equal(result.tokens, count(result.text));
-    assert.deepEqual(baseline, saved); assert.deepEqual(snapshot, source);
-    for (const budget of [baseline.tokens, baseline.tokens + 5, result.tokens - 1]) {
-        assert.deepEqual(await annotateHostTime(baseline, snapshot, budget, count), baseline);
+test('selection budgets full dated excerpts and rejects forged, missing and stale remote times', async () => {
+    const { docs } = await documents(capture(context(chat())), 'owner', config);
+    const dated = docs[0], plain = memoryMessages([{ ...dated, conversationTimestamp: undefined }])[0].mes;
+    const full = memoryMessages([dated])[0].mes;
+    assert(full.startsWith('[Past conversation excerpt: user "User", message 1, passage 1]\n'));
+    assert(full.includes('source=host_message; UTC, not story/event date; original local timezone unknown'));
+    assert(full.endsWith('The treaty was signed in Frostmonth, year 812.'));
+    assert.equal((await selectPackedMemory([dated], docs, count(full), count)).text, full);
+    assert.equal((await selectPackedMemory([dated], docs, count(full) - 1, count)).text, '');
+    assert.equal((await selectPackedMemory([dated], docs, count(plain), count)).text, '');
+    for (const bad of [{ ...dated, conversationTimestamp: undefined }, { ...dated, timestampSource: 'session' },
+        { ...dated, conversationTimestamp: '2099-01-01T00:00:00.000Z' }]) {
+        assert.equal((await selectPackedMemory([bad], docs, 2000, count)).text, '');
+        assert.equal((await selectPackedMemory([bad, dated], docs, 2000, count)).text, full);
     }
-    assert.deepEqual(await annotateHostTime(baseline, { messages: [] }, 2000, count), baseline);
-    for (const invalid of [NaN, Infinity, -1]) await assert.rejects(annotateHostTime(baseline, snapshot, 2000, () => invalid), /Token counting unavailable/);
+    for (const invalid of [NaN, Infinity, -1]) await assert.rejects(selectPackedMemory([dated], docs, 2000, () => invalid), /Token counting unavailable/);
 });
 
-test('packed repeated occurrences keep distinct timestamp coordinates without duplicating body or adding unselected sources', async () => {
-    const snapshot = { messages: [0, 2, 3].map(index => ({ index, recordedAt: `2024-03-0${index + 1}T00:00:00.000Z` })) };
-    const docs = [0, 2].map(message => ({ id: `id-${message}`, owner: 'owner', scope: 'scope', revision: `r-${message}`,
-        role: 'user', speaker: 'User', message, chunk: 0, text: 'The door is locked. '.repeat(40) }));
-    const baseline = await selectPackedMemory(docs, docs, 2000, count);
-    assert.equal(baseline.messages.length, 1);
-    const result = await annotateHostTime(baseline, snapshot, 2000, count);
-    assert(result.text.includes('1=2024-03-01T00:00:00.000Z; 3=2024-03-03T00:00:00.000Z'));
-    assert(!result.text.includes('4='));
-    assert(result.messages[0].mes.startsWith(baseline.messages[0].mes.split('\n')[0] + '\n'));
-    assert(result.messages[0].mes.endsWith('\n' + docs[0].text));
-    assert.deepEqual(result.passages, docs);
-    const firstOnly = await annotateHostTime(baseline, snapshot, baseline.tokens + 110, count);
-    assert(firstOnly.text.includes('1=')); assert(!firstOnly.text.includes('3='));
-    assert.deepEqual(firstOnly.passages, docs);
+test('identical bodies with distinct known or unknown times are not collapsed', async () => {
+    const source = chat(); source[1] = { ...source[0], send_date: '2024-03-01T00:00:00Z' };
+    source[0].mes = source[1].mes = 'The door is locked. '.repeat(30);
+    const { docs } = await documents(capture(context(source)), 'owner', { ...config, chunkChars: 800 });
+    const result = await selectPackedMemory(docs, docs, 4000, count);
+    assert.equal(result.messages.length, 2);
+    assert(result.messages[0].mes.includes(stamp)); assert(result.messages[1].mes.includes('2024-03-01'));
+    const unknown = { ...docs[1] }; delete unknown.conversationTimestamp; delete unknown.timestampSource;
+    assert.equal(packedMemoryMessages([docs[0], unknown]).length, 2);
+    const same = { ...docs[1], conversationTimestamp: stamp };
+    const packed = packedMemoryMessages([docs[0], same]);
+    assert.equal(packed.length, 1); assert(packed[0].mes.includes('1:1, 2:1'));
+    assert.equal(packed[0].mes.split(stamp).length, 2);
 });

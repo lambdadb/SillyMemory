@@ -1,12 +1,12 @@
 import { beginWrites, clearCommit, recordWrite, sameDocument } from './commit.js';
 import { preferAssistantContext } from './context.js';
 import { chunkSpans, CHUNKING_POLICY } from './chunking.js';
-import { hostTimestamp, annotateHostTime } from './time.js';
+import { hostTimestamp, conversationTime, conversationTimeLabel } from './time.js';
 
-export const DEFAULTS = Object.freeze({ recent: 12, budget: 800, chunkChars: 800 });
+export const DEFAULTS = Object.freeze({ recent: 12, budget: 1600, chunkChars: 800 });
 export function options(value = {}) {
     const integer = (x, fallback, min, max) => Number.isInteger(Number(x)) ? Math.min(max, Math.max(min, Number(x))) : fallback;
-    return { recent: integer(value.recent, 12, 2, 100), budget: integer(value.budget, 800, 64, 4096), chunkChars: integer(value.chunkChars, 800, 200, 2000) };
+    return { recent: integer(value.recent, 12, 2, 100), budget: integer(value.budget, 1600, 64, 4096), chunkChars: integer(value.chunkChars, 800, 200, 2000) };
 }
 export async function digest(value) {
     const bytes = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(value));
@@ -68,9 +68,10 @@ export async function documents(snapshot, owner, config) {
     const docs = [];
     for (const m of snapshot.messages.slice(0, -config.recent)) {
         if (!m.eligible || !m.text.trim()) continue;
-        const revision = await digest(JSON.stringify([m.index, m.name, m.user, m.swipe, m.text]));
+        const time = conversationTime(m);
+        const revision = await digest(JSON.stringify([m.index, m.name, m.user, m.swipe, m.text, time]));
         for (const [chunk, { start, end, text }] of chunkSpans(m.text, config.chunkChars).entries()) {
-            docs.push({ id: `${scope}_${revision}_${CHUNKING_POLICY}_${chunk}_${start}_${end}`, owner, scope, revision, text, start, end, message: m.index, chunk, speaker: m.name, role: m.user ? 'user' : 'assistant' });
+            docs.push({ id: `${scope}_${revision}_${CHUNKING_POLICY}_${chunk}_${start}_${end}`, owner, scope, revision, text, start, end, message: m.index, chunk, speaker: m.name, role: m.user ? 'user' : 'assistant', ...time });
         }
     }
     return { scope, docs };
@@ -84,7 +85,7 @@ export function literal(text) {
 export function memoryMessages(passages) {
     return [...passages].sort((a, b) => a.message - b.message || a.chunk - b.chunk).map(d => ({
         index: d.message, name: literal(d.speaker), is_user: d.role === 'user', is_system: false,
-        mes: `[Past conversation excerpt: ${d.role} ${JSON.stringify(literal(d.speaker))}, message ${d.message + 1}, passage ${d.chunk + 1}]\n${literal(d.text)}`,
+        mes: `[Past conversation excerpt: ${d.role} ${JSON.stringify(literal(d.speaker))}, message ${d.message + 1}, passage ${d.chunk + 1}]\n${conversationTimeLabel(d)}${literal(d.text)}`,
     }));
 }
 const wrap = passages => memoryMessages(passages).map(m => m.mes).join('\n');
@@ -94,7 +95,7 @@ export async function selectMemory(hits, expected, budget, countTokens) {
     for (const hit of hits) {
         const doc = valid.get(hit?.id);
         // The remote response is only a ranking signal. Inject current local source text.
-        if (!doc || seen.has(doc.id) || hit.scope !== doc.scope || hit.owner !== doc.owner || hit.revision !== doc.revision || hit.text !== doc.text) continue;
+        if (!doc || seen.has(doc.id) || hit.scope !== doc.scope || hit.owner !== doc.owner || hit.revision !== doc.revision || hit.text !== doc.text || hit.conversationTimestamp !== doc.conversationTimestamp || hit.timestampSource !== doc.timestampSource) continue;
         seen.add(doc.id);
         const candidate = wrap([...selected, doc]);
         const tokens = await countTokens(candidate);
@@ -107,7 +108,7 @@ export async function selectMemory(hits, expected, budget, countTokens) {
     return { text, tokens, passages: selected, messages: memoryMessages(selected) };
 }
 
-const repeatedKey = doc => JSON.stringify([doc.owner, doc.scope, doc.role, doc.speaker, doc.text]);
+const repeatedKey = doc => JSON.stringify([doc.owner, doc.scope, doc.role, doc.speaker, doc.text, doc.conversationTimestamp, doc.timestampSource]);
 
 // Preserve every selected source coordinate and full verbatim body. A repeated
 // excerpt is placed at its latest occurrence, with all occurrences named, so a
@@ -121,7 +122,7 @@ export function packedMemoryMessages(passages) {
     return [...groups.values()].map(group => {
         const last = group.at(-1), message = memoryMessages([last])[0];
         if (group.length > 1) {
-            message.mes = `[Past conversation excerpt: ${last.role} ${JSON.stringify(literal(last.speaker))}, identical text at message:passage ${group.map(doc => `${doc.message + 1}:${doc.chunk + 1}`).join(', ')}]\n${literal(last.text)}`;
+            message.mes = `[Past conversation excerpt: ${last.role} ${JSON.stringify(literal(last.speaker))}, identical text at message:passage ${group.map(doc => `${doc.message + 1}:${doc.chunk + 1}`).join(', ')}]\n${conversationTimeLabel(last)}${literal(last.text)}`;
         }
         return { message, chunk: last.chunk };
     }).sort((a, b) => a.message.index - b.message.index || a.chunk - b.chunk).map(entry => entry.message);
@@ -148,7 +149,7 @@ export async function selectPackedMemory(hits, expected, budget, countTokens) {
     const valid = new Map(expected.map(doc => [doc.id, doc])), seen = new Set(selected.map(doc => doc.id));
     for (const hit of hits) {
         const doc = valid.get(hit?.id);
-        if (!doc || seen.has(doc.id) || ['scope', 'owner', 'revision', 'text'].some(key => hit[key] !== doc[key])) continue;
+        if (!doc || seen.has(doc.id) || ['scope', 'owner', 'revision', 'text', 'conversationTimestamp', 'timestampSource'].some(key => hit[key] !== doc[key])) continue;
         seen.add(doc.id);
         // Spend the saved space on distinct content, not more repeat citations.
         if (content.has(repeatedKey(doc))) continue;
@@ -294,8 +295,7 @@ export class MemoryEngine {
         } finally { reads.abort(); }
         if (!current()) return null;
         progress({ phase: 'budgeting' });
-        const selected = await selectPackedMemory(interleaveHits(results), prepared.docs, config.budget, countTokens);
-        const result = await annotateHostTime(selected, snapshot, config.budget, countTokens);
+        const result = await selectPackedMemory(interleaveHits(results), prepared.docs, config.budget, countTokens);
         return current() ? result : null;
     }
     async deleteAll() {
