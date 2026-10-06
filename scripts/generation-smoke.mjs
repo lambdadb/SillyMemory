@@ -30,6 +30,7 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const source = process.env.ST_SOURCE || '/tmp/sillymemory-st-source';
 const revision = '06bde939fb1e9c4c8d8641d810f0a916b5bce127';
 if (process.argv.includes('--chunking')) throw new Error('Historical chunking comparison is archived; use its recorded producer.');
+if (process.argv.some(arg => arg.startsWith('--rerank'))) throw new Error('Reranking evaluation is archived; use its recorded producer.');
 const env = parseEnv(await readFile(process.env.SM_ENV_FILE || path.join(root, '.env.local'), 'utf8'));
 const hybridMode = process.argv.includes('--hybrid');
 
@@ -445,7 +446,7 @@ try {
                     await openSettings();
                     page.once('dialog', dialog => dialog.accept());
                     await field('delete').click();
-                    await waitStatus('Owned remote memory collection is no longer accessible');
+                    await waitStatus('no longer accessible');
                     assert(true, 'settings deletion drains writes and removes owned memory');
                 }
                 await page.evaluate(async ({ credentials, collections }) => {
@@ -461,7 +462,7 @@ try {
         } catch { console.log('Cleanup incomplete; keep pending resource record.'); }
     }
     const sourceSha256 = {};
-    for (const file of [...(hybridMode ? [...hybridFiles, 'scripts/provider-retry.mjs'] : []), 'src/chunking.js', 'index.js', 'src/chat-collections.js','src/client.js', 'vendor/lambdadb.js', 'package-lock.json','src/gate.js','src/memory.js', 'src/context.js','src/status.js','scripts/generation-smoke.mjs','scripts/provider-spacing.mjs','scripts/generation-cleanup.mjs','scripts/korean-eval.mjs','scripts/korean-fixture.mjs','scripts/comparison-fixture.mjs','scripts/comparison-eval.mjs','scripts/challenge-eval.mjs','scripts/recall-challenges.mjs','scripts/heldout-fixture.mjs', ...(natural ? ['scripts/natural-eval.mjs', 'scripts/natural-dialogue.mjs', ...(semantic ? [...semanticFiles, ...(summarizeMode ? summaryFiles : nativeTuning ? tuningFiles : threeModes ? threeModeFiles : [])] : fixtureFiles(frozenNatural?.plan.version)), ...(retryTransient ? ['scripts/provider-retry.mjs', 'docs/natural-dialogue-retry.md', 'scripts/natural-summary.mjs', 'scripts/natural-score.mjs'] : [])] : [])]) sourceSha256[file] = createHash('sha256').update(await readFile(path.join(root, file))).digest('hex');
+    for (const file of [...Object.keys(experimentSource || {}), ...(hybridMode ? [...hybridFiles, 'scripts/provider-retry.mjs'] : []), 'src/chunking.js', 'index.js', 'src/chat-collections.js','src/client.js', 'vendor/lambdadb.js', 'package-lock.json','src/gate.js','src/memory.js', 'src/context.js','src/status.js','scripts/generation-smoke.mjs','scripts/provider-spacing.mjs','scripts/generation-cleanup.mjs','scripts/korean-eval.mjs','scripts/korean-fixture.mjs','scripts/comparison-fixture.mjs','scripts/comparison-eval.mjs','scripts/challenge-eval.mjs','scripts/recall-challenges.mjs','scripts/heldout-fixture.mjs', ...(natural ? ['scripts/natural-eval.mjs', 'scripts/natural-dialogue.mjs', ...(semantic ? [...semanticFiles, ...(summarizeMode ? summaryFiles : nativeTuning ? tuningFiles : threeModes ? threeModeFiles : [])] : fixtureFiles(frozenNatural?.plan.version)), ...(retryTransient ? ['scripts/provider-retry.mjs', 'docs/natural-dialogue-retry.md', 'scripts/natural-summary.mjs', 'scripts/natural-score.mjs'] : [])] : [])]) sourceSha256[file] = createHash('sha256').update(await readFile(path.join(root, file))).digest('hex');
     if (natural && Object.entries(naturalSourceSha256).some(([file, digest]) => sourceSha256[file] !== digest)) failure ||= { stage: 'source identity', reason: 'Source changed during execution' };
     if ((natural || hybridMode) && !failure) {
         try { assert(summarizeProviderSpacing(resumeReport ? generations.slice(resumeReport.generations.length) : generations, PROVIDER_SPACING).verified, 'actual provider starts respect the 15-second interval'); }

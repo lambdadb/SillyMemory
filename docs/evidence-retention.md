@@ -171,3 +171,105 @@ URL/UI upgrade results, opt-in story/checkpoint lifecycle, failed navigation
 attempt, interpretation and publication boundary. Its local-only archive contains
 319 verified files and three exact installation producers. Existing historical
 archives remain intact; all owned test resources were cleaned up.
+
+## Managed reranker adoption review
+
+The [completed decision record](managed-reranking.md) retains the completed stages' core
+results, positive findings, answer regressions, execution boundaries and archive
+identities. The three original run bundles remain byte-for-byte unchanged. A fourth
+closeout bundle preserves the fixed-prompt comparison and every retired source,
+fixture, protocol and detailed conclusion before active-tree removal. A fifth
+bundle preserves the user-requested English-only/raw-text comparison, its neutral
+14/14 versus 14/14 answer result, all four lexical controls, and the initial setup
+failure/correction. A sixth bundle records the remaining six controls: all three
+conditions score 5/6, sharing a topic-switch failure despite delivered evidence. It
+preserves the unchanged fixture, three-arm producer, all 18 answers and cleanup
+receipts. A seventh bundle preserves the full 32-case GPT-6.1 Sol comparison: vector
+28/32 versus English raw hybrid + Jev 31/32, with four gains and one current-location
+regression. An eighth bundle preserves the subsequent 32-case fusion diagnosis:
+live component scores, local Lucene-style Bayesian arithmetic, exact candidate-set
+Jev replay, and a focused existing-feature control. Bayesian + Jev injects complete
+evidence in 32/32 versus RRF/Min-Max + Jev 31/32; existing weighted Min-Max and a
+larger RRF rerank pool also rescue the one loss in a focused control. This stage
+contains no generated answers or deployed Bayesian API. The decision record keeps
+retrieval/packing counts distinct from the complete paired answer matrix and
+earlier-model results. A ninth bundle preserves the fixed-pool confirmation: 32
+known plus 24 new authored cases, 112 actual-host/model answers using captured
+live-derived rankings, and all source/prompt/ownership checks. Bayesian gains the
+known current-location answer (32/32 versus RRF 31/32), while both score 24/24 on
+new cases. Weighted Min-Max ties Bayesian's complete evidence injection at the
+same candidate limit; it has no new generation arm. The predeclared new-case-gain
+priority gate fails, so the result does not justify prioritizing Bayesian backend
+support for SillyMemory. Preserve the RRF tie-policy diagnostic as post-result
+candidate-only evidence, and the future-location answer as correct despite its
+stricter all-evidence miss. The four HTTP 503 upserts, initial host transport
+exception, one bounded continuation of unfinished answers and unknown failed-call
+usage remain explicit. All 65 owned collections are verified absent. Every
+preceding bundle remains unchanged.
+
+The current tree keeps the decision and independent generation-harness corrections.
+It does not depend on archived experiment runners or raw output for CI. Historical
+reproduction uses the recorded producer and local-only archive, not the current
+runner. No unresolved ownership or cleanup record was discarded.
+
+## Deployed Bayesian evaluation — 2026-10-06
+
+The [decision record](bayesian-sdk-validation.md) preserves actual server
+Bayesian/Jev support using a temporary dev SDK, twelve exposed English
+update/temporal cases, all thirty-six actual-host answers, remaining mortgage/date
+failures, browser CORS validation and confirmed cleanup of sixteen Collections.
+The temporary dependency, bundle and SDK-specific test are retained evidence,
+not maintained product or CI changes. Detailed outputs and one-off producers
+remain local-only in
+`sillymemory-bayesian-sdk-validation/artifacts/archive/bayesian-live-v1/evidence.tar.gz`:
+4,846,316 bytes, forty verified files plus manifest, SHA-256
+`f7ab9bd7ec4f86feab866cc776ac332ef1a6d09c7f7958d00df161e81128971e`.
+The bundle contains base fbae879 and the exact temporary SDK/runtime patch; its
+manifest and README describe restoration. Every archived file was read back and
+checked against its original digest, with zero configured credential matches.
+It is unavailable in a fresh clone and must be retained before worktree removal.
+Earlier archives remain unchanged. Unit/emulator checks, deployed retrieval,
+plain-browser CORS and actual-host ranking replay are separate evidence layers.
+
+## Context and capacity diagnosis — 2026-10-06
+
+The [completed follow-up](bayesian-sdk-validation.md#context-versus-capacity-follow-up--2026-10-06)
+compares the original 800-token selection with 1,600 tokens and bounded paired/date
+context at 800, on the same exposed English source and captured vector/Bayesian
+rankings. It preserves all 48 new host-generated answers, qualified mortgage
+interpretation, the recovered 24-day interval, expansion regressions and the
+unchanged product/default decision. No dev SDK or maintained evaluator is added.
+
+The local-only archive is `artifacts/archive/context-budget-v1/evidence.tar.gz` in
+both `sillymemory-context-evaluation` and the primary `sillymemory` worktree:
+5,090,984 bytes, 29 verified files plus manifest, SHA-256
+`b2e76de37feff6c0886f663a94c1e5bdbf8adf14bbc9300fbaa3b9b15840131a`.
+Both local copies are byte-identical; every member was read back and configured
+secret matches were zero. It contains base fbae879, exact frozen source/rankings,
+selectors/protocol, full prompts/answers/reviews, historical baseline answers,
+validation and cleanup. Host source/dependencies and credentials are separately
+required as described in the README; the archive is unavailable in a fresh clone.
+Both owned setup Collections were verified 404. Prior archives remain unchanged.
+
+## Compact explicit date provenance — 2026-10-06
+
+The [completed bounded comparison](bayesian-sdk-validation.md#compact-session-provenance-follow-up--2026-10-06)
+preserves 24 existing-case and twelve newly frozen control answers, the unchanged
+800-token cap/rankings, zero previous-answer losses, recovered 24/16-day intervals,
+mortgage/event-selection ambiguity and the boundary between conversation and
+story/event time. It does not adopt production date extraction or a new default.
+The original preparer's question-role fault blocks the first control before
+provider forwarding; a plumbing-only continuation completes unanswered controls
+without changing frozen histories, candidate order, selections or completed answers.
+Both reports and their distinct producer identities are retained.
+
+The local-only archive is `artifacts/archive/compact-date-v1/evidence.tar.gz` in
+both `sillymemory-context-evaluation` and the primary `sillymemory` worktree:
+4,922,433 bytes, 45 verified files plus manifest, SHA-256
+`f0b2afabbbedf3ef825eebcf28f03c84e1a3a3789512bfaea5c3872846a28f6f`.
+Both copies and every archive member are byte-verified; configured-secret matches
+are zero. It contains base fbae879, protocols, all source/ranking/selection locks,
+full prompts/answers/reviews, initial arithmetic and correction, setup failure,
+validation and both cleanup receipts. All four setup Collections are verified 404.
+Host/dependencies and credentials are separately required; fresh clones cannot
+retrieve this local archive. Earlier archives are preserved without modification.

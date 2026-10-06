@@ -58,7 +58,11 @@ response fields. These are synthetic fixtures, not permissive runtime fallbacks.
 Historical reports retain their original producers. The maintained diagnostic
 runner also uses SDK operations rather than the removed raw-request interface.
 
-## Next experiment design — not executed
+## Next experiment design — not executed during the SDK migration
+
+Follow-up: the [managed reranking evaluation](managed-reranking.md) records the
+completed comparison, shared unsupported elaboration and decision to retain vector
+retrieval. The original migration design below is preserved for context.
 
 Question: does managed Jev reranking improve evidence delivery and final English
 answers at the same memory budget, without losing existing correct answers?
@@ -165,3 +169,13 @@ related benchmark producer maps now include `vendor/lambdadb.js` and
 `package-lock.json`. Regressions reject missing/mixed SDK identities. Historical
 reports retain their original source/validator archives; no report was rewritten
 or paid result relabeled. Runtime and the measured SDK bundle are unchanged.
+
+## Deployed Bayesian follow-up
+
+The subsequent [deployed API evaluation](bayesian-sdk-validation.md) temporarily
+uses the dev SDK for actual server Bayesian/Jev requests, English long-dialogue
+results and remaining temporal failures. The dependency, bundle and SDK-specific
+test are archived experiment inputs, not product changes. That evaluation leaves
+its producing revision on SDK 0.7.0; it does not pin the current product version.
+The current dependency is recorded in [package.json](../package.json); separately
+reviewed stable upgrades do not change these historical results.
