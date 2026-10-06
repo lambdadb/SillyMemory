@@ -400,10 +400,13 @@ Neither original archive was replaced.
 
 ## Memory interpretation guidance decision
 
-The [bounded instruction comparison](conversation-memory-defaults.md#memory-interpretation-instruction-not-adopted)
+The [bounded instruction comparison](conversation-memory-defaults.md#memory-interpretation-instruction-efficacy-inconclusive)
 uses producer baseline `c7edad18d2357acc433e47c478f918176444e983` and pinned
 SillyTavern `06bde939fb1e9c4c8d8641d810f0a916b5bce127`. Both arms answer 12/12;
-no instruction or runtime change is adopted. No completed answer was regenerated.
+no instruction or runtime change is adopted. Efficacy is inconclusive because the
+baseline is perfect and relevant failures were not qualified before the comparison.
+No completed answer was regenerated; the original archive/review decision bytes
+remain unchanged even where their wording predates this correction.
 
 - Archive: `artifacts/archive/memory-interpretation-guidance-v1/evidence.tar.gz`.
   It contains 58 entries, 1,485,895 bytes; SHA-256
@@ -437,3 +440,25 @@ Validation of the unchanged runtime: `npm test` (Node 24.15.0) and
 `npm run check`, `npm run check:release` and `npm run check:sdk` pass. All
 `scripts/*.mjs` and `tests/*.js` pass `node --check`; `git diff --check` passes.
 No new isolation/recovery suite, model sweep, release or deployment is claimed.
+
+### Historical failure qualification and ceiling correction
+
+The source/prompt/answer audit of mortgage `852ce960` and elapsed days `4dfccbf7`
+finds no clear evidence-sufficient interpretation failure to justify another
+instruction comparison. It verifies nine original input/report members against
+their historical archive manifests. The mortgage's qualified two-amount answer
+has an ambiguous single-answer target; the date dependency was already repaired
+by the earlier compact-date Bayesian diagnostic. No new provider or service call
+was made, and no historical answer, score or original evidence bundle was changed.
+
+Supplemental archive:
+`artifacts/archive/memory-guidance-failure-triage-v1/evidence.tar.gz` contains
+12 files plus manifest, 10,638,833 bytes; SHA-256
+`57013fcf37dcec84413abc2ca8db5eff686ab8479068f5587d1f1f7c9f32f2d5`.
+It preserves the checked original inputs/reports, full source excerpts and prompt
+selections, derived classifications and one-off audit/archive scripts. All members
+were extracted and length/checksum verified; configured-secret scanning passes.
+Identical local-only archive/receipt copies exist in the primary and
+`sillymemory-memory-guidance` worktrees, unavailable in a fresh clone. The previous
+guidance and historical archives remain intact. The corrected interpretation is
+maintained in the decision document; the original provisional review is not edited.

@@ -100,7 +100,7 @@ fresh preservation support the search default. The fresh run alone would not
 justify paying for reranking as an accuracy improvement. Neither comparison is a
 broad multilingual or long-context quality guarantee.
 
-## Memory interpretation instruction: not adopted
+## Memory interpretation instruction: efficacy inconclusive
 
 A follow-up at baseline `c7edad18d2357acc433e47c478f918176444e983`
 tested one short system instruction: distinguish message dates from event dates,
@@ -108,6 +108,10 @@ require explicit corrections before replacing facts, preserve historical states,
 separate plans/cancellations from completed events, and report unresolved conflicts
 or missing dates. The pre-call gate required more complete source-supported
 answers with no loss of previously correct answers. Equal scores were insufficient.
+However, the comparison was run before establishing a relevant failure in the
+current baseline. This omitted qualification step is a design flaw: a perfect
+baseline has no improvement headroom. The run supports bounded preservation,
+not a conclusion that the instruction is ineffective.
 
 Both arms use the deployed managed retrieval and actual host/model settings above,
 with Bayesian+Jev, 1,600 tokens and four recent messages. Twenty-four new query
@@ -141,11 +145,12 @@ Every required source is selected in both arms. Paying for the instruction remov
 one irrelevant filler message per case; its cost can displace useful evidence in
 other histories. The small net token increase includes that selection change.
 
-Do not add the instruction, another setting, metadata fields or maintained test
-infrastructure. Keep the current defaults and runtime. This result does not show
-that instructions never help other models or harder conversations; a new comparison
-needs a demonstrated failure and a bounded decision, not more retries of these
-already correct answers. The raw run's `semanticReviewPending` flag is retained;
+Keep the current defaults and runtime because there is no demonstrated benefit
+to justify adding the instruction. No new setting, metadata field or maintained
+test infrastructure is added. This is a decision to defer adoption, not evidence
+against efficacy. A new comparison needs a demonstrated relevant baseline failure
+and a bounded decision, not more retries of these already correct answers.
+The raw run's `semanticReviewPending` flag is retained;
 the completed separate review is archived with it.
 
 Quality generation completed 24 answers plus READY: 25 actual provider calls,
@@ -160,6 +165,43 @@ error remains recorded. The paid run passes the real 15-second spacing check.
 No product failure or OpenAI retry is inferred from either preflight error.
 Full evidence, producer bytes, cleanup and validation are in the
 [evidence index](evidence-retention.md#memory-interpretation-guidance-decision).
+
+### Historical failure audit before another comparison
+
+A read-only audit checked the original questions, source, actual answers and
+delivered selections for mortgage `852ce960` and elapsed days `4dfccbf7`, using
+checksum-verified historical archive members. No new model or retrieval call was
+made, and released benchmark answers/scores were not rewritten.
+
+| Historical observation | Verified mechanism | Use in a guidance comparison |
+| --- | --- | --- |
+| Mortgage, Bayesian/800 answers $350,000 | The retrieved later $400,000 statement is absent from the selected prompt. | Capacity loss; instructions cannot restore missing evidence. |
+| Mortgage, both 1,600-token arms mention both amounts | The question asks the amount "when I got my mortgage"; the later source says "remember when I got pre-approved for $400,000", without explicitly correcting the original $350,000. Answers explain the discrepancy. | Ambiguous target, not a clear interpretation error. Preserve the released $400,000 target separately. |
+| Elapsed days, undated 1,600-token prompts abstain | Event messages 383/415 are present, but their February 1/25 session anchors at 379/407 are not delivered. | Missing date dependencies, not an arithmetic failure. |
+| Elapsed days, earlier compact-date Bayesian answer | Both events and session dates are delivered; the actual answer is 24 days. Vector instead retains the February 1 plan, a competing reading of "decided to take". | Already repaired in that diagnostic; not evidence of a remaining Bayesian interpretation failure. |
+
+These indices are zero-based source-message positions, not chunk numbers; UI
+labels add one. The date question is "How many days had passed since I started
+taking ukulele lessons when I decided to take my acoustic guitar to the guitar
+tech for servicing?" Source 387 plans the visit on February 1; source 415 reports
+returning from the completed visit on February 25. This competing event reading
+must not be silently removed to obtain the released 24-day answer.
+
+Neither historical case supplies a clear evidence-sufficient interpretation
+failure for the proposed instruction. The other ten historical Bayesian/1,600
+answers were already recorded as passing. These old SDK/adaptor runs are not a
+revalidation of today's runtime: historical `send_date=0` does not supply current
+host timestamp metadata, and the compact-date experiment used explicit session
+markers. Do not pool them with the new 12/12 controls or claim current benchmark
+accuracy from this audit.
+
+Stop the paid instruction comparison here. Before another candidate, use a
+discovery cohort to establish a real current-baseline failure and its mechanism.
+Freeze a disjoint confirmation cohort, source-grounded scoring and regression
+controls before candidate generation; keep ambiguous targets separate and report
+the whole cohort. Do not choose only observed wrong answers as the confirmation
+set or add explanatory hints to make new controls trivial. The audit and original
+evidence remain available through the evidence index.
 
 ## Whole-pair rejection and retained evidence
 

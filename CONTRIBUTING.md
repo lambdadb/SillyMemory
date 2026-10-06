@@ -82,6 +82,17 @@ which observation will support a decision, the authorized input/cost/time bounds
 and the stopping condition. Prefer existing runners. Add infrastructure only when
 it is necessary to complete that evaluation or has a concrete recurring use.
 
+Before a paid answer-quality improvement comparison, identify a demonstrated
+baseline failure relevant to the proposed change. Inspect the question, original
+source and final delivered prompt: distinguish retrieval loss, budget/dependency
+loss, ambiguous targets and interpretation errors with sufficient evidence.
+Already correct cases are regression controls, not evidence of improvement.
+Use discovery cases to diagnose the mechanism, then freeze a separate confirmation
+cohort and scoring criteria before comparing candidates. Report the entire frozen
+cohort, not only cases selected after observing wrong baseline answers. A perfect
+baseline makes efficacy inconclusive; do not infer that the candidate has no effect
+or expand paid runs merely to find a favorable result.
+
 A normal experiment change includes the needed harness changes, the bounded run,
 analysis of positive/negative results, limitations, and verified owned-data cleanup.
 Do not split preparation, retry handling, another preflight, and each intermediate
