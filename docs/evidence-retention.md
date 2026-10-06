@@ -230,3 +230,23 @@ checked against its original digest, with zero configured credential matches.
 It is unavailable in a fresh clone and must be retained before worktree removal.
 Earlier archives remain unchanged. Unit/emulator checks, deployed retrieval,
 plain-browser CORS and actual-host ranking replay are separate evidence layers.
+
+## Context and capacity diagnosis — 2026-10-06
+
+The [completed follow-up](bayesian-sdk-validation.md#context-versus-capacity-follow-up--2026-10-06)
+compares the original 800-token selection with 1,600 tokens and bounded paired/date
+context at 800, on the same exposed English source and captured vector/Bayesian
+rankings. It preserves all 48 new host-generated answers, qualified mortgage
+interpretation, the recovered 24-day interval, expansion regressions and the
+unchanged product/default decision. No dev SDK or maintained evaluator is added.
+
+The local-only archive is `artifacts/archive/context-budget-v1/evidence.tar.gz` in
+both `sillymemory-context-evaluation` and the primary `sillymemory` worktree:
+5,090,984 bytes, 29 verified files plus manifest, SHA-256
+`b2e76de37feff6c0886f663a94c1e5bdbf8adf14bbc9300fbaa3b9b15840131a`.
+Both local copies are byte-identical; every member was read back and configured
+secret matches were zero. It contains base fbae879, exact frozen source/rankings,
+selectors/protocol, full prompts/answers/reviews, historical baseline answers,
+validation and cleanup. Host source/dependencies and credentials are separately
+required as described in the README; the archive is unavailable in a fresh clone.
+Both owned setup Collections were verified 404. Prior archives remain unchanged.

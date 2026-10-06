@@ -233,3 +233,142 @@ historical archives were not changed. This archive is not uploaded and is
 unavailable in a fresh clone; the manifest and README record restoration needs.
 Keep it before removing this worktree. Paid reproduction requires separately
 supplied credentials, the pinned host/dependencies and a newly frozen protocol.
+
+## Context versus capacity follow-up — 2026-10-06
+
+**Decision: reject unconditional paired-turn/date expansion at 800 tokens. Keep
+product SDK 0.7.0, vector-only search, the adjustable 800-token default and current
+indexing unchanged.** A 1,600-token budget recovers omitted facts in these exposed
+histories; explicit date provenance resolves the target elapsed-days question
+with Bayesian candidates. Neither result establishes a safe universal default,
+and pairing retrieval context is not a test of indexing whole conversation pairs.
+
+### Fixed comparison
+
+Use the same twelve English cases, literal source/questions, captured deployed
+vector and Bayesian + Jev rankings, two-query interleaving and recent windows.
+The original 800-token answers are the completed historical baseline, not fresh
+concurrent completions. RRF is not rerun. Forty-eight new answers compare:
+
+- **1,600 tokens:** unchanged source and production selector; only budget changes.
+- **Context at 800 tokens:** retain hit order and exact source chunks; attach the
+  nearest explicit dataset session marker, and add the immediately adjacent
+  opposite-speaker turn's first chunk when the pair fits. Otherwise try the hit
+  with its date context alone. Never cross explicit session or recent-window
+  boundaries. Source roles, coordinates, revisions and verbatim bodies remain.
+
+The date labels explicitly describe conversation-session time, not inferred event
+or message-creation time. Gold answers and evidence labels do not drive selection.
+The candidate is a final-context expansion in an ignored evaluator, not a new
+embedding/index layout. It does not measure full user/assistant-pair indexing,
+which could also change retrieval and synchronization behavior. Date-only 800-token
+packing is retained as a local ablation without new generated answers.
+
+The pinned SillyTavern/GPT-6.1 Sol setup and original instructions are unchanged.
+Four arm orders rotate by case. The protocol caps 48 quality answers plus READY,
+57 provider attempts, eight transient retries and one hour. No completed answer
+is regenerated, no model is substituted and no new quality retrieval is issued.
+
+### Completed answers and interpretation
+
+All exact answers and final prompts were inspected against source by the coding
+assistant. This is not independent human review or an official LongMemEval judge.
+Mortgage answers describing both amounts are reported separately as **qualified**,
+not silently counted as a resolved single-answer benchmark gain.
+
+| Ranking / injection | Resolved against expected target | Qualified mortgage | Remaining unresolved |
+| --- | ---: | ---: | ---: |
+| Vector, original 800 (historical) | 7/12 | 0 | 5 |
+| Vector, 1,600 | 10/12 | 1 | 1 |
+| Vector, context at 800 | 6/12 | 0 | 6 |
+| Bayesian + Jev, original 800 (historical) | 10/12 | 0 | 2 |
+| Bayesian + Jev, 1,600 | 10/12 | 1 | 1 |
+| Bayesian + Jev, context at 800 | 9/12 | 0 | 3 |
+
+At 1,600, vector recovers weight (10 pounds), magazine count (five) and bake-sale
+ordering. Neither ranking loses a previously resolved answer on this set. This
+comparison also increases median provider input: vector 2,737.5 → 3,552.5 and
+Bayesian 2,715 → 3,535.5 tokens, about 30%, not a measured service-latency claim.
+
+**Mortgage:** both 1,600-token prompts retain initial $350,000 and later $400,000.
+Both answers explicitly describe the discrepancy rather than hiding the later
+statement. This supports the user's interpretation that an open answer can explain
+both contexts. Answers were already free-form in the prior run; it is the released
+$400,000 target that is narrow. The source's later statement is a recollection,
+not an explicit refinancing correction, and "when I got my mortgage" permits an
+initial-event reading. Do not force a latest-always-wins rule, relabel the released
+answer, or claim a clear model error merely because it explains both amounts.
+The context-at-800 candidate omits the later amount in both rankings and answers
+only $350,000; expansion still competes with evidence for the same budget.
+
+**Elapsed days:** increasing budget alone leaves the session anchors absent and
+both models abstain. With Bayesian context-at-800, turns 383 and 415 and the
+explicit February 1/February 25 session markers are retained; the actual answer
+correctly calculates **24 days**. The earlier failure is therefore not evidence
+of an inability to subtract supplied dates. The candidate combines date and pair
+expansion, so this answer cannot establish a separate causal benefit of pairing.
+
+Vector context-at-800 instead answers **zero days**, connecting the February 1
+ukulele start to the earlier plan to service the guitar at turn 387. It omits the
+released target's February 25 completed-visit turn 415. The earlier plan itself
+is real source, and the question says "decided to take"; preserve that competing
+interpretation rather than calling the result an arithmetic failure or an invented
+event date. Date provenance cannot by itself identify which event is intended.
+
+**Expansion regressions:** vector loses the previously correct historical Juan /
+Wednesday answer. Bayesian loses the five-magazine update and bake-sale-before-gala
+answer. The buddy chunks and repeated date labels consume capacity otherwise used
+for relevant evidence. Local date-only packing retains Juan turn 153 and Bayesian
+gala turn 146, unlike the combined candidate; it still omits the later magazine
+count. This diagnoses separate pair-expansion and metadata-overhead costs, not a
+validated answer-quality win for the ungenerated date-only ablation. Compact
+provenance and targeted dependencies remain candidates, not adopted behavior.
+
+All four existing synthetic controls pass in both new conditions and rankings:
+current attic location, future pantry location, canceled meeting and final ferry
+10:45 with canceled 09:20 excluded. Historical Juan passes at 1,600; its loss in
+vector context-at-800 blocks treating the combined candidate as generally safe.
+
+The previous [budget confirmation](budget-confirmation.md) found a ledger answer
+regression at 1,600 on a different generator/cohort. Its baseline already had all
+required facts and no improvement headroom. Do not pool that older result with
+this GPT-6.1 Sol run or erase it. This exposed diagnostic set justifies offering
+more capacity when relevant passages are omitted, not declaring 800 sufficient
+or 1,600 universally better. Stop the planned comparison here rather than tuning
+these consumed questions. A future product candidate should preserve compact,
+explicit source/session provenance without unconditional partner expansion;
+unknown session dates must stay unknown, and session time must not replace event
+time. Pair indexing and a new default need separate supporting evidence.
+
+### Validation and retention
+
+The actual-host replay completed 48 quality answers plus READY, **49 provider
+attempts with no retry**, 104 host integrity checks and the verified 15-second
+send interval. Usage reported 144,714 input and 1,084 output tokens. Exact source,
+rank mapping, selections, token limits, final-prompt delivery and provider/saved
+answer equality passed. This is actual host/provider generation on captured live
+rankings, not fresh quality retrieval or full live synchronization validation.
+The inherited setup used two owned Collections, one document and two queries;
+both Collections were deleted and verified 404, with no pending cleanup record.
+Keys were absent from browser/host persistence and the retained evidence audit.
+
+Stable SDK 0.7.0 remains byte-identical to the product baseline. `npm test` executed
+315/315 passing tests; `npm run check`, `npm run check:release` and
+`npm run check:sdk` passed. Temporary selector checks cover revision validation,
+budget rejection, explicit date propagation and session/recent boundaries; these
+are local evaluator checks, not new maintained tests or deployed feature proof.
+No new emulator suite or fresh server Bayesian run was needed for this unchanged
+product/doc-only result. No release, default promotion or deployment is included.
+
+The local-only `context-budget-v1/evidence.tar.gz` bundle contains 29 verified files
+plus a manifest, **5,090,984 bytes**, SHA-256
+`b2e76de37feff6c0886f663a94c1e5bdbf8adf14bbc9300fbaa3b9b15840131a`.
+Identical copies exist at `artifacts/archive/context-budget-v1/evidence.tar.gz` in
+`sillymemory-context-evaluation` and the primary `sillymemory` worktree. They are
+two copies on one machine, not a remote backup or downloadable fresh-clone input.
+Every archived byte matched its source and configured-secret matches were zero.
+Base fbae879, one-off selectors/runners, frozen protocol/rankings/selections,
+full prompts/answers, explicit reviews, cleanup receipts and historical baseline
+answers are preserved. The earlier Bayesian archive is unchanged. README and
+manifest describe separately required pinned host/dependencies and credentials;
+raw scripts remain ignored and are not added to CI or the product dependency graph.
