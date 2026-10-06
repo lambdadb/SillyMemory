@@ -193,3 +193,28 @@ test('managed rerank metadata must confirm application or an empty candidate poo
     const client = new LambdaClient(config, 'test-key', { fetcher: async () => Response.json(rerankedResponse([{ id: 'one' }])) });
     assert.deepEqual(await client.search('test', owner, scope, 'What happened?', undefined, 'chat_child'), [{ id: 'one' }]);
 });
+
+
+test('search bounds every signal to the same whole-code-point 8 KiB UTF-8 prefix', async () => {
+    const cases = [
+        ['界'.repeat(3000), '界'.repeat(2730)],
+        ['🧭'.repeat(3000), '🧭'.repeat(2048)],
+        ['x'.repeat(8191) + '🧭z', 'x'.repeat(8191)],
+        ['x'.repeat(8188) + '🧭', 'x'.repeat(8188) + '🧭'],
+    ];
+    for (const [input, expected] of cases) {
+        const calls = [];
+        const client = new LambdaClient(config, 'synthetic', { fetcher: async (url, init) => {
+            calls.push(JSON.parse(init.body)); return Response.json(rerankedResponse());
+        } });
+        await client.search('test', owner, scope, input, undefined, 'chat_child');
+        assert.equal(calls.length, 1, 'The SDK accepts the bounded request');
+        const body = calls[0];
+        assert.equal(body.query.bayesian[0].knn.queryText, expected);
+        assert.equal(body.query.bayesian[1].bool[1].queryString.query, expected);
+        assert.equal(body.rerank.queryText, expected);
+        assert(Buffer.byteLength(expected, 'utf8') <= 8192);
+        assert.equal(body.query.bayesian[0].knn.k, 30);
+        assert.deepEqual(body.ref, { kind: 'branch', name: 'chat_child' });
+    }
+});

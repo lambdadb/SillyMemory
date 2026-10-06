@@ -184,6 +184,14 @@ export class LambdaClient {
         return result.docs.map(x => x.doc);
     }
     search(collection, owner, scope, text, signal, branch = 'main') {
+        // The SDK caps rerank queries at 8 KiB UTF-8. Keep all three signals
+        // aligned, and never cut inside a multi-byte code point.
+        const bytes = new TextEncoder().encode(text);
+        if (bytes.length > 8192) {
+            let end = 8192;
+            while ((bytes[end] & 0xc0) === 0x80) end--;
+            text = new TextDecoder().decode(bytes.subarray(0, end));
+        }
         const filter = scopeFilter(owner, scope);
         return this.query(collection, { bayesian: [
             { knn: { field: 'embedding', queryText: text, k: 30, filter } },

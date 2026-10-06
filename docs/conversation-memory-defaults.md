@@ -30,7 +30,9 @@ instructs the model not to invent a date, making it an easier abstention control
 Deployed retrieval uses stable SDK 0.8.0, managed `text-embedding-3-small`, an
 English-only `text` analyzer, raw query with `skipSyntax: true`, owner/scope filters
 on both legs, `consistentRead: true`, explicit `chat_eval` branch, `knn.k=30` and
-final `size=30`. Bayesian combines two unboosted vector/text signals, followed by
+final `size=30`. Search uses one shared UTF-8-safe prefix for all signals, capped
+at the reranker SDK limit of 8,192 bytes; queries below that limit remain unchanged.
+Bayesian combines two unboosted vector/text signals, followed by
 Typesafe `jev-1.13.0`, `candidateSize=30`, `fields=['text']`, `onFailure='error'`.
 Applied rerank metadata and exact source/time readback are required. These are not
 RRF or manually OR-expanded lexical queries. No additional provider key is needed;
@@ -131,6 +133,12 @@ The measured runtime hashes match their pre-call locks. The final default-only
 800 → 1,600 patch was applied afterward; all measured arms already used explicit
 budgets. Final source and UI checks verify the adopted initial setting. Privacy
 copy was clarified during the run and was not part of the measured module locks.
+Automatic review subsequently identified the reranker byte-limit boundary. The
+final guard truncates oversized queries at a complete UTF-8 code point for all
+three signals. All 24 captured Bayesian requests remain byte-for-byte unchanged
+(the largest query was 144 bytes); no paid answer was regenerated. The final unit
+suite passes 325 tests on both supported Node versions. The actual-host and paid
+runs precede this boundary-only fix; their producing modules remain archived.
 
 No source time is invented for imports, no historical timezone is inferred, and
 message time is not automatically treated as event time. Timestamp-only changes

@@ -345,7 +345,7 @@ final default-only patch follows the completed explicitly budgeted arms.
   credentials and private host/browser profiles are excluded. Original active-tree
   evidence and all earlier archives remain intact.
 
-Validation on the final runtime:
+Validation after initial-default adoption, before the automatic-review boundary fix:
 
 | Command | Outcome and boundary |
 | --- | --- |
@@ -365,3 +365,21 @@ supplied credentials; they are not maintained CI or a public credential-bearing
 reproduction bundle. Normal unit coverage uses small synthetic inputs. No new
 large fixture or experiment framework is committed, and no release/deployment is
 established by these checks.
+
+Automatic review then identified the stable SDK's 8,192-byte reranker query limit.
+The final guard uses a shared whole-code-point UTF-8 prefix for vector, lexical
+and reranker signals. Unit coverage includes long CJK, emoji, a partial-code-point
+boundary and an exactly-full request. `npm test` (Node 24.15.0) and the Node 20.12.0
+command above pass 325/325; syntax, release and SDK checks pass again. Replaying the
+24 captured Bayesian requests through the final SDK client produces identical
+request bodies (maximum query 144 bytes) and no network/provider calls. Actual-host
+and paid quality runs were not repeated after this boundary-only fix.
+
+The original adoption archive remains unchanged. A verified supplemental archive
+at `artifacts/archive/conversation-memory-review-fix-v1/evidence.tar.gz` contains
+10 entries, 37,996 bytes; SHA-256
+`ad711aae12c4f4ef5e7b149c8a201120e8d31d8e5961cfafcecd0f92503c089e`.
+It records the patch against `fa49b55974f2fa6a9a0938a09ce7bc18291e3cce`, final
+client/test bytes, request-equivalence receipt and final check logs, and links the
+original archive checksum. Identical local-only copies and receipts exist in the
+same two worktrees; every manifest entry was extracted and verified.
