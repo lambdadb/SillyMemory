@@ -1,5 +1,9 @@
 # Deployed Bayesian evaluation with a temporary dev SDK
 
+SDK version references identify the historical evaluation producers and decisions,
+not the current product dependency. See [SDK migration](sdk-migration.md) and
+[package.json](../package.json) for the reviewed product pin.
+
 ## Scope and decision
 
 An isolated evaluation temporarily installed
