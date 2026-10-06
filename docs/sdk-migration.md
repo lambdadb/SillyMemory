@@ -1,6 +1,59 @@
 # Official SDK migration
 
-## Decision and bounded scope
+## Current SDK — 0.8.0
+
+The extension now pins the released `@functional-systems/lambdadb` **0.8.0** and
+ships its regenerated browser bundle (134,939 bytes; Apache-2.0 and Zod notices
+unchanged). This is the stable release, not the temporary `dev` evaluation input.
+See the [official release](https://github.com/lambdadb/lambdadb-typescript-client/releases/tag/v0.8.0).
+
+Published-source comparison against 0.7.0 finds additive Bayesian query/candidate
+budget types and serialization, Bayesian-aware reranking validation, and native
+embedding configuration support. The existing legacy `managedEmbedding: true`
+configuration remains supported. Retain it and the existing vector-only query;
+SDK feature availability does not adopt Bayesian/reranking or certify its quality.
+The underlying transport/body-reading code is unchanged, so the response-buffering
+safeguard below remains necessary. No SDK source patch is introduced.
+
+Parsing, validation order, sanitized error classification, side effects, ownership,
+branch/ref isolation, session-only keys, direct CORS, explicit deadlines/retries,
+inline-only handling, k/size 30, chunking and token budgets remain unchanged.
+The application-client diff only removes a version-specific comment reference.
+The extension remains an unreleased 0.4.0 candidate; this does not publish it.
+
+Upgrade verification on SillyTavern 1.19.0 at the pinned revision below:
+
+- `npm test`: 315/315 executed and passing, with no new SDK-internal tests.
+- `npm run check`, `npm run check:release`, `npm run check:sdk`: pass; the locked
+  browser bundle reproduces exactly. The lockfile changes only the SDK pin,
+  tarball location and integrity; other dependencies and licenses are unchanged.
+- `npm run test:recovery` with the local HTTPS LambdaDB emulator: 189 checks pass,
+  including reload/restart, mutations, failure handling and write-drained deletion;
+  zero emulator Collections remain. This is actual-host/emulator evidence.
+- `node scripts/prompt-delivery-smoke.mjs`: 13 final-prompt scenarios and recorded
+  repeated-passage packing pass with a local completion fixture, zero remaining
+  Collections and no persisted session key. This is not a paid model quality run.
+- `npm run test:collections:live -- --checkpoint-manager`: 41 actual-host/live
+  managed-LambdaDB checks pass, including ordinary upsert/queryText, unchanged
+  branch inheritance, checkpoint verification/resume, scoped deletion and owned
+  discovery cleanup. Twelve document submissions include the transport test;
+  frozen runtime hashes are unchanged and owned cleanup is confirmed.
+
+No generation provider, new live Bayesian/reranker query, fresh quality cohort,
+large-history rerun or new snapshot-retention experiment is part of this upgrade.
+Historical 0.7.0 migration and temporary dev-SDK evidence retain their original
+versions, results and availability; the following sections describe that migration.
+
+Upgrade evidence is retained locally at
+`/Users/steven/Dev/sillymemory-sdk-080/artifacts/archive/sdk-080-v1/evidence.tar.gz`:
+1,127,108 bytes, 14 members, SHA-256
+`a2bb26fa1034112dfb5d4c42ca453f14eefcc0f058d337fa7719109aaa23aed2`.
+Every member was read back byte-for-byte; configured-secret matches were zero.
+The bundle contains base fbae879, the candidate patch, reports/logs and scope;
+this archive pointer was added after capture without changing runtime files.
+It is local-only and unavailable in a fresh clone. Existing evidence is unchanged.
+
+## Original migration decision and bounded scope
 
 Use the official `@functional-systems/lambdadb` 0.7.0 client for collection,
 branch, document and query operations. Keep the existing SillyMemory interface

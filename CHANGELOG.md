@@ -8,7 +8,7 @@ boundary; publication is confirmed by the corresponding Git tag and GitHub Relea
 
 ### Changed
 
-- Use the official LambdaDB TypeScript SDK 0.7.0 through a pinned browser bundle.
+- Use the official LambdaDB TypeScript SDK 0.8.0 through a pinned browser bundle.
   Preserve session-only keys, direct CORS, cancellation, safe errors and explicit
   retry/inline-result policies; Git URL installation needs no user build step.
 

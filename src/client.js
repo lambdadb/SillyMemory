@@ -54,7 +54,7 @@ export class LambdaClient {
                     headers: { 'Content-Type': 'application/json', 'x-api-key': this.#key },
                 });
                 if (!response.ok) throw httpError(response.status);
-                // SDK 0.7.0 can leave a rejected metadata promise if body reading
+                // The SDK can leave a rejected metadata promise if body reading
                 // fails after headers. Finish the JSON transport under the same
                 // deadline here; SDK parsing/validation still owns the payload.
                 const bytes = await response.arrayBuffer();
