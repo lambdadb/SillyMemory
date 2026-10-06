@@ -6,6 +6,13 @@ boundary; publication is confirmed by the corresponding Git tag and GitHub Relea
 
 ## [0.4.0] - Unreleased
 
+### Added
+
+- Add UTC host-message provenance to recalled excerpts when budget permits, using local
+  timestamps and spare memory tokens after passage selection. Missing or unsupported
+  dates are omitted; timestamp-only edits do not re-embed source text. Host time is
+  explicitly distinguished from story/event dates.
+
 ### Changed
 
 - Use the official LambdaDB TypeScript SDK 0.8.0 through a pinned browser bundle.

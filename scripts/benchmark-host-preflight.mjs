@@ -43,7 +43,7 @@ const report = { version: 'longmemeval-host-preflight-v1', passed: false,
         browserBlocked: 0, hostBlocked: 0 }, cleanup: false };
 for (const file of ['scripts/benchmark-host-preflight.mjs', 'scripts/benchmark-host-input.mjs',
     'scripts/benchmark-loopback-guard.cjs', 'scripts/benchmark-audit.mjs', 'index.js', 'src/chat-collections.js', 'manifest.json',
-    'src/memory.js', 'src/context.js', 'src/client.js', 'vendor/lambdadb.js', 'package-lock.json', 'src/gate.js', 'src/delivery.js', 'src/status.js']) {
+    'src/memory.js', 'src/time.js', 'src/context.js', 'src/client.js', 'vendor/lambdadb.js', 'package-lock.json', 'src/gate.js', 'src/delivery.js', 'src/status.js']) {
     report.sourceSha256ByFile[file] = sha(await read(file));
 }
 await mkdir(path.dirname(path.resolve(output)), { recursive: true });

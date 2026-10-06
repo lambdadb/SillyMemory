@@ -44,6 +44,30 @@ test('deduplication, edits, swipe, deletion and reload reconcile uncertain write
     await reloaded.sync(snap, config);
     assert.deepEqual([...s.remote.keys()].sort(), (await documents(snap, owner, config)).docs.map(x => x.id).sort());
 });
+test('timestamp-only edits and reload use current local provenance without another remote upsert', async () => {
+    const s = setup(), snap = snapshot();
+    snap.messages[0].recordedAt = '2024-01-01T00:00:00.000Z';
+    await s.engine.sync(snap, config);
+    snap.messages[0].recordedAt = '2024-01-02T00:00:00.000Z';
+    const result = await s.engine.retrieve(snap, { ...config, budget: 2000 }, t => t.length);
+    assert(result.text.includes('1=2024-01-02T00:00:00.000Z'));
+    assert(!result.text.includes('2024-01-01')); assert.equal(s.writes.length, 1);
+    const reloaded = new MemoryEngine({ client: s.client, owner, collection: 'test', branch: 'chat_test', journal: new Journal(s.storage, 'test') });
+    assert.equal((await reloaded.retrieve(snap, { ...config, budget: 2000 }, t => t.length)).text, result.text);
+    assert.equal(s.writes.length, 1); assert.equal(s.deletes.length, 0);
+});
+
+test('a timestamp change during asynchronous annotation cannot deliver the old prompt', async () => {
+    const s = setup(), snap = snapshot(); let current = true, release, started;
+    snap.messages[0].recordedAt = '2024-01-01T00:00:00.000Z';
+    const annotating = new Promise(resolve => { started = resolve; });
+    const pending = s.engine.retrieve(snap, { ...config, budget: 2000 }, async text => {
+        if (text.includes('[Host message timestamps')) { started(); await new Promise(resolve => { release = resolve; }); }
+        return text.length;
+    }, () => current);
+    await annotating; current = false; release();
+    assert.equal(await pending, null);
+});
 test('intent journal survives server acceptance followed by a timeout', async () => {
     const s = setup(); const real = s.client.upsert;
     s.client.upsert = async (...args) => { await real(...args); throw new Error('timeout'); };
