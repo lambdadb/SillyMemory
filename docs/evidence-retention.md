@@ -462,3 +462,42 @@ Identical local-only archive/receipt copies exist in the primary and
 `sillymemory-memory-guidance` worktrees, unavailable in a fresh clone. The previous
 guidance and historical archives remain intact. The corrected interpretation is
 maintained in the decision document; the original provisional review is not edited.
+
+## Current-baseline failure discovery
+
+The [completed decision](current-baseline-failure-discovery.md) uses producer base
+`13a27f7713b9a5ce66fb4f3c15ab66ab1ca4a770` and pinned SillyTavern
+`06bde939fb1e9c4c8d8641d810f0a916b5bce127`. Six actual discovery answers produce
+five target matches; one same-ranking capacity repair returns the complete answer.
+No instruction/runtime/default change is adopted. The independent six-case source
+preflight has no missing labeled evidence at 1,600, so no paid confirmation
+comparison is run. Source coverage is not an answer-correctness claim.
+
+- Archive: `artifacts/archive/current-baseline-failure-discovery-v1/evidence.tar.gz`.
+  It contains 81 files plus manifest, 84,501,361 bytes; SHA-256
+  `167b8161bfde17f636b7d1c49109b1f1676dc11d4ce573dafeeb13e39fb18d53`.
+- Every manifest member was extracted and checked for length/SHA-256; configured
+  secret scanning passes. Identical archive/receipt copies are retained in
+  `/Users/steven/Dev/sillymemory` and
+  `/Users/steven/Dev/sillymemory-failure-discovery`. These are local copies on one
+  machine, ignored and unavailable in a fresh clone, not a remote backup.
+- Includes the full original public dataset and original dialogue adaptation,
+  selection/source/settings locks, producer base tar, one-off source, deployed
+  readbacks/searches, 18 actual-host fixture selections, seven full actual quality
+  answers plus two actual READY checks, complete prompts/usage, pre-answer judging
+  criteria, semantic audits, unchanged candidate plan and separate ceiling-stop
+  receipt. All 24 owned collection cleanup receipts and Node/syntax/SDK/release
+  check logs are retained. No environment file, secret or host profile is included.
+- Original auth401, consistent-fetch503 attempts, bounded read retries and
+  Bayesian400 service probe are preserved, alongside the successful later probe.
+  The earlier `failure-discovery-service-blocker-v1` archive remains unchanged
+  (SHA-256 `4918d44b97304590c3b8f6bb55c6e656ad4f536b4b887d2c91ce7554119ff581`).
+
+For reproduction, restore the recorded base, archived dataset/cases and producing
+scripts in ignored `artifacts/`, with the pinned host and its dependencies. The
+one-off scripts record the original absolute local dataset/environment locations;
+restore or explicitly adapt those ignored paths before use. Only the primary
+`.env.local` supplied credentials in memory, with explicit `SM_MODEL=gpt-6.1-sol`.
+Replaying captured selections is offline; repeating upserts/searches/answers is
+new paid live work and does not reproduce identical provider responses. This
+archive is evidence, not a portable maintained evaluation command or CI fixture.

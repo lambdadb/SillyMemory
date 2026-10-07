@@ -6,6 +6,10 @@ boundary-aware per-message chunks, the 4,096-token maximum and the host's
 one-quarter context cap. These are development defaults, not a release or a claim
 that 1,600 tokens are sufficient for every conversation.
 
+The later [external failure discovery](current-baseline-failure-discovery.md)
+qualifies one real capacity loss and its 3,200-token repair. Independent default
+efficacy remains unestablished; the 1,600-token default is retained.
+
 ## Method and adoption boundary
 
 Twelve newly authored English histories were frozen before provider calls: six
