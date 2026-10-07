@@ -6,6 +6,10 @@ boundary-aware per-message chunks, the 4,096-token maximum and the host's
 one-quarter context cap. These are development defaults, not a release or a claim
 that 1,600 tokens are sufficient for every conversation.
 
+The [context-aware query comparison](context-aware-query-comparison.md) rejects
+unconditional context concatenation and finds no demonstrated added value from
+always-on Sol rewriting. Current defaults and retrieval policy remain unchanged.
+
 The later [external failure discovery](current-baseline-failure-discovery.md)
 qualifies one real capacity loss and its 3,200-token repair. Independent default
 efficacy remains unestablished; the 1,600-token default is retained.

@@ -501,3 +501,34 @@ restore or explicitly adapt those ignored paths before use. Only the primary
 Replaying captured selections is offline; repeating upserts/searches/answers is
 new paid live work and does not reproduce identical provider responses. This
 archive is evidence, not a portable maintained evaluation command or CI fixture.
+
+## Context-aware query comparison
+
+The [completed comparison](context-aware-query-comparison.md) retains the current
+runtime/defaults: baseline17/18, structured-context17/18, constrained-rewrite18/18.
+The only gain uses an unchanged query; two current-query-only attribution answers
+also succeed. The supplementary full-source 5K correction changes interpretation,
+not historical scores, source bytes or original archives.
+
+- Local-only archive: `artifacts/archive/context-query-comparison-v1/evidence.tar.gz`.
+  54 files plus manifest; 20,473,538 bytes; SHA-256
+  `acc6e899aa9b9f835308fc5996dff9769a100cc91e1f4393ac6289ca5ba9187f`.
+- Every manifest member read back and length/hash verified, configured-secret
+  matches zero. Identical archive/receipt copies exist in the primary
+  `/Users/steven/Dev/sillymemory` and
+  `/Users/steven/Dev/sillymemory-context-query` worktrees. These are ignored local
+  copies on one machine, unavailable in a fresh clone, not a remote backup.
+- Contains producer base13a27f7, all twelve external and six synthetic inputs,
+  original/prepaid input versions, frozen methods/scoring, original protocol and
+  separately retained schedule/diagnostic addenda, all deployed captures/readbacks,
+  actual-host source/prompt identities, 54 main and two diagnostic full answers,
+  eighteen rewrites, three READY checks and corresponding zero-provider fixture
+  reports, source-interpretation correction, final audit, usage/cleanup/check logs,
+  and one-off producers. All thirty owned collections are deletion/404 verified.
+- Original failure-discovery archive and active-tree evidence remain unchanged.
+  Restore this archive into a fresh directory, supplying pinned host/dependencies
+  and credentials separately. Captured-rank replay is offline; rerunning actual
+  retrieval/generation is new paid work with nonidentical provider responses.
+  Historical absolute paths need adaptation; this is retained evidence, not a
+  maintained portable evaluation command or CI dependency. No environment file,
+  credential, personal chat or host/browser profile is included.

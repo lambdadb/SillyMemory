@@ -12,7 +12,7 @@ reason to increase the default. No runtime, instruction or user setting changes.
 | Discovery question | Result at 1,600 | Interpretation |
 | --- | --- | --- |
 | `184da446`: current reading progress | Correct: 220 pages | Both older 200 and later 220 were delivered. |
-| `e66b632c`: previous 5K personal best | Target match: 27m45s | Later recollection says 26m30s; the source does not explicitly establish a new run. The answer's “newer best” relation is plausible, not uniquely established. |
+| `e66b632c`: previous 5K personal best | Target match: 27m45s | An additional full-source audit finds message 485 explicitly reporting a new run beating the previous record; both that source and later 26m30s are delivered. |
 | `4adc0475`: goals plus assists | Correct: 5 | Both 3 goals and 2 assists were delivered. |
 | `gpt4_2f91af09`: completed writing pieces | Incomplete: 22, with an explicit unknown challenge count | Required challenge piece was retrieved but omitted by selection. |
 | `gpt4_8279ba03`: appliance bought ten days ago | Correct: smoker | March 15 source and March 25 question support the interval. |
@@ -20,9 +20,14 @@ reason to increase the default. No runtime, instruction or user setting changes.
 
 These are assistant semantic audits of full answers, original source and exact
 final prompts against criteria frozen before generation. They are not official
-LongMemEval scores or independent human judgments. Preserve the 5/6 target-match
-count and the 5K ambiguity separately; do not rewrite the released target or
-claim an unambiguous evidence-interpretation failure there.
+LongMemEval scores or independent human judgments. Preserve the 5/6 target-match count and the original evidence. A supplemental
+full-source audit corrects the earlier 5K ambiguity explanation: zero-based
+source 484 explicitly describes a new run beating the previous record, and it
+is present in the original delivered prompt. Its approximate “minute and a half”
+improvement differs from the exact 1m15s difference between the two recorded
+times; this does not erase the explicit new-run statement. No target or score
+changes. The original frozen criteria and audits remain archived unchanged; see
+the [query comparison](context-aware-query-comparison.md).
 
 ### The actual failure and controlled repair
 
@@ -60,7 +65,10 @@ supporting messages are already delivered in full at 1,600** across the five
 answerable confirmation cases. Both budgets have identical coverage of those
 sources. The sixth question is an abstention control. This is a source-delivery
 ceiling for the diagnosed mechanism, **not** a measured answer-accuracy ceiling:
-no confirmation quality answers were generated.
+no confirmation quality answers were generated in this budget-only experiment.
+Dataset evidence flags are not exhaustive: the later query comparison identifies
+an unflagged kitchen-mat replacement source. Labeled coverage alone cannot prove
+that every necessary dependency reached the prompt.
 
 | Reserved confirmation | Coverage at both budgets |
 | --- | --- |
