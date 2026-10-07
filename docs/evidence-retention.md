@@ -561,3 +561,48 @@ separately; historical absolute paths need adaptation. Fresh paid reruns do not
 reproduce identical provider output. Environment files, credentials, host/browser
 profiles and personal chats are excluded. The recorded 13-vs-12 query-attempt bound
 deviation is retained; no evidence or failure was rewritten to conceal it.
+
+## Expanded contextual-query quality comparison
+
+The forty-case English comparison is recorded in
+[context-aware query comparison](context-aware-query-comparison.md#expanded-contextual-query-quality-comparison).
+It completes 96 live query rewrites and 120 new Sol answers across single-current-
+question, B/Sol-low and B/Luna-none arms. All three retrieve/inject sufficient support
+and answer 35 factual targets; five ambiguity controls meet clarification criteria.
+The generic event-pair case does not specify its intended inspection/drill labels:
+its bridge source is missing and menus use a competing historical note. Preserve
+that limitation rather than claim forty complete source recoveries. Clear referent
+resolution is 25/25 Sol versus 12/25 Luna, with mode-only mistakes in both models;
+no default or runtime adoption. A saturated small-corpus factual baseline leaves
+rewrite efficacy inconclusive.
+
+Detailed output/source/audit is ignored and **local-only**, unavailable in a fresh
+clone or CI:
+
+- Primary retained copy: `artifacts/archive/context-quality-v1/evidence.tar.gz`.
+- Producing worktree copy: the same relative path in `sillymemory-context-query`.
+- Archive SHA-256: `cc293ac84dcbd3aaa06ec79d2651295aeebef456d1b61d999f3433e830c8ad2e`.
+- Size: 2,472,550 bytes; 43 files plus `ARCHIVE-MANIFEST.json`.
+- Every member hash/length and primary backup bytes verified; configured-key
+  matches zero. No `.env.local` or credentials copied.
+- Base: `13a27f7713b9a5ce66fb4f3c15ab66ab1ca4a770`; pinned host
+  `06bde939fb1e9c4c8d8641d810f0a916b5bce127`; SDK 0.8.0.
+
+The bundle contains frozen cases/specifications/protocol, exact original B prompt,
+one-off builder/host runners/resource guard, producer-base source tar, full
+fixture/two-live reports and source-hash plans, ownership/request ledgers, complete
+manual/final audit, annotation correction, completion and local check logs. The
+original fixture cap 44 protocol/budget bytes are retained against their recorded
+hashes; paid phases use the pre-live corrected cap of 48 and separately verified guard.
+An initial annotation of grounded `he`→Owen replacement as semantic corruption is
+withdrawn; violin specificity remains a documented limitation, with original
+annotation/disposition preserved. Required/contrast evidence roles are explicit;
+the later grant note also independently supports the original $1,400 amount.
+
+Actual provider attempts: 218, zero retries/transport errors. The fixture's 217 responses
+are simulated, with zero direct OpenAI calls; fixture service setup is real. All
+46 owned collections (40 corpora + six setup) are deleted/404-confirmed; pending
+records absent. Combined submissions: 2,923 and query attempts: 75 stay within frozen
+resource bounds. No repeated-answer quality selection, hidden failed run or
+unperformed corpus browser-sync claim. The original failure-discovery, context-query,
+Luna-rewrite and service-blocker archives remain untouched.

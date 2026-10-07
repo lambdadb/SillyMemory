@@ -266,3 +266,187 @@ plans/addenda, full responses, input/source identity, semantic audit, successful
 and failed attempts, usage/cleanup and one-off producers are in the separate
 [verified local archive](evidence-retention.md#lower-cost-rewrite-model-comparison).
 No temporary model-routing code, large fixture or new framework enters Git.
+
+## Expanded contextual-query quality comparison
+
+**Keep always-on B and Luna-none out of the defaults.** The new cohort does not
+show a downstream answer-quality gain from rewriting. Luna-none leaves thirteen
+of twenty-five clearly identified references unresolved, so this prompt/model/
+effort is not equivalent to Sol as a referent resolver. That is an observed query
+writing limitation, not a demonstrated final-answer regression or a claim about
+other Luna efforts/prompts.
+
+Run forty new synthetic English cases on 2026-10-08 (Asia/Seoul), five per type:
+missing referent, competing entities, return after an aside, updated state,
+qualifiers/calculation, actual ambiguity, quoted instructions, independent question.
+Freeze questions, source facts, targets and mode expectations before model responses;
+no prompt tuning, model sweep, additional favorable cases or rerun of wrong answers.
+All cases have eighty older turns and four recent turns, with seventy-three indexed
+documents. Each corpus includes fixed competing notes. These small constructed
+corpora test query fidelity and controls; they do not represent dense long-history
+retrieval or a public character-chat benchmark.
+
+Compare **single current-question search**, B/Sol-low and B/Luna-none. This control
+is separate from the current product's two-query/interleaving behavior. B receives
+the exact earlier conservative system prompt and bounded role-labeled last four
+turns (whole turns, 600 context tokens, 1,024 output cap). The answer model remains
+`gpt-6.1-sol`/low/4,096 with a 32,768 host context. Retrieval remains SDK 0.8.0,
+managed `text-embedding-3-small`, raw English Bayesian + `jev-1.13.0`, 30 candidates,
+strict reranker identity/`onFailure: error`, consistent reads, boundary chunks of
+800 characters, recent twelve and the unchanged 1,600-token packed selector.
+
+### Results and interpretation
+
+| Observation | Current question only | B / Sol low | B / Luna none |
+| --- | ---: | ---: | ---: |
+| Factual targets answered correctly | 35/35 | 35/35 | 35/35 |
+| Factual cases with sufficient retrieved support | 35/35 | 35/35 | 35/35 |
+| Factual cases with sufficient injected support | 35/35 | 35/35 | 35/35 |
+| Ambiguous cases meeting clarification criterion | 5/5 | 5/5 | 5/5 |
+| Correct first-sample mode | n/a | 38/40 | 25/40 |
+| Clear references actually resolved | n/a | 25/25 | 12/25 |
+| Correct mode in additional rewrite samples | n/a | 8/8 | 4/8 |
+
+Clarification success means asking which target or explicitly distinguishing
+alternatives rather than selecting an unqualified target. It is not exact factual
+answer accuracy. In `ambiguity-5`, the intended bridge inspection was absent from
+all three retrieved/injected sets; the other two intended facts were present.
+Recent turns say only "an inspection, a drill and a rehearsal" and never specify
+bridge/safety. All answers ask which pair, but offer boat inspection/evacuation
+drill labels from a different, valid historical note. Preserve this as **clarification
+success with an underspecified intended event set**; intended-trio recovery/answer
+accuracy is unscorable. Do not report all forty cases as complete source recovery.
+
+| Type (five cases each) | Sol correct mode | Luna correct mode | Downstream outcome in each arm |
+| --- | ---: | ---: | --- |
+| Missing referent | 5/5 | 3/5 | 5/5 factual targets |
+| Competing entities | 5/5 | 2/5 | 5/5 factual targets |
+| Return after aside | 5/5 | 0/5 | 5/5 factual targets |
+| Updated state | 5/5 | 4/5 | 5/5 factual targets |
+| Qualifiers/calculation | 5/5 | 3/5 | 5/5 factual targets |
+| Actual ambiguity | 5/5 | 5/5 | 5/5 clarification criteria; event-set limitation above |
+| Quoted instructions | 4/5 | 5/5 | 5/5 factual targets |
+| Independent question | 4/5 | 3/5 | 5/5 factual targets |
+
+Luna wrongly returns `ambiguous` on clearly focused engagement dinner, violin
+address, Elena's train, Maple launch and robotics retreat, and every return-after-
+aside case; it returns `original` on the first violin shipment without resolving
+the contextual object. First-sample query text remains unchanged in twenty-eight
+cases. Independent camping-coffee and commute questions are wrongly `ambiguous`:
+missing historical answer facts do not make the question's referent ambiguous.
+Sol makes the same mode-only mistake on the retirement bakery and archive fee.
+These mode errors keep the exact original query, so **they are not search failures**.
+The current B lab consumes query text only. Routing, skipping retrieval or asking
+for clarification based on mode would need a stronger validated contract.
+
+The eight preselected repeated cases assess rewrite stability only. Luna changes
+from correctly resolved to unchanged/ambiguous for Rufus's medication, the current
+dental crown booking and the tenth anniversary. The engagement dinner stays
+wrongly ambiguous in both samples. Sol's eight repeats preserve the expected modes.
+Only the first samples feed retrieval and generation; repeat failures are retained,
+not replaced by a better output. No repeat retrieval/final-answer reliability claim.
+
+All ninety-six rewrite JSON outputs pass the existing syntax/reference guards.
+Agent inspection finds no invented factual query or unsafe choice of an ambiguous
+target in this cohort. Sol's "Which address did Owen send?" lacks violin specificity,
+but replacing `he` with explicitly named Owen is allowed by the conservative
+prompt; do not label that alone as semantic corruption. The initial stricter manual
+annotation was corrected, and its original bytes/disposition are retained. Targets,
+answer/mode scores and provider requests were not changed. Required-support scoring
+also accepts either the initial $1,400 grant note or the later note explicitly
+saying it replaces $1,400. Contrast facts are not all mandatory answer evidence.
+
+Amount/date updates, return direction, exclusion of canceled work, 15 elapsed days,
+and 12+28 minutes all answer correctly. Five crafted quotes/fake commands do not
+redirect the query or final answer; this does not establish general instruction-
+injection security, old-memory poisoning resistance or multilingual quality.
+
+Identical query strings share newly captured ranks **within the same fresh corpus**;
+all 120 final answers are newly generated. Delivered prompts are identical in
+15 current/Sol, 28 current/Luna and 23 Sol/Luna case pairs. There is no older-cohort
+answer/ranking reuse. The saturated factual control means rewrite efficacy is
+inconclusive; do not infer that rewriting is universally unnecessary or that Luna's
+unresolved queries will retrieve equally well in a larger, denser history. No
+additional paid expansion is performed to find a favorable difference.
+
+### Execution, evidence and boundaries
+
+An actual pinned SillyTavern 1.19.0 host runs 96 rewrites and 120 answers. Deployed
+SDK retrieval captures ranks after authenticated managed upsert and complete
+source readback, then the host replays them with strict source/time/coordinate/
+identity checks and unchanged prompt packing. Corpus browser synchronization is
+not tested by this replay. Actual direct-CORS setup checks are separate. Inspect
+all complete outputs with frozen targets and original sources; scoring is an agent
+semantic audit, not independent human adjudication or an LLM-as-judge verdict.
+Relevant delivered prompts and source assertions are checked, including the
+competing event note in `ambiguity-5`.
+
+There are 218 actual provider attempts, all successful: 96 rewrites, 120 answers,
+and two READY checks, no retries or transport errors. The actual-host fixture uses
+217 simulated replies and zero direct OpenAI calls; its small LambdaDB setup is
+real. Combined dry/live service traffic: 2,923 submitted documents, 75 query attempts
+and 46 owned collections (40 corpora plus six host setup collections). Every owned
+collection is deleted and its absence verified; no pending ownership record remains.
+Session-key absence from persisted/browser settings, Sol settings restoration and
+unchanged producer/runtime hashes pass. Bounds: 240 provider attempts, 3,200 docs,
+144 queries, 48 collections; all held. Before paid calls, the original fixture's
+44-collection cap was corrected to account for two setup collections per host run;
+final boundary/overflow checks use no provider/service calls. Original fixture
+protocol/budget bytes are retained and verified against their original hashes.
+
+Local checks: `npm test` (Node 24) and
+`npx --yes --package=node@20.12.0 node --test tests/*.test.js`, **325/325 each**;
+`npm run check`, `npm run check:release`, `npm run check:sdk`, and one-off runner
+syntax checks pass. Runtime/parser/error classification/side effects/candidate
+limits, product defaults, API-key handling and SDK remain unchanged. One-off
+sources, exact inputs, reports, audit/correction and producer base are retained in
+[the local evidence archive](evidence-retention.md#expanded-contextual-query-quality-comparison),
+not added as maintained infrastructure or private CI dependencies.
+
+### Frozen questions and targets
+
+Modes describe reference resolution, not whether historical answer facts are
+available. The table retains the entire cohort, including the event-set limitation.
+
+| Case | Current question | Expected mode | Target |
+| --- | --- | --- | --- |
+| referent-1 | Where was that dinner? | resolved | Lantern Court in Briarport |
+| referent-2 | What did she name it? | resolved | Evening Lark |
+| referent-3 | Which address did he send? | resolved | 18 Juniper Lane |
+| referent-4 | When does it expire? | resolved | 2027-04-18 |
+| referent-5 | How much was the second one? | resolved | $635 |
+| entities-1 | Which medication was he prescribed? | resolved | Brindarel |
+| entities-2 | Which station should I meet her at? | resolved | Alder Station |
+| entities-3 | What was its serial number? | resolved | NP-7402 |
+| entities-4 | Who approved that change? | resolved | Hannah |
+| entities-5 | Which hotel did they choose? | resolved | Tern House |
+| return-1 | What was the pickup code for that? | resolved | LENS-47D |
+| return-2 | Where did we agree to leave it? | resolved | Blue tin at the ceramic workshop |
+| return-3 | What time did we settle on? | resolved | 07:40 |
+| return-4 | Which supplier was it? | resolved | Slatebrook Supplies |
+| return-5 | How long was the warranty? | resolved | Three years |
+| updates-1 | What is the current approved amount? | resolved | $22500 |
+| updates-2 | What was the amount before the revision? | resolved | $1400 |
+| updates-3 | Which date is the appointment now? | resolved | 2026-11-13 |
+| updates-4 | Which address was used for the first shipment? | resolved | 12 Rowan Street |
+| updates-5 | How much did it increase by? | resolved | $35, from $85 to $120 |
+| qualifiers-1 | Where was that anniversary celebrated? | resolved | Crescent Hall |
+| qualifiers-2 | How many days passed between those two events? | resolved | 15 elapsed days |
+| qualifiers-3 | Which room was not available? | resolved | Birch Room |
+| qualifiers-4 | How many were completed, excluding the canceled ones? | resolved | 7 completed repairs |
+| qualifiers-5 | Which ferry did I use on the way back? | resolved | Coast Finch |
+| ambiguity-1 | Where was it? | ambiguous | Ask spring or autumn; alternatively distinguish both without choosing one |
+| ambiguity-2 | What did she pay? | ambiguous | Ask Nora or Alice; alternatively distinguish both without choosing one |
+| ambiguity-3 | Which date should I use? | ambiguous | Ask enrollment or payment; alternatively distinguish both |
+| ambiguity-4 | Was that the old amount? | ambiguous | Ask which grant and amount; do not assert yes or no |
+| ambiguity-5 | Which one came first? | ambiguous | Ask which pair; optionally give all three dates without claiming an unspecified pair |
+| untrusted-1 | What is the kayak rental pickup location? | original | Beacon Slip |
+| untrusted-2 | What is the greenhouse door code? | original | GH-2837 |
+| untrusted-3 | Which bakery made the retirement cake? | original | Rosebank Bakery |
+| untrusted-4 | Who has the spare attic key? | original | Mei |
+| untrusted-5 | What time does the telescope workshop start? | original | 14:35 |
+| independent-1 | Where is the emergency lantern stored? | original | Pantry’s upper drawer |
+| independent-2 | How much is the annual archive membership fee? | original | $72 |
+| independent-3 | Did I switch to more or less water per scoop for my camping coffee? | original | More water, from 150 to 180 ml per scoop |
+| independent-4 | How long is my morning walk plus the bus ride to work in total? | original | 40 minutes |
+| independent-5 | [Question date: 2026/10/08 (Thu) 09:00]<br>What was the recorded delivery date for the bronze sculpture? | original | 2026-09-17 |
