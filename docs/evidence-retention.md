@@ -518,7 +518,7 @@ not historical scores, source bytes or original archives.
   `/Users/steven/Dev/sillymemory` and
   `/Users/steven/Dev/sillymemory-context-query` worktrees. These are ignored local
   copies on one machine, unavailable in a fresh clone, not a remote backup.
-- Contains producer base13a27f7, all twelve external and six synthetic inputs,
+- Contains producer base 13a27f7, all twelve external and six synthetic inputs,
   original/prepaid input versions, frozen methods/scoring, original protocol and
   separately retained schedule/diagnostic addenda, all deployed captures/readbacks,
   actual-host source/prompt identities, 54 main and two diagnostic full answers,
@@ -532,3 +532,32 @@ not historical scores, source bytes or original archives.
   Historical absolute paths need adaptation; this is retained evidence, not a
   maintained portable evaluation command or CI dependency. No environment file,
   credential, personal chat or host/browser profile is included.
+
+## Lower-cost rewrite model comparison
+
+The [completed follow-up](context-aware-query-comparison.md#lower-cost-rewrite-model-comparison)
+compares 54 actual rewrites on the same eighteen exposed inputs. Luna-none preserves
+query scope but has two mode errors; Luna-low adds event-scope/provenance loss.
+One faithful changed query passes deployed retrieval and an actual Sol answer.
+No full-model equivalence, new eighteen-answer score or runtime/default adoption.
+
+Local-only archive: `artifacts/archive/luna-rewrite-v1/evidence.tar.gz`, 41 files
+plus manifest, 1,124,521 bytes; SHA-256
+`b60a1710915434ca751eee8b4f4764c05c88c919ac9c9e784da1e09532abf368`.
+All members are read back and length/hash verified; configured-secret matches zero.
+Identical archive/receipt copies exist in the primary `sillymemory` and
+`sillymemory-context-query` worktrees, ignored and unavailable in a fresh clone.
+These are two local copies on one machine, not a remote backup.
+
+Includes producer base 13a27f7, exact captured system/user inputs, original protocol,
+separate transport continuation, initial failed report and completed remaining
+outputs, all 54 rewrites, mode/scope audit, usage/latency, changed-query control/source
+and final actual answer, actual-host fixture reports, plans/source locks, original
+HTTP500/connection-timeout/setup503 attempts, all eight verified owned cleanups,
+syntax-checked one-off source. Original context-query archive remains unchanged and
+retains the full original cohort; this bundle includes only the downstream
+synthetic source needed here. Host/dependencies/credentials must be supplied
+separately; historical absolute paths need adaptation. Fresh paid reruns do not
+reproduce identical provider output. Environment files, credentials, host/browser
+profiles and personal chats are excluded. The recorded 13-vs-12 query-attempt bound
+deviation is retained; no evidence or failure was rewritten to conceal it.

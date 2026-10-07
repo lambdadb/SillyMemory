@@ -162,3 +162,107 @@ The useful next product question is conditional context use that avoids unrelate
 budget competition while preserving genuinely dependent references. This result
 rejects blind concatenation and does not justify paying for unconditional rewriting;
 it is not permission to ship a new universal query policy from this small cohort.
+
+## Lower-cost rewrite model comparison
+
+**Luna `none` is a useful query-text candidate, but neither Luna setting fully
+preserves B's output contract.** Keep the product unchanged. Lower model cost
+does not establish that always-on rewriting is needed or justify adopting B.
+
+Reuse all eighteen exposed inputs, byte-identical system/user messages and the
+1,024 output cap. Compare fresh `gpt-6.1-sol`/low, `gpt-6-luna`/none and
+`gpt-6-luna`/low through actual SillyTavern `generateRaw`. Rotate arm order per
+case. Answer generation remains Sol/low/4,096. No prompt, scoring, cohort or model
+sweep is performed after observing outputs. All 54 successful rewrites are audited
+for original-question preservation, entity/negation/event scope, quoted grounding,
+uncertainty and output mode; schema acceptance alone does not prove faithfulness.
+
+| Rewrite arm, 18 calls each | Query scope and provenance | Correct mode | Full contract | Median complete call | Standard token-cost estimate |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Sol low | 18/18 | 18/18 | 18/18 | 8.67 s | $0.026534 |
+| Luna none | 18/18 | 16/18 | 16/18 | 2.14 s | $0.001338 |
+| Luna low | 17/18 | 16/18 | 15/18 | 2.63 s | $0.001962 |
+
+These are **rewrite-contract counts, not final-answer accuracy**. Latency excludes
+all artificial 15-second pacing, includes known HTTP/retry delays within the
+completed logical call, and measures complete response delivery, not just model
+inference or first token. One sample per case, serialized local traffic and a
+mid-run continuation do not establish product/tail latency or general reliability.
+Luna none is about four times faster at the observed median and about twenty
+times cheaper for these completed rewrites; neither ratio is a service guarantee.
+
+All arms use 9,072 input tokens with zero cached tokens. Output usage, including
+reasoning: Sol 839 (15 reasoning), Luna none 861 (zero reasoning), Luna low 2,110
+(1,182 reasoning). Arithmetic uses current Standard uncached input/output rates:
+Sol $2/$10 and Luna $0.10/$0.50 per million tokens. It excludes READY, failed/unknown
+attempt charges, final answers and managed embedding/reranking; this is not an
+invoice. Sources: [Sol specifications](https://developers.openai.com/api/docs/models/gpt-6.1-sol)
+and [Luna specifications](https://developers.openai.com/api/docs/models/gpt-6-luna).
+Luna supports both `none` and `low`; availability was verified without substitution.
+
+### Concrete quality differences
+
+- French-press ratio (`6071bd76`): both Luna settings call a self-contained question
+  `ambiguous`. The recent dialogue does not supply the historical answer.
+  The question names the object and asks a clear comparison; missing answer
+  evidence is not an unresolved referent. Search text remains identical.
+- Morning preparation plus commute (`1192316e`): Luna none makes the same mode
+  error; search text remains identical.
+- Quoted-instruction control: Luna low incorrectly returns `ambiguous`, but preserves
+  the original aquarium question and does not follow the quoted malicious query.
+  This is a classification error, not an observed instruction-injection success.
+- Anniversary: Luna low returns `Where was Mira and Leon’s anniversary restaurant?`,
+  dropping the **tenth** anniversary qualifier. It cites only turn 93, whose quote
+  contains neither name; the names and event ordinal come from uncited turn 92.
+  The numeric/quote-presence checks accept this output. The manual scope/provenance
+  gate rejects it, without paying for a downstream test of that rejected query.
+- Luna none keeps Mira/Leon and the tenth anniversary and quotes both relevant
+  turns. Both Luna settings correctly resolve Pip rather than Moss, and all arms
+  leave the genuinely ambiguous two-trip question unresolved.
+
+If the application consumes only `query`, mode mistakes do not change those
+search requests. They still violate the specified contract and make `mode`
+unfit for an unvalidated conditional-search or clarification decision. Thus a
+query-text-only result must not be presented as full Sol equivalence. Increasing
+reasoning to low did not remove these problems in this fixed comparison.
+
+### Changed-query validation and complete execution record
+
+Seventeen queries per Luna arm are byte-identical to previous B; their existing
+source/prompt/answer observations are reused, not regenerated as new Luna answers.
+The only faithful changed query is Luna-none's anniversary query. Upsert/readback
+of the synthetic corpus and fresh deployed managed Bayesian+Jev searches validate
+both that query and the previous-B control. Both deliver the required source.
+Actual host source/branch/passage/time/budget assertions pass, and one actual Sol
+answer returns Vesper House in Larkhaven. This is **one new final answer**, not a
+new eighteen-case end-to-end quality score. The rejected Luna-low query has no
+new answer observation.
+
+Original run completes 35 rewrites, encounters a connection `ETIMEDOUT` before any
+HTTP response/output, and exits with a failed report but successful cleanup. A
+separate continuation retains that unknown/potentially charged attempt, verifies
+model availability again, resubmits that unobserved sample once and completes the
+nineteen remaining outputs. Completed 35 outputs are never repeated. The original
+failure, protocol and separately declared transport continuation remain intact;
+no quality retry or post-answer source/setting change occurs. Sol also returns
+HTTP500 once; the original same-body transient policy retries it successfully.
+
+Totals: **60 actual provider attempts**, 54 successful rewrites, one final answer,
+three READY checks, one failed HTTP500 attempt and one unknown connection attempt.
+Two fixture runs make 57 simulated responses and **zero OpenAI calls**. All runs
+restore Sol/settings and verify absence of real keys from persisted host settings.
+Remote totals, including fixtures/setup: 88 documents, 13 query attempts and eight
+owned collections, all deletion/404 verified. One existing UI setup503 retry makes
+query attempts 13 rather than the planned 12; the corpus-only guard did not include
+setup retry traffic. Record this one-request bound deviation and stop. The 64
+provider-attempt, 5,000-document and ten-collection bounds hold; no further queries
+or cohort expansion occurs. No production/resource-limit behavior changes.
+
+Final unchanged unit suites pass 325/325 on Node 24.15.0 and 20.12.0;
+`npm run check`, `npm run check:release`, `npm run check:sdk` pass.
+All one-off JavaScript passes `node --check`; runtime is byte-identical to 13a27f7.
+No new unit, isolation/recovery or deployment coverage is claimed. Original inputs,
+plans/addenda, full responses, input/source identity, semantic audit, successful
+and failed attempts, usage/cleanup and one-off producers are in the separate
+[verified local archive](evidence-retention.md#lower-cost-rewrite-model-comparison).
+No temporary model-routing code, large fixture or new framework enters Git.
