@@ -606,3 +606,41 @@ records absent. Combined submissions: 2,923 and query attempts: 75 stay within f
 resource bounds. No repeated-answer quality selection, hidden failed run or
 unperformed corpus browser-sync claim. The original failure-discovery, context-query,
 Luna-rewrite and service-blocker archives remain untouched.
+
+## Complete recent-dialogue comparison
+
+- **Availability:** local-only retained evidence; not downloadable from a fresh
+  clone and not a CI dependency. No new raw corpus or one-off harness is committed.
+- **Primary archive:** `/Users/steven/Dev/sillymemory/artifacts/archive/context-full-v1/evidence.tar.gz`.
+- **Producer copy:** `/Users/steven/Dev/sillymemory-context-query/artifacts/archive/context-full-v1/evidence.tar.gz`.
+- **SHA-256:** `2440cc68dbd88735caca7d6ccf6d99048e37660936ab083fa62eec9030de4b44`.
+- **Size:** 1,765,880 bytes; 38 original files plus `ARCHIVE-MANIFEST.json`.
+  Every member's length/hash and the byte-identical primary copy were verified;
+  a scanner using the parsed configured credentials found zero matches.
+- **Runtime producer:** `13a27f7713b9a5ce66fb4f3c15ab66ab1ca4a770`; pinned actual
+  SillyTavern `06bde939fb1e9c4c8d8641d810f0a916b5bce127`. Full protocol, generated
+  fifteen-case inputs, pre-live hashes, source tree and one-off scripts are included.
+  The actual-host fixture's original protocol and failed initial stale-path startup
+  log are retained; live criteria were fixed before any paid generation.
+- **Evidence:** three discovery and twelve pre-frozen confirmation cases, four
+  search policies, fifteen Sol rewrites, sixty Sol answers, seventy-seven successful
+  provider attempts, no retries/errors; all ranks, delivered messages, source/time/
+  coordinate assertions, manual answers and query audit, stage metrics and limits.
+- **Confirmed result:** complete-context B and static full context both recover
+  four hotel sources missed by current-product and question-only retrieval.
+  Confirmation answers are 8/12, 7/12, 11/12 and 12/12 respectively. Two final
+  arithmetic errors are retained and separated from retrieval; one occurs with
+  a byte-identical B/question-only prompt. B's superiority over static retrieval
+  or causal noise reduction in this cohort is not established.
+- **Limitations:** constructed template-sharing variants, short full contexts,
+  single output samples, agent adjudication and SDK-rank replay into the actual
+  host. Not a public benchmark, long-input reliability claim or production change.
+- **Cleanup:** all 21 owned collections deleted and 404 verified (fifteen corpus,
+  six fixture/live setup); 1,683 submitted documents and 63 query attempts.
+  Pending records absent; temporary host profiles/servers removed and original
+  model/settings/prototypes restored. Original prior evidence archives retain
+  their previously recorded checksums. No historical evidence is discarded.
+- **Validation:** Node 20.12.0/24.15.0 suites each 325/325; runtime/release/SDK and
+  whitespace checks pass. Fixture made 76 simulated replies and zero OpenAI calls.
+
+See [method, exact failures and interpretation](context-aware-query-comparison.md#complete-recent-dialogue-comparison).

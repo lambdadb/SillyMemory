@@ -1,5 +1,17 @@
 # Context-aware retrieval query comparison
 
+**Complete recent-dialogue B/Sol is a viable contextual retrieval candidate.**
+In the latest frozen twelve-case confirmation, it recovers four necessary targets
+missed by current-product and question-only searches. Static full context recovers
+the same targets; B's one additional correct answer over static is an arithmetic
+outcome, not demonstrated retrieval superiority. Use the complete non-indexed
+recent dialogue as the reference before optimizing input windows or model cost.
+Runtime and defaults remain unchanged; this small template-based evaluation does
+not establish a universal production policy. See the [latest comparison](#complete-recent-dialogue-comparison)
+for the distinct retrieval and generation findings.
+
+## Initial bounded-context decision
+
 **Reject unconditional recent-dialogue concatenation; do not add an always-on
 LLM query rewriter.** B answers all 18 questions, but its only baseline gain uses
 an unchanged question. Two additional actual answers without rewriting also
@@ -450,3 +462,193 @@ available. The table retains the entire cohort, including the event-set limitati
 | independent-3 | Did I switch to more or less water per scoop for my camping coffee? | original | More water, from 150 to 180 ml per scoop |
 | independent-4 | How long is my morning walk plus the bus ride to work in total? | original | 40 minutes |
 | independent-5 | [Question date: 2026/10/08 (Thu) 09:00]<br>What was the recorded delivery date for the bronze sculpture? | original | 2026-09-17 |
+
+## Complete recent-dialogue reference decision
+
+Steven's decision after the expanded comparison: evaluate contextual selection
+before optimizing the rewrite input window, latency, or cost. The four-message /
+600-token window is a historical experimental setting, not an established quality
+requirement or the reference for the next comparison. Previous inputs, scores,
+and evidence remain unchanged.
+
+For B/Sol, supply all recent source dialogue outside the older-history indexing
+partition, with native roles and source order, plus the current question. Under
+the current product setting this is the latest twelve non-system source messages,
+not a new rewrite-specific twelve-message cap. Include the current question once;
+exclude a retained answer being regenerated and keep existing generation-anchor,
+source-validity, special-message, and isolation rules. The boundary is the logical
+indexing partition, not whether an old document's asynchronous write has been
+acknowledged. Never include unrelated chats or all unsynchronized historical data.
+Do not impose an additional message-count or input-token cutoff, truncate a turn,
+or preselect context with a heuristic. Report provider context overflow explicitly.
+The rewriter selects relevant context for its query; giving it the entire recent
+input does not mean concatenating that entire input into the search query.
+
+Compare the current product's two-query policy, single current-question retrieval,
+static full-recent-dialogue concatenation, and B/Sol selective construction with
+identical corpus, search configuration, memory-injection budget, and answer model.
+Freeze a bounded cohort covering necessary references, irrelevant recent topics,
+and necessary context mixed with unrelated dialogue. Include dependencies both
+within and beyond the historical four-message window. Inspect full source and
+baseline delivered prompts; correct control cases alone cannot establish utility.
+Score target selection, retrieval, injection, and answers separately, including
+ambiguity and unsafe inferred details. Establish the mechanism on discovery cases
+and freeze separate confirmation cases before making an adoption decision.
+
+This reference-method decision preceded the completed comparison below; it is not
+a production change. Freeze aggregate call/document/cost bounds before paid execution. Only
+if quality utility is established should smaller windows, token caps, cheaper
+rewrite models, or conditional invocation be compared against this reference.
+Existing product memory-injection budgets and operational safety limits remain
+unchanged; input-window optimization and output context budgeting are separate.
+
+## Complete recent-dialogue comparison
+
+### Decision and scope
+
+The earlier saturated question-only cohort did not establish that contextual
+rewriting has no utility. This comparison demonstrates a concrete retrieval
+benefit from resolving a named recent referent: the current product and question-
+only retrieval miss four confirmation targets, while B/Sol and static full context
+retrieve and inject all four. **Keep B/Sol as a viable candidate and the complete
+recent dialogue as the reference input; do not return to a four-message window
+without measuring its quality loss.** B's retrieval superiority over static full
+context and causal noise-reduction benefit in this new cohort remain unestablished.
+The result supports the technique's mechanism, not a default promotion, general
+model equivalence, multilingual claim, or validated production rewrite lifecycle.
+
+Run three discovery cases and twelve confirmation cases on 2026-10-08 (Asia/Seoul).
+All fifteen sources, questions, targets, modes and support criteria are frozen
+before any paid output. Discovery demonstrates the mechanism before confirmation
+proceeds without changing any input. Confirmation uses four different named event/
+value variants per family, but shares constructed templates and distractors with
+discovery. It is not an independently sampled public benchmark or broad coverage
+of character-chat behavior. No unsuccessful sample is rerun or replaced.
+
+| Method | Construction |
+| --- | --- |
+| Current product | Current question and the existing eligible prior-turn query, separately reranked and interleaved. |
+| Question only | One search using the unchanged current question. |
+| Static full context | Role-labeled complete recent dialogue plus the current question, one search. |
+| B / Sol low | Complete recent dialogue passed to the conservative query constructor; only its grounded selected query is searched once. |
+
+Each source has 112 indexed older messages and eleven recent messages, followed
+by the current question. The complete unindexed partition therefore contains
+**eleven prior turns plus the current question once**, under the existing recent-
+twelve product setting. Preserve roles/order and every recent text; no additional
+last-N or input-token cap, truncation, oversized-turn skipping, or heuristic
+preselection is applied. The current question is not duplicated in the input.
+This is a logical indexing partition, not a test of asynchronous write completion.
+
+Recent turns identify the event but never supply its hotel answer. The named event
+appears at zero-based source positions 112/113, outside the historical last-four
+window. Travel corpora have many competing accommodation records; exhibition
+corpora have seven distinct completed-piece counts plus cycling specifications.
+The contexts are only 245–271 tokenizer tokens: this demonstrates the importance
+of seeing the earlier named turns, **not the effect of removing a 600-token cap
+on long dialogue**. No four-message rewrite arm is rerun in this comparison.
+
+The conservative instruction, ambiguity/provenance guards and 1,024 rewrite-output
+cap remain fixed. Remove the arbitrary 600-query-token validation guard for the
+reference; the actual 8,192-byte transport limit remains explicit, and static
+queries are checked before submission so none is silently clipped. Quote limits
+remain the existing provenance contract, not recent-input selection. Provider/
+host context limits and operational safety bounds remain in force. All fifteen
+B outputs are accepted and manually audited as faithful; ten resolve references
+and five independent counting questions stay byte-identical, with correct modes.
+This full-input result is Sol-specific; Luna is not evaluated again.
+
+### Complete scores and attribution
+
+| Cohort / stage | Current product | Question only | Static full context | B / Sol |
+| --- | ---: | ---: | ---: | ---: |
+| Discovery answers | 2/3 | 2/3 | 3/3 | 3/3 |
+| Confirmation sufficient retrieval | 8/12 | 8/12 | 12/12 | 12/12 |
+| Confirmation sufficient injection | 8/12 | 8/12 | 12/12 | 12/12 |
+| Confirmation correct answers | **8/12** | **7/12** | **11/12** | **12/12** |
+
+Frozen travel correctness requires the named hotel without a conflicting selected
+hotel; merely repeating the city from recent conversation is incomplete. Counting
+requires the exact sum of all seven separate categories without a contradictory
+total. Required support is the explicit hotel source or all seven category sources.
+Every complete answer, rewrite, relevant source and delivered dependency is audited
+by the agent; automated checks verify complete recent input, rank/source identity,
+actual delivered passages and budget. This is not independent human adjudication.
+
+| Confirmation family | Current product | Question only | Static full context | B / Sol | Mechanism |
+| --- | ---: | ---: | ---: | ---: | --- |
+| Necessary named trip, 4 | 0/4 | 0/4 | 4/4 | 4/4 | Explicit event/city needed to recover the hotel; target absent from all context-free hits. |
+| Independent exhibition total, 4 | 4/4 | 3/4 | 3/4 | 4/4 | Every arm retrieves/injects all seven counts; two final arithmetic errors. |
+| Return to trip after cycling aside, 4 | 4/4 | 4/4 | 4/4 | 4/4 | Required hotel already retrieved by all methods; regression controls, not improvement evidence. |
+
+For example, the current question is `Which hotel did I stay at on that trip?`.
+The recent dialogue starts `Let us revisit my autumn ceramics retreat in Oakmere.`
+and then has nine further turns without a hotel name. B produces `Which hotel did
+I stay at on my autumn ceramics retreat in Oakmere?`, quoting source turn 112.
+Old source message 12 says the stay was at **Amber Wren**. Current-product and
+question-only queries omit that source from their hit lists; static/B rank it first
+and answer correctly. The other necessary-trip confirmations are coastal bird
+census/Lindenbay → Slate Lantern (source 16), winter astronomy workshop/Corven →
+Copper Willow (source 20), and spring textile fair/Elmsford → Silver Fern (source 24).
+This is **retrieval recovery, not a token-budget rescue or answer-only change**.
+
+Two distinct arithmetic failures must not inflate the inferred query benefit:
+
+- `noise-3`: the counts are 5, 6, 7, 8, 9, 10 and 11; the sum is 56.
+  Question-only lists every correct count but answers **66**. B answers 56 with
+  byte-identical query, selection and complete delivered message array. This is
+  observed final-generation variation, not a causal rewriting gain.
+- `noise-4`: the counts are 6 through 12; the sum is 63. Static full context lists
+  every count but answers **73**. All necessary facts are delivered. Static and B
+  prompts differ, so neither identical-prompt variation nor a diagnosed context-
+  noise cause is claimed. One sample cannot establish B's retrieval superiority
+  or explain this arithmetic difference. The failure remains in the score.
+
+The four genuine context-dependent recoveries are separate from these arithmetic
+outcomes. New noise controls show no retrieval/injection regression for B, but do
+not demonstrate a causal noise-reduction advantage over static context. Preserve
+the earlier eighteen-case contamination observation separately; do not dismiss B
+because the intervening forty-case question-only control was saturated, or treat
+this twelve-case result as a reason to promote defaults immediately.
+
+### Execution, validation and preservation
+
+Producer runtime remains `13a27f7713b9a5ce66fb4f3c15ab66ab1ca4a770`, pinned actual
+SillyTavern 1.19.0 `06bde939fb1e9c4c8d8641d810f0a916b5bce127`. Stable SDK 0.8.0,
+managed `text-embedding-3-small`, English Bayesian + Typesafe `jev-1.13.0`, 30
+candidates per search, strict identity, `onFailure: error`, consistent reads,
+boundary chunks 800, recent twelve and memory budget 1,600 remain unchanged.
+Final answers and rewrites use `gpt-6.1-sol`/low through actual host `generate` and
+`generateRaw`; answers cap 4,096, rewrite cap 1,024, host context 32,768. No key or
+model-environment file is modified. Complete-source SDK upsert/readback/search
+is live, followed by verified rank replay into the actual host's unchanged selector;
+full-corpus browser live synchronization is not claimed. Separate host setup tests
+real direct-CORS/authentication/owned-data cleanup.
+
+- **77 actual successful provider attempts:** fifteen rewrites, sixty final answers,
+  two READY checks; zero retries or transport errors. Provider starts respect the
+  existing fifteen-second spacing; this pacing is not product latency.
+- Actual-host fixture: **76 simulated replies, zero OpenAI calls**; real small
+  LambdaDB setup. A first local startup used the stale default host path and exited
+  before resource creation; the retained retry selects the pinned archived checkout.
+  Fixture protocol bytes are preserved separately from the completed live protocol;
+  live answer criteria and confirmation inputs are frozen before paid calls.
+- Fixture and both live phases: **1,683 submitted documents, 63 query attempts and
+  21 owned collections**, all deletion/404 verified. No pending resource record
+  remains; source/prototypes/model/settings are restored and servers/profiles closed.
+  Bounds hold: 94 combined provider attempts, 2,600 documents, 120 queries,
+  26 collections and two-hour per-phase deadlines. No cohort expansion follows.
+- `npm test` on Node 24.15.0 and
+  `npx --yes --package=node@20.12.0 node --test tests/*.test.js`: **325/325 each**.
+  `npm run check`, `npm run check:release`, `npm run check:sdk` and diff whitespace
+  checks pass. Runtime/defaults/dependency locks remain byte-identical; no new
+  isolation/recovery suite, production integration, release or deployment is claimed.
+
+Original sources, frozen protocols, complete requests/answers/rewrites/rankings,
+manual stage audits, provider/resource receipts, validation, one-off producers and
+Git base are preserved in the verified [local evidence archive](evidence-retention.md#complete-recent-dialogue-comparison).
+Historical archives remain unchanged. The repository change contains instructions
+and concise decisions only; no one-off harness, raw output or large fixture enters
+Git or CI. Input-window, model-cost and invocation-policy optimization should use
+this complete recent-dialogue method as the reference after relevant quality utility
+is established, with broader fidelity and ambiguity coverage before product adoption.
