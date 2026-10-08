@@ -12,18 +12,18 @@ test('assistant-topic boundary fixtures keep targets old and distinguish a first
         assert(docs.some(d => d.message === item.target.message && d.text === item.target.text));
         const messages = item.snapshot.messages, queries = retrievalQueries(item.snapshot);
         assert(messages.at(-1).user);
-        assert.equal(queries[0], messages.at(-1).text);
+        assert.equal(queries.length, 1);
+        assert(queries[0].endsWith(messages.at(-1).text));
         if (item.kind === 'first-user') {
             assert(messages.slice(0, -1).every(m => !m.user));
-            assert.equal(queries.length, 2);
-            assert.equal(queries[1], messages.at(-2).text);
+            assert(queries[0].includes(messages.at(-2).text));
         } else {
             assert(messages.slice(0, -1).some(m => m.user));
-            assert.equal(queries.length, 2);
+
         }
         if (item.kind === 'explicit-switch') {
             assert(queries[0].includes(item.language === 'en' ? 'green cloth banner' : '자주색 천 현수막'));
-            assert(queries[1].includes(item.language === 'en' ? 'canal map' : '노선도'));
+            assert(queries[0].includes(item.language === 'en' ? 'canal map' : '노선도'));
         }
     }
 });

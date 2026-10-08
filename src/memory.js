@@ -1,5 +1,5 @@
 import { beginWrites, clearCommit, recordWrite, sameDocument } from './commit.js';
-import { preferAssistantContext } from './context.js';
+import { conversationQuery } from './context.js';
 import { chunkSpans, CHUNKING_POLICY } from './chunking.js';
 import { hostTimestamp, conversationTime, conversationTimeLabel } from './time.js';
 
@@ -30,27 +30,15 @@ export function capture(context) {
     return { character: avatar, chat: metadata?.id, messages, memory: { story: metadata?.story, source: metadata?.source } };
 }
 export function fingerprint(snapshot) { return JSON.stringify(snapshot); }
-export const RETRIEVAL_POLICY = 'latest-anchor-with-context-selection-v5';
-export function retrievalQueries(snapshot, type = 'normal') {
+export const RETRIEVAL_POLICY = 'complete-recent-dialogue-v6';
+export function retrievalQueries(snapshot, type = 'normal', config = DEFAULTS) {
     const messages = snapshot.messages;
-    // Swipe/regenerate may retain an assistant answer in the source. Anchor on
-    // the last user message so that answer cannot steer its own replacement.
-    // Explicit continuation follows the message being extended. Regenerate and
-    // swipe still exclude the old answer from the query for its replacement.
+    // A retained answer must not steer its own swipe/regenerated replacement.
+    // Explicit continuation instead follows the message being extended.
     let anchor = messages.findLastIndex(m => (type === 'continue' || m.user) && m.text.trim());
     if (anchor < 0) anchor = messages.findLastIndex(m => m.text.trim());
     if (anchor < 0) return [];
-    const primary = messages[anchor].text.trim().slice(0, 6000);
-    // Keep the prior user context unless a newer assistant turn has a stronger
-    // lexical connection to earlier history. Missing user context keeps the
-    // assistant fallback, but file/media/tool turns cannot be context candidates.
-    // A retained answer after the anchor is never eligible.
-    const prior = messages.slice(0, anchor);
-    const user = prior.findLastIndex(m => m.user && m.text.trim());
-    const assistant = prior.findLastIndex(m => !m.user && m.eligible !== false && m.text.trim());
-    const context = prior[user < 0 || preferAssistantContext(prior, user, assistant) ? assistant : user];
-    const contextual = context?.text.trim().slice(0, 6000);
-    return [...new Set([primary, contextual].filter(Boolean))];
+    return [conversationQuery(messages, anchor, config.recent)];
 }
 export function interleaveHits(lists) {
     const hits = [];
@@ -279,23 +267,19 @@ export class MemoryEngine {
         const prepared = await this.sync(snapshot, config, sourceCurrent, progress);
         if (!prepared || !current()) return null;
         if (!prepared.docs.length) return { text: '', tokens: 0, passages: [] };
-        const queries = retrievalQueries(snapshot, type);
+        const queries = retrievalQueries(snapshot, type, config);
         if (!queries.length) return null;
         const reads = new AbortController();
         const signal = AbortSignal.any([pendingReads, reads.signal]);
         let results;
         try {
-            let completed = 0;
-            progress({ phase: 'searching', completed, total: queries.length });
-            results = await Promise.all(queries.map(async query => {
-                const hits = await this.client.search(this.collection, this.owner, prepared.scope, query, signal, this.branch);
-                if (current() && !signal.aborted) progress({ phase: 'searching', completed: ++completed, total: queries.length });
-                return hits;
-            }));
+            progress({ phase: 'searching', completed: 0, total: 1 });
+            results = await this.client.search(this.collection, this.owner, prepared.scope, queries[0], signal, this.branch);
+            if (current() && !signal.aborted) progress({ phase: 'searching', completed: 1, total: 1 });
         } finally { reads.abort(); }
         if (!current()) return null;
         progress({ phase: 'budgeting' });
-        const result = await selectPackedMemory(interleaveHits(results), prepared.docs, config.budget, countTokens);
+        const result = await selectPackedMemory(results, prepared.docs, config.budget, countTokens);
         return current() ? result : null;
     }
     async deleteAll() {

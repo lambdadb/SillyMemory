@@ -242,6 +242,15 @@ try {
         check('individual deletion preserves the story collections and sibling branches', collections.size === 2 && [...collections.values()][1].branches.size === 1);
         await field('enabled').check(); await waitStatus('synchronized');
     }
+    const originalAnchor = await page.evaluate(() => {
+        const c = SillyTavern.getContext(), index = c.chat.findLastIndex(m => m.is_user && m.mes.trim());
+        const original = c.chat[index].mes; c.chat[index].mes = 'x'.repeat(8193);
+        return { index, original };
+    });
+    const searchesBeforeOverflow = calls.filter(c => c.body.query?.bayesian).length;
+    const overflow = await prompt(); await waitStatus('8 KiB limit');
+    check('oversized complete query aborts generation without pruning or sending a truncated search', overflow.aborted && !overflow.injection && overflow.before === overflow.after && searchesBeforeOverflow === calls.filter(c => c.body.query?.bayesian).length);
+    await page.evaluate(({ index, original }) => { SillyTavern.getContext().chat[index].mes = original; }, originalAnchor);
     failQuery = true;
     const failed = await prompt(); failQuery = false;
     check('query failure preserves unmodified prompt', !failed.injection && failed.chat.length === 7);

@@ -80,8 +80,9 @@ export async function auditNaturalDialogue(fixture = loadNaturalFixture()) {
             assert(matches.length, 'Ground truth is not indexable under current chunking/recent settings');
             return { message: ref.message, documentIds: matches.map(doc => doc.id) };
         });
-        const queries = retrievalQueries(snapshot, item.input.type);
-        assert.equal(queries[0], item.input.question, 'Normal retrieval must anchor on the question');
+        const queries = retrievalQueries(snapshot, item.input.type, config);
+        assert.equal(queries.length, 1);
+        assert(queries[0].endsWith(item.input.question), 'Normal retrieval must end with the current question');
         rows.push({ case: item.id, sourceMessages: snapshot.messages.length, indexableChunks: prepared.docs.length, queries, requiredEvidence: evidence });
     }
     return { passed: true, kind: 'offline fixture audit', serviceCalls: 0, fixtureHash: hash(fixture), cases: cases.length, scheduledSamples: naturalSchedule(fixture).length, rows };

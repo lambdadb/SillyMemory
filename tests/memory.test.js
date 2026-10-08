@@ -82,7 +82,7 @@ test('intent journal survives server acceptance followed by a timeout', async ()
 test('late results after chat switch/edit are rejected', async () => {
     const s = setup(); const resolvers = [], signals = []; let started;
     const searching = new Promise(r => { started = r; });
-    s.client.search = async (_, o, scope, query, signal) => { signals.push(signal); return new Promise(r => { resolvers.push(r); if (resolvers.length === 2) started(); }); };
+    s.client.search = async (_, o, scope, query, signal) => { signals.push(signal); return new Promise(r => { resolvers.push(r); if (resolvers.length === 1) started(); }); };
     const pending = s.engine.retrieve(snapshot(), config, t => t.length / 4);
     await searching; s.engine.invalidate();
     assert.ok(signals.every(signal => signal.aborted));
@@ -180,21 +180,27 @@ test('recalled macros are literal before token counting and include host separat
 });
 
 
-test('query anchors on the latest user; contextual retrieval stays separate from the question', () => {
+test('a single query preserves all recent context and excludes retained replacement answers', () => {
     const messages = [
         { user: true, text: 'Old unrelated topic' },
         { user: false, text: 'Mira stored a travel document.' },
         { user: true, text: 'Where did she put it?' },
         { user: false, text: 'Incorrect previous answer during swipe or regenerate' },
     ];
-    assert.deepEqual(retrievalQueries({ messages }), ['Where did she put it?', 'Old unrelated topic']);
-    assert.deepEqual(retrievalQueries({ messages: messages.slice(0, -1) }), retrievalQueries({ messages }));
+    const queries = retrievalQueries({ messages });
+    assert.equal(queries.length, 1);
+    assert(queries[0].includes(messages[0].text));
+    assert(queries[0].includes(messages[1].text));
+    assert(queries[0].endsWith(messages[2].text));
+    assert(!queries[0].includes(messages[3].text));
+    assert.deepEqual(retrievalQueries({ messages: messages.slice(0, -1) }), queries);
     assert.deepEqual(retrievalQueries({ messages: [{ user: true, text: '  Question  ' }] }), ['Question']);
     assert.deepEqual(retrievalQueries({ messages: [{ user: false, text: 'Opening scene' }] }), ['Opening scene']);
     assert.deepEqual(retrievalQueries({ messages: [{ user: true, text: '  ' }] }), []);
     const long = retrievalQueries({ messages: [{ user: true, text: 'context' }, { user: true, text: 'x'.repeat(7000) }] });
-    assert.deepEqual(long, ['x'.repeat(6000), 'context']);
+    assert(long[0].endsWith('x'.repeat(7000)));
 });
+
 test('rank interleaving keeps question and contextual top hits inside a bounded selection', async () => {
     const { docs } = await documents(snapshot(), owner, config);
     const count = text => text.length;
@@ -205,14 +211,13 @@ test('rank interleaving keeps question and contextual top hits inside a bounded 
     assert.equal(result.tokens, expected.tokens);
     assert.deepEqual(interleaveHits([[1, 2, 3], [4]]), [1, 4, 2, 3]);
 });
-test('a query failure cancels the sibling and rejects partial memory', async () => {
-    const s = setup(); let count = 0, siblingAborted = false;
+test('a failed single search aborts its read scope and exposes no partial memory', async () => {
+    const s = setup(); let count = 0, readSignal;
     s.client.search = async (_, o, scope, query, signal) => {
-        if (++count === 1) throw new Error('query failed');
-        return new Promise((resolve, reject) => signal.addEventListener('abort', () => { siblingAborted = true; reject(signal.reason); }, { once: true }));
+        count++; readSignal = signal; throw new Error('query failed');
     };
     await assert.rejects(s.engine.retrieve(snapshot(), config, text => text.length), /query failed/);
-    assert.equal(count, 2); assert.equal(siblingAborted, true);
+    assert.equal(count, 1); assert.equal(readSignal.aborted, true);
 });
 
 test('progress counts only acknowledged batches and retry skips earlier successful uploads', async () => {
@@ -270,7 +275,7 @@ test('deletion progress stops at invalidation and a fresh pass reconciles the re
 test('retrieval reports query completion and budgeting without source text', async () => {
     const s = setup(), events = [];
     await s.engine.retrieve(snapshot(), config, t => t.length / 4, () => true, e => events.push(e));
-    assert.deepEqual(events.filter(e => e.phase === 'searching').map(e => [e.completed, e.total]), [[0, 2], [1, 2], [2, 2]]);
+    assert.deepEqual(events.filter(e => e.phase === 'searching').map(e => [e.completed, e.total]), [[0, 1], [1, 1]]);
     assert.equal(events.at(-1).phase, 'budgeting');
     assert(!JSON.stringify(events).includes('compass'));
 });
@@ -317,7 +322,7 @@ test('read cancellation rejects late results even when transport ignores abort',
     const searching = new Promise(resolve => { started = resolve; });
     s.client.search = async (_, o, scope, query, signal) => {
         signals.push(signal);
-        return new Promise(resolve => { resolvers.push(resolve); if (resolvers.length === 2) started(); });
+        return new Promise(resolve => { resolvers.push(resolve); if (resolvers.length === 1) started(); });
     };
     const pending = s.engine.retrieve(snapshot(), config, text => text.length / 4);
     await searching; s.engine.cancelReads();
@@ -343,9 +348,9 @@ test('explicit continuation anchors on the continued message while regenerate an
     const snap = snapshot();
     snap.messages.push({ ...snap.messages[0], index: 6, user: true, text: 'Tell me about the red passport.' });
     snap.messages.push({ ...snap.messages[0], index: 7, user: false, text: 'Now return to the blue compass. Its location is' });
-    assert.equal(retrievalQueries(snap, 'continue')[0], snap.messages[7].text);
+    assert(retrievalQueries(snap, 'continue')[0].endsWith(snap.messages[7].text));
     for (const type of ['normal', 'regenerate', 'swipe']) {
-        assert.equal(retrievalQueries(snap, type)[0], snap.messages[6].text);
+        assert(retrievalQueries(snap, type)[0].endsWith(snap.messages[6].text));
         assert(retrievalQueries(snap, type).every(q => !q.includes(snap.messages[7].text)));
     }
 });
@@ -363,74 +368,32 @@ test('native excerpt order follows source and chunk order without changing retri
 });
 
 
-test('reference retrieval keeps the prior user topic separate from generic acknowledgments and questions', () => {
-    const messages = [
-        { user: true, text: 'An older unrelated topic' },
-        { user: true, text: '전시실에 걸 자주색 천 현수막 이야기를 다시 해요.' },
-        { user: false, text: '네, 그 물건에 대해 무엇을 확인하고 싶으세요?' },
-        { user: true, text: '  ' },
-        { user: true, text: '그건 누가 언제 가져오기로 했죠?' },
-        { user: false, text: 'An incorrect answer to be replaced' },
-    ];
-    for (const type of ['normal', 'regenerate', 'swipe']) {
-        assert.deepEqual(retrievalQueries({ messages }, type), [messages[4].text, messages[1].text]);
-    }
-    assert.deepEqual(retrievalQueries({ messages }, 'continue'), [messages[5].text, messages[4].text]);
-});
-
-test('prior-user queries stay bounded and preserve fallback when there is no reference corpus', () => {
-    assert.deepEqual(retrievalQueries({ messages: [
-        { user: false, text: 'An assistant introduction' }, { user: true, text: 'A first question' },
-    ] }), ['A first question', 'An assistant introduction']);
-    assert.deepEqual(retrievalQueries({ messages: [
-        { user: true, text: 'Repeated topic' }, { user: false, text: 'A reply' }, { user: true, text: ' Repeated topic ' },
-    ] }), ['Repeated topic']);
-    const long = retrievalQueries({ messages: [
-        { user: true, text: 'y'.repeat(7000) }, { user: false, text: 'A reply' }, { user: true, text: 'x'.repeat(7000) },
-    ] });
-    assert.deepEqual(long, ['x'.repeat(6000), 'y'.repeat(6000)]);
-});
-
-test('assistant-only fallback cancels its other query and exposes no partial memory on failure', async () => {
-    const s = setup(), snap = snapshot();
-    snap.messages.forEach(m => { m.user = false; });
-    snap.messages.push({ ...snap.messages[0], index: 6, user: true, text: 'First user question' });
-    const queries = []; let aborted = false;
-    s.client.search = async (_, o, scope, query, signal) => {
-        queries.push(query);
-        if (query === 'First user question') return new Promise((resolve,reject) => signal.addEventListener('abort', () => { aborted = true; reject(signal.reason); }, { once: true }));
-        throw new Error('assistant context query failed');
-    };
-    await assert.rejects(s.engine.retrieve(snap, config, text => text.length), /assistant context query failed/);
-    assert.deepEqual(queries, ['First user question', snap.messages[5].text]);
-    assert.equal(aborted, true);
-});
-
-test('selected assistant context still cancels sibling failures and rejects results after source invalidation', async () => {
+test('retrieval uses the actual source partition, not an anchor-relative window', async () => {
     const snap = snapshot();
-    snap.messages.push({ ...snap.messages[0], index: 6, text: 'An unrelated schedule', user: true });
-    snap.messages.push({ ...snap.messages[0], index: 7, text: 'Return to the blue compass under the tree', user: false });
-    snap.messages.push({ ...snap.messages[0], index: 8, text: 'Where is it?', user: true });
-    assert.deepEqual(retrievalQueries(snap), ['Where is it?', snap.messages[7].text]);
-    const failing = setup(); let siblingAborted = false;
-    failing.client.search = async (_, owner, scope, query, signal) => {
-        if (query !== snap.messages[7].text) return new Promise((resolve, reject) => signal.addEventListener('abort', () => { siblingAborted = true; reject(signal.reason); }, { once: true }));
-        throw new Error('selected assistant search failed');
-    };
-    await assert.rejects(failing.engine.retrieve(snap, config, text => text.length), /selected assistant search failed/);
-    assert.equal(siblingAborted, true);
-    const late = setup(), queries = [], signals = [], resolvers = []; let start;
-    const started = new Promise(resolve => { start = resolve; });
-    late.client.search = async (_, owner, scope, query, signal) => {
-        queries.push(query); signals.push(signal);
-        return new Promise(resolve => { resolvers.push(resolve); if (queries.length === 2) start(); });
-    };
-    const pending = late.engine.retrieve(snap, config, text => text.length / 4);
-    await started; late.engine.invalidate();
-    assert(signals.every(signal => signal.aborted));
-    resolvers.forEach(resolve => resolve([...late.remote.values()]));
-    assert.equal(await pending, null);
-    assert.deepEqual(queries, retrievalQueries(snap));
+    snap.messages.push({ ...snap.messages[0], index: 6, text: 'New question', user: true });
+    snap.messages.push({ ...snap.messages[0], index: 7, text: 'Retained answer', user: false });
+    const prepared = await documents(snap, owner, config);
+    assert.equal(prepared.docs.length, 6);
+    const [query] = retrievalQueries(snap, 'swipe', config);
+    assert.equal(query, 'New question');
+    const s = setup(), queries = [];
+    s.client.search = async (...args) => { queries.push(args[3]); return [...s.remote.values()]; };
+    await s.engine.retrieve(snap, config, t => t.length / 4, () => true, () => {}, 'swipe');
+    assert.deepEqual(queries, [query]);
+});
+
+test('identical text in distinct recent turns preserves both roles without duplicating the anchor', () => {
+    const [query] = retrievalQueries({ messages: [
+        { index: 20, user: true, text: 'Repeated topic' },
+        { index: 21, user: false, text: 'Repeated topic' },
+        { index: 22, user: true, text: ' Repeated topic ' },
+    ] });
+    const turns = JSON.parse(query.split('\n')[1]);
+    assert.deepEqual(turns, [
+        { turnId: 20, role: 'user', text: 'Repeated topic' },
+        { turnId: 21, role: 'assistant', text: 'Repeated topic' },
+    ]);
+    assert(query.endsWith('\nRepeated topic'));
 });
 
 test('removing source time deletes the old dated revision and never recovers it from stale hits', async () => {

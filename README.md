@@ -77,6 +77,16 @@ indexing chunks: long messages now prefer paragraph, sentence and word boundarie
 [controlled budget comparison](docs/memory-budget-calibration.md) for evidence
 and limitations, and the [design review](docs/memory-design-followups.md) for
 chunking and hybrid-search work. The [chat collection lifecycle](docs/chat-collections.md) describes the implemented isolation and cleanup behavior.
+Each answer uses one retrieval query: all eligible recent dialogue outside the
+indexed older-history partition, with turn IDs and roles, followed by the current
+question once. Regenerate/swipe excludes the answer being replaced; continuation
+anchors on the message being extended. No LLM query rewriting or additional
+context-window cap is used. The SDK's 8 KiB UTF-8 query limit is enforced explicitly:
+an oversized complete query sends no search, retains the original prompt and
+stops generation. Reduce the recent
+setting or shorten the input before retrying. See the
+[complete recent-query decision](docs/context-aware-query-comparison.md#product-adoption-complete-recent-query).
+
 Current retrieval combines managed vector and raw English text search with
 Bayesian fusion, followed by managed Typesafe Jev reranking. Both signals use the
 same owner/scope filter and explicit chat branch. Reranking failure or unconfirmed

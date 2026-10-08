@@ -644,3 +644,32 @@ Luna-rewrite and service-blocker archives remain untouched.
   whitespace checks pass. Fixture made 76 simulated replies and zero OpenAI calls.
 
 See [method, exact failures and interpretation](context-aware-query-comparison.md#complete-recent-dialogue-comparison).
+
+## Complete recent-query production validation
+
+- **Availability:** local-only retained bundle at
+  `/Users/steven/Dev/sillymemory/artifacts/archive/full-query-production-v1/evidence.tar.gz`,
+  verified byte-identical implementation-worktree copy. Unavailable in a fresh clone.
+- **Integrity:** SHA-256
+  `14c59b6485bf8aa342a6c99e194d731d57229692bfd11a987f15783c493f5e47`;
+  215,891 bytes, 43 members including the manifest. All member hashes and copied
+  bytes verified; configured-secret matches zero.
+- **Contents:** bounded protocol and input/harness locks; three frozen historical
+  synthetic inputs; temporary initial/corrected host runners; both live reports;
+  basic/final fault reports and logs including the failed overflow assertion;
+  Node 20/24 results; exact paid producer source with verified report hashes;
+  base `62e99aa7e5f0ac09f9f9fe6371ff958da77eba30` and final runtime/test patch.
+- **Result:** actual unmodified browser runtime, no rank replay or prototype
+  replacement: all three source-injection and answer checks pass. One initial
+  OpenAI 400 from unsupported temporary temperature settings is retained; corrected
+  Sol parameters yield three successful answers. Final explicit query-limit abort
+  was added afterward and verified by 75 fault/browser checks. The basic emulator
+  checks 42 assertions; unit suites each pass 323 tests.
+- **Cleanup:** combined live runs submit 339 documents, make nine query attempts
+  and create four owned collections; all deleted/404 verified, no pending ownership
+  record. Session keys are not persisted, host credentials are not forwarded, and
+  temporary processes/profiles and the original host extension symlink are restored.
+- **Boundary:** implementation smoke, not a new full-cohort efficacy result or a
+  long-input/multilingual reliability claim. Preserve the earlier complete-dialogue
+  comparison and all historical archives unchanged. See the
+  [product decision and interpretation](context-aware-query-comparison.md#product-adoption-complete-recent-query).

@@ -1,14 +1,12 @@
 # Context-aware retrieval query comparison
 
-**Complete recent-dialogue B/Sol is a viable contextual retrieval candidate.**
-In the latest frozen twelve-case confirmation, it recovers four necessary targets
-missed by current-product and question-only searches. Static full context recovers
-the same targets; B's one additional correct answer over static is an arithmetic
-outcome, not demonstrated retrieval superiority. Use the complete non-indexed
-recent dialogue as the reference before optimizing input windows or model cost.
-Runtime and defaults remain unchanged; this small template-based evaluation does
-not establish a universal production policy. See the [latest comparison](#complete-recent-dialogue-comparison)
-for the distinct retrieval and generation findings.
+**Adopt a single complete recent-dialogue query without LLM rewriting.**
+The frozen twelve-case confirmation recovered all required sources with both static
+full context and B/Sol; their final answers were 11/12 and 12/12. B's one additional
+correct answer was arithmetic, not demonstrated retrieval superiority. The user's
+product decision is to use static full context until a concrete limitation warrants
+an extra LLM call. See [product adoption](#product-adoption-complete-recent-query).
+Historical comparisons below retain their original producer and default settings.
 
 ## Initial bounded-context decision
 
@@ -647,8 +645,86 @@ real direct-CORS/authentication/owned-data cleanup.
 Original sources, frozen protocols, complete requests/answers/rewrites/rankings,
 manual stage audits, provider/resource receipts, validation, one-off producers and
 Git base are preserved in the verified [local evidence archive](evidence-retention.md#complete-recent-dialogue-comparison).
-Historical archives remain unchanged. The repository change contains instructions
+Historical archives remain unchanged. That comparison initially added instructions
 and concise decisions only; no one-off harness, raw output or large fixture enters
 Git or CI. Input-window, model-cost and invocation-policy optimization should use
 this complete recent-dialogue method as the reference after relevant quality utility
-is established, with broader fidelity and ambiguity coverage before product adoption.
+is established, with broader fidelity and ambiguity coverage remaining a limitation of this
+English prototype. The subsequent product decision and implementation are below.
+
+## Product adoption: complete recent query
+
+The runtime now uses `complete-recent-dialogue-v6`. It replaces the previous
+question/context pair and rank interleaving with one search. The context is exactly
+the eligible, nonempty recent source partition used by synchronization, before the
+anchor. With 12 recent messages and a new question this normally means eleven
+prior turns plus that question. Turn IDs and roles are serialized as JSON, followed
+by the complete current question:
+
+```text
+Recent conversation (context only):
+[{"turnId":112,"role":"user","text":"Let us revisit my autumn ceramics retreat in Oakmere."},...]
+Current question (retrieval purpose):
+Which hotel did I stay at on that trip?
+```
+
+This is one identical query for managed vector search, English text search and Jev
+reranking. No four-turn/600-token selection, lexical context scoring, query
+rewriting model or silent prefix truncation remains in the runtime. The configured
+recent partition still determines which older messages are indexed. File/media/tool
+context remains excluded; normal/regenerate/swipe anchors on the latest nonempty
+user turn and excludes retained answers after it. Explicit continuation anchors
+on the latest nonempty turn. Assistant-only chats preserve the existing fallback.
+The boundary is based on the actual source length, including retained answers,
+matching `documents()` rather than shifting the partition around the anchor.
+
+An oversized complete query fails locally with a typed validation error before
+any search request. The SDK limit is 8,192 UTF-8 bytes, including JSON/labels. The
+current question is never cut off to meet it. The original prompt remains available;
+generation aborts for this explicit query-limit error. A user can reduce the recent setting
+or shorten input and retry. This is a disclosed service limit, not a new automatic
+quality heuristic. The memory budget, candidate limits, source validation, branch
+isolation, consistent reads, session-only keys and synchronization are unchanged.
+
+### Validation of the adopted runtime
+
+- `npm test` on Node 24.15.0 and
+  `npx --yes --package=node@20.12.0 node --test tests/*.test.js`: **323/323 each**.
+  Runtime syntax, release metadata, pinned SDK and diff whitespace checks pass.
+  Obsolete two-search/lexical-choice assertions are replaced with complete-query,
+  exact source-partition, retained-answer exclusion and UTF-8-limit regressions.
+- Real pinned SillyTavern + Chromium, emulated LambdaDB: **42 basic checks** and
+  **75 final fault checks** pass. The latter verifies explicit overflow abort,
+  no truncated request, unchanged source, invalidation, edits/swipes/deletion,
+  reload/key loss and accepted-but-timed-out write recovery. A first overflow
+  assertion exposed the old prompt-preserving fallback; the explicit query-limit
+  abort was then added and verified in the final run. Other transport failure
+  classification and fallback behavior remain unchanged.
+- **Real browser → real LambdaDB → final host prompt → real Sol:** all three
+  bounded cases pass (`needed-1`, `mixed-1`, `noise-3`). Each makes one Bayesian
+  request using identical complete vector/text/reranker queries, all eleven recent
+  turns and the current question. Explicit branch/consistent-read contracts hold;
+  the nine required source messages reach delivered prompts. Saved answers name
+  Amber Wren for both trip questions and correctly total 56 exhibition pieces.
+  Final input usage is 1,851 / 1,871 / 1,901 tokens. No rank replay, sync override,
+  query rewrite call or direct embedding-provider call is used.
+- Three successful Sol-low answers use a 32K host context and 4,096 reserved output
+  tokens. The initial attempt failed with OpenAI HTTP 400 because the temporary
+  host setup included `temperature: 0`. Correcting only temporary API exclusions
+  to the archived Sol contract completed the same frozen inputs; the failed report
+  is retained. Aggregate: **four provider attempts, 339 submitted documents,
+  nine query attempts and four owned collections**, all deleted/404 verified.
+  Keys are absent from host/browser settings, requests contain no host cookies or
+  CSRF headers, and all recorded artifacts pass the configured-secret scan.
+- The paid run preceded the final query-limit abort branch; its exact producer
+  bytes are preserved and hashes verified. That final branch is separately covered
+  by the completed fault/browser run. Host extension symlink is restored, temporary
+  host profiles/processes are closed, and no owned-resource pending record remains.
+
+This is bounded implementation validation, not a rerun of the complete quality
+cohort or proof of general superiority. The earlier static 11/12 arithmetic error
+remains in the quality record. Long recent dialogue can exceed the disclosed 8KiB
+limit; no automatic input reduction is claimed. Existing English priority and
+multilingual limitations remain. No merge, release, deployment or extra model
+credential is introduced. Detailed evidence and one-off producers remain in the
+[verified local archive](evidence-retention.md#complete-recent-query-production-validation).
