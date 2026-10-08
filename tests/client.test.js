@@ -201,25 +201,29 @@ test('managed rerank metadata must confirm application or an empty candidate poo
 });
 
 
-test('search bounds every signal to the same whole-code-point 8 KiB UTF-8 prefix', async () => {
-    const cases = [
-        ['界'.repeat(3000), '界'.repeat(2730)],
-        ['🧭'.repeat(3000), '🧭'.repeat(2048)],
-        ['x'.repeat(8191) + '🧭z', 'x'.repeat(8191)],
-        ['x'.repeat(8188) + '🧭', 'x'.repeat(8188) + '🧭'],
-    ];
-    for (const [input, expected] of cases) {
+test('search rejects oversized complete queries without sending a truncated request', () => {
+    let calls = 0;
+    const client = new LambdaClient(config, 'synthetic', { fetcher: async () => { calls++; return Response.json(rerankedResponse()); } });
+    for (const input of ['x'.repeat(8193), '界'.repeat(3000), '🧭'.repeat(3000), 'x'.repeat(8191) + '🧭z']) {
+        assert.throws(() => client.search('test', owner, scope, input), error =>
+            error.name === 'ConnectionError' && error.code === 'query-limit' && error.message.includes('no search was sent'));
+    }
+    assert.equal(calls, 0);
+});
+
+test('the exact UTF-8 query limit preserves identical vector, lexical and reranker signals', async () => {
+    for (const input of ['x'.repeat(8192), 'x'.repeat(8188) + '🧭']) {
         const calls = [];
         const client = new LambdaClient(config, 'synthetic', { fetcher: async (url, init) => {
             calls.push(JSON.parse(init.body)); return Response.json(rerankedResponse());
         } });
         await client.search('test', owner, scope, input, undefined, 'chat_child');
-        assert.equal(calls.length, 1, 'The SDK accepts the bounded request');
+        assert.equal(calls.length, 1);
         const body = calls[0];
-        assert.equal(body.query.bayesian[0].knn.queryText, expected);
-        assert.equal(body.query.bayesian[1].bool[1].queryString.query, expected);
-        assert.equal(body.rerank.queryText, expected);
-        assert(Buffer.byteLength(expected, 'utf8') <= 8192);
+        assert.equal(body.query.bayesian[0].knn.queryText, input);
+        assert.equal(body.query.bayesian[1].bool[1].queryString.query, input);
+        assert.equal(body.rerank.queryText, input);
+        assert.equal(Buffer.byteLength(input, 'utf8'), 8192);
         assert.equal(body.query.bayesian[0].knn.k, 30);
         assert.deepEqual(body.ref, { kind: 'branch', name: 'chat_child' });
     }

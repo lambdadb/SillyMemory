@@ -82,6 +82,16 @@ which observation will support a decision, the authorized input/cost/time bounds
 and the stopping condition. Prefer existing runners. Add infrastructure only when
 it is necessary to complete that evaluation or has a concrete recurring use.
 
+Evaluate the semantically justified reference method before introducing quality
+heuristics for performance or cost. For example, a contextual query constructor
+should initially receive the entire recent dialogue outside the indexed older
+history, rather than an arbitrary last-N-message or token-truncated subset.
+After establishing utility, compare bounded-window, truncation, or cheaper-model
+optimizations against that reference and disclose quality losses. This sequencing
+does not remove source/isolation invariants, provider context limits, or authorized
+aggregate experiment resource bounds. Record a context-limit blocker explicitly;
+do not silently reduce the reference input and claim an unrestricted evaluation.
+
 Before a paid answer-quality improvement comparison, identify a demonstrated
 baseline failure relevant to the proposed change. Inspect the question, original
 source and final delivered prompt: distinguish retrieval loss, budget/dependency

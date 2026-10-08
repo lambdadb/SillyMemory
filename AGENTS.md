@@ -29,6 +29,19 @@ Read [CONTRIBUTING.md](CONTRIBUTING.md) before changing this repository.
   requires it. Test-count growth and infrastructure completion are not product or
   answer-quality progress. Report those boundaries explicitly.
 
+## Hypothesis evaluation before optimization
+
+- Start a new technique with the simplest formulation justified by its semantics.
+  Do not add arbitrary message-count, token, threshold, or routing heuristics
+  before establishing that the technique improves the relevant quality failures.
+- Establish quality and meaning first, then optimize latency, cost, and resource
+  use against that measured reference. Retain operational safety, provider context
+  limits, source validity, isolation, and authorized total experiment bounds.
+- For contextual query construction, the initial reference input is the complete
+  recent dialogue outside the indexed older-history partition. Do not impose a
+  separate four-message or 600-token context cap. Report model-context overflow as
+  a limitation rather than silently truncate the reference input.
+
 ## Current evaluation priority
 
 - Prioritize English for near-term answer-quality evaluation and optimization.

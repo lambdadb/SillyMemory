@@ -185,13 +185,9 @@ export class LambdaClient {
         return result.docs.map(x => x.doc);
     }
     search(collection, owner, scope, text, signal, branch = 'main') {
-        // The SDK caps rerank queries at 8 KiB UTF-8. Keep all three signals
-        // aligned, and never cut inside a multi-byte code point.
-        const bytes = new TextEncoder().encode(text);
-        if (bytes.length > 8192) {
-            let end = 8192;
-            while ((bytes[end] & 0xc0) === 0x80) end--;
-            text = new TextDecoder().decode(bytes.subarray(0, end));
+        // Preserve the complete query or fail explicitly before any service call.
+        if (new TextEncoder().encode(text).length > 8192) {
+            throw new ConnectionError('The complete retrieval query exceeds the 8 KiB limit. Reduce the recent-message setting or shorten the input; no search was sent.', 0, 'query-limit');
         }
         const filter = scopeFilter(owner, scope);
         return this.query(collection, { bayesian: [

@@ -167,6 +167,9 @@ globalThis.sillymemory_intercept = async (chat, contextSize, abort, type) => {
         if (!instance) { if (operation.current()) fail(e, operation); abandoned = true; abort(true); return; }
         if (!valid()) { operation.finish('Memory operation canceled because the prompt changed. Generate again.'); abandoned = true; abort(true); return; }
         if (operation.current()) fail(e, operation);
+        // A service limit must not silently turn the complete-query policy into
+        // a truncated search or a generation without the requested memory.
+        if (e instanceof ConnectionError && e.code === 'query-limit') { abandoned = true; abort(true); return; }
     } finally {
         // Reserve only after retrieval: superseded in-flight reads still abort
         // through the existing validity check and never claim a final event.

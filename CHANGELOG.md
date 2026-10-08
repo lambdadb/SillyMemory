@@ -15,6 +15,11 @@ boundary; publication is confirmed by the corresponding Git tag and GitHub Relea
 
 ### Changed
 
+- Retrieve once using the complete eligible recent dialogue and current question,
+  replacing separate question/context searches and their interleaved rankings.
+  No LLM query rewriting is required. Reject complete queries exceeding the SDK's
+  8 KiB UTF-8 limit instead of silently dropping the end of the question.
+
 - Use Bayesian vector/English-text fusion with managed Typesafe Jev reranking and
   a 1,600-token initial memory budget. Keep the 4,096-token maximum and host context
   cap. Reject unconfirmed reranking instead of silently injecting fallback results.

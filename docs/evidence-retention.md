@@ -462,3 +462,214 @@ Identical local-only archive/receipt copies exist in the primary and
 `sillymemory-memory-guidance` worktrees, unavailable in a fresh clone. The previous
 guidance and historical archives remain intact. The corrected interpretation is
 maintained in the decision document; the original provisional review is not edited.
+
+## Current-baseline failure discovery
+
+The [completed decision](current-baseline-failure-discovery.md) uses producer base
+`13a27f7713b9a5ce66fb4f3c15ab66ab1ca4a770` and pinned SillyTavern
+`06bde939fb1e9c4c8d8641d810f0a916b5bce127`. Six actual discovery answers produce
+five target matches; one same-ranking capacity repair returns the complete answer.
+No instruction/runtime/default change is adopted. The independent six-case source
+preflight has no missing labeled evidence at 1,600, so no paid confirmation
+comparison is run. Source coverage is not an answer-correctness claim.
+
+- Archive: `artifacts/archive/current-baseline-failure-discovery-v1/evidence.tar.gz`.
+  It contains 81 files plus manifest, 84,501,361 bytes; SHA-256
+  `167b8161bfde17f636b7d1c49109b1f1676dc11d4ce573dafeeb13e39fb18d53`.
+- Every manifest member was extracted and checked for length/SHA-256; configured
+  secret scanning passes. Identical archive/receipt copies are retained in
+  `/Users/steven/Dev/sillymemory` and
+  `/Users/steven/Dev/sillymemory-failure-discovery`. These are local copies on one
+  machine, ignored and unavailable in a fresh clone, not a remote backup.
+- Includes the full original public dataset and original dialogue adaptation,
+  selection/source/settings locks, producer base tar, one-off source, deployed
+  readbacks/searches, 18 actual-host fixture selections, seven full actual quality
+  answers plus two actual READY checks, complete prompts/usage, pre-answer judging
+  criteria, semantic audits, unchanged candidate plan and separate ceiling-stop
+  receipt. All 24 owned collection cleanup receipts and Node/syntax/SDK/release
+  check logs are retained. No environment file, secret or host profile is included.
+- Original auth401, consistent-fetch503 attempts, bounded read retries and
+  Bayesian400 service probe are preserved, alongside the successful later probe.
+  The earlier `failure-discovery-service-blocker-v1` archive remains unchanged
+  (SHA-256 `4918d44b97304590c3b8f6bb55c6e656ad4f536b4b887d2c91ce7554119ff581`).
+
+For reproduction, restore the recorded base, archived dataset/cases and producing
+scripts in ignored `artifacts/`, with the pinned host and its dependencies. The
+one-off scripts record the original absolute local dataset/environment locations;
+restore or explicitly adapt those ignored paths before use. Only the primary
+`.env.local` supplied credentials in memory, with explicit `SM_MODEL=gpt-6.1-sol`.
+Replaying captured selections is offline; repeating upserts/searches/answers is
+new paid live work and does not reproduce identical provider responses. This
+archive is evidence, not a portable maintained evaluation command or CI fixture.
+
+## Context-aware query comparison
+
+The [completed comparison](context-aware-query-comparison.md) retains the current
+runtime/defaults: baseline17/18, structured-context17/18, constrained-rewrite18/18.
+The only gain uses an unchanged query; two current-query-only attribution answers
+also succeed. The supplementary full-source 5K correction changes interpretation,
+not historical scores, source bytes or original archives.
+
+- Local-only archive: `artifacts/archive/context-query-comparison-v1/evidence.tar.gz`.
+  54 files plus manifest; 20,473,538 bytes; SHA-256
+  `acc6e899aa9b9f835308fc5996dff9769a100cc91e1f4393ac6289ca5ba9187f`.
+- Every manifest member read back and length/hash verified, configured-secret
+  matches zero. Identical archive/receipt copies exist in the primary
+  `/Users/steven/Dev/sillymemory` and
+  `/Users/steven/Dev/sillymemory-context-query` worktrees. These are ignored local
+  copies on one machine, unavailable in a fresh clone, not a remote backup.
+- Contains producer base 13a27f7, all twelve external and six synthetic inputs,
+  original/prepaid input versions, frozen methods/scoring, original protocol and
+  separately retained schedule/diagnostic addenda, all deployed captures/readbacks,
+  actual-host source/prompt identities, 54 main and two diagnostic full answers,
+  eighteen rewrites, three READY checks and corresponding zero-provider fixture
+  reports, source-interpretation correction, final audit, usage/cleanup/check logs,
+  and one-off producers. All thirty owned collections are deletion/404 verified.
+- Original failure-discovery archive and active-tree evidence remain unchanged.
+  Restore this archive into a fresh directory, supplying pinned host/dependencies
+  and credentials separately. Captured-rank replay is offline; rerunning actual
+  retrieval/generation is new paid work with nonidentical provider responses.
+  Historical absolute paths need adaptation; this is retained evidence, not a
+  maintained portable evaluation command or CI dependency. No environment file,
+  credential, personal chat or host/browser profile is included.
+
+## Lower-cost rewrite model comparison
+
+The [completed follow-up](context-aware-query-comparison.md#lower-cost-rewrite-model-comparison)
+compares 54 actual rewrites on the same eighteen exposed inputs. Luna-none preserves
+query scope but has two mode errors; Luna-low adds event-scope/provenance loss.
+One faithful changed query passes deployed retrieval and an actual Sol answer.
+No full-model equivalence, new eighteen-answer score or runtime/default adoption.
+
+Local-only archive: `artifacts/archive/luna-rewrite-v1/evidence.tar.gz`, 41 files
+plus manifest, 1,124,521 bytes; SHA-256
+`b60a1710915434ca751eee8b4f4764c05c88c919ac9c9e784da1e09532abf368`.
+All members are read back and length/hash verified; configured-secret matches zero.
+Identical archive/receipt copies exist in the primary `sillymemory` and
+`sillymemory-context-query` worktrees, ignored and unavailable in a fresh clone.
+These are two local copies on one machine, not a remote backup.
+
+Includes producer base 13a27f7, exact captured system/user inputs, original protocol,
+separate transport continuation, initial failed report and completed remaining
+outputs, all 54 rewrites, mode/scope audit, usage/latency, changed-query control/source
+and final actual answer, actual-host fixture reports, plans/source locks, original
+HTTP500/connection-timeout/setup503 attempts, all eight verified owned cleanups,
+syntax-checked one-off source. Original context-query archive remains unchanged and
+retains the full original cohort; this bundle includes only the downstream
+synthetic source needed here. Host/dependencies/credentials must be supplied
+separately; historical absolute paths need adaptation. Fresh paid reruns do not
+reproduce identical provider output. Environment files, credentials, host/browser
+profiles and personal chats are excluded. The recorded 13-vs-12 query-attempt bound
+deviation is retained; no evidence or failure was rewritten to conceal it.
+
+## Expanded contextual-query quality comparison
+
+The forty-case English comparison is recorded in
+[context-aware query comparison](context-aware-query-comparison.md#expanded-contextual-query-quality-comparison).
+It completes 96 live query rewrites and 120 new Sol answers across single-current-
+question, B/Sol-low and B/Luna-none arms. All three retrieve/inject sufficient support
+and answer 35 factual targets; five ambiguity controls meet clarification criteria.
+The generic event-pair case does not specify its intended inspection/drill labels:
+its bridge source is missing and menus use a competing historical note. Preserve
+that limitation rather than claim forty complete source recoveries. Clear referent
+resolution is 25/25 Sol versus 12/25 Luna, with mode-only mistakes in both models;
+no default or runtime adoption. A saturated small-corpus factual baseline leaves
+rewrite efficacy inconclusive.
+
+Detailed output/source/audit is ignored and **local-only**, unavailable in a fresh
+clone or CI:
+
+- Primary retained copy: `artifacts/archive/context-quality-v1/evidence.tar.gz`.
+- Producing worktree copy: the same relative path in `sillymemory-context-query`.
+- Archive SHA-256: `cc293ac84dcbd3aaa06ec79d2651295aeebef456d1b61d999f3433e830c8ad2e`.
+- Size: 2,472,550 bytes; 43 files plus `ARCHIVE-MANIFEST.json`.
+- Every member hash/length and primary backup bytes verified; configured-key
+  matches zero. No `.env.local` or credentials copied.
+- Base: `13a27f7713b9a5ce66fb4f3c15ab66ab1ca4a770`; pinned host
+  `06bde939fb1e9c4c8d8641d810f0a916b5bce127`; SDK 0.8.0.
+
+The bundle contains frozen cases/specifications/protocol, exact original B prompt,
+one-off builder/host runners/resource guard, producer-base source tar, full
+fixture/two-live reports and source-hash plans, ownership/request ledgers, complete
+manual/final audit, annotation correction, completion and local check logs. The
+original fixture cap 44 protocol/budget bytes are retained against their recorded
+hashes; paid phases use the pre-live corrected cap of 48 and separately verified guard.
+An initial annotation of grounded `he`→Owen replacement as semantic corruption is
+withdrawn; violin specificity remains a documented limitation, with original
+annotation/disposition preserved. Required/contrast evidence roles are explicit;
+the later grant note also independently supports the original $1,400 amount.
+
+Actual provider attempts: 218, zero retries/transport errors. The fixture's 217 responses
+are simulated, with zero direct OpenAI calls; fixture service setup is real. All
+46 owned collections (40 corpora + six setup) are deleted/404-confirmed; pending
+records absent. Combined submissions: 2,923 and query attempts: 75 stay within frozen
+resource bounds. No repeated-answer quality selection, hidden failed run or
+unperformed corpus browser-sync claim. The original failure-discovery, context-query,
+Luna-rewrite and service-blocker archives remain untouched.
+
+## Complete recent-dialogue comparison
+
+- **Availability:** local-only retained evidence; not downloadable from a fresh
+  clone and not a CI dependency. No new raw corpus or one-off harness is committed.
+- **Primary archive:** `/Users/steven/Dev/sillymemory/artifacts/archive/context-full-v1/evidence.tar.gz`.
+- **Producer copy:** `/Users/steven/Dev/sillymemory-context-query/artifacts/archive/context-full-v1/evidence.tar.gz`.
+- **SHA-256:** `2440cc68dbd88735caca7d6ccf6d99048e37660936ab083fa62eec9030de4b44`.
+- **Size:** 1,765,880 bytes; 38 original files plus `ARCHIVE-MANIFEST.json`.
+  Every member's length/hash and the byte-identical primary copy were verified;
+  a scanner using the parsed configured credentials found zero matches.
+- **Runtime producer:** `13a27f7713b9a5ce66fb4f3c15ab66ab1ca4a770`; pinned actual
+  SillyTavern `06bde939fb1e9c4c8d8641d810f0a916b5bce127`. Full protocol, generated
+  fifteen-case inputs, pre-live hashes, source tree and one-off scripts are included.
+  The actual-host fixture's original protocol and failed initial stale-path startup
+  log are retained; live criteria were fixed before any paid generation.
+- **Evidence:** three discovery and twelve pre-frozen confirmation cases, four
+  search policies, fifteen Sol rewrites, sixty Sol answers, seventy-seven successful
+  provider attempts, no retries/errors; all ranks, delivered messages, source/time/
+  coordinate assertions, manual answers and query audit, stage metrics and limits.
+- **Confirmed result:** complete-context B and static full context both recover
+  four hotel sources missed by current-product and question-only retrieval.
+  Confirmation answers are 8/12, 7/12, 11/12 and 12/12 respectively. Two final
+  arithmetic errors are retained and separated from retrieval; one occurs with
+  a byte-identical B/question-only prompt. B's superiority over static retrieval
+  or causal noise reduction in this cohort is not established.
+- **Limitations:** constructed template-sharing variants, short full contexts,
+  single output samples, agent adjudication and SDK-rank replay into the actual
+  host. Not a public benchmark, long-input reliability claim or production change.
+- **Cleanup:** all 21 owned collections deleted and 404 verified (fifteen corpus,
+  six fixture/live setup); 1,683 submitted documents and 63 query attempts.
+  Pending records absent; temporary host profiles/servers removed and original
+  model/settings/prototypes restored. Original prior evidence archives retain
+  their previously recorded checksums. No historical evidence is discarded.
+- **Validation:** Node 20.12.0/24.15.0 suites each 325/325; runtime/release/SDK and
+  whitespace checks pass. Fixture made 76 simulated replies and zero OpenAI calls.
+
+See [method, exact failures and interpretation](context-aware-query-comparison.md#complete-recent-dialogue-comparison).
+
+## Complete recent-query production validation
+
+- **Availability:** local-only retained bundle at
+  `/Users/steven/Dev/sillymemory/artifacts/archive/full-query-production-v1/evidence.tar.gz`,
+  verified byte-identical implementation-worktree copy. Unavailable in a fresh clone.
+- **Integrity:** SHA-256
+  `14c59b6485bf8aa342a6c99e194d731d57229692bfd11a987f15783c493f5e47`;
+  215,891 bytes, 43 members including the manifest. All member hashes and copied
+  bytes verified; configured-secret matches zero.
+- **Contents:** bounded protocol and input/harness locks; three frozen historical
+  synthetic inputs; temporary initial/corrected host runners; both live reports;
+  basic/final fault reports and logs including the failed overflow assertion;
+  Node 20/24 results; exact paid producer source with verified report hashes;
+  base `62e99aa7e5f0ac09f9f9fe6371ff958da77eba30` and final runtime/test patch.
+- **Result:** actual unmodified browser runtime, no rank replay or prototype
+  replacement: all three source-injection and answer checks pass. One initial
+  OpenAI 400 from unsupported temporary temperature settings is retained; corrected
+  Sol parameters yield three successful answers. Final explicit query-limit abort
+  was added afterward and verified by 75 fault/browser checks. The basic emulator
+  checks 42 assertions; unit suites each pass 323 tests.
+- **Cleanup:** combined live runs submit 339 documents, make nine query attempts
+  and create four owned collections; all deleted/404 verified, no pending ownership
+  record. Session keys are not persisted, host credentials are not forwarded, and
+  temporary processes/profiles and the original host extension symlink are restored.
+- **Boundary:** implementation smoke, not a new full-cohort efficacy result or a
+  long-input/multilingual reliability claim. Preserve the earlier complete-dialogue
+  comparison and all historical archives unchanged. See the
+  [product decision and interpretation](context-aware-query-comparison.md#product-adoption-complete-recent-query).
