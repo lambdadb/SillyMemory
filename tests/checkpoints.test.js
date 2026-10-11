@@ -69,7 +69,7 @@ test('pending checkpoint survives a lost branch response and can finish without 
     assert.equal(f.writes, before);
 });
 test('unconfirmed local checkpoint saves never create a remote branch; empty memory can be saved', async () => {
-    const f = await fixture(1), count = f.branches.size, save = f.host.save;
+    const f = await fixture(0), count = f.branches.size, save = f.host.save;
     f.host.save = async () => {};
     await assert.rejects(createCheckpoint(f), /save is not confirmed/);
     assert.equal(f.branches.size, count);

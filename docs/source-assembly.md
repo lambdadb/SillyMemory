@@ -36,7 +36,8 @@ identical admission or answer results between the benchmark and runtime.
 
 Current defaults are recent12, memory budget4096 (maximum4096), chunk ceiling800
 codepoints, vector k100/rerank candidate100/final size50, Bayesian English fusion with managed Jev and one
-complete-recent-dialogue query. The host's existing one-quarter-context budget cap,
+current-question query with independent completed-history indexing; see
+[current policy](conversation-memory-defaults.md). The host's existing one-quarter-context budget cap,
 current-chat validation, cancellation, session-only key and prompt-delivery checks
 are unchanged. No new mode, stored format, provider option or SDK change. See the
 [later numeric-default adoption](profile-50-host-validation.md#product-default-adoption);

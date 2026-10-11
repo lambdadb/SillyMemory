@@ -654,7 +654,8 @@ English prototype. The subsequent product decision and implementation are below.
 
 ## Product adoption: complete recent query
 
-The runtime now uses `complete-recent-dialogue-v6`. It replaces the previous
+This historical adoption used `complete-recent-dialogue-v6`. The later
+[current-question policy](conversation-memory-defaults.md) supersedes it. It replaces the previous
 question/context pair and rank interleaving with one search. The context is exactly
 the eligible, nonempty recent source partition used by synchronization, before the
 anchor. With 12 recent messages and a new question this normally means eleven

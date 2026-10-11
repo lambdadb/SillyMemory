@@ -21,10 +21,14 @@ boundary; publication is confirmed by the corresponding Git tag and GitHub Relea
   saved space in search order within the unchanged budget. No LLM processing or
   extra retrieval is added; malformed coordinates retain separate excerpts.
 
-- Retrieve once using the complete eligible recent dialogue and current question,
-  replacing separate question/context searches and their interleaved rankings.
-  No LLM query rewriting is required. Reject complete queries exceeding the SDK's
-  8 KiB UTF-8 limit instead of silently dropping the end of the question.
+- Index all completed eligible conversation messages independently of recent prompt
+  retention, and retrieve using only the current question. Exclude retained turns
+  from both search legs and local selection. Continue searches the message being
+  extended; pending final user inputs wait for a reply before indexing. Reject
+  retrieval inputs above 8 KiB without silent truncation.
+- Add budgeted system guidance to ask a brief clarification instead of guessing
+  when conversation evidence is insufficient or the referent is ambiguous.
+  Verify final delivery even when no memory is selected.
 
 - Use Bayesian vector/English-text fusion with managed Typesafe Jev reranking and
   vector k=100, at most 100 rerank candidates, a final return limit of 50 chunks

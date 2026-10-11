@@ -993,3 +993,63 @@ See [method, exact failures and interpretation](context-aware-query-comparison.m
   fault/delivery hashes match the final measured code. Local-only, unavailable in
   a fresh clone; pinned host/dependencies are external inputs. Prior live archive
   stays immutable; no raw run output or scratch generator enters Git.
+
+## Current-question policy validation
+
+This first snapshot predates the final user-anchor preservation fix. It remains
+immutable; use the final validation record below for the submitted runtime.
+
+The PR #72 follow-up indexes completed eligible history independently of prompt
+retention, uses current-question retrieval and supplies budgeted clarification
+guidance. See [policy, checks and limits](conversation-memory-defaults.md).
+
+- Archive: `/Users/steven/Dev/sillymemory/artifacts/archive/current-question-policy-v1/evidence.tar.gz`
+- SHA-256: `67dff888db749ec27ff102cfc33d3e422c2ba53d9b3e2f03c01ee41f295c3b96`
+- Manifest: adjacent `manifest.json`, with verified hashes for all 74 members.
+- Producing base: `718ce65d390c0306b02471b1cb15b9c277dd5850`; parent
+  `e1fe1fc93b619560cda6cf9529066e7060460ed7`, with the included working-tree patch
+  and final validated source snapshot. Final documentation pointers follow this
+  snapshot. The manifest and runtime hashes identify the measured bytes.
+- Includes final unit/browser/fault/prompt-delivery reports, the one-off live numeric
+  filter producer and report, and failed harness-attempt reports/logs. Earlier
+  failed attempts retain recorded hashes and available output; not every
+  intermediate producer source or failed packing request was captured. The final
+  delivery producer also records all completion-emulator requests on failure.
+- Final browser 45, fault 77 and all 13 prompt-delivery cases passed with no
+  remaining emulator collections. Failed attempts can report collections still
+  present in the process-local emulator before it shuts down; they created no
+  external resources. The live run's one owned collection has HTTP 404 cleanup
+  confirmation and an empty pending record. A credential-content scan found zero
+  matches in the bundle. No personal chats or `.env.local` are included.
+- Availability: local-only. Fresh clones do not have this archive, pinned host
+  checkout/dependencies or the private credential file. Maintained CI uses small
+  fixed inputs and does not read this archive. The one-off live producer is not
+  added to maintained tooling.
+
+This record establishes implementation contracts, not a new LongMemEval score or
+actual-model clarification behavior. Prior evidence archives are unchanged.
+
+## Current-question policy final validation
+
+The final runtime also protects the current user anchor and every following turn
+when consecutive assistant replies move it outside the configured recent window.
+
+- Archive: `/Users/steven/Dev/sillymemory/artifacts/archive/current-question-policy-v2/evidence.tar.gz`
+- SHA-256: `e785af7bfa5ca8ae6e0a4a6c02de2b41562184175e1bc4e83880a052a9255ff8`
+- Manifest: adjacent `manifest.json`, with verified hashes for all 86 members.
+- Same base/parent as v1, with the final source snapshot and patch. Final browser
+  `current-question-v4`, fault `current-question-v3` and delivery
+  `current-question-v8` source hashes match the included current source.
+- Unit 340/340, browser 45, fault 77 and all 14 delivery cases passed; the new real
+  host case retains the user anchor and a following assistant turn during
+  regeneration with recent=2. Final emulator collections are zero.
+- The live numeric-filter check predates the anchor-only fix; its actually imported
+  `src/client.js` and SDK bundle are byte-identical to the final runtime. Its other
+  recorded runtime hashes are historical, not a new full-host live check.
+- All v1 attempts plus final reports and source are retained. The same external
+  prerequisites and failed-attempt capture limits apply. Secret-content matches
+  are zero; live owned deletion remains confirmed by HTTP 404.
+- Local-only; unavailable in a fresh clone and never required by CI. No benchmark
+  score or actual-model clarification behavior is established by these checks.
+
+The v1 and earlier numeric-profile archives have not been overwritten or deleted.

@@ -103,3 +103,13 @@ test('delivery counts assembled excerpts rather than their underlying source pas
     const missingPart = [{ role: 'user', content: messages[0].mes.replace('second', '') }, complete[1]];
     assert.match(deliverySummary(inspectPrompt(input, missingPart), true), /Generation stopped: 1 memory excerpts/);
 });
+
+
+test('clarification guidance must be delivered as system context even when no memory was selected', () => {
+    const input = { ...expected([], [source('Where was that?', true)]), guidance: [{ role: 'system', content: 'Ask for clarification instead of guessing.', verifiable: true }] };
+    const tracker = new PromptDelivery(); tracker.begin(input, () => true);
+    const result = tracker.finish([{ role: 'user', content: 'Where was that?' }]);
+    assert.equal(result.lost, true); assert.match(deliverySummary(result.result, true), /clarification guidance is missing/);
+    tracker.begin(input, () => true);
+    assert.equal(tracker.finish([{ role: 'system', content: 'Ask for clarification instead of guessing.' }, { role: 'user', content: 'Where was that?' }]).lost, false);
+});

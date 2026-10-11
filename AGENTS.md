@@ -37,7 +37,9 @@ Read [CONTRIBUTING.md](CONTRIBUTING.md) before changing this repository.
 - Establish quality and meaning first, then optimize latency, cost, and resource
   use against that measured reference. Retain operational safety, provider context
   limits, source validity, isolation, and authorized total experiment bounds.
-- For contextual query construction, the initial reference input is the complete
+- The product default indexes completed history and searches only the current
+  question, while retaining recent full messages in the answer prompt.
+- When evaluating contextual query construction as a new candidate, the initial reference input is the complete
   recent dialogue outside the indexed older-history partition. Do not impose a
   separate four-message or 600-token context cap. Report model-context overflow as
   a limitation rather than silently truncate the reference input.

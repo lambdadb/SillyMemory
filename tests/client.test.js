@@ -229,3 +229,17 @@ test('the exact UTF-8 query limit preserves identical vector, lexical and rerank
         assert.deepEqual(body.ref, { kind: 'branch', name: 'chat_child' });
     }
 });
+
+
+test('message boundary filters both search legs before ranking and rejects invalid bounds without a request', async () => {
+    const calls = [];
+    const client = new LambdaClient(config, 'synthetic-key', { fetcher: async (_, init) => {
+        calls.push(JSON.parse(init.body)); return Response.json(rerankedResponse());
+    } });
+    await client.search('test', owner, scope, 'Where?', undefined, 'chat_test', 4);
+    const filter = { queryString: { query: `owner:${owner} AND scope:${scope} AND message:[0 TO 3]` } };
+    assert.deepEqual(calls[0].query.bayesian[0].knn.filter, filter);
+    assert.deepEqual(calls[0].query.bayesian[1].bool[0], { ...filter, occur: 'filter' });
+    for (const boundary of [0, -1, 1.5, NaN, '4']) assert.throws(() => client.search('test', owner, scope, 'Where?', undefined, 'chat_test', boundary), /boundary/);
+    assert.equal(calls.length, 1);
+});

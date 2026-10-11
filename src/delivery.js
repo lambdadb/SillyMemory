@@ -38,7 +38,7 @@ export function inspectPrompt(expected, prompt) {
         if (index >= 0) used.add(index);
         return { ...message, outcome: index >= 0 ? 'included' : 'missing' };
     });
-    return { memory: match(expected.memory), recent: match(expected.recent) };
+    return { memory: match(expected.memory), recent: match(expected.recent), guidance: match(expected.guidance || []) };
 }
 
 export function deliverySummary(result, stopOnLoss) {
@@ -46,8 +46,9 @@ export function deliverySummary(result, stopOnLoss) {
     const count = (group, outcome) => result[group].filter(m => m.outcome === outcome).length;
     const memoryLost = count('memory', 'missing'), recentLost = count('recent', 'missing');
     const uncertain = count('memory', 'unverified') + count('recent', 'unverified');
+    const guidanceLost = (result.guidance || []).some(m => m.outcome === 'missing');
     const totals = `Final host prompt: ${count('memory', 'included')}/${result.memory.length} memory excerpts and ${count('recent', 'included')}/${result.recent.length} recent messages verified.`;
-    if (memoryLost || recentLost) return `${stopOnLoss ? 'Generation stopped' : 'Warning'}: ${memoryLost} memory excerpts and ${recentLost} recent messages are missing or changed. ${totals} Increase context, reduce reserved output or recent-message count, then generate again. Disable Stop on missing context to proceed with a warning.${uncertain ? ` ${uncertain} transformed messages could not be verified.` : ''}`;
+    if (memoryLost || recentLost || guidanceLost) return `${stopOnLoss ? 'Generation stopped' : 'Warning'}: ${memoryLost} memory excerpts and ${recentLost} recent messages are missing or changed.${guidanceLost ? ' Memory clarification guidance is missing or changed.' : ''} ${totals} Increase context, reduce reserved output or recent-message count, then generate again. Disable Stop on missing context to proceed with a warning.${uncertain ? ` ${uncertain} transformed messages could not be verified.` : ''}`;
     return `${totals}${uncertain ? ` ${uncertain} transformed messages could not be verified; they are not counted as missing.` : ''} Provider receipt is not checked.`;
 }
 
@@ -71,6 +72,6 @@ export class PromptDelivery {
         this.pending = undefined;
         if (canceled || !valid()) return { canceled: true };
         const result = inspectPrompt(expected, prompt);
-        return { result, lost: Boolean(result && [...result.memory, ...result.recent].some(m => m.outcome === 'missing')) };
+        return { result, lost: Boolean(result && [...result.memory, ...result.recent, ...result.guidance].some(m => m.outcome === 'missing')) };
     }
 }

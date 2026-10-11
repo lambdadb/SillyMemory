@@ -78,15 +78,21 @@ indexing chunks: long messages now prefer paragraph, sentence and word boundarie
 [controlled budget comparison](docs/memory-budget-calibration.md) for evidence
 and limitations, and the [design review](docs/memory-design-followups.md) for
 chunking and hybrid-search work. The [chat collection lifecycle](docs/chat-collections.md) describes the implemented isolation and cleanup behavior.
-Each answer uses one retrieval query: all eligible recent dialogue outside the
-indexed older-history partition, with turn IDs and roles, followed by the current
-question once. Regenerate/swipe excludes the answer being replaced; continuation
-anchors on the message being extended. No LLM query rewriting or additional
-context-window cap is used. The SDK's 8 KiB UTF-8 query limit is enforced explicitly:
-an oversized complete query sends no search, retains the original prompt and
-stops generation. Reduce the recent
-setting or shorten the input before retrying. See the
-[complete recent-query decision](docs/context-aware-query-comparison.md#product-adoption-complete-recent-query).
+Each answer searches only the current user question, without appending recent
+conversation or using an LLM to rewrite it. All completed eligible messages are
+indexed, independently of the recent full-message setting; a pending final user
+input is indexed after the assistant replies. Recent full messages remain in the
+answer prompt and are excluded from both search legs and local selection to avoid
+duplicate injection. Regenerate/swipe search the user question; Continue searches
+the eligible message being extended. Inputs above 8 KiB fail before search rather
+than being silently shortened.
+
+A system instruction asks the answer model to use available conversation evidence
+and ask one brief clarifying question when the referent or requested fact is
+unclear, rather than guess. This is a model instruction, not a guarantee of
+abstention or retrieval recall. It is budgeted with memory and checked at the final
+host prompt boundary, including empty search results. See the
+[current policy and validation limits](docs/conversation-memory-defaults.md).
 
 Current retrieval combines managed vector and raw English text search with
 Bayesian fusion with vector k=100, followed by managed Typesafe Jev reranking
@@ -139,16 +145,16 @@ release notes describe their original versions, not the current contract.
 
 ## Use and behavior
 
-- The status panel shows preparation, queued writes, ownership checks, outdated-chunk deletion, upload, search, and token budgeting. Upload totals count current older chunks; confirmed chunks include this session's earlier successful writes. Counts advance only after a service response, not merely after sending a request. They do not measure embedding/index visibility or bytes transferred. A failed operation keeps the last confirmed count and shows retry guidance.
+- The status panel shows preparation, queued writes, ownership checks, outdated-chunk deletion, upload, search, and token budgeting. Upload totals count completed conversation chunks; confirmed chunks include this session's earlier successful writes. Counts advance only after a service response, not merely after sending a request. They do not measure embedding/index visibility or bytes transferred. A failed operation keeps the last confirmed count and shows retry guidance.
 - Send messages normally. Message generation, edits, selected swipes, deletion, chat changes, and reload/re-enable trigger reconciliation. Click **Sync this chat** to retry after a network failure. For authentication errors, re-enter the key using **Use key for this session** first; for rate limits or timeouts, wait before retrying. Successful batches are skipped within the session. A lost response can require an idempotent re-upsert, and reload conservatively rechecks current records after key re-entry and re-enabling memory. Progress is not saved across reloads.
 - Long messages use boundary-aware chunks with exact source offsets. The first sync after this update deletes journal-tracked old-layout IDs and reindexes the current chat; this incurs managed embedding usage. See [the controlled comparison and limits](docs/boundary-chunking.md).
-- Only older plain-text messages are embedded. Recent messages stay in the generation array. Files, media, and tool messages are not indexed; group chats and chats with system tool invocations are bypassed.
+- All completed eligible plain-text messages are embedded. Recent messages stay in the generation array. Files, media, and tool messages are not indexed; group chats and chats with system tool invocations are bypassed.
 - Each story uses one owned collection and each chat path uses an isolated writable branch. Saved native metadata defines the story and chat IDs. Renaming preserves them; verified native forks inherit committed memory without re-embedding. Independent copies receive a new story. Every query applies an owner/story filter and validates results against the current local chat. See [the storage model](docs/versioned-memory.md).
-- Before generation, the extension synchronizes current source text and retrieves matching chunks with `knn.queryText`: the latest user message and the preceding nonempty user message are searched independently. A first user turn has only one query; generic assistant acknowledgments are not concatenated into the topic query. Explicit **Continue** generation instead anchors on the latest message being extended; regenerate and swipe still use the user question. It interleaves the two result lists, validates every result against current local text and IDs, and token-counts the complete injected string using the host tokenizer. Macro braces and legacy macro markers are shown with fullwidth delimiters so recalled dialogue stays literal during host prompt assembly.
+- Before generation, the extension synchronizes current source text and retrieves matching older chunks with one current-question query. Vector and English lexical legs share owner, story scope and message-index filters; recent full messages are excluded before ranking. Continue anchors on the eligible message being extended; regenerate and swipe use the user question. Every result is validated against current local text, IDs and the retained-message boundary. The host tokenizer counts excerpts and guidance together. Macro braces and legacy macro markers are shown with fullwidth delimiters so recalled dialogue stays literal during host prompt assembly.
 - If at least one valid passage fits, older eligible full messages are removed from the ephemeral prompt array and the selected passages are injected. Source chat messages on disk are not modified. If nothing fits or an operation fails, the original prompt remains. A mid-request chat change aborts that generation; generate again in the new chat.
 - Identical selected passages from the same speaker and role share one full body with every selected source position listed. If this saves tokens, additional distinct retrieved passages may fit; no already-selected source is dropped. Repeated groups appear at their latest selected occurrence. The inspection panel exposes these labels.
-- Every indexed chunk stores available UTC **host message timestamps** from current `send_date` metadata, separately from embedding text. Selection budgets the complete excerpt and its timestamp together. These are explicitly not story/event dates; unsupported or missing timestamps remain unknown. Time edits update document revisions and can trigger embedding again. See [provenance, budget and validation](docs/conversation-time.md).
-- **Memory in the last prompt** separates prepared excerpts from those verified in the final host prompt. **Stop on missing context** is enabled by default: if prepared memory or verifiable recent messages are missing or changed, generation is canceled before the completion request. Increase context, reduce reserved output or recent-message count, then generate again; the submitted user message remains in the chat. Turn the option off to proceed with a visible warning. There is no automatic retry. See [behavior, limits and validation](docs/prompt-delivery.md).
+- Every indexed chunk stores available UTC **host message timestamps** from current `send_date` metadata, separately from embedding text. Selection budgets the complete excerpt, its timestamp and clarification guidance together. These are explicitly not story/event dates; unsupported or missing timestamps remain unknown. Time edits update document revisions and can trigger embedding again. See [provenance, budget and validation](docs/conversation-time.md).
+- **Memory in the last prompt** separates prepared excerpts from those verified in the final host prompt. **Stop on missing context** is enabled by default: if prepared memory, clarification guidance or verifiable recent messages are missing or changed, generation is canceled before the completion request. Increase context, reduce reserved output or recent-message count, then generate again; the submitted user message remains in the chat. Turn the option off to proceed with a visible warning. There is no automatic retry. See [behavior, limits and validation](docs/prompt-delivery.md).
 - Verification uses the pinned host's Chat Completion prompt boundary, not provider receipt or billed tokens. Name macros are supported; arbitrary macros and the final continuation prefix are explicitly unverified rather than falsely counted as missing. Other completion formats report verification unavailable. Later provider transformations and other prompt-rewriting extensions are outside this check. The default 1,600-token allocation and one-quarter cap remain heuristics, not exact remaining capacity; the [capacity audit](docs/prompt-capacity-results.md) records why.
 - **Disable** stops synchronization/retrieval and clears the injection. It retains remote data. **Forget key** also disables memory. Reload starts disabled and requires key re-entry.
 - **Delete this chat’s remote memory** removes its writable branch; parent and sibling branches remain. **Delete all owned remote memory** discovers and deletes this installation’s story collections, including those absent from browser bookkeeping. Both drain pending writes and verify ownership and API absence. Local chats remain; this does not prove physical erasure from provider backups.

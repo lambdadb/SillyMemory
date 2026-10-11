@@ -75,10 +75,10 @@ const remote = createServer({ key: await readFile(key), cert: await readFile(cer
             assert.deepEqual(body.query.bayesian[1].bool[0], { ...filter, occur: 'filter' });
             assert.equal(knn.k, 100); assert.equal(body.size, 50); assert.equal(body.rerank.candidateSize, 100);
         }
-        const match = /^owner:([a-f0-9]+) AND scope:([a-f0-9]+)$/.exec(filter.queryString?.query || '');
+        const match = /^owner:([a-f0-9]+) AND scope:([a-f0-9]+)(?: AND message:\[0 TO (\d+)\])?$/.exec(filter.queryString?.query || '');
         assert.ok(match, 'owner and scope query filters required');
         if (knn) assert.equal(typeof knn.queryText, 'string');
-        const found = [...docs.values()].filter(d => d.owner === match[1] && d.scope === match[2]);
+        const found = [...docs.values()].filter(d => d.owner === match[1] && d.scope === match[2] && (match[3] === undefined || d.message <= Number(match[3])));
         return faults.respond('query', () => [200, body.rerank ? rerankedResponse([...found, ...staleHits], name) : documentResponse([...found, ...staleHits], name)], send);
     }
     send(400);
@@ -192,7 +192,7 @@ try {
         // This suite calls only the interceptor dispatcher. Emulate its completion
         // boundary to release prompt ownership; full packing/dispatch is tested
         // by prompt-delivery-smoke.mjs, not by this synthetic final event.
-        if (!aborted) await c.eventSource.emit(c.eventTypes.GENERATE_AFTER_DATA, { prompt: chat.map(m => ({ role: m.is_user ? 'user' : 'assistant', content: m.mes })) }, false);
+        if (!aborted) await c.eventSource.emit(c.eventTypes.GENERATE_AFTER_DATA, { prompt: [{ role: 'system', content: c.extensionPrompts.sillymemory.value }, ...chat.map(m => ({ role: m.is_user ? 'user' : 'assistant', content: m.mes }))] }, false);
         return result;
     });
     const result = await prompt();
@@ -234,7 +234,7 @@ try {
     check('swipe event updates remote source', [...collection.docs.values()].some(d => d.text.includes('Selected swipe')));
     await page.evaluate(async () => { const c = SillyTavern.getContext(); c.chat.splice(0, 1); await c.eventSource.emit(c.eventTypes.MESSAGE_DELETED, 0); });
     await waitStatus('synchronized');
-    check('message deletion reconciles remote documents', collection.docs.size === 5);
+    check('message deletion reconciles remote documents', collection.docs.size === 7);
     delayedQuery = 700;
     const pending = prompt();
     await page.waitForTimeout(150);
@@ -372,7 +372,7 @@ try {
     check('explicit user budget survives reload without default replacement', await field('budget').inputValue() === '512');
     if (faultMode) check('fault run has no uncaught browser page errors', errors.length === 0);
     const sourceSha256 = {};
-    for (const file of ['index.js', 'manifest.json', 'settings.html', 'style.css', 'src/chunking.js', 'src/client.js', 'src/commit.js', 'src/chat-collections.js', 'src/checkpoints.js', 'src/gate.js', 'src/memory.js', 'src/time.js', 'src/context.js', 'src/status.js', 'scripts/browser-smoke.mjs', 'scripts/emulator-cors.mjs', 'scripts/fault-scenarios.mjs', 'scripts/recovery-scenarios.mjs']) {
+    for (const file of ['index.js', 'manifest.json', 'settings.html', 'style.css', 'src/chunking.js', 'src/client.js', 'src/commit.js', 'src/chat-collections.js', 'src/checkpoints.js', 'src/gate.js', 'src/memory.js', 'src/time.js', 'src/context.js', 'src/delivery.js', 'src/status.js', 'scripts/browser-smoke.mjs', 'scripts/emulator-cors.mjs', 'scripts/fault-scenarios.mjs', 'scripts/recovery-scenarios.mjs']) {
         sourceSha256[file] = createHash('sha256').update(await readFile(path.join(root, file))).digest('hex');
     }
     await writeFile(path.join(artifacts, artifactName), JSON.stringify({ passed: true, faultResults, sourceSha256, time: new Date().toISOString(), sillyTavern: revision, node: process.version, browser: browser.version(), upstream: 'Local HTTPS LambdaDB emulator; no live managed embeddings', checks, pageErrors: errors, requestCount: calls.length, preflights, proxyRequests, remainingCollections: collections.size }, null, 2));

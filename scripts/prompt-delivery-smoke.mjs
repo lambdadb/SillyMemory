@@ -14,6 +14,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { capacityPlan, capacityChat, capacityInstructions } from './prompt-capacity-cases.mjs';
 import { hostSource, loadLong } from './semantic-long.mjs';
+import { MEMORY_GUIDANCE } from '../src/context.js';
 import { retrievalQueries, interleaveHits } from '../src/memory.js';
 
 const packingRanks = JSON.parse(await readFile(new URL('../tests/fixtures/packing-ranks.json', import.meta.url)));
@@ -39,13 +40,14 @@ const plan = { ...capacityPlan, cases: [
     { ...base, id: 'pressure-regenerate', recentRepeats: 80, type: 'regenerate', blocked: true },
     { ...base, id: 'recovered-context', recentRepeats: 80, context: 4096 },
     { ...base, id: 'continue', type: 'continue' },
+    { ...base, id: 'anchor-before-recent-window', type: 'regenerate', context: 4096, recent: 2, earlierAnchor: true },
     { ...base, id: 'no-hits-pressure', recentRepeats: 80, noHits: true, blocked: true },
     { ...base, id: 'no-hits-small', noHits: true },
     { ...base, id: 'disabled', enabled: false, recentRepeats: 80 },
 ] };
 
-// These cases isolate host context loss, rather than the complete-query byte limit.
-// Three recent turns at 100 repeats exceed 8 KiB under the current query policy.
+// These cases isolate host context loss; question-only retrieval does not append
+// the deliberately oversized recent conversation. Continuation still has limits.
 for (const spec of plan.cases.filter(spec => spec.enabled)) {
     const messages = capacityChat(spec.recentRepeats).map((message, index) => ({ index, text: message.mes, user: message.is_user, eligible: true }));
     if (spec.type === 'normal') messages.push({ index: messages.length, text: plan.question, user: true, eligible: true });
@@ -119,13 +121,13 @@ const remote = httpsServer({ key: await readFile(key), cert: await readFile(cert
             const knn = body.query.bayesian?.[0]?.knn || body.query.knn;
             const filter = knn?.filter || body.query;
             if (body.query.bayesian) assert.deepEqual(body.query.bayesian[1].bool[0], { ...filter, occur: 'filter' });
-            const match = /^owner:([a-f0-9]+) AND scope:([a-f0-9]+)$/.exec(filter.queryString?.query || '');
+            const match = /^owner:([a-f0-9]+) AND scope:([a-f0-9]+)(?: AND message:\[0 TO (\d+)\])?$/.exec(filter.queryString?.query || '');
             assert.ok(match);
             if (knn) assert.equal(typeof knn.queryText, 'string');
             // Fixed source order, deliberately no embeddings or ANN simulation.
-            let docs = knn && noHits ? [] : [...branchDocs.values()].filter(d => d.owner === match[1] && d.scope === match[2]);
+            let docs = knn && noHits ? [] : [...branchDocs.values()].filter(d => d.owner === match[1] && d.scope === match[2] && (match[3] === undefined || d.message <= Number(match[3])));
             if (knn && packing) {
-                assert.equal(knn.queryText, packingQuery, 'Actual host uses the complete recent-query policy');
+                assert.equal(knn.queryText, packingQuery, 'Actual host uses the current-question policy');
                 docs = packingOrder.map(hit => {
                     const doc = docs.find(doc => doc.message === hit.message && doc.chunk === hit.chunk);
                     assert.ok(doc, 'Recorded rank refers to a synchronized source');
@@ -208,9 +210,11 @@ try {
         console.log(`VERIFY ${spec.id}`);
         noHits = spec.noHits === true;
         const chat = capacityChat(spec.recentRepeats);
+        if (spec.earlierAnchor) chat.slice(9).forEach(message => { message.is_user = false; message.name = 'Mira'; });
         if (spec.collision) chat[10].mes = 'OK';
         if (await field('enabled').isChecked()) await field('enabled').uncheck();
         await field('stopOnLoss').setChecked(spec.stopOnLoss);
+        await field('recent').fill(String(spec.recent ?? plan.recent)); await field('recent').dispatchEvent('change');
         await page.evaluate(async ({ spec, chat, instructions }) => {
             const c = SillyTavern.getContext(), { oai_settings } = await import('/scripts/openai.js');
             Object.assign(oai_settings, { openai_max_context: spec.context, openai_max_tokens: spec.output, stream_openai: Boolean(spec.streaming), names_behavior: spec.names ?? 0 });
@@ -266,18 +270,25 @@ try {
         else {
             assert.equal(observation.generationError, undefined);
             assert.ok(observation.answer.endsWith('LOCAL_FIXTURE_OK'));
-            if (spec.enabled) assert.match(observation.delivery, spec.stopOnLoss ? /^Final host prompt:/ : /^Warning:/);
+            if (spec.enabled) {
+                assert.match(observation.delivery, spec.stopOnLoss ? /^Final host prompt:/ : /^Warning:/);
+                assert(sent[0].messages.some(m => m.role === 'system' && m.content.includes(MEMORY_GUIDANCE)), 'Clarification guidance reaches the completion request, including no hits');
+            }
         }
         if (spec.type === 'normal') assert.deepEqual(observation.chat.slice(0, 12), chat.map(m => m.mes), 'Original chat text preserved');
         if (spec.id === 'included') {
-            assert.match(observation.delivery, /2\/2 memory excerpts and 4\/4 recent messages verified/);
-            assert.equal(sent[0].messages.filter(m => m.content.startsWith('[Past conversation excerpt:')).length, 2);
+            assert.match(observation.delivery, /1\/1 memory excerpts and 4\/4 recent messages verified/);
+            assert.equal(sent[0].messages.filter(m => m.content.startsWith('[Past conversation excerpt:')).length, 1);
         }
         if (spec.id === 'pressure-warning') {
-            assert.match(observation.delivery, /2 memory excerpts and 1 recent messages are missing/);
+            assert.match(observation.delivery, /1 memory excerpts and 1 recent messages are missing/);
             assert.equal(sent[0].messages.filter(m => m.content.startsWith('[Past conversation excerpt:')).length, 0);
         }
-        if (spec.id === 'recovered-context') assert.match(observation.delivery, /6\/6 memory excerpts and 4\/4 recent messages verified/);
+        if (spec.id === 'recovered-context') assert.match(observation.delivery, /5\/5 memory excerpts and 4\/4 recent messages verified/);
+        if (spec.earlierAnchor) {
+            assert(sent[0].messages.some(m => m.role === 'user' && m.content === chat[8].mes), 'User anchor outside the recent window is never pruned');
+            assert(sent[0].messages.some(m => m.role === 'assistant' && m.content === chat[9].mes), 'Following assistant turn stays full');
+        }
         if (spec.id === 'continue') assert.match(observation.delivery, /could not be verified/);
         if (spec.id === 'disabled') assert.doesNotMatch(observation.delivery, /Generation stopped|verified/);
         if (spec.id === 'pressure-stopped') {
@@ -296,7 +307,7 @@ try {
             assert.equal(generations.length, recoveryStart + 1);
             assert.deepEqual(recovered.after.slice(0, -1), recovered.before);
             assert.equal(recovered.after.at(-1), 'LOCAL_FIXTURE_OK');
-            assert.match(recovered.delivery, /6\/6 memory excerpts and 4\/4 recent messages verified/);
+            assert.match(recovered.delivery, /5\/5 memory excerpts and 4\/4 recent messages verified/);
             rows.at(-1).manualRecovery = { ...recovered, request: generations.at(-1) };
         }
     }
@@ -347,7 +358,9 @@ try {
     report.overlap = { ...rejected, ...race, rejectedCompletionRequests: 0, recoveryCompletionRequests: 1 };
     console.log('VERIFY repeated-passage-packing');
     await field('enabled').uncheck();
-    for (const [name, value] of [['recent', 8], ['budget', 400]]) {
+    // Reserve guidance headroom so this source-integrity fixture still exercises
+    // repeated citations; the small-context cases above retain their old limits.
+    for (const [name, value] of [['recent', 8], ['budget', 500]]) {
         await field(name).fill(String(value)); await field(name).dispatchEvent('change');
     }
     const packingChat = hostSource(packingFixture.item);
@@ -357,7 +370,7 @@ try {
     ] }, 'normal', { recent: 8 })[0];
     await page.evaluate(async chat => {
         const c = SillyTavern.getContext(), { oai_settings } = await import('/scripts/openai.js');
-        Object.assign(oai_settings, { openai_max_context: 1536, openai_max_tokens: 256, stream_openai: false });
+        Object.assign(oai_settings, { openai_max_context: 2048, openai_max_tokens: 256, stream_openai: false });
         c.chat.splice(0, c.chat.length, ...chat); await c.saveChat(); await c.reloadCurrentChat();
     }, packingChat);
     packing = true;
@@ -371,15 +384,15 @@ try {
     }, packingFixture.item.question);
     assert.equal(generations.length, packingStart + 1);
     const packingRequest = generations.at(-1), excerpts = packingRequest.messages.filter(m => m.content.startsWith('[Past conversation excerpt:'));
-    assert.equal(excerpts.length, 4);
-    assert.match(packed.delivery, /4\/4 memory excerpts and 8\/8 recent messages verified/);
+    assert.equal(excerpts.length, 5);
+    assert.match(packed.delivery, /5\/5 memory excerpts and 8\/8 recent messages verified/);
     for (const index of [0, 1, 2, 27]) {
         const original = packingFixture.item.messages[index];
         assert(excerpts.some(m => m.role === original.role && m.content.endsWith(`\n${original.text}`)), 'Full source and native role reached the completion endpoint');
     }
     assert(excerpts.some(m => m.content.includes('identical text at message:passage 3:1, 43:1]')));
     assert.deepEqual(packed.chat.slice(0, 60), packingChat.map(m => m.mes), 'Packing never changes stored history');
-    report.packing = { evidence: 'Actual host generation with recorded query ranks and a local completion fixture', case: packingFixture.item.id, configuredBudget: 400, effectiveBudget: 320, delivery: packed.delivery, request: packingRequest, storedHistoryUnchanged: true };
+    report.packing = { evidence: 'Actual host generation with recorded query ranks and a local completion fixture', case: packingFixture.item.id, configuredBudget: 500, effectiveBudget: 448, delivery: packed.delivery, request: packingRequest, storedHistoryUnchanged: true };
     packing = false;
     console.log('VERIFY same-message-assembly');
     await field('enabled').uncheck();
@@ -433,6 +446,7 @@ try {
     console.error('Delivery status:', await page?.locator('[data-sm="delivery"]').innerText().catch(() => 'unavailable'));
     throw error;
 } finally {
+    report.generations = generations;
     await writeFile(output, JSON.stringify(report, null, 2) + '\n');
     await browser?.close();
     if (server && server.exitCode === null) { const exited = new Promise(r => server.once('exit', r)); server.kill('SIGTERM'); await exited; }

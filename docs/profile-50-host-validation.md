@@ -152,8 +152,12 @@ integration check; the earlier [full 500 comparison](jev-depth-100.md) supports 
 candidate, with its consumed-cohort and renderer limitations preserved. Neither
 establishes a new normal-default 500-case score.
 
-Retain recent 12 and the complete-recent-dialogue query policy. Do not adopt the
-experiment's recent 1/question-only partition for ordinary character chat. Budget
+The initial numeric adoption retained recent 12 and complete-recent-dialogue
+retrieval. The subsequent maintainer decision in this PR supersedes that retrieval
+policy: index all completed eligible history, search only the current question,
+and retain recent 12 in the answer prompt. Add budgeted clarification guidance;
+see [current policy and its own validation](conversation-memory-defaults.md).
+The live run below predates that final policy and did not include the guidance. Budget
 maximum 4096 and the host's one-quarter-context cap remain unchanged; saved explicit
 budgets are respected. Ownership/branch filters, consistent reads, source checks,
 rerank failure rejection, cancellation and final delivery protection are unchanged.

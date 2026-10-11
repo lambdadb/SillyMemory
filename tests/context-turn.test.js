@@ -29,17 +29,11 @@ test('fixed 62-case corpus keeps every target old and freezes fourteen new shape
     assert.equal(contextTurnDecision([]),null);
 });
 
-test('the runtime query contains every eligible recent turn, with no lexical selection or text truncation', async () => {
+test('runtime searches only the current eligible question, even with oversized recent context', async () => {
     const { retrievalQueries, RETRIEVAL_POLICY } = await import('../src/memory.js');
-    assert.equal(RETRIEVAL_POLICY, 'complete-recent-dialogue-v6');
-    const messages = Array.from({ length: 15 }, (_, index) => ({ index, user: index % 2 === 0, text: `Turn ${index}`, eligible: true }));
-    messages[7].eligible = false;
-    messages[10].text = 'Long context '.repeat(600);
-    messages[11].text = '  ';
-    const [query] = retrievalQueries({ messages });
-    assert.deepEqual(JSON.parse(query.split('\n')[1]), messages.slice(3, 14).filter(m => m.eligible && m.text.trim()).map(m => ({ turnId: m.index, role: m.user ? 'user' : 'assistant', text: m.text })));
-    assert(query.endsWith('\nTurn 14'));
-    for (const m of messages.slice(0, 3)) assert(!query.includes(`"text":"${m.text}"`));
+    assert.equal(RETRIEVAL_POLICY, 'current-question-v7');
+    const messages = [{ user: false, text: 'Context '.repeat(10000) }, { user: true, text: 'Where is the compass?' }];
+    assert.deepEqual(retrievalQueries({ messages }), ['Where is the compass?']);
 });
 
 test('generation amendment preserves new cases and adds the two historical boundary controls before execution', async () => {
@@ -66,23 +60,10 @@ test('adoption rejects individual source regressions and follows the frozen cand
     assert.equal(contextTurnDecision(rows.filter(r => r.case !== 'boundaries/ko-assistant-topic')), null);
 });
 
-test('captured file, media and tool assistant turns cannot supply the contextual query', async () => {
+test('file, media and tool turns cannot become the current query anchor', async () => {
     const { capture, retrievalQueries } = await import('../src/memory.js');
-    const captureChat = chat => capture({chat,characterId:0,characters:[{avatar:'test.png'}],chatMetadata: { sillymemory: { version: 1, id: 'special-context', story: 'special-context' } }, getCurrentChatId: () => 'special-context'});
     for (const extra of [{file:{name:'synthetic.txt'}}, {media:[{url:'synthetic'}]}, {tool_invocations:[{name:'synthetic'}]}]) {
-        const message = (mes, is_user, extra = {}) => ({mes,is_user,extra});
-        const snapshot = captureChat([message('Lantern repair history',false), message('Unrelated schedule',true), message('Lantern repair history',false,extra), message('Who brings it?',true)]);
-        assert.equal(snapshot.messages[2].eligible,false);
-        for (const type of ['normal','regenerate','swipe','continue']) {
-            const turns = JSON.parse(retrievalQueries(snapshot,type)[0].split('\n')[1]);
-            assert.deepEqual(turns.map(t => t.turnId), [0,1]);
-        }
-        snapshot.messages[2].eligible=true;
-        assert.deepEqual(JSON.parse(retrievalQueries(snapshot)[0].split('\n')[1]).map(t => t.turnId), [0,1,2]);
-        // The no-prior-user fallback must obey the same eligibility rule.
-        const fallback = captureChat([message('Plain introduction',false),message('Special introduction',false,extra),message('First question',true)]);
-        assert.deepEqual(JSON.parse(retrievalQueries(fallback)[0].split('\n')[1]).map(t => t.text), ['Plain introduction']);
-        fallback.messages.shift();
-        assert.deepEqual(retrievalQueries(fallback),['First question']);
+        const snapshot = capture({chat:[{mes:'Plain question',is_user:true},{mes:'Special reply',is_user:false,extra}],characterId:0,characters:[{avatar:'test.png'}],getCurrentChatId:()=> 'test'});
+        for (const type of ['normal','swipe','regenerate','continue']) assert.deepEqual(retrievalQueries(snapshot,type), ['Plain question']);
     }
 });
