@@ -373,12 +373,18 @@ source-preserving refill and unchanged fallback. These validate the ignored cand
 not shipped runtime, host integration or provider behavior. Tokenization uses the
 same recorded tiktoken/o200k_base implementation.
 
-**Decision:** source assembly is a justified answer-quality confirmation candidate:
+**Decision:** source assembly is a justified answer-evaluation candidate:
 it recovers both demonstrated budget-loss sources at the same budget and preserves
-all existing text/provenance. Keep defaults unchanged pending generated-answer
-comparison over the full frozen cohort, including all already-correct regression
-controls. Do not claim seven corrected answers, increase the budget, tune a subset,
-or run further searches/model-selection variants from this arithmetic alone.
+all existing text/provenance. Keep defaults unchanged. A generated-answer comparison
+over all these 500 questions, including already-correct controls, would be **regression
+and discovery-cohort evidence**, not independent confirmation: this cohort motivated
+and selected the assembly rule and has been repeatedly inspected. Before a paid
+confirmation, freeze a disjoint, previously unused cohort, its provenance/exclusion
+rules and scoring criteria; retain these 500 questions as full regression coverage.
+Taking a new subset of these consumed questions does not establish independence.
+No disjoint confirmation cohort or paid run was prepared in this offline phase.
+Do not claim seven corrected answers, promote defaults, increase the budget, tune a
+subset or run further search/model-selection variants from this arithmetic alone.
 
 ## Operational recovery, resources and latency
 

@@ -822,11 +822,13 @@ See [method, exact failures and interpretation](context-aware-query-comparison.m
   accuracy is measured. Additional admitted depth100 passages 1262, of which 1255
   are unmarked; unmarked is not irrelevant. Full50 medians fall to 6221/6479 but no
   full50 memory fits4096. Boundary-v1 has zero actual overlap; overlap tests are
-  synthetic. Defaults and the benchmark reference stay unchanged pending full-cohort
-  generated-answer confirmation, not a subset-tuned or token-only quality claim.
+  synthetic. Defaults and the benchmark reference stay unchanged. The current500
+  remain full regression/discovery evidence. Before paid independent confirmation,
+  freeze a disjoint, previously unused cohort and scoring/provenance/exclusion rules;
+  a new subset of the consumed500 does not qualify. No such cohort was prepared here.
 - **Assembly archive:** `/Users/steven/Dev/sillymemory/artifacts/archive/jev-depth-100-message-packing-v1/evidence.tar.gz`.
   SHA-256 `a7275c3fc78c61f057f44b3ed8b3132e1defb66ca0d02e3e7be969ad103d24b4`;
-  42,143,920 bytes, 19 members, each original byte verified. Assembly report SHA-256
+  42,143,920 bytes, 19 members, each original byte verified. Initial archived report SHA-256
   `500b8b0362d7ce0202cac09c4b70329b9a2c223c0377f057c49cd6ffb4b17fbf`.
   Frozen plan/producer/input locks, complete memories/prompts and source-union blocks,
   metrics/type results, source inspection notes, nine small synthetic scenarios,
@@ -834,6 +836,15 @@ See [method, exact failures and interpretation](context-aware-query-comparison.m
   byte-identical. Local-only, unavailable in a fresh clone; dataset/tokenizer and
   parent sources/results are external dependencies, not CI inputs. No raw corpus,
   one-off implementation or compatibility path is added to maintained source.
+- **Review clarification:** the initial archived report called the same500 answer
+  comparison confirmation; the current report correctly treats it as regression and
+  requires disjoint unused data before independent confirmation. Results/labels are
+  unchanged. Adjacent `review-correction-report.md` SHA-256
+  `fc1ce7376fab0456abf313083d4d8f8609978f5dcbae1ced727bab1d2aee5d62` and
+  `review-correction.json` SHA-256
+  `d207c37374340a2668f8acea150a7c410035c21ce615716370039297a3e890cb`
+  preserve the correction/repeated validation without replacing the original archive
+  or manifest. Both sidecars are local-only at the same assembly archive directory.
 - **Assembly validation:** independent Python checks 1000 memories, 50000 returned
   passages, 32105 selected passages and 81551 rendered blocks; canonical UTF-16
   unions, explicit gaps, all baseline sources, identical-text provenance, exact prompt
