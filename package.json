@@ -16,12 +16,7 @@
     "test:live:faults": "node scripts/chat-collections-live.mjs --checkpoint-recovery",
     "test:generation": "node scripts/generation-smoke.mjs",
     "test:generation:live": "node scripts/generation-smoke.mjs --live-model",
-    "test:korean:live": "node scripts/generation-smoke.mjs --korean-eval",
-    "test:comparison:live": "node scripts/generation-smoke.mjs --comparison",
-    "test:heldout:live": "node scripts/generation-smoke.mjs --heldout",
     "test:recovery": "node scripts/browser-smoke.mjs --recovery",
-    "test:challenges:live": "node scripts/generation-smoke.mjs --challenges",
-    "test:natural:live": "node scripts/generation-smoke.mjs --natural",
     "build:sdk": "node scripts/build-sdk.mjs",
     "check:sdk": "node scripts/build-sdk.mjs --check"
   },

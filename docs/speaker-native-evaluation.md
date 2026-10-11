@@ -4,6 +4,7 @@
 > [pre-cleanup revision](https://github.com/lambdadb/SillyMemory/tree/94b9bc04cf664587ae4c96b7739c22af87897b6b).
 > Reproduction commands below require their recorded producer; see
 > [evidence retention](evidence-retention.md) for archives and recovery.
+> Fixed recent-window modes and their npm aliases are retired from the current package.
 
 Declared on 2026-09-29 after the two system-wrapper trials were closed and
 preserved separately. [v1](https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/speaker-attribution-v1.json) retained four

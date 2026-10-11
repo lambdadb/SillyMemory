@@ -291,30 +291,40 @@ This fixes the [GPT-4.1 mini snapshot](https://developers.openai.com/api/docs/mo
 
 The earlier Gemini run used `LLM_MODEL=gemini-3.8-flash` and `LLM_REASONING_EFFORT=low`. For Gemini, use `LLM_BASE_URL=https://generativelanguage.googleapis.com/v1beta/openai`. The harness configures SillyTavern's Custom API body exclusions for `frequency_penalty`, `logprobs`, and `top_logprobs`: the live Gemini endpoint rejected the first two fields from the host's generic request. The loopback bridge forwards the resulting request without altering messages. Check [Google's compatibility guide](https://ai.google.dev/gemini-api/docs/openai) and your project's [model availability and free quota](https://ai.google.dev/gemini-api/docs/pricing); a successful model listing alone does not establish generation access.
 
-Run the longer Korean comparison with `SM_ARTIFACT_TAG=openai-gpt-4.1-mini npm run test:korean:live` for the OpenAI settings above. Optional `SM_MODEL` overrides the model for the run without editing `.env.local`; select a model from the configured provider. The fixed protocol plans 16 model requests; it restores the same source before each, checks complete baseline history and memory bounds, grades factual replies, and measures provider prompt tokens plus warm generation duration. See the [Korean protocol, results, and continuation instructions](docs/korean-evaluation.md). Completed samples are preserved when quota or availability blocks later requests. The summarizer rejects cross-model pooling and duplicates; an explicitly partial summary compares only completed question pairs. Its `--output <path>` option keeps provider summaries separate.
+### Historical answer-quality protocols
 
-Run the fixed three-mode comparison with `SM_ARTIFACT_TAG=openai-gpt-4.1-mini npm run test:comparison:live`. It compares memory off, SillyMemory, and native Vector Storage across three Korean histories (120–240 messages), nine questions and two repetitions: 54 live generations plus embedding calls. The native OpenAI-compatible embedding adapter uses the same private loopback test bridge; no local model or server plugin is installed. Preserve each run with a distinct artifact tag. Review the [protocol and results](docs/comparison-evaluation.md) before running; native Vector Storage retains other old history, so it is not an equal-token-budget comparison.
+The Korean, three-mode comparison, held-out, challenge and natural-dialogue npm
+commands are retired from the current package. Their fixed recent-message
+protocols require the exact producing checkout recorded in the linked documents
+and [evidence index](docs/evidence-retention.md). Do not run those old modes against
+the current active-input policy or label their archived results as current scores.
+The low-level generation runner rejects these modes before credentials or provider
+setup. Original scripts, protocols, reports and scoring remain in recorded source
+revisions and verified archives.
 
-Aggregate completed, nonoverlapping runs with `node scripts/comparison-summary.mjs artifacts/generation-comparison-openai-gpt-4.1-mini.json --output artifacts/comparison-summary-openai-gpt-4.1-mini.json`. The summarizer requires all 54 fixed samples, matching evaluated source/configuration, actual provider usage and verified remote/native cleanup; it rejects duplicate or incomplete evidence. Generation-only cost estimates exclude embeddings and LambdaDB charges.
+The [Korean protocol](docs/korean-evaluation.md) planned 16 model requests, grading
+factual replies and measuring provider input tokens and warm generation duration.
+The [three-mode comparison](docs/comparison-evaluation.md) used three Korean
+histories of 120–240 messages, nine questions and two repetitions: 54 generations
+plus embeddings. Native Vector Storage retained other old history, so this was not
+an equal-token-budget comparison. Its historical summarizer requires all 54 samples,
+matching source/configuration, provider usage and verified cleanup; generation-only
+cost excludes embeddings and LambdaDB charges.
 
-For the search-only diagnosis, run `SM_ARTIFACT_TAG=diagnosis-next node scripts/retrieval-diagnostic.mjs`. It compares four query constructions, actual managed `queryText` results, and an identical-vector server/exhaustive control without any text-generation calls. It still incurs LambdaDB embedding and data usage. The completed experiment reproduced all six old-fact misses in exhaustive search with the current query; the latest user message alone retrieved and selected all six. This is a retrieval result, not a new answer-quality score. See the [diagnostic and committed-index limitation](docs/retrieval-diagnostic.md).
+The [retrieval diagnostic](docs/retrieval-diagnostic.md) compared four query
+constructions and identical-vector server/exhaustive controls. It reproduced all
+six old-fact misses with the old query; latest-user-only retrieval selected all
+six. This is historical retrieval evidence, not a current answer-quality score.
+Reproduction requires its recorded producer and incurs embedding/data usage.
 
 The live harnesses require Node.js 20.12+ for `util.parseEnv`; recorded runs use Node.js 24.15.0.
 
-For the fixed ambiguous-reference, continuation and context-overflow evaluation,
-see [the protocol and results](docs/recall-challenges.md). Run
-`npm run test:challenges:live` only with an authorized synthetic-data scope and
-the configured provider credentials; it makes 12 scheduled model requests plus
-managed embedding operations. A separate existing credential file can be read
-by the generation harness with `SM_ENV_FILE=/absolute/path/to/.env.local` without
-copying it into the worktree.
-
-For 12 new counterbalanced cases (24 real model answers), use
-`npm run test:heldout:live`; aggregate with
-`node scripts/challenge-summary.mjs --heldout <reports...> --output <summary.json>`.
-`npm run test:recovery` adds two real host SIGKILL/restarts and 24 repeated
-edit/swipe/delete cycles to the emulator fault suite. See the
-[held-out and recovery protocol](docs/heldout-recovery.md) for limits and evidence.
+The historical [challenge protocol](docs/recall-challenges.md) covers ambiguous
+references, continuation and overflow with 12 scheduled model requests. The
+[held-out protocol](docs/heldout-recovery.md) added 12 counterbalanced cases and 24
+answers. Their execution commands require their producing checkout. Current
+`npm run test:recovery` remains the emulator-only lifecycle check with two host
+SIGKILL/restarts and 24 repeated edit/swipe/delete cycles.
 
 The natural-dialogue runner uses the frozen 16-case English/Korean corpus for
 64 real memory-off/on responses. An opt-in [transport amendment](docs/natural-dialogue-retry.md)
@@ -363,8 +373,8 @@ the quotation gap but lose other required sources, so neither is adopted.
 
 The [context candidate protocol](docs/context-candidate-evaluation.md) compares
 the current labelled selector, label removal, and label removal plus adjacent-turn
-retention under 400 host tokens. Freeze a plan with fixture `actor-candidate-v1`
-and pass it to the same natural runner. This is a 48-answer controlled prompt
+retention under 400 host tokens. Its recorded producer freezes fixture `actor-candidate-v1`
+and runs the historical natural adapter; use that checkout for reproduction. This is a 48-answer controlled prompt
 experiment with frozen source indices and generation-time retrieval disabled;
 the candidate code is test-only and does not change installed extension behavior.
 

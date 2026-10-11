@@ -26,6 +26,8 @@ boundary; publication is confirmed by the corresponding Git tag and GitHub Relea
   from both search legs and local selection. Continue searches the message being
   extended; pending final user inputs wait for a reply before indexing. Reject
   retrieval inputs above 8 KiB without silent truncation.
+- Retire npm aliases for historical fixed-window answer evaluations; preserve
+  protocols/results with explicit recorded-checkout reproduction instructions.
 - Remove the fixed recent-message window and its setting. Successful generation
   preparation keeps only the active input and recalled memory alongside native
   character/system settings, including when no memory fits. Continue preserves

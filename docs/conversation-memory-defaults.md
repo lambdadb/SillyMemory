@@ -95,7 +95,8 @@ answer-quality changes. Intermediate attempts failed on stale policy labels,
 expected excerpt totals or pressure assumptions; no paid answer reruns occurred.
 Historical producer revisions are required for fixed-window answer experiments;
 current generation refuses those old modes rather than silently changing their
-frozen protocol. Current contract runners no longer configure a recent window.
+frozen protocol. Their npm aliases are removed, and historical execution documents
+explicitly require the recorded checkout. Current contract runners no longer configure a recent window.
 
 See the [active-input evidence record](evidence-retention.md#active-input-policy-final-validation). Previous current-question and first active-input archives
 preserve the intermediate recent-12 implementation and its validation. They are
