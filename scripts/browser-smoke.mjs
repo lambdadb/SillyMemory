@@ -159,7 +159,6 @@ try {
     check('preparation creates no collection before a chat is enabled', collections.size === 0);
     await page.locator('#sillymemory .inline-drawer-toggle').scrollIntoViewIfNeeded();
     if (!faultMode) await page.screenshot({ path: path.join(artifacts, 'setup.png') });
-    await field('recent').fill('2'); await field('recent').dispatchEvent('change');
     await field('budget').fill('250'); await field('budget').dispatchEvent('change');
     // Create a synthetic character through SillyTavern's own API, then load it.
     await page.evaluate(async () => {
@@ -198,7 +197,7 @@ try {
     const result = await prompt();
     check('real host dispatcher injects bounded memory', Boolean(result.injection) && /\d+ \/ 250 tokens/.test(result.inspection));
     check('native recalled excerpts keep macros literal within budget', result.rendered.includes('｛｛char｝｝') && result.rendered.includes('＜USER＞') && result.macroValue === undefined && result.renderedTokens <= 250);
-    check('recent messages and persisted source chat are preserved', result.chat.filter(m => !m.mes.startsWith('[Past conversation excerpt:')).length === 2 && result.chat.at(-2).mes.includes('passage 6') && result.before === result.after);
+    check('only the question stays full and persisted source chat is preserved', result.chat.filter(m => !m.mes.startsWith('[Past conversation excerpt:')).length === 1 && result.chat.at(-1).mes.includes('passage 6') && result.before === result.after);
     // Exercise assembly through the real extension dispatcher with multiple stored chunks.
     await field('budget').fill('1600'); await field('budget').dispatchEvent('change');
     const assemblySource = await page.evaluate(async () => {

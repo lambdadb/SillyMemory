@@ -31,7 +31,7 @@ test('fixed 62-case corpus keeps every target old and freezes fourteen new shape
 
 test('runtime searches only the current eligible question, even with oversized recent context', async () => {
     const { retrievalQueries, RETRIEVAL_POLICY } = await import('../src/memory.js');
-    assert.equal(RETRIEVAL_POLICY, 'current-question-v7');
+    assert.equal(RETRIEVAL_POLICY, 'current-question-v8');
     const messages = [{ user: false, text: 'Context '.repeat(10000) }, { user: true, text: 'Where is the compass?' }];
     assert.deepEqual(retrievalQueries({ messages }), ['Where is the compass?']);
 });

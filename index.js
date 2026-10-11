@@ -123,9 +123,9 @@ globalThis.sillymemory_intercept = async (chat, contextSize, abort, type) => {
     let snapshot = capture(context()); if (!snapshot) { status('Select a supported character chat to use memory.'); return; }
     clearTimeout(timer); // Retrieval below replaces the pending synchronization.
     let instance; const config = options(state);
-    const before = memoryBoundary(snapshot, config, type);
+    const before = memoryBoundary(snapshot, type);
     const protectedMessages = chat.every(message => Number.isInteger(message.index))
-        ? chat.filter(message => message.index >= before) : chat.slice(-config.recent);
+        ? chat.filter(message => message.index === before) : [];
     const promptBefore = JSON.stringify(chat);
     const sourceBefore = JSON.stringify([context().getCurrentChatId(), snapshot.character, snapshot.messages]);
     const sameSource = () => { const s = capture(context()); return s && JSON.stringify([context().getCurrentChatId(), s.character, s.messages]) === sourceBefore; };
@@ -150,15 +150,15 @@ globalThis.sillymemory_intercept = async (chat, contextSize, abort, type) => {
         if (!Number.isFinite(guidanceTokens) || guidanceTokens < 0 || guidanceTokens > config.budget) throw new Error('Memory guidance does not fit the token budget.');
         context().setExtensionPrompt('sillymemory', MEMORY_GUIDANCE, 1, 0, false, 0);
         guidance = [{ role: 'system', content: MEMORY_GUIDANCE, verifiable: true }];
-        if (!result?.text) { operation.finish('No current matching memory fits the budget. Original prompt retained.'); return; }
-        // Protect the most recent prompt messages, including during swipe/regenerate.
+        if (!result) throw new Error('Memory retrieval did not complete.');
+        // Protect only the active input; keep special/file/tool messages intact.
         const indexedMessages = new Set(result.passages.map(p => p.message));
-        // All plain older messages were candidates; retain special/file/tool messages.
-        const eligible = new Set(snapshot.messages.slice(0, before).filter(m => m.eligible && m.text.trim()).map(m => m.index));
+        // Drop full plain history, including answers following a replacement question.
+        const eligible = new Set(snapshot.messages.filter(m => m.index !== before && m.eligible && m.text.trim()).map(m => m.index));
         // Require the pinned coreChat index contract before pruning anything.
         if (!chat.every(m => Number.isInteger(m.index))) { operation.finish('Unexpected prompt shape. Original prompt retained.'); return; }
-        if (![...indexedMessages].every(i => eligible.has(i))) { operation.finish('Memory no longer matches eligible source. Original prompt retained.'); return; }
-        // Replace only eligible old prompt messages, in place and in source order.
+        if (![...indexedMessages].every(i => i < before && eligible.has(i))) { operation.finish('Memory no longer matches eligible source. Original prompt retained.'); return; }
+        // Replace eligible past prompt messages, in place and in source order.
         // Preserve native user/assistant roles instead of flattening all excerpts
         // into one system message. These copies never enter the persisted chat.
         const recalled = new Map();
@@ -185,7 +185,7 @@ globalThis.sillymemory_intercept = async (chat, contextSize, abort, type) => {
         // through the existing validity check and never claim a final event.
         if (!abandoned && sourceValid()) {
             const names = { user: context().name1, character: context().name2 };
-            delivery.begin({ memory: expectedMessages(preparedMessages, names), recent: expectedMessages(protectedMessages, { ...names, continuation: type === 'continue' }), guidance }, sourceValid);
+            delivery.begin({ memory: expectedMessages(preparedMessages, names), input: expectedMessages(protectedMessages, { ...names, continuation: type === 'continue' }), guidance }, sourceValid);
             element('delivery').textContent = 'Memory prepared; waiting for the final host prompt. Delivery is not yet verified.';
         }
         if (retrievalOperation === operation) retrievalOperation = undefined;
@@ -208,7 +208,7 @@ async function initialize() {
         if (JSON.parse(stored.settings).extension_settings?.sillymemory?.owner !== owner) throw new Error('Installation identity was not persisted.');
     }
     stateKey = `sillymemory:state:${owner}`;
-    state = { endpoint: '', project: '', enabled: false, ready: false, recent: DEFAULTS.recent, budget: DEFAULTS.budget, stopOnLoss: true, chatCollections: [], ...JSON.parse(localStorage.getItem(stateKey) || '{}') };
+    state = { endpoint: '', project: '', enabled: false, ready: false, budget: DEFAULTS.budget, stopOnLoss: true, chatCollections: [], ...JSON.parse(localStorage.getItem(stateKey) || '{}') };
     const folder = new URL('.', import.meta.url).pathname.split('/scripts/extensions/')[1].replace(/\/$/, '');
     const html = await ctx.renderExtensionTemplateAsync(folder, 'settings');
     document.querySelector('#extensions_settings2').insertAdjacentHTML('beforeend', html);
@@ -220,7 +220,7 @@ async function initialize() {
         if (progress?.total > 0) { bar.max = progress.total; bar.value = progress.completed; }
         else bar.removeAttribute('value');
     });
-    for (const name of ['endpoint', 'project', 'recent', 'budget']) element(name).value = state[name];
+    for (const name of ['endpoint', 'project', 'budget']) element(name).value = state[name];
     element('stopOnLoss').checked = state.stopOnLoss !== false;
     element('stopOnLoss').onchange = () => { state.stopOnLoss = element('stopOnLoss').checked; persist(); };
     element('enabled').checked = false; state.enabled = false; persist();
@@ -397,8 +397,9 @@ async function initialize() {
             element('inspection').textContent = 'No memory prepared.';
         }
     });
-    for (const name of ['recent', 'budget']) element(name).onchange = () => {
-        state[name] = options({ ...state, [name]: element(name).value })[name]; element(name).value = state[name]; persist(); schedule();
+    element('budget').onchange = () => {
+        state.budget = options({ ...state, budget: element('budget').value }).budget;
+        element('budget').value = state.budget; persist(); schedule();
     };
     element('sync').onclick = sync;
     async function deleteMemory(all) {

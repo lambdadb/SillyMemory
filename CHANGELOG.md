@@ -21,11 +21,15 @@ boundary; publication is confirmed by the corresponding Git tag and GitHub Relea
   saved space in search order within the unchanged budget. No LLM processing or
   extra retrieval is added; malformed coordinates retain separate excerpts.
 
-- Index all completed eligible conversation messages independently of recent prompt
-  retention, and retrieve using only the current question. Exclude retained turns
+- Index all completed eligible conversation messages independently of generation input
+  retention, and retrieve using only the current question. Exclude the active input and replacement answers
   from both search legs and local selection. Continue searches the message being
   extended; pending final user inputs wait for a reply before indexing. Reject
   retrieval inputs above 8 KiB without silent truncation.
+- Remove the fixed recent-message window and its setting. Successful generation
+  preparation keeps only the active input and recalled memory alongside native
+  character/system settings, including when no memory fits. Continue preserves
+  the partial answer; preparation failures retain the original prompt.
 - Add budgeted system guidance to ask a brief clarification instead of guessing
   when conversation evidence is insufficient or the referent is ambiguous.
   Verify final delivery even when no memory is selected.

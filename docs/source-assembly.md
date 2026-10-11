@@ -34,7 +34,7 @@ renderer. Its 93.8%→95.0% consumed-cohort score is **not a new runtime/default
 Product repeat-packing selection remains a floor as well; this PR does not claim
 identical admission or answer results between the benchmark and runtime.
 
-Current defaults are recent12, memory budget4096 (maximum4096), chunk ceiling800
+Current defaults are active-input-only generation plus recalled memory, memory budget4096 (maximum4096), chunk ceiling800
 codepoints, vector k100/rerank candidate100/final size50, Bayesian English fusion with managed Jev and one
 current-question query with independent completed-history indexing; see
 [current policy](conversation-memory-defaults.md). The host's existing one-quarter-context budget cap,

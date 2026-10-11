@@ -109,7 +109,6 @@ try {
     }, { credentials, entry });
     stage = 'transport'; await connect(); await field('gate').click(); await status('Transport gate passed');
     await field('provision').click(); await status('Chat memory is ready');
-    await field('recent').fill('2'); await field('recent').dispatchEvent('change');
     await field('budget').fill('800'); await field('budget').dispatchEvent('change');
     await page.evaluate(async () => {
         const c = SillyTavern.getContext(), body = new FormData(); body.set('ch_name', 'Collection Lifecycle'); body.set('first_mes', 'Synthetic collection lifecycle.');

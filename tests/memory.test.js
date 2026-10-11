@@ -162,7 +162,7 @@ test('settings are clamped and capture refuses group/no character chats', () => 
     assert.equal(options({ budget: 800 }).budget, 800);
     assert.equal(options({ budget: NaN }).budget, 4096);
     assert.equal(options({ budget: 999999, recent: 0 }).budget, 4096);
-    assert.equal(options({ recent: 0 }).recent, 2);
+    assert.equal(Object.hasOwn(options({ recent: 100 }), 'recent'), false);
     assert.equal(capture({ groupId: 'group' }), null);
     assert.equal(capture({ characterId: undefined }), null);
 });
@@ -406,38 +406,41 @@ test('removing source time deletes the old dated revision and never recovers it 
 });
 
 
-test('completed history storage is independent of retained prompt messages and excludes pending user input', async () => {
+test('completed history storage is independent of the injection budget and excludes pending user input', async () => {
     const s = setup(), snap = snapshot();
     snap.messages.push({ ...snap.messages[0], index: 6, text: 'Current question?' });
     await s.engine.sync(snap, config);
     assert.deepEqual([...s.remote.values()].map(d => d.message), [0,1,2,3,4,5]);
-    await s.engine.sync(snap, { ...config, recent: 100 });
+    await s.engine.sync(snap, { ...config, budget: 100 });
     assert.equal(s.writes.length, 1); assert.equal(s.deletes.length, 0);
+    const recalled = await s.engine.retrieve(snap, { ...config, budget: 2000 }, t => t.length);
+    assert(recalled.passages.some(d => d.message === 5), 'Immediately preceding completed answer is searchable');
+    assert(recalled.passages.every(d => d.message < 6), 'Pending question is not recalled');
     snap.messages.push({ ...snap.messages[1], index: 7, text: 'Completed answer.' });
     await s.engine.sync(snap, config);
     assert.deepEqual(s.writes[1].map(d => d.message), [6,7]);
 });
 
-test('retrieval prefilters retained messages and validates the same boundary against hostile results', async () => {
+test('retrieval prefilters the active input and replacement answers, including hostile results', async () => {
     const s = setup(), snap = snapshot(); let request;
     s.client.search = async (...args) => { request = args; return [...s.remote.values()].reverse(); };
     const result = await s.engine.retrieve(snap, { ...config, budget: 2000 }, t => t.length);
     assert.equal(request[3], snap.messages[4].text); assert.equal(request[6], 4);
     assert(result.passages.length); assert(result.passages.every(d => d.message < 4));
-    assert.equal(s.remote.size, 6, 'recent completed messages are stored but not recalled');
+    assert.equal(s.remote.size, 6, 'completed messages are stored; the replacement answer is not recalled');
     let searches = 0; s.client.search = async () => { searches++; return []; };
-    assert.equal((await s.engine.retrieve(snap, { ...config, recent: 12 }, t => t.length)).text, '');
-    assert.equal(searches, 0, 'no older prompt partition means no unnecessary search');
+    assert.equal((await s.engine.retrieve({ ...snap, messages: snap.messages.slice(0, 1) }, config, t => t.length)).text, '');
+    assert.equal(searches, 0, 'no preceding history means no unnecessary search');
 });
 
 
-test('replacement protects its user anchor and every following assistant turn outside the recent window', async () => {
+test('replacement retrieval stops before the user anchor regardless of following assistant turns', async () => {
     const s = setup(), snap = snapshot();
     snap.messages.slice(3).forEach(m => { m.user = false; });
     for (const type of ['normal','regenerate','swipe']) {
-        assert.equal(memoryBoundary(snap, config, type), 2);
+        assert.equal(memoryBoundary(snap, type), 2);
         const result = await s.engine.retrieve(snap, { ...config, budget: 2000 }, t => t.length, () => true, () => {}, type);
         assert.deepEqual(result.passages.map(d => d.message), [0,1]);
     }
-    assert.equal(memoryBoundary(snap, config, 'continue'), 4);
+    assert.equal(memoryBoundary(snap, 'continue'), 5);
 });

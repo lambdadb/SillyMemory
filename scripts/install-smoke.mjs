@@ -77,7 +77,6 @@ try {
     check('installed extension shows product branding', (await page.locator('#sillymemory').innerText()).includes('Powered by LambdaDB'));
     await field('endpoint').fill('https://release-test.invalid'); await field('project').fill('release-test');
     await field('key').fill('synthetic-release-session-key'); await field('connect').click();
-    await field('recent').fill('14'); await field('recent').dispatchEvent('change');
     await field('budget').fill('600'); await field('budget').dispatchEvent('change');
     await field('stopOnLoss').uncheck();
     check('session key input clears after connecting', await field('key').inputValue() === '');
@@ -86,7 +85,7 @@ try {
     await page.reload(); await page.locator('#sillymemory').waitFor({ state: 'attached' }); await settings();
     check('reload preserves installation ownership', await page.evaluate(owner => SillyTavern.getContext().extensionSettings.sillymemory.owner === owner, owner));
     check('reload clears the key and leaves memory disabled', await field('key').inputValue() === '' && !await field('enabled').isChecked());
-    check('configured token bounds and warning-only preference survive reload', await field('recent').inputValue() === '14' && await field('budget').inputValue() === '600' && !await field('stopOnLoss').isChecked());
+    check('configured token bounds and warning-only preference survive reload', await field('budget').inputValue() === '600' && !await field('stopOnLoss').isChecked());
     check('settings link to the canonical source and license', await page.locator('#sillymemory a', { hasText: 'Source' }).getAttribute('href') === repository && await page.locator('#sillymemory a', { hasText: 'AGPL-3.0-only' }).getAttribute('href') === `${repository}/blob/main/LICENSE`);
     check('panel explains direct CORS without a proxy setup', (await page.locator('#sillymemory').innerText()).includes('No SillyTavern proxy setting or restart is needed.'));
     const candidate = JSON.parse(await readFile(path.join(installed, 'manifest.json'), 'utf8'));

@@ -3,85 +3,100 @@
 Current development defaults use stored, fully budgeted conversation-time
 provenance, Bayesian English fusion and managed Jev: vector k=100, up to 100 rerank
 candidates, final size=50, and a 4,096-token initial memory budget. Keep per-message
-boundary chunks and 12 recent full messages in the generation prompt, with the
-4,096-token maximum and host one-quarter-context cap. Explicit saved budgets are
-respected. These are development defaults, not a release or a universal optimum.
+boundary chunks with an 800-code-point ceiling. The 4,096-token maximum and host
+one-quarter-context cap remain; explicit saved budgets are respected. These are
+development defaults, not a release or a universal optimum.
 
-### Current-question policy
+### Current-question and active-input policy
 
-Index all completed eligible messages, including the recent full-message window.
-Do not index a pending trailing user input until the assistant replies. Search only
-the current eligible user question; Continue uses the message being extended.
-Regenerate/swipe never use the retained answer as a query. The user anchor and
-every following turn remain full even when consecutive assistant messages move
-the anchor outside the configured recent window. Vector and lexical
-prefilters exclude retained recent messages, and local validation applies the same
-boundary before token selection. Changing recent retention does not re-embed the
-same completed transcript. Storage does not send the complete history to the
-answer model: recent full messages and selected older excerpts form its chat input.
+Index all completed eligible plain-text messages, including the immediately
+preceding exchange. Do not index a pending trailing user input until the assistant
+replies. Search only the current eligible user question; Continue uses the message
+being extended. Regenerate/swipe never use the answer being replaced as a query.
+Both search legs prefilter message positions below the active input, and local
+validation applies the same boundary before token selection. Answers following a
+replacement question are also excluded from retrieval.
+
+After successful preparation, generation keeps **only the active input and selected
+memory**, alongside native system/character settings. Normal/regenerate/swipe keep
+the question; Continue keeps the partial message being extended. There is no
+last-N-message window or recent-message setting. Past eligible full messages,
+including answers following a replacement question, are removed only from the
+ephemeral prompt. Stored chats are unchanged. Special/file/media messages are
+preserved rather than treated as searchable plain text; tool/group chats remain
+outside the supported scope. Zero hits or no fitting passages follow the same
+policy, with no full-history fallback. Synchronization/query/counting failures or
+an unexpected host shape retain the original prompt; failures are visible, and
+query-limit violations abort rather than silently skipping memory.
 
 The answer model receives a separate system instruction to ask one brief clarifying
-question rather than guess when available conversation cannot establish a fact or
+question rather than guess when available evidence cannot establish a fact or
 disambiguate its referent. Missing retrieval is not proof that an event never
 occurred. The instruction is counted with excerpts under the memory budget and
 verified in the final prompt even when retrieval is empty. This is an instruction,
 not a guarantee of model behavior; a clarification turn does not automatically
-recover missing evidence. No extra generation, query rewriting or summary call is
-introduced. A long current question/continuation can still exceed the 8 KiB search
-limit; removing appended dialogue does not remove provider input limits.
+recover missing evidence. No extra generation, rewriting, summary or retrieval
+call is introduced. A long current question/continuation can still exceed the
+8 KiB search limit; provider input limits remain.
 
-Product decision: use all-completed-history storage and current-question retrieval
-as the simple baseline requested by the maintainer. Keep existing native recent
-turns for conversational continuity and bound memory with the existing context cap.
-Completion criterion: independent storage/retention, identical prefilters/local
-boundary, no pending-input or replacement-answer leakage, final instruction delivery,
-and existing synchronization/branch/budget/cancellation checks pass. Do not expand
-paid experiments or claim a new quality score for this implementation change.
+Product decision: use all-completed-history storage, current-question retrieval
+and active-input-plus-memory generation as the simple baseline requested by the
+maintainer. A fixed recent-12 window had no measured necessity under this policy
+and is removed. Completion criterion: no previous eligible plain turn remains
+full after successful preparation, even for empty selections; preserve the current
+input, native system/character settings and Continue prefix, exclude replacement
+answers, and pass source/synchronization/branch/budget/cancellation/delivery checks.
+Do not expand paid experiments or claim a new quality score for this change.
 
-See [numeric-profile validation](profile-50-host-validation.md#product-default-adoption).
-Its six-case live check used question-only retrieval and history except the current
-question, with no other recent messages supplied to generation. It did not use the
-new clarification guidance or the product's recent-12 prompt, and cannot establish
-answer behavior for this final policy. The full-500 result remains consumed-cohort
-evidence. No new independent answer-quality confirmation or clarification-behavior
-measurement is claimed. The [complete recent-dialogue comparison](context-aware-query-comparison.md#complete-recent-dialogue-comparison)
-records the preceding policy and its historical outcomes; it is now superseded.
+The [six-case live check](profile-50-host-validation.md#product-default-adoption)
+used question-only retrieval and history except the current question, with no
+other recent messages supplied to generation. It did not use the new clarification
+guidance and cannot establish answer behavior for this final policy. The full-500
+result remains consumed-cohort evidence. No new independent answer-quality score,
+conversation-continuity confirmation or clarification-behavior measurement is
+claimed. A generic follow-up such as "Where was that?" may need clarification
+without full recent context. The prior [complete recent-dialogue comparison](context-aware-query-comparison.md#complete-recent-dialogue-comparison)
+remains historical evidence, not the current policy.
 
 ### Implementation validation
 
 - `npm test`: 340/340; runtime, maintained script/test syntax, release metadata
   and locked SDK 0.8.0 checks passed.
-- `ST_SOURCE=<pinned host> SM_ARTIFACT_TAG=current-question-v4 npm run test:browser`:
+- `ST_SOURCE=<pinned host> ST_TEST_PORT=18134 SM_ARTIFACT_TAG=input-only-v2 npm run test:browser`:
   45 checks passed. Actual pinned host/Chromium; local LambdaDB emulator.
-- `ST_SOURCE=<pinned host> SM_ARTIFACT_TAG=current-question-v3 npm run test:faults`:
+- `ST_SOURCE=<pinned host> ST_TEST_PORT=18135 SM_ARTIFACT_TAG=input-only-v2 npm run test:faults`:
   77 checks passed, including timeout/reload, uncertain writes, native branches,
   deletion and cancellation; no uncaught browser errors or remaining collections.
-- `ST_SOURCE=<pinned host> node scripts/prompt-delivery-smoke.mjs artifacts/current-question-v8/prompt-delivery.json`:
-  all 14 cases plus overlap, repeated packing and source assembly passed. Actual
-  host packing and dispatched local completion requests contain the system
-  instruction, including no-hit requests. This does not exercise an actual LLM.
-- A bounded one-off live LambdaDB contract check used the shipped SDK client from
-  Node: one collection, four synthetic documents, two searches, no generation
-  calls. Both legs accepted the numeric message-range prefilter; the recent and
-  foreign-scope control documents were excluded, while the scope-only control
-  retrieved the recent document. Managed embedding/Bayesian/Jev and explicit branch
-  reads passed; owned deletion was followed by HTTP 404. This is not browser CORS
-  or model-answer evidence. Its producer remains ignored local evidence.
+- `ST_SOURCE=<pinned host> node scripts/prompt-delivery-smoke.mjs artifacts/input-only-v7/prompt-delivery.json`:
+  all 16 cases plus overlap, repeated packing and source assembly passed. Actual
+  host packing and dispatched local completion requests preserve native character
+  and system settings, active input and system guidance. Past eligible turns are
+  absent as full messages. No-hit and no-fitting-passage requests do not restore
+  history; regenerate/swipe exclude the answer suffix; Continue keeps its prefix.
+  This does not exercise an actual LLM.
+- The preceding one-off live LambdaDB numeric-range contract used one collection,
+  four synthetic documents and two searches, with no generation. Both legs
+  accepted the message-range prefilter and isolated the source correctly; owned
+  cleanup returned HTTP 404. The client and SDK are unchanged by this follow-up.
+  This is historical transport evidence, not a new browser/provider run.
 
-Clarification guidance spends part of the existing memory budget. With unchanged
-small-context fixtures, the prepared count fell from two excerpts to one; context
-recovery retained five rather than six. The repeated-citation source-integrity
-fixture alone now uses context 2,048 and budget 500 (effective 448), so it can still
-exercise its original four required sources plus one additional excerpt. Its
-prior 1,536/400 run cannot accommodate the same sources and guidance. These are
-emulator packing observations, not answer-quality regressions or improvements.
+The active-input revision removes recent-history capacity pressure; the maintained
+harness therefore separates a long-history control from actual system-instruction
+pressure. The latter uses 110 instruction repetitions to exercise host truncation,
+Stop on missing context, streaming, swipe/regenerate and manual context recovery.
+Previously captured cases retain their original settings in local archives.
+Small-context packing now prepares two excerpts, with six after context recovery;
+the repeated-citation source-integrity fixture keeps its five required excerpts
+under context 2,048/budget 500. These are emulator contract observations, not
+answer-quality changes. Intermediate attempts failed on stale policy labels,
+expected excerpt totals or pressure assumptions; no paid answer reruns occurred.
+Historical producer revisions are required for fixed-window answer experiments;
+current generation refuses those old modes rather than silently changing their
+frozen protocol. Current contract runners no longer configure a recent window.
 
-Initial harness attempts failed on historical stored-document totals, progress
-counts or pre-guidance excerpt-count assertions. Preserve their reports/logs;
-these were not real-service or answer-model failures. The final unit/emulator
-runs passed; no paid answer regeneration or revised scoring was used.
-See the [local evidence record](evidence-retention.md#current-question-policy-final-validation).
-Historical archives and six-case scores remain unchanged.
+See the [active-input evidence record](evidence-retention.md#active-input-policy-validation). Previous current-question archives
+preserve the intermediate recent-12 implementation and its validation. They are
+not final active-input evidence; historical scores remain unchanged.
 
 ## Historical adoption evidence
 

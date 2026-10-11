@@ -1031,8 +1031,10 @@ actual-model clarification behavior. Prior evidence archives are unchanged.
 
 ## Current-question policy final validation
 
-The final runtime also protects the current user anchor and every following turn
-when consecutive assistant replies move it outside the configured recent window.
+This is the intermediate recent-window runtime at `0f32f15c98a16ad65283c3025fe0f99dda672a6d`,
+now superseded by the active-input policy below. It protects the current user anchor
+and every following turn when consecutive assistant replies move it outside the
+configured recent window. Its reports and original bytes remain unchanged.
 
 - Archive: `/Users/steven/Dev/sillymemory/artifacts/archive/current-question-policy-v2/evidence.tar.gz`
 - SHA-256: `e785af7bfa5ca8ae6e0a4a6c02de2b41562184175e1bc4e83880a052a9255ff8`
@@ -1053,3 +1055,38 @@ when consecutive assistant replies move it outside the configured recent window.
   score or actual-model clarification behavior is established by these checks.
 
 The v1 and earlier numeric-profile archives have not been overwritten or deleted.
+
+
+## Active-input policy validation
+
+The maintainer removed the fixed recent-message window from generation. This
+follow-up keeps the active input plus recalled memory and native system/character
+settings, including successful empty selections. It does not change source chats,
+add a model call or claim a new answer-quality score.
+
+- Archive: `/Users/steven/Dev/sillymemory/artifacts/archive/active-input-policy-v1/evidence.tar.gz`
+- SHA-256: `4d453bbf3eb870a59328774ea05a125559b99dd8638f0477b2cb06d62743f62e`
+- Manifest: adjacent `manifest.json`, all 351 members verified; 1,944,618 bytes.
+- Parent: `0f32f15c98a16ad65283c3025fe0f99dda672a6d`; base:
+  `718ce65d390c0306b02471b1cb15b9c277dd5850`. Includes the final working-tree
+  source, base patch, producing notes and available successful/failed reports.
+  Archive pointers are added to documentation after freezing the source snapshot.
+- Final unit340, browser45 (`input-only-v2`), fault77 (`input-only-v2`) and
+  prompt-delivery16 (`input-only-v7`) plus overlap/packing/assembly passed.
+  Final runtime and harness hashes match their reports; emulator collections0.
+  Native character/system settings, current input, no-hit/no-fitting selection,
+  replacement-answer exclusion, Continue prefix and failure recovery were checked.
+- Earlier attempts retain available logs/reports and recorded hashes; not every
+  intermediate producer source was captured. Failed emulator resources were
+  process-local and disappeared when the harness shut down; no external service
+  resources or paid calls were created in this follow-up. Initial failures were
+  stale policy/count/pressure assertions, not actual-model quality failures.
+- No `.env.local` or personal chat data. Secret-content scan: zero matches. All
+  previous immutable archives are retained unchanged; nothing is removed to shrink
+  PR scope.
+- Local-only, unavailable in a fresh clone; pinned SillyTavern, dependencies and
+  Playwright browser are separate reproduction inputs. CI never reads this bundle.
+  The prior numeric-filter live check remains historical evidence for the unchanged
+  client/SDK; no new live service or actual LLM clarification behavior was measured.
+
+See [current policy and limits](conversation-memory-defaults.md).

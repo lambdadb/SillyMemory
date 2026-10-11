@@ -3,10 +3,10 @@ import { queryAnchor } from './context.js';
 import { chunkSpans, CHUNKING_POLICY } from './chunking.js';
 import { hostTimestamp, conversationTime, conversationTimeLabel } from './time.js';
 
-export const DEFAULTS = Object.freeze({ recent: 12, budget: 4096, chunkChars: 800 });
+export const DEFAULTS = Object.freeze({ budget: 4096, chunkChars: 800 });
 export function options(value = {}) {
     const integer = (x, fallback, min, max) => Number.isInteger(Number(x)) ? Math.min(max, Math.max(min, Number(x))) : fallback;
-    return { recent: integer(value.recent, 12, 2, 100), budget: integer(value.budget, DEFAULTS.budget, 64, 4096), chunkChars: integer(value.chunkChars, 800, 200, 2000) };
+    return { budget: integer(value.budget, DEFAULTS.budget, 64, 4096), chunkChars: integer(value.chunkChars, 800, 200, 2000) };
 }
 export async function digest(value) {
     const bytes = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(value));
@@ -30,22 +30,22 @@ export function capture(context) {
     return { character: avatar, chat: metadata?.id, messages, memory: { story: metadata?.story, source: metadata?.source } };
 }
 export function fingerprint(snapshot) { return JSON.stringify(snapshot); }
-export const RETRIEVAL_POLICY = 'current-question-v7';
+export const RETRIEVAL_POLICY = 'current-question-v8';
 export function retrievalQueries(snapshot, type = 'normal') {
     const messages = snapshot.messages;
     const anchor = queryAnchor(messages, type);
     if (anchor < 0) return [];
     return [messages[anchor].text.trim()];
 }
-// Storage is independent of the recent full-message prompt window. A trailing
+// Storage is independent of generation input retention. A trailing
 // user input is pending until the assistant replies; completed replies are stored.
 export function completedMessages(snapshot) {
     return snapshot.messages.at(-1)?.user ? snapshot.messages.slice(0, -1) : snapshot.messages;
 }
-export function memoryBoundary(snapshot, config, type = 'normal') {
-    // Retain the generation anchor even when several assistant turns have moved
-    // it outside the configured recent window.
-    return Math.max(0, Math.min(snapshot.messages.length - config.recent, queryAnchor(snapshot.messages, type)));
+export function memoryBoundary(snapshot, type = 'normal') {
+    // Normal/regenerate/swipe keep only their question; Continue keeps the
+    // message being extended. Replacement answers never enter retrieval.
+    return Math.max(0, queryAnchor(snapshot.messages, type));
 }
 export function interleaveHits(lists) {
     const hits = [];
@@ -339,10 +339,10 @@ export class MemoryEngine {
         // Canceling a prompt's reads must not cancel its source reconciliation.
         const prepared = await this.sync(snapshot, config, sourceCurrent, progress);
         if (!prepared || !current()) return null;
-        const before = memoryBoundary(snapshot, config, type);
+        const before = memoryBoundary(snapshot, type);
         const expected = prepared.docs.filter(doc => doc.message < before);
         if (!expected.length) return { text: '', tokens: 0, passages: [], messages: [] };
-        const queries = retrievalQueries(snapshot, type, config);
+        const queries = retrievalQueries(snapshot, type);
         if (!queries.length) return null;
         const reads = new AbortController();
         const signal = AbortSignal.any([pendingReads, reads.signal]);

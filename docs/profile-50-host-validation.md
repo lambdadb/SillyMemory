@@ -155,7 +155,8 @@ establishes a new normal-default 500-case score.
 The initial numeric adoption retained recent 12 and complete-recent-dialogue
 retrieval. The subsequent maintainer decision in this PR supersedes that retrieval
 policy: index all completed eligible history, search only the current question,
-and retain recent 12 in the answer prompt. Add budgeted clarification guidance;
+and retain only the active input plus selected memory in the answer prompt,
+alongside native character/system settings. Add budgeted clarification guidance;
 see [current policy and its own validation](conversation-memory-defaults.md).
 The live run below predates that final policy and did not include the guidance. Budget
 maximum 4096 and the host's one-quarter-context cap remain unchanged; saved explicit
@@ -164,7 +165,7 @@ rerank failure rejection, cancellation and final delivery protection are unchang
 Generic administrative queries keep their existing size=30 default; only memory
 search requests explicitly use size=50. More candidates can increase rerank/query work; a larger budget can increase
 generation input. No new LLM
-preprocessing call is introduced. The changed product passed `npm test`335/335, syntax/release/SDK checks and all
+preprocessing call is introduced. The initial numeric-adoption runtime passed `npm test`335/335, syntax/release/SDK checks and all
 maintained script/test syntax checks. With the pinned actual host and local service
 emulators, browser44, final fault77 and all13 final prompt-delivery cases passed,
 including cancellation, stale-source rejection, deletion, context loss, packing
