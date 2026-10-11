@@ -673,3 +673,93 @@ See [method, exact failures and interpretation](context-aware-query-comparison.m
   long-input/multilingual reliability claim. Preserve the earlier complete-dialogue
   comparison and all historical archives unchanged. See the
   [product decision and interpretation](context-aware-query-comparison.md#product-adoption-complete-recent-query).
+
+## Jev depth100 provider blocker
+
+- **Record:** [combined depth100 comparison and blocker](jev-depth-100.md).
+  Historical interruption: 233/500 fresh paired questions. The original archive is
+  unchanged; the completed continuation and answer evaluation are recorded below.
+- **Availability:** local-only ignored evidence, unavailable in a fresh clone and
+  not a CI dependency. Original dataset, parent archives and tokenizer are referenced
+  local dependencies; no raw corpus or one-off runner enters maintained source/CI.
+- **Archive:** `/Users/steven/Dev/sillymemory/artifacts/archive/jev-depth-100-blocker-v1/evidence.tar.gz`.
+  SHA-256 `b307cb9733903aa49f6d09919ded62e1e029cb49427487a1513fc62215536fd2`;
+  29,080,864 bytes, 419 members. Every member's original bytes verified; configured
+  credential matches zero. Six predecessor archives retain their original checksums.
+- **Producer:** runtime base `ec0834e8641ff4b35f9b348981d89117725ce886`, original
+  boundary-v1, managed OpenAI text-embedding-3-small, Bayesian English and question
+  only. Both arms use default native Jev; k/candidate 50 versus 100, final 50 and 4096
+  tokens unchanged. Stable SDK 0.8.1 is experiment-local; maintained SDK 0.8.0 unchanged.
+  Frozen plan/settings/protocol/source/query locks, all 233 complete pair/pool envelopes,
+  prompts, ledgers, two preserved failed execution snapshots and two diagnostics included.
+- **Blocker:** repeated 503 in Jev on both depth settings, seven attempts per query
+  episode exhausted twice. Same-corpus retrieval/managed embedding succeeds; diagnostic
+  returnOriginal reports fallback/unavailable/scoredCount0. A previously successful
+  short question also fails Jev, making a long-query-only issue unlikely. Exact
+  upstream cause requires provider logs. Diagnostic fallback is never scored/injected.
+- **Partial result:** 437 marked occurrences: final retrieval 417→430, delivery 416→420;
+  13 delivery gains, 9 losses. Multi-session delivery 310→320; preference 40→34. Temporal,
+  update and assistant-source groups not completed. Source markers are not answers;
+  preserve redundant/ambiguous markers rather than silently changing the evaluation.
+- **Validation:** independent partial marker/request arithmetic; all 500 planned
+  corpora rebuilt; 4743 physical main upsert bodies and 46,600 successful source hits
+  validated; 466 exact token-budget/rendering replays. Node 24.15.0 unit 323/323,
+  syntax/release/SDK checks passed; eight synthetic error/retry scenarios passed.
+  No Node 20, actual-host, generated-answer accuracy or exact-vector-oracle check.
+- **Resources including diagnostics:** 239 collections, 233,018 physical submitted
+  documents, 6,722 requests; all deleted/GET404-confirmed and owned listing empty.
+  Main and diagnostic counters are separately retained and must be combined for
+  future safety guards. No pending remote data, promotion, publication or default change.
+- **Continuation:** only 267 remaining frozen IDs. Verify predecessor/producer hashes,
+  provider recovery and remaining aggregate bounds first. Retain paired segments and
+  original clock; if its four-hour window expires, explicitly define a bounded
+  continuation rather than silently resetting the deadline or rerunning completed pairs.
+
+## Jev depth100 complete answer comparison
+
+- **Record:** [completed comparison and interpretation](jev-depth-100.md). All 500
+  fresh search pairs, then 1000 fresh Sol answers and 1000 official judgments.
+  Official accuracy 464/500 (92.8%) → 471/500 (94.2%); 15 gains and 8 losses.
+  Source coverage improves, but judge-sensitive and ambiguous cases limit the
+  causal interpretation. Product/default promotion is deferred; no code change.
+- **Availability:** local-only ignored evidence, unavailable in a fresh clone and
+  not a CI dependency. Dataset, tokenizer and predecessor archives are referenced
+  external local inputs. No raw corpus, responses or one-off helpers enter Git.
+- **Archive:** `/Users/steven/Dev/sillymemory/artifacts/archive/jev-depth-100-completed-v1/evidence.tar.gz`.
+  SHA-256 `c86917f90c55c80269517d63e94bc9a68539253f592daa6002aa72aecd38039f`;
+  72,350,337 bytes, 1819 members. Every member's original bytes verified; configured
+  credential matches zero. Report SHA-256
+  `0e26387142091f0fad939a848ea5ecd3bdbfadde971ea3ddc62c37124e0df6e8`.
+  The interrupted archive and six earlier predecessors remain byte-identical.
+- **Producer/settings:** base `ec0834e8641ff4b35f9b348981d89117725ce886`, experiment
+  SDK 0.8.1, managed text-embedding-3-small, original boundary-v1/800-codepoint chunks,
+  Bayesian English question only, native typesafe/jev-1.13.0/default-relevance-v1,
+  k/candidate 50 versus 100, final 50, consistent branch reads, identical 4096-token
+  compact session-date packing. No fallback is scored. Maintained SDK 0.8.0 unchanged.
+- **Answers:** exact stored memories and previous system/date-decorated question;
+  gpt-6.1-sol/low/output4096, fixed gpt-4o-2024-08-06/temperature0/output10 official
+  template and strict yes/no parser. No reference/rubric in generation. Actual
+  response identities match; Sol is an undated alias. All 2000 calls HTTP 200, no retries
+  or waits, concurrency 2, 27.26 minutes. No new LambdaDB requests for answer scoring.
+- **Interpretation:** all 23 changed answer/reference pairs inspected provisionally;
+  exact changed prompts, source/budget evidence and notes included. Real missing
+  source recovery coexists with personalization budget regressions and near-equivalent
+  answers receiving opposite official labels. Preserve original labels, ambiguity
+  and the distinction between marker coverage, generated answers and human judgment.
+  This repeatedly consumed 500 is not blind held-out or independently replicated.
+- **Recovery/resources:** user reported Typesafe credit exhaustion, replenishment
+  and automatic payment; account logs not independently inspected. Both blocked
+  cases resumed with native applied. Prior diagnostics added to original guards;
+  all 233 earlier complete pairs unchanged. Combined native/diagnostics: 506 owned
+  collections, 493091 physical submitted documents, 14207 requests, 1050 rerank attempts.
+  All deleted/GET404 confirmed and owned listings empty; no pending remote data.
+- **Validation:** independent full marker/request and 1000 answer/judge receipt
+  recomputation; all 487285 source documents rebuilt, 10080 physical upsert bodies
+  and 100000 returned source hits checked, 1000 exact memory/budget replays. Node 24.15.0
+  unit 323/323, syntax/release/SDK checks and eight synthetic retry scenarios passed.
+  No Node 20 locally, new browser/host run, exact-vector oracle, same-byte judge
+  repeats, independent human adjudication, deployment or promotion.
+- **Preservation:** frozen plans/protocols and producer/continuation/analysis locks,
+  all raw query/model envelopes, prompts, transport ledgers, failed episode snapshots,
+  cleanup records and source bundle included. Prefix analysis-lock outputs belong
+  to the unchanged interrupted archive; use completion locks for the final run.
