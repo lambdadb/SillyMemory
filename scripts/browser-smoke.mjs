@@ -185,7 +185,7 @@ try {
         const { runGenerationInterceptors } = await import('/scripts/extensions.js');
         aborted = await runGenerationInterceptors(chat, 4096, 'normal');
         const rendered = chat.filter(m => m.mes.startsWith('[Past conversation excerpt:')).map(m => m.mes).join('\n');
-        const result = { before, after: JSON.stringify(c.chat), chat, aborted, rendered, renderedTokens: await c.getTokenCountAsync(rendered), macroValue: c.chatMetadata.variables?.sillymemory_test, injection: rendered, inspection: document.querySelector('[data-sm="inspection"]').textContent };
+        const result = { before, after: JSON.stringify(c.chat), chat, aborted, rendered, preparation: document.querySelector('[data-sm="status"]').textContent, renderedTokens: await c.getTokenCountAsync(rendered), macroValue: c.chatMetadata.variables?.sillymemory_test, injection: rendered, inspection: document.querySelector('[data-sm="inspection"]').textContent };
         // This suite calls only the interceptor dispatcher. Emulate its completion
         // boundary to release prompt ownership; full packing/dispatch is tested
         // by prompt-delivery-smoke.mjs, not by this synthetic final event.
@@ -205,9 +205,10 @@ try {
         return { original, text };
     });
     const assembled = await prompt();
+    const preparedCounts = /Prepared (\d+) source passages in (\d+) memory excerpts/.exec(assembled.preparation);
     const assembledMessage = assembled.chat.find(m => m.mes.startsWith('[Past conversation excerpt:') && m.index === 0);
     check('real host dispatcher assembles same-message chunks with their source and one shared header',
-        !assembled.aborted && assembledMessage?.mes.includes('passages 1-') && assembledMessage.mes.endsWith(assemblySource.text)
+        !assembled.aborted && preparedCounts && Number(preparedCounts[1]) > Number(preparedCounts[2]) && assembledMessage?.mes.includes('passages 1-') && assembledMessage.mes.endsWith(assemblySource.text)
         && assembled.renderedTokens <= 1024 && assembled.before === assembled.after);
     await page.evaluate(async original => {
         const c = SillyTavern.getContext(); c.chat[0].mes = original; await c.eventSource.emit(c.eventTypes.MESSAGE_UPDATED, 0);

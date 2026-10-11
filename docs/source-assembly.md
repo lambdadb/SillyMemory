@@ -42,25 +42,25 @@ are unchanged. No new mode, stored format, provider option or SDK change.
 
 At the develop baseline `ec0834e8641ff4b35f9b348981d89117725ce886`:
 
-- `npm test`: 332/332 passed on Node24.15.0. Nine small assembly regressions cover
+- `npm test`: 333/333 passed on Node24.15.0. Nine small assembly regressions and a delivery-count regression cover
   source-only adjacency, explicit gaps/exact and conflicting overlaps, invalid
   coordinates/order, identity/time boundaries, opaque repeat citations,
   UTF-16/macros, source-floor refill, stale/foreign/deleted hits and fallback/count
   failures. Existing synchronization/cancellation/isolation/budget tests still pass.
 - `npm run check`, `npm run check:release`, `npm run check:sdk`: passed. SDK0.8.0,
   release metadata0.4.0Unreleased and search contracts are unchanged.
-- `ST_SOURCE="$PWD/artifacts/host-source" SM_ARTIFACT_TAG=source-assembly-v3 npm run test:browser`:
+- `ST_SOURCE="$PWD/artifacts/host-source" SM_ARTIFACT_TAG=source-assembly-review npm run test:browser`:
   44 checks passed on real pinned SillyTavern1.19.0/Chromium153.0.8010.12, with local
   HTTPS LambdaDB emulation. Multi-chunk source is assembled through the actual
   extension dispatcher, stays under the unchanged1024 effective cap for4096 host
   context, and leaves stored history intact. Reload/key handling, edits/swipes,
   deletion, branches/races, provenance and owned cleanup also pass.
-- `ST_SOURCE="$PWD/artifacts/host-source" node scripts/prompt-delivery-smoke.mjs artifacts/prompt-delivery-source-assembly-final.json`:
+- `ST_SOURCE="$PWD/artifacts/host-source" node scripts/prompt-delivery-smoke.mjs artifacts/prompt-delivery-source-assembly-review.json`:
   all13 existing allocation/delivery cases plus overlap, repeated packing and the
   new assembly scenario passed. The real host sends the complete joined source
   with native role and one timestamp to the local completion endpoint; final host
   verification and stored-history preservation pass. No actual model is called.
-- `ST_SOURCE="$PWD/artifacts/host-source" SM_ARTIFACT_TAG=source-assembly-v1 npm run test:faults`:
+- `ST_SOURCE="$PWD/artifacts/host-source" ST_TEST_PORT=18127 SM_ARTIFACT_TAG=source-assembly-review npm run test:faults`:
   76 real-host/emulator checks passed, including HTTP401/403/429/503, query timeout,
   accepted/lost write acknowledgments, interruption/reload, cleanup and absence of
   browser page errors. Both browser runs end with zero emulated collections.
@@ -80,6 +80,13 @@ Old delivery-pressure inputs also crossed the now-enforced8KiB complete-query li
 fixed while the emulator explicitly validates the current single complete query;
 it is a packing fixture, not a live search-quality result. Selecting the edit target
 by message identity replaces an invalid assumption about remote insertion order.
+
+Review follow-through distinguishes preparation's source-passage count from final
+verification's rendered memory-excerpt count. Two chunks can form one excerpt;
+partial loss of that excerpt still stops generation. The inspector uses the same
+excerpt terminology. This is a label correction, not weaker delivery verification.
+Initial implementation evidence remains immutable; the evidence index separately
+records the reviewed report and reruns.
 
 No credentials, paid provider calls, live LambdaDB resources, new quality score,
 independent confirmation cohort, release or deployment are involved. Previously

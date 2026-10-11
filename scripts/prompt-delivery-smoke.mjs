@@ -270,14 +270,14 @@ try {
         }
         if (spec.type === 'normal') assert.deepEqual(observation.chat.slice(0, 12), chat.map(m => m.mes), 'Original chat text preserved');
         if (spec.id === 'included') {
-            assert.match(observation.delivery, /2\/2 memory passages and 4\/4 recent messages verified/);
+            assert.match(observation.delivery, /2\/2 memory excerpts and 4\/4 recent messages verified/);
             assert.equal(sent[0].messages.filter(m => m.content.startsWith('[Past conversation excerpt:')).length, 2);
         }
         if (spec.id === 'pressure-warning') {
-            assert.match(observation.delivery, /2 memory passages and 1 recent messages are missing/);
+            assert.match(observation.delivery, /2 memory excerpts and 1 recent messages are missing/);
             assert.equal(sent[0].messages.filter(m => m.content.startsWith('[Past conversation excerpt:')).length, 0);
         }
-        if (spec.id === 'recovered-context') assert.match(observation.delivery, /6\/6 memory passages and 4\/4 recent messages verified/);
+        if (spec.id === 'recovered-context') assert.match(observation.delivery, /6\/6 memory excerpts and 4\/4 recent messages verified/);
         if (spec.id === 'continue') assert.match(observation.delivery, /could not be verified/);
         if (spec.id === 'disabled') assert.doesNotMatch(observation.delivery, /Generation stopped|verified/);
         if (spec.id === 'pressure-stopped') {
@@ -296,7 +296,7 @@ try {
             assert.equal(generations.length, recoveryStart + 1);
             assert.deepEqual(recovered.after.slice(0, -1), recovered.before);
             assert.equal(recovered.after.at(-1), 'LOCAL_FIXTURE_OK');
-            assert.match(recovered.delivery, /6\/6 memory passages and 4\/4 recent messages verified/);
+            assert.match(recovered.delivery, /6\/6 memory excerpts and 4\/4 recent messages verified/);
             rows.at(-1).manualRecovery = { ...recovered, request: generations.at(-1) };
         }
     }
@@ -372,7 +372,7 @@ try {
     assert.equal(generations.length, packingStart + 1);
     const packingRequest = generations.at(-1), excerpts = packingRequest.messages.filter(m => m.content.startsWith('[Past conversation excerpt:'));
     assert.equal(excerpts.length, 4);
-    assert.match(packed.delivery, /4\/4 memory passages and 8\/8 recent messages verified/);
+    assert.match(packed.delivery, /4\/4 memory excerpts and 8\/8 recent messages verified/);
     for (const index of [0, 1, 2, 27]) {
         const original = packingFixture.item.messages[index];
         assert(excerpts.some(m => m.role === original.role && m.content.endsWith(`\n${original.text}`)), 'Full source and native role reached the completion endpoint');

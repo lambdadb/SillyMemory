@@ -706,3 +706,17 @@ See [method, exact failures and interpretation](context-aware-query-comparison.m
   equivalence helper. Local-only, unavailable in a fresh clone; recorded parent
   oracle archive and pinned host/dependencies are external reproduction inputs,
   not maintained CI requirements. Historical benchmark evidence is not overwritten.
+- **Review correction and final reruns:** preparation names source passages and
+  assembled memory excerpts separately; final verification/inspection counts
+  excerpts, not chunks. A new regression confirms that partial joined-source loss
+  still stops generation. Unit333/333, syntax/release/SDK, browser44, fault76 and all
+  actual-host delivery cases passed again on the revised source; emulated cleanup
+  remains empty. Initial implementation archive/report are unchanged.
+- **Review archive:** `/Users/steven/Dev/sillymemory/artifacts/archive/source-assembly-review-v1/evidence.tar.gz`.
+  SHA-256 `5212c1c0a1dd26a7c8fdfe2af80c20c8c24e15ff1b6b0d049c4b7d36dc6bb899`;
+  507,842 bytes,23 members, each original byte verified. Reviewed report SHA-256
+  `fe2162484c458e52d99e3a23012c390e6e5e2508445c8b7149e76f9da51f41a4`.
+  Adjacent `manifest.json` locks original implementation commit `4b99d6a9ef6db8d06a1d79c2410660ea3ecc4127`,
+  revised code/test/host harness/report bytes and complete repeated-run records.
+  Local-only, unavailable in a fresh clone; the initial implementation archive and
+  pinned host/dependencies remain external reproduction inputs, not CI requirements.
