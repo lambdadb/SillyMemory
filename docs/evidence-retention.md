@@ -728,7 +728,7 @@ See [method, exact failures and interpretation](context-aware-query-comparison.m
 - **Archive:** `/Users/steven/Dev/sillymemory/artifacts/archive/jev-depth-100-completed-v1/evidence.tar.gz`.
   SHA-256 `c86917f90c55c80269517d63e94bc9a68539253f592daa6002aa72aecd38039f`;
   72,350,337 bytes, 1819 members. Every member's original bytes verified; configured
-  credential matches zero. Report SHA-256
+  credential matches zero. Initial archived report SHA-256
   `0e26387142091f0fad939a848ea5ecd3bdbfadde971ea3ddc62c37124e0df6e8`.
   The interrupted archive and six earlier predecessors remain byte-identical.
 - **Producer/settings:** base `ec0834e8641ff4b35f9b348981d89117725ce886`, experiment
@@ -763,3 +763,24 @@ See [method, exact failures and interpretation](context-aware-query-comparison.m
   all raw query/model envelopes, prompts, transport ledgers, failed episode snapshots,
   cleanup records and source bundle included. Prefix analysis-lock outputs belong
   to the unchanged interrupted archive; use completion locks for the final run.
+- **Completed offline follow-through:** [source-consistency audit](jev-depth-100.md#completed-offline-source-consistency-audit)
+  covers all 23 changed pairs using the immutable completed archive and released
+  source. Five source-backed coverage benefits (museum chronology still qualified),
+  two budget-related personalization losses, two unsupported/incomplete generations,
+  one cleaner abstention and 13 scoring/target-confounded pairs. These are dispositions,
+  not corrected accuracy labels; the other 477 pairs are not semantically regraded.
+  Product/default promotion remains deferred; zero new provider requests or resources.
+- **Audit archive:** `/Users/steven/Dev/sillymemory/artifacts/archive/jev-depth-100-source-audit-v1/evidence.tar.gz`.
+  SHA-256 `b486a5c6f79864762da560434349dcb56198838a89d809ca77b3b6ec8a18119b`;
+  61,264 bytes, 10 members, each original byte verified. Revised report SHA-256
+  `f19ca1e5f92aac700a07630440222a57bd1d21549fbcf9aba3965192d05d3404`.
+  Includes frozen rules/case list, decisions, exact source/rank/delivery/answer
+  locators, audit producer/validator, input locks, references and revised report.
+  Initial completed/interrupted archives remain unchanged; the revised report does
+  not replace their original bytes. Local-only external dataset/parent dependencies;
+  no audit helper or raw source enters Git or CI.
+- **Audit validation:** 23 pairs, 56 original source locators and 88 delivered-passage
+  locators independently checked against archived envelopes; labels and 15/8 official
+  changes unchanged. Train subtraction, website date interval and different-week
+  doctor/bedtime examples recomputed without a model. This checks recorded bytes and
+  arithmetic, not independent human judgment or full-cohort corrected grading.

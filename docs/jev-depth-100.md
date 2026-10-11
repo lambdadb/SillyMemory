@@ -11,9 +11,10 @@ answers, but the automated-score gain also includes judge-sensitive and ambiguou
 cases. Do not equate all 15 gains with retrieval-caused improvements.
 
 Keep depth 50 as the benchmark reference; **do not promote depth 100 to product defaults
-from this single run**. The next useful confirmation is scoring/target consistency on
-saved answers and source, before more retrieval or packing tuning. No further paid
-judge/generation repeats were made. Product code, settings, dependencies and tests are
+from this single run**. The completed offline source-consistency audit below confirms
+real evidence recovery alongside budget losses and scoring/target uncertainty; it
+does not turn the official +1.4pp into an independently verified quality gain.
+No further paid judge/generation repeats were made. Product code, settings, dependencies and tests are
 unchanged. This record closes the bounded comparison, not a model/parameter sweep. Live
 execution was on 2026-10-11 UTC; answer generation ran 11:38:51–12:06:07.
 
@@ -191,6 +192,57 @@ these counts alone. Full changed-case prompts and all 23 provisional notes are r
 The repeatedly consumed 500 is not a new blind held-out cohort; one generation and
 one automated judgment per condition do not establish replication or generalization.
 
+### Completed offline source-consistency audit
+
+All 23 official changed pairs were audited from the immutable completed archive and
+checksum-locked released dataset. The case list and classification rules were fixed
+before this additional source inspection. This is retrospective and unblinded:
+the previous answers/labels were already known. No provider requests, reference
+edits, label changes or new generated answers. The other 477 unchanged pairs were
+not semantically regraded, so this cannot produce a corrected overall accuracy.
+
+| Classification | Cases | Official gains | Official losses |
+| --- | ---: | ---: | ---: |
+| Newly delivered source used in the answer | 5 | 5 | 0 |
+| Budget-related personalization omission | 2 | 0 | 2 |
+| Unsupported or incomplete candidate generation | 2 | 0 | 2 |
+| Cleaner abstention wording, correctness gain unproven | 1 | 1 | 0 |
+| Equivalent facts or preference-rubric consistency concerns | 6 | 5 | 1 |
+| Counting target/reference confounds | 2 | 2 | 0 |
+| Relative dates or event/entity target confounds | 4 | 1 | 3 |
+| Abstention reference conflicts with assistant estimates | 1 | 1 | 0 |
+
+The five source benefits are citrus, reunion, museums, business milestone and
+charity count described above. Museums recovers the missing names, but the first
+two visits' order remains uncertain; **five coverage benefits are not five newly
+adjudicated fully correct answers**. The two budget losses are beef-stew success
+and established external-drive backups. Jewelry adds an unconfirmed acquisition;
+fitness supplies an unsupported Monday and stops without the known weekday list.
+Fish abstention becomes cleaner, although both answers already deny a known
+30-gallon count and control's extra extrapolation is explicitly conditional.
+
+The six consistency concerns are `09ba9854`, `eac54adc`, `f685340e_abs`, `57f827a0`,
+`b6025781` and `35a27287`. Original labels remain frozen, including **control Yes /
+candidate No** for `35a27287`; both recommend French/Spanish language exchange.
+Property and rare-item counts confound a matching number with the intended entities.
+Emma, plants, doctor and baking depend on event/entity or relative-date interpretation.
+Bus savings is not clearly justified abstention merely because estimates are qualified.
+
+Three explicit calculations were checked without an LLM: 60−10=50 in both train
+answers; February 10→March 1 is 19 days in both website answers; doctor appointment
+May 24's last Thursday resolves to May 18, whereas bedtime May 29's last Wednesday
+resolves to May 24. These checks validate the cited examples, not every event time
+or the full benchmark. Session timestamps must not manufacture an unstated event date.
+
+The audit preserves exact original source, session/date/message locators, returned
+chunk ranks, delivered passages, answers and budget trials for each cited source.
+Independent checks verify all 23 pairs, 56 source locators and 88 delivered-passage
+locators without changing labels; semantic dispositions remain the
+assistant's assessment, not independent human adjudication. The next useful product
+question is preserving recovered facts within the existing injection budget, with
+search fixed, rather than another depth/weight/model sweep. Any future change needs
+the full frozen comparison and disclosed scoring limitations, not only these 23 cases.
+
 ## Operational recovery, resources and latency
 
 The initial 233 pairs and two failed execution snapshots were preserved; each execution
@@ -254,6 +306,9 @@ See [the evidence index](evidence-retention.md#jev-depth100-complete-answer-comp
 for checksum, availability and producer details. Both are local-only ignored archives,
 unavailable in a fresh clone and not CI dependencies; no raw corpus, responses or
 one-off runners enter Git. Seven predecessor archives remain byte-identical.
+The original completed archive retains its initial report bytes; the subsequent
+offline audit and revised report are preserved separately in the source-audit archive
+listed in the evidence index. Earlier records and labels are not overwritten.
 
 Offline revalidation uses the retained source and original worktree-relative placement:
 
@@ -264,6 +319,8 @@ node artifacts/jev-depth-100-v1/source-wire-check.mjs
 node artifacts/jev-depth-100-v1/token-check.mjs
 node artifacts/jev-depth-100-answers-v1/summarize.mjs
 python3 artifacts/jev-depth-100-answers-v1/validate.py
+python3 artifacts/jev-depth-100-source-audit-v1/audit.py
+python3 artifacts/jev-depth-100-source-audit-v1/validate.py
 ```
 
 These require the recorded local dataset/tokenizer paths. Copy/extract to a separate
