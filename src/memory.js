@@ -101,7 +101,7 @@ const repeatedKey = doc => JSON.stringify([doc.owner, doc.scope, doc.role, doc.s
 // Preserve every selected source coordinate and full verbatim body. A repeated
 // excerpt is placed at its latest occurrence, with all occurrences named, so a
 // later repetition is not silently presented as an earlier, superseded state.
-export function packedMemoryMessages(passages) {
+function repeatedEntries(passages) {
     const groups = new Map();
     for (const doc of [...passages].sort((a, b) => a.message - b.message || a.chunk - b.chunk)) {
         const key = repeatedKey(doc), group = groups.get(key) || [];
@@ -112,19 +112,72 @@ export function packedMemoryMessages(passages) {
         if (group.length > 1) {
             message.mes = `[Past conversation excerpt: ${last.role} ${JSON.stringify(literal(last.speaker))}, identical text at message:passage ${group.map(doc => `${doc.message + 1}:${doc.chunk + 1}`).join(', ')}]\n${conversationTimeLabel(last)}${literal(last.text)}`;
         }
-        return { message, chunk: last.chunk };
-    }).sort((a, b) => a.message.index - b.message.index || a.chunk - b.chunk).map(entry => entry.message);
+        return { docs: group, last, message };
+    }).sort((a, b) => a.last.message - b.last.message || a.last.chunk - b.last.chunk);
 }
 
-export async function selectPackedMemory(hits, expected, budget, countTokens) {
+const repeatedMessages = passages => repeatedEntries(passages).map(entry => entry.message);
+const messageIdentity = doc => JSON.stringify([doc.owner, doc.scope, doc.revision, doc.message, doc.role, doc.speaker, doc.conversationTimestamp, doc.timestampSource]);
+const passageNumbers = docs => {
+    const ranges = [];
+    for (const number of [...new Set(docs.map(doc => doc.chunk + 1))].sort((a, b) => a - b)) {
+        const last = ranges.at(-1);
+        if (last && number === last[1] + 1) last[1] = number;
+        else ranges.push([number, number]);
+    }
+    return ranges.map(([start, end]) => start === end ? String(start) : `${start}-${end}`).join(', ');
+};
+
+// Join only returned text. Offsets are UTF-16 positions, not code-point counts.
+// Missing intervals stay explicit; conflicting overlaps retain separate excerpts.
+function joinedText(docs) {
+    const ranges = [];
+    const sorted = [...docs].sort((a, b) => a.start - b.start || a.end - b.end);
+    for (const [index, doc] of sorted.entries()) {
+        if (!Number.isInteger(doc.start) || !Number.isInteger(doc.end) || doc.start < 0 || doc.end <= doc.start
+            || doc.end - doc.start !== doc.text.length || !Number.isInteger(doc.chunk) || doc.chunk < 0
+            || (index && doc.chunk < sorted[index - 1].chunk)) return null;
+        const last = ranges.at(-1);
+        if (!last || doc.start > last.end) { ranges.push({ start: doc.start, end: doc.end, text: doc.text }); continue; }
+        const overlap = Math.min(last.end, doc.end) - doc.start;
+        if (last.text.slice(doc.start - last.start, doc.start - last.start + overlap) !== doc.text.slice(0, overlap)) return null;
+        if (doc.end > last.end) { last.text += doc.text.slice(last.end - doc.start); last.end = doc.end; }
+    }
+    return ranges.map(range => literal(range.text)).join('\n[Omitted original text between excerpts]\n');
+}
+
+export function packedMemoryMessages(passages) {
+    const runs = [];
+    for (const entry of repeatedEntries(passages)) {
+        const previous = runs.at(-1);
+        // Repeated text keeps all citations at its latest occurrence as an opaque block.
+        if (entry.docs.length === 1 && previous?.every(item => item.docs.length === 1)
+            && messageIdentity(previous[0].last) === messageIdentity(entry.last)) previous.push(entry);
+        else runs.push([entry]);
+    }
+    return runs.flatMap(run => {
+        if (run.length === 1) return [run[0].message];
+        const docs = run.map(entry => entry.last), body = joinedText(docs), last = docs.at(-1);
+        if (body === null) return run.map(entry => entry.message);
+        return [{ index: last.message, name: literal(last.speaker), is_user: last.role === 'user', is_system: false,
+            mes: `[Past conversation excerpt: ${last.role} ${JSON.stringify(literal(last.speaker))}, message ${last.message + 1}, passages ${passageNumbers(docs)}]\n${conversationTimeLabel(last)}${body}` }];
+    });
+}
+
+async function selectRepeatedMemory(hits, expected, budget, countTokens) {
     // Establish the shipped whole-passage selection first. Packing may add
     // sources but can never evict any passage that the baseline already kept.
     const baseline = await selectMemory(hits, expected, budget, countTokens);
     if (!baseline.passages.length) return baseline;
     const selected = [...baseline.passages], content = new Set(selected.map(repeatedKey));
     if (content.size === selected.length) return baseline;
+    return refillMemory(hits, expected, baseline, budget, countTokens, repeatedMessages);
+}
+
+async function refillMemory(hits, expected, baseline, budget, countTokens, renderMessages, tryCandidateAssembly = false) {
+    const selected = [...baseline.passages], content = new Set(selected.map(repeatedKey));
     const render = docs => {
-        const messages = packedMemoryMessages(docs);
+        const messages = renderMessages(docs);
         return { messages, text: messages.map(message => message.mes).join('\n') };
     };
     const count = async text => {
@@ -132,8 +185,14 @@ export async function selectPackedMemory(hits, expected, budget, countTokens) {
         if (!Number.isFinite(tokens) || tokens < 0) throw new Error('Token counting unavailable.');
         return tokens;
     };
-    let result = render(selected), tokens = await count(result.text);
-    if (tokens >= baseline.tokens) return baseline; // Short repetitions may cost more to label.
+    let result = render(selected);
+    let tokens = result.text === baseline.text ? baseline.tokens : await count(result.text);
+    if (result.text === baseline.text || tokens >= baseline.tokens) {
+        if (!tryCandidateAssembly) return baseline; // Short repetitions may cost more to label.
+        // Adding a rejected adjacent chunk can save its header even when the
+        // selected chunks alone do not assemble. Keep the exact floor meanwhile.
+        result = { text: baseline.text, messages: baseline.messages }; tokens = baseline.tokens;
+    }
     const valid = new Map(expected.map(doc => [doc.id, doc])), seen = new Set(selected.map(doc => doc.id));
     for (const hit of hits) {
         const doc = valid.get(hit?.id);
@@ -145,6 +204,13 @@ export async function selectPackedMemory(hits, expected, budget, countTokens) {
         if (trial <= budget) { selected.push(doc); content.add(repeatedKey(doc)); result = candidate; tokens = trial; }
     }
     return { ...result, tokens, passages: selected };
+}
+
+export async function selectPackedMemory(hits, expected, budget, countTokens) {
+    // Preserve the current repeated-passage selection, including its refilled sources.
+    const baseline = await selectRepeatedMemory(hits, expected, budget, countTokens);
+    if (!baseline.passages.length) return baseline;
+    return refillMemory(hits, expected, baseline, budget, countTokens, packedMemoryMessages, true);
 }
 
 export class Journal {

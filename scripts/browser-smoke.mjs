@@ -185,7 +185,7 @@ try {
         const { runGenerationInterceptors } = await import('/scripts/extensions.js');
         aborted = await runGenerationInterceptors(chat, 4096, 'normal');
         const rendered = chat.filter(m => m.mes.startsWith('[Past conversation excerpt:')).map(m => m.mes).join('\n');
-        const result = { before, after: JSON.stringify(c.chat), chat, aborted, rendered, renderedTokens: await c.getTokenCountAsync(rendered), macroValue: c.chatMetadata.variables?.sillymemory_test, injection: rendered, inspection: document.querySelector('[data-sm="inspection"]').textContent };
+        const result = { before, after: JSON.stringify(c.chat), chat, aborted, rendered, preparation: document.querySelector('[data-sm="status"]').textContent, renderedTokens: await c.getTokenCountAsync(rendered), macroValue: c.chatMetadata.variables?.sillymemory_test, injection: rendered, inspection: document.querySelector('[data-sm="inspection"]').textContent };
         // This suite calls only the interceptor dispatcher. Emulate its completion
         // boundary to release prompt ownership; full packing/dispatch is tested
         // by prompt-delivery-smoke.mjs, not by this synthetic final event.
@@ -196,6 +196,24 @@ try {
     check('real host dispatcher injects bounded memory', Boolean(result.injection) && /\d+ \/ 250 tokens/.test(result.inspection));
     check('native recalled excerpts keep macros literal within budget', result.rendered.includes('｛｛char｝｝') && result.rendered.includes('＜USER＞') && result.macroValue === undefined && result.renderedTokens <= 250);
     check('recent messages and persisted source chat are preserved', result.chat.filter(m => !m.mes.startsWith('[Past conversation excerpt:')).length === 2 && result.chat.at(-2).mes.includes('passage 6') && result.before === result.after);
+    // Exercise assembly through the real extension dispatcher with multiple stored chunks.
+    await field('budget').fill('1600'); await field('budget').dispatchEvent('change');
+    const assemblySource = await page.evaluate(async () => {
+        const c = SillyTavern.getContext(), original = c.chat[0].mes;
+        const text = Array.from({ length: 45 }, (_, i) => `Archive shelf ${i}: the cedar maps are here.`).join('\n');
+        c.chat[0].mes = text; await c.eventSource.emit(c.eventTypes.MESSAGE_UPDATED, 0);
+        return { original, text };
+    });
+    const assembled = await prompt();
+    const preparedCounts = /Prepared (\d+) source passages in (\d+) memory excerpts/.exec(assembled.preparation);
+    const assembledMessage = assembled.chat.find(m => m.mes.startsWith('[Past conversation excerpt:') && m.index === 0);
+    check('real host dispatcher assembles same-message chunks with their source and one shared header',
+        !assembled.aborted && preparedCounts && Number(preparedCounts[1]) > Number(preparedCounts[2]) && assembledMessage?.mes.includes('passages 1-') && assembledMessage.mes.endsWith(assemblySource.text)
+        && assembled.renderedTokens <= 1024 && assembled.before === assembled.after);
+    await page.evaluate(async original => {
+        const c = SillyTavern.getContext(); c.chat[0].mes = original; await c.eventSource.emit(c.eventTypes.MESSAGE_UPDATED, 0);
+    }, assemblySource.original);
+    await field('budget').fill('250'); await field('budget').dispatchEvent('change');
     delayedQuery = 400;
     const olderGeneration = prompt();
     await page.waitForTimeout(100);
@@ -203,7 +221,7 @@ try {
     const [older, newer] = await Promise.all([olderGeneration, newerGeneration]); delayedQuery = 0;
     check('overlapping generations cannot overwrite the newest injection', older.aborted && !newer.aborted && Boolean(newer.injection));
     const parentBranch = await page.evaluate(() => `chat_${SillyTavern.getContext().chatMetadata.sillymemory.id}`);
-    const collection = { docs: [...collections.values()][0].branches.get(parentBranch) }; const old = [...collection.docs.values()][0];
+    const collection = { docs: [...collections.values()][0].branches.get(parentBranch) }; const old = [...collection.docs.values()].find(doc => doc.message === 0);
     await page.evaluate(async () => { const c = SillyTavern.getContext(); c.chat[0].mes = 'Edited: the compass is in the tower.'; await c.eventSource.emit(c.eventTypes.MESSAGE_UPDATED, 0); });
     await waitStatus('synchronized'); staleHits = [old];
     const edited = await prompt();

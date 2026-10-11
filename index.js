@@ -162,7 +162,7 @@ globalThis.sillymemory_intercept = async (chat, contextSize, abort, type) => {
         }
         element('inspection').textContent = `${result.tokens} / ${config.budget} tokens\n\n${result.text}`;
         preparedMessages = result.messages;
-        operation.finish(`Prepared ${result.passages.length} passages (${result.tokens} tokens); awaiting final prompt verification.`);
+        operation.finish(`Prepared ${result.passages.length} source passages in ${result.messages.length} memory excerpts (${result.tokens} tokens); awaiting final prompt verification.`);
     } catch (e) {
         if (!instance) { if (operation.current()) fail(e, operation); abandoned = true; abort(true); return; }
         if (!valid()) { operation.finish('Memory operation canceled because the prompt changed. Generate again.'); abandoned = true; abort(true); return; }
@@ -438,7 +438,7 @@ async function initialize() {
         if (finished.result) {
             const included = finished.result.memory.filter(m => m.outcome === 'included');
             const omitted = finished.result.memory.filter(m => m.outcome !== 'included');
-            element('inspection').textContent = `Memory in final host prompt (${included.length}/${finished.result.memory.length}):\n\n${included.map(m => m.content).join('\n\n') || 'None.'}${omitted.length ? `\n\nNot verified in final prompt:\n\n${omitted.map(m => m.content).join('\n\n')}` : ''}`;
+            element('inspection').textContent = `Memory excerpts in final host prompt (${included.length}/${finished.result.memory.length}):\n\n${included.map(m => m.content).join('\n\n') || 'None.'}${omitted.length ? `\n\nNot verified in final prompt:\n\n${omitted.map(m => m.content).join('\n\n')}` : ''}`;
         }
     });
     for (const name of ['CHAT_CHANGED', 'MESSAGE_SENT', 'MESSAGE_RECEIVED', 'MESSAGE_EDITED', 'MESSAGE_UPDATED', 'MESSAGE_SWIPED', 'MESSAGE_DELETED', 'GENERATION_ENDED', 'CHAT_RENAMED']) {

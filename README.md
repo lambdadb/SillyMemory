@@ -93,6 +93,15 @@ same owner/scope filter and explicit chat branch. Reranking failure or unconfirm
 rerank metadata rejects injection; there is no silent fallback. The user supplies
 only a LambdaDB project key. Managed embedding and reranking may incur additional
 LambdaDB inference usage. See [the default decision and bounded English evaluation](docs/conversation-memory-defaults.md).
+Selected chunks from the same message and revision share one source/time header.
+Touching text and matching overlaps are joined from the returned chunks; missing
+intervals remain explicitly marked. Existing selected evidence and repeated-text
+citations are preserved, and saved space admits additional retrieved passages in
+rank order within the same budget. This adds no model or retrieval calls. The
+formatter does not need a complete local message; the extension still validates
+retrieval against the current chat before injecting it. See the
+[source assembly implementation and validation](docs/source-assembly.md).
+
 The earlier [hybrid comparison](docs/hybrid-retrieval.md) and
 [budget follow-up](docs/budget-confirmation.md) describe historical configurations;
 their adverse results remain evidence rather than current-default claims.

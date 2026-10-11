@@ -885,3 +885,69 @@ See [method, exact failures and interpretation](context-aware-query-comparison.m
   created. `npm test`323/323 on Node24.15.0, syntax/release/SDK checks passed.
   No independent semantic adjudication, same-byte judge repeat, unseen cohort,
   actual-host integration, runtime/default promotion or deployment.
+
+## Source-only assembly integration
+
+- **Decision and scope:** [implementation and validation](source-assembly.md).
+  Integrate source-preserving same-message assembly into memory injection, using
+  only validated returned chunks and UTF-16 positions. Current repeated-packing
+  selection is a source floor; preserve every selected passage and refill saved
+  space in rank order. Exact overlap only; missing intervals stay explicit.
+  No additional retrieval/model calls, new mode, SDK/storage change or search,
+  recent-message, token-budget or host-cap change. This is implementation evidence,
+  not another answer score or unseen-cohort confirmation.
+- **Validation:** Node24.15.0 `npm test`332/332, runtime/development syntax,
+  release and SDK checks passed. Real pinned SillyTavern1.19.0/Chromium153.0.8010.12:
+  browser44 and fault76 checks passed, zero emulated collections remaining. Actual
+  host generation:13 existing delivery cases plus overlap/repeated packing and
+  new assembly scenario passed; full source/role/time reaches a local completion
+  endpoint and stored history stays intact. LambdaDB and completions are emulated;
+  no real credentials, live embeddings/reranking/model calls or remote resources.
+- **Source equivalence:** all1000 archived selected memories/23362 blocks/5208
+  assembled blocks match canonical raw unions, gaps, roles/names and placement
+  without loading the complete source dataset. Input SHA-256
+  `488359e6c6d04dd5c7fb01e745034a2a9de68d9f511a1ea54455236366de00a8`
+  matches the unchanged assembly parent archive. Benchmark header/date decoration
+  differs; no runtime-admission or generated-answer equivalence is asserted.
+- **Archive:** `/Users/steven/Dev/sillymemory/artifacts/archive/source-assembly-integration-v1/evidence.tar.gz`.
+  SHA-256 `f955d825aee986a8d6475c1ea0a3110f85838cc0d12473b63abf1bac14905426`;
+  1,511,952 bytes,66 members, every original byte verified. Report SHA-256
+  `5bf99d5a1cef52102105fb1d96dc91cc95e1177a1eec0dd96d6d9eb85ddab524`.
+  Adjacent `manifest.json` locks base `ec0834e8641ff4b35f9b348981d89117725ce886`,
+  measured/implemented source, plans, outputs, initial failed episodes and one-off
+  equivalence helper. Local-only, unavailable in a fresh clone; recorded parent
+  oracle archive and pinned host/dependencies are external reproduction inputs,
+  not maintained CI requirements. Historical benchmark evidence is not overwritten.
+- **Review correction and final reruns:** preparation names source passages and
+  assembled memory excerpts separately; final verification/inspection counts
+  excerpts, not chunks. A new regression confirms that partial joined-source loss
+  still stops generation. Unit333/333, syntax/release/SDK, browser44, fault76 and all
+  actual-host delivery cases passed again on the revised source; emulated cleanup
+  remains empty. Initial implementation archive/report are unchanged.
+- **Review archive:** `/Users/steven/Dev/sillymemory/artifacts/archive/source-assembly-review-v1/evidence.tar.gz`.
+  SHA-256 `5212c1c0a1dd26a7c8fdfe2af80c20c8c24e15ff1b6b0d049c4b7d36dc6bb899`;
+  507,842 bytes,23 members, each original byte verified. Reviewed report SHA-256
+  `fe2162484c458e52d99e3a23012c390e6e5e2508445c8b7149e76f9da51f41a4`.
+  Adjacent `manifest.json` locks original implementation commit `4b99d6a9ef6db8d06a1d79c2410660ea3ecc4127`,
+  revised code/test/host harness/report bytes and complete repeated-run records.
+  Local-only, unavailable in a fresh clone; the initial implementation archive and
+  pinned host/dependencies remain external reproduction inputs, not CI requirements.
+- **Candidate-join review follow-up:** after PR70 merged, both evidence-index
+  additions were retained byte-for-byte. A new review identified that a rejected
+  adjacent chunk can fit when assembled with the single selected chunk, even if
+  the floor itself saves no tokens. Probe assembled candidates in existing rank
+  order; preserve the exact floor if none fits. Existing repeat-packing behavior,
+  source validation, whole-source retention, search limits and budgets stay intact.
+  Two small regressions cover recovery, invalid hits, boundaries and fail-closed
+  counting. `npm test`335/335 and syntax/release/SDK/development syntax passed;
+  browser44, fault76 and all13 actual-host delivery cases plus additional packing
+  scenarios passed again with local LambdaDB/completion emulators. All reported
+  source hashes match; zero remaining emulated collections. No new quality score
+  or provider calls. Earlier archives/reports remain unchanged.
+- **Candidate-join archive:** `/Users/steven/Dev/sillymemory/artifacts/archive/source-assembly-candidate-review-v1/evidence.tar.gz`.
+  SHA-256 `0105691c4cf2845faede89246604f557c2e62fc5f20933853f3589a2c3ba4950`;
+  521,575 bytes,22 members, each original byte verified.
+  Adjacent `manifest.json` records base `e6f5cb20bdcb6880b9e0f2f0ad2bdc3acff22743`,
+  revised source/test/report, follow-up patch and fresh run bytes. Local-only,
+  unavailable in a fresh clone; pinned host/dependencies are external inputs,
+  not maintained CI dependencies.

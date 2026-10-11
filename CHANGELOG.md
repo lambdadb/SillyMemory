@@ -15,6 +15,12 @@ boundary; publication is confirmed by the corresponding Git tag and GitHub Relea
 
 ### Changed
 
+- Assemble selected chunks from the same message/revision under one provenance
+  header. Join touching or exactly matching overlaps, mark missing intervals,
+  preserve repeated-text citations and all previously selected sources, and refill
+  saved space in search order within the unchanged budget. No LLM processing or
+  extra retrieval is added; malformed coordinates retain separate excerpts.
+
 - Retrieve once using the complete eligible recent dialogue and current question,
   replacing separate question/context searches and their interleaved rankings.
   No LLM query rewriting is required. Reject complete queries exceeding the SDK's

@@ -14,27 +14,44 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { capacityPlan, capacityChat, capacityInstructions } from './prompt-capacity-cases.mjs';
 import { hostSource, loadLong } from './semantic-long.mjs';
+import { retrievalQueries, interleaveHits } from '../src/memory.js';
 
 const packingRanks = JSON.parse(await readFile(new URL('../tests/fixtures/packing-ranks.json', import.meta.url)));
-const packingFixture = { item: loadLong().cases.find(item => item.id === packingRanks.case), original: packingRanks };
+const packingFixture = { item: loadLong().cases.find(item => item.id === packingRanks.case) };
 assert.ok(packingFixture);
+const primaryRanks = packingRanks.queries.find(query => query.query === packingFixture.item.question);
+assert.ok(primaryRanks);
+// Preserve the historical packing input order, not historical query routing.
+// This emulator checks source delivery; it makes no current retrieval-quality claim.
+const packingOrder = [...new Map(interleaveHits([primaryRanks.hits, ...packingRanks.queries.filter(query => query !== primaryRanks).map(query => query.hits)])
+    .map(hit => [`${hit.message}:${hit.chunk}`, hit])).values()].slice(0, 30);
+let packingQuery;
 
 const base = { enabled: true, context: 1536, output: 256, instructions: 1, recentRepeats: 1, stopOnLoss: true, type: 'normal' };
 const plan = { ...capacityPlan, cases: [
     { ...base, id: 'included' },
     { ...base, id: 'speaker-prefix', names: 2 },
     { ...base, id: 'substring-collision', context: 4096, noHits: true, collision: true, blocked: true },
-    { ...base, id: 'pressure-stopped', recentRepeats: 100, blocked: true },
-    { ...base, id: 'pressure-warning', recentRepeats: 100, stopOnLoss: false },
-    { ...base, id: 'pressure-streaming', recentRepeats: 100, streaming: true, blocked: true },
-    { ...base, id: 'pressure-swipe', recentRepeats: 100, type: 'swipe', blocked: true },
-    { ...base, id: 'pressure-regenerate', recentRepeats: 100, type: 'regenerate', blocked: true },
-    { ...base, id: 'recovered-context', recentRepeats: 100, context: 4096 },
+    { ...base, id: 'pressure-stopped', recentRepeats: 80, blocked: true },
+    { ...base, id: 'pressure-warning', recentRepeats: 80, stopOnLoss: false },
+    { ...base, id: 'pressure-streaming', recentRepeats: 80, streaming: true, blocked: true },
+    { ...base, id: 'pressure-swipe', recentRepeats: 80, type: 'swipe', blocked: true },
+    { ...base, id: 'pressure-regenerate', recentRepeats: 80, type: 'regenerate', blocked: true },
+    { ...base, id: 'recovered-context', recentRepeats: 80, context: 4096 },
     { ...base, id: 'continue', type: 'continue' },
-    { ...base, id: 'no-hits-pressure', recentRepeats: 100, noHits: true, blocked: true },
+    { ...base, id: 'no-hits-pressure', recentRepeats: 80, noHits: true, blocked: true },
     { ...base, id: 'no-hits-small', noHits: true },
-    { ...base, id: 'disabled', enabled: false, recentRepeats: 100 },
+    { ...base, id: 'disabled', enabled: false, recentRepeats: 80 },
 ] };
+
+// These cases isolate host context loss, rather than the complete-query byte limit.
+// Three recent turns at 100 repeats exceed 8 KiB under the current query policy.
+for (const spec of plan.cases.filter(spec => spec.enabled)) {
+    const messages = capacityChat(spec.recentRepeats).map((message, index) => ({ index, text: message.mes, user: message.is_user, eligible: true }));
+    if (spec.type === 'normal') messages.push({ index: messages.length, text: plan.question, user: true, eligible: true });
+    const [query] = retrievalQueries({ messages }, spec.type, { recent: plan.recent });
+    assert(new TextEncoder().encode(query).byteLength <= 8192, `${spec.id}: pressure fixture must fit complete-query limits`);
+}
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const source = process.env.ST_SOURCE || '/tmp/sillymemory-st-prompt-delivery';
@@ -108,9 +125,8 @@ const remote = httpsServer({ key: await readFile(key), cert: await readFile(cert
             // Fixed source order, deliberately no embeddings or ANN simulation.
             let docs = knn && noHits ? [] : [...branchDocs.values()].filter(d => d.owner === match[1] && d.scope === match[2]);
             if (knn && packing) {
-                const recorded = packingFixture.original.queries.find(query => query.query === knn.queryText);
-                assert.ok(recorded, 'Actual host query matches the recorded synthetic query');
-                docs = recorded.hits.map(hit => {
+                assert.equal(knn.queryText, packingQuery, 'Actual host uses the complete recent-query policy');
+                docs = packingOrder.map(hit => {
                     const doc = docs.find(doc => doc.message === hit.message && doc.chunk === hit.chunk);
                     assert.ok(doc, 'Recorded rank refers to a synchronized source');
                     assert.equal(createHash('sha256').update(doc.text).digest('hex'), hit.textSha256);
@@ -254,14 +270,14 @@ try {
         }
         if (spec.type === 'normal') assert.deepEqual(observation.chat.slice(0, 12), chat.map(m => m.mes), 'Original chat text preserved');
         if (spec.id === 'included') {
-            assert.match(observation.delivery, /2\/2 memory passages and 4\/4 recent messages verified/);
+            assert.match(observation.delivery, /2\/2 memory excerpts and 4\/4 recent messages verified/);
             assert.equal(sent[0].messages.filter(m => m.content.startsWith('[Past conversation excerpt:')).length, 2);
         }
         if (spec.id === 'pressure-warning') {
-            assert.match(observation.delivery, /2 memory passages and 2 recent messages are missing/);
+            assert.match(observation.delivery, /2 memory excerpts and 1 recent messages are missing/);
             assert.equal(sent[0].messages.filter(m => m.content.startsWith('[Past conversation excerpt:')).length, 0);
         }
-        if (spec.id === 'recovered-context') assert.match(observation.delivery, /6\/6 memory passages and 4\/4 recent messages verified/);
+        if (spec.id === 'recovered-context') assert.match(observation.delivery, /6\/6 memory excerpts and 4\/4 recent messages verified/);
         if (spec.id === 'continue') assert.match(observation.delivery, /could not be verified/);
         if (spec.id === 'disabled') assert.doesNotMatch(observation.delivery, /Generation stopped|verified/);
         if (spec.id === 'pressure-stopped') {
@@ -280,7 +296,7 @@ try {
             assert.equal(generations.length, recoveryStart + 1);
             assert.deepEqual(recovered.after.slice(0, -1), recovered.before);
             assert.equal(recovered.after.at(-1), 'LOCAL_FIXTURE_OK');
-            assert.match(recovered.delivery, /6\/6 memory passages and 4\/4 recent messages verified/);
+            assert.match(recovered.delivery, /6\/6 memory excerpts and 4\/4 recent messages verified/);
             rows.at(-1).manualRecovery = { ...recovered, request: generations.at(-1) };
         }
     }
@@ -335,6 +351,10 @@ try {
         await field(name).fill(String(value)); await field(name).dispatchEvent('change');
     }
     const packingChat = hostSource(packingFixture.item);
+    packingQuery = retrievalQueries({ messages: [
+        ...packingChat.map((message, index) => ({ index, text: message.mes, user: message.is_user, eligible: true })),
+        { index: packingChat.length, text: packingFixture.item.question, user: true, eligible: true },
+    ] }, 'normal', { recent: 8 })[0];
     await page.evaluate(async chat => {
         const c = SillyTavern.getContext(), { oai_settings } = await import('/scripts/openai.js');
         Object.assign(oai_settings, { openai_max_context: 1536, openai_max_tokens: 256, stream_openai: false });
@@ -352,7 +372,7 @@ try {
     assert.equal(generations.length, packingStart + 1);
     const packingRequest = generations.at(-1), excerpts = packingRequest.messages.filter(m => m.content.startsWith('[Past conversation excerpt:'));
     assert.equal(excerpts.length, 4);
-    assert.match(packed.delivery, /4\/4 memory passages and 8\/8 recent messages verified/);
+    assert.match(packed.delivery, /4\/4 memory excerpts and 8\/8 recent messages verified/);
     for (const index of [0, 1, 2, 27]) {
         const original = packingFixture.item.messages[index];
         assert(excerpts.some(m => m.role === original.role && m.content.endsWith(`\n${original.text}`)), 'Full source and native role reached the completion endpoint');
@@ -361,6 +381,35 @@ try {
     assert.deepEqual(packed.chat.slice(0, 60), packingChat.map(m => m.mes), 'Packing never changes stored history');
     report.packing = { evidence: 'Actual host generation with recorded query ranks and a local completion fixture', case: packingFixture.item.id, configuredBudget: 400, effectiveBudget: 320, delivery: packed.delivery, request: packingRequest, storedHistoryUnchanged: true };
     packing = false;
+    console.log('VERIFY same-message-assembly');
+    await field('enabled').uncheck();
+    for (const [name, value] of [['recent', 2], ['budget', 1600]]) {
+        await field(name).fill(String(value)); await field(name).dispatchEvent('change');
+    }
+    const assemblyChat = Array.from({ length: 8 }, (_, index) => ({
+        mes: index ? `Synthetic assembly turn ${index}.` : Array.from({ length: 75 }, (_, i) => `Archive shelf ${i}: the cedar maps are here.`).join('\n'),
+        name: index % 2 ? 'Mira' : 'User', is_user: !(index % 2), is_system: false, send_date: '2026-01-01T00:00:00.000Z', extra: {},
+    }));
+    await page.evaluate(async chat => {
+        const c = SillyTavern.getContext(), { oai_settings } = await import('/scripts/openai.js');
+        Object.assign(oai_settings, { openai_max_context: 8192, openai_max_tokens: 256, stream_openai: false });
+        c.chat.splice(0, c.chat.length, ...chat); await c.saveChat(); await c.reloadCurrentChat();
+    }, assemblyChat);
+    await field('enabled').check(); await waitStatus('synchronized');
+    const assemblyStart = generations.length;
+    const assembled = await page.evaluate(async () => {
+        const c = SillyTavern.getContext(); document.querySelector('#send_textarea').value = 'Where are the cedar maps?';
+        await c.generate('normal');
+        return { source: c.chat[0].mes, delivery: document.querySelector('[data-sm="delivery"]').textContent };
+    });
+    assert.equal(generations.length, assemblyStart + 1);
+    const assemblyRequest = generations.at(-1), joined = assemblyRequest.messages.find(m => m.content.includes('message 1, passages 1-'));
+    assert(joined && joined.role === 'user' && joined.content.endsWith(assemblyChat[0].mes), 'All assembled source text reached the completion endpoint');
+    assert.equal(joined.content.split('[Conversation timestamp:').length - 1, 1);
+    assert.equal(assembled.source, assemblyChat[0].mes, 'Assembly does not alter stored history');
+    assert.match(assembled.delivery, /^Final host prompt:/); assert(!assembled.delivery.includes('missing or changed'));
+    report.assembly = { evidence: 'Actual host assembled prompt dispatched to a local completion fixture; LambdaDB emulated',
+        configuredBudget: 1600, sourceUnchanged: true, delivery: assembled.delivery, request: assemblyRequest };
     await field('stopOnLoss').uncheck();
     await page.reload(); await page.locator('#sillymemory').waitFor({ state: 'attached' });
     assert.equal(await field('stopOnLoss').isChecked(), false, 'Warning preference survives reload');
