@@ -932,3 +932,22 @@ See [method, exact failures and interpretation](context-aware-query-comparison.m
   revised code/test/host harness/report bytes and complete repeated-run records.
   Local-only, unavailable in a fresh clone; the initial implementation archive and
   pinned host/dependencies remain external reproduction inputs, not CI requirements.
+- **Candidate-join review follow-up:** after PR70 merged, both evidence-index
+  additions were retained byte-for-byte. A new review identified that a rejected
+  adjacent chunk can fit when assembled with the single selected chunk, even if
+  the floor itself saves no tokens. Probe assembled candidates in existing rank
+  order; preserve the exact floor if none fits. Existing repeat-packing behavior,
+  source validation, whole-source retention, search limits and budgets stay intact.
+  Two small regressions cover recovery, invalid hits, boundaries and fail-closed
+  counting. `npm test`335/335 and syntax/release/SDK/development syntax passed;
+  browser44, fault76 and all13 actual-host delivery cases plus additional packing
+  scenarios passed again with local LambdaDB/completion emulators. All reported
+  source hashes match; zero remaining emulated collections. No new quality score
+  or provider calls. Earlier archives/reports remain unchanged.
+- **Candidate-join archive:** `/Users/steven/Dev/sillymemory/artifacts/archive/source-assembly-candidate-review-v1/evidence.tar.gz`.
+  SHA-256 `0105691c4cf2845faede89246604f557c2e62fc5f20933853f3589a2c3ba4950`;
+  521,575 bytes,22 members, each original byte verified.
+  Adjacent `manifest.json` records base `e6f5cb20bdcb6880b9e0f2f0ad2bdc3acff22743`,
+  revised source/test/report, follow-up patch and fresh run bytes. Local-only,
+  unavailable in a fresh clone; pinned host/dependencies are external inputs,
+  not maintained CI dependencies.

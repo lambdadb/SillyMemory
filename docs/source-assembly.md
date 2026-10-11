@@ -21,9 +21,11 @@ source documents. Remote role/speaker/offset fields never override those documen
 - Invalid coordinates, inconsistent chunk order or conflicting overlap retain
   the original separate excerpts. Literalize macros after joining; recall cannot
   execute a macro split across chunk boundaries.
-- If formatting saves tokens, try additional distinct hits in the original search
-  order, counting the complete rendered candidate. Otherwise retain the exact
-  source-floor representation. Never evict or truncate an existing passage.
+- Try additional distinct hits in the original search order, counting the complete
+  assembled candidate. This also checks a rejected adjacent chunk when the floor
+  contains only one chunk: sharing its header can make the pair affordable.
+  Retain the exact source-floor representation when no cheaper rendering or
+  additional source fits. Never evict or truncate an existing passage.
 
 This is the same source-union mechanism evaluated in
 [PR #70's fixed-search benchmark](https://github.com/lambdadb/SillyMemory/blob/00298741f853bd6c8034cb6dbff2dfc354e435a7/docs/jev-depth-100.md#completed-fresh-source-assembly-answer-regression),
@@ -87,6 +89,14 @@ partial loss of that excerpt still stops generation. The inspector uses the same
 excerpt terminology. This is a label correction, not weaker delivery verification.
 Initial implementation evidence remains immutable; the evidence index separately
 records the reviewed report and reruns.
+
+After PR70 merged, develop `16992234507ed4402fb3d65ebc5c90fbc1aad467` was
+incorporated without changing either evidence-index addition. A further review
+identified the one-selected-chunk case described above. Two small regressions
+check exact-budget recovery in both ranking orders, invalid-hit rejection,
+identity/overlap/coordinate boundaries, over-budget fallback and failed counting.
+The earlier 333-test and browser/fault records remain historical evidence;
+the follow-up validation is recorded separately in the evidence index.
 
 No credentials, paid provider calls, live LambdaDB resources, new quality score,
 independent confirmation cohort, release or deployment are involved. Previously

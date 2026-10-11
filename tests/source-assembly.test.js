@@ -112,3 +112,40 @@ test('expensive assembly falls back exactly and token-count failures fail closed
             text => text.includes('passages 1-2]') ? invalid : count(text)), /Token counting unavailable/);
     }
 });
+
+test('a rejected adjacent chunk fits through assembly even when the source floor is unchanged', async () => {
+    const a = doc(0, 0, 'A'.repeat(100)), b = doc(1, 100, 'B'.repeat(100));
+    const expectedText = '[Past conversation excerpt: user "User", message 1, passages 1-2]\n'
+        + 'A'.repeat(100) + 'B'.repeat(100);
+    const budget = count(expectedText);
+    const baseline = await selectMemory([a, b], [a, b], budget, count);
+    assert.deepEqual(baseline.passages, [a]);
+    for (const hits of [[a, b], [b, a]]) {
+        const result = await selectPackedMemory(hits, [a, b], budget, count);
+        assert.equal(result.text, expectedText);
+        assert.equal(result.tokens, budget);
+        assert.equal(result.messages.length, 1);
+        assert.deepEqual(new Set(result.passages), new Set([a, b]));
+    }
+    const expected = [a, b];
+    const invalid = ['scope', 'owner', 'revision', 'text', 'conversationTimestamp', 'timestampSource']
+        .map(key => ({ ...b, [key]: 'forged' }));
+    assert.deepEqual(await selectPackedMemory([a, ...invalid, { ...b, id: 'deleted' }], expected, budget, count), baseline);
+    assert.equal((await selectPackedMemory([a, ...invalid, b], expected, budget, count)).text, expectedText);
+});
+
+test('candidate assembly preserves the exact floor when boundaries or budget prevent joining', async () => {
+    const a = doc(0, 0, 'A'.repeat(100)), b = doc(1, 100, 'B'.repeat(100));
+    const budget = count('[Past conversation excerpt: user "User", message 1, passages 1-2]\n') + 200;
+    for (const fields of [{ revision: 'other' }, { message: 1 }, { role: 'assistant' },
+        { speaker: 'Other' }, { ...timestamp }, { start: 50, end: 150 }, { end: 999 }]) {
+        const docs = [a, { ...b, ...fields }];
+        assert.deepEqual(await selectPackedMemory(docs, docs, budget, count), await selectMemory(docs, docs, budget, count));
+    }
+    assert.deepEqual(await selectPackedMemory([a, b], [a, b], budget - 1, count),
+        await selectMemory([a, b], [a, b], budget - 1, count));
+    for (const invalid of [NaN, Infinity, -1]) {
+        await assert.rejects(selectPackedMemory([a, b], [a, b], budget,
+            text => text.includes('passages 1-2]') ? invalid : count(text)), /Token counting unavailable/);
+    }
+});

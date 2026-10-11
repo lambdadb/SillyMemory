@@ -174,7 +174,7 @@ async function selectRepeatedMemory(hits, expected, budget, countTokens) {
     return refillMemory(hits, expected, baseline, budget, countTokens, repeatedMessages);
 }
 
-async function refillMemory(hits, expected, baseline, budget, countTokens, renderMessages) {
+async function refillMemory(hits, expected, baseline, budget, countTokens, renderMessages, tryCandidateAssembly = false) {
     const selected = [...baseline.passages], content = new Set(selected.map(repeatedKey));
     const render = docs => {
         const messages = renderMessages(docs);
@@ -186,9 +186,13 @@ async function refillMemory(hits, expected, baseline, budget, countTokens, rende
         return tokens;
     };
     let result = render(selected);
-    if (result.text === baseline.text) return baseline;
-    let tokens = await count(result.text);
-    if (tokens >= baseline.tokens) return baseline; // Short repetitions may cost more to label.
+    let tokens = result.text === baseline.text ? baseline.tokens : await count(result.text);
+    if (result.text === baseline.text || tokens >= baseline.tokens) {
+        if (!tryCandidateAssembly) return baseline; // Short repetitions may cost more to label.
+        // Adding a rejected adjacent chunk can save its header even when the
+        // selected chunks alone do not assemble. Keep the exact floor meanwhile.
+        result = { text: baseline.text, messages: baseline.messages }; tokens = baseline.tokens;
+    }
     const valid = new Map(expected.map(doc => [doc.id, doc])), seen = new Set(selected.map(doc => doc.id));
     for (const hit of hits) {
         const doc = valid.get(hit?.id);
@@ -206,7 +210,7 @@ export async function selectPackedMemory(hits, expected, budget, countTokens) {
     // Preserve the current repeated-passage selection, including its refilled sources.
     const baseline = await selectRepeatedMemory(hits, expected, budget, countTokens);
     if (!baseline.passages.length) return baseline;
-    return refillMemory(hits, expected, baseline, budget, countTokens, packedMemoryMessages);
+    return refillMemory(hits, expected, baseline, budget, countTokens, packedMemoryMessages, true);
 }
 
 export class Journal {
