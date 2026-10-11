@@ -14,8 +14,9 @@ Keep depth 50 as the benchmark reference; **do not promote depth 100 to product 
 from this single run**. The completed offline source-consistency audit below confirms
 real evidence recovery alongside budget losses and scoring/target uncertainty; it
 does not turn the official +1.4pp into an independently verified quality gain.
-No further paid judge/generation repeats were made. Product code, settings, dependencies and tests are
-unchanged. This record closes the bounded comparison, not a model/parameter sweep. Live
+No extra generation/judge repeats were made within the depth comparison. The separately
+authorized source-assembly regression below uses fresh answers in both arms. Product
+code, settings, dependencies and tests are unchanged. Live
 execution was on 2026-10-11 UTC; answer generation ran 11:38:51–12:06:07.
 
 This is direct provider benchmark generation over captured native retrievals, not a
@@ -24,6 +25,12 @@ k/size/rerank candidate 30 and complete-recent-dialogue query construction. The
 benchmark instead indexes all history except the question, queries that question
 alone and uses a 4096-token memory budget. Do not describe these benchmark settings
 as the current installation defaults or a demonstrated live-character-chat result.
+
+The later fixed-search assembly regression completed on the same consumed 500:
+**existing depth100 packing 469/500 (93.8%) versus assembly/refill 475/500 (95.0%),
+11 gains and 5 losses**. Slow-cooker and NAS answers use recovered source facts,
+but other changes include interpretation and grading concerns. This is regression
+evidence, not independent confirmation or default promotion.
 
 ## Frozen comparison
 
@@ -386,6 +393,113 @@ No disjoint confirmation cohort or paid run was prepared in this offline phase.
 Do not claim seven corrected answers, promote defaults, increase the budget, tune a
 subset or run further search/model-selection variants from this arithmetic alone.
 
+### Completed fresh source-assembly answer regression
+
+Steven authorized completing the full consumed 500 as regression coverage after
+resolving the PR's incorrect branch finding. Freeze point
+`09c6d1b36676a1ef05fe5a328b7f7356c33fc49d`; frozen settings and prompt hashes were
+checked before any paid call. This is **not disjoint independent confirmation**.
+Both arms use the same captured depth100 final50 retrievals: control is the original
+4096-token prompt, candidate is the exact source-preserving assembly/refill output
+above. No depth50 arm, new retrieval, embedding, reranker, query rewrite, summary,
+budget change, source/gold edit or runtime change. Four identical-prompt fallbacks
+are retained, not excluded.
+
+Fresh 1000 Sol answers and 1000 official judgments; historical answers are not reused.
+The generator, low reasoning/output cap4096, original system/question-date,
+`gpt-4o-2024-08-06` judge/template/strict parser and alternating arm order match the
+previous comparison. All response model identities match. The configured normal
+local model was not substituted for the frozen Sol experiment model. One answer
+and one judgment per condition; no score-driven reruns or mid-run tuning.
+
+| Type | Cases | Existing packing correct | Assembly/refill correct | Gains | Losses |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| single-session-user | 70 | 70 | 68 | 0 | 2 |
+| multi-session | 133 | 117 | 120 | 4 | 1 |
+| single-session-preference | 30 | 24 | 28 | 4 | 0 |
+| temporal-reasoning | 133 | 126 | 126 | 2 | 2 |
+| knowledge-update | 78 | 76 | 77 | 1 | 0 |
+| single-session-assistant | 56 | 56 | 56 | 0 | 0 |
+| **All** | **500** | **469 (93.8%)** | **475 (95.0%)** | **11** | **5** |
+
+Both correct464, both wrong20. Official gains: `6d550036`, `3a704032`, `dd2973ad`,
+`gpt4_7fce9456`, `35a27287`, `195a1a1b`, `caf03d32`, `1da05512`, `gpt4_468eb063`,
+`gpt4_85da3956`, `a2f3aa27`. Losses: `ec81a493`, `15745da0`, `eeda8a6d_abs`,
+`gpt4_7abb270c`, `6e984301`. These remain the original official labels.
+
+All 16 changed pairs and all six restored-marker cases (19 unique questions) were
+inspected against original and delivered source, answers and gold. This is assistant
+assessment, not independent human adjudication; the other 481 pairs were not
+semantically regraded and there is no corrected overall score.
+
+- **Two clear source-backed personalization benefits:** slow-cooker restores
+  message475's beef-stew success, which the candidate acknowledges alongside yogurt;
+  NAS restores375/379's capacity trouble and existing external-drive backups, which
+  the candidate uses in its buy/wait advice. Control lacks those facts. The observed
+  mechanism supports assembly, without isolating its causal effect from single-sample
+  generation or proving every part of either answer correct.
+- Cultural events also changes No→Yes after restoring409, but both answers already
+  recommend French/Spanish exchange from419 and ask the user's location. Do not count
+  it as a third clearly caused source-recovery benefit. Three other restored-marker
+  controls remain correct: photography, kitchen and phone. Kitchen newly acknowledges
+  the leaking faucet; photography uses additional candle-photo context. Useful source
+  tailoring can occur without a changed correctness label.
+- **All five official losses preserve the original sources.** Camera-duration answers
+  both say three months plus nine days. Sculpting answers both say nine weeks, while
+  gold says three; the same Feb11 session contradicts itself with started-today and
+  six-weeks-already statements. These opposite labels are semantic grading concerns,
+  not demonstrated lost-fact regressions. Poster500/album identity, conditional
+  fish-tank transfer and the first two museums' visit order remain target/wording/date
+  concerns. Museum candidate reverses Science/Contemporary based on recently versus
+  today, with no exact early event date; all six sources are still delivered.
+- Other gains do not establish newly recovered necessary facts. Doctor/bedtime combines
+  different weeks despite the source dates. Property answers both omit Oakwood and
+  count four including Brookside instead of four other properties. Evening answers
+  both still suggest films, and user503 remains omitted. Project leadership has
+  competing role definitions. Emma first meeting versus lunch/catch-up remains
+  ambiguous. The festival candidate correctly uses July15→Aug5 as three weeks where
+  control misreads already-present evidence. Follower counts both preserve the
+  unchecked close-to1300 versus confirmed1250 distinction. Keep these limitations
+  alongside the aggregate improvement; unmarked added passages are not automatically noise.
+
+The fresh unchanged control differs from its historical471/500: two gains and four
+losses, net−2, on identical saved prompts but newly generated answers/judgments. This
+shows run-to-run variation; it is not a same-byte judge repeat or a historical third
+arm. All four within-run identical-prompt cases stay correct in both arms. The +1.2pp
+paired result is an observation on repeatedly consumed data, not a replicated or
+statistically established general quality gain.
+
+The live phase ran 2026-10-11 UTC 14:42:28–15:09:51, 27.38 minutes, peak concurrency2.
+Exactly2000 physical calls, all HTTP200; no retries, rate waits or artificial
+success delay. Available remaining/reset request/token headers were recorded and
+used by the admission gate. Bounds6000 attempts, three per logical call, four hours
+and historical approximate USD100 reservation were preserved; reservation50.612842
+is not invoiced cost or a current pricing quote. Live429 handling was not exercised.
+
+Actual provider answer input tokens: control2158498, candidate2138377 (−20121, −0.93%);
+outputs33324/33298, cached inputs12980/4373. Judges use103122/102948 input and835/852
+output tokens. Most saved space was refilled, so this is not a large token-cost
+reduction. Successful answer HTTP median2060/2025ms, p955485/5402ms; judge median
+622/629ms. These are direct provider timings, not SillyTavern end-to-end latency.
+No LambdaDB resource was created; preceding verified cleanup remains intact.
+
+Independent validation checks all1000 exact frozen prompts/source floors/gold
+whitelists and all2000 request hashes, receipts, identities, strict labels, usage
+and resource bounds. The review locator check verifies19 case pairs and96 source
+locators against captured envelopes without regrading. Both pass. Existing offline
+canonical-range/token validations remain the source/4096-budget evidence.
+
+**Decision:** retain source-preserving assembly as the next implementation candidate;
+this completed regression supports its concrete budget-loss mechanism and reveals
+no lost baseline text, but does not authorize default promotion. Close this comparison
+without another depth/model/budget sweep. Before paid independent confirmation,
+freeze a previously unused, provenance-checked cohort with no shared consumed
+question/conversation source and fixed scoring, then compare this exact candidate
+with its reference. A different question subset of these500, or a longer corpus
+sharing their conversation source, is not independent. Runtime integration and
+actual-host isolation/budget/failure checks are still unperformed; there is no
+production algorithm, new default or release in this documentation PR.
+
 ## Operational recovery, resources and latency
 
 The initial 233 pairs and two failed execution snapshots were preserved; each execution
@@ -472,6 +586,11 @@ python3 artifacts/jev-depth-100-budget-ceiling-v1/validate.py
 node artifacts/jev-depth-100-message-packing-v1/fixtures.mjs
 python3 artifacts/jev-depth-100-message-packing-v1/summarize.py
 python3 artifacts/jev-depth-100-message-packing-v1/validate.py
+node artifacts/jev-depth-100-message-packing-answers-v1/summarize.mjs
+python3 artifacts/jev-depth-100-message-packing-answers-v1/validate.py
+python3 artifacts/jev-depth-100-message-packing-answers-v1/metrics.py
+python3 artifacts/jev-depth-100-message-packing-answers-v1/audit.py
+python3 artifacts/jev-depth-100-message-packing-answers-v1/review.py
 ```
 
 These require the recorded local dataset/tokenizer paths. Copy/extract to a separate

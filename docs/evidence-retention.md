@@ -852,3 +852,36 @@ See [method, exact failures and interpretation](context-aware-query-comparison.m
   `npm test` 323/323 on Node24.15.0 and syntax/release/SDK checks passed; product/test
   diff is empty. Same recorded tokenizer, no independent tokenization, generated
   answers, billed usage, latency, fresh browser integration or default promotion.
+- **Completed fresh assembly answer regression:** [full consumed500 comparison](jev-depth-100.md#completed-fresh-source-assembly-answer-regression).
+  Freeze point `09c6d1b36676a1ef05fe5a328b7f7356c33fc49d`. Same captured depth100
+  final50, 4096 budget, source-preserving candidate, system/questions/gold and
+  Sol/official judge; no new search/embedding/reranking or runtime changes.
+  Fresh control469/500 (93.8%), candidate475/500 (95.0%), 11 gains/5 losses.
+  All16 changed pairs and6 restored-marker cases (19 unique) inspected: two clear
+  restored-source personalization benefits (slow-cooker/NAS); other changes include
+  interpretation, source/target ambiguity and grading consistency concerns.
+  All baseline source text remains included; official labels are not corrected.
+  This is consumed-cohort regression/discovery, not independent confirmation.
+  Before paid confirmation, freeze an unused cohort without shared consumed
+  questions/conversation sources and fixed provenance/exclusion/scoring rules.
+- **Assembly-answer archive:** `/Users/steven/Dev/sillymemory/artifacts/archive/jev-depth-100-message-packing-answers-v1/evidence.tar.gz`.
+  SHA-256 `868238a783b0d4926518e5ac1a9e58d5c7bf45c288e2e6fdb0c3e91fc833f506`;
+  10,741,039 bytes, 1036 members, every original member byte verified. Archived
+  final report SHA-256 `04a765e7a9581141b8edfc29f5617e953a282639102c9108240183a5d0d363fc`.
+  Adjacent `manifest.json` records all member hashes, frozen producer base and
+  parent archive hashes. Includes1000 exact prepared/graded case records, raw
+  transport receipts/usage, frozen prompts/settings, preflight/validators,
+  metrics, review cards/dispositions/source locators and one-off producer sources.
+  All five prior Jev archives and both review-correction sidecars remain unchanged;
+  zero configured-secret matches. Local-only, unavailable in a fresh clone;
+  recorded parent/dataset/tokenizer paths are dependencies, not CI inputs.
+- **Assembly-answer validation:** independent all1000 prompt/source-floor/gold
+  checks and2000 request/receipt/model/strict-label/usage/bounds checks passed;
+  all19 review pairs/96 source locators match captured records. Exactly2000 HTTP200
+  calls, zero retries/waits, concurrency2, 27.38 minutes; normal calls have no
+  artificial sleep and available rate headers feed admission. Actual answer input
+  2158498→2138377 (−0.93%), successful answer HTTP median2060→2025ms. These are
+  provider usage/timings, not an invoice or actual-host latency. No remote resources
+  created. `npm test`323/323 on Node24.15.0, syntax/release/SDK checks passed.
+  No independent semantic adjudication, same-byte judge repeat, unseen cohort,
+  actual-host integration, runtime/default promotion or deployment.
