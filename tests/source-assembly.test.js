@@ -14,7 +14,7 @@ test('returned chunks assemble in source order with one header and no full-messa
     const messages = packedMemoryMessages([b, a]);
     assert.deepEqual(messages, [{ index: 0, name: 'User', is_user: true, is_system: false,
         mes: '[Past conversation excerpt: user "User", message 1, passages 1-2]\nFirst sentence. Second sentence.' }]);
-    assert.deepEqual(DEFAULTS, { recent: 12, budget: 1600, chunkChars: 800 });
+    assert.deepEqual(DEFAULTS, { recent: 12, budget: 4096, chunkChars: 800 });
     assert.equal(RETRIEVAL_POLICY, 'complete-recent-dialogue-v6');
 });
 

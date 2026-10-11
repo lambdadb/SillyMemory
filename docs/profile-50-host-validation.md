@@ -6,10 +6,11 @@ On 2026-10-11 UTC, all **six frozen LongMemEval-S cases** completed actual
 SillyTavern generation with live LambdaDB retrieval: **6/6 official correct**.
 All final memory excerpts and the current question passed host delivery checks.
 This establishes bounded host compatibility for the tested profile. It is not
-full 500 reproduction, independent confirmation, or a product-default promotion.
+full 500 reproduction, independent confirmation, or proof of the normal-default query policy.
 The cases were already consumed during earlier failure analysis.
 
-Product source, UI, dependencies and defaults are unchanged. The ignored test copy
+The measured base source, UI, dependencies and defaults were unchanged during the
+live run. The ignored test copy
 changes k/candidate/return limits and the history partition to match the previously
 authorized question-only benchmark input. It is not an installation profile users
 can select in the current UI. No temporary patch or runner is committed.
@@ -109,7 +110,7 @@ pending resources remain. This does not establish backup/physical erasure.
 Session keys were absent from browser local/session storage after each episode;
 364 local evidence/source files were scanned without credential matches. Temporary
 host processes/profile were removed and the extension symlink restored. Host Git
-source and tracked product code are unchanged.
+source and measured-base product code were unchanged.
 
 ## Validation and next decision
 
@@ -119,17 +120,45 @@ whitelisted requests, provider identities/answers, strict judgments, aggregate
 bounds and cleanup. Actual host token counts enforce 4096. Local Node24 validation:
 `npm test` 335/335; `npm run check`, `npm run check:release`, `npm run check:sdk`
 and development script/test syntax passed. No new maintained fixture is needed
-for this documentation-only result.
+for the live evidence record.
 
 The existing complete-recent-dialogue/recent 12 profile is a different input policy:
 a preserved offline admission check on these histories rejects all six queries
 above 8 KiB before any live query. This result cannot establish normal-default chat
-compatibility or justify silently changing that policy. Next, resolve the product
-history/query partition and its provider-size behavior explicitly before promoting
-search limits or budget. No rerun of all historical candidate methods is proposed.
+compatibility or justify silently changing that policy. The numeric-default adoption below
+preserves it; resolving provider-size behavior and the history/query partition is
+still a separate product decision. No rerun of all historical candidate methods is proposed.
 Node20 is left to CI; no full 500 actual-host run, held-out confirmation, live 429
 fault injection, release or deployment was performed.
 
 See [the evidence index](evidence-retention.md#profile50-actual-host-validation)
 for immutable archive hashes and local-only availability. Full raw runs, patched
 copy, producers and failure records remain ignored rather than permanent CI inputs.
+
+## Product default adoption
+
+Adopt vector k=100, rerank candidateSize=100, final
+size=50 and a fresh-settings memory budget of 4096 tokens. The result supports a bounded
+integration check; the earlier [full 500 comparison](jev-depth-100.md) supports the search/packing
+candidate, with its consumed-cohort and renderer limitations preserved. Neither
+establishes a new normal-default 500-case score.
+
+Retain recent 12 and the complete-recent-dialogue query policy. Do not adopt the
+experiment's recent 1/question-only partition for ordinary character chat. Budget
+maximum 4096 and the host's one-quarter-context cap remain unchanged; saved explicit
+budgets are respected. Ownership/branch filters, consistent reads, source checks,
+rerank failure rejection, cancellation and final delivery protection are unchanged.
+Generic administrative queries keep their existing size=30 default; only memory
+search requests explicitly use size=50. More candidates can increase rerank/query work; a larger budget can increase
+generation input. No new LLM
+preprocessing call is introduced. The changed product passed `npm test`335/335, syntax/release/SDK checks and all
+maintained script/test syntax checks. With the pinned actual host and local service
+emulators, browser44, final fault77 and all13 final prompt-delivery cases passed,
+including cancellation, stale-source rejection, deletion, context loss, packing
+and assembly. Fresh UI budget4096 and outgoing k100/candidate100/size50 are asserted;
+an explicitly saved budget512 survives reload. Effective budget remains capped by
+the host context. The initial fault recorder assumed the normal-only timestamp
+fixture's budget also applied in fault mode; its failed assertion and cleanup0 are
+retained. The corrected test saves/checks its own explicit value. No production
+regression or new paid quality run was needed. See the separate default-adoption
+archive in the evidence index for measured source hashes and complete outputs.

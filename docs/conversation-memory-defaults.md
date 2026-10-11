@@ -1,23 +1,28 @@
 # Conversation memory defaults
 
-Adopt stored, fully budgeted conversation-time provenance, Bayesian+Jev retrieval,
-and a 1,600-token initial memory budget for the English-focused prototype. Keep
-boundary-aware per-message chunks, the 4,096-token maximum and the host's
-one-quarter context cap. These are development defaults, not a release or a claim
-that 1,600 tokens are sufficient for every conversation.
+Current development defaults use stored, fully budgeted conversation-time
+provenance, Bayesian English fusion and managed Jev: vector k=100, up to 100 rerank
+candidates, final size=50, and a 4,096-token initial memory budget. Keep per-message chunks with boundary detection, recent 12, complete-recent-dialogue query construction,
+the 4,096-token maximum and the host's one-quarter-context cap. Explicit saved
+user budgets remain respected. These are development defaults, not a release or
+an established optimum for every conversation.
+
+See the [numeric-default adoption and live validation limits](profile-50-host-validation.md#product-default-adoption).
+The fixed six-case live check uses the benchmark's question-only/history-indexed
+partition, not the normal recent 12 query policy. The earlier full 500 result is a
+consumed-cohort comparison, not independent normal-default efficacy.
 
 The [complete recent-dialogue comparison](context-aware-query-comparison.md#complete-recent-dialogue-comparison)
-qualifies the earlier negative result from a separately capped context window.
-Following that completed comparison, adopt one query containing the entire eligible
-recent partition and the current generation anchor. No LLM rewrite is needed;
-Bayesian+Jev, managed embeddings and the 1,600-token default remain unchanged.
-See [product adoption](context-aware-query-comparison.md#product-adoption-complete-recent-query)
-for the exact partition, limits and production validation. Historical experiments
-below retain their original two-query protocol; they are not reruns of this default.
+selected one query containing the entire eligible recent partition and current
+generation anchor, without an LLM rewrite. Oversized complete queries fail before
+network dispatch instead of silently truncating. Its query policy remains intact.
 
-The later [external failure discovery](current-baseline-failure-discovery.md)
-qualifies one real capacity loss and its 3,200-token repair. Independent default
-efficacy remains unestablished; the 1,600-token default is retained.
+## Historical adoption evidence
+
+The original twelve-case evaluation below adopted Bayesian+Jev with a 1,600-token
+budget. The later [external failure discovery](current-baseline-failure-discovery.md)
+identified a real capacity loss and a 3,200-token repair. Preserve those original
+protocols/results; they are not reruns of the current numeric defaults.
 
 ## Method and adoption boundary
 
@@ -40,7 +45,7 @@ independent held-out benchmark. Histories fit 32K and do not establish performan
 when a realistic large context overflows. The unknown-date case also explicitly
 instructs the model not to invent a date, making it an easier abstention control.
 
-Deployed retrieval uses stable SDK 0.8.0, managed `text-embedding-3-small`, an
+Recorded retrieval used stable SDK 0.8.0, managed `text-embedding-3-small`, an
 English-only `text` analyzer, raw query with `skipSyntax: true`, owner/scope filters
 on both legs, `consistentRead: true`, explicit `chat_eval` branch, `knn.k=30` and
 final `size=30`. Search uses one shared UTF-8-safe prefix for all signals, capped

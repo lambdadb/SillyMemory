@@ -28,31 +28,35 @@ No chat text or API key is persisted in the journal. If local storage fails, rem
 
 ## Retrieval and prompt application
 
-Queries use the selected `chat_<ID>` branch with `consistentRead: true`, not Tags/Aliases. The empty `main` branch is an independent-story fork source. Bayesian fusion combines managed embedding `knn.queryText` and the raw question through English-analyzed `text` with `skipSyntax: true`. Both legs use the owner/scope prefilter. Managed Typesafe `jev-1.13.0` reranks at most 30 candidates; unconfirmed applied metadata, mismatched provider/model identity or failure rejects injection. The final result limit remains 30. Search caps all three query signals at the same whole-code-point 8,192-byte UTF-8 prefix; shorter input is unchanged. Remote hits are ranking signals: only exact current IDs, ownership, scope, revision, source text and conversation-time metadata are accepted; injection uses the locally reconstructed text. This prevents eventual-index lag, deleted records, malicious remote text changes, and sibling-chat results from resurrecting stale content.
+Queries use the selected `chat_<ID>` branch with `consistentRead: true`, not
+Tags/Aliases. The empty `main` branch is an independent-story fork source. One
+complete-recent-dialogue query combines all eligible retained dialogue outside the
+indexed history partition and the current question, preserving turn IDs/roles.
+Regenerate/swipe exclude the answer being replaced; continuation anchors on the
+message being extended. No query rewriting model, second search or separate recent
+window cap is used. See the [complete recent-query decision](context-aware-query-comparison.md#product-adoption-complete-recent-query).
 
-The `latest-anchor-with-context-selection-v5` query policy normally anchors on the
-last non-empty user message (or the last non-empty message if no user exists).
-The second query normally uses the preceding non-empty user turn. A newer
-eligible assistant turn strictly before the anchor replaces it only when its
-maximum lexical similarity to earlier eligible history exceeds the user's by a factor
-of 1.25. With no prior user, keep the preceding eligible assistant fallback.
-Assistant file/media/tool turns cannot become the second query. The local
-comparison uses word trigrams and smoothed IDF-weighted cosine on at most 256
-eligible messages before both candidates; no additional service call is made.
-This is a bounded heuristic, not semantic reference resolution. Each text/query
-is capped at 6,000 UTF-16 code units; duplicate queries collapse to one request.
-Regenerate/swipe exclude retained answers after the user anchor. Explicit host
-`continue` anchors on the latest non-empty message being extended and applies
-the same context rule before that anchor. See the [query policy](query-policy.md)
-and [context-turn results and limitations](context-turn-results.md).
+Bayesian fusion combines managed embedding `knn.queryText` with English-analyzed
+`text` using the same query and `skipSyntax: true`; both legs use the owner/scope
+prefilter. Vector k=100, managed Typesafe `jev-1.13.0` candidateSize=100, final
+size=50. Unconfirmed applied metadata, mismatched provider/model identity or failure
+rejects injection. Queries above 8,192 UTF-8 bytes fail explicitly before any service
+call; they are never silently truncated.
 
-The distinct queries run concurrently, each requesting 30 candidates with the same scope filter. Candidate ranks are interleaved, question first, then context. Scores from separate queries are not added or compared. Current-source validation precedes deduplication; whole passages are accepted while the complete wrapper stays inside the same token budget. This reserves early selection opportunities for the question and the contextual reference without guaranteeing equal token shares. One query failure cancels the sibling and rejects the entire retrieval; the existing full-prompt fallback applies. Two requests can increase managed embedding/query usage and latency compared with the original single query.
+Remote hits are ranking signals: only exact current IDs, ownership, scope, revision,
+source text and conversation-time metadata are accepted; injection uses the locally
+reconstructed text. This prevents eventual-index lag, deleted records, malicious
+remote text changes and sibling-chat results from resurrecting stale content.
+Whole source passages are selected under the complete rendered token budget, then
+same-message source assembly can share headers/remove exact overlap and refill in
+retrieval order without removing the established source floor. Final presentation
+remains chronological. Fifty returned chunks need not all fit the configured budget.
 
 An epoch and a full snapshot comparison invalidate work across events, chat switches, disabling, and connection replacement. Pending queries are canceled when possible; canceled server writes are never assumed rolled back. Token counting and the final validity check precede mutation. Failed sync/query/counting or empty selection preserves the full ephemeral prompt. A valid selection replaces older eligible messages while preserving recent full messages and special messages. Only the generated `coreChat` array is spliced; persisted chat objects are untouched.
 
 Selected excerpts replace eligible older messages in the ephemeral `coreChat` at their source positions, using the locally reconstructed user/assistant role and display name. Presentation is chronological even when retrieval ranks differ. A system extension prompt no longer combines different speakers. Recent and special messages retain their original objects; source chat is untouched. Source labels identify recalled passages without rewriting pronouns or treating a speaker as the actor of every reported action.
 
-Macro braces and legacy `<USER>`/`<CHAR>`-style markers are rendered with fullwidth delimiters before budgeting. The joined excerpt content, source labels and newline separators are counted with the host tokenizer, additionally capped at a quarter of the host context limit. Provider per-message envelopes and the complete system/persona/response overhead remain the host's responsibility; this is not a cap on total billed tokens or a guarantee that oversized recent history fits. Labeling and native roles are not a comprehensive prompt-injection defense.
+Macro braces and legacy `<USER>`/`<CHAR>`-style markers are rendered with fullwidth delimiters before budgeting. The joined excerpt content, source labels and newline separators are counted with the host tokenizer, with a fresh-settings default of 4,096 tokens, additionally capped at a quarter of the host context limit. Provider per-message envelopes and the complete system/persona/response overhead remain the host's responsibility; this is not a cap on total billed tokens or a guarantee that oversized recent history fits. Labeling and native roles are not a comprehensive prompt-injection defense.
 
 The pinned host scans `coreChat` for World Info after interceptors. Recalled excerpts can therefore participate in its ordinary history scan, unlike the previous system extension prompt with scanning disabled. World Info, other prompt rewriters, non-chat-completion providers and different host revisions are unverified. See the [speaker results](speaker-attribution-results.md) for the bounded OpenAI validation and remaining actor-attribution failure.
 

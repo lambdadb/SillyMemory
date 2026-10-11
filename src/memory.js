@@ -3,10 +3,10 @@ import { conversationQuery } from './context.js';
 import { chunkSpans, CHUNKING_POLICY } from './chunking.js';
 import { hostTimestamp, conversationTime, conversationTimeLabel } from './time.js';
 
-export const DEFAULTS = Object.freeze({ recent: 12, budget: 1600, chunkChars: 800 });
+export const DEFAULTS = Object.freeze({ recent: 12, budget: 4096, chunkChars: 800 });
 export function options(value = {}) {
     const integer = (x, fallback, min, max) => Number.isInteger(Number(x)) ? Math.min(max, Math.max(min, Number(x))) : fallback;
-    return { recent: integer(value.recent, 12, 2, 100), budget: integer(value.budget, 1600, 64, 4096), chunkChars: integer(value.chunkChars, 800, 200, 2000) };
+    return { recent: integer(value.recent, 12, 2, 100), budget: integer(value.budget, DEFAULTS.budget, 64, 4096), chunkChars: integer(value.chunkChars, 800, 200, 2000) };
 }
 export async function digest(value) {
     const bytes = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(value));

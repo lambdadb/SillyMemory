@@ -964,7 +964,8 @@ See [method, exact failures and interpretation](context-aware-query-comparison.m
   request whitelist, provider answers/judgments, cumulative resources and cleanup
   checked. All11 owned collections absent by GET404. One original ungraded answer,
   two inspector-recording failures and period-compatible judge recovery are kept;
-  no answer substitution or changed questions. Product source remains unchanged.
+  no answer substitution or changed questions. The measured-base product source was unchanged. The same PR now also adopts
+  numeric product defaults; it preserves the distinct live input policy.
 - **Archive:** `/Users/steven/Dev/sillymemory/artifacts/archive/profile-50-host-validation-v1/evidence.tar.gz`.
   SHA-256 `e64c4b8f4bb38ec6bae551b7ee7ebec4a0b45225ec7004449cc812e893b45ffc`;
   6,190,656 bytes,363 members, every original byte verified. Final report SHA-256
@@ -975,3 +976,20 @@ See [method, exact failures and interpretation](context-aware-query-comparison.m
   patch/copy. Local-only and unavailable in a fresh clone; the recorded dataset,
   pinned host and dependencies are external reproduction inputs, not CI dependencies.
   Prior historical archives are not overwritten or removed.
+
+- **Numeric-default adoption verification:** source k100/candidate100/final50 and
+  fresh budget4096 now apply to ordinary memory search. Recent12/query policy and
+  safety semantics remain unchanged; saved explicit budgets are preserved. Unit335,
+  syntax/release/SDK/development syntax, browser44, final fault77 and delivery13
+  passed with actual pinned host/local emulators. No new paid requests or quality
+  score. Initial fault-harness saved-budget assumption failure and cleanup0 are
+  preserved; the corrected test explicitly sets/checks512 before/after reload.
+- **Default-adoption archive:** `/Users/steven/Dev/sillymemory/artifacts/archive/profile-50-default-adoption-v1/evidence.tar.gz`.
+  SHA-256 `9aab0672c155c01bc20f79c7708fc3a31e25add7baf891fc464632d81a95995b`;
+  750,008 bytes,196 members, every byte verified. Adjacent `manifest.json` locks
+  the measured runtime/tests/maintained producers, source patch against base
+  `718ce65d390c0306b02471b1cb15b9c277dd5850`, completed/failed reports and notes.
+  The original browser producer reconstruction matches its measured hash; final
+  fault/delivery hashes match the final measured code. Local-only, unavailable in
+  a fresh clone; pinned host/dependencies are external inputs. Prior live archive
+  stays immutable; no raw run output or scratch generator enters Git.

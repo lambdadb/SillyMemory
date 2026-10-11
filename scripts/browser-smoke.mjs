@@ -71,7 +71,10 @@ const remote = createServer({ key: await readFile(key), cert: await readFile(cer
         if (delayedQuery) await new Promise(r => setTimeout(r, delayedQuery));
         const knn = body.query.bayesian?.[0]?.knn || body.query.knn;
         const filter = knn?.filter || body.query;
-        if (body.query.bayesian) assert.deepEqual(body.query.bayesian[1].bool[0], { ...filter, occur: 'filter' });
+        if (body.query.bayesian) {
+            assert.deepEqual(body.query.bayesian[1].bool[0], { ...filter, occur: 'filter' });
+            assert.equal(knn.k, 100); assert.equal(body.size, 50); assert.equal(body.rerank.candidateSize, 100);
+        }
         const match = /^owner:([a-f0-9]+) AND scope:([a-f0-9]+)$/.exec(filter.queryString?.query || '');
         assert.ok(match, 'owner and scope query filters required');
         if (knn) assert.equal(typeof knn.queryText, 'string');
@@ -134,7 +137,7 @@ try {
     const field = name => page.locator(`#sillymemory [data-sm="${name}"]`);
     const status = () => field('status').innerText();
     const waitStatus = async text => { await page.waitForFunction(text => document.querySelector('#sillymemory [data-sm="status"]')?.textContent.includes(text), text, { timeout: 30000 }); };
-    check('fresh settings use the adopted 1600-token initial budget', await field('budget').inputValue() === '1600');
+    check('fresh settings use the adopted 4096-token initial budget', await field('budget').inputValue() === '4096');
     await field('endpoint').fill(endpoint); await field('project').fill('synthetic');
     corsEnabled = false;
     await field('key').fill('synthetic-session-key'); await field('connect').click();
@@ -363,8 +366,10 @@ try {
     if (faultMode) { staleHits = []; faultResults = await runFaultScenarios({ page, field, waitStatus, prompt, check, faults, collections, calls, restartHost: recoveryMode ? async () => { const exited = new Promise(resolve => server.once('exit', resolve)); server.kill('SIGKILL'); await exited; await start(false); } : undefined, screenshot: name => page.screenshot({ path: path.join(artifacts, `${name}${artifactTag ? `-${artifactTag}` : ''}.png`) }) }); }
     else { page.once('dialog', dialog => dialog.accept()); await field('delete').click(); await waitStatus('no longer accessible'); }
     check('owned remote deletion leaves no collections', collections.size === 0);
+    await field('budget').fill('512'); await field('budget').dispatchEvent('change');
     await page.reload(); await page.locator('#sillymemory').waitFor({ state: 'attached', timeout: 45000 });
     check('final reload again requires key entry', await field('key').inputValue() === '' && !await field('enabled').isChecked());
+    check('explicit user budget survives reload without default replacement', await field('budget').inputValue() === '512');
     if (faultMode) check('fault run has no uncaught browser page errors', errors.length === 0);
     const sourceSha256 = {};
     for (const file of ['index.js', 'manifest.json', 'settings.html', 'style.css', 'src/chunking.js', 'src/client.js', 'src/commit.js', 'src/chat-collections.js', 'src/checkpoints.js', 'src/gate.js', 'src/memory.js', 'src/time.js', 'src/context.js', 'src/status.js', 'scripts/browser-smoke.mjs', 'scripts/emulator-cors.mjs', 'scripts/fault-scenarios.mjs', 'scripts/recovery-scenarios.mjs']) {

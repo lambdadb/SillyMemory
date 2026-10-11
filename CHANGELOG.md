@@ -27,8 +27,10 @@ boundary; publication is confirmed by the corresponding Git tag and GitHub Relea
   8 KiB UTF-8 limit instead of silently dropping the end of the question.
 
 - Use Bayesian vector/English-text fusion with managed Typesafe Jev reranking and
-  a 1,600-token initial memory budget. Keep the 4,096-token maximum and host context
-  cap. Reject unconfirmed reranking instead of silently injecting fallback results.
+  vector k=100, at most 100 rerank candidates, a final return limit of 50 chunks
+  and a 4,096-token initial memory budget. Keep the 4,096-token maximum and host
+  one-quarter-context cap. Saved explicit user budgets remain respected. Reject
+  unconfirmed reranking instead of silently injecting fallback results.
   Preserve boundary-aware per-message chunks and session-only project keys.
 
 - Use the official LambdaDB TypeScript SDK 0.8.0 through a pinned browser bundle.

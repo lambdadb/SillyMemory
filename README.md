@@ -64,15 +64,16 @@ The development baseline is **SillyTavern 1.19.0**, pinned to commit [`06bde939f
 5. Click **Use key for this session**. The input is immediately cleared. The key lives only in the client instance's browser memory, never in saved settings, local/session storage, a URL, or extension logs. A reload or **Forget key** requires re-entry. Other trusted extensions and the browser runtime can still observe network requests; this is not an isolation boundary against malicious extensions.
 6. Click **Test synthetic upsert / query / delete**. This creates a dedicated `smtest_<random>` collection, upserts a synthetic story, queries `knn.queryText`, deletes its document, verifies it no longer appears, then deletes the owned test collection. This consumes LambdaDB resources and inference usage. The test must pass before **Prepare chat memory** becomes available.
 7. If a test fails, use **Clean up test collection**. Pending test identity is preserved across reloads so cleanup can be retried after reconnecting. A failed cleanup is not reported as successful.
-8. Click **Prepare chat memory**, select a character chat, then enable memory. Native branches automatically reuse committed history in separate LambdaDB branches within one story collection. Default settings retain 12 recent messages and allow 1,600 memory tokens, including excerpt content, source labels and available conversation timestamps; provider message-envelope overhead is managed by the host. Configure the bounds in the panel. Disable built-in Vector Storage chat vectorization and other prompt-rewriting memory extensions for this prototype.
+8. Click **Prepare chat memory**, select a character chat, then enable memory. Native branches automatically reuse committed history in separate LambdaDB branches within one story collection. Default settings retain 12 recent messages and allow 4,096 memory tokens, including excerpt content, source labels and available conversation timestamps; provider message-envelope overhead is managed by the host. Configure the bounds in the panel. Disable built-in Vector Storage chat vectorization and other prompt-rewriting memory extensions for this prototype.
 
 Optionally enter a checkpoint name and use **Save / finish checkpoint** to save the current transcript and memory state. **Refresh story checkpoints** shows names, creation times and verified states, with controls to finish pending saves, resume a new path, rename or delete individual checkpoints. See [recovery, integrity and restore limits](docs/checkpoints.md).
 
 The memory budget applies **per generated answer**, not cumulatively across a
 chat. Recent messages and character instructions are separate from that budget.
 You can set 64–4,096 memory tokens; the effective limit is also capped at one
-quarter of the context size passed by the host. The default 1,600 is a heuristic,
-not an established optimum. It is unrelated to the current 800-**character**
+quarter of the context size passed by the host. The default 4,096 uses the tested
+budget ceiling, not an established optimum. On smaller host contexts the
+one-quarter cap lowers the effective budget. It is unrelated to the current 800-**character**
 indexing chunks: long messages now prefer paragraph, sentence and word boundaries within that ceiling, without overlap. Exact source text is retained; a sentence longer than the ceiling can still be split. See the
 [controlled budget comparison](docs/memory-budget-calibration.md) for evidence
 and limitations, and the [design review](docs/memory-design-followups.md) for
@@ -88,10 +89,14 @@ setting or shorten the input before retrying. See the
 [complete recent-query decision](docs/context-aware-query-comparison.md#product-adoption-complete-recent-query).
 
 Current retrieval combines managed vector and raw English text search with
-Bayesian fusion, followed by managed Typesafe Jev reranking. Both signals use the
+Bayesian fusion with vector k=100, followed by managed Typesafe Jev reranking
+over at most 100 candidates and a final return limit of 50 chunks. These are
+search candidates, not a promise that all 50 fit the memory budget. Both signals
+use the
 same owner/scope filter and explicit chat branch. Reranking failure or unconfirmed
 rerank metadata rejects injection; there is no silent fallback. The user supplies
-only a LambdaDB project key. Managed embedding and reranking may incur additional
+only a LambdaDB project key. See the [default adoption and validation limits](docs/profile-50-host-validation.md#product-default-adoption).
+Managed embedding and reranking may incur additional
 LambdaDB inference usage. See [the default decision and bounded English evaluation](docs/conversation-memory-defaults.md).
 Selected chunks from the same message and revision share one source/time header.
 Touching text and matching overlaps are joined from the returned chunks; missing

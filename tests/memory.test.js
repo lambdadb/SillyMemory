@@ -158,9 +158,9 @@ test('deletion drains pending writes and clears local journal', async () => {
     assert.equal(s.remote.size, 0); assert.equal(s.storage.length, 0);
 });
 test('settings are clamped and capture refuses group/no character chats', () => {
-    assert.equal(options().budget, 1600);
+    assert.equal(options().budget, 4096);
     assert.equal(options({ budget: 800 }).budget, 800);
-    assert.equal(options({ budget: NaN }).budget, 1600);
+    assert.equal(options({ budget: NaN }).budget, 4096);
     assert.equal(options({ budget: 999999, recent: 0 }).budget, 4096);
     assert.equal(options({ recent: 0 }).recent, 2);
     assert.equal(capture({ groupId: 'group' }), null);
