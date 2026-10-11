@@ -44,7 +44,8 @@ export function completedMessages(snapshot) {
 }
 export function memoryBoundary(snapshot, type = 'normal') {
     // Normal/regenerate/swipe keep only their question; Continue keeps the
-    // message being extended. Replacement answers never enter retrieval.
+    // message being extended; Impersonate keeps the response being answered.
+    // Replacement answers never enter retrieval.
     return Math.max(0, queryAnchor(snapshot.messages, type));
 }
 export function interleaveHits(lists) {

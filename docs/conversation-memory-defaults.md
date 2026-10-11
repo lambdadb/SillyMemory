@@ -12,14 +12,15 @@ development defaults, not a release or a universal optimum.
 Index all completed eligible plain-text messages, including the immediately
 preceding exchange. Do not index a pending trailing user input until the assistant
 replies. Search only the current eligible user question; Continue uses the message
-being extended. Regenerate/swipe never use the answer being replaced as a query.
+being extended, and Impersonate uses the latest eligible response. Regenerate/swipe never use the answer being replaced as a query.
 Both search legs prefilter message positions below the active input, and local
 validation applies the same boundary before token selection. Answers following a
 replacement question are also excluded from retrieval.
 
 After successful preparation, generation keeps **only the active input and selected
 memory**, alongside native system/character settings. Normal/regenerate/swipe keep
-the question; Continue keeps the partial message being extended. There is no
+the question; Continue keeps the partial message being extended, and Impersonate
+keeps the character response to answer as the user. There is no
 last-N-message window or recent-message setting. Past eligible full messages,
 including answers following a replacement question, are removed only from the
 ephemeral prompt. Stored chats are unchanged. Special/file/media messages are
@@ -44,7 +45,7 @@ and active-input-plus-memory generation as the simple baseline requested by the
 maintainer. A fixed recent-12 window had no measured necessity under this policy
 and is removed. Completion criterion: no previous eligible plain turn remains
 full after successful preparation, even for empty selections; preserve the current
-input, native system/character settings and Continue prefix, exclude replacement
+input, native system/character settings, Continue prefix and impersonation response, exclude replacement
 answers, and pass source/synchronization/branch/budget/cancellation/delivery checks.
 Do not expand paid experiments or claim a new quality score for this change.
 
@@ -62,17 +63,19 @@ remains historical evidence, not the current policy.
 
 - `npm test`: 340/340; runtime, maintained script/test syntax, release metadata
   and locked SDK 0.8.0 checks passed.
-- `ST_SOURCE=<pinned host> ST_TEST_PORT=18134 SM_ARTIFACT_TAG=input-only-v2 npm run test:browser`:
+- `ST_SOURCE=<pinned host> ST_TEST_PORT=18134 SM_ARTIFACT_TAG=input-only-v4 npm run test:browser`:
   45 checks passed. Actual pinned host/Chromium; local LambdaDB emulator.
-- `ST_SOURCE=<pinned host> ST_TEST_PORT=18135 SM_ARTIFACT_TAG=input-only-v2 npm run test:faults`:
+- `ST_SOURCE=<pinned host> ST_TEST_PORT=18135 SM_ARTIFACT_TAG=input-only-v4 npm run test:faults`:
   77 checks passed, including timeout/reload, uncertain writes, native branches,
   deletion and cancellation; no uncaught browser errors or remaining collections.
-- `ST_SOURCE=<pinned host> node scripts/prompt-delivery-smoke.mjs artifacts/input-only-v7/prompt-delivery.json`:
-  all 16 cases plus overlap, repeated packing and source assembly passed. Actual
+- `ST_SOURCE=<pinned host> node scripts/prompt-delivery-smoke.mjs artifacts/input-only-v9/prompt-delivery.json`:
+  all 17 cases plus overlap, repeated packing and source assembly passed. Actual
   host packing and dispatched local completion requests preserve native character
   and system settings, active input and system guidance. Past eligible turns are
   absent as full messages. No-hit and no-fitting-passage requests do not restore
-  history; regenerate/swipe exclude the answer suffix; Continue keeps its prefix.
+  history; regenerate/swipe exclude the answer suffix; Continue keeps its prefix and
+  Impersonate retains the character response while leaving source history intact.
+  Empty-selection preparation displays the counted guidance tokens rather than zero.
   This does not exercise an actual LLM.
 - The preceding one-off live LambdaDB numeric-range contract used one collection,
   four synthetic documents and two searches, with no generation. Both legs
@@ -94,7 +97,7 @@ Historical producer revisions are required for fixed-window answer experiments;
 current generation refuses those old modes rather than silently changing their
 frozen protocol. Current contract runners no longer configure a recent window.
 
-See the [active-input evidence record](evidence-retention.md#active-input-policy-validation). Previous current-question archives
+See the [active-input evidence record](evidence-retention.md#active-input-policy-final-validation). Previous current-question and first active-input archives
 preserve the intermediate recent-12 implementation and its validation. They are
 not final active-input evidence; historical scores remain unchanged.
 

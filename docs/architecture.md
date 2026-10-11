@@ -32,10 +32,11 @@ Queries use the selected `chat_<ID>` branch with `consistentRead: true`, not
 Tags/Aliases. The empty `main` branch is an independent-story fork source. One
 current-question query uses only the current eligible user message.
 Regenerate/swipe exclude the answer being replaced; continuation anchors on the
-eligible message being extended. No query rewriting model, appended recent
+eligible message being extended; Impersonate anchors on the latest eligible response.
+No query rewriting model, appended recent
 conversation or second search is used. All completed history is stored; generation
 retains only the active input (the current question, or the message being extended
-for Continue) and selected memory alongside native system/character settings.
+for Continue, or the response being answered for Impersonate) and selected memory alongside native system/character settings.
 No last-N-message window is used. Answers following a replacement question are
 removed from ephemeral generation input and excluded from retrieval.
 See the [current default policy](conversation-memory-defaults.md).

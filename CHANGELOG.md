@@ -29,10 +29,12 @@ boundary; publication is confirmed by the corresponding Git tag and GitHub Relea
 - Remove the fixed recent-message window and its setting. Successful generation
   preparation keeps only the active input and recalled memory alongside native
   character/system settings, including when no memory fits. Continue preserves
-  the partial answer; preparation failures retain the original prompt.
+  the partial answer, and Impersonate preserves the character response being
+  answered; preparation failures retain the original prompt.
 - Add budgeted system guidance to ask a brief clarification instead of guessing
   when conversation evidence is insufficient or the referent is ambiguous.
-  Verify final delivery even when no memory is selected.
+  Verify final delivery even when no memory is selected; count guidance in the
+  prepared token display for empty selections as well.
 
 - Use Bayesian vector/English-text fusion with managed Typesafe Jev reranking and
   vector k=100, at most 100 rerank candidates, a final return limit of 50 chunks

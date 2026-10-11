@@ -151,6 +151,7 @@ globalThis.sillymemory_intercept = async (chat, contextSize, abort, type) => {
         context().setExtensionPrompt('sillymemory', MEMORY_GUIDANCE, 1, 0, false, 0);
         guidance = [{ role: 'system', content: MEMORY_GUIDANCE, verifiable: true }];
         if (!result) throw new Error('Memory retrieval did not complete.');
+        const preparedTokens = result.text ? result.tokens : guidanceTokens;
         // Protect only the active input; keep special/file/tool messages intact.
         const indexedMessages = new Set(result.passages.map(p => p.message));
         // Drop full plain history, including answers following a replacement question.
@@ -169,9 +170,9 @@ globalThis.sillymemory_intercept = async (chat, contextSize, abort, type) => {
         for (let i = chat.length - 1; i >= 0; i--) {
             if (eligible.has(chat[i].index)) chat.splice(i, 1, ...(recalled.get(chat[i].index) || []));
         }
-        element('inspection').textContent = `${result.tokens} / ${config.budget} tokens\n\n${result.text}`;
+        element('inspection').textContent = `${preparedTokens} / ${config.budget} tokens\n\n${result.text}`;
         preparedMessages = result.messages;
-        operation.finish(`Prepared ${result.passages.length} source passages in ${result.messages.length} memory excerpts (${result.tokens} tokens); awaiting final prompt verification.`);
+        operation.finish(`Prepared ${result.passages.length} source passages in ${result.messages.length} memory excerpts (${preparedTokens} tokens); awaiting final prompt verification.`);
     } catch (e) {
         if (!instance) { if (operation.current()) fail(e, operation); abandoned = true; abort(true); return; }
         if (!valid()) { operation.finish('Memory operation canceled because the prompt changed. Generate again.'); abandoned = true; abort(true); return; }

@@ -1,7 +1,7 @@
 // A retained answer must not steer its own replacement. Continuation instead
-// searches the eligible message being extended, without appending other turns.
+// and impersonation use the latest eligible message, without appending other turns.
 export function queryAnchor(messages, type = 'normal') {
-    let anchor = messages.findLastIndex(m => m.eligible !== false && (type === 'continue' || m.user) && m.text.trim());
+    let anchor = messages.findLastIndex(m => m.eligible !== false && (type === 'continue' || type === 'impersonate' || m.user) && m.text.trim());
     if (anchor < 0) anchor = messages.findLastIndex(m => m.eligible !== false && m.text.trim());
     return anchor;
 }

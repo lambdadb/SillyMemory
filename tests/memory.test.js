@@ -442,5 +442,10 @@ test('replacement retrieval stops before the user anchor regardless of following
         const result = await s.engine.retrieve(snap, { ...config, budget: 2000 }, t => t.length, () => true, () => {}, type);
         assert.deepEqual(result.passages.map(d => d.message), [0,1]);
     }
-    assert.equal(memoryBoundary(snap, 'continue'), 5);
+    for (const type of ['continue', 'impersonate']) {
+        assert.equal(memoryBoundary(snap, type), 5);
+        const result = await s.engine.retrieve(snap, { ...config, budget: 2000 }, t => t.length, () => true, () => {}, type);
+        assert(result.passages.some(d => d.message === 4));
+        assert(result.passages.every(d => d.message < 5));
+    }
 });

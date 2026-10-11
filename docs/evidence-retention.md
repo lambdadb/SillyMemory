@@ -1059,9 +1059,12 @@ The v1 and earlier numeric-profile archives have not been overwritten or deleted
 
 ## Active-input policy validation
 
-The maintainer removed the fixed recent-message window from generation. This
-follow-up keeps the active input plus recalled memory and native system/character
-settings, including successful empty selections. It does not change source chats,
+This first active-input snapshot is the runtime at `b80ae5e50b49a752a65bdbab4a1a8a0622df034b`,
+before the impersonation fix and empty-selection prepared-token display correction.
+Use the final validation record below for the submitted runtime. The maintainer
+removed the fixed recent-message window from generation; this snapshot keeps the
+active input plus recalled memory and native system/character settings, including
+successful empty selections. It does not change source chats,
 add a model call or claim a new answer-quality score.
 
 - Archive: `/Users/steven/Dev/sillymemory/artifacts/archive/active-input-policy-v1/evidence.tar.gz`
@@ -1090,3 +1093,33 @@ add a model call or claim a new answer-quality score.
   client/SDK; no new live service or actual LLM clarification behavior was measured.
 
 See [current policy and limits](conversation-memory-defaults.md).
+
+
+## Active-input policy final validation
+
+The final follow-up anchors native Impersonate on the latest eligible response,
+preserving the character turn being answered as the user. Successful empty memory
+preparation also displays the counted guidance tokens instead of zero. Neither fix
+adds a provider call or changes the numeric search/budget defaults.
+
+- Archive: `/Users/steven/Dev/sillymemory/artifacts/archive/active-input-policy-v2/evidence.tar.gz`
+- SHA-256: `07101bcc5b3f0a1a4d8c1cc576182908f7be30fe1ac80b612437f32aa3368891`
+- Manifest: adjacent `manifest.json`; all 370 members verified, 2,321,072 bytes.
+- Parent: `b80ae5e50b49a752a65bdbab4a1a8a0622df034b`; same base as v1.
+  Includes the final source snapshot/base patch and all available active-input
+  attempts. Documentation archive pointers are added after freezing the snapshot.
+- Final unit340, browser45/fault77 (`input-only-v4`), and all17 prompt-delivery cases
+  (`input-only-v9`) plus overlap/packing/assembly passed. Source hashes match final
+  runtime/harness bytes. The added actual-host impersonation check preserves the
+  last character response, produces a user draft and leaves the chat unchanged.
+  No-hit/no-fitting checks compare the prepared token display with host-tokenized
+  guidance. Final emulator collections0; no uncaught page errors.
+- The first display-check collector read the post-verification excerpt inspector,
+  rather than the prepared-token view, and failed with NaN. Its original report is
+  preserved; the final collector captures preparation at the final host event.
+- No new paid model or live LambdaDB calls. Zero secret-content matches; no
+  `.env.local` or private chats. All prior archives remain unchanged. The same
+  local-only availability, external prerequisites and intermediate-source capture
+  limits as v1 apply; these archives are never CI dependencies.
+
+See [current policy and remaining quality limits](conversation-memory-defaults.md).

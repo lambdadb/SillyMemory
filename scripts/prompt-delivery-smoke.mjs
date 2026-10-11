@@ -42,6 +42,7 @@ const plan = { version: 2, generationInput: 'active-input-and-memory',
     { ...base, id: 'pressure-regenerate', instructions: 110, type: 'regenerate', blocked: true },
     { ...base, id: 'recovered-context', instructions: 110, context: 4096 },
     { ...base, id: 'continue', type: 'continue' },
+    { ...base, id: 'impersonate', type: 'impersonate' },
     { ...base, id: 'replacement-with-assistant-suffix', type: 'regenerate', context: 4096, earlierAnchor: true },
     { ...base, id: 'no-hits-pressure', recentRepeats: 80, noHits: true },
     { ...base, id: 'no-hits-small', noHits: true },
@@ -242,9 +243,12 @@ try {
         const observation = await page.evaluate(async ({ question, type }) => {
             const c = SillyTavern.getContext();
             if (type === 'normal') document.querySelector('#send_textarea').value = question;
-            let generationError;
+            let generationError, preparedInspection;
+            const inspectPrepared = (_data, dryRun) => { if (!dryRun) preparedInspection = document.querySelector('[data-sm="inspection"]').textContent; };
+            c.eventSource.makeFirst(c.eventTypes.GENERATE_AFTER_DATA, inspectPrepared);
             try { await c.generate(type); } catch (error) { generationError = String(error?.name || error); }
-            return { generationError, answer: c.chat.at(-1)?.mes, isUser: c.chat.at(-1)?.is_user,
+            finally { c.eventSource.removeListener(c.eventTypes.GENERATE_AFTER_DATA, inspectPrepared); }
+            return { generationError, preparedInspection, draft: document.querySelector('#send_textarea').value, answer: c.chat.at(-1)?.mes, isUser: c.chat.at(-1)?.is_user,
                 chat: c.chat.map(m => m.mes),
                 delivery: document.querySelector('[data-sm="delivery"]').textContent,
                 inspection: document.querySelector('[data-sm="inspection"]').textContent,
@@ -274,14 +278,14 @@ try {
         }
         else {
             assert.equal(observation.generationError, undefined);
-            assert.ok(observation.answer.endsWith('LOCAL_FIXTURE_OK'));
+            assert.ok((spec.type === 'impersonate' ? observation.draft : observation.answer).endsWith('LOCAL_FIXTURE_OK'));
             if (spec.enabled) {
                 assert.match(observation.delivery, spec.stopOnLoss ? /^Final host prompt:/ : /^Warning:/);
                 assert(sent[0].messages.some(m => m.role === 'system' && m.content.includes(MEMORY_GUIDANCE)), 'Clarification guidance reaches the completion request, including no hits');
             }
         }
         if (spec.enabled && sent.length) {
-            const input = spec.type === 'normal' ? (spec.collision ? 'OK' : plan.question) : chat[spec.type === 'continue' ? 11 : spec.earlierAnchor ? 8 : 10].mes;
+            const input = spec.type === 'normal' ? (spec.collision ? 'OK' : plan.question) : chat[['continue', 'impersonate'].includes(spec.type) ? 11 : spec.earlierAnchor ? 8 : 10].mes;
             for (const prior of chat) if (prior.mes !== input) {
                 assert(!sent[0].messages.some(m => m.content === prior.mes), 'No previous plain turn remains full');
             }
@@ -292,6 +296,8 @@ try {
         if (!spec.blocked && (spec.noHits || spec.id === 'nothing-fits')) {
             assert.equal(sent[0].messages.filter(m => m.content.startsWith('[Past conversation excerpt:')).length, 0, 'Empty selection sends no excerpts and does not restore full history');
             assert.match(observation.delivery, /0\/0 memory excerpts and 1\/1 input messages verified/);
+            const guidanceTokens = await page.evaluate(text => SillyTavern.getContext().getTokenCountAsync(text), MEMORY_GUIDANCE);
+            assert.equal(Number(observation.preparedInspection.split(' / ')[0]), guidanceTokens, 'Empty-selection inspection includes the guidance token cost');
         }
         if (spec.id === 'included') {
             assert.match(observation.delivery, /2\/2 memory excerpts and 1\/1 input messages verified/);
@@ -310,6 +316,10 @@ try {
             assert.match(observation.delivery, /could not be verified/);
             assert(sent[0].messages.some(m => m.role === 'assistant' && m.content.trim() === chat[11].mes.trim()), 'Native partial answer reaches the completion endpoint');
             assert(observation.answer.startsWith(chat[11].mes.trim()), 'Continue appends to the original partial answer');
+        }
+        if (spec.id === 'impersonate') {
+            assert(sent[0].messages.some(m => m.role === 'assistant' && m.content.trim() === chat[11].mes.trim()), 'Impersonation answers the latest character response');
+            assert.deepEqual(observation.chat, chat.map(m => m.mes), 'Impersonation writes a draft without changing source history');
         }
         if (spec.id === 'disabled') assert.doesNotMatch(observation.delivery, /Generation stopped|verified/);
         if (spec.id === 'pressure-stopped') {
