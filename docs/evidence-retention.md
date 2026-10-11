@@ -673,3 +673,36 @@ See [method, exact failures and interpretation](context-aware-query-comparison.m
   long-input/multilingual reliability claim. Preserve the earlier complete-dialogue
   comparison and all historical archives unchanged. See the
   [product decision and interpretation](context-aware-query-comparison.md#product-adoption-complete-recent-query).
+
+## Source-only assembly integration
+
+- **Decision and scope:** [implementation and validation](source-assembly.md).
+  Integrate source-preserving same-message assembly into memory injection, using
+  only validated returned chunks and UTF-16 positions. Current repeated-packing
+  selection is a source floor; preserve every selected passage and refill saved
+  space in rank order. Exact overlap only; missing intervals stay explicit.
+  No additional retrieval/model calls, new mode, SDK/storage change or search,
+  recent-message, token-budget or host-cap change. This is implementation evidence,
+  not another answer score or unseen-cohort confirmation.
+- **Validation:** Node24.15.0 `npm test`332/332, runtime/development syntax,
+  release and SDK checks passed. Real pinned SillyTavern1.19.0/Chromium153.0.8010.12:
+  browser44 and fault76 checks passed, zero emulated collections remaining. Actual
+  host generation:13 existing delivery cases plus overlap/repeated packing and
+  new assembly scenario passed; full source/role/time reaches a local completion
+  endpoint and stored history stays intact. LambdaDB and completions are emulated;
+  no real credentials, live embeddings/reranking/model calls or remote resources.
+- **Source equivalence:** all1000 archived selected memories/23362 blocks/5208
+  assembled blocks match canonical raw unions, gaps, roles/names and placement
+  without loading the complete source dataset. Input SHA-256
+  `488359e6c6d04dd5c7fb01e745034a2a9de68d9f511a1ea54455236366de00a8`
+  matches the unchanged assembly parent archive. Benchmark header/date decoration
+  differs; no runtime-admission or generated-answer equivalence is asserted.
+- **Archive:** `/Users/steven/Dev/sillymemory/artifacts/archive/source-assembly-integration-v1/evidence.tar.gz`.
+  SHA-256 `f955d825aee986a8d6475c1ea0a3110f85838cc0d12473b63abf1bac14905426`;
+  1,511,952 bytes,66 members, every original byte verified. Report SHA-256
+  `5bf99d5a1cef52102105fb1d96dc91cc95e1177a1eec0dd96d6d9eb85ddab524`.
+  Adjacent `manifest.json` locks base `ec0834e8641ff4b35f9b348981d89117725ce886`,
+  measured/implemented source, plans, outputs, initial failed episodes and one-off
+  equivalence helper. Local-only, unavailable in a fresh clone; recorded parent
+  oracle archive and pinned host/dependencies are external reproduction inputs,
+  not maintained CI requirements. Historical benchmark evidence is not overwritten.
