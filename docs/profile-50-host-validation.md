@@ -137,6 +137,15 @@ copy, producers and failure records remain ignored rather than permanent CI inpu
 
 ## Product default adoption
 
+This is an intentional **provisional pre-release setting choice**, not a
+quality-confirmed default. Independent capacity-pressure/no-answer-loss confirmation
+and a matched quality comparison under the retained recent12 query policy remain
+outstanding. The historical discovery/depth decisions are not relabeled as passed
+gates. The six-case question-only score must not be presented as validation of
+ordinary character-chat answer quality. The existing query-byte limit also remains
+an operational limitation; larger search limits do not repair oversized queries.
+
+
 Adopt vector k=100, rerank candidateSize=100, final
 size=50 and a fresh-settings memory budget of 4096 tokens. The result supports a bounded
 integration check; the earlier [full 500 comparison](jev-depth-100.md) supports the search/packing
