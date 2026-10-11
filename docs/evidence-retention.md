@@ -674,6 +674,218 @@ See [method, exact failures and interpretation](context-aware-query-comparison.m
   comparison and all historical archives unchanged. See the
   [product decision and interpretation](context-aware-query-comparison.md#product-adoption-complete-recent-query).
 
+## Jev depth100 provider blocker
+
+- **Record:** [combined depth100 comparison and blocker](jev-depth-100.md).
+  Historical interruption: 233/500 fresh paired questions. The original archive is
+  unchanged; the completed continuation and answer evaluation are recorded below.
+- **Availability:** local-only ignored evidence, unavailable in a fresh clone and
+  not a CI dependency. Original dataset, parent archives and tokenizer are referenced
+  local dependencies; no raw corpus or one-off runner enters maintained source/CI.
+- **Archive:** `/Users/steven/Dev/sillymemory/artifacts/archive/jev-depth-100-blocker-v1/evidence.tar.gz`.
+  SHA-256 `b307cb9733903aa49f6d09919ded62e1e029cb49427487a1513fc62215536fd2`;
+  29,080,864 bytes, 419 members. Every member's original bytes verified; configured
+  credential matches zero. Six predecessor archives retain their original checksums.
+- **Producer:** runtime base `ec0834e8641ff4b35f9b348981d89117725ce886`, original
+  boundary-v1, managed OpenAI text-embedding-3-small, Bayesian English and question
+  only. Both arms use default native Jev; k/candidate 50 versus 100, final 50 and 4096
+  tokens unchanged. Stable SDK 0.8.1 is experiment-local; maintained SDK 0.8.0 unchanged.
+  Frozen plan/settings/protocol/source/query locks, all 233 complete pair/pool envelopes,
+  prompts, ledgers, two preserved failed execution snapshots and two diagnostics included.
+- **Blocker:** repeated 503 in Jev on both depth settings, seven attempts per query
+  episode exhausted twice. Same-corpus retrieval/managed embedding succeeds; diagnostic
+  returnOriginal reports fallback/unavailable/scoredCount0. A previously successful
+  short question also fails Jev, making a long-query-only issue unlikely. Exact
+  upstream cause requires provider logs. Diagnostic fallback is never scored/injected.
+- **Partial result:** 437 marked occurrences: final retrieval 417→430, delivery 416→420;
+  13 delivery gains, 9 losses. Multi-session delivery 310→320; preference 40→34. Temporal,
+  update and assistant-source groups not completed. Source markers are not answers;
+  preserve redundant/ambiguous markers rather than silently changing the evaluation.
+- **Validation:** independent partial marker/request arithmetic; all 500 planned
+  corpora rebuilt; 4743 physical main upsert bodies and 46,600 successful source hits
+  validated; 466 exact token-budget/rendering replays. Node 24.15.0 unit 323/323,
+  syntax/release/SDK checks passed; eight synthetic error/retry scenarios passed.
+  No Node 20, actual-host, generated-answer accuracy or exact-vector-oracle check.
+- **Resources including diagnostics:** 239 collections, 233,018 physical submitted
+  documents, 6,722 requests; all deleted/GET404-confirmed and owned listing empty.
+  Main and diagnostic counters are separately retained and must be combined for
+  future safety guards. No pending remote data, promotion, publication or default change.
+- **Continuation:** only 267 remaining frozen IDs. Verify predecessor/producer hashes,
+  provider recovery and remaining aggregate bounds first. Retain paired segments and
+  original clock; if its four-hour window expires, explicitly define a bounded
+  continuation rather than silently resetting the deadline or rerunning completed pairs.
+
+## Jev depth100 complete answer comparison
+
+- **Record:** [completed comparison and interpretation](jev-depth-100.md). All 500
+  fresh search pairs, then 1000 fresh Sol answers and 1000 official judgments.
+  Official accuracy 464/500 (92.8%) → 471/500 (94.2%); 15 gains and 8 losses.
+  Source coverage improves, but judge-sensitive and ambiguous cases limit the
+  causal interpretation. Product/default promotion is deferred; no code change.
+- **Availability:** local-only ignored evidence, unavailable in a fresh clone and
+  not a CI dependency. Dataset, tokenizer and predecessor archives are referenced
+  external local inputs. No raw corpus, responses or one-off helpers enter Git.
+- **Archive:** `/Users/steven/Dev/sillymemory/artifacts/archive/jev-depth-100-completed-v1/evidence.tar.gz`.
+  SHA-256 `c86917f90c55c80269517d63e94bc9a68539253f592daa6002aa72aecd38039f`;
+  72,350,337 bytes, 1819 members. Every member's original bytes verified; configured
+  credential matches zero. Initial archived report SHA-256
+  `0e26387142091f0fad939a848ea5ecd3bdbfadde971ea3ddc62c37124e0df6e8`.
+  The interrupted archive and six earlier predecessors remain byte-identical.
+- **Producer/settings:** base `ec0834e8641ff4b35f9b348981d89117725ce886`, experiment
+  SDK 0.8.1, managed text-embedding-3-small, original boundary-v1/800-codepoint chunks,
+  Bayesian English question only, native typesafe/jev-1.13.0/default-relevance-v1,
+  k/candidate 50 versus 100, final 50, consistent branch reads, identical 4096-token
+  compact session-date packing. No fallback is scored. Maintained SDK 0.8.0 unchanged.
+- **Answers:** exact stored memories and previous system/date-decorated question;
+  gpt-6.1-sol/low/output4096, fixed gpt-4o-2024-08-06/temperature0/output10 official
+  template and strict yes/no parser. No reference/rubric in generation. Actual
+  response identities match; Sol is an undated alias. All 2000 calls HTTP 200, no retries
+  or waits, concurrency 2, 27.26 minutes. No new LambdaDB requests for answer scoring.
+- **Interpretation:** all 23 changed answer/reference pairs inspected provisionally;
+  exact changed prompts, source/budget evidence and notes included. Real missing
+  source recovery coexists with personalization budget regressions and near-equivalent
+  answers receiving opposite official labels. Preserve original labels, ambiguity
+  and the distinction between marker coverage, generated answers and human judgment.
+  This repeatedly consumed 500 is not blind held-out or independently replicated.
+- **Recovery/resources:** user reported Typesafe credit exhaustion, replenishment
+  and automatic payment; account logs not independently inspected. Both blocked
+  cases resumed with native applied. Prior diagnostics added to original guards;
+  all 233 earlier complete pairs unchanged. Combined native/diagnostics: 506 owned
+  collections, 493091 physical submitted documents, 14207 requests, 1050 rerank attempts.
+  All deleted/GET404 confirmed and owned listings empty; no pending remote data.
+- **Validation:** independent full marker/request and 1000 answer/judge receipt
+  recomputation; all 487285 source documents rebuilt, 10080 physical upsert bodies
+  and 100000 returned source hits checked, 1000 exact memory/budget replays. Node 24.15.0
+  unit 323/323, syntax/release/SDK checks and eight synthetic retry scenarios passed.
+  No Node 20 locally, new browser/host run, exact-vector oracle, same-byte judge
+  repeats, independent human adjudication, deployment or promotion.
+- **Preservation:** frozen plans/protocols and producer/continuation/analysis locks,
+  all raw query/model envelopes, prompts, transport ledgers, failed episode snapshots,
+  cleanup records and source bundle included. Prefix analysis-lock outputs belong
+  to the unchanged interrupted archive; use completion locks for the final run.
+- **Completed offline follow-through:** [source-consistency audit](jev-depth-100.md#completed-offline-source-consistency-audit)
+  covers all 23 changed pairs using the immutable completed archive and released
+  source. Five source-backed coverage benefits (museum chronology still qualified),
+  two budget-related personalization losses, two unsupported/incomplete generations,
+  one cleaner abstention and 13 scoring/target-confounded pairs. These are dispositions,
+  not corrected accuracy labels; the other 477 pairs are not semantically regraded.
+  Product/default promotion remains deferred; zero new provider requests or resources.
+- **Audit archive:** `/Users/steven/Dev/sillymemory/artifacts/archive/jev-depth-100-source-audit-v1/evidence.tar.gz`.
+  SHA-256 `b486a5c6f79864762da560434349dcb56198838a89d809ca77b3b6ec8a18119b`;
+  61,264 bytes, 10 members, each original byte verified. Source-audit archived report SHA-256
+  `f19ca1e5f92aac700a07630440222a57bd1d21549fbcf9aba3965192d05d3404`.
+  Includes frozen rules/case list, decisions, exact source/rank/delivery/answer
+  locators, audit producer/validator, input locks, references and revised report.
+  Initial completed/interrupted archives remain unchanged; the revised report does
+  not replace their original bytes. Local-only external dataset/parent dependencies;
+  no audit helper or raw source enters Git or CI.
+- **Audit validation:** 23 pairs, 56 original source locators and 88 delivered-passage
+  locators independently checked against archived envelopes; labels and 15/8 official
+  changes unchanged. Train subtraction, website date interval and different-week
+  doctor/bedtime examples recomputed without a model. This checks recorded bytes and
+  arithmetic, not independent human judgment or full-cohort corrected grading.
+- **Completed budget-ceiling replay:** [full50 injection diagnostic](jev-depth-100.md#completed-offline-injection-budget-ceiling)
+  covers all 500 questions/both existing arms, changing only 4096 admission to all
+  fixed final50 passages under the identical renderer/selector. No retrieval,
+  embeddings, generation, judgments or remote resources. Full-memory medians
+  6595/7054 tokens and maxima 8675/8681; serialized prompt estimates rise 1.60×/1.69×.
+  Depth50 restores one annotated source in an already correct case; depth100 restores
+  11 across nine cases, including all markers in two current wrong answers and some
+  markers in a third. No new accuracy or noise labels; defaults/reference unchanged.
+- **Budget-ceiling archive:** `/Users/steven/Dev/sillymemory/artifacts/archive/jev-depth-100-budget-ceiling-v1/evidence.tar.gz`.
+  SHA-256 `74a4054384317dd266188ee97a348a9f22129490391e078feeed5f6c4ca092d7`;
+  22,490,224 bytes, 13 members, each original byte verified. Budget-ceiling report
+  SHA-256 `85f85e2f03af81bc1e2fd9a069f24f3f2b6c52419b69466e81adc60748042fdd`.
+  Frozen plan/producer/input locks, 1000 complete counterfactual memories/prompts,
+  per-case metrics, aggregate/type results, validator and revised report included.
+  Interrupted/completed/source-audit archives retain their original bytes.
+  Local-only dataset/tokenizer/parent dependencies; no large results or one-off
+  helpers enter Git/CI. Re-render in a separate workspace with empty output paths.
+- **Budget-ceiling validation:** 1000 memories and 50000 fixed passages; baseline
+  source inclusion, original markers/labels and exact prompt whitelists/hashes checked.
+  All pass the earlier experimental32768 input-plus-output reservation gate, not a
+  fresh provider context-limit check. Same recorded tokenizer; no new answer-quality,
+  billing, latency or browser test. Defer paid full50 generation; first assess preserving
+  selected text/provenance while reducing repeated contiguous-message formatting.
+- **Completed same-message assembly:** [fixed-budget source assembly](jev-depth-100.md#completed-offline-same-message-assembly)
+  covers all 500 questions/both captured final50 arms, with search and budget4096
+  unchanged. Same-message canonical ranges share a source/date header, touching or
+  exactly overlapping ranges are joined and missing intervals explicitly marked.
+  Existing identical-text groups remain opaque with all citations. Original selected
+  passages are a source floor; spend savings in original rank order, or retain the
+  exact baseline when formatting saves nothing. No new model or retrieval calls.
+- **Assembly result:** same-source median savings 250/267 tokens; marker delivery
+  864→865 / 876→883. Depth100 recovers seven marked occurrences across six questions,
+  including all annotated sources for both inspected budget-related wrong answers
+  and partial restoration for cultural events. All seven newly represented bodies
+  are complete. Existing marked delivery/text is preserved, but no new answer
+  accuracy is measured. Additional admitted depth100 passages 1262, of which 1255
+  are unmarked; unmarked is not irrelevant. Full50 medians fall to 6221/6479 but no
+  full50 memory fits4096. Boundary-v1 has zero actual overlap; overlap tests are
+  synthetic. Defaults and the benchmark reference stay unchanged. The current500
+  remain full regression/discovery evidence. Before paid independent confirmation,
+  freeze a disjoint, previously unused cohort and scoring/provenance/exclusion rules;
+  a new subset of the consumed500 does not qualify. No such cohort was prepared here.
+- **Assembly archive:** `/Users/steven/Dev/sillymemory/artifacts/archive/jev-depth-100-message-packing-v1/evidence.tar.gz`.
+  SHA-256 `a7275c3fc78c61f057f44b3ed8b3132e1defb66ca0d02e3e7be969ad103d24b4`;
+  42,143,920 bytes, 19 members, each original byte verified. Initial archived report SHA-256
+  `500b8b0362d7ce0202cac09c4b70329b9a2c223c0377f057c49cd6ffb4b17fbf`.
+  Frozen plan/producer/input locks, complete memories/prompts and source-union blocks,
+  metrics/type results, source inspection notes, nine small synthetic scenarios,
+  validator and revised report included. All four preceding Jev archives remain
+  byte-identical. Local-only, unavailable in a fresh clone; dataset/tokenizer and
+  parent sources/results are external dependencies, not CI inputs. No raw corpus,
+  one-off implementation or compatibility path is added to maintained source.
+- **Review clarification:** the initial archived report called the same500 answer
+  comparison confirmation; the current report correctly treats it as regression and
+  requires disjoint unused data before independent confirmation. Results/labels are
+  unchanged. Adjacent `review-correction-report.md` SHA-256
+  `fc1ce7376fab0456abf313083d4d8f8609978f5dcbae1ced727bab1d2aee5d62` and
+  `review-correction.json` SHA-256
+  `d207c37374340a2668f8acea150a7c410035c21ce615716370039297a3e890cb`
+  preserve the correction/repeated validation without replacing the original archive
+  or manifest. Both sidecars are local-only at the same assembly archive directory.
+- **Assembly validation:** independent Python checks 1000 memories, 50000 returned
+  passages, 32105 selected passages and 81551 rendered blocks; canonical UTF-16
+  unions, explicit gaps, all baseline sources, identical-text provenance, exact prompt
+  whitelists and original labels/markers verified. Nine synthetic scenarios passed.
+  `npm test` 323/323 on Node24.15.0 and syntax/release/SDK checks passed; product/test
+  diff is empty. Same recorded tokenizer, no independent tokenization, generated
+  answers, billed usage, latency, fresh browser integration or default promotion.
+- **Completed fresh assembly answer regression:** [full consumed500 comparison](jev-depth-100.md#completed-fresh-source-assembly-answer-regression).
+  Freeze point `09c6d1b36676a1ef05fe5a328b7f7356c33fc49d`. Same captured depth100
+  final50, 4096 budget, source-preserving candidate, system/questions/gold and
+  Sol/official judge; no new search/embedding/reranking or runtime changes.
+  Fresh control469/500 (93.8%), candidate475/500 (95.0%), 11 gains/5 losses.
+  All16 changed pairs and6 restored-marker cases (19 unique) inspected: two clear
+  restored-source personalization benefits (slow-cooker/NAS); other changes include
+  interpretation, source/target ambiguity and grading consistency concerns.
+  All baseline source text remains included; official labels are not corrected.
+  This is consumed-cohort regression/discovery, not independent confirmation.
+  Before paid confirmation, freeze an unused cohort without shared consumed
+  questions/conversation sources and fixed provenance/exclusion/scoring rules.
+- **Assembly-answer archive:** `/Users/steven/Dev/sillymemory/artifacts/archive/jev-depth-100-message-packing-answers-v1/evidence.tar.gz`.
+  SHA-256 `868238a783b0d4926518e5ac1a9e58d5c7bf45c288e2e6fdb0c3e91fc833f506`;
+  10,741,039 bytes, 1036 members, every original member byte verified. Archived
+  final report SHA-256 `04a765e7a9581141b8edfc29f5617e953a282639102c9108240183a5d0d363fc`.
+  Adjacent `manifest.json` records all member hashes, frozen producer base and
+  parent archive hashes. Includes1000 exact prepared/graded case records, raw
+  transport receipts/usage, frozen prompts/settings, preflight/validators,
+  metrics, review cards/dispositions/source locators and one-off producer sources.
+  All five prior Jev archives and both review-correction sidecars remain unchanged;
+  zero configured-secret matches. Local-only, unavailable in a fresh clone;
+  recorded parent/dataset/tokenizer paths are dependencies, not CI inputs.
+- **Assembly-answer validation:** independent all1000 prompt/source-floor/gold
+  checks and2000 request/receipt/model/strict-label/usage/bounds checks passed;
+  all19 review pairs/96 source locators match captured records. Exactly2000 HTTP200
+  calls, zero retries/waits, concurrency2, 27.38 minutes; normal calls have no
+  artificial sleep and available rate headers feed admission. Actual answer input
+  2158498→2138377 (−0.93%), successful answer HTTP median2060→2025ms. These are
+  provider usage/timings, not an invoice or actual-host latency. No remote resources
+  created. `npm test`323/323 on Node24.15.0, syntax/release/SDK checks passed.
+  No independent semantic adjudication, same-byte judge repeat, unseen cohort,
+  actual-host integration, runtime/default promotion or deployment.
+
 ## Source-only assembly integration
 
 - **Decision and scope:** [implementation and validation](source-assembly.md).
