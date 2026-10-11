@@ -243,6 +243,67 @@ question is preserving recovered facts within the existing injection budget, wit
 search fixed, rather than another depth/weight/model sweep. Any future change needs
 the full frozen comparison and disclosed scoring limitations, not only these 23 cases.
 
+### Completed offline injection-budget ceiling
+
+All 500 questions in both captured depth settings were replayed with the same final
+50 documents, ordering, current selector/renderer, source text, dates, system/question
+and o200k_base tokenizer. The only intervention is 4096-token admission versus
+admitting all returned passages. All original selected sources remain represented;
+existing identical-text packing/provenance rules are unchanged. No query, embedding,
+generation, judge call or remote resource was created. This is a diagnostic ceiling
+over returned content, not a new answer-quality measurement or adopted setting.
+
+| Metric | Depth50 | Depth100 |
+| --- | ---: | ---: |
+| Full-50 memory tokens: minimum / median / p95 / maximum | 4777 / 6595 / 7490 / 8675 | 5030 / 7054 / 7857 / 8681 |
+| Marked source delivery: 4096 → full50 | 864→865 / 896 | 876→887 / 896 |
+| Questions recovering any marked source | 1 | 9 |
+| Questions with all marked sources: 4096 → full50 | 457→458 / 479 | 463→470 / 479 |
+| Full-50 memories exceeding 8192 tokens | 1 / 500 | 5 / 500 |
+| Aggregate serialized prompt-token estimate multiplier | 1.60× | 1.69× |
+
+Every full-50 memory exceeds 4096. Maximum serialized full-prompt estimate is
+9712/9734, plus the unchanged 4096 output reservation; all 1000 pass the **previous
+experimental 32768-token preflight gate**. This is not a fresh provider context-limit
+verification, billed token usage, cost or latency measurement.
+
+Depth100 restores 11 marked occurrences across nine questions: `gpt4_7fce9456`,
+`06878be2`, `35a27287`, `195a1a1b`, `afdc33df`, `caf03d32`, `1da05512`, `07b6f563`
+and `gpt4_f420262d`. Nine of the 11 are preference sources; one is multi-session,
+one temporal. Among current official wrong answers, slow-cooker/NAS have all markers
+restored, while cultural events restores one but another marked source remains absent
+from final50.
+Depth50 restores only old NAS storage-capacity message 375; that answer was already
+officially correct. These are source restorations, not predicted score gains or an
+upper bound on answer improvement: unmarked evidence can also help, and added context
+can distract or change an already correct answer.
+
+In depth100, current wrong-answer proxies remain 21 already having all markers,
+four with returned-marker gaps, two with restored delivery gaps and two unanswerable
+without markers. Full50 has 887 represented marked messages but only 883 complete
+adapted message bodies; existing partially represented marked messages are not made
+complete by this change. Coverage is still not exact answer-span recall.
+
+Depth100 adds 10375 passages: 12 from marked messages, 10363 from unmarked messages;
+3572 user and 6803 assistant passages. The extra marked passage beyond the 11 newly
+represented messages is part of an already correctly answered bike-maintenance case.
+**Unmarked does not mean irrelevant; same-message chunks do not mean duplicate text.**
+No semantic relevance/noise labels were produced. Full rendered tokens minus summed
+raw-body tokens average 1696/1719; this net includes source/date labels, removed input
+prefixes, identical-text grouping and token-boundary effects, not pure header overhead.
+
+The budget is a real bottleneck for specific sources, but removing it expands input
+throughout the cohort while only a small set of annotated delivery gaps is restored.
+Keep defaults and the reference unchanged; defer a paid full50 answer run. The next
+bounded candidate should preserve all current selected text and provenance while
+reducing repeated formatting of contiguous chunks from the same message, with search
+and 4096 admission fixed. Compare the complete frozen cohort before adopting it;
+do not discard assistant/unmarked content or introduce learned selection calls here.
+
+Independent validation checks 1000 counterfactual memories, 50000 fixed passages,
+original labels/markers, baseline-source inclusion and exact prompt whitelists/hashes.
+Token counts use the same recorded tokenizer, not an independent implementation.
+
 ## Operational recovery, resources and latency
 
 The initial 233 pairs and two failed execution snapshots were preserved; each execution
@@ -309,6 +370,8 @@ one-off runners enter Git. Seven predecessor archives remain byte-identical.
 The original completed archive retains its initial report bytes; the subsequent
 offline audit and revised report are preserved separately in the source-audit archive
 listed in the evidence index. Earlier records and labels are not overwritten.
+The later budget-ceiling replay and its revised report have another separate archive;
+all preceding archives retain their original bytes.
 
 Offline revalidation uses the retained source and original worktree-relative placement:
 
@@ -321,6 +384,8 @@ node artifacts/jev-depth-100-answers-v1/summarize.mjs
 python3 artifacts/jev-depth-100-answers-v1/validate.py
 python3 artifacts/jev-depth-100-source-audit-v1/audit.py
 python3 artifacts/jev-depth-100-source-audit-v1/validate.py
+python3 artifacts/jev-depth-100-budget-ceiling-v1/summarize.py
+python3 artifacts/jev-depth-100-budget-ceiling-v1/validate.py
 ```
 
 These require the recorded local dataset/tokenizer paths. Copy/extract to a separate
@@ -330,3 +395,7 @@ completed validation uses continuation/completion locks. The final report bytes,
 producer sources, frozen settings, all wire/model responses, ledgers, cleanup records
 and interpretation notes are preserved. No release, push or default change is implied
 by completing this evaluation.
+
+The budget-ceiling producer `run.mjs` refuses to overwrite existing output files.
+To independently rerender it, retain the original results and restore its plan/source
+dependencies into a separate workspace with empty budget-ceiling output paths.

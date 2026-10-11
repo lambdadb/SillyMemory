@@ -772,7 +772,7 @@ See [method, exact failures and interpretation](context-aware-query-comparison.m
   Product/default promotion remains deferred; zero new provider requests or resources.
 - **Audit archive:** `/Users/steven/Dev/sillymemory/artifacts/archive/jev-depth-100-source-audit-v1/evidence.tar.gz`.
   SHA-256 `b486a5c6f79864762da560434349dcb56198838a89d809ca77b3b6ec8a18119b`;
-  61,264 bytes, 10 members, each original byte verified. Revised report SHA-256
+  61,264 bytes, 10 members, each original byte verified. Source-audit archived report SHA-256
   `f19ca1e5f92aac700a07630440222a57bd1d21549fbcf9aba3965192d05d3404`.
   Includes frozen rules/case list, decisions, exact source/rank/delivery/answer
   locators, audit producer/validator, input locks, references and revised report.
@@ -784,3 +784,26 @@ See [method, exact failures and interpretation](context-aware-query-comparison.m
   changes unchanged. Train subtraction, website date interval and different-week
   doctor/bedtime examples recomputed without a model. This checks recorded bytes and
   arithmetic, not independent human judgment or full-cohort corrected grading.
+- **Completed budget-ceiling replay:** [full50 injection diagnostic](jev-depth-100.md#completed-offline-injection-budget-ceiling)
+  covers all 500 questions/both existing arms, changing only 4096 admission to all
+  fixed final50 passages under the identical renderer/selector. No retrieval,
+  embeddings, generation, judgments or remote resources. Full-memory medians
+  6595/7054 tokens and maxima 8675/8681; serialized prompt estimates rise 1.60×/1.69×.
+  Depth50 restores one annotated source in an already correct case; depth100 restores
+  11 across nine cases, including all markers in two current wrong answers and some
+  markers in a third. No new accuracy or noise labels; defaults/reference unchanged.
+- **Budget-ceiling archive:** `/Users/steven/Dev/sillymemory/artifacts/archive/jev-depth-100-budget-ceiling-v1/evidence.tar.gz`.
+  SHA-256 `74a4054384317dd266188ee97a348a9f22129490391e078feeed5f6c4ca092d7`;
+  22,490,224 bytes, 13 members, each original byte verified. Budget-ceiling report
+  SHA-256 `85f85e2f03af81bc1e2fd9a069f24f3f2b6c52419b69466e81adc60748042fdd`.
+  Frozen plan/producer/input locks, 1000 complete counterfactual memories/prompts,
+  per-case metrics, aggregate/type results, validator and revised report included.
+  Interrupted/completed/source-audit archives retain their original bytes.
+  Local-only dataset/tokenizer/parent dependencies; no large results or one-off
+  helpers enter Git/CI. Re-render in a separate workspace with empty output paths.
+- **Budget-ceiling validation:** 1000 memories and 50000 fixed passages; baseline
+  source inclusion, original markers/labels and exact prompt whitelists/hashes checked.
+  All pass the earlier experimental32768 input-plus-output reservation gate, not a
+  fresh provider context-limit check. Same recorded tokenizer; no new answer-quality,
+  billing, latency or browser test. Defer paid full50 generation; first assess preserving
+  selected text/provenance while reducing repeated contiguous-message formatting.
