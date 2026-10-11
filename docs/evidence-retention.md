@@ -807,3 +807,37 @@ See [method, exact failures and interpretation](context-aware-query-comparison.m
   fresh provider context-limit check. Same recorded tokenizer; no new answer-quality,
   billing, latency or browser test. Defer paid full50 generation; first assess preserving
   selected text/provenance while reducing repeated contiguous-message formatting.
+- **Completed same-message assembly:** [fixed-budget source assembly](jev-depth-100.md#completed-offline-same-message-assembly)
+  covers all 500 questions/both captured final50 arms, with search and budget4096
+  unchanged. Same-message canonical ranges share a source/date header, touching or
+  exactly overlapping ranges are joined and missing intervals explicitly marked.
+  Existing identical-text groups remain opaque with all citations. Original selected
+  passages are a source floor; spend savings in original rank order, or retain the
+  exact baseline when formatting saves nothing. No new model or retrieval calls.
+- **Assembly result:** same-source median savings 250/267 tokens; marker delivery
+  864→865 / 876→883. Depth100 recovers seven marked occurrences across six questions,
+  including all annotated sources for both inspected budget-related wrong answers
+  and partial restoration for cultural events. All seven newly represented bodies
+  are complete. Existing marked delivery/text is preserved, but no new answer
+  accuracy is measured. Additional admitted depth100 passages 1262, of which 1255
+  are unmarked; unmarked is not irrelevant. Full50 medians fall to 6221/6479 but no
+  full50 memory fits4096. Boundary-v1 has zero actual overlap; overlap tests are
+  synthetic. Defaults and the benchmark reference stay unchanged pending full-cohort
+  generated-answer confirmation, not a subset-tuned or token-only quality claim.
+- **Assembly archive:** `/Users/steven/Dev/sillymemory/artifacts/archive/jev-depth-100-message-packing-v1/evidence.tar.gz`.
+  SHA-256 `a7275c3fc78c61f057f44b3ed8b3132e1defb66ca0d02e3e7be969ad103d24b4`;
+  42,143,920 bytes, 19 members, each original byte verified. Assembly report SHA-256
+  `500b8b0362d7ce0202cac09c4b70329b9a2c223c0377f057c49cd6ffb4b17fbf`.
+  Frozen plan/producer/input locks, complete memories/prompts and source-union blocks,
+  metrics/type results, source inspection notes, nine small synthetic scenarios,
+  validator and revised report included. All four preceding Jev archives remain
+  byte-identical. Local-only, unavailable in a fresh clone; dataset/tokenizer and
+  parent sources/results are external dependencies, not CI inputs. No raw corpus,
+  one-off implementation or compatibility path is added to maintained source.
+- **Assembly validation:** independent Python checks 1000 memories, 50000 returned
+  passages, 32105 selected passages and 81551 rendered blocks; canonical UTF-16
+  unions, explicit gaps, all baseline sources, identical-text provenance, exact prompt
+  whitelists and original labels/markers verified. Nine synthetic scenarios passed.
+  `npm test` 323/323 on Node24.15.0 and syntax/release/SDK checks passed; product/test
+  diff is empty. Same recorded tokenizer, no independent tokenization, generated
+  answers, billed usage, latency, fresh browser integration or default promotion.

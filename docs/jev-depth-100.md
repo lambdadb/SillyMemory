@@ -294,15 +294,91 @@ prefixes, identical-text grouping and token-boundary effects, not pure header ov
 
 The budget is a real bottleneck for specific sources, but removing it expands input
 throughout the cohort while only a small set of annotated delivery gaps is restored.
-Keep defaults and the reference unchanged; defer a paid full50 answer run. The next
-bounded candidate should preserve all current selected text and provenance while
-reducing repeated formatting of contiguous chunks from the same message, with search
-and 4096 admission fixed. Compare the complete frozen cohort before adopting it;
-do not discard assistant/unmarked content or introduce learned selection calls here.
+Keep defaults and the reference unchanged; defer a paid full50 answer run. This
+motivated the bounded same-message assembly comparison below, preserving current
+selected text/provenance with search and 4096 admission fixed. Compare the complete
+frozen cohort before adopting it; do not discard assistant/unmarked content or
+introduce learned selection calls here.
 
 Independent validation checks 1000 counterfactual memories, 50000 fixed passages,
 original labels/markers, baseline-source inclusion and exact prompt whitelists/hashes.
 Token counts use the same recorded tokenizer, not an independent implementation.
+
+### Completed offline same-message assembly
+
+Frozen before execution at `c27926e03680366280244e8394eb91bec9b2a05e`: all original
+500 questions, both captured native Jev arms and their fixed final50 ranking. Only
+prompt assembly changes; no new search, embeddings, generation, judging or remote
+resources. Product code/defaults and original answer labels remain unchanged.
+
+Establish the existing 4096-token selection as an immutable source floor. Preserve
+existing identical-text groups as opaque blocks, with all original coordinates and
+session dates at their latest occurrence. Group consecutive singleton blocks from
+the same original message/revision/identity, sort their ranges by original UTF-16
+offset and merge only touching or exactly overlapping canonical ranges. Share one
+message/passages/session-time header; explicitly mark each omitted interval between
+disjoint ranges. Never reconstruct missing text or combine different messages.
+Singletons and identical-text blocks keep the existing representation. The same
+first-session prefix replacement and conversation-time legend are retained.
+
+If rendering the baseline-selected passages saves tokens, refill from the original
+hit order within 4096 using the existing distinct-content guard; never evict or
+truncate a baseline passage. Otherwise retain the exact baseline. This is a local
+candidate, not a promoted runtime algorithm. **The frozen boundary-v1 corpus has
+zero overlapping source characters:** observed savings come from shared formatting
+and adjoining text, not overlap removal. Hypothetical overlap is synthetic coverage.
+
+| Metric | Depth50 | Depth100 |
+| --- | ---: | ---: |
+| Same-selected-source net tokens saved: median / p95 / maximum | 250 / 438 / 569 | 267 / 452 / 559 |
+| Memories using assembly | 495/500 | 496/500 |
+| Marked sources delivered: existing → assembled/refilled | 864→865 / 896 | 876→883 / 896 |
+| Questions recovering any marked source | 1 | 6 |
+| Questions with all marked sources: existing → assembled/refilled | 457→458 / 479 | 463→467 / 479 |
+| Complete marked message bodies: existing → assembled/refilled | 858→859 | 872→879 |
+| Additional admitted passages | 1158 | 1262 |
+| Full50 memory tokens: existing median → grouped median | 6595→6221 | 7054→6479 |
+| Grouped full50 memories fitting 4096 | 0/500 | 0/500 |
+
+All 1000 candidates preserve every baseline source passage and stay within 4096;
+no message-marker delivery regression occurs. Depth100 restores seven of the 11
+marked occurrences available from unlimited full50 injection, across six questions:
+`06878be2`, `35a27287`, `afdc33df`, `caf03d32`, `1da05512`, `07b6f563`.
+All seven newly represented marked message bodies are complete. Slow-cooker and NAS,
+the two inspected budget-related wrong-answer cases, regain all annotated sources;
+cultural events regains one but message 411 remains outside final50. The other
+recoveries are already officially correct controls. Depth50 restores the one old
+NAS source also restored by unlimited admission, in an already correct answer.
+
+Four depth100 delivery gaps remain relative to full50: property-viewing count
+`gpt4_7fce9456` (message 439), photography setup `06878be2` (328), bedtime
+`195a1a1b` (503) and temporal `gpt4_f420262d` (368). The unchanged greedy refill spends
+space on earlier eligible passages; formatting cannot remove every delivery gap.
+These are original flattened message indices, not chunk numbers. This does not
+assert that those markers are unique required facts or that their answers are wrong.
+
+Depth100 adds seven passages from marked messages and 1255 from unmarked messages,
+491 user and 771 assistant passages. Unmarked is not irrelevant. Most saved space
+is spent on additional source content: final memory median remains 4077 tokens,
+rather than becoming a substantially cheaper memory prompt. Serialized full-input
+estimates total 2262699→2242427; fewer role-message wrappers affect this estimate.
+It is not provider usage, cost, latency or a generated-answer-quality result.
+
+Independent Python validation checks all 1000 memories/50000 returned passages,
+32105 selected passages and 81551 rendered blocks against canonical UTF-16 unions,
+exact gaps, date/source citations, original system/question whitelists and unchanged
+markers/labels. Nine small synthetic scenarios cover adjacency, gaps, overlap,
+identical-text provenance, revision boundaries/stale text, prefix handling, Unicode,
+source-preserving refill and unchanged fallback. These validate the ignored candidate,
+not shipped runtime, host integration or provider behavior. Tokenization uses the
+same recorded tiktoken/o200k_base implementation.
+
+**Decision:** source assembly is a justified answer-quality confirmation candidate:
+it recovers both demonstrated budget-loss sources at the same budget and preserves
+all existing text/provenance. Keep defaults unchanged pending generated-answer
+comparison over the full frozen cohort, including all already-correct regression
+controls. Do not claim seven corrected answers, increase the budget, tune a subset,
+or run further searches/model-selection variants from this arithmetic alone.
 
 ## Operational recovery, resources and latency
 
@@ -370,8 +446,9 @@ one-off runners enter Git. Seven predecessor archives remain byte-identical.
 The original completed archive retains its initial report bytes; the subsequent
 offline audit and revised report are preserved separately in the source-audit archive
 listed in the evidence index. Earlier records and labels are not overwritten.
-The later budget-ceiling replay and its revised report have another separate archive;
-all preceding archives retain their original bytes.
+The later budget-ceiling replay and same-message assembly comparison each have their
+own separate archive and report revision; all preceding archives retain their
+original bytes.
 
 Offline revalidation uses the retained source and original worktree-relative placement:
 
@@ -386,6 +463,9 @@ python3 artifacts/jev-depth-100-source-audit-v1/audit.py
 python3 artifacts/jev-depth-100-source-audit-v1/validate.py
 python3 artifacts/jev-depth-100-budget-ceiling-v1/summarize.py
 python3 artifacts/jev-depth-100-budget-ceiling-v1/validate.py
+node artifacts/jev-depth-100-message-packing-v1/fixtures.mjs
+python3 artifacts/jev-depth-100-message-packing-v1/summarize.py
+python3 artifacts/jev-depth-100-message-packing-v1/validate.py
 ```
 
 These require the recorded local dataset/tokenizer paths. Copy/extract to a separate
@@ -399,3 +479,6 @@ by completing this evaluation.
 The budget-ceiling producer `run.mjs` refuses to overwrite existing output files.
 To independently rerender it, retain the original results and restore its plan/source
 dependencies into a separate workspace with empty budget-ceiling output paths.
+The same-message candidate `run.mjs` likewise requires empty output paths; restore
+its archived sources/dependencies in a separate workspace instead of overwriting
+retained results. Neither offline producer needs credentials or makes provider calls.
