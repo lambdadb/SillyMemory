@@ -951,3 +951,27 @@ See [method, exact failures and interpretation](context-aware-query-comparison.m
   revised source/test/report, follow-up patch and fresh run bytes. Local-only,
   unavailable in a fresh clone; pinned host/dependencies are external inputs,
   not maintained CI dependencies.
+
+## Profile50 actual-host validation
+
+- **Record:** [LongMemEval profile through the actual host](profile-50-host-validation.md).
+  Six consumed LongMemEval-S cases completed in pinned unmodified SillyTavern with
+  live managed embeddings/Bayesian/Jev/Sol and official frozen judging:6/6 correct.
+  Question-only retrieval and memory-plus-question generation; k100/candidate100/
+  final50/budget4096. This is a patched ignored test copy, not product defaults,
+  full500 reproduction, byte-identical benchmark prompts or held-out confirmation.
+- **Audit:** all source slices/revisions, returned documents, assembled source unions,
+  request whitelist, provider answers/judgments, cumulative resources and cleanup
+  checked. All11 owned collections absent by GET404. One original ungraded answer,
+  two inspector-recording failures and period-compatible judge recovery are kept;
+  no answer substitution or changed questions. Product source remains unchanged.
+- **Archive:** `/Users/steven/Dev/sillymemory/artifacts/archive/profile-50-host-validation-v1/evidence.tar.gz`.
+  SHA-256 `e64c4b8f4bb38ec6bae551b7ee7ebec4a0b45225ec7004449cc812e893b45ffc`;
+  6,190,656 bytes,363 members, every original byte verified. Final report SHA-256
+  `400e3e324012c593337c78d2a24ba89babab0ceb21b63e30188c06927ffd1085`.
+  Adjacent `manifest.json` records base `718ce65d390c0306b02471b1cb15b9c277dd5850`,
+  frozen plans, cumulative continuation, admission observations, all failed/completed
+  episodes, independent audit, exact producer sources and experiment-only extension
+  patch/copy. Local-only and unavailable in a fresh clone; the recorded dataset,
+  pinned host and dependencies are external reproduction inputs, not CI dependencies.
+  Prior historical archives are not overwritten or removed.
