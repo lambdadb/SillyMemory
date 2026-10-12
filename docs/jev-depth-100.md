@@ -1,5 +1,11 @@
 # Jev depth 100: completed LongMemEval-S retrieval and final answers
 
+The depth-comparison decision below is historical: it does not establish an
+independent quality gain. The later [provisional numeric-default selection](profile-50-host-validation.md#product-default-adoption)
+uses these observations plus completed assembly and host validation, while keeping
+current-policy quality confirmation outstanding. The original counts, losses,
+limitations and recommendation against promotion from this single run are retained.
+
 ## Result and decision
 
 **All 500 paired questions completed. Official answer accuracy: Jev50
@@ -20,7 +26,7 @@ code, settings, dependencies and tests are unchanged. Live
 execution was on 2026-10-11 UTC; answer generation ran 11:38:51–12:06:07.
 
 This is direct provider benchmark generation over captured native retrievals, not a
-new SillyTavern browser run. Runtime defaults remain recent 12 messages, budget 1600,
+new SillyTavern browser run. At the measured base, runtime defaults were recent 12 messages, budget 1600,
 k/size/rerank candidate 30 and complete-recent-dialogue query construction. The
 benchmark instead indexes all history except the question, queries that question
 alone and uses a 4096-token memory budget. Do not describe these benchmark settings

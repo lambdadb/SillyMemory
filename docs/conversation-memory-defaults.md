@@ -1,23 +1,113 @@
 # Conversation memory defaults
 
-Adopt stored, fully budgeted conversation-time provenance, Bayesian+Jev retrieval,
-and a 1,600-token initial memory budget for the English-focused prototype. Keep
-boundary-aware per-message chunks, the 4,096-token maximum and the host's
-one-quarter context cap. These are development defaults, not a release or a claim
-that 1,600 tokens are sufficient for every conversation.
+Current development defaults use stored, fully budgeted conversation-time
+provenance, Bayesian English fusion and managed Jev: vector k=100, up to 100 rerank
+candidates, final size=50, and a 4,096-token initial memory budget. Keep per-message
+boundary chunks with an 800-code-point ceiling. The 4,096-token maximum and host
+one-quarter-context cap remain; explicit saved budgets are respected. These are
+development defaults, not a release or a universal optimum.
 
-The [complete recent-dialogue comparison](context-aware-query-comparison.md#complete-recent-dialogue-comparison)
-qualifies the earlier negative result from a separately capped context window.
-Following that completed comparison, adopt one query containing the entire eligible
-recent partition and the current generation anchor. No LLM rewrite is needed;
-Bayesian+Jev, managed embeddings and the 1,600-token default remain unchanged.
-See [product adoption](context-aware-query-comparison.md#product-adoption-complete-recent-query)
-for the exact partition, limits and production validation. Historical experiments
-below retain their original two-query protocol; they are not reruns of this default.
+### Current-question and active-input policy
 
-The later [external failure discovery](current-baseline-failure-discovery.md)
-qualifies one real capacity loss and its 3,200-token repair. Independent default
-efficacy remains unestablished; the 1,600-token default is retained.
+Index all completed eligible plain-text messages, including the immediately
+preceding exchange. Do not index a pending trailing user input until the assistant
+replies. Search only the current eligible user question; Continue uses the message
+being extended, and Impersonate uses the latest eligible response. Regenerate/swipe never use the answer being replaced as a query.
+Both search legs prefilter message positions below the active input, and local
+validation applies the same boundary before token selection. Answers following a
+replacement question are also excluded from retrieval.
+
+After successful preparation, generation keeps **only the active input and selected
+memory**, alongside native system/character settings. Normal/regenerate/swipe keep
+the question; Continue keeps the partial message being extended, and Impersonate
+keeps the character response to answer as the user. There is no
+last-N-message window or recent-message setting. Past eligible full messages,
+including answers following a replacement question, are removed only from the
+ephemeral prompt. Stored chats are unchanged. Special/file/media messages are
+preserved rather than treated as searchable plain text; tool/group chats remain
+outside the supported scope. Zero hits or no fitting passages follow the same
+policy, with no full-history fallback. Synchronization/query/counting failures or
+an unexpected host shape retain the original prompt; failures are visible, and
+query-limit violations abort rather than silently skipping memory.
+
+The answer model receives a separate system instruction to ask one brief clarifying
+question rather than guess when available evidence cannot establish a fact or
+disambiguate its referent. Missing retrieval is not proof that an event never
+occurred. The instruction is counted with excerpts under the memory budget and
+verified in the final prompt even when retrieval is empty. This is an instruction,
+not a guarantee of model behavior; a clarification turn does not automatically
+recover missing evidence. No extra generation, rewriting, summary or retrieval
+call is introduced. A long current question/continuation can still exceed the
+8 KiB search limit; provider input limits remain.
+
+Product decision: use all-completed-history storage, current-question retrieval
+and active-input-plus-memory generation as the simple baseline requested by the
+maintainer. A fixed recent-12 window had no measured necessity under this policy
+and is removed. Completion criterion: no previous eligible plain turn remains
+full after successful preparation, even for empty selections; preserve the current
+input, native system/character settings, Continue prefix and impersonation response, exclude replacement
+answers, and pass source/synchronization/branch/budget/cancellation/delivery checks.
+Do not expand paid experiments or claim a new quality score for this change.
+
+The [six-case live check](profile-50-host-validation.md#product-default-adoption)
+used question-only retrieval and history except the current question, with no
+other recent messages supplied to generation. It did not use the new clarification
+guidance and cannot establish answer behavior for this final policy. The full-500
+result remains consumed-cohort evidence. No new independent answer-quality score,
+conversation-continuity confirmation or clarification-behavior measurement is
+claimed. A generic follow-up such as "Where was that?" may need clarification
+without full recent context. The prior [complete recent-dialogue comparison](context-aware-query-comparison.md#complete-recent-dialogue-comparison)
+remains historical evidence, not the current policy.
+
+### Implementation validation
+
+- `npm test`: 340/340; runtime, maintained script/test syntax, release metadata
+  and locked SDK 0.8.0 checks passed.
+- `ST_SOURCE=<pinned host> ST_TEST_PORT=18134 SM_ARTIFACT_TAG=input-only-v4 npm run test:browser`:
+  45 checks passed. Actual pinned host/Chromium; local LambdaDB emulator.
+- `ST_SOURCE=<pinned host> ST_TEST_PORT=18135 SM_ARTIFACT_TAG=input-only-v4 npm run test:faults`:
+  77 checks passed, including timeout/reload, uncertain writes, native branches,
+  deletion and cancellation; no uncaught browser errors or remaining collections.
+- `ST_SOURCE=<pinned host> node scripts/prompt-delivery-smoke.mjs artifacts/input-only-v9/prompt-delivery.json`:
+  all 17 cases plus overlap, repeated packing and source assembly passed. Actual
+  host packing and dispatched local completion requests preserve native character
+  and system settings, active input and system guidance. Past eligible turns are
+  absent as full messages. No-hit and no-fitting-passage requests do not restore
+  history; regenerate/swipe exclude the answer suffix; Continue keeps its prefix and
+  Impersonate retains the character response while leaving source history intact.
+  Empty-selection preparation displays the counted guidance tokens rather than zero.
+  This does not exercise an actual LLM.
+- The preceding one-off live LambdaDB numeric-range contract used one collection,
+  four synthetic documents and two searches, with no generation. Both legs
+  accepted the message-range prefilter and isolated the source correctly; owned
+  cleanup returned HTTP 404. The client and SDK are unchanged by this follow-up.
+  This is historical transport evidence, not a new browser/provider run.
+
+The active-input revision removes recent-history capacity pressure; the maintained
+harness therefore separates a long-history control from actual system-instruction
+pressure. The latter uses 110 instruction repetitions to exercise host truncation,
+Stop on missing context, streaming, swipe/regenerate and manual context recovery.
+Previously captured cases retain their original settings in local archives.
+Small-context packing now prepares two excerpts, with six after context recovery;
+the repeated-citation source-integrity fixture keeps its five required excerpts
+under context 2,048/budget 500. These are emulator contract observations, not
+answer-quality changes. Intermediate attempts failed on stale policy labels,
+expected excerpt totals or pressure assumptions; no paid answer reruns occurred.
+Historical producer revisions are required for fixed-window answer experiments;
+current generation refuses those old modes rather than silently changing their
+frozen protocol. Their npm aliases are removed, and historical execution documents
+explicitly require the recorded checkout. Current contract runners no longer configure a recent window.
+
+See the [active-input evidence record](evidence-retention.md#active-input-policy-final-validation). Previous current-question and first active-input archives
+preserve the intermediate recent-12 implementation and its validation. They are
+not final active-input evidence; historical scores remain unchanged.
+
+## Historical adoption evidence
+
+The original twelve-case evaluation below adopted Bayesian+Jev with a 1,600-token
+budget. The later [external failure discovery](current-baseline-failure-discovery.md)
+identified a real capacity loss and a 3,200-token repair. Preserve those original
+protocols/results; they are not reruns of the current numeric defaults.
 
 ## Method and adoption boundary
 
@@ -40,7 +130,7 @@ independent held-out benchmark. Histories fit 32K and do not establish performan
 when a realistic large context overflows. The unknown-date case also explicitly
 instructs the model not to invent a date, making it an easier abstention control.
 
-Deployed retrieval uses stable SDK 0.8.0, managed `text-embedding-3-small`, an
+Recorded retrieval used stable SDK 0.8.0, managed `text-embedding-3-small`, an
 English-only `text` analyzer, raw query with `skipSyntax: true`, owner/scope filters
 on both legs, `consistentRead: true`, explicit `chat_eval` branch, `knn.k=30` and
 final `size=30`. Search uses one shared UTF-8-safe prefix for all signals, capped

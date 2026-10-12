@@ -71,11 +71,14 @@ const remote = createServer({ key: await readFile(key), cert: await readFile(cer
         if (delayedQuery) await new Promise(r => setTimeout(r, delayedQuery));
         const knn = body.query.bayesian?.[0]?.knn || body.query.knn;
         const filter = knn?.filter || body.query;
-        if (body.query.bayesian) assert.deepEqual(body.query.bayesian[1].bool[0], { ...filter, occur: 'filter' });
-        const match = /^owner:([a-f0-9]+) AND scope:([a-f0-9]+)$/.exec(filter.queryString?.query || '');
+        if (body.query.bayesian) {
+            assert.deepEqual(body.query.bayesian[1].bool[0], { ...filter, occur: 'filter' });
+            assert.equal(knn.k, 100); assert.equal(body.size, 50); assert.equal(body.rerank.candidateSize, 100);
+        }
+        const match = /^owner:([a-f0-9]+) AND scope:([a-f0-9]+)(?: AND message:\[0 TO (\d+)\])?$/.exec(filter.queryString?.query || '');
         assert.ok(match, 'owner and scope query filters required');
         if (knn) assert.equal(typeof knn.queryText, 'string');
-        const found = [...docs.values()].filter(d => d.owner === match[1] && d.scope === match[2]);
+        const found = [...docs.values()].filter(d => d.owner === match[1] && d.scope === match[2] && (match[3] === undefined || d.message <= Number(match[3])));
         return faults.respond('query', () => [200, body.rerank ? rerankedResponse([...found, ...staleHits], name) : documentResponse([...found, ...staleHits], name)], send);
     }
     send(400);
@@ -134,7 +137,7 @@ try {
     const field = name => page.locator(`#sillymemory [data-sm="${name}"]`);
     const status = () => field('status').innerText();
     const waitStatus = async text => { await page.waitForFunction(text => document.querySelector('#sillymemory [data-sm="status"]')?.textContent.includes(text), text, { timeout: 30000 }); };
-    check('fresh settings use the adopted 1600-token initial budget', await field('budget').inputValue() === '1600');
+    check('fresh settings use the adopted 4096-token initial budget', await field('budget').inputValue() === '4096');
     await field('endpoint').fill(endpoint); await field('project').fill('synthetic');
     corsEnabled = false;
     await field('key').fill('synthetic-session-key'); await field('connect').click();
@@ -156,7 +159,6 @@ try {
     check('preparation creates no collection before a chat is enabled', collections.size === 0);
     await page.locator('#sillymemory .inline-drawer-toggle').scrollIntoViewIfNeeded();
     if (!faultMode) await page.screenshot({ path: path.join(artifacts, 'setup.png') });
-    await field('recent').fill('2'); await field('recent').dispatchEvent('change');
     await field('budget').fill('250'); await field('budget').dispatchEvent('change');
     // Create a synthetic character through SillyTavern's own API, then load it.
     await page.evaluate(async () => {
@@ -189,13 +191,13 @@ try {
         // This suite calls only the interceptor dispatcher. Emulate its completion
         // boundary to release prompt ownership; full packing/dispatch is tested
         // by prompt-delivery-smoke.mjs, not by this synthetic final event.
-        if (!aborted) await c.eventSource.emit(c.eventTypes.GENERATE_AFTER_DATA, { prompt: chat.map(m => ({ role: m.is_user ? 'user' : 'assistant', content: m.mes })) }, false);
+        if (!aborted) await c.eventSource.emit(c.eventTypes.GENERATE_AFTER_DATA, { prompt: [{ role: 'system', content: c.extensionPrompts.sillymemory.value }, ...chat.map(m => ({ role: m.is_user ? 'user' : 'assistant', content: m.mes }))] }, false);
         return result;
     });
     const result = await prompt();
     check('real host dispatcher injects bounded memory', Boolean(result.injection) && /\d+ \/ 250 tokens/.test(result.inspection));
     check('native recalled excerpts keep macros literal within budget', result.rendered.includes('｛｛char｝｝') && result.rendered.includes('＜USER＞') && result.macroValue === undefined && result.renderedTokens <= 250);
-    check('recent messages and persisted source chat are preserved', result.chat.filter(m => !m.mes.startsWith('[Past conversation excerpt:')).length === 2 && result.chat.at(-2).mes.includes('passage 6') && result.before === result.after);
+    check('only the question stays full and persisted source chat is preserved', result.chat.filter(m => !m.mes.startsWith('[Past conversation excerpt:')).length === 1 && result.chat.at(-1).mes.includes('passage 6') && result.before === result.after);
     // Exercise assembly through the real extension dispatcher with multiple stored chunks.
     await field('budget').fill('1600'); await field('budget').dispatchEvent('change');
     const assemblySource = await page.evaluate(async () => {
@@ -231,7 +233,7 @@ try {
     check('swipe event updates remote source', [...collection.docs.values()].some(d => d.text.includes('Selected swipe')));
     await page.evaluate(async () => { const c = SillyTavern.getContext(); c.chat.splice(0, 1); await c.eventSource.emit(c.eventTypes.MESSAGE_DELETED, 0); });
     await waitStatus('synchronized');
-    check('message deletion reconciles remote documents', collection.docs.size === 5);
+    check('message deletion reconciles remote documents', collection.docs.size === 7);
     delayedQuery = 700;
     const pending = prompt();
     await page.waitForTimeout(150);
@@ -363,11 +365,13 @@ try {
     if (faultMode) { staleHits = []; faultResults = await runFaultScenarios({ page, field, waitStatus, prompt, check, faults, collections, calls, restartHost: recoveryMode ? async () => { const exited = new Promise(resolve => server.once('exit', resolve)); server.kill('SIGKILL'); await exited; await start(false); } : undefined, screenshot: name => page.screenshot({ path: path.join(artifacts, `${name}${artifactTag ? `-${artifactTag}` : ''}.png`) }) }); }
     else { page.once('dialog', dialog => dialog.accept()); await field('delete').click(); await waitStatus('no longer accessible'); }
     check('owned remote deletion leaves no collections', collections.size === 0);
+    await field('budget').fill('512'); await field('budget').dispatchEvent('change');
     await page.reload(); await page.locator('#sillymemory').waitFor({ state: 'attached', timeout: 45000 });
     check('final reload again requires key entry', await field('key').inputValue() === '' && !await field('enabled').isChecked());
+    check('explicit user budget survives reload without default replacement', await field('budget').inputValue() === '512');
     if (faultMode) check('fault run has no uncaught browser page errors', errors.length === 0);
     const sourceSha256 = {};
-    for (const file of ['index.js', 'manifest.json', 'settings.html', 'style.css', 'src/chunking.js', 'src/client.js', 'src/commit.js', 'src/chat-collections.js', 'src/checkpoints.js', 'src/gate.js', 'src/memory.js', 'src/time.js', 'src/context.js', 'src/status.js', 'scripts/browser-smoke.mjs', 'scripts/emulator-cors.mjs', 'scripts/fault-scenarios.mjs', 'scripts/recovery-scenarios.mjs']) {
+    for (const file of ['index.js', 'manifest.json', 'settings.html', 'style.css', 'src/chunking.js', 'src/client.js', 'src/commit.js', 'src/chat-collections.js', 'src/checkpoints.js', 'src/gate.js', 'src/memory.js', 'src/time.js', 'src/context.js', 'src/delivery.js', 'src/status.js', 'scripts/browser-smoke.mjs', 'scripts/emulator-cors.mjs', 'scripts/fault-scenarios.mjs', 'scripts/recovery-scenarios.mjs']) {
         sourceSha256[file] = createHash('sha256').update(await readFile(path.join(root, file))).digest('hex');
     }
     await writeFile(path.join(artifacts, artifactName), JSON.stringify({ passed: true, faultResults, sourceSha256, time: new Date().toISOString(), sillyTavern: revision, node: process.version, browser: browser.version(), upstream: 'Local HTTPS LambdaDB emulator; no live managed embeddings', checks, pageErrors: errors, requestCount: calls.length, preflights, proxyRequests, remainingCollections: collections.size }, null, 2));

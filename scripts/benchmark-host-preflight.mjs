@@ -191,12 +191,12 @@ try {
         $('#vector_altEndpointUrl_enabled').prop('checked', true).trigger('input');
         $('#vector_altEndpoint_address').val('http://127.0.0.1:1/v1').trigger('change');
         return { summary: structuredClone(c.extensionSettings.memory), vectors: structuredClone(c.extensionSettings.vectors),
-            recent: Number(document.querySelector('[data-sm="recent"]').value), budget: Number(document.querySelector('[data-sm="budget"]').value) };
+            recentWindowControlPresent: Boolean(document.querySelector('[data-sm="recent"]')), budget: Number(document.querySelector('[data-sm="budget"]').value) };
     });
     assert.equal(report.settings.summary.prompt_builder, 0); assert.equal(report.settings.summary.promptInterval, 10);
     assert.equal(report.settings.summary.promptWords, 200); assert.equal(report.settings.summary.overrideResponseLength, 0);
     assert.equal(report.settings.vectors.insert, 3); assert.equal(report.settings.vectors.protect, 5);
-    assert.equal(report.settings.recent, 12); assert.equal(report.settings.budget, 800);
+    assert.equal(report.settings.recentWindowControlPresent, false); assert.equal(report.settings.budget, 4096);
 
     async function reset(chat, id, context) {
         if (await field('enabled').isChecked()) await field('enabled').uncheck();

@@ -1,5 +1,10 @@
 # Current-baseline failure discovery
 
+This records the historical 1,600-token discovery/adoption decision, not the
+current settings. The later [provisional numeric-default selection](profile-50-host-validation.md#product-default-adoption)
+does not claim that the independent quality gate below has been completed. Original
+sources, scores, repair and stopping criteria remain unchanged.
+
 **Keep Bayesian+Jev and the 1,600-token default.** Six previously unexposed
 English LongMemEval-S questions produced five released-target matches. One
 multi-source answer failed because a retrieved source did not fit the injected

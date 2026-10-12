@@ -20,10 +20,11 @@ test('direct CORS preserves auth/body and query scope without host credentials',
         assert.deepEqual(Object.keys(init.headers).sort(), ['Content-Type', 'x-api-key']);
     }
     const body = JSON.parse(calls[1].init.body);
+    assert.equal(body.size, 50); assert.equal(body.query.bayesian[0].knn.k, 100);
     assert.equal(body.query.bayesian[0].knn.queryText, 'compass'); assert.deepEqual(body.query.bayesian[0].knn.filter, scopeFilter(owner, scope));
     assert.deepEqual(body.query.bayesian[1].bool[0], { ...scopeFilter(owner, scope), occur: 'filter' });
     assert.deepEqual(body.query.bayesian[1].bool[1], { queryString: { query: 'compass', defaultField: 'text', skipSyntax: true }, occur: 'must' });
-    assert.deepEqual(body.rerank, { provider: 'typesafe', model: 'jev-1.13.0', queryText: 'compass', fields: ['text'], candidateSize: 30, onFailure: 'error' });
+    assert.deepEqual(body.rerank, { provider: 'typesafe', model: 'jev-1.13.0', queryText: 'compass', fields: ['text'], candidateSize: 100, onFailure: 'error' });
     assert.equal(body.consistentRead, true); assert.deepEqual(body.ref, { kind: 'branch', name: 'main' });
     assert.ok(!JSON.stringify(client).includes('secret-test-only'));
     client.forget(); await assert.rejects(client.get('test'), /Enter your API key again/);
@@ -185,7 +186,7 @@ test('SDK diagnostics remain silent even when environment debugging is requested
 test('managed rerank metadata must confirm application or an empty candidate pool', async () => {
     for (const change of [r => { delete r.rerank; }, r => { r.rerank.status = 'fallback'; },
         r => { r.rerank.provider = 'different-provider'; }, r => { r.rerank.model = 'different-model'; },
-        r => { r.rerank.scoredCount = 0; }, r => { r.rerank.candidateCount = 31; },
+        r => { r.rerank.scoredCount = 0; }, r => { r.rerank.candidateCount = 101; r.rerank.scoredCount = 101; },
         r => { delete r.docs[0].retrievalScore; }]) {
         const response = rerankedResponse([{ id: 'one' }]); change(response);
         const client = new LambdaClient(config, 'test-key', { fetcher: async () => Response.json(response) });
@@ -224,7 +225,21 @@ test('the exact UTF-8 query limit preserves identical vector, lexical and rerank
         assert.equal(body.query.bayesian[1].bool[1].queryString.query, input);
         assert.equal(body.rerank.queryText, input);
         assert.equal(Buffer.byteLength(input, 'utf8'), 8192);
-        assert.equal(body.query.bayesian[0].knn.k, 30);
+        assert.equal(body.query.bayesian[0].knn.k, 100);
         assert.deepEqual(body.ref, { kind: 'branch', name: 'chat_child' });
     }
+});
+
+
+test('message boundary filters both search legs before ranking and rejects invalid bounds without a request', async () => {
+    const calls = [];
+    const client = new LambdaClient(config, 'synthetic-key', { fetcher: async (_, init) => {
+        calls.push(JSON.parse(init.body)); return Response.json(rerankedResponse());
+    } });
+    await client.search('test', owner, scope, 'Where?', undefined, 'chat_test', 4);
+    const filter = { queryString: { query: `owner:${owner} AND scope:${scope} AND message:[0 TO 3]` } };
+    assert.deepEqual(calls[0].query.bayesian[0].knn.filter, filter);
+    assert.deepEqual(calls[0].query.bayesian[1].bool[0], { ...filter, occur: 'filter' });
+    for (const boundary of [0, -1, 1.5, NaN, '4']) assert.throws(() => client.search('test', owner, scope, 'Where?', undefined, 'chat_test', boundary), /boundary/);
+    assert.equal(calls.length, 1);
 });

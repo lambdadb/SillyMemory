@@ -10,7 +10,7 @@ There is no server plugin. Runtime modules have no external dependencies. Playwr
 
 The current SillyTavern chat is authoritative. The owner is a random per-account identity kept in extension settings; its initial save is awaited and read back before the UI permits remote operations. Browser-local configuration and journals are keyed by that owner. Scope is SHA-256 of owner, character avatar filename, and the saved story ID. Every story has one owned collection; each chat path has its own writable branch. Native metadata is persisted and read back before remote use. Verified native forks inherit the story scope; independent copies start new stories. The source revision hashes message position, speaker, role, selected swipe, full text and normalized conversation-time metadata. A chunk ID contains scope, revision, chunking policy, ordinal and source offsets. Insertion/deletion can renumber subsequent messages and require reindexing; content is never deduplicated across scopes.
 
-Only older eligible text is indexed. Chunks are up to 800 Unicode code points by default. They retain message/chunk provenance and available host time/source metadata, separately from embedding text. The current implementation selects whole chunks and does not perform neighbor expansion. Renaming a chat preserves its saved identity. Changing the character avatar identity is not a continuity guarantee.
+All completed eligible text is indexed independently of generation input retention. A trailing user input remains pending until an assistant reply. Chunks are up to 800 Unicode code points by default. They retain message/chunk provenance and available host time/source metadata, separately from embedding text. The current implementation selects whole chunks and does not perform neighbor expansion. Renaming a chat preserves its saved identity. Changing the character avatar identity is not a continuity guarantee.
 
 ## Write ordering and recovery
 
@@ -28,31 +28,50 @@ No chat text or API key is persisted in the journal. If local storage fails, rem
 
 ## Retrieval and prompt application
 
-Queries use the selected `chat_<ID>` branch with `consistentRead: true`, not Tags/Aliases. The empty `main` branch is an independent-story fork source. Bayesian fusion combines managed embedding `knn.queryText` and the raw question through English-analyzed `text` with `skipSyntax: true`. Both legs use the owner/scope prefilter. Managed Typesafe `jev-1.13.0` reranks at most 30 candidates; unconfirmed applied metadata, mismatched provider/model identity or failure rejects injection. The final result limit remains 30. Search caps all three query signals at the same whole-code-point 8,192-byte UTF-8 prefix; shorter input is unchanged. Remote hits are ranking signals: only exact current IDs, ownership, scope, revision, source text and conversation-time metadata are accepted; injection uses the locally reconstructed text. This prevents eventual-index lag, deleted records, malicious remote text changes, and sibling-chat results from resurrecting stale content.
+Queries use the selected `chat_<ID>` branch with `consistentRead: true`, not
+Tags/Aliases. The empty `main` branch is an independent-story fork source. One
+current-question query uses only the current eligible user message.
+Regenerate/swipe exclude the answer being replaced; continuation anchors on the
+eligible message being extended; Impersonate anchors on the latest eligible response.
+No query rewriting model, appended recent
+conversation or second search is used. All completed history is stored; generation
+retains only the active input (the current question, or the message being extended
+for Continue, or the response being answered for Impersonate) and selected memory alongside native system/character settings.
+No last-N-message window is used. Answers following a replacement question are
+removed from ephemeral generation input and excluded from retrieval.
+See the [current default policy](conversation-memory-defaults.md).
 
-The `latest-anchor-with-context-selection-v5` query policy normally anchors on the
-last non-empty user message (or the last non-empty message if no user exists).
-The second query normally uses the preceding non-empty user turn. A newer
-eligible assistant turn strictly before the anchor replaces it only when its
-maximum lexical similarity to earlier eligible history exceeds the user's by a factor
-of 1.25. With no prior user, keep the preceding eligible assistant fallback.
-Assistant file/media/tool turns cannot become the second query. The local
-comparison uses word trigrams and smoothed IDF-weighted cosine on at most 256
-eligible messages before both candidates; no additional service call is made.
-This is a bounded heuristic, not semantic reference resolution. Each text/query
-is capped at 6,000 UTF-16 code units; duplicate queries collapse to one request.
-Regenerate/swipe exclude retained answers after the user anchor. Explicit host
-`continue` anchors on the latest non-empty message being extended and applies
-the same context rule before that anchor. See the [query policy](query-policy.md)
-and [context-turn results and limitations](context-turn-results.md).
 
-The distinct queries run concurrently, each requesting 30 candidates with the same scope filter. Candidate ranks are interleaved, question first, then context. Scores from separate queries are not added or compared. Current-source validation precedes deduplication; whole passages are accepted while the complete wrapper stays inside the same token budget. This reserves early selection opportunities for the question and the contextual reference without guaranteeing equal token shares. One query failure cancels the sibling and rejects the entire retrieval; the existing full-prompt fallback applies. Two requests can increase managed embedding/query usage and latency compared with the original single query.
+Bayesian fusion combines managed embedding `knn.queryText` with English-analyzed
+`text` using the same query and `skipSyntax: true`; both legs use the owner/scope
+prefilter, extended with the indexed `long` message-position range below the
+active-input boundary. The same boundary also limits local accepted documents,
+so an out-of-bound response cannot consume budget or duplicate the active input. Vector k=100, managed Typesafe `jev-1.13.0` candidateSize=100, final
+size=50. Unconfirmed applied metadata, mismatched provider/model identity or failure
+rejects injection. Queries above 8,192 UTF-8 bytes fail explicitly before any service
+call; they are never silently truncated.
 
-An epoch and a full snapshot comparison invalidate work across events, chat switches, disabling, and connection replacement. Pending queries are canceled when possible; canceled server writes are never assumed rolled back. Token counting and the final validity check precede mutation. Failed sync/query/counting or empty selection preserves the full ephemeral prompt. A valid selection replaces older eligible messages while preserving recent full messages and special messages. Only the generated `coreChat` array is spliced; persisted chat objects are untouched.
+Remote hits are ranking signals: only exact current IDs, ownership, scope, revision,
+source text and conversation-time metadata are accepted; injection uses the locally
+reconstructed text. This prevents eventual-index lag, deleted records, malicious
+remote text changes and sibling-chat results from resurrecting stale content.
+Whole source passages are selected under the complete rendered token budget, then
+same-message source assembly can share headers/remove exact overlap and refill in
+retrieval order without removing the established source floor. Final presentation
+remains chronological. Fifty returned chunks need not all fit the configured budget.
 
-Selected excerpts replace eligible older messages in the ephemeral `coreChat` at their source positions, using the locally reconstructed user/assistant role and display name. Presentation is chronological even when retrieval ranks differ. A system extension prompt no longer combines different speakers. Recent and special messages retain their original objects; source chat is untouched. Source labels identify recalled passages without rewriting pronouns or treating a speaker as the actor of every reported action.
+An epoch and a full snapshot comparison invalidate work across events, chat switches, disabling, and connection replacement. Pending queries are canceled when possible; canceled server writes are never assumed rolled back. Token counting and the final validity check precede mutation. Failed sync/query/counting preserves the full ephemeral prompt. A successful selection, including zero hits or nothing fitting the budget, replaces past eligible messages while preserving the active input and special messages. Only the generated `coreChat` array is spliced; persisted chat objects are untouched.
 
-Macro braces and legacy `<USER>`/`<CHAR>`-style markers are rendered with fullwidth delimiters before budgeting. The joined excerpt content, source labels and newline separators are counted with the host tokenizer, additionally capped at a quarter of the host context limit. Provider per-message envelopes and the complete system/persona/response overhead remain the host's responsibility; this is not a cap on total billed tokens or a guarantee that oversized recent history fits. Labeling and native roles are not a comprehensive prompt-injection defense.
+Selected excerpts replace eligible older messages in the ephemeral `coreChat` at their source positions, using the locally reconstructed user/assistant role and display name. Presentation is chronological even when retrieval ranks differ. A separate system extension prompt supplies clarification guidance; recalled speakers are never combined into that instruction. The active input and special messages retain their original objects; source chat is untouched. Source labels identify recalled passages without rewriting pronouns or treating a speaker as the actor of every reported action.
+
+Macro braces and legacy `<USER>`/`<CHAR>`-style markers are rendered with fullwidth delimiters before budgeting. The joined excerpt content, source labels, newline separators and clarification guidance are counted with the host tokenizer, with a fresh-settings default of 4,096 tokens, additionally capped at a quarter of the host context limit. Provider per-message envelopes and the complete system/persona/response overhead remain the host's responsibility; this is not a cap on total billed tokens or a guarantee that an oversized current input fits. Labeling and native roles are not a comprehensive prompt-injection defense.
+
+Successful preparation supplies a system instruction even with no matching memory:
+use available conversation evidence, ask one brief clarification when the referent
+or requested fact is unclear, and do not treat absent retrieval as proof of absence.
+Final delivery validates this instruction alongside excerpts and the active input.
+Failed preparation clears it and retains the original prompt. This does not detect
+answer correctness or ensure that every model follows the instruction.
 
 The pinned host scans `coreChat` for World Info after interceptors. Recalled excerpts can therefore participate in its ordinary history scan, unlike the previous system extension prompt with scanning disabled. World Info, other prompt rewriters, non-chat-completion providers and different host revisions are unverified. See the [speaker results](speaker-attribution-results.md) for the bounded OpenAI validation and remaining actor-attribution failure.
 

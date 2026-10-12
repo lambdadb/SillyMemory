@@ -34,11 +34,14 @@ renderer. Its 93.8%→95.0% consumed-cohort score is **not a new runtime/default
 Product repeat-packing selection remains a floor as well; this PR does not claim
 identical admission or answer results between the benchmark and runtime.
 
-Defaults remain recent12, memory budget1600 (maximum4096), chunk ceiling800 code
-points, k/size/rerank candidate30, Bayesian English fusion with managed Jev and one
-complete-recent-dialogue query. The host's existing one-quarter-context budget cap,
+Current defaults are active-input-only generation plus recalled memory, memory budget4096 (maximum4096), chunk ceiling800
+codepoints, vector k100/rerank candidate100/final size50, Bayesian English fusion with managed Jev and one
+current-question query with independent completed-history indexing; see
+[current policy](conversation-memory-defaults.md). The host's existing one-quarter-context budget cap,
 current-chat validation, cancellation, session-only key and prompt-delivery checks
-are unchanged. No new mode, stored format, provider option or SDK change.
+are unchanged. No new mode, stored format, provider option or SDK change. See the
+[later numeric-default adoption](profile-50-host-validation.md#product-default-adoption);
+the assembly verification below retains its originally measured settings.
 
 ## Verification
 

@@ -4,7 +4,7 @@ Long-term memory for SillyTavern.
 
 **Powered by LambdaDB**
 
-An installable, experimental UI extension for character chats. SillyMemory keeps recent messages intact at its prompt hook and replaces older plain-text history with relevant source passages under a fixed memory token budget. SillyTavern may subsequently truncate the prompt to fit its context limit. It uses LambdaDB managed embeddings over direct browser HTTPS/CORS. No server plugin or LambdaDB modification is required.
+An installable, experimental UI extension for character chats. SillyMemory keeps the current input intact at its prompt hook and replaces past plain-text history with relevant source passages under a fixed memory token budget. SillyTavern may subsequently truncate the prompt to fit its context limit. It uses LambdaDB managed embeddings over direct browser HTTPS/CORS. No server plugin or LambdaDB modification is required.
 
 **0.4.0 is an unreleased experimental candidate.**
 [Story memory](docs/versioned-memory.md) is automatic for every enabled chat;
@@ -64,34 +64,46 @@ The development baseline is **SillyTavern 1.19.0**, pinned to commit [`06bde939f
 5. Click **Use key for this session**. The input is immediately cleared. The key lives only in the client instance's browser memory, never in saved settings, local/session storage, a URL, or extension logs. A reload or **Forget key** requires re-entry. Other trusted extensions and the browser runtime can still observe network requests; this is not an isolation boundary against malicious extensions.
 6. Click **Test synthetic upsert / query / delete**. This creates a dedicated `smtest_<random>` collection, upserts a synthetic story, queries `knn.queryText`, deletes its document, verifies it no longer appears, then deletes the owned test collection. This consumes LambdaDB resources and inference usage. The test must pass before **Prepare chat memory** becomes available.
 7. If a test fails, use **Clean up test collection**. Pending test identity is preserved across reloads so cleanup can be retried after reconnecting. A failed cleanup is not reported as successful.
-8. Click **Prepare chat memory**, select a character chat, then enable memory. Native branches automatically reuse committed history in separate LambdaDB branches within one story collection. Default settings retain 12 recent messages and allow 1,600 memory tokens, including excerpt content, source labels and available conversation timestamps; provider message-envelope overhead is managed by the host. Configure the bounds in the panel. Disable built-in Vector Storage chat vectorization and other prompt-rewriting memory extensions for this prototype.
+8. Click **Prepare chat memory**, select a character chat, then enable memory. Native branches automatically reuse committed history in separate LambdaDB branches within one story collection. Generation retains only the current input and recalled memory alongside native character/system settings. Default settings allow 4,096 memory tokens, including excerpt content, source labels and available conversation timestamps; provider message-envelope overhead is managed by the host. Configure the memory budget in the panel. Disable built-in Vector Storage chat vectorization and other prompt-rewriting memory extensions for this prototype.
 
 Optionally enter a checkpoint name and use **Save / finish checkpoint** to save the current transcript and memory state. **Refresh story checkpoints** shows names, creation times and verified states, with controls to finish pending saves, resume a new path, rename or delete individual checkpoints. See [recovery, integrity and restore limits](docs/checkpoints.md).
 
 The memory budget applies **per generated answer**, not cumulatively across a
 chat. Recent messages and character instructions are separate from that budget.
 You can set 64–4,096 memory tokens; the effective limit is also capped at one
-quarter of the context size passed by the host. The default 1,600 is a heuristic,
-not an established optimum. It is unrelated to the current 800-**character**
+quarter of the context size passed by the host. The default 4,096 uses the tested
+budget ceiling, not an established optimum. On smaller host contexts the
+one-quarter cap lowers the effective budget. It is unrelated to the current 800-**character**
 indexing chunks: long messages now prefer paragraph, sentence and word boundaries within that ceiling, without overlap. Exact source text is retained; a sentence longer than the ceiling can still be split. See the
 [controlled budget comparison](docs/memory-budget-calibration.md) for evidence
 and limitations, and the [design review](docs/memory-design-followups.md) for
 chunking and hybrid-search work. The [chat collection lifecycle](docs/chat-collections.md) describes the implemented isolation and cleanup behavior.
-Each answer uses one retrieval query: all eligible recent dialogue outside the
-indexed older-history partition, with turn IDs and roles, followed by the current
-question once. Regenerate/swipe excludes the answer being replaced; continuation
-anchors on the message being extended. No LLM query rewriting or additional
-context-window cap is used. The SDK's 8 KiB UTF-8 query limit is enforced explicitly:
-an oversized complete query sends no search, retains the original prompt and
-stops generation. Reduce the recent
-setting or shorten the input before retrying. See the
-[complete recent-query decision](docs/context-aware-query-comparison.md#product-adoption-complete-recent-query).
+Each answer searches only the current user question, without appending recent
+conversation or using an LLM to rewrite it. All completed eligible messages are
+indexed, independently of the generation prompt; a pending final user
+input is indexed after the assistant replies. Generation retains only the active
+input and selected memory alongside native character/system settings. The active
+input and replacement answers are excluded from both search legs and local selection. Regenerate/swipe search the user question; Continue searches
+the eligible message being extended, while Impersonate uses the latest eligible
+character response. Inputs above 8 KiB fail before search rather
+than being silently shortened.
+
+A system instruction asks the answer model to use available conversation evidence
+and ask one brief clarifying question when the referent or requested fact is
+unclear, rather than guess. This is a model instruction, not a guarantee of
+abstention or retrieval recall. It is budgeted with memory and checked at the final
+host prompt boundary, including empty search results. See the
+[current policy and validation limits](docs/conversation-memory-defaults.md).
 
 Current retrieval combines managed vector and raw English text search with
-Bayesian fusion, followed by managed Typesafe Jev reranking. Both signals use the
+Bayesian fusion with vector k=100, followed by managed Typesafe Jev reranking
+over at most 100 candidates and a final return limit of 50 chunks. These are
+search candidates, not a promise that all 50 fit the memory budget. Both signals
+use the
 same owner/scope filter and explicit chat branch. Reranking failure or unconfirmed
 rerank metadata rejects injection; there is no silent fallback. The user supplies
-only a LambdaDB project key. Managed embedding and reranking may incur additional
+only a LambdaDB project key. See the [default adoption and validation limits](docs/profile-50-host-validation.md#product-default-adoption).
+Managed embedding and reranking may incur additional
 LambdaDB inference usage. See [the default decision and bounded English evaluation](docs/conversation-memory-defaults.md).
 Selected chunks from the same message and revision share one source/time header.
 Touching text and matching overlaps are joined from the returned chunks; missing
@@ -122,8 +134,7 @@ shown in the extension manager comes from `manifest.json`.
 Open **Extensions → Manage extensions** and use SillyMemory's update button,
 then reload. It pulls your installed branch, normally `main`; it does not select
 the newest GitHub Release/tag. Automatic updates are currently disabled. After
-reload, re-enter the LambdaDB key and re-enable memory. Budget, recent-message
-settings and installation ownership are retained. Normal updates do not require
+reload, re-enter the LambdaDB key and re-enable memory. Budget, delivery preferences and installation ownership are retained. Normal updates do not require
 deleting the owned memory collection or reinstalling the extension.
 
 The current development candidate uses story collections and chat branches by
@@ -134,17 +145,17 @@ release notes describe their original versions, not the current contract.
 
 ## Use and behavior
 
-- The status panel shows preparation, queued writes, ownership checks, outdated-chunk deletion, upload, search, and token budgeting. Upload totals count current older chunks; confirmed chunks include this session's earlier successful writes. Counts advance only after a service response, not merely after sending a request. They do not measure embedding/index visibility or bytes transferred. A failed operation keeps the last confirmed count and shows retry guidance.
+- The status panel shows preparation, queued writes, ownership checks, outdated-chunk deletion, upload, search, and token budgeting. Upload totals count completed conversation chunks; confirmed chunks include this session's earlier successful writes. Counts advance only after a service response, not merely after sending a request. They do not measure embedding/index visibility or bytes transferred. A failed operation keeps the last confirmed count and shows retry guidance.
 - Send messages normally. Message generation, edits, selected swipes, deletion, chat changes, and reload/re-enable trigger reconciliation. Click **Sync this chat** to retry after a network failure. For authentication errors, re-enter the key using **Use key for this session** first; for rate limits or timeouts, wait before retrying. Successful batches are skipped within the session. A lost response can require an idempotent re-upsert, and reload conservatively rechecks current records after key re-entry and re-enabling memory. Progress is not saved across reloads.
 - Long messages use boundary-aware chunks with exact source offsets. The first sync after this update deletes journal-tracked old-layout IDs and reindexes the current chat; this incurs managed embedding usage. See [the controlled comparison and limits](docs/boundary-chunking.md).
-- Only older plain-text messages are embedded. Recent messages stay in the generation array. Files, media, and tool messages are not indexed; group chats and chats with system tool invocations are bypassed.
+- All completed eligible plain-text messages are embedded. Only the active input stays full in the generation array alongside selected memory. Files, media, and tool messages are not indexed; group chats and chats with system tool invocations are bypassed.
 - Each story uses one owned collection and each chat path uses an isolated writable branch. Saved native metadata defines the story and chat IDs. Renaming preserves them; verified native forks inherit committed memory without re-embedding. Independent copies receive a new story. Every query applies an owner/story filter and validates results against the current local chat. See [the storage model](docs/versioned-memory.md).
-- Before generation, the extension synchronizes current source text and retrieves matching chunks with `knn.queryText`: the latest user message and the preceding nonempty user message are searched independently. A first user turn has only one query; generic assistant acknowledgments are not concatenated into the topic query. Explicit **Continue** generation instead anchors on the latest message being extended; regenerate and swipe still use the user question. It interleaves the two result lists, validates every result against current local text and IDs, and token-counts the complete injected string using the host tokenizer. Macro braces and legacy macro markers are shown with fullwidth delimiters so recalled dialogue stays literal during host prompt assembly.
-- If at least one valid passage fits, older eligible full messages are removed from the ephemeral prompt array and the selected passages are injected. Source chat messages on disk are not modified. If nothing fits or an operation fails, the original prompt remains. A mid-request chat change aborts that generation; generate again in the new chat.
+- Before generation, the extension synchronizes current source text and retrieves matching past chunks with one current-question query. Vector and English lexical legs share owner, story scope and message-index filters; the active input and replacement answers are excluded before ranking. Continue anchors on the eligible message being extended, Impersonate on the latest eligible response; regenerate and swipe use the user question. Every result is validated against current local text, IDs and the active-input boundary. The host tokenizer counts excerpts and guidance together. Macro braces and legacy macro markers are shown with fullwidth delimiters so recalled dialogue stays literal during host prompt assembly.
+- After successful retrieval, past eligible full messages are removed from the ephemeral prompt array and selected passages are injected. Zero hits or nothing fitting the budget still retains only the active input and clarification guidance, alongside native character/system settings. Source chat messages on disk are not modified. If an operation fails, the original prompt remains. A mid-request chat change aborts that generation; generate again in the new chat.
 - Identical selected passages from the same speaker and role share one full body with every selected source position listed. If this saves tokens, additional distinct retrieved passages may fit; no already-selected source is dropped. Repeated groups appear at their latest selected occurrence. The inspection panel exposes these labels.
-- Every indexed chunk stores available UTC **host message timestamps** from current `send_date` metadata, separately from embedding text. Selection budgets the complete excerpt and its timestamp together. These are explicitly not story/event dates; unsupported or missing timestamps remain unknown. Time edits update document revisions and can trigger embedding again. See [provenance, budget and validation](docs/conversation-time.md).
-- **Memory in the last prompt** separates prepared excerpts from those verified in the final host prompt. **Stop on missing context** is enabled by default: if prepared memory or verifiable recent messages are missing or changed, generation is canceled before the completion request. Increase context, reduce reserved output or recent-message count, then generate again; the submitted user message remains in the chat. Turn the option off to proceed with a visible warning. There is no automatic retry. See [behavior, limits and validation](docs/prompt-delivery.md).
-- Verification uses the pinned host's Chat Completion prompt boundary, not provider receipt or billed tokens. Name macros are supported; arbitrary macros and the final continuation prefix are explicitly unverified rather than falsely counted as missing. Other completion formats report verification unavailable. Later provider transformations and other prompt-rewriting extensions are outside this check. The default 1,600-token allocation and one-quarter cap remain heuristics, not exact remaining capacity; the [capacity audit](docs/prompt-capacity-results.md) records why.
+- Every indexed chunk stores available UTC **host message timestamps** from current `send_date` metadata, separately from embedding text. Selection budgets the complete excerpt, its timestamp and clarification guidance together. These are explicitly not story/event dates; unsupported or missing timestamps remain unknown. Time edits update document revisions and can trigger embedding again. See [provenance, budget and validation](docs/conversation-time.md).
+- **Memory in the last prompt** separates prepared excerpts from those verified in the final host prompt. **Stop on missing context** is enabled by default: if prepared memory, clarification guidance or the verifiable current input are missing or changed, generation is canceled before the completion request. Increase context, reduce reserved output, then generate again; the submitted user message remains in the chat. Turn the option off to proceed with a visible warning. There is no automatic retry. See [behavior, limits and validation](docs/prompt-delivery.md).
+- Verification uses the pinned host's Chat Completion prompt boundary, not provider receipt or billed tokens. Name macros are supported; arbitrary macros and the final continuation prefix are explicitly unverified rather than falsely counted as missing. Other completion formats report verification unavailable. Later provider transformations and other prompt-rewriting extensions are outside this check. The default 4,096-token allocation and one-quarter cap remain heuristics, not exact remaining capacity; the [capacity audit](docs/prompt-capacity-results.md) records why.
 - **Disable** stops synchronization/retrieval and clears the injection. It retains remote data. **Forget key** also disables memory. Reload starts disabled and requires key re-entry.
 - **Delete this chat’s remote memory** removes its writable branch; parent and sibling branches remain. **Delete all owned remote memory** discovers and deletes this installation’s story collections, including those absent from browser bookkeeping. Both drain pending writes and verify ownership and API absence. Local chats remain; this does not prove physical erasure from provider backups.
 
@@ -280,30 +291,40 @@ This fixes the [GPT-4.1 mini snapshot](https://developers.openai.com/api/docs/mo
 
 The earlier Gemini run used `LLM_MODEL=gemini-3.8-flash` and `LLM_REASONING_EFFORT=low`. For Gemini, use `LLM_BASE_URL=https://generativelanguage.googleapis.com/v1beta/openai`. The harness configures SillyTavern's Custom API body exclusions for `frequency_penalty`, `logprobs`, and `top_logprobs`: the live Gemini endpoint rejected the first two fields from the host's generic request. The loopback bridge forwards the resulting request without altering messages. Check [Google's compatibility guide](https://ai.google.dev/gemini-api/docs/openai) and your project's [model availability and free quota](https://ai.google.dev/gemini-api/docs/pricing); a successful model listing alone does not establish generation access.
 
-Run the longer Korean comparison with `SM_ARTIFACT_TAG=openai-gpt-4.1-mini npm run test:korean:live` for the OpenAI settings above. Optional `SM_MODEL` overrides the model for the run without editing `.env.local`; select a model from the configured provider. The fixed protocol plans 16 model requests; it restores the same source before each, checks complete baseline history and memory bounds, grades factual replies, and measures provider prompt tokens plus warm generation duration. See the [Korean protocol, results, and continuation instructions](docs/korean-evaluation.md). Completed samples are preserved when quota or availability blocks later requests. The summarizer rejects cross-model pooling and duplicates; an explicitly partial summary compares only completed question pairs. Its `--output <path>` option keeps provider summaries separate.
+### Historical answer-quality protocols
 
-Run the fixed three-mode comparison with `SM_ARTIFACT_TAG=openai-gpt-4.1-mini npm run test:comparison:live`. It compares memory off, SillyMemory, and native Vector Storage across three Korean histories (120–240 messages), nine questions and two repetitions: 54 live generations plus embedding calls. The native OpenAI-compatible embedding adapter uses the same private loopback test bridge; no local model or server plugin is installed. Preserve each run with a distinct artifact tag. Review the [protocol and results](docs/comparison-evaluation.md) before running; native Vector Storage retains other old history, so it is not an equal-token-budget comparison.
+The Korean, three-mode comparison, held-out, challenge and natural-dialogue npm
+commands are retired from the current package. Their fixed recent-message
+protocols require the exact producing checkout recorded in the linked documents
+and [evidence index](docs/evidence-retention.md). Do not run those old modes against
+the current active-input policy or label their archived results as current scores.
+The low-level generation runner rejects these modes before credentials or provider
+setup. Original scripts, protocols, reports and scoring remain in recorded source
+revisions and verified archives.
 
-Aggregate completed, nonoverlapping runs with `node scripts/comparison-summary.mjs artifacts/generation-comparison-openai-gpt-4.1-mini.json --output artifacts/comparison-summary-openai-gpt-4.1-mini.json`. The summarizer requires all 54 fixed samples, matching evaluated source/configuration, actual provider usage and verified remote/native cleanup; it rejects duplicate or incomplete evidence. Generation-only cost estimates exclude embeddings and LambdaDB charges.
+The [Korean protocol](docs/korean-evaluation.md) planned 16 model requests, grading
+factual replies and measuring provider input tokens and warm generation duration.
+The [three-mode comparison](docs/comparison-evaluation.md) used three Korean
+histories of 120–240 messages, nine questions and two repetitions: 54 generations
+plus embeddings. Native Vector Storage retained other old history, so this was not
+an equal-token-budget comparison. Its historical summarizer requires all 54 samples,
+matching source/configuration, provider usage and verified cleanup; generation-only
+cost excludes embeddings and LambdaDB charges.
 
-For the search-only diagnosis, run `SM_ARTIFACT_TAG=diagnosis-next node scripts/retrieval-diagnostic.mjs`. It compares four query constructions, actual managed `queryText` results, and an identical-vector server/exhaustive control without any text-generation calls. It still incurs LambdaDB embedding and data usage. The completed experiment reproduced all six old-fact misses in exhaustive search with the current query; the latest user message alone retrieved and selected all six. This is a retrieval result, not a new answer-quality score. See the [diagnostic and committed-index limitation](docs/retrieval-diagnostic.md).
+The [retrieval diagnostic](docs/retrieval-diagnostic.md) compared four query
+constructions and identical-vector server/exhaustive controls. It reproduced all
+six old-fact misses with the old query; latest-user-only retrieval selected all
+six. This is historical retrieval evidence, not a current answer-quality score.
+Reproduction requires its recorded producer and incurs embedding/data usage.
 
 The live harnesses require Node.js 20.12+ for `util.parseEnv`; recorded runs use Node.js 24.15.0.
 
-For the fixed ambiguous-reference, continuation and context-overflow evaluation,
-see [the protocol and results](docs/recall-challenges.md). Run
-`npm run test:challenges:live` only with an authorized synthetic-data scope and
-the configured provider credentials; it makes 12 scheduled model requests plus
-managed embedding operations. A separate existing credential file can be read
-by the generation harness with `SM_ENV_FILE=/absolute/path/to/.env.local` without
-copying it into the worktree.
-
-For 12 new counterbalanced cases (24 real model answers), use
-`npm run test:heldout:live`; aggregate with
-`node scripts/challenge-summary.mjs --heldout <reports...> --output <summary.json>`.
-`npm run test:recovery` adds two real host SIGKILL/restarts and 24 repeated
-edit/swipe/delete cycles to the emulator fault suite. See the
-[held-out and recovery protocol](docs/heldout-recovery.md) for limits and evidence.
+The historical [challenge protocol](docs/recall-challenges.md) covers ambiguous
+references, continuation and overflow with 12 scheduled model requests. The
+[held-out protocol](docs/heldout-recovery.md) added 12 counterbalanced cases and 24
+answers. Their execution commands require their producing checkout. Current
+`npm run test:recovery` remains the emulator-only lifecycle check with two host
+SIGKILL/restarts and 24 repeated edit/swipe/delete cycles.
 
 The natural-dialogue runner uses the frozen 16-case English/Korean corpus for
 64 real memory-off/on responses. An opt-in [transport amendment](docs/natural-dialogue-retry.md)
@@ -352,8 +373,8 @@ the quotation gap but lose other required sources, so neither is adopted.
 
 The [context candidate protocol](docs/context-candidate-evaluation.md) compares
 the current labelled selector, label removal, and label removal plus adjacent-turn
-retention under 400 host tokens. Freeze a plan with fixture `actor-candidate-v1`
-and pass it to the same natural runner. This is a 48-answer controlled prompt
+retention under 400 host tokens. Its recorded producer freezes fixture `actor-candidate-v1`
+and runs the historical natural adapter; use that checkout for reproduction. This is a 48-answer controlled prompt
 experiment with frozen source indices and generation-time retrieval disabled;
 the candidate code is test-only and does not change installed extension behavior.
 
@@ -363,7 +384,7 @@ See [architecture](docs/architecture.md), [pinned contracts](docs/contracts.md),
 
 Persistent keys, automatic checkpoints, in-place transcript rollback, Data Bank, World Info, multi-user administration, and external result downloads are outside this MVP. The synthetic built-in-memory comparison is documented separately; no general recall-quality, latency, or total operating-cost improvement is claimed. Stable release readiness remains under evaluation.
 
-The [latest-user/context query policy](docs/query-policy.md) documents the retrieval change, its regression and held-out checks, and commands for reproducing them. The original comparison and vector diagnostic remain historical evidence from their recorded source hashes.
+The [historical latest-user/context query policy](docs/query-policy.md) documents the earlier retrieval change, its regression and held-out checks. Reproduction requires its recorded producer; it is not the current policy. The original comparison and vector diagnostic remain historical evidence from their recorded source hashes.
 
 ## License
 

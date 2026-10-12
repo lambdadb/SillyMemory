@@ -14,16 +14,6 @@ test('assistant-topic boundary fixtures keep targets old and distinguish a first
         assert(messages.at(-1).user);
         assert.equal(queries.length, 1);
         assert(queries[0].endsWith(messages.at(-1).text));
-        if (item.kind === 'first-user') {
-            assert(messages.slice(0, -1).every(m => !m.user));
-            assert(queries[0].includes(messages.at(-2).text));
-        } else {
-            assert(messages.slice(0, -1).some(m => m.user));
-
-        }
-        if (item.kind === 'explicit-switch') {
-            assert(queries[0].includes(item.language === 'en' ? 'green cloth banner' : '자주색 천 현수막'));
-            assert(queries[0].includes(item.language === 'en' ? 'canal map' : '노선도'));
-        }
+        assert.equal(queries[0], messages.at(-1).text.trim());
     }
 });

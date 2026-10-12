@@ -31,6 +31,7 @@ const source = process.env.ST_SOURCE || '/tmp/sillymemory-st-source';
 const revision = '06bde939fb1e9c4c8d8641d810f0a916b5bce127';
 if (process.argv.includes('--chunking')) throw new Error('Historical chunking comparison is archived; use its recorded producer.');
 if (process.argv.some(arg => arg.startsWith('--rerank'))) throw new Error('Reranking evaluation is archived; use its recorded producer.');
+if (process.argv.some(arg => ['--hybrid', '--semantic', '--natural', '--comparison', '--heldout', '--challenges', '--korean-eval', '--three-modes', '--native-tuning'].includes(arg))) throw new Error('Historical fixed-window answer evaluations require their recorded producer; current generation keeps only the active input and recalled memory.');
 const env = parseEnv(await readFile(process.env.SM_ENV_FILE || path.join(root, '.env.local'), 'utf8'));
 const hybridMode = process.argv.includes('--hybrid');
 
@@ -363,14 +364,14 @@ try {
         evaluation = await runKoreanEvaluation({ page, field, openSettings, waitStatus, generate, assert, setStage: value => { stage = value; }, startCase: caseStart, startSample: sampleStart });
         events = await page.evaluate(() => globalThis.generationTestEvents);
     } else {
-        await field('recent').fill('3'); await field('recent').dispatchEvent('change'); await field('budget').fill('220'); await field('budget').dispatchEvent('change');
+        await field('budget').fill('220'); await field('budget').dispatchEvent('change');
         assert(true, 'real settings buttons completed the live LambdaDB gate and provisioning');
         await seed(); const baseline = await generate('memory-off');
         assert(baseline.prompt.includes('DISTRACTOR_1'), 'memory-off final request contains older full history');
         await seed(); await openSettings(); await field('enabled').check(); await waitStatus('synchronized');
         const on = await generate('memory-on');
         assert(on.prompt.includes('Past conversation excerpt') && on.prompt.includes('beneath the cedar tree'), 'final model request contains retrieved live memory');
-        assert(on.prompt.includes('RECENT_KEEP_A') && on.prompt.includes('RECENT_KEEP_B'), 'final model request retains recent complete messages');
+        assert(!on.request.messages.some(m => typeof m.content === 'string' && m.content.startsWith('RECENT_KEEP_')), 'recent messages are not retained as full generation input');
         assert(on.request.promptCharacters < baseline.request.promptCharacters, 'memory-on reduces this fixture final prompt size');
         assert(!on.prompt.includes('DISTRACTOR_1'), 'older full distractor message omitted from final request');
         assert(await page.evaluate(() => SillyTavern.getContext().chat[1].mes.includes('DISTRACTOR_1')), 'prompt pruning preserves source conversation');

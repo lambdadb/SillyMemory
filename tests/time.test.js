@@ -63,7 +63,7 @@ test('identical bodies with distinct known or unknown times are not collapsed', 
     const source = chat(); source[1] = { ...source[0], send_date: '2024-03-01T00:00:00Z' };
     source[0].mes = source[1].mes = 'The door is locked. '.repeat(30);
     const { docs } = await documents(capture(context(source)), 'owner', { ...config, chunkChars: 800 });
-    const result = await selectPackedMemory(docs, docs, 4000, count);
+    const result = await selectPackedMemory(docs.slice(0, 2), docs, 4000, count);
     assert.equal(result.messages.length, 2);
     assert(result.messages[0].mes.includes(stamp)); assert(result.messages[1].mes.includes('2024-03-01'));
     const unknown = { ...docs[1] }; delete unknown.conversationTimestamp; delete unknown.timestampSource;

@@ -1,5 +1,10 @@
 # Korean long-dialogue evaluation
 
+> Historical protocol: execution commands below require the recorded producing
+> checkout from the [evidence index](evidence-retention.md). Fixed recent-window
+> generation modes and their npm aliases are retired from the current package.
+> Original inputs, scores and reports remain unchanged.
+
 This is a bounded synthetic integration evaluation, not a representative roleplay benchmark. It compares SillyMemory off and on with the same source history, questions, model, and host settings. It does not compare against SillyTavern Vector Storage or another memory product.
 
 ## Current result

@@ -1,12 +1,12 @@
 import { beginWrites, clearCommit, recordWrite, sameDocument } from './commit.js';
-import { conversationQuery } from './context.js';
+import { queryAnchor } from './context.js';
 import { chunkSpans, CHUNKING_POLICY } from './chunking.js';
 import { hostTimestamp, conversationTime, conversationTimeLabel } from './time.js';
 
-export const DEFAULTS = Object.freeze({ recent: 12, budget: 1600, chunkChars: 800 });
+export const DEFAULTS = Object.freeze({ budget: 4096, chunkChars: 800 });
 export function options(value = {}) {
     const integer = (x, fallback, min, max) => Number.isInteger(Number(x)) ? Math.min(max, Math.max(min, Number(x))) : fallback;
-    return { recent: integer(value.recent, 12, 2, 100), budget: integer(value.budget, 1600, 64, 4096), chunkChars: integer(value.chunkChars, 800, 200, 2000) };
+    return { budget: integer(value.budget, DEFAULTS.budget, 64, 4096), chunkChars: integer(value.chunkChars, 800, 200, 2000) };
 }
 export async function digest(value) {
     const bytes = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(value));
@@ -30,15 +30,23 @@ export function capture(context) {
     return { character: avatar, chat: metadata?.id, messages, memory: { story: metadata?.story, source: metadata?.source } };
 }
 export function fingerprint(snapshot) { return JSON.stringify(snapshot); }
-export const RETRIEVAL_POLICY = 'complete-recent-dialogue-v6';
-export function retrievalQueries(snapshot, type = 'normal', config = DEFAULTS) {
+export const RETRIEVAL_POLICY = 'current-question-v8';
+export function retrievalQueries(snapshot, type = 'normal') {
     const messages = snapshot.messages;
-    // A retained answer must not steer its own swipe/regenerated replacement.
-    // Explicit continuation instead follows the message being extended.
-    let anchor = messages.findLastIndex(m => (type === 'continue' || m.user) && m.text.trim());
-    if (anchor < 0) anchor = messages.findLastIndex(m => m.text.trim());
+    const anchor = queryAnchor(messages, type);
     if (anchor < 0) return [];
-    return [conversationQuery(messages, anchor, config.recent)];
+    return [messages[anchor].text.trim()];
+}
+// Storage is independent of generation input retention. A trailing
+// user input is pending until the assistant replies; completed replies are stored.
+export function completedMessages(snapshot) {
+    return snapshot.messages.at(-1)?.user ? snapshot.messages.slice(0, -1) : snapshot.messages;
+}
+export function memoryBoundary(snapshot, type = 'normal') {
+    // Normal/regenerate/swipe keep only their question; Continue keeps the
+    // message being extended; Impersonate keeps the response being answered.
+    // Replacement answers never enter retrieval.
+    return Math.max(0, queryAnchor(snapshot.messages, type));
 }
 export function interleaveHits(lists) {
     const hits = [];
@@ -54,7 +62,7 @@ export async function documents(snapshot, owner, config) {
     if (!snapshot.memory?.story || !snapshot.chat) throw new Error('Missing story memory identity.');
     const scope = await digest(JSON.stringify([owner, snapshot.character, snapshot.memory.story]));
     const docs = [];
-    for (const m of snapshot.messages.slice(0, -config.recent)) {
+    for (const m of completedMessages(snapshot)) {
         if (!m.eligible || !m.text.trim()) continue;
         const time = conversationTime(m);
         const revision = await digest(JSON.stringify([m.index, m.name, m.user, m.swipe, m.text, time]));
@@ -332,20 +340,22 @@ export class MemoryEngine {
         // Canceling a prompt's reads must not cancel its source reconciliation.
         const prepared = await this.sync(snapshot, config, sourceCurrent, progress);
         if (!prepared || !current()) return null;
-        if (!prepared.docs.length) return { text: '', tokens: 0, passages: [] };
-        const queries = retrievalQueries(snapshot, type, config);
+        const before = memoryBoundary(snapshot, type);
+        const expected = prepared.docs.filter(doc => doc.message < before);
+        if (!expected.length) return { text: '', tokens: 0, passages: [], messages: [] };
+        const queries = retrievalQueries(snapshot, type);
         if (!queries.length) return null;
         const reads = new AbortController();
         const signal = AbortSignal.any([pendingReads, reads.signal]);
         let results;
         try {
             progress({ phase: 'searching', completed: 0, total: 1 });
-            results = await this.client.search(this.collection, this.owner, prepared.scope, queries[0], signal, this.branch);
+            results = await this.client.search(this.collection, this.owner, prepared.scope, queries[0], signal, this.branch, before);
             if (current() && !signal.aborted) progress({ phase: 'searching', completed: 1, total: 1 });
         } finally { reads.abort(); }
         if (!current()) return null;
         progress({ phase: 'budgeting' });
-        const result = await selectPackedMemory(results, prepared.docs, config.budget, countTokens);
+        const result = await selectPackedMemory(results, expected, config.budget, countTokens);
         return current() ? result : null;
     }
     async deleteAll() {

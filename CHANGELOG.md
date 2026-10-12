@@ -21,14 +21,28 @@ boundary; publication is confirmed by the corresponding Git tag and GitHub Relea
   saved space in search order within the unchanged budget. No LLM processing or
   extra retrieval is added; malformed coordinates retain separate excerpts.
 
-- Retrieve once using the complete eligible recent dialogue and current question,
-  replacing separate question/context searches and their interleaved rankings.
-  No LLM query rewriting is required. Reject complete queries exceeding the SDK's
-  8 KiB UTF-8 limit instead of silently dropping the end of the question.
+- Index all completed eligible conversation messages independently of generation input
+  retention, and retrieve using only the current question. Exclude the active input and replacement answers
+  from both search legs and local selection. Continue searches the message being
+  extended; pending final user inputs wait for a reply before indexing. Reject
+  retrieval inputs above 8 KiB without silent truncation.
+- Retire npm aliases for historical fixed-window answer evaluations; preserve
+  protocols/results with explicit recorded-checkout reproduction instructions.
+- Remove the fixed recent-message window and its setting. Successful generation
+  preparation keeps only the active input and recalled memory alongside native
+  character/system settings, including when no memory fits. Continue preserves
+  the partial answer, and Impersonate preserves the character response being
+  answered; preparation failures retain the original prompt.
+- Add budgeted system guidance to ask a brief clarification instead of guessing
+  when conversation evidence is insufficient or the referent is ambiguous.
+  Verify final delivery even when no memory is selected; count guidance in the
+  prepared token display for empty selections as well.
 
 - Use Bayesian vector/English-text fusion with managed Typesafe Jev reranking and
-  a 1,600-token initial memory budget. Keep the 4,096-token maximum and host context
-  cap. Reject unconfirmed reranking instead of silently injecting fallback results.
+  vector k=100, at most 100 rerank candidates, a final return limit of 50 chunks
+  and a 4,096-token initial memory budget. Keep the 4,096-token maximum and host
+  one-quarter-context cap. Saved explicit user budgets remain respected. Reject
+  unconfirmed reranking instead of silently injecting fallback results.
   Preserve boundary-aware per-message chunks and session-only project keys.
 
 - Use the official LambdaDB TypeScript SDK 0.8.0 through a pinned browser bundle.

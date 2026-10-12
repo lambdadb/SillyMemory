@@ -19,6 +19,7 @@ export const schema = Object.freeze({
     text: { type: 'text', analyzers: ['english'] },
     embedding: { type: 'vector', managedEmbedding: true, embedding: { provider: 'openai', model: 'text-embedding-3-small', sourceField: 'text' } },
     conversationTimestamp: { type: 'datetime' }, timestampSource: { type: 'keyword' },
+    message: { type: 'long' },
     owner: { type: 'keyword' }, scope: { type: 'keyword' }, revision: { type: 'keyword' },
 });
 
@@ -184,16 +185,20 @@ export class LambdaClient {
         }
         return result.docs.map(x => x.doc);
     }
-    search(collection, owner, scope, text, signal, branch = 'main') {
+    search(collection, owner, scope, text, signal, branch = 'main', before) {
         // Preserve the complete query or fail explicitly before any service call.
         if (new TextEncoder().encode(text).length > 8192) {
-            throw new ConnectionError('The complete retrieval query exceeds the 8 KiB limit. Reduce the recent-message setting or shorten the input; no search was sent.', 0, 'query-limit');
+            throw new ConnectionError('The current retrieval input exceeds the 8 KiB limit. Shorten the input; no search was sent.', 0, 'query-limit');
         }
         const filter = scopeFilter(owner, scope);
+        if (before !== undefined) {
+            if (!Number.isSafeInteger(before) || before <= 0) throw new ConnectionError('Invalid memory message boundary.');
+            filter.queryString.query += ` AND message:[0 TO ${before - 1}]`;
+        }
         return this.query(collection, { bayesian: [
-            { knn: { field: 'embedding', queryText: text, k: 30, filter } },
+            { knn: { field: 'embedding', queryText: text, k: 100, filter } },
             { bool: [{ ...filter, occur: 'filter' }, { queryString: { query: text, defaultField: 'text', skipSyntax: true }, occur: 'must' }] },
-        ] }, { signal, branch, rerank: { provider: 'typesafe', model: 'jev-1.13.0', queryText: text, fields: ['text'], candidateSize: 30, onFailure: 'error' } });
+        ] }, { signal, branch, size: 50, rerank: { provider: 'typesafe', model: 'jev-1.13.0', queryText: text, fields: ['text'], candidateSize: 100, onFailure: 'error' } });
     }
 }
 

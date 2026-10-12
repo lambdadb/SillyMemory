@@ -951,3 +951,175 @@ See [method, exact failures and interpretation](context-aware-query-comparison.m
   revised source/test/report, follow-up patch and fresh run bytes. Local-only,
   unavailable in a fresh clone; pinned host/dependencies are external inputs,
   not maintained CI dependencies.
+
+## Profile50 actual-host validation
+
+- **Record:** [LongMemEval profile through the actual host](profile-50-host-validation.md).
+  Six consumed LongMemEval-S cases completed in pinned unmodified SillyTavern with
+  live managed embeddings/Bayesian/Jev/Sol and official frozen judging:6/6 correct.
+  Question-only retrieval and memory-plus-question generation; k100/candidate100/
+  final50/budget4096. This is a patched ignored test copy, not product defaults,
+  full500 reproduction, byte-identical benchmark prompts or held-out confirmation.
+- **Audit:** all source slices/revisions, returned documents, assembled source unions,
+  request whitelist, provider answers/judgments, cumulative resources and cleanup
+  checked. All11 owned collections absent by GET404. One original ungraded answer,
+  two inspector-recording failures and period-compatible judge recovery are kept;
+  no answer substitution or changed questions. The measured-base product source was unchanged. The same PR now also adopts
+  numeric product defaults; it preserves the distinct live input policy.
+- **Archive:** `/Users/steven/Dev/sillymemory/artifacts/archive/profile-50-host-validation-v1/evidence.tar.gz`.
+  SHA-256 `e64c4b8f4bb38ec6bae551b7ee7ebec4a0b45225ec7004449cc812e893b45ffc`;
+  6,190,656 bytes,363 members, every original byte verified. Final report SHA-256
+  `400e3e324012c593337c78d2a24ba89babab0ceb21b63e30188c06927ffd1085`.
+  Adjacent `manifest.json` records base `718ce65d390c0306b02471b1cb15b9c277dd5850`,
+  frozen plans, cumulative continuation, admission observations, all failed/completed
+  episodes, independent audit, exact producer sources and experiment-only extension
+  patch/copy. Local-only and unavailable in a fresh clone; the recorded dataset,
+  pinned host and dependencies are external reproduction inputs, not CI dependencies.
+  Prior historical archives are not overwritten or removed.
+
+- **Numeric-default adoption verification:** source k100/candidate100/final50 and
+  fresh budget4096 now apply to ordinary memory search. Recent12/query policy and
+  safety semantics remain unchanged; saved explicit budgets are preserved. Unit335,
+  syntax/release/SDK/development syntax, browser44, final fault77 and delivery13
+  passed with actual pinned host/local emulators. No new paid requests or quality
+  score. Initial fault-harness saved-budget assumption failure and cleanup0 are
+  preserved; the corrected test explicitly sets/checks512 before/after reload.
+- **Default-adoption archive:** `/Users/steven/Dev/sillymemory/artifacts/archive/profile-50-default-adoption-v1/evidence.tar.gz`.
+  SHA-256 `9aab0672c155c01bc20f79c7708fc3a31e25add7baf891fc464632d81a95995b`;
+  750,008 bytes,196 members, every byte verified. Adjacent `manifest.json` locks
+  the measured runtime/tests/maintained producers, source patch against base
+  `718ce65d390c0306b02471b1cb15b9c277dd5850`, completed/failed reports and notes.
+  The original browser producer reconstruction matches its measured hash; final
+  fault/delivery hashes match the final measured code. Local-only, unavailable in
+  a fresh clone; pinned host/dependencies are external inputs. Prior live archive
+  stays immutable; no raw run output or scratch generator enters Git.
+
+## Current-question policy validation
+
+This first snapshot predates the final user-anchor preservation fix. It remains
+immutable; use the final validation record below for the submitted runtime.
+
+The PR #72 follow-up indexes completed eligible history independently of prompt
+retention, uses current-question retrieval and supplies budgeted clarification
+guidance. See [policy, checks and limits](conversation-memory-defaults.md).
+
+- Archive: `/Users/steven/Dev/sillymemory/artifacts/archive/current-question-policy-v1/evidence.tar.gz`
+- SHA-256: `67dff888db749ec27ff102cfc33d3e422c2ba53d9b3e2f03c01ee41f295c3b96`
+- Manifest: adjacent `manifest.json`, with verified hashes for all 74 members.
+- Producing base: `718ce65d390c0306b02471b1cb15b9c277dd5850`; parent
+  `e1fe1fc93b619560cda6cf9529066e7060460ed7`, with the included working-tree patch
+  and final validated source snapshot. Final documentation pointers follow this
+  snapshot. The manifest and runtime hashes identify the measured bytes.
+- Includes final unit/browser/fault/prompt-delivery reports, the one-off live numeric
+  filter producer and report, and failed harness-attempt reports/logs. Earlier
+  failed attempts retain recorded hashes and available output; not every
+  intermediate producer source or failed packing request was captured. The final
+  delivery producer also records all completion-emulator requests on failure.
+- Final browser 45, fault 77 and all 13 prompt-delivery cases passed with no
+  remaining emulator collections. Failed attempts can report collections still
+  present in the process-local emulator before it shuts down; they created no
+  external resources. The live run's one owned collection has HTTP 404 cleanup
+  confirmation and an empty pending record. A credential-content scan found zero
+  matches in the bundle. No personal chats or `.env.local` are included.
+- Availability: local-only. Fresh clones do not have this archive, pinned host
+  checkout/dependencies or the private credential file. Maintained CI uses small
+  fixed inputs and does not read this archive. The one-off live producer is not
+  added to maintained tooling.
+
+This record establishes implementation contracts, not a new LongMemEval score or
+actual-model clarification behavior. Prior evidence archives are unchanged.
+
+## Current-question policy final validation
+
+This is the intermediate recent-window runtime at `0f32f15c98a16ad65283c3025fe0f99dda672a6d`,
+now superseded by the active-input policy below. It protects the current user anchor
+and every following turn when consecutive assistant replies move it outside the
+configured recent window. Its reports and original bytes remain unchanged.
+
+- Archive: `/Users/steven/Dev/sillymemory/artifacts/archive/current-question-policy-v2/evidence.tar.gz`
+- SHA-256: `e785af7bfa5ca8ae6e0a4a6c02de2b41562184175e1bc4e83880a052a9255ff8`
+- Manifest: adjacent `manifest.json`, with verified hashes for all 86 members.
+- Same base/parent as v1, with the final source snapshot and patch. Final browser
+  `current-question-v4`, fault `current-question-v3` and delivery
+  `current-question-v8` source hashes match the included current source.
+- Unit 340/340, browser 45, fault 77 and all 14 delivery cases passed; the new real
+  host case retains the user anchor and a following assistant turn during
+  regeneration with recent=2. Final emulator collections are zero.
+- The live numeric-filter check predates the anchor-only fix; its actually imported
+  `src/client.js` and SDK bundle are byte-identical to the final runtime. Its other
+  recorded runtime hashes are historical, not a new full-host live check.
+- All v1 attempts plus final reports and source are retained. The same external
+  prerequisites and failed-attempt capture limits apply. Secret-content matches
+  are zero; live owned deletion remains confirmed by HTTP 404.
+- Local-only; unavailable in a fresh clone and never required by CI. No benchmark
+  score or actual-model clarification behavior is established by these checks.
+
+The v1 and earlier numeric-profile archives have not been overwritten or deleted.
+
+
+## Active-input policy validation
+
+This first active-input snapshot is the runtime at `b80ae5e50b49a752a65bdbab4a1a8a0622df034b`,
+before the impersonation fix and empty-selection prepared-token display correction.
+Use the final validation record below for the submitted runtime. The maintainer
+removed the fixed recent-message window from generation; this snapshot keeps the
+active input plus recalled memory and native system/character settings, including
+successful empty selections. It does not change source chats,
+add a model call or claim a new answer-quality score.
+
+- Archive: `/Users/steven/Dev/sillymemory/artifacts/archive/active-input-policy-v1/evidence.tar.gz`
+- SHA-256: `4d453bbf3eb870a59328774ea05a125559b99dd8638f0477b2cb06d62743f62e`
+- Manifest: adjacent `manifest.json`, all 351 members verified; 1,944,618 bytes.
+- Parent: `0f32f15c98a16ad65283c3025fe0f99dda672a6d`; base:
+  `718ce65d390c0306b02471b1cb15b9c277dd5850`. Includes the final working-tree
+  source, base patch, producing notes and available successful/failed reports.
+  Archive pointers are added to documentation after freezing the source snapshot.
+- Final unit340, browser45 (`input-only-v2`), fault77 (`input-only-v2`) and
+  prompt-delivery16 (`input-only-v7`) plus overlap/packing/assembly passed.
+  Final runtime and harness hashes match their reports; emulator collections0.
+  Native character/system settings, current input, no-hit/no-fitting selection,
+  replacement-answer exclusion, Continue prefix and failure recovery were checked.
+- Earlier attempts retain available logs/reports and recorded hashes; not every
+  intermediate producer source was captured. Failed emulator resources were
+  process-local and disappeared when the harness shut down; no external service
+  resources or paid calls were created in this follow-up. Initial failures were
+  stale policy/count/pressure assertions, not actual-model quality failures.
+- No `.env.local` or personal chat data. Secret-content scan: zero matches. All
+  previous immutable archives are retained unchanged; nothing is removed to shrink
+  PR scope.
+- Local-only, unavailable in a fresh clone; pinned SillyTavern, dependencies and
+  Playwright browser are separate reproduction inputs. CI never reads this bundle.
+  The prior numeric-filter live check remains historical evidence for the unchanged
+  client/SDK; no new live service or actual LLM clarification behavior was measured.
+
+See [current policy and limits](conversation-memory-defaults.md).
+
+
+## Active-input policy final validation
+
+The final follow-up anchors native Impersonate on the latest eligible response,
+preserving the character turn being answered as the user. Successful empty memory
+preparation also displays the counted guidance tokens instead of zero. Neither fix
+adds a provider call or changes the numeric search/budget defaults.
+
+- Archive: `/Users/steven/Dev/sillymemory/artifacts/archive/active-input-policy-v2/evidence.tar.gz`
+- SHA-256: `07101bcc5b3f0a1a4d8c1cc576182908f7be30fe1ac80b612437f32aa3368891`
+- Manifest: adjacent `manifest.json`; all 370 members verified, 2,321,072 bytes.
+- Parent: `b80ae5e50b49a752a65bdbab4a1a8a0622df034b`; same base as v1.
+  Includes the final source snapshot/base patch and all available active-input
+  attempts. Documentation archive pointers are added after freezing the snapshot.
+- Final unit340, browser45/fault77 (`input-only-v4`), and all17 prompt-delivery cases
+  (`input-only-v9`) plus overlap/packing/assembly passed. Source hashes match final
+  runtime/harness bytes. The added actual-host impersonation check preserves the
+  last character response, produces a user draft and leaves the chat unchanged.
+  No-hit/no-fitting checks compare the prepared token display with host-tokenized
+  guidance. Final emulator collections0; no uncaught page errors.
+- The first display-check collector read the post-verification excerpt inspector,
+  rather than the prepared-token view, and failed with NaN. Its original report is
+  preserved; the final collector captures preparation at the final host event.
+- No new paid model or live LambdaDB calls. Zero secret-content matches; no
+  `.env.local` or private chats. All prior archives remain unchanged. The same
+  local-only availability, external prerequisites and intermediate-source capture
+  limits as v1 apply; these archives are never CI dependencies.
+
+See [current policy and remaining quality limits](conversation-memory-defaults.md).
