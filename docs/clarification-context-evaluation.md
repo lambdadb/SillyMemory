@@ -17,7 +17,9 @@ is buffered visually until decoded. Source signatures invalidate stale boundarie
 selected swipes retain their own state, and interrupted/invalid replies preserve
 unresolved context as internal `unknown`. Incomplete protocol placeholders stay in
 the recovery UI but are excluded from both retrieval and subsequent generation.
-Deferred recovery safely ignores a reply deleted in the meantime. Both remote search legs and local selection
+Deferred recovery safely ignores a reply deleted in the meantime. Startup also
+recovers an already-open chat, and decoded reply changes are applied only after
+asynchronous source/ownership validation succeeds. Both remote search legs and local selection
 exclude already-retained pending turns before bounded ranking/budgeting. A root at
 message zero skips search after synchronization. V4 below searched before the active
 input and excluded pending excerpts after packing. The
@@ -26,18 +28,19 @@ opt-out for providers/settings without compatible JSON schema support.
 
 ### Production validation
 
-- `npm test`: 353/353. Includes status/source binding, reload copies, edits/deletion,
+- `npm test`: 355/355. Includes status/source binding, reload copies, edits/deletion,
   selected swipe restoration, malformed/refused/interrupted replies, schema/tool
   conflicts, native YAML override shapes and duplicate-budget exclusion.
 - `npm run check`, maintained script/test syntax, `npm run check:release` and
   `npm run check:sdk`: passed; locked SDK 0.8.0 remains unchanged.
-- `ST_SOURCE=<pinned host> SM_ARTIFACT_TAG=clarification-protocol-final npm run test:browser`:
+- `ST_SOURCE=<pinned host> SM_ARTIFACT_TAG=clarification-startup-final npm run test:browser`:
   actual SillyTavern 1.19.0/Chromium with local LambdaDB and deterministic completion
   emulators. Automatic opening, full dialogue in retrieval/generation, terminal
   closure, full page reload/key re-entry, malformed stream, explicit stop,
   regeneration, native swipe selection, source edit, chat isolation and custom
   schema conflicts, the pending-root remote boundary and omission of recovery
-  placeholders before/after terminal closure passed. These are host-integration
+  placeholders before/after terminal closure and recovery of a chat auto-loaded
+  before extension initialization passed. These are host-integration
   tests, not model-quality measurements. Streaming JSON visibility was checked during token events.
 - The earlier `SM_ARTIFACT_TAG=clarification-integration-final npm run test:faults`
   passed existing delayed-query/edit/delete/
@@ -66,8 +69,8 @@ call waits, reserving 85,298 admission tokens (not billed usage). The run submit
 2,031 documents in 156 LambdaDB requests; all three owned collections were deleted
 and HTTP 404 verified, with no keys in browser storage and no recorded host errors.
 The live runtime snapshot preceded final YAML-shape guards, the remote pending-root
-filter and removal of incomplete protocol placeholders from later prompts. Those
-changes are covered by unit and actual-host emulator tests;
+filter, incomplete-placeholder pruning, startup recovery and mutation-after-validation
+refinements. Those changes are covered by unit and actual-host emulator tests;
 the ten-reply paid run was not repeated and is not exact final-search quality evidence.
 
 This is a bounded functional adoption gate, **not** a new LongMemEval score or proof

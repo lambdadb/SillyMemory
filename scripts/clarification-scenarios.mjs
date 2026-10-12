@@ -52,7 +52,35 @@ export async function runClarificationScenarios({ page, field, waitStatus, check
     check('native clarification opens on intent ambiguity and saves plain reply only', opening.extra.sillymemoryRequest.status === 'needs_clarification' && opening.mes === 'Which visit do you mean?');
     await page.evaluate(async () => { const c = SillyTavern.getContext(); await c.saveChat(); await (await import('/script.js')).saveSettings(); });
     const savedChat = await page.evaluate(() => { const c = SillyTavern.getContext(); return { avatar: c.characters[c.characterId].avatar, file: c.getCurrentChatId() }; });
+    await page.evaluate(async () => {
+        const c = SillyTavern.getContext(), { ClarificationRequest } = await import('/scripts/extensions/third-party/sillymemory/src/clarification.js');
+        const { power_user } = await import('/scripts/power-user.js'); power_user.auto_load_chat = true;
+        c.chat.push({ mes: 'Startup recovery fixture.', name: 'User', is_user: true, extra: {} });
+        const pending = new ClarificationRequest(), anchor = c.chat.length - 1;
+        await pending.prepare(c.chat, anchor, 'fixture'); pending.configure({}, c.chat, 'fixture');
+        c.chat.push({ mes: '{"reply":"unfinished', name: 'Mira', is_user: false, extra: {} }); pending.streaming(c.chat, 'fixture');
+        await c.saveChat(); await (await import('/script.js')).saveSettings();
+    });
+    let loadedBeforeInitialization = false;
+    await page.route('**/scripts/extensions/third-party/sillymemory/settings.html', async route => {
+        // Hold extension initialization until the native auto-loaded chat exists.
+        // Its CHAT_CHANGED event therefore cannot run our future recovery listener.
+        await page.waitForFunction(() => globalThis.SillyTavern?.getContext().chat.at(-1)?.extra?.sillymemoryPending);
+        loadedBeforeInitialization = true;
+        await route.continue();
+    });
     await page.reload(); await page.locator('#sillymemory').waitFor({ state: 'attached' });
+    await page.waitForFunction(() => SillyTavern.getContext().chat.at(-1)?.extra?.sillymemoryRequest?.status === 'unknown');
+    check('initialization recovers a pending reply already opened by native auto-load', loadedBeforeInitialization && await page.evaluate(() => {
+        const m = SillyTavern.getContext().chat.at(-1);
+        return m.extra.sillymemoryRequest.root === 2 && !m.extra.sillymemoryPending && !m.mes.includes('"reply"');
+    }));
+    await page.unroute('**/scripts/extensions/third-party/sillymemory/settings.html');
+    await page.evaluate(async () => {
+        const c = SillyTavern.getContext(), { power_user } = await import('/scripts/power-user.js'); power_user.auto_load_chat = false;
+        c.chat.splice(4); // Restore the original dialogue after the controlled startup fixture.
+        await c.saveChat(); await (await import('/script.js')).saveSettings();
+    });
     await page.evaluate(async saved => { const c = SillyTavern.getContext(); await c.selectCharacterById(c.characters.findIndex(x => x.avatar === saved.avatar)); await c.openCharacterChat(saved.file); }, savedChat);
     await page.waitForFunction(() => SillyTavern.getContext().chat.some(m => m.extra?.sillymemoryRequest));
     if (!await field('key').isVisible()) {

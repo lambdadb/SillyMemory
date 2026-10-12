@@ -77,6 +77,29 @@ test('a deleted streaming reply cannot be adopted by deferred completion recover
     assert.equal(await request.finish(chat, 'a', 1), null);
     assert.deepEqual(chat, [user('Where?')]);
 });
+test('source changes during completion validation leave the reply and recovery marker untouched', async () => {
+    const chat = [user('Where?')], request = new ClarificationRequest();
+    await request.prepare(chat, 0, 'a'); request.configure({}, chat, 'a');
+    chat.push(assistant('{"reply":"Which event?","request_status":"needs_clarification"}')); request.streaming(chat, 'a');
+    const original = structuredClone(chat[1]);
+    const completion = request.finish(chat, 'a', 1);
+    chat[0].mes = 'Edited question.';
+    const decoded = await completion;
+    assert.equal(decoded, null); assert.deepEqual(chat[1], original);
+    assert.deepEqual(await recoverPendingReplies(chat), [1]);
+    assert.equal(chat[1].extra.sillymemoryRequest.status, 'unknown');
+    assert.equal(chat[1].extra.sillymemoryRequest.root, null);
+});
+test('ownership loss during completion validation cannot mutate a reply', async () => {
+    const chat = [user('Where?')], request = new ClarificationRequest();
+    await request.prepare(chat, 0, 'a'); request.configure({}, chat, 'a');
+    chat.push(assistant('{"reply":"Which event?","request_status":"needs_clarification"}')); request.streaming(chat, 'a');
+    const original = structuredClone(chat[1]); let owned = true;
+    const completion = request.finish(chat, 'a', 1, () => owned);
+    owned = false;
+    assert.equal(await completion, null);
+    assert.deepEqual(chat[1], original);
+});
 test('schema, tools and multiple-reply conflicts are rejected without overwriting settings', async () => {
     for (const data of [{ json_schema: { name: 'other' } }, { response_format: { type: 'json_object' } }, { tools: [{}] }, { n: 2 }]) {
         const chat = [user('Where?')], request = new ClarificationRequest(); await request.prepare(chat, 0, 'a');

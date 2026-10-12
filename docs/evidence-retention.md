@@ -1340,3 +1340,20 @@ recovery. Both pending and post-terminal actual requests omit the placeholder.
   patch, 353-unit-test receipt and 69-check native-host emulator report retained.
   Archive byte-readback and credential scan passed. No paid rerun or new answer
   score; previous archives remain unchanged. Local-only and not a CI dependency.
+
+The final state-safety review adds recovery for a chat already open at initialization,
+plus candidate hashing before native reply mutation. A source edit or ownership
+change during hashing leaves raw text and its in-flight marker recoverable.
+
+- Follow-up archive: `artifacts/archive/clarification-production-review-v3/evidence.tar.gz`
+  under the primary worktree; 47,755 bytes, ten members; SHA-256
+  `71cf8e2409fae92cba75b75a2bef57bb6ecc1adff7f683a0fcba483ae035527c`.
+- Manifest: `artifacts/archive/clarification-production-review-v3/manifest.json`;
+  SHA-256 `6fbd7f415567f905700ed77f12b9c62faa35ee26f2185d378b8b459be1a4af91`.
+- Base `3e941c33383672d59ef4e082e4c8c5bfabbbcd44`; exact sources/patch,
+  355-unit-test receipt and 70-check native-host emulator report retained. The
+  startup fixture delays extension initialization until native auto-load has opened
+  the marked chat, proving recovery without a later chat switch. Unit tests change
+  source/ownership while the real asynchronous digest is pending, without replacing
+  global crypto or changing other tests' state. Archive read-back and credential
+  scan passed. No paid rerun; prior archives remain unchanged. Local-only and not CI.

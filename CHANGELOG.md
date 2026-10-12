@@ -18,7 +18,8 @@ boundary; publication is confirmed by the corresponding Git tag and GitHub Relea
   invalidate stale boundaries after edits/deletions. Hide streaming JSON, recover
   interrupted replies conservatively, omit incomplete protocol placeholders from
   later prompts, tolerate a reply deleted before deferred recovery, and reject
-  conflicting schemas/tools.
+  conflicting schemas/tools. Recover already-open chats at initialization, and
+  validate asynchronous completion before changing native reply text or metadata.
   Requires schema-capable Chat Completions; an explicit checkbox disables it.
 
 - Store available UTC host-message provenance on every chunk, separately from

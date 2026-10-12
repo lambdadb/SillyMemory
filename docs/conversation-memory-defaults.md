@@ -44,7 +44,8 @@ Incomplete structured streams are excluded from indexing and later generation
 prompts, while their recovery notice remains in the native chat UI. Missing/invalid status
 or interrupted generation retains unresolved context conservatively as internal
 `unknown`, rather than fabricating completion. Recovery cleans saved in-flight
-replies when the chat loads. This is separate from the three model statuses.
+replies when the chat loads or is already open at initialization. Decoding commits
+only after asynchronous source and current-chat ownership checks succeed. This is separate from the three model statuses.
 
 The supported adapter requires Chat Completions with JSON-schema support. The live
 provider gate used Sol; other providers are not thereby certified. Streaming text

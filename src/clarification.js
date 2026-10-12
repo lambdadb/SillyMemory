@@ -76,21 +76,25 @@ export class ClarificationRequest {
         message.extra.sillymemoryPending = { version: 1, anchor: current.anchor, root: current.start, prefixHash: current.prefixHash };
         return current.anchor + 1;
     }
-    async finish(chat, key, index) {
+    async finish(chat, key, index, valid = () => true) {
         const current = this.current;
-        if (!current?.requested || current.chat !== chat || current.key !== key || index !== current.anchor + 1 || !chat[index] || chat[index].is_user) return null;
+        if (!valid() || !current?.requested || current.chat !== chat || current.key !== key || index !== current.anchor + 1 || !chat[index] || chat[index].is_user) return null;
         this.current = null;
         const unchanged = projection(chat, current.anchor) === current.prefix;
         const decoded = decodeReply(String(chat[index].mes || ''));
         if (current.canceled || !unchanged) decoded.status = 'unknown';
         const message = chat[index];
+        const root = unchanged && ['needs_clarification', 'unknown'].includes(decoded.status) ? current.start : null;
+        const source = projection(chat, index, false);
+        const candidate = chat.slice(0, index + 1);
+        candidate[index] = { ...message, mes: decoded.reply };
+        const sourceHash = await hash(projection(candidate, index, false));
+        // No live text, marker or selected-swipe state changes before the final
+        // source/ownership check. Invalidated candidates remain recoverable.
+        if (!valid() || chat[index] !== message || projection(chat, index, false) !== source) return null;
         message.mes = decoded.reply;
         message.extra ??= {};
         delete message.extra.sillymemoryPending;
-        const root = unchanged && ['needs_clarification', 'unknown'].includes(decoded.status) ? current.start : null;
-        const source = projection(chat, index, false);
-        const sourceHash = await hash(source);
-        if (projection(chat, index, false) !== source) return null;
         message.extra.sillymemoryRequest = { version: 1, status: decoded.status, root, sourceHash, incomplete: decoded.incomplete };
         if (Array.isArray(message.swipes)) message.swipes[message.swipe_id ?? 0] = message.mes;
         if (message.swipe_info?.[message.swipe_id ?? 0]) message.swipe_info[message.swipe_id ?? 0].extra = structuredClone(message.extra);
@@ -101,16 +105,18 @@ export class ClarificationRequest {
 // A chat may have been saved while a stream was interrupted or while switching
 // chats. A persisted in-flight marker permits recovery without parsing unrelated
 // messages that happen to contain JSON.
-export async function recoverPendingReplies(chat) {
+export async function recoverPendingReplies(chat, valid = () => true) {
     const recovered = [];
     for (let index = 0; index < chat.length; index++) {
-        const marker = chat[index].extra?.sillymemoryPending;
+        if (!valid()) break;
+        const message = chat[index], marker = message.extra?.sillymemoryPending;
         if (marker?.version !== 1 || marker.anchor !== index - 1 || !Number.isInteger(marker.root) || marker.root < 0 || marker.root > marker.anchor || !chat[marker.root]?.is_user) continue;
         const prefix = projection(chat, marker.anchor);
         const prefixHash = await hash(prefix);
+        if (!valid() || chat[index] !== message || projection(chat, marker.anchor) !== prefix) continue;
         const request = new ClarificationRequest();
         request.current = { chat, key: '', anchor: marker.anchor, start: marker.root, prefix: prefixHash === marker.prefixHash ? prefix : '', requested: true, canceled: true };
-        if (await request.finish(chat, '', index)) recovered.push(index);
+        if (await request.finish(chat, '', index, valid)) recovered.push(index);
     }
     return recovered;
 }

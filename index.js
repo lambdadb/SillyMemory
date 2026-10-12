@@ -466,6 +466,17 @@ async function initialize() {
         if (message) context().updateMessageBlock(index, message);
         document.querySelector(`#chat .mes[mesid="${index}"]`)?.classList.remove('sm-awaiting-reply');
     };
+    const recoverCurrentChat = async () => {
+        const source = context().chat, key = requestKey();
+        const valid = () => context().chat === source && requestKey() === key;
+        source.forEach((m, index) => {
+            if (m.extra?.sillymemoryPending) document.querySelector(`#chat .mes[mesid="${index}"]`)?.classList.add('sm-awaiting-reply');
+        });
+        const recovered = await recoverPendingReplies(source, valid);
+        if (!valid()) return;
+        recovered.forEach(revealReply);
+        if (recovered.length) await context().saveChat();
+    };
     ctx.eventSource.on(events.CHAT_COMPLETION_SETTINGS_READY, data => {
         if (!data.messages?.some(m => m.role === 'system' && typeof m.content === 'string' && m.content.includes(REQUEST_GUIDANCE))) return;
         try {
@@ -483,7 +494,9 @@ async function initialize() {
         if (index !== null) document.querySelector(`#chat .mes[mesid="${index}"]`)?.classList.add('sm-awaiting-reply');
     });
     ctx.eventSource.makeFirst(events.MESSAGE_RECEIVED, async index => {
-        const decoded = await clarification.finish(context().chat, requestKey(), index);
+        const source = context().chat, key = requestKey();
+        const valid = () => context().chat === source && requestKey() === key;
+        const decoded = await clarification.finish(source, key, index, valid);
         if (!decoded) return;
         revealReply(index);
         if (decoded.status === 'unknown') status('No valid request status was received. Existing unresolved context is retained; regenerate if the reply was incomplete.');
@@ -492,11 +505,7 @@ async function initialize() {
     ctx.eventSource.makeFirst(events.CHAT_CHANGED, async () => {
         if (clarification.current?.requested) ctx.stopGeneration();
         clarification.current = null;
-        const source = context().chat;
-        const recovered = await recoverPendingReplies(source);
-        if (context().chat !== source) return;
-        recovered.forEach(revealReply);
-        if (recovered.length) await context().saveChat();
+        await recoverCurrentChat();
     });
     ctx.eventSource.makeFirst(events.GENERATION_ENDED, () => {
         const current = clarification.current;
@@ -506,7 +515,8 @@ async function initialize() {
             if (!current || clarification.current !== current) return;
             if (current.responseSeen && current.chat === context().chat && current.key === requestKey()) {
                 clarification.cancel();
-                const decoded = await clarification.finish(current.chat, current.key, current.anchor + 1);
+                const valid = () => current.chat === context().chat && current.key === requestKey();
+                const decoded = await clarification.finish(current.chat, current.key, current.anchor + 1, valid);
                 if (decoded) { revealReply(current.anchor + 1); await context().saveChat(); }
             }
             if (clarification.current === current) clarification.current = null;
@@ -544,5 +554,6 @@ async function initialize() {
         });
     }
     addEventListener('pagehide', () => { client?.forget(); element('key').value = ''; });
+    await recoverCurrentChat(); // APP_READY can follow the selected chat's initial load.
 }
 context().eventSource.on(context().eventTypes.APP_READY, () => { setTimeout(() => initialize().catch(() => { globalThis.toastr?.error('SillyMemory could not initialize. Check browser storage access and the supported SillyTavern version.'); }), 0); });
