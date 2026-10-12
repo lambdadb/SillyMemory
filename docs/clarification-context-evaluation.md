@@ -13,7 +13,9 @@ model or retrieval call is introduced. Search and token defaults are unchanged.
 The production adapter returns the reply and status in the same schema-constrained
 Chat Completions generation. Only decoded text is displayed/saved as the reply;
 status is native reply metadata, not embedded document content. Normal streaming
-is buffered visually until decoded. Source signatures invalidate stale boundaries,
+is buffered visually until decoded. Each interceptor attempt owns its preparation
+object; late failures discard only that object, and invalidated asynchronous
+preparation cannot overwrite a newer request. Source signatures invalidate stale boundaries,
 selected swipes retain their own state, and interrupted/invalid replies preserve
 unresolved context as internal `unknown`. Incomplete protocol placeholders stay in
 the recovery UI but are excluded from both retrieval and subsequent generation.
@@ -30,12 +32,12 @@ opt-out for providers/settings without compatible JSON schema support.
 
 ### Production validation
 
-- `npm test`: 356/356. Includes status/source binding, reload copies, edits/deletion,
+- `npm test`: 358/358. Includes status/source binding, reload copies, edits/deletion,
   selected swipe restoration, malformed/refused/interrupted replies, schema/tool
   conflicts, native YAML override shapes and duplicate-budget exclusion.
 - `npm run check`, maintained script/test syntax, `npm run check:release` and
   `npm run check:sdk`: passed; locked SDK 0.8.0 remains unchanged.
-- `ST_SOURCE=<pinned host> SM_ARTIFACT_TAG=clarification-target-final npm run test:browser`:
+- `ST_SOURCE=<pinned host> SM_ARTIFACT_TAG=clarification-ownership-final npm run test:browser`:
   actual SillyTavern 1.19.0/Chromium with local LambdaDB and deterministic completion
   emulators. Automatic opening, full dialogue in retrieval/generation, terminal
   closure, full page reload/key re-entry, malformed stream, explicit stop,
@@ -73,7 +75,7 @@ call waits, reserving 85,298 admission tokens (not billed usage). The run submit
 and HTTP 404 verified, with no keys in browser storage and no recorded host errors.
 The live runtime snapshot preceded final YAML-shape guards, the remote pending-root
 filter, incomplete-placeholder pruning, startup recovery and mutation-after-validation
-and active-target/non-streaming recovery refinements. Those changes are covered by
+active-target/non-streaming recovery and attempt-ownership refinements. Those changes are covered by
 unit and actual-host emulator tests;
 the ten-reply paid run was not repeated and is not exact final-search quality evidence.
 

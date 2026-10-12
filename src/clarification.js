@@ -57,14 +57,16 @@ export function decodeReply(text) {
 
 export class ClarificationRequest {
     current = null;
-    async prepare(chat, anchor, key) {
+    async prepare(chat, anchor, key, valid = () => true) {
         const prefix = projection(chat, anchor);
         const start = await pendingRequestStart(chat, anchor);
         const prefixHash = await hash(prefix);
-        if (prefix !== projection(chat, anchor)) throw new Error('Chat changed while preparing clarification context. Generate again.');
-        this.current = { chat, key, anchor, start, prefix, prefixHash, requested: false, canceled: false };
-        return start;
+        if (!valid() || prefix !== projection(chat, anchor)) throw new Error('Chat changed while preparing clarification context. Generate again.');
+        const request = { chat, key, anchor, start, prefix, prefixHash, requested: false, canceled: false };
+        this.current = request;
+        return request;
     }
+    discard(request) { if (request && this.current === request) this.current = null; }
     configure(data, chat, key) {
         const current = this.current;
         if (!current || current.chat !== chat || current.key !== key || current.prefix !== projection(chat, current.anchor)) return false;

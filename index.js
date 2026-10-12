@@ -137,7 +137,7 @@ globalThis.sillymemory_intercept = async (chat, contextSize, abort, type) => {
     const valid = () => retrieval === retrievalSequence && unchangedPrompt();
     const operation = statusView.start(() => retrieval === retrievalSequence && sequence === promptSequence);
     retrievalOperation = operation;
-    let preparedMessages = [], guidance = [], abandoned = false;
+    let preparedMessages = [], guidance = [], abandoned = false, request;
     try {
         const prepared = await prepareMemory(() => sequence === promptSequence && sessionReady && state.enabled && sameSource() && JSON.stringify(chat) === promptBefore);
         if (!prepared) { abandoned = true; abort(true); return; }
@@ -152,8 +152,8 @@ globalThis.sillymemory_intercept = async (chat, contextSize, abort, type) => {
             const anchor = source.indexOf(source.filter(m => !m.is_system)[before]);
             if (isReplyTarget(source, anchor, type)) {
                 if (context().mainApi !== 'openai') throw new ConnectionError('Clarification continuity requires Chat Completions with JSON schema support. Disable clarification continuity to use this API.', 0, 'request-protocol');
-                const start = await clarification.prepare(source, anchor, requestKey());
-                config.requestStart = source.slice(0, start).filter(m => !m.is_system).length;
+                request = await clarification.prepare(source, anchor, requestKey(), valid);
+                config.requestStart = source.slice(0, request.start).filter(m => !m.is_system).length;
                 protectedMessages = chat.filter(m => m.index >= config.requestStart && m.index <= before && !snapshot.messages[m.index]?.protocolIncomplete);
                 requestGuidance += `\n${REQUEST_GUIDANCE}`;
             }
@@ -198,8 +198,8 @@ globalThis.sillymemory_intercept = async (chat, contextSize, abort, type) => {
         preparedMessages = result.messages;
         operation.finish(`Prepared ${result.passages.length} source passages in ${result.messages.length} memory excerpts (${preparedTokens} tokens); awaiting final prompt verification.`);
     } catch (e) {
-        const trackedRequest = Boolean(clarification.current);
-        clarification.current = null;
+        const trackedRequest = Boolean(request);
+        clarification.discard(request);
         if (!instance) { if (operation.current()) fail(e, operation); abandoned = true; abort(true); return; }
         if (!valid()) { operation.finish('Memory operation canceled because the prompt changed. Generate again.'); abandoned = true; abort(true); return; }
         guidance = [];

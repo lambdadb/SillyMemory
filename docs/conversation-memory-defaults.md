@@ -46,7 +46,9 @@ or interrupted generation retains unresolved context conservatively as internal
 `unknown`, rather than fabricating completion. Recovery cleans saved in-flight
 replies when the chat loads or is already open at initialization. Decoding commits
 only after asynchronous source and current-chat ownership checks succeed. Both
-streaming and non-streaming replies keep an in-flight marker until that commit. This is separate from the three model statuses.
+streaming and non-streaming replies keep an in-flight marker until that commit.
+Each interceptor attempt clears only its own request object; canceled asynchronous
+preparation cannot overwrite newer state. This is separate from the three model statuses.
 
 The adapter applies only to the actual nonempty plain-user generation target;
 blank/file/media/tool inputs bypass it instead of binding to an older eligible turn.

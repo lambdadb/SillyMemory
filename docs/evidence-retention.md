@@ -1375,3 +1375,18 @@ establishes the same recoverable in-flight marker before asynchronous validation
   is tested for streaming and non-streaming replies. Intermediate non-streaming
   recovery receipts are retained too. Archive read-back and credential scan passed;
   no paid rerun. Prior archives remain unchanged; local-only and not a CI dependency.
+
+The request-ownership review binds preparation and cleanup to one interceptor
+attempt. A late older failure cannot clear newer state, and an invalidated digest
+cannot install a stale prepared request. These concurrency invariants are focused
+unit evidence; normal native-host integration remains a separate check.
+
+- Follow-up archive: `artifacts/archive/clarification-production-review-v5/evidence.tar.gz`
+  under the primary worktree; 47,310 bytes, ten members; SHA-256
+  `5918e674b8b2b1fc78098901483a12494a22087ea80b6c0a7fbd95e1f86eb3e7`.
+- Manifest: `artifacts/archive/clarification-production-review-v5/manifest.json`;
+  SHA-256 `ba7cd2d99e4242f45f4a8eed806174b22b6631112fbce16485f93a86033588a4`.
+- Base `b911b94677038b397bdfaa3b8ec31672d74bd4e7`; exact source/patch,
+  358-unit-test receipt and 71-check native-host emulator report retained.
+  Archive read-back and credential scan passed; no new paid run or quality score.
+  Prior archives remain unchanged; local-only and not a CI dependency.

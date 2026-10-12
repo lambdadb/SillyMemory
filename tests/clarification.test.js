@@ -30,6 +30,21 @@ async function reply(chat, status, text = 'Which visit do you mean?') {
     await request.finish(chat, 'a', anchor + 1);
     return request;
 }
+test('discarding an older failed attempt preserves the newer request for configuration', async () => {
+    const chat = [user('Where?')], request = new ClarificationRequest();
+    const older = await request.prepare(chat, 0, 'a');
+    const newer = await request.prepare(chat, 0, 'a');
+    request.discard(older);
+    assert.equal(request.current, newer); assert.equal(request.configure({}, chat, 'a'), true);
+    request.discard(newer); assert.equal(request.current, null);
+});
+test('an invalidated asynchronous preparation cannot replace a newer request', async () => {
+    const chat = [user('Where?')], request = new ClarificationRequest(); let olderValid = true;
+    const rejected = assert.rejects(request.prepare(chat, 0, 'a', () => olderValid), /Chat changed/);
+    olderValid = false;
+    const newer = await request.prepare(chat, 0, 'a');
+    await rejected; assert.equal(request.current, newer); assert.equal(request.configure({}, chat, 'a'), true);
+});
 test('pending dialogue survives reload, includes both roles and closes on either terminal status', async () => {
     for (const terminal of ['answered', 'insufficient_evidence']) {
         let chat = [user('Where was it?')];
