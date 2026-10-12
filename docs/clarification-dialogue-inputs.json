@@ -21,11 +21,6 @@
   },
   "selection": "New confirmation dialogues use the first eight distinct single-session-user sources with answers <=70 characters, ordered by SHA256(seed:id), excluding prior six sources. Four prespecified cancellation, absence, multiple-clarification and answered-with-question controls reuse those new sources. All sources were consumed by prior whole-500 work; this is a fresh dialogue cohort, not an independent benchmark.",
   "selectionSeed": "clarification-dialogue-confirmation-v4",
-  "conditions": [
-    "latest-input",
-    "pending-user-inputs",
-    "pending-dialogue"
-  ],
   "queryProtocol": {
     "latest-input": "Current input verbatim.",
     "pending-user-inputs": "All pending user turns, each prefixed User: and separated by two newlines.",
@@ -332,5 +327,16 @@
     "maxConcurrent": 1,
     "maxAttempts": 3
   },
-  "recordingNote": "Original pre-run plan retained unchanged. Its scope, exact per-case queries, decisionGate and producer hash define this run; several inherited v2/v3 prose fields are stale. The post-run protocol audit independently verifies all 60 recorded final queries against the frozen turns/queries. This maintained lock describes the executed protocol."
+  "recordingNote": "Original pre-run plan retained unchanged. Its scope, exact per-case queries, decisionGate and producer hash define this run; several inherited v2/v3 prose fields are stale. The post-run protocol audit independently verifies all 60 recorded final queries against the frozen turns/queries. This maintained lock describes the executed protocol.",
+  "conditionsByCohort": {
+    "regression": [
+      "pending-user-inputs",
+      "pending-dialogue"
+    ],
+    "confirmation": [
+      "latest-input",
+      "pending-user-inputs",
+      "pending-dialogue"
+    ]
+  }
 }
