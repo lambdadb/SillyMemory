@@ -123,12 +123,11 @@ export async function runClarificationScenarios({ page, field, waitStatus, check
             clarificationStreamChecks.push(Boolean(node) && getComputedStyle(node).visibility === 'hidden');
         });
     });
+    const queriesBeforeRetainedAnswer = calls.filter(c => c.body.query?.bayesian).length;
     const answer = await generate('My Friday visit.', { reply: 'The city museum. Would you like directions?', status: 'answered' }, true);
-    const query = calls.findLast(c => c.body.query?.bayesian)?.body.query.bayesian[0].knn.queryText;
-    check('native reloaded pending dialogue reaches retrieval in role order', query === 'User: Where was it?\n\nAssistant: Which visit do you mean?\n\nUser: My Friday visit.');
-    check('native retrieval excludes already-retained pending turns in both search legs', calls.findLast(c => c.body.query?.bayesian)?.body.query.bayesian[0].knn.filter.queryString.query.endsWith(' AND message:[0 TO 1]'));
+    check('a fully retained recent and pending dialogue skips unnecessary memory retrieval', calls.filter(c => c.body.query?.bayesian).length === queriesBeforeRetainedAnswer);
     const request = requests.at(-1);
-    check('native generation retains both user inputs and the assistant clarification', ['Where was it?', 'Which visit do you mean?', 'My Friday visit.'].every(text => request.messages.some(m => m.content === text)));
+    check('native generation retains both user inputs, the assistant clarification and recent source', requests.at(-1).messages.some(m => m.content === 'I visited the city museum on Friday.') && ['Where was it?', 'Which visit do you mean?', 'My Friday visit.'].every(text => request.messages.some(m => m.content === text)));
     check('streaming wrapper stays hidden and final reply/status are separated', await page.evaluate(() => clarificationStreamChecks.length > 0 && clarificationStreamChecks.every(Boolean)) && answer.mes === 'The city museum. Would you like directions?' && answer.extra.sillymemoryRequest.status === 'answered' && !await page.locator('.sm-awaiting-reply').count());
     await generate('What is my account number?', { reply: 'Available evidence does not establish your account number.', status: 'insufficient_evidence' });
     check('terminal answer clears retrieval accumulation', calls.findLast(c => c.body.query?.bayesian)?.body.query.bayesian[0].knn.queryText === 'What is my account number?');

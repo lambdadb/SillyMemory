@@ -257,7 +257,7 @@ try {
     const result = await prompt();
     check('real host dispatcher injects bounded memory', Boolean(result.injection) && /\d+ \/ 250 tokens/.test(result.inspection));
     check('native recalled excerpts keep macros literal within budget', result.rendered.includes('｛｛char｝｝') && result.rendered.includes('＜USER＞') && result.macroValue === undefined && result.renderedTokens <= 250);
-    check('only the question stays full and persisted source chat is preserved', result.chat.filter(m => !m.mes.startsWith('[Past conversation excerpt:')).length === 1 && result.chat.at(-1).mes.includes('passage 6') && result.before === result.after);
+    check('five recent messages stay full in source order and persisted source chat is preserved', JSON.stringify(result.chat.filter(m => !m.mes.startsWith('[Past conversation excerpt:')).map(m => m.index)) === '[2,3,4,5,6]' && result.chat.at(-1).mes.includes('passage 6') && result.before === result.after);
     // Exercise assembly through the real extension dispatcher with multiple stored chunks.
     await field('budget').fill('1600'); await field('budget').dispatchEvent('change');
     const assemblySource = await page.evaluate(async () => {

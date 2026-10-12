@@ -33,20 +33,22 @@ Tags/Aliases. The empty `main` branch is an independent-story fork source. One
 current-question query uses only the current eligible user message.
 Regenerate/swipe exclude the answer being replaced; continuation anchors on the
 eligible message being extended; Impersonate anchors on the latest eligible response.
-No query rewriting model, appended recent
-conversation or second search is used. All completed history is stored; generation
-retains only the active input (the current question, or the message being extended
-for Continue, or the response being answered for Impersonate) and selected memory alongside native system/character settings.
-No last-N-message window is used. Answers following a replacement question are
-removed from ephemeral generation input and excluded from retrieval.
+No query rewriting model or second search is used. An unresolved clarification
+instead uses its complete user/assistant span for the single retrieval query.
+All completed history is stored, independently of generation retention. Generation
+retains the five most recent eligible messages through the active anchor, together
+with any longer unresolved span and selected memory alongside native settings.
+Continue/Impersonate retain recent dialogue through their existing eligible anchor.
+Answers following a replacement question are removed from ephemeral generation
+input and excluded from retrieval.
 See the [current default policy](conversation-memory-defaults.md).
 
 
 Bayesian fusion combines managed embedding `knn.queryText` with English-analyzed
 `text` using the same query and `skipSyntax: true`; both legs use the owner/scope
 prefilter, extended with the indexed `long` message-position range below the
-active-input boundary. The same boundary also limits local accepted documents,
-so an out-of-bound response cannot consume budget or duplicate the active input. Vector k=100, managed Typesafe `jev-1.13.0` candidateSize=100, final
+earliest retained recent/pending boundary. The same boundary also limits local accepted documents,
+so an out-of-bound response cannot consume budget or duplicate a retained turn. Vector k=100, managed Typesafe `jev-1.13.0` candidateSize=100, final
 size=50. Unconfirmed applied metadata, mismatched provider/model identity or failure
 rejects injection. Queries above 8,192 UTF-8 bytes fail explicitly before any service
 call; they are never silently truncated.
@@ -60,16 +62,18 @@ same-message source assembly can share headers/remove exact overlap and refill i
 retrieval order without removing the established source floor. Final presentation
 remains chronological. Fifty returned chunks need not all fit the configured budget.
 
-An epoch and a full snapshot comparison invalidate work across events, chat switches, disabling, and connection replacement. Pending queries are canceled when possible; canceled server writes are never assumed rolled back. Token counting and the final validity check precede mutation. Failed sync/query/counting preserves the full ephemeral prompt. A successful selection, including zero hits or nothing fitting the budget, replaces past eligible messages while preserving the active input and special messages. Only the generated `coreChat` array is spliced; persisted chat objects are untouched.
+An epoch and a full snapshot comparison invalidate work across events, chat switches, disabling, and connection replacement. Pending queries are canceled when possible; canceled server writes are never assumed rolled back. Token counting and the final validity check precede mutation. Failed sync/query/counting preserves the full ephemeral prompt. A successful selection, including zero hits or nothing fitting the budget, replaces past eligible messages while preserving recent/pending dialogue and special messages. Only the generated `coreChat` array is spliced; persisted chat objects are untouched.
 
-Selected excerpts replace eligible older messages in the ephemeral `coreChat` at their source positions, using the locally reconstructed user/assistant role and display name. Presentation is chronological even when retrieval ranks differ. A separate system extension prompt supplies clarification guidance; recalled speakers are never combined into that instruction. The active input and special messages retain their original objects; source chat is untouched. Source labels identify recalled passages without rewriting pronouns or treating a speaker as the actor of every reported action.
+Selected excerpts replace eligible older messages in the ephemeral `coreChat` at their source positions, using the locally reconstructed user/assistant role and display name. Presentation is chronological even when retrieval ranks differ. A separate system extension prompt supplies clarification guidance; recalled speakers are never combined into that instruction. Retained recent/pending and special messages keep their original objects; source chat is untouched. Source labels identify recalled passages without rewriting pronouns or treating a speaker as the actor of every reported action.
 
 Macro braces and legacy `<USER>`/`<CHAR>`-style markers are rendered with fullwidth delimiters before budgeting. The joined excerpt content, source labels, newline separators and clarification guidance are counted with the host tokenizer, with a fresh-settings default of 4,096 tokens, additionally capped at a quarter of the host context limit. Provider per-message envelopes and the complete system/persona/response overhead remain the host's responsibility; this is not a cap on total billed tokens or a guarantee that an oversized current input fits. Labeling and native roles are not a comprehensive prompt-injection defense.
 
 Successful preparation supplies a system instruction even with no matching memory:
 use available conversation evidence, ask one brief clarification when the referent
 or requested fact is unclear, and do not treat absent retrieval as proof of absence.
-Final delivery validates this instruction alongside excerpts and the active input.
+Final delivery validates this instruction alongside excerpts and every verifiable
+retained recent/pending turn. Long raw turns can exceed host context even when the
+memory allocation fits; the default loss guard stops that generation.
 Failed preparation clears it and retains the original prompt. This does not detect
 answer correctness or ensure that every model follows the instruction.
 

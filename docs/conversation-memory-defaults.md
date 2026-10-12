@@ -11,26 +11,30 @@ development defaults, not a release or a universal optimum.
 
 Index all completed eligible plain-text messages, including the preceding exchange.
 A trailing user input waits for a reply before indexing. Ordinarily, retrieve with
-only the current question and retain only that input plus selected memory alongside
-native system/character settings. No fixed recent-message window is added.
+only the current question. Retain the five most recent eligible messages including
+that input, in native roles and source order, plus selected memory alongside native
+system/character settings. Storage still includes completed recent turns. See
+[the retention decision and limits](recent-dialogue-retention.md).
 
 **Clarification continuity is enabled by default.** The same answer generation
 returns the visible reply and a structured status. `needs_clarification` means the
 user's request or referent is ambiguous. It opens a pending span at that user input.
 On subsequent turns, one search uses the complete pending user/assistant dialogue,
-with roles and order preserved. Generation keeps the same full span plus only the
-current query's selected memory. Earlier retrieval snapshots are never accumulated.
+with roles and order preserved. Generation keeps the union of that full span and the five recent eligible messages,
+plus only the current query's selected memory. Earlier retrieval snapshots are never accumulated.
 `answered` closes the span even if the reply contains an optional conversational
 question. `insufficient_evidence` also closes it: missing or conflicting evidence
 for a clear request must not be mistaken for ambiguity in the user's intent.
 Status expresses request state, not factual correctness.
 
-Both search legs prefilter positions before the pending root, or before the current
-input when no clarification is pending. Local selection validates the same boundary.
+Both search legs prefilter positions before the earliest retained recent/pending
+message. Local selection validates the same boundary. Query text still starts at
+the pending root (or uses only the current input); retaining recent messages does
+not append them to the retrieval query.
 Already-retained full turns therefore consume neither the bounded result slots nor
 the excerpt budget. A root at the first message skips search after synchronization:
 there is no older memory to retrieve. This refines the v4 experiment, which searched
-before the active input and filtered pending excerpts only after packing. Pending dialogue is outside the memory budget but inside the
+before the active input and filtered pending excerpts only after packing. Recent/pending dialogue is outside the memory budget but inside the
 host context and final delivery checks. Search k=100/candidateSize=100/size=50,
 4,096 memory tokens and the one-quarter-context cap are unchanged. Oversized queries
 still fail at 8 KiB without truncation. No extra LLM, rewriting or search call is added.
@@ -104,7 +108,7 @@ decision record for the current integration receipt.
   cleanup returned HTTP 404. The client and SDK are unchanged by this follow-up.
   This is historical transport evidence, not a new browser/provider run.
 
-The active-input revision removes recent-history capacity pressure; the maintained
+At the historical active-input revision, recent-history capacity pressure was removed; the maintained
 harness therefore separates a long-history control from actual system-instruction
 pressure. The latter uses 110 instruction repetitions to exercise host truncation,
 Stop on missing context, streaming, swipe/regenerate and manual context recovery.
@@ -117,7 +121,8 @@ expected excerpt totals or pressure assumptions; no paid answer reruns occurred.
 Historical producer revisions are required for fixed-window answer experiments;
 current generation refuses those old modes rather than silently changing their
 frozen protocol. Their npm aliases are removed, and historical execution documents
-explicitly require the recorded checkout. Current contract runners no longer configure a recent window.
+explicitly require the recorded checkout. That historical validation had no recent window. Current retention uses a fixed five
+messages; its new capacity/delivery receipts are documented separately.
 
 See the [active-input evidence record](evidence-retention.md#active-input-policy-final-validation). Previous current-question and first active-input archives
 preserve the intermediate recent-12 implementation and its validation. They are

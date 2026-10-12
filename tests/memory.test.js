@@ -41,6 +41,16 @@ test('a pending request starting at the first message syncs but performs no sear
     assert.deepEqual(result, { text: '', tokens: 0, passages: [], messages: [] });
     assert(s.remote.size > 0); // Storage still includes all completed eligible messages.
 });
+test('recent dialogue stays stored but is excluded from ranked memory without changing the query', async () => {
+    const s = setup(), snap = snapshot(), calls = [];
+    s.client.search = async (...args) => { calls.push(args); return [...s.remote.values()]; };
+    const result = await s.engine.retrieve(snap, { ...config, retainedStart: 2 }, text => text.split(/\s+/).length);
+    assert.equal(calls.length, 1);
+    assert.equal(calls[0][3], snap.messages[4].text);
+    assert.equal(calls[0][6], 2);
+    assert(result.passages.every(p => p.message < 2));
+    assert.equal(s.remote.size, 6);
+});
 test('stable content IDs, unique character/chat/branch scopes, and all completed messages', async () => {
     const a = await documents(snapshot(), owner, config);
     assert.equal(a.docs.length, 6); assert.ok(a.docs.every(d => d.message < 6));

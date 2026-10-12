@@ -6,7 +6,7 @@ import { runTransportGate } from './src/gate.js';
 import { MemoryEngine, Journal, capture, fingerprint, options, DEFAULTS, memoryBoundary } from './src/memory.js';
 import { OperationStatus, failureText } from './src/status.js';
 import { PromptDelivery, expectedMessages, deliverySummary } from './src/delivery.js';
-import { MEMORY_GUIDANCE } from './src/context.js';
+import { MEMORY_GUIDANCE, retentionStart } from './src/context.js';
 import { ClarificationRequest, REQUEST_GUIDANCE, recoverPendingReplies, pendingRequestStart, conflictsWithReplyProtocol, isReplyTarget } from './src/clarification.js';
 
 const context = () => SillyTavern.getContext();
@@ -168,6 +168,10 @@ globalThis.sillymemory_intercept = async (chat, contextSize, abort, type) => {
                 requestGuidance += `\n${REQUEST_GUIDANCE}`;
             }
         }
+        // Keep recent conversation independently of classification/retrieval.
+        // A longer pending clarification is retained in full, never truncated.
+        config.retainedStart = Math.min(retentionStart(snapshot.messages, before), config.requestStart ?? before);
+        protectedMessages = chat.filter(m => m.index >= config.retainedStart && m.index <= before && !snapshot.messages[m.index]?.protocolIncomplete);
         // The extension budget includes its complete wrapper; SillyTavern still manages
         // total prompt overhead, character instructions, and final model context limits.
         config.budget = Math.min(config.budget, Math.max(0, Math.floor(contextSize / 4)));
@@ -184,7 +188,7 @@ globalThis.sillymemory_intercept = async (chat, contextSize, abort, type) => {
         // Protect the active input or complete pending dialogue; keep special messages intact.
         const indexedMessages = new Set(result.passages.map(p => p.message));
         // Drop full plain history, including answers following a replacement question.
-        const start = config.requestStart ?? before;
+        const start = config.retainedStart;
         const eligible = new Set(snapshot.messages.filter(m => (m.index < start || m.index > before) && m.eligible && m.text.trim()).map(m => m.index));
         // Incomplete protocol output is neither searchable source nor retained
         // dialogue. Preserve its native recovery UI, but never feed it to the model.

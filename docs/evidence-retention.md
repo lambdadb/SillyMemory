@@ -1493,3 +1493,39 @@ fixture and final reports; see [combined validation](saved-connection.md#integra
   fault count correction; the unchanged run report is authoritative. Initial bytes
   and all prior archives remain preserved. Local-only, ignored, unavailable in a
   fresh clone and never a CI dependency.
+
+## Recent dialogue retention
+
+The [decision and complete interpretation](recent-dialogue-retention.md) records
+Retain 5 as a native source-delivery/usability contract. Two known ordinary
+follow-up failures are restored on replay; the independent twelve-case cohort
+scores 11/12 in both conditions. The 24 regression reference matches change from
+23/24 to 24/24 only on the already interpretively ambiguous Target coupon case,
+without new linking evidence. Do not claim independent quality superiority.
+
+- Primary archive: `artifacts/archive/recent-dialogue-retention-v1/evidence.tar.gz`
+  under the primary SillyMemory worktree; 13,211,182 bytes, 82 members; SHA-256
+  `fc8412bc5fe36792724d872b535b3a926b26360652208e0977a7093d4520b9c8`.
+- Manifest: `artifacts/archive/recent-dialogue-retention-v1/manifest.json`;
+  SHA-256 `36070476ae9b1ae399c191053fe5a885a73750ece6d4f841c6e89a1ccc345b98`.
+- Producer base `a728fc81e47398e23393c685904d23cdcc00016c`; dirty final patch,
+  maintained source/fixtures, exact isolated experimental extension with its
+  count-only control, source/settings/input locks, pacing/runner/preparation source,
+  all phase plans/amendments, all 76 final answers/queries/prompts/provider receipts,
+  92 controlled prefixes, complete answer audit, native observations and cleanup
+  receipts are retained. The two discovery replays are mechanism checks, not a new
+  confirmation cohort. No paid judge or quality retries were used.
+- Retains the failed regression source-hash preflight and initial delivery failures.
+  Regression inputs/references did not change: the full dataset hash and all 24
+  raw source hashes match the archived v4 producer. Its original dataset stays in
+  the existing checksum-locked failure-discovery archive; it is not duplicated.
+- Final validation: 375 units, 82 browser, 88 fault checks and 17 delivery scenarios
+  with local emulators. Live calls: 76 attempts, 667,734 admission tokens (not billed
+  usage), 2,234 LambdaDB requests and 26,888 document submissions. All 32 owned
+  collection creations, including gates/preflight, were deleted and HTTP 404 verified.
+  Keys were removed from browser/native settings and contain zero report matches;
+  temporary profiles/servers were removed and the host link restored.
+- Every archive member was read back and matched to its source bytes. Earlier
+  archives and original failure outputs remain unchanged. Local-only, ignored,
+  unavailable in fresh clones and never a CI dependency. This is neither an
+  official LongMemEval score nor a release/main deployment.

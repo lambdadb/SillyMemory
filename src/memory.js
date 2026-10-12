@@ -345,7 +345,7 @@ export class MemoryEngine {
         const before = memoryBoundary(snapshot, type);
         // Full pending turns already appear in the prompt. Exclude them before
         // bounded vector/lexical retrieval so they cannot displace older evidence.
-        const searchBefore = config.requestStart ?? before;
+        const searchBefore = config.retainedStart ?? config.requestStart ?? before;
         const expected = prepared.docs.filter(doc => doc.message < searchBefore);
         if (!expected.length) return { text: '', tokens: 0, passages: [], messages: [] };
         const queries = retrievalQueries(snapshot, type, config);

@@ -47,15 +47,18 @@ boundary; publication is confirmed by the corresponding Git tag and GitHub Relea
   extra retrieval is added; malformed coordinates retain separate excerpts.
 
 - Index all completed eligible conversation messages independently of generation input
-  retention, and ordinarily retrieve using only the current question; pending clarifications use their complete dialogue. Exclude the active input and replacement answers
+  retention, and ordinarily retrieve using only the current question; pending clarifications use their complete dialogue. Exclude all retained recent/pending turns and replacement answers
   from both search legs and local selection. Continue searches the message being
   extended; pending final user inputs wait for a reply before indexing. Reject
   retrieval inputs above 8 KiB without silent truncation.
 - Retire npm aliases for historical fixed-window answer evaluations; preserve
   protocols/results with explicit recorded-checkout reproduction instructions.
-- Remove the fixed recent-message window and its setting. Successful generation
-  preparation keeps the active input or pending dialogue and recalled memory alongside native
-  character/system settings, including when no memory fits. Continue preserves
+- Keep five recent eligible messages including the active input in native roles
+  and source order, plus any longer unresolved clarification span and recalled
+  memory alongside native character/system settings, including when no memory fits.
+  This prevents ordinary follow-ups from depending on successful retrieval of the
+  preceding exchange. The window is fixed without a new configuration option;
+  current-question/pending queries and completed-history indexing stay unchanged. Continue preserves
   the partial answer, and Impersonate preserves the character response being
   answered; continuity failures abort, while the disabled-continuity fallback retains the original prompt.
 - Add budgeted system guidance to ask a brief clarification for ambiguous intent
