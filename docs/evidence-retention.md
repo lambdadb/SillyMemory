@@ -1123,3 +1123,31 @@ adds a provider call or changes the numeric search/budget defaults.
   limits as v1 apply; these archives are never CI dependencies.
 
 See [current policy and remaining quality limits](conversation-memory-defaults.md).
+
+## Clarification context live diagnosis
+
+The [decision record](clarification-context-evaluation.md) preserves the six-case
+current-policy diagnosis, all nine derived flow comparisons, native Sol flag
+transport checks, interpretation limits and the decision not to change defaults.
+The base is `15c781289aff2448ed5e7afce595d677121f7479`; the pinned host is
+`06bde939fb1e9c4c8d8641d810f0a916b5bce127`. Prototype retention changes exist
+only in the captured runtime copy and producer, not maintained runtime code.
+
+- Primary local archive: `artifacts/archive/clarification-context-v1/evidence.tar.gz`
+  under the primary SillyMemory worktree; 27,877,845 bytes, 46 members; SHA-256
+  `48263f0dece357b45de830898b4f2c056df33305bbe2b031f3cefd51fa092705`.
+- Manifest: `artifacts/archive/clarification-context-v1/manifest.json`; SHA-256
+  `a12e36987451a32fa76e4c2df9e03f7102a2b112590919ae9813ee367b3ec669`.
+- All original plans/amendments, exact producers with verified locked hashes,
+  pacing helper, prototype source/patch, raw native dispatched prompts/provider
+  replies/queries, interruption records, resumed comparisons, schema probes and
+  compact summary are retained. Every archived member was read back and matched
+  to its original SHA-256. Credential-content scanning found zero matches.
+- The checksum-locked original dataset remains in the prior local failure-discovery
+  archive at the plan's recorded path; its SHA-256 is
+  `d6f21ea9d60a0d56f34a05b609c79c88a451d2ae03597821ea3d5a9678c3a442`.
+  The new bundle does not duplicate the entire dataset or include environment files,
+  private host/browser profiles or credentials. All 11 owned collection creations
+  were deleted and HTTP 404 verified; no cleanup obligations remain.
+- These artifacts are local-only, ignored, unavailable in a fresh clone and not
+  dependencies of maintained tests or CI. Historical evidence archives are unchanged.

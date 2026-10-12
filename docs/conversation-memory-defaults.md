@@ -54,8 +54,12 @@ used question-only retrieval and history except the current question, with no
 other recent messages supplied to generation. It did not use the new clarification
 guidance and cannot establish answer behavior for this final policy. The full-500
 result remains consumed-cohort evidence. No new independent answer-quality score,
-conversation-continuity confirmation or clarification-behavior measurement is
-claimed. A generic follow-up such as "Where was that?" may need clarification
+conversation-continuity confirmation or clarification-behavior measurement was
+claimed at adoption. The later [bounded clarification diagnosis](clarification-context-evaluation.md)
+measures six consumed questions and three scripted flows without changing these
+defaults. Strict reply/flag JSON works through the actual host, but its semantics
+and dialogue reliability are not established as a product policy. A generic
+follow-up such as "Where was that?" may need clarification
 without full recent context. The prior [complete recent-dialogue comparison](context-aware-query-comparison.md#complete-recent-dialogue-comparison)
 remains historical evidence, not the current policy.
 
