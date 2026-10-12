@@ -79,8 +79,8 @@ calls have no fixed delay; only server budget headers and transient failures can
 cause admission/backoff waits.
 
 **Interpretation:** this supports the user's intended accumulated query as the
-implementation candidate. Generation retention alone could preserve intent but
-could not recover a missing historical fact. Searching only "The total." or
+formulation for independent confirmation, not a selected product policy.
+Generation retention alone could preserve intent but could not recover a missing historical fact. Searching only "The total." or
 "Just its name." had discarded the request's subject. The combined approach fixes
 that mechanism without increasing the search result count or memory budget.
 It does not establish that every conversation needs accumulation, nor does it
@@ -106,8 +106,11 @@ There are 39 emulated replies in this lifecycle stage and no paid provider calls
 
 This proves the **prototype's event/state mechanics**, not that a model always
 opens the right request, classifies optional questions correctly, or identifies a
-new unresolved topic boundary. Combined quality and mechanism evidence justify
-continuing implementation of this candidate; they do not complete production
+new unresolved topic boundary. Combined quality and mechanism evidence explain
+the discovery-set repair; freeze a separate confirmation cohort and scoring criteria before selecting a
+product policy. Keep the same twelve cases as regression controls. A derived new
+dialogue cohort over consumed sources must still be labeled as such, rather than
+claiming an independent benchmark score. These results do not complete production
 provider integration, malformed/refused response handling, streaming behavior,
 source-edit/swipe/regeneration handling or chat isolation for this new state.
 Keep PR #73 Draft until those integration gates have a concrete implementation

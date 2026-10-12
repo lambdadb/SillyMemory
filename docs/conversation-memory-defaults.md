@@ -63,8 +63,9 @@ On the same frozen twelve dialogue cases, accumulating pending user inputs in th
 query restores all four retrieval losses and changes answers from 8/12 to 12/12,
 with the same complete pending dialogue in generation and unchanged search/budget
 settings. This is derived consumed-source evidence, not a new benchmark score.
-The combined policy is the implementation candidate in the same unfinished PR;
-three-state JSON and retention remain prototype behavior, not product defaults.
+The combined formulation still requires a separately frozen confirmation cohort
+before selecting a product policy in the same unfinished PR. Three-state JSON
+and retention remain prototype behavior, not product defaults.
 A generic follow-up such as "Where was that?" can still need clarification when
 neither the pending dialogue nor recalled evidence identifies its referent. The
 prior [complete recent-dialogue comparison](context-aware-query-comparison.md#complete-recent-dialogue-comparison)

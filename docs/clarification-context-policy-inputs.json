@@ -408,6 +408,6 @@
     ],
     "answerDelivery": "Unchanged requests captured from actual host/live retrieval, then paid Sol answers; no new native reply-delivery claim.",
     "scoring": "Same released full-question/reference judge, except the frozen missing-account-number rubric.",
-    "integrationGate": "Preserve the eight controls while restoring the four diagnosed retrieval losses; then verify actual opening, accumulation and terminal closure, provider delivery, malformed/refused responses, source mutations and chat isolation before promoting a production default. The quality comparison uses seeded roots; emulated status signals do not establish model classification quality."
+    "integrationGate": "Treat 8/12 to 12/12 as discovery-set repair, not independent confirmation. Freeze a separate cohort and scoring criteria before selecting a product policy; preserve these twelve as regression controls. Then verify automatic opening, accumulation and terminal closure, provider delivery, malformed/refused responses, source mutations and chat isolation before promoting a production default. Known roots and emulated status signals are not automatic classification proof."
   }
 }

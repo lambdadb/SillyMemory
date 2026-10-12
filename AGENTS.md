@@ -43,8 +43,12 @@ Read [CONTRIBUTING.md](CONTRIBUTING.md) before changing this repository.
 - The product default indexes completed history and searches only the current
   question, while retaining only the active input and selected memory in the answer
   prompt alongside native system/character settings.
-- When evaluating contextual query construction as a new candidate, the initial reference input is the complete
-  recent dialogue outside the indexed older-history partition. Do not impose a
+- Follow an explicitly specified semantic input unit first. Pending-request
+  accumulation here means user inputs from ambiguity through completion for
+  retrieval, with the full clarification dialogue supplied to generation. This
+  is not a token/message-window optimization of a broader query.
+- For contextual query construction without an explicitly specified input unit,
+  the initial reference input is the complete recent dialogue outside the indexed older-history partition. Do not impose a
   separate four-message or 600-token context cap. Report model-context overflow as
   a limitation rather than silently truncate the reference input.
 
