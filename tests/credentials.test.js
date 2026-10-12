@@ -56,3 +56,41 @@ test('rejected restoration removes only the exact scoped key and preserves a new
     assert.equal(saved.read(config), 'newer'); assert.equal(saved.forgetMatching(config, 'newer'), true);
     assert.equal(saved.read(config), null);
 });
+
+test('a failed settings or credential write preserves the exact previous connection bytes', () => {
+    for (const failCredential of [false, true]) {
+        const storage = memory(), saved = new SavedKey(storage, owner), stateId = `sillymemory:state:${owner}`;
+        const oldState = JSON.stringify({ ...config, ready: true, enabled: true });
+        storage.setItem(stateId, oldState); saved.save(config, 'previous');
+        const oldCredential = storage.getItem(saved.id()), original = storage.setItem;
+        let failed = false;
+        storage.setItem = (id, value) => {
+            if (!failed && id === (failCredential ? saved.id() : stateId)) { failed = true; throw new Error('quota contains private-new-key'); }
+            return original(id, value);
+        };
+        assert.throws(() => saved.commit({ ...config, project: 'other' }, 'private-new-key', { endpoint: config.endpoint, project: 'other', ready: false, enabled: false }), error => error.code === 'credential-storage' && !error.message.includes('private-new-key'));
+        assert.equal(storage.getItem(stateId), oldState); assert.equal(storage.getItem(saved.id()), oldCredential);
+        assert.equal(saved.read(config), 'previous');
+    }
+});
+test('failed first credential save removes draft settings, while a successful commit stores coherent records', () => {
+    const storage = memory(), saved = new SavedKey(storage, owner), original = storage.setItem;
+    storage.setItem = (id, value) => { if (id === saved.id()) throw new Error('quota'); return original(id, value); };
+    assert.throws(() => saved.commit(config, 'new', { ...config, ready: false, enabled: false }), /Previous saved connection preserved/);
+    assert.equal(storage.data.size, 0);
+    storage.setItem = original;
+    saved.commit(config, 'new', { ...config, ready: false, enabled: false });
+    assert.equal(saved.read(config), 'new');
+    assert.deepEqual(JSON.parse(storage.getItem(`sillymemory:state:${owner}`)), { ...config, ready: false, enabled: false });
+});
+test('unavailable rollback is reported without overwriting the previous credential', () => {
+    const storage = memory(), saved = new SavedKey(storage, owner), original = storage.setItem;
+    const stateId = `sillymemory:state:${owner}`; storage.setItem(stateId, JSON.stringify(config)); saved.save(config, 'previous');
+    let wroteState = false;
+    storage.setItem = (id, value) => {
+        if (id === saved.id() || wroteState) throw new Error('private storage failure');
+        wroteState = true; return original(id, value);
+    };
+    assert.throws(() => saved.commit({ ...config, project: 'other' }, 'new', { ...config, project: 'other' }), error => error.code === 'credential-storage' && error.message.includes('rollback could not finish') && !error.message.includes('private'));
+    assert.equal(saved.read(config), 'previous');
+});

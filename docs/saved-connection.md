@@ -46,6 +46,10 @@ checks still guard writes and generation.
 - The exclusive tab lock blocks automatic credential restoration and service calls
   in another SillyMemory tab. Account changes and page exit invalidate connection
   preparation; completed stale requests cannot install a client.
+- Explicit save writes ordinary settings first and the credential last, adopting
+  neither in runtime until both succeed. A failed credential write restores the
+  previous settings bytes; a failed settings write never touches the prior key.
+  If storage also blocks rollback, the error explicitly reports incomplete recovery.
 - Malformed records or unavailable browser storage fail with safe actionable
   messages, without exposing stored bytes or raw exception details.
 
@@ -66,9 +70,9 @@ scoped removal, malformed records, blocked storage and the bounded authenticated
 read contract. Completed validation on SillyTavern 1.19.0 at
 `06bde939fb1e9c4c8d8641d810f0a916b5bce127`:
 
-- `npm test`: 347 passed; runtime/script/test syntax, release metadata and the
+- `npm test`: 350 passed; runtime/script/test syntax, release metadata and the
   pinned SDK 0.8.0 bundle checks passed.
-- `SM_ARTIFACT_TAG=saved-connection-removal npm run test:browser`: 54 actual-host
+- `SM_ARTIFACT_TAG=saved-connection-storage npm run test:browser`: 55 actual-host
   Chromium checks with the local HTTPS LambdaDB emulator. Confirmed verified
   automatic reconnect, enabled/disabled retention, no duplicate upserts, delayed
   authentication staying disabled, exclusive-tab behavior, HTTP 401 removal,
@@ -79,8 +83,8 @@ read contract. Completed validation on SillyTavern 1.19.0 at
 - `node scripts/prompt-delivery-smoke.mjs`: 17 native prompt-delivery cases,
   including streaming, swipe, regeneration, capacity failure and literal assembly.
   Both fault and prompt runs preceded the final storage-error message sanitization
-  and unsupported-lock control disabling; final units and the 54-check browser
-  run include those guards and the candidate-key/removal review corrections. All emulator runs ended with zero remaining collections
+  and unsupported-lock control disabling; final units and the 55-check browser
+  run include those guards and the candidate-key/removal/storage review corrections. All emulator runs ended with zero remaining collections
   and no browser errors.
 
 The paid generation/lifecycle runners were updated and syntax checked but not

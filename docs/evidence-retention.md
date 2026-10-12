@@ -1175,3 +1175,20 @@ emulator checks: 54; no browser errors or remaining collections; no paid calls.
 - Base `af241c0d1f35da8274eba0f83574580383dd6ab2`; exact sources/patch and
   verification receipts retained. Byte-readback passed; all previous archives
   remain unchanged. Local-only and not a CI dependency.
+
+The storage-failure review writes ordinary settings before replacing the key,
+restores their exact previous bytes if credential storage fails and adopts runtime
+state only after both writes succeed. Unit tests independently cover settings-write
+failure, credential-write failure, failed initial save and unavailable rollback;
+a scoped native browser quota fixture restores its prototype in a finally block.
+Final units: 350; native-host emulator checks: 55; zero browser errors/remaining
+collections; no real keys or paid calls.
+
+- Follow-up archive: `artifacts/archive/saved-connection-review-v3/evidence.tar.gz`
+  under the primary worktree; 41,493 bytes, 10 members; SHA-256
+  `d5592de1c1a12a9073a42765f3a0c673db9cc54d48c857975f1dc8955546ab57`.
+- Manifest: `artifacts/archive/saved-connection-review-v3/manifest.json`; SHA-256
+  `f8f5f3ee933e70859a99c10e14a19ac1d7b4c545d6c41f145757748032ceb221`.
+- Base `47057276f0cae1f75ef00f4a90ba7d873b7c7632`; sources/patch and
+  verification receipts retained. Byte-readback passed; all prior archives
+  unchanged. Local-only and not a CI dependency.

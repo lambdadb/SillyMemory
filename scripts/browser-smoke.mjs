@@ -149,6 +149,24 @@ try {
     check('auth failure is visible with reconnect guidance', (await status()).includes('Authentication failed') && (await status()).includes('Save and connect'));
     await field('key').fill('synthetic-session-key'); await field('connect').click();
     await field('cleanup').click(); await waitStatus('No pending');
+    const storedBeforeFailure = await page.evaluate(() => {
+        const owner = SillyTavern.getContext().extensionSettings.sillymemory.owner;
+        return [localStorage.getItem(`sillymemory:state:${owner}`), localStorage.getItem(`sillymemory:credential:${owner}`)];
+    });
+    await page.evaluate(() => {
+        const key = `sillymemory:credential:${SillyTavern.getContext().extensionSettings.sillymemory.owner}`;
+        const original = Storage.prototype.setItem;
+        globalThis.restoreCredentialStorage = () => { Storage.prototype.setItem = original; delete globalThis.restoreCredentialStorage; };
+        Storage.prototype.setItem = function (id, value) { if (id === key) throw new DOMException('Synthetic quota', 'QuotaExceededError'); return original.call(this, id, value); };
+    });
+    try {
+        await field('key').fill('synthetic-session-key'); await field('connect').click(); await waitStatus('Previous saved connection preserved');
+        check('a failed credential write rolls settings back and preserves the prior key', await page.evaluate(before => {
+            const owner = SillyTavern.getContext().extensionSettings.sillymemory.owner;
+            return localStorage.getItem(`sillymemory:state:${owner}`) === before[0] && localStorage.getItem(`sillymemory:credential:${owner}`) === before[1];
+        }, storedBeforeFailure));
+    } finally { await page.evaluate(() => globalThis.restoreCredentialStorage()); }
+    await field('connect').click(); await waitStatus('Connected.');
     await field('project').fill('other-project'); await field('key').fill('wrong-synthetic-key'); await field('connect').click(); await waitStatus('Authentication failed');
     check('a rejected explicit key for another project preserves the prior validated credential', await page.evaluate(() => {
         const name = Object.keys(localStorage).find(k => k.startsWith('sillymemory:credential:'));

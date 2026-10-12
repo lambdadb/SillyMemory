@@ -27,7 +27,7 @@ function clearInjection() {
     context().setExtensionPrompt('sillymemory', '', 1, 0, false, 0);
 }
 function invalidate() { promptSequence++; engine?.invalidate(); clearInjection(); delivery.clear(); }
-function persist() { localStorage.setItem(stateKey, JSON.stringify(state)); }
+function persist(next = state) { localStorage.setItem(stateKey, JSON.stringify(next)); }
 function makeCollections() {
     engine = undefined; engines.clear(); identityKey = undefined;
     collections = client ? new ChatCollections(client, owner, entry => {
@@ -268,9 +268,11 @@ async function initialize() {
             status(restoring ? 'Reconnecting with the saved key…' : 'Checking the project key before saving…');
             await candidateClient.checkConnection();
             if (!sessionReady || context().extensionSettings.sillymemory?.owner !== owner) throw new ConnectionError('Connection canceled because the session changed.', 0, 'canceled');
-            if (!restoring) savedKey.save(candidate, key);
             const ready = !changed && state.ready;
-            Object.assign(state, candidate, { ready, enabled: Boolean(enabled && ready) }); persist();
+            const nextState = { ...state, ...candidate, ready, enabled: Boolean(enabled && ready) };
+            if (restoring) persist(nextState);
+            else savedKey.commit(candidate, key, nextState);
+            state = nextState;
             client = candidateClient; makeCollections(); gatePassed = false;
             element('enabled').checked = state.enabled;
             if (state.enabled) schedule();

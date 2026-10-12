@@ -27,6 +27,28 @@ export class SavedKey {
         try { this.storage.setItem(this.id(), JSON.stringify({ version: 1, ...connectionConfig(config), key: key.trim() })); }
         catch { throw new ConnectionError('The key could not be saved. Allow browser storage, then save and connect again.', 0, 'credential-storage'); }
     }
+    commit(config, key, state) {
+        const stateId = `sillymemory:state:${this.owner}`;
+        let previous;
+        try {
+            previous = this.storage.getItem(stateId);
+            this.storage.setItem(stateId, JSON.stringify(state));
+        } catch {
+            throw new ConnectionError('Connection could not be saved. Previous saved connection preserved. Allow browser storage, then save and connect again.', 0, 'credential-storage');
+        }
+        // Write the credential last: a failed atomic setItem cannot replace the
+        // previous key. If that write fails, restore the ordinary settings bytes.
+        try { this.save(config, key); }
+        catch {
+            try {
+                if (previous === null) this.storage.removeItem(stateId);
+                else this.storage.setItem(stateId, previous);
+            } catch {
+                throw new ConnectionError('Connection save failed and settings rollback could not finish. The previous key was preserved; allow browser storage, then click Forget key before reconnecting.', 0, 'credential-storage');
+            }
+            throw new ConnectionError('Connection could not be saved. Previous saved connection preserved. Allow browser storage, then save and connect again.', 0, 'credential-storage');
+        }
+    }
     forget() {
         try { this.storage.removeItem(this.id()); }
         catch { throw new ConnectionError('The saved key could not be removed. Allow browser storage, then click Forget key again.', 0, 'credential-storage'); }
