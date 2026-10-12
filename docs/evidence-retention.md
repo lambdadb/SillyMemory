@@ -1152,14 +1152,15 @@ only in the captured runtime copy and producer, not maintained runtime code.
 - These artifacts are local-only, ignored, unavailable in a fresh clone and not
   dependencies of maintained tests or CI. Historical evidence archives are unchanged.
 
-## Clarification dialogue policy completion
+## Generation-only clarification dialogue policy completion
 
-The [completed policy decision](clarification-context-evaluation.md) supersedes
+The [generation-only policy decision](clarification-context-evaluation.md) supersedes
 the initial diagnosis's promotion inference while preserving its original evidence.
 The [small input/settings lock](clarification-context-policy-inputs.json) keeps
 twelve paired dialogue cases and six live user profiles; no producer or large run
-fixture becomes a maintained CI dependency. Product defaults are unchanged because
-the promotion gate was not met, and status-only request boundaries are incomplete.
+fixture becomes a maintained CI dependency. This narrower generation-only evaluation
+did not meet its promotion gate. It is not a decision against accumulating retrieval queries; the corrected combined
+scope below remains unfinished for production integration.
 
 - Primary local archive: `artifacts/archive/clarification-policy-v2/evidence.tar.gz`
   under the primary SillyMemory worktree; 56,483,051 bytes, 60 members; SHA-256
@@ -1186,3 +1187,42 @@ the promotion gate was not met, and status-only request boundaries are incomplet
   archive, not duplicated in this bundle. Both this archive and the initial
   `clarification-context-v1` archive are local-only, ignored, unavailable in fresh
   clones and never CI dependencies. Historical evidence was not deleted or rewritten.
+
+## Clarification query accumulation
+
+The [corrected evaluation](clarification-context-evaluation.md) preserves the
+maintainer's intended retrieval-and-generation accumulation and supersedes any
+application of the earlier generation-only defer conclusion to that combined
+policy. The same twelve frozen cases score **8/12 → 12/12** when only retrieval
+query construction changes and generation keeps the complete pending dialogue.
+All four lost user facts are restored within the unchanged 4,096-token budget.
+Production defaults remain unchanged; PR #73 remains unfinished for integration.
+
+- Primary local archive: `artifacts/archive/clarification-query-v3/evidence.tar.gz`
+  under the primary SillyMemory worktree; 63,263,044 bytes, 33 members; SHA-256
+  `1db2fad3cd2aa0e9b453656dc007b683e6a0392c0264b8a347f4afa30c6d50a4`.
+- Manifest: `artifacts/archive/clarification-query-v3/manifest.json`; SHA-256
+  `c41a8f495a59a1bc22c9cec13d12516b7e08e5fb5635b21b94469460603e9caa`.
+- Producing base: `80dab585491fb3cccdc840c1140fa86544465b95`; pinned host
+  `06bde939fb1e9c4c8d8641d810f0a916b5bce127`. Exact prototype/runtime files,
+  three producer scripts, frozen plans, phase bounds, provider pacing and summary
+  are retained. Full benchmark source stays in its prior checksum-locked archive.
+- Capture stage: 24 actual-host/live managed LambdaDB queries with emulated
+  completions. Known pending roots isolate query construction; assistant turns
+  are excluded from the accumulated search string, retained in generation.
+- Paired answers: 24 unchanged captured host requests sent to Sol and 24
+  released-judge/custom-absence calls. All 48 attempts completed without retries
+  or rate-header waits. This does not re-run native paid reply delivery.
+- Lifecycle stage: twelve actual-host flows with live managed retrieval and 39
+  controlled status replies. They verify opening without a seeded root, repeated
+  accumulation and terminal closure. Final answer text is reused from the paired
+  stage, not generated anew against that stage's ranking; automatic model status
+  classification, mutation/isolation and provider integration are not established.
+- Total: 11,989 document submissions, 970 LambdaDB requests and 14 owned
+  collections, all deleted with HTTP 404 verification. Browser storage and exact
+  archived bytes contain zero key matches. Every archive member was read back
+  and matched to its original checksum. No environment/private host profiles are
+  included. The inherited broad audit report label is qualified by its explicit
+  zero paid-call count; it is not live-answer evidence.
+- The archive is local-only, ignored, unavailable in fresh clones and never a CI
+  dependency. Earlier v1/v2 evidence archives were neither removed nor rewritten.

@@ -348,5 +348,66 @@
   "liveRouting": "Arm-blind frozen referent/intent/unknown-detail response routing. See the preserved producer for exact rules. No user model, answer key or retrieval fed to reply selection.",
   "adoptionGate": "Require correct-answer preservation and at least two distinct cases with either repaired final answers or one fewer clarification turn against native-current, plus no unsupported-fact regressions and lifecycle safety. Reject provider-dependent state retention as default if unresolved topic boundaries cannot be represented by its current signal.",
   "judgeTemplateRevision": "9e0b455f4ef0e2ab8f2e582289761153549043fc",
-  "statusInterpretation": "expectedStatus is the desired resolved outcome, not semantic ground truth when an arm lacks intent or evidence. Assess status against the actual delivered prompt and answer."
+  "statusInterpretation": "expectedStatus is the desired resolved outcome, not semantic ground truth when an arm lacks intent or evidence. Assess status against the actual delivered prompt and answer.",
+  "combinedQueryComparison": {
+    "scope": "Same twelve cases; generation retains the complete pending prefix in both arms. Only retrieval query construction changes. Known pending roots are not automatic opening evidence.",
+    "conditions": [
+      "latest-input",
+      "pending-user-inputs"
+    ],
+    "queryFormat": "Join chronological user inputs from the pending root through the current input with two newlines; exclude assistant turns.",
+    "cases": [
+      {
+        "id": "degree-referent",
+        "query": "What degree did I graduate with?\n\nMine."
+      },
+      {
+        "id": "commute-referent",
+        "query": "How long does it take?\n\nMy daily commute to work."
+      },
+      {
+        "id": "play-referent",
+        "query": "What was its title?\n\nThe play I attended at the local community theater."
+      },
+      {
+        "id": "degree-multiple",
+        "query": "What degree did I graduate with?\n\nYes, mine.\n\nThe subject."
+      },
+      {
+        "id": "bookshelf-multiple",
+        "query": "How long did it take me to assemble the IKEA bookshelf?\n\nMy assembly time.\n\nThe total."
+      },
+      {
+        "id": "playlist-multiple",
+        "query": "What did I name the playlist I created on Spotify?\n\nMine.\n\nJust its name."
+      },
+      {
+        "id": "degree-stored",
+        "query": "I have a question about my education.\n\nI cannot remember the subject of my degree. What degree did I graduate with?"
+      },
+      {
+        "id": "internet-stored",
+        "query": "I have a question about my internet plan.\n\nI cannot remember the speed. What speed is my new internet plan?"
+      },
+      {
+        "id": "commute-stored",
+        "query": "I have a question about my commute.\n\nI cannot remember the duration. How long is my daily commute to work?"
+      },
+      {
+        "id": "degree-optional",
+        "query": "I have a question about my education.\n\nRemind me what degree I graduated with. After answering, you may optionally ask whether I use it at work."
+      },
+      {
+        "id": "internet-missing",
+        "query": "I have a question about my internet plan.\n\nWhat is the exact account number for my new internet plan?"
+      },
+      {
+        "id": "playlist-topic-switch",
+        "query": "How long did it take?\n\nI do not need that anymore. What did I name the playlist I created on Spotify?"
+      }
+    ],
+    "answerDelivery": "Unchanged requests captured from actual host/live retrieval, then paid Sol answers; no new native reply-delivery claim.",
+    "scoring": "Same released full-question/reference judge, except the frozen missing-account-number rubric.",
+    "integrationGate": "Preserve the eight controls while restoring the four diagnosed retrieval losses; then verify actual opening, accumulation and terminal closure, provider delivery, malformed/refused responses, source mutations and chat isolation before promoting a production default. The quality comparison uses seeded roots; emulated status signals do not establish model classification quality."
+  }
 }

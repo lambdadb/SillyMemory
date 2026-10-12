@@ -1,6 +1,129 @@
 # Clarification dialogue context policy
 
-## Completed policy decision
+## Corrected scope: retrieval and generation accumulation
+
+The maintainer intended accumulating user inputs from ambiguity through completion
+for **both retrieval and generation**. The generation-only comparison below omitted
+the retrieval part. Its defer conclusion cannot establish that the intended combined
+policy is ineffective. Historical inputs, results and archives remain unchanged.
+PR #73 is unfinished for the combined product integration; keep this work in that
+PR rather than merging a diagnosis as a separate milestone.
+
+### Same-input query comparison
+
+Reuse all twelve frozen cases and the same Sol/low, host, managed embeddings,
+Bayesian English/Jev, k=100/candidateSize=100/size=50 and 4,096-token settings.
+Both arms retain the complete prepared pending dialogue for generation. Only the
+search string changes:
+
+- **Latest input:** the final user input alone.
+- **Pending user inputs:** all user inputs from the pending root through the
+  final input, in chronological order, separated by two newlines. Assistant
+  clarifications are included in generation, but excluded from the search string.
+
+For the bookshelf case, the accumulated query is exactly:
+
+```text
+How long did it take me to assemble the IKEA bookshelf?
+
+My assembly time.
+
+The total.
+```
+
+No query rewriting, extra model call, recent-message window or separate context
+cap is added. Both search legs and the reranker receive the same constructed
+query. Existing source validation, branch/range filters, consistent reads and
+memory budget remain in effect. The pending root is known from the frozen prefix
+in this quality comparison; it is not proof of automatic request-start detection.
+
+The actual pinned SillyTavern host executes both real LambdaDB searches and packs
+and delivers each prompt. An explicitly emulated completion captures the prompt;
+the **unchanged captured request** is then sent to Sol for paid answers. Those
+paid calls do not re-run native reply delivery. Scoring uses the same released
+full-question/reference judge, except the previously frozen account-number
+absence rubric. This is a matched derived dialogue test over consumed sources,
+not a new LongMemEval-S benchmark score.
+
+| Frozen case | Latest-input query | Pending-user-input query |
+| --- | --- | --- |
+| Degree referent: "Mine." | No | Yes |
+| Commute referent | Yes | Yes |
+| Play referent | Yes | Yes |
+| Degree subject after multiple clarifications | No | Yes |
+| Bookshelf total after multiple clarifications | No | Yes |
+| Playlist name after multiple clarifications | No | Yes |
+| Explicit degree recall | Yes | Yes |
+| Explicit internet-speed recall | Yes | Yes |
+| Explicit commute recall | Yes | Yes |
+| Degree answer with optional followup allowed | Yes | Yes |
+| Unrecorded internet account number | Yes | Yes |
+| Explicit topic switch to playlist recall | Yes | Yes |
+| **Correct answers** | **8/12** | **12/12** |
+
+All four prior losses are restored at retrieval and delivered within the unchanged
+budget: degree referent at rank 2; degree subject, bookshelf total and playlist
+name at rank 1. Each is the original user fact, not an assistant-only assertion.
+The seven factual controls retain their target facts; the absence control admits
+that the account number cannot be determined. All responses satisfy the three-state
+schema; the eleven factual accumulated-query responses are `answered`, and the
+absence control is `insufficient_evidence`. Optional questions remain allowed,
+not forced, so this still does not measure their natural status classification.
+
+The capture audit used 5,980 document submissions and 440 LambdaDB requests;
+seven owned collections were deleted with 404 verification and no stored keys.
+The paired stage used 24 answers and 24 judge calls, 48 total provider attempts,
+no retries, and a peak concurrency of one. Reserved input/output tokens were
+211,586, an admission accounting bound rather than billed usage. Normal successful
+calls have no fixed delay; only server budget headers and transient failures can
+cause admission/backoff waits.
+
+**Interpretation:** this supports the user's intended accumulated query as the
+implementation candidate. Generation retention alone could preserve intent but
+could not recover a missing historical fact. Searching only "The total." or
+"Just its name." had discarded the request's subject. The combined approach fixes
+that mechanism without increasing the search result count or memory budget.
+It does not establish that every conversation needs accumulation, nor does it
+justify retaining unrelated history once the request is completed. Production
+defaults are unchanged while production state handling and provider integration are unfinished.
+
+### Native status lifecycle mechanism
+
+A separate actual-host run starts each of the same twelve cases without a seeded
+pending root. The frozen assistant clarifications are supplied as explicitly
+emulated `needs_clarification` responses. Native message events open the root;
+subsequent queries are constructed dynamically from user messages in that span.
+Each final response reuses its paired answer text and terminal status as a
+controlled response, not a newly generated answer to the new live ranking.
+
+All twelve flows preserve the first unresolved root across followups, include the
+complete pending dialogue in generation, and send exactly the frozen accumulated
+query on the final turn. Both `answered` and `insufficient_evidence` clear the
+pending span. A following "Thank you." searches only that input and no longer
+protects the earlier full dialogue. Old text can still legitimately appear as
+source-validated quoted memory; clearing the span does not delete indexed history.
+There are 39 emulated replies in this lifecycle stage and no paid provider calls.
+
+This proves the **prototype's event/state mechanics**, not that a model always
+opens the right request, classifies optional questions correctly, or identifies a
+new unresolved topic boundary. Combined quality and mechanism evidence justify
+continuing implementation of this candidate; they do not complete production
+provider integration, malformed/refused response handling, streaming behavior,
+source-edit/swipe/regeneration handling or chat isolation for this new state.
+Keep PR #73 Draft until those integration gates have a concrete implementation
+and validation or an explicit documented blocker. No new diagnostic PR is needed.
+
+Across capture and lifecycle stages there are 11,989 document submissions, 970
+LambdaDB requests and 14 owned collections, all deleted with 404 verification.
+No browser-stored or artifact key matches were found. Aggregate phase bounds are
+recorded before the second isolated host run; paid-call bounds remain unchanged.
+The [evidence index](evidence-retention.md#clarification-query-accumulation)
+retains the exact producers, plans, requests, replies, scores and cleanup receipts.
+The original v1/v2 archives remain immutable. The capture report's inherited
+broad evidence label mentions live Sol; its zero paid-call count and explicit
+emulator receipts establish the narrower audit evidence described here.
+
+## Previous generation-only decision: narrower scope
 
 **Defer promoting either a recent-exchange window or model-controlled request
 status retention. Keep the current product defaults.** The bounded work is

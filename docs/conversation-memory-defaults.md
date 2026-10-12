@@ -55,14 +55,19 @@ other recent messages supplied to generation. It did not use the new clarificati
 guidance and cannot establish answer behavior for this final policy. The full-500
 result remains consumed-cohort evidence. No new independent answer-quality score,
 conversation-continuity confirmation or clarification-behavior measurement was
-claimed at adoption. The later [completed clarification policy evaluation](clarification-context-evaluation.md)
-compared 12 controlled dialogue cases and six actual followup flows. Retention arms
-scored equally, and live clarification-turn counts were identical. Default promotion
-of recent-exchange or pending-status retention is deferred; three-state JSON works
-in the prototype but is not integrated. Four controlled failures lack the target
-fact in the returned top 50, so retention alone does not address them. A generic
-follow-up such as "Where was that?" can still need clarification without full recent
-context. The prior [complete recent-dialogue comparison](context-aware-query-comparison.md#complete-recent-dialogue-comparison)
+claimed at adoption. The later [clarification policy evaluation](clarification-context-evaluation.md)
+first compared generation retention with latest-input-only retrieval. Those arms
+scored equally; deferring generation-only retention does not establish that the
+maintainer's intended retrieval-and-generation accumulation is ineffective.
+On the same frozen twelve dialogue cases, accumulating pending user inputs in the
+query restores all four retrieval losses and changes answers from 8/12 to 12/12,
+with the same complete pending dialogue in generation and unchanged search/budget
+settings. This is derived consumed-source evidence, not a new benchmark score.
+The combined policy is the implementation candidate in the same unfinished PR;
+three-state JSON and retention remain prototype behavior, not product defaults.
+A generic follow-up such as "Where was that?" can still need clarification when
+neither the pending dialogue nor recalled evidence identifies its referent. The
+prior [complete recent-dialogue comparison](context-aware-query-comparison.md#complete-recent-dialogue-comparison)
 remains historical evidence, not the current policy.
 
 ### Implementation validation
