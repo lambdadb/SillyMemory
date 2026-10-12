@@ -1151,3 +1151,38 @@ only in the captured runtime copy and producer, not maintained runtime code.
   were deleted and HTTP 404 verified; no cleanup obligations remain.
 - These artifacts are local-only, ignored, unavailable in a fresh clone and not
   dependencies of maintained tests or CI. Historical evidence archives are unchanged.
+
+## Clarification dialogue policy completion
+
+The [completed policy decision](clarification-context-evaluation.md) supersedes
+the initial diagnosis's promotion inference while preserving its original evidence.
+The [small input/settings lock](clarification-context-policy-inputs.json) keeps
+twelve paired dialogue cases and six live user profiles; no producer or large run
+fixture becomes a maintained CI dependency. Product defaults are unchanged because
+the promotion gate was not met, and status-only request boundaries are incomplete.
+
+- Primary local archive: `artifacts/archive/clarification-policy-v2/evidence.tar.gz`
+  under the primary SillyMemory worktree; 56,483,051 bytes, 60 members; SHA-256
+  `98ce27c5987ae6639bc6833e1e4db717b9033f0ddf5f6a6b5dcd1b28777e9d5b`.
+- Manifest: `artifacts/archive/clarification-policy-v2/manifest.json`; SHA-256
+  `b19285a4ad052ab9f1d0aa8fbd71716a8444ba322138035cb3fff261a63d0422`.
+- Producing revision: `475dee672722dd947b60af69ba8b22510be1ed8d`; pinned host
+  `06bde939fb1e9c4c8d8641d810f0a916b5bce127`. Exact prototype/runtime patches,
+  producer hashes, initial plan, interpretation lock, native-stage amendment and
+  arm-blind response router are retained. The router was frozen before live calls
+  while the paired stage was running; this is not an independent benchmark cohort.
+- Raw captures, full native prompts/transcripts/provider replies, official judge
+  receipts, status observations, local state-contract reasoning, summary and all
+  cleanup receipts are retained. Twelve capture replies are explicitly emulated;
+  36 paired answers replay actual captured LambdaDB rankings, and 14 native live
+  answers use actual queries/plain generation. All 50 answers and 50 judge calls
+  completed without retry or harness recovery.
+- Every archived member was read back and matched to its original checksum; exact
+  producing-script hashes and the live router lock were verified. Secret-content
+  scanning found zero matches after correcting a local scan-command syntax error;
+  no environment files or private browser/host profiles are included. All 14 owned
+  collection creations were deleted and HTTP 404 verified, with no outstanding cleanup.
+- The original dataset remains checksum-locked in the prior local failure-discovery
+  archive, not duplicated in this bundle. Both this archive and the initial
+  `clarification-context-v1` archive are local-only, ignored, unavailable in fresh
+  clones and never CI dependencies. Historical evidence was not deleted or rewritten.

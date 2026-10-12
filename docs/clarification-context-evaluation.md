@@ -1,11 +1,161 @@
-# Clarification context: bounded live diagnosis
+# Clarification dialogue context policy
 
-## Intermediate observation; policy decision pending
+## Completed policy decision
 
-This diagnosis is part of the clarification-dialogue context policy work, not
-its completion. The final adoption, defer or rejection decision is pending.
-Keeping current defaults during evaluation does not close that product question;
-these notes must not become a separate merge milestone.
+**Defer promoting either a recent-exchange window or model-controlled request
+status retention. Keep the current product defaults.** The bounded work is
+complete: it found no measured answer or clarification-turn gain under controlled
+inputs and actual followup routing, and the three statuses alone cannot establish
+all request boundaries. This is a decision against default promotion on this
+evidence, not a claim that context retention never helps other conversations.
+No production response schema, state machine or recent-message setting is added.
+
+The original three-flow diagnosis below remains preserved. Its fixed user replies
+sometimes did not answer the model's clarification, so its 0/3, 1/3, 2/3 result
+must not establish a winning policy. The completed follow-up below replaces that
+inference, without rewriting the original responses or historical benchmark scores.
+
+### Controlled retention comparison
+
+Twelve dialogue cases over six previously consumed LongMemEval-S sources were
+frozen before paid answers. The [small input/settings lock](clarification-context-policy-inputs.json)
+retains exact dialogue prefixes, inputs, references, status definitions, source
+hashes, host/model/search settings and the six live user profiles. These are new
+controlled dialogue situations over consumed sources, not an independent benchmark.
+
+Every arm receives the same main instruction, three-state JSON schema and common
+memory guidance. The schema carries `reply` and `request_status`:
+
+- `needs_clarification`: the intended referent or request still needs clarification.
+- `answered`: the request was answered, even if an optional question follows.
+- `insufficient_evidence`: the request is understood, but the fact cannot be
+  established from available evidence. Neither terminal state certifies correctness.
+
+Current input, the last complete exchange, and the unresolved dialogue span are
+compared on exactly the same prepared dialogue. The pending root is seeded from
+that frozen prefix; this isolates retention with a known root, not automatic
+request-start detection or a complete live status-routing loop. Arm order rotates. Search remains
+current-input-only with k=100/candidateSize=100/size=50, Bayesian English fusion,
+managed embeddings/Jev, consistent reads and the 4,096-token memory budget.
+Before paid answers, one actual-host/live-LambdaDB ranking per case is captured
+using an explicitly emulated completion. The same source-validated result and
+packed selection are replayed in all paired arms. Retained full messages replace
+overlapping selected excerpts; they are not supplied twice. Thus the comparison
+isolates additional full dialogue retention, rather than new query construction,
+changing rankings or different preceding model replies. The paired stage does
+not measure an unchanged production generation path: all arms share the status
+schema and clarified common guidance.
+
+| Frozen case | Current input | Last exchange | Pending status | Target user fact in returned top 50 |
+| --- | --- | --- | --- | --- |
+| Degree referent: "Mine." | No | No | No | Absent |
+| Commute referent | Yes | Yes | Yes | Present |
+| Play referent | Yes | Yes | Yes | Present |
+| Degree subject after multiple clarifications | No | No | No | Absent |
+| Bookshelf total after multiple clarifications | No | No | No | Absent |
+| Playlist name after multiple clarifications | No | No | No | Absent |
+| Explicit degree recall | Yes | Yes | Yes | Present |
+| Explicit internet-speed recall | Yes | Yes | Yes | Present |
+| Explicit commute recall | Yes | Yes | Yes | Present |
+| Degree answer with optional followup | Yes | Yes | Yes | Present |
+| Unrecorded internet account number | Yes | Yes | Yes | Absence control |
+| Explicit topic switch to playlist recall | Yes | Yes | Yes | Present |
+
+All arms score **8/12** using the released original full-question/reference judge
+(`gpt-4o-2024-08-06`), except the frozen account-number absence rubric. Four losses
+are missing returned evidence: the target statements are absent from both the top
+50 and delivered prompt. They are not token-budget exclusions. Keeping the root
+request in the generation prompt does not restore a fact that retrieval omitted.
+The three already-correct explicit questions are preservation controls, not gains.
+
+All 36 status responses satisfy the schema. The missing-account control returns
+`insufficient_evidence`; the degree-answer and completed topic-switch controls
+return `answered`. The degree-answer control allowed an optional question, but no
+arm emitted one. It therefore does not validate status labeling when a completed
+answer actually includes an optional question; the earlier NAS ambiguity remains
+unverified. When the current-input arm loses the meaning of "Mine.", it
+asks for clarification; arms retaining the original degree request instead report
+missing evidence. A case's desired resolved status is not a semantic oracle:
+a justified clarification or insufficient-evidence label is not wrong solely
+because it did not achieve the full-intent answer.
+
+### Actual followup comparison
+
+The six live source identities were fixed in the initial plan. Detailed user-reply
+routing was frozen before live execution, while the paired stage was running;
+it was not frozen before every paired call. The resulting live comparison is
+therefore a bounded diagnostic confirmation, not statistically independent evidence.
+
+Compare unchanged current-input generation with last-exchange retention through
+actual pinned-host Generate and live LambdaDB queries. Both arms use the existing
+production memory guidance and plain replies; there is **no status schema, JSON
+response adapter or ranking replay** in this stage. A neutral prelude identifies
+the topic, followed by an ambiguous request. Each user profile knows only its
+referent and intended question, not the target historical answer. The same frozen,
+arm-blind routing function chooses a referent, intent or unknown-detail response
+from the actual model question. It accepts no answer key, memory results or judge
+feedback; no user-role LLM is used. A missing clarification gets an honest response
+that the user does not remember the detail, followed by their intended question.
+This remains a finite deterministic user model, not an unconstrained human study.
+
+| Source question | Current input: turns to official Yes | Last exchange: turns to official Yes |
+| --- | ---: | ---: |
+| Degree subject | 2 | 2 |
+| Daily commute duration | 1 | 1 |
+| Community-theater play title | 1 | 1 |
+| Spotify playlist name | 1 | 1 |
+| IKEA bookshelf assembly time | 1 | 1 |
+| Internet-plan speed | 1 | 1 |
+
+Both arms score **6/6**, with identical turns per case: seven assistant responses
+per arm. On the degree case, the current arm asks which topic the user means;
+the retained-exchange arm asks which degree. Both receive "My own degree, the
+one I graduated with." and recall Business Administration next. The user does
+not supply that answer. The predeclared promotion gate required at least two
+repaired answers or reduced clarification turns without lost correct controls;
+it was not met. A perfect live control makes efficacy inconclusive for this
+cohort, not proof of universal equivalence. No additional paid cohort was opened
+to seek a favorable outcome.
+
+### State boundary and stopping criterion
+
+A local state-contract check verifies pending-span opening, terminal closure and
+unknown-output preservation. It also records a signal-sufficiency limitation:
+`needs_clarification` with an existing pending root can mean either continuation
+of that request or a new unresolved request replacing it. A status alone does not
+identify which root to retain. This is local state reasoning, not a live model
+failure measurement. Adding more outcome labels does not automatically solve that
+separate request-relation question.
+
+The adoption gate is not met, so this scope ends with **default promotion deferred**.
+The response-schema prototype is not integrated. Resume this policy question only
+with a demonstrated current-default failure where the needed source fact is
+already delivered and missing intent is the remaining cause, or with a separately
+justified request-boundary design. The four observed retrieval losses can motivate
+a distinct resolved-request query-construction task; they do not justify another
+retention, budget or search-family sweep in this PR.
+
+### Verification and retained evidence
+
+Actual host: SillyTavern 1.19.0 at
+`06bde939fb1e9c4c8d8641d810f0a916b5bce127`; Sol with low reasoning, 4,096 output
+tokens, 32K host context; direct CORS and SDK 0.8.0. The underlying timestamp import
+and neutral-character limits of the original diagnosis also apply. Fifty actual
+answer calls and 50 judge calls completed, with 12 separately labeled emulated
+capture replies and no completion retries/rate-limit waits. Cumulative admission
+reservation is 439,751 tokens, not billed input usage. LambdaDB received 12,006
+document submissions and 1,161 requests. Fourteen owned collection creations were
+deleted with HTTP 404 verification; keys are absent from browser storage/evidence.
+
+The native second session needs another gate and the same six source collections,
+so its pre-run amendment raises cumulative creation/submission bounds to 14 and
+13,000. Quality sources, answer/judge/attempt/token/time caps and numerical search
+settings are unchanged. Both stages completed without harness recovery. Raw
+prompts, transcripts, rankings, exact runtime/producer bytes, all locks/amendments,
+status observations, source-support checks and cleanup receipts are local-only
+and checksum verified. See [evidence retention](evidence-retention.md#clarification-dialogue-policy-completion).
+
+## Initial diagnosis: preserved intermediate observations
 
 Keep the current product defaults. A single response can carry an ordinary reply
 and a structured clarification flag through the pinned SillyTavern host with Sol;
@@ -134,7 +284,7 @@ and the model can answer a different or wrong question with `false`. A single
 boolean therefore cannot safely serve as an answer-quality oracle or the complete
 conversation lifecycle policy.
 
-## Completion, recovery and adoption boundary
+## Initial diagnosis recovery and provisional boundary
 
 All frozen cases and all nine flow/condition combinations completed. Total use was
 65 provider attempts: 34 successful answers/capability replies, 30 successful
@@ -157,14 +307,10 @@ flow has unknown timestamps for restored experimental replies; full native metad
 was not captured before that assertion. All originals, amendments and producer
 hashes are preserved, including the failures.
 
-Do not promote either retention candidate yet. A follow-up should first freeze a
-small independent dialogue cohort whose clarification responses actually address
-the model's question. Keep the current search settings and compare one coherent
-active-request policy rather than repeat historical search/budget families. Define
-mandatory clarification versus optional follow-up explicitly. Before shipping a
-JSON adapter, verify missing/invalid/refused/truncated responses, streaming, topic
-changes, reload, edit/swipe/delete, stale requests and per-chat/branch state. Do not
-infer completion from a missing flag, add an arbitrary long recent window, or let
-an unresolved span grow beyond provider context limits silently.
+At the initial stage, neither retention candidate was ready for promotion. The
+proposed follow-up was a controlled dialogue comparison followed by actual
+clarification routing, now completed above with its independence limits disclosed.
+The initial recommendation to validate response-schema lifecycle behavior remains
+an adoption prerequisite; no such adapter is shipped by this completed decision.
 
 See the [retained evidence](evidence-retention.md#clarification-context-live-diagnosis).
