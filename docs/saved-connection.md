@@ -30,8 +30,10 @@ checks still guard writes and generation.
 
 ## Failure and removal
 
-- HTTP 401 removes the saved account key and disables memory. Replace the key and
-  choose **Save and connect**. Invalid keys are never saved as successful connections.
+- HTTP 401 disables memory. A rejected restored key is removed only if its exact
+  endpoint/project and value still match storage. A rejected explicit candidate is
+  not saved and preserves the previous credential. Replace the key and choose
+  **Save and connect**; switching back can retry the prior saved connection.
 - Network/CORS, timeout, 403 and transient service errors leave saved credentials
   available but do not enable memory. An empty key input may retry the saved key
   for the exact selected connection via **Save and connect**. No automatic retry loop.
@@ -62,20 +64,21 @@ scoped removal, malformed records, blocked storage and the bounded authenticated
 read contract. Completed validation on SillyTavern 1.19.0 at
 `06bde939fb1e9c4c8d8641d810f0a916b5bce127`:
 
-- `npm test`: 346 passed; runtime/script/test syntax, release metadata and the
+- `npm test`: 347 passed; runtime/script/test syntax, release metadata and the
   pinned SDK 0.8.0 bundle checks passed.
-- `SM_ARTIFACT_TAG=saved-connection-ready npm run test:browser`: 52 actual-host
+- `SM_ARTIFACT_TAG=saved-connection-review npm run test:browser`: 53 actual-host
   Chromium checks with the local HTTPS LambdaDB emulator. Confirmed verified
   automatic reconnect, enabled/disabled retention, no duplicate upserts, delayed
   authentication staying disabled, exclusive-tab behavior, HTTP 401 removal,
-  HTTP 503 retention and password-free retry, dedicated storage and complete forget.
+  HTTP 503 retention and password-free retry, preservation of the prior key after
+  a rejected different-project candidate, dedicated storage and complete forget.
 - `SM_ARTIFACT_TAG=saved-connection-faults npm run test:faults`: 84 checks, including
   existing synchronization, stale results, uncertain writes and deletion races.
 - `node scripts/prompt-delivery-smoke.mjs`: 17 native prompt-delivery cases,
   including streaming, swipe, regeneration, capacity failure and literal assembly.
   Both fault and prompt runs preceded the final storage-error message sanitization
-  and unsupported-lock control disabling; final units and the 52-check browser
-  run include those guards. All emulator runs ended with zero remaining collections
+  and unsupported-lock control disabling; final units and the 53-check browser
+  run include those guards and the candidate-key review correction. All emulator runs ended with zero remaining collections
   and no browser errors.
 
 The paid generation/lifecycle runners were updated and syntax checked but not

@@ -277,14 +277,18 @@ async function initialize() {
             else status(state.ready ? 'Connected. Memory remains disabled.' : 'Connected. Run the synthetic transport test, then prepare chat memory.');
         } catch (error) {
             candidateClient.forget(); state.enabled = false; element('enabled').checked = false;
-            if (error.status === 401) { savedKey.forget(); persist(); }
+            if (error.status === 401) {
+                if (restoring) savedKey.forgetMatching(candidate, key);
+                persist();
+            }
             throw error;
         } finally { if (connectingClient === candidateClient) connectingClient = undefined; }
     }
     element('connect').onclick = () => action(async () => {
         const candidate = connectionConfig({ endpoint: element('endpoint').value.trim(), project: element('project').value.trim() });
-        const key = element('key').value.trim() || savedKey.read(candidate) || ''; element('key').value = '';
-        await connect(candidate, key, state.enabled);
+        const typed = element('key').value.trim();
+        const key = typed || savedKey.read(candidate) || ''; element('key').value = '';
+        await connect(candidate, key, state.enabled, !typed);
     });
     element('forget').onclick = () => action(async () => {
         state.enabled = false; element('enabled').checked = false; invalidate();

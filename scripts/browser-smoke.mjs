@@ -149,6 +149,12 @@ try {
     check('auth failure is visible with reconnect guidance', (await status()).includes('Authentication failed') && (await status()).includes('Save and connect'));
     await field('key').fill('synthetic-session-key'); await field('connect').click();
     await field('cleanup').click(); await waitStatus('No pending');
+    await field('project').fill('other-project'); await field('key').fill('wrong-synthetic-key'); await field('connect').click(); await waitStatus('Authentication failed');
+    check('a rejected explicit key for another project preserves the prior validated credential', await page.evaluate(() => {
+        const name = Object.keys(localStorage).find(k => k.startsWith('sillymemory:credential:'));
+        const record = JSON.parse(localStorage.getItem(name)); return record.project === 'synthetic' && record.key === 'synthetic-session-key';
+    }) && collections.size === 0);
+    await field('project').fill('synthetic'); await field('connect').click(); await waitStatus('Connected.');
     if (faultMode) faults.arm('upsert', 'http', 503);
     await field('gate').click(); await waitStatus('Transport gate passed');
     if (faultMode) check('transport gate retries transient upsert readiness through direct CORS', calls.filter(c => c.path.endsWith('/docs/upsert')).length === 2);

@@ -10,8 +10,8 @@ boundary; publication is confirmed by the corresponding Git tag and GitHub Relea
 
 - Save a verified project key in a dedicated account/endpoint/project-bound browser
   record and reconnect automatically after reload. Restore the previous memory
-  enabled/disabled state only after a bounded authenticated read. Remove rejected
-  keys and disable memory; Forget key removes browser and runtime credentials.
+  enabled/disabled state only after a bounded authenticated read. Remove rejected restored
+  keys, preserve the prior key on candidate validation failure, and disable memory; Forget key removes browser and runtime credentials.
   Browser persistence is disclosed before saving and is not an isolated secret vault.
 
 - Store available UTC host-message provenance on every chunk, separately from

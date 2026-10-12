@@ -1145,3 +1145,18 @@ provider calls. Original session-only acceptance remains historical evidence.
   and unit receipts include them. Archive byte-readback passed.
 - All emulator runs ended with zero remaining collections and no browser errors.
   Local-only, ignored, unavailable in fresh clones and never a CI dependency.
+
+The review correction preserves the previous validated key when an explicit
+candidate is rejected. Only the exact restored endpoint/project/key can be removed
+after failed validation. Final verification passed 347 units and 53 native-host
+emulator checks, including a different-project rejected candidate and successful
+password-free recovery of the prior connection. No paid calls or real keys.
+
+- Follow-up archive: `artifacts/archive/saved-connection-review-v1/evidence.tar.gz`
+  under the primary worktree; 53,384 bytes, 13 members; SHA-256
+  `e5c3ee9836795344c97b373ce05029d5cac2ac0066fc0e7dcb07bdbc87d39dfe`.
+- Manifest: `artifacts/archive/saved-connection-review-v1/manifest.json`; SHA-256
+  `a246a6989b6010cd07bb57f99c4b7c7101ba1f94d49ee1bfcb69a4e8ca5d58e6`.
+- Base `fc5191e69abee1568363e34fd25a85ab90beaba0`; exact sources/patch and
+  reports/logs retained, including an intermediate assertion requiring lowercase
+  wording. Byte-readback passed; original archive unchanged. Local-only and not CI.

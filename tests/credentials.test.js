@@ -45,3 +45,14 @@ test('invalid account identities and empty keys never enter storage', () => {
     for (const key of ['', ' ', null]) assert.throws(() => saved.save(config, key), /Enter your project/);
     assert.equal(storage.data.size, 0);
 });
+
+test('rejected restoration removes only the exact scoped key and preserves a newer saved value', () => {
+    const storage = memory(), saved = new SavedKey(storage, owner);
+    saved.save(config, 'previous');
+    assert.equal(saved.forgetMatching({ ...config, project: 'other' }, 'previous'), false);
+    assert.equal(saved.forgetMatching(config, 'rejected-candidate'), false);
+    assert.equal(saved.read(config), 'previous');
+    saved.save(config, 'newer'); assert.equal(saved.forgetMatching(config, 'previous'), false);
+    assert.equal(saved.read(config), 'newer'); assert.equal(saved.forgetMatching(config, 'newer'), true);
+    assert.equal(saved.read(config), null);
+});

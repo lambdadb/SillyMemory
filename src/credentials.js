@@ -31,4 +31,9 @@ export class SavedKey {
         try { this.storage.removeItem(this.id()); }
         catch { throw new ConnectionError('The saved key could not be removed. Allow browser storage, then click Forget key again.', 0, 'credential-storage'); }
     }
+    forgetMatching(config, key) {
+        if (this.read(config) !== key.trim()) return false;
+        this.forget();
+        return true;
+    }
 }
