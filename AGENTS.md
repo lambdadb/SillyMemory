@@ -42,12 +42,15 @@ Read [CONTRIBUTING.md](CONTRIBUTING.md) before changing this repository.
 - Establish quality and meaning first, then optimize latency, cost, and resource
   use against that measured reference. Retain operational safety, provider context
   limits, source validity, isolation, and authorized total experiment bounds.
-- The product default indexes completed history and ordinarily searches the current
-  question. During a source-verified pending clarification, retain and search the
+- The product default archives completed eligible messages only after they leave
+  the recent-five window. Ordinarily search the two most recent eligible messages
+  through the generation anchor, in one role-labelled request. During a source-verified pending clarification, retain and search the
   complete pending user/assistant dialogue. Always retain five recent eligible
   messages including the active input, plus any longer pending dialogue and selected
   memory alongside native system/character settings. Exclude full retained turns
-  from memory selection; storage timing and query construction are independent.
+  from memory selection. Upload displaced source immediately; do not introduce
+  a five-message write queue or expand the raw generation window for batching.
+  Checkpoints explicitly synchronize the full completed transcript.
 - Follow an explicitly specified semantic input unit first. Pending-request
   accumulation uses the complete user/assistant dialogue from ambiguity through
   completion for retrieval and generation, preserving roles and order. Supply

@@ -9,11 +9,14 @@ development defaults, not a release or a universal optimum.
 
 ### Current request and clarification continuity
 
-Index all completed eligible plain-text messages, including the preceding exchange.
-A trailing user input waits for a reply before indexing. Ordinarily, retrieve with
-only the current question. Retain the five most recent eligible messages including
+Index completed eligible plain-text messages only when they leave the recent-five
+window. Upload newly displaced source immediately, grouping chunks available at the
+same synchronization in existing batches of up to 50 documents. A trailing user
+input remains pending. Checkpoints index the entire completed transcript. Ordinarily,
+retrieve with the two most recent eligible messages through the generation anchor
+in a single role-labelled query (usually the preceding reply and current question). Retain the five most recent eligible messages including
 that input, in native roles and source order, plus selected memory alongside native
-system/character settings. Storage still includes completed recent turns. See
+system/character settings. Recent completed turns remain authoritative native source until they leave that window. See
 [the retention decision and limits](recent-dialogue-retention.md).
 
 **Clarification continuity is enabled by default.** The same answer generation
@@ -28,9 +31,9 @@ for a clear request must not be mistaken for ambiguity in the user's intent.
 Status expresses request state, not factual correctness.
 
 Both search legs prefilter positions before the earliest retained recent/pending
-message. Local selection validates the same boundary. Query text still starts at
-the pending root (or uses only the current input); retaining recent messages does
-not append them to the retrieval query.
+message. Local selection validates the same boundary. Query text starts at the pending root when a genuinely unresolved span starts
+earlier than the active input; otherwise it uses the two-message query. It does not
+append all five retained messages.
 Already-retained full turns therefore consume neither the bounded result slots nor
 the excerpt budget. A root at the first message skips search after synchronization:
 there is no older memory to retrieve. This refines the v4 experiment, which searched

@@ -16,13 +16,20 @@ optimal. The separate confirmation quality-improvement gate is inconclusive;
 engineering adoption rests on the concrete failure/replay and delivery invariants,
 with no observed new regression in the frozen controls.
 
-Completed history storage is unchanged, including recent completed turns. The
-trailing user input still waits for a reply. Generation retention and write timing
-are separate: no five-message upload batching is added. Ordinarily search only the
-current question; a pending request uses its complete dialogue. No Query 2,
-rewriting model or additional search is added. Vector/lexical prefilters and local
-selection exclude all fully retained positions before ranking and budgeting.
+Ordinary storage now archives completed eligible messages only after they leave
+this five-message window. Upload displaced chunks immediately, grouping whatever
+is ready at the same synchronization in existing batches of up to 50 documents.
+There is no queue waiting for five displaced messages and no extra raw context to
+support batching. Checkpoints synchronize the complete completed transcript.
+Ordinary retrieval uses the two most recent eligible messages through the query
+anchor, normally the preceding assistant reply and current user question, with
+roles/order preserved in one request. A longer unresolved span takes precedence.
+No rewriting model or additional search is added. Vector/lexical prefilters and
+local selection still exclude fully retained positions before ranking/budgeting.
 
+The original evaluation below used unchanged completed-history storage and
+current-question queries; its scores do not establish this follow-up's quality.
+The separately bounded query/storage comparison is recorded at the end.
 Managed embeddings, Bayesian English/Jev, k=100/candidateSize=100/size=50,
 800-code-point boundary chunks and the 4,096-token memory budget remain unchanged.
 The quarter-context memory cap remains. Recent/pending source is outside that
@@ -31,7 +38,7 @@ recent messages can exhaust context even with no recalled excerpts. The default
 guard then stops generation with recovery guidance; it does not silently shorten
 the five-message window. Disable memory to use ordinary native history.
 
-## Evaluation protocol
+## Original Retain 5 evaluation protocol
 
 The [input lock](recent-dialogue-inputs.json) records two discovery dialogues and
 twelve confirmation dialogues, with the existing 24 clarification dialogues as
@@ -76,7 +83,7 @@ as Project P, then asks its original name. Both conditions return 50 documents
 without the original name, Summer Vibes, and the name never reaches selected
 memory. Retain 5 preserves the alias correctly but cannot supply missing historical
 evidence. This is a candidate/query issue, not current-window loss or token
-packing. Query 2 is a separate future evaluation, not part of this change.
+packing. This demonstrated failure motivates the separate Query 2 comparison below.
 
 The coupon reference expects Target. Both prompts contain the coupon statement
 and nearby Target discussion but no explicit sentence connecting that redemption
@@ -156,3 +163,150 @@ passes 91. `scripts/prompt-delivery-smoke.mjs` with output
 `artifacts/prompt-delivery-recent-retention-anchor.json` passes all 17 cases plus
 assembly/overlap. No page errors or remaining emulator collections. These supersede
 the earlier runtime shape checks; original paid quality receipts remain unchanged.
+
+
+## Query 2 and immediate archival follow-up
+
+The user requested two changes after the original retention decision: include the
+preceding eligible message in ordinary retrieval, and avoid embedding the recent
+five until they leave the raw window. The later decision explicitly rejected a
+five-message write queue: it would require retaining additional unsent source
+(and increase generation input), or leave a source gap. The current runtime
+implements immediate displacement, not batching by five messages.
+
+Ordinary background synchronization and generation preparation use the same
+recent boundary. All currently displaced chunks are reconciled in upsert batches
+of at most 50 documents. IDs, local-source validation, delete-before-upsert,
+acknowledgement, uncertain-write reload recovery and consistent reads remain.
+Recent edits/swipes are uploaded only when the source leaves the window; already
+archived edits/deletions reconcile normally. Regenerate/swipe storage ends before
+the five-message window through the actual user input, excluding replacement
+suffixes. A longer unresolved span can still be stored outside the recent window,
+but remains fully present and excluded from both search legs. Checkpoints omit the
+ordinary archive boundary and synchronize every completed eligible message before
+confirming the snapshot. No state is kept solely in a volatile write buffer.
+
+Query 2 means one complete role-labelled query, shared by vector, lexical and Jev
+stages. Normal alternating dialogue includes the previous assistant reply and the
+current question. Blank/ineligible source is skipped; a single eligible message
+uses its plain text. Continue/Impersonate use their existing anchor and one prior
+eligible message. Replacement reply suffixes never enter the query. A fresh
+request root at the active input does not disable Query 2; an earlier pending root
+uses its entire dialogue instead. There is no rewriting model, extra search,
+truncation or separate previous-message reranking. The combined input still has
+the existing 8 KiB query limit, so two long messages can stop generation sooner
+than a question-only query. The UI reports the limit rather than dropping context.
+
+### Cost boundary
+
+This changes write timing, not guaranteed write-request savings. With exact
+five-message retention, a user input and its subsequent assistant reply can each
+move one old message across the boundary, producing two small upserts per exchange
+instead of the former completed-pair upsert. The initial archive excludes recent
+messages, and repeated changes while still recent avoid embedding obsolete
+versions. Two messages displaced at the same synchronization share one upsert
+when their chunks fit the existing 50-document batch. Ordinary generation raw
+input remains five eligible messages; it does not grow to nine for batching.
+
+LambdaDB documents a 50 KB minimum per upsert and a fixed 100 KB write charge per
+delete request. Fewer submitted documents therefore do not alone prove a smaller
+bill. These are documented billing rules, not measured account invoices; see
+[Understanding costs](https://docs.lambdadb.ai/guides/costs/understanding-costs).
+Query 2 also sends more input text to managed embedding/reranking than a question
+alone; one request does not mean unchanged inference-token usage. It adds no
+query-rewriting LLM call and no additional raw generation messages.
+
+### Frozen verification scope
+
+[The follow-up input lock](recent-query-storage-inputs.json) reuses all twelve
+ordinary confirmation cases and their unchanged references. The known baseline
+failure is the Project P playlist alias: the source name was absent from all 50
+returned chunks, rather than rejected by packing. The same Sol/low model, managed
+embeddings, Bayesian English/Jev, 100/100/50 retrieval, 4,096 memory budget and
+32,768 host context remain. Compare three conditions: original question-only with
+full completed storage, question-only with aged-out storage, then Query 2 with the
+same aged-out storage. Each adjacent comparison changes one policy. All retain
+five native messages and the full pending span. Identical prefixes use controlled
+native schema completions; the 36 final answers are live Sol calls. This is an
+already-consumed, derived development cohort, not an official benchmark score or
+independent generalization claim. No paid judge, selective retry or new favorable
+case is allowed. Detailed producers and responses remain ignored evidence.
+
+
+### Completed follow-up results
+
+| Condition | Correct final answers | Median final input tokens | Median selected memory tokens |
+| --- | --- | --- | --- |
+| Question only; all completed source stored | 11/12 | 4,937.5 | 4,074 |
+| Question only; only aged-out source stored | 11/12 | 4,903.5 | 4,089.5 |
+| Query 2; same aged-out storage | 12/12 | 4,871 | 4,082.5 |
+
+The changed case is `recent-plus-historical-playlist`. Its current input is
+`What is the original name of Project P?`; the immediately preceding controlled
+reply is `Project P refers to the Spotify playlist you created.` The two-message
+query is exactly:
+
+```text
+Assistant: Project P refers to the Spotify playlist you created.
+
+User: What is the original name of Project P?
+```
+
+Both question-only conditions return 50 chunks without `Summer Vibes`; their
+selected and delivered memory also lack the name, and Sol reports insufficient
+evidence. Query 2 returns the user's original named-playlist statement as its
+first hit (message index 129, chunk 0), plus corroborating assistant text as hit 2.
+Both are selected and delivered. Sol answers: `The original name of Project P is
+“Summer Vibes.”` This is an observed retrieval/context improvement, not just a
+larger packing budget or a different interpretation. The other eleven answers
+remain correct in every condition, including the new-topic arithmetic and explicit
+outside-window IKEA reference. Every complete answer and delivered prompt was
+inspected against the unchanged target/rubric; literal reference checks alone
+are not the quality audit. No blinded or independent-human correctness claim.
+
+Adopt the requested Query 2 construction and immediate aged-out storage. The
+adjacent storage-only comparison has no observed quality change; Query 2 fixes
+the demonstrated alias failure without an observed new regression in this fixed
+English cohort. This is not proof of general superiority, an optimal query window,
+or measured write-billing savings. Initial full-history imports, repeated resets,
+and condition order share branches in this paired experiment; run-level writes
+are resource receipts, not a steady-state pricing comparison. Query 2 still has
+the explicit combined-query overflow limitation above. The earlier 24 paid
+clarification answers are historical evidence; they were not rerun for this
+follow-up. Native emulators verify the unchanged full-pending query semantics.
+
+Final validation:
+
+- `npm test`: 382 passed; `npm run check`, `npm run check:release`,
+  `npm run check:sdk` and syntax checks over maintained scripts/tests pass.
+- Pinned host with `ST_TEST_PORT=18136`, tag `query-two-archive-v3`:
+  `npm run test:browser` passes 90 real-host/Chromium checks with local service and
+  completion emulators. Tag `query-two-archive` with `npm run test:faults` passes
+  95 checks. Each run has zero page errors and zero remaining emulator collections.
+  These include archive-only ordinary sync, recent-edit write avoidance, exact
+  per-message displacement, no duplicate reload upserts, old-source edit/delete,
+  native forks/checkpoints, structured clarification and saved-connection lifecycle.
+- `ST_SOURCE=<pinned host> node scripts/prompt-delivery-smoke.mjs
+  artifacts/prompt-delivery-query-two-archive-v2.json`: 17 native delivery cases,
+  plus repeated/same-message assembly and overlap, pass. Long retained text is
+  placed before the last two short messages to distinguish generation capacity
+  from combined-query overflow. No private profile, real uploaded file or paid
+  provider is used by these emulator checks.
+- Actual unmodified host + managed LambdaDB + live Sol: 36 final calls/attempts,
+  zero retries/waits, peak concurrency one; 48 controlled prefix completions and
+  84 verified delivery observations. Source history is unchanged and each final
+  request contains only its current selected memory. No query-rewriting call.
+- Resource receipts: 323,972 reserved admission tokens (not billed token usage),
+  9,124 document submissions, 927 LambdaDB requests and 10 owned collection
+  creations including the transport gate. Every collection is deleted with
+  absence/404 verified. Keys are forgotten and absent from final browser/native
+  settings; reports contain no exact configured keys. The original host extension
+  link is restored. No merge, main promotion, release or deployment is performed.
+
+Early local attempts preserved their failures: a wrong host-extension link,
+a fixture race before the overlap assertion, a stale question-only clarification
+assertion, and a pressure case that became too small when the last two messages
+were shortened. The current delivery fixture preserves the original pressure
+in an earlier retained message. These were harness corrections, not paid-case,
+reference or model changes; the live comparison completed in one attempt.
+See the [evidence index](evidence-retention.md#recent-query-and-storage).

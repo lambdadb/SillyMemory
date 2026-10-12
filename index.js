@@ -3,10 +3,10 @@ import { LambdaClient, ConnectionError, connectionConfig } from './src/client.js
 import { SavedKey } from './src/credentials.js';
 import { ChatCollections, chatCollection, ensureChatIdentity } from './src/chat-collections.js';
 import { runTransportGate } from './src/gate.js';
-import { MemoryEngine, Journal, capture, fingerprint, options, DEFAULTS, memoryBoundary } from './src/memory.js';
+import { MemoryEngine, Journal, capture, fingerprint, options, DEFAULTS, memoryBoundary, archiveBoundary } from './src/memory.js';
 import { OperationStatus, failureText } from './src/status.js';
 import { PromptDelivery, expectedMessages, deliverySummary } from './src/delivery.js';
-import { MEMORY_GUIDANCE, retentionStart, retentionAnchor } from './src/context.js';
+import { MEMORY_GUIDANCE, retentionAnchor } from './src/context.js';
 import { ClarificationRequest, REQUEST_GUIDANCE, recoverPendingReplies, pendingRequestStart, conflictsWithReplyProtocol, isReplyTarget } from './src/clarification.js';
 
 const context = () => SillyTavern.getContext();
@@ -80,8 +80,8 @@ async function sync() {
         const prepared = await prepareMemory(current, operation.update); if (!prepared) return;
         const { snapshot, instance } = prepared;
         const valid = () => current() && validSnapshot(snapshot, instance);
-        const result = await instance.sync(snapshot, options(state), valid, operation.update);
-        if (result) operation.finish(`Current chat synchronized: ${result.docs.length} completed conversation chunks. Memory will be retrieved on generation.`);
+        const result = await instance.sync(snapshot, { ...options(state), archiveBefore: archiveBoundary(snapshot) }, valid, operation.update);
+        if (result) operation.finish(`Current chat synchronized: ${result.docs.length} archived conversation chunks. Recent messages stay in the native chat. Memory will be retrieved on generation.`);
     } catch (e) { if (operation.current()) fail(e, operation); }
 }
 function schedule() {
@@ -171,7 +171,8 @@ globalThis.sillymemory_intercept = async (chat, contextSize, abort, type) => {
         // Keep recent conversation independently of classification/retrieval.
         // A longer pending clarification is retained in full, never truncated.
         const retainedEnd = retentionAnchor(snapshot.messages, type);
-        config.retainedStart = retainedEnd < 0 ? 0 : Math.min(retentionStart(snapshot.messages, retainedEnd), config.requestStart ?? retainedEnd);
+        config.archiveBefore = archiveBoundary(snapshot, type);
+        config.retainedStart = retainedEnd < 0 ? 0 : Math.min(config.archiveBefore, config.requestStart ?? retainedEnd);
         protectedMessages = chat.filter(m => m.index >= config.retainedStart && m.index <= retainedEnd && !snapshot.messages[m.index]?.protocolIncomplete);
         // The extension budget includes its complete wrapper; SillyTavern still manages
         // total prompt overhead, character instructions, and final model context limits.

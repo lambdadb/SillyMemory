@@ -1547,3 +1547,32 @@ eligible-normal evaluation paths remain unchanged.
 - Base `02b73475de7c159d75ef393e16ac796e99e074a4`; exact correction sources,
   patch and verification receipts retained with byte-readback. Original archives
   are unchanged; local-only, ignored, unavailable in fresh clones and not CI.
+
+
+## Recent query and storage
+
+`recent-query-storage-v1` preserves the completed follow-up to Retain 5: all
+36 Sol final answers, 48 controlled native prefixes and 84 delivered prompts,
+managed LambdaDB request/response and cleanup receipts, all three frozen conditions,
+the ignored producer/experimental extension, agent answer audit, original plans,
+local failures, current native browser/fault/delivery reports and logs. The source
+dataset remains in its existing checksum-locked archive and is not duplicated.
+No configured credentials or personal conversations are included.
+
+- Producing base: `f39a567eb8b688d06a979be498100cd3f1aae249` plus
+  `checkout/changes.patch` and the snapshotted changed source/new input lock.
+- Local archive: `/Users/steven/Dev/sillymemory/artifacts/archive/recent-query-storage-v1/evidence.tar.gz`.
+- SHA-256: `13c37f783d456b1a2dd0b0f7df4466ad45d233decd8f46f42e0f2a1793219219`;
+  5,949,095 bytes, 66 members.
+- Manifest: same directory, `manifest.json`; SHA-256
+  `ebc809357315e6d8c90e9c55d1502d43446e857ef78d32f47e740db75c84e09f`.
+  Every member's original bytes were read back from the archive and verified.
+- Availability: ignored local-only evidence, not downloadable from a fresh clone
+  and not a CI dependency. The existing Retain 5 and review archives are unchanged.
+  This index's receipt append follows archive creation; the final committed index
+  supplies the archive location without a self-referential archive hash.
+
+[Decision, interpretation and limits](recent-dialogue-retention.md#query-2-and-immediate-archival-follow-up)
+and the [frozen follow-up lock](recent-query-storage-inputs.json) are maintained in
+Git. Only the small fixed correctness inputs remain in CI; no raw provider answer,
+large prompt/result fixture, private path dependency or one-off generator is added.

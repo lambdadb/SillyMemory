@@ -10,7 +10,7 @@ There is no server plugin. Runtime modules have no external dependencies. Playwr
 
 The current SillyTavern chat is authoritative. The owner is a random per-account identity kept in extension settings; its initial save is awaited and read back before the UI permits remote operations. Browser-local configuration and journals are keyed by that owner. Scope is SHA-256 of owner, character avatar filename, and the saved story ID. Every story has one owned collection; each chat path has its own writable branch. Native metadata is persisted and read back before remote use. Verified native forks inherit the story scope; independent copies start new stories. The source revision hashes message position, speaker, role, selected swipe, full text and normalized conversation-time metadata. A chunk ID contains scope, revision, chunking policy, ordinal and source offsets. Insertion/deletion can renumber subsequent messages and require reindexing; content is never deduplicated across scopes.
 
-All completed eligible text is indexed independently of generation input retention. A trailing user input remains pending until an assistant reply. Chunks are up to 800 Unicode code points by default. They retain message/chunk provenance and available host time/source metadata, separately from embedding text. The current implementation selects whole chunks and does not perform neighbor expansion. Renaming a chat preserves its saved identity. Changing the character avatar identity is not a continuity guarantee.
+Ordinary synchronization indexes completed eligible text only before the recent-five boundary. A trailing user input remains pending. New source that crosses that boundary is uploaded immediately; multiple displaced messages share the existing 50-document batches. A five-message write queue is not used. Checkpoints deliberately index the full completed transcript, including recent completed messages. Chunks are up to 800 Unicode code points by default. They retain message/chunk provenance and available host time/source metadata, separately from embedding text. The current implementation selects whole chunks and does not perform neighbor expansion. Renaming a chat preserves its saved identity. Changing the character avatar identity is not a continuity guarantee.
 
 ## Write ordering and recovery
 
@@ -30,12 +30,14 @@ No chat text or API key is persisted in the journal. If local storage fails, rem
 
 Queries use the selected `chat_<ID>` branch with `consistentRead: true`, not
 Tags/Aliases. The empty `main` branch is an independent-story fork source. One
-current-question query uses only the current eligible user message.
+two-message query includes the preceding eligible message and the current anchor,
+with roles and source order preserved (normally assistant reply plus user input).
 Regenerate/swipe exclude the answer being replaced; continuation anchors on the
 eligible message being extended; Impersonate anchors on the latest eligible response.
 No query rewriting model or second search is used. An unresolved clarification
 instead uses its complete user/assistant span for the single retrieval query.
-All completed history is stored, independently of generation retention. Generation
+Ordinary storage archives completed source before the recent-five boundary;
+checkpoints explicitly synchronize the full completed transcript. Generation
 retains the five most recent eligible messages through the active anchor, together
 with any longer unresolved span and selected memory alongside native settings.
 Generation retention uses the actual native position, independently of query

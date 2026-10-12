@@ -59,10 +59,11 @@ export async function runFaultScenarios({ page, field, waitStatus, prompt, check
     async function expectedRemote() {
         return page.evaluate(async () => {
             const c = SillyTavern.getContext();
-            const { capture, documents, options } = await import('/scripts/extensions/third-party/sillymemory/src/memory.js');
+            const { capture, documents, options, archiveBoundary } = await import('/scripts/extensions/third-party/sillymemory/src/memory.js');
             const owner = c.extensionSettings.sillymemory.owner;
             const state = JSON.parse(localStorage.getItem(`sillymemory:state:${owner}`));
-            return documents(capture(c), owner, options(state));
+            const snapshot = capture(c);
+            return documents(snapshot, owner, { ...options(state), archiveBefore: archiveBoundary(snapshot) });
         });
     }
     async function remoteMatches() {
@@ -143,7 +144,7 @@ export async function runFaultScenarios({ page, field, waitStatus, prompt, check
     const firstBatch = faults.arm('upsert', 'hold');
     await page.evaluate(async () => {
         const c = SillyTavern.getContext();
-        c.chat.splice(0, c.chat.length, ...Array.from({ length: 120 }, (_, i) => ({ name: i % 2 ? 'Mira' : 'User', is_user: !(i % 2), is_system: false, send_date: Date.now(), extra: {}, mes: `Progress fixture ${i}: a compass in a wooden box.` })));
+        c.chat.splice(0, c.chat.length, ...Array.from({ length: 125 }, (_, i) => ({ name: i % 2 ? 'Mira' : 'User', is_user: !(i % 2), is_system: false, send_date: Date.now(), extra: {}, mes: `Progress fixture ${i}: a compass in a wooden box.` })));
         await c.saveChat(); await c.eventSource.emit(c.eventTypes.MESSAGE_UPDATED, 0);
     });
     await entered(firstBatch);
@@ -156,7 +157,7 @@ export async function runFaultScenarios({ page, field, waitStatus, prompt, check
     const uploadsBefore = calls.filter(c => c.path.endsWith('/docs/upsert')).length;
     await sync();
     const retried = calls.filter(c => c.path.endsWith('/docs/upsert')).slice(uploadsBefore);
-    check('manual retry skips confirmed chunks and completes the current source', JSON.stringify(retried.map(c => c.body.docs.length)) === '[50,20]' && retried.every(c => c.body.docs.every(d => !firstIds.has(d.id))) && await remoteMatches() && (await field('status').innerText()).includes('120 completed conversation chunks') && await field('progress').isHidden());
+    check('manual retry skips confirmed chunks and completes the current source', JSON.stringify(retried.map(c => c.body.docs.length)) === '[50,20]' && retried.every(c => c.body.docs.every(d => !firstIds.has(d.id))) && await remoteMatches() && (await field('status').innerText()).includes('120 archived conversation chunks') && await field('progress').isHidden());
 
     const queuedWrite = faults.arm('upsert', 'hold');
     await edit('Progress fixture changed: compass moved to an oak chest.'); await entered(queuedWrite);

@@ -1,0 +1,113 @@
+{
+  "version": 1,
+  "decision": "Apply a single query=2 request and immediate archival outside the recent-five window, without a five-message write queue.",
+  "parentInputLock": "recent-dialogue-inputs.json",
+  "parentInputLockSha256": "cf3f7ed862a7fb587ba46dd78026d1ec7e39c54e544495a0ecf6bb49db5a21bd",
+  "datasetSha256": "d6f21ea9d60a0d56f34a05b609c79c88a451d2ae03597821ea3d5a9678c3a442",
+  "host": "06bde939fb1e9c4c8d8641d810f0a916b5bce127",
+  "profile": {
+    "model": "gpt-6.1-sol",
+    "reasoningEffort": "low",
+    "context": 32768,
+    "output": 4096,
+    "k": 100,
+    "candidateSize": 100,
+    "size": 50,
+    "budget": 4096
+  },
+  "conditions": [
+    {
+      "id": "query-1-full",
+      "queryMessages": 1,
+      "storage": "all completed eligible messages",
+      "retainedMessages": 5
+    },
+    {
+      "id": "query-1-aging",
+      "queryMessages": 1,
+      "storage": "completed eligible messages before recent-five boundary",
+      "retainedMessages": 5
+    },
+    {
+      "id": "query-2-aging",
+      "queryMessages": 2,
+      "storage": "completed eligible messages before recent-five boundary",
+      "retainedMessages": 5
+    }
+  ],
+  "cases": [
+    {
+      "id": "choice-second-gift",
+      "source": "66f24dbb",
+      "sourceMessagesSha256": "20a74ef15f8994d1bf0fe9dcbcae62918fbdcf39388c6c280c099baafec8f57c"
+    },
+    {
+      "id": "choice-former-book",
+      "source": "86f00804",
+      "sourceMessagesSha256": "d72951af6ad9ed31492a11d5f449dec1612ddd8e6222469b8f5878bd9abeabe9"
+    },
+    {
+      "id": "explain-commute-arithmetic",
+      "source": "118b2229",
+      "sourceMessagesSha256": "02d492a02a884679029a7e37e9135c89e4c24e42c81b24570bd495664ddc6742"
+    },
+    {
+      "id": "explain-book-format",
+      "source": "86f00804",
+      "sourceMessagesSha256": "d72951af6ad9ed31492a11d5f449dec1612ddd8e6222469b8f5878bd9abeabe9"
+    },
+    {
+      "id": "modify-gift-date",
+      "source": "66f24dbb",
+      "sourceMessagesSha256": "20a74ef15f8994d1bf0fe9dcbcae62918fbdcf39388c6c280c099baafec8f57c"
+    },
+    {
+      "id": "modify-playlist-title",
+      "source": "1e043500",
+      "sourceMessagesSha256": "a9a03d335ba7b928222e4fb5694d33e565855067a5389dcdf4e292261a1f184c"
+    },
+    {
+      "id": "conditions-two-exchanges",
+      "source": "8e9d538c",
+      "sourceMessagesSha256": "98bc6513aa2c798f4a91ed557a74e117415f84ab619f1d4e8cb97f93fe76aa1e"
+    },
+    {
+      "id": "conditions-exact-five",
+      "source": "c960da58",
+      "sourceMessagesSha256": "4abdd70916358684d5a9079e6fcf009eeeef8306862c9914b6d40597c1c004ae"
+    },
+    {
+      "id": "recent-plus-historical-giver",
+      "source": "f4f1d8a4",
+      "sourceMessagesSha256": "2f5e22ed8b637bd9dc732a031efc5d0730c796b4917b645d44d60c9384b53d1c"
+    },
+    {
+      "id": "recent-plus-historical-playlist",
+      "source": "1e043500",
+      "sourceMessagesSha256": "a9a03d335ba7b928222e4fb5694d33e565855067a5389dcdf4e292261a1f184c"
+    },
+    {
+      "id": "topic-switch-calculation",
+      "source": "4100d0a0",
+      "sourceMessagesSha256": "a2eee4c6f580780f85f10043e93f64e1ef102fce67d16516f8f0c21566325d58"
+    },
+    {
+      "id": "outside-window-older-reference",
+      "source": "94f70d80",
+      "sourceMessagesSha256": "00585a2fae1e5a8dcf09ce960b0bd68983f9360cb34a2c29dac2a5ed1a4756f8"
+    }
+  ],
+  "bounds": {
+    "collections": 14,
+    "documents": 40000,
+    "lambdaRequests": 6000,
+    "answerCalls": 36,
+    "judgeCalls": 0,
+    "completionAttempts": 48,
+    "reservedTokens": 1200000,
+    "elapsedMinutes": 90,
+    "maxConcurrent": 1
+  },
+  "stoppingCondition": "All 36 frozen final answers complete or a concrete non-transient blocker; no new cases or quality retries. Inspect every final prompt and answer; verify every owned collection deletion.",
+  "grading": "Inspect every native final prompt and final Sol answer against the unchanged parent reference/rubric. No paid judge or quality retry. This is a derived development cohort, not an official LongMemEval score."
+}

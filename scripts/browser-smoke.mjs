@@ -255,12 +255,36 @@ try {
     check('clarification continuity defaults on', await field('clarification').isChecked());
     await field('clarification').uncheck(); // Isolate the existing memory/interceptor contracts.
     const result = await prompt();
+    const latestSearch = calls.findLast(call => call.body?.query?.bayesian)?.body;
+    check('one query=2 request shares the complete preceding reply and question with both search legs and reranking',
+        latestSearch?.query.bayesian[0].knn.queryText === 'Assistant: Synthetic passage 5: the blue compass is beneath the cedar tree.\n\nUser: Synthetic passage 6: the blue compass is beneath the cedar tree.'
+        && latestSearch.rerank.queryText === latestSearch.query.bayesian[0].knn.queryText);
+    const archive = [...collections.values()][0].branches.get(await page.evaluate(() => `chat_${SillyTavern.getContext().chatMetadata.sillymemory.id}`));
+    check('ordinary native synchronization stores exactly the three messages outside the retained five',
+        JSON.stringify([...archive.values()].map(doc => doc.message).sort((a, b) => a - b)) === '[0,1,2]');
     check('real host dispatcher injects bounded memory', Boolean(result.injection) && /\d+ \/ 250 tokens/.test(result.inspection));
     check('native recalled excerpts keep macros literal within budget', result.rendered.includes('｛｛char｝｝') && result.rendered.includes('＜USER＞') && result.macroValue === undefined && result.renderedTokens <= 250);
     check('five recent messages stay full in source order and persisted source chat is preserved', JSON.stringify(result.chat.filter(m => !m.mes.startsWith('[Past conversation excerpt:')).map(m => m.index)) === '[3,4,5,6,7]' && result.chat.at(-1).mes.includes('passage 7') && result.before === result.after);
     // Ineligible active inputs still preserve recent dialogue. The actual native
     // hook is exercised with attachment/media/tool metadata, without uploading files.
     const originalSource = await page.evaluate(() => structuredClone(SillyTavern.getContext().chat));
+    const writesBeforeRecentEdit = calls.filter(call => call.path.endsWith('/docs/upsert')).length;
+    await page.evaluate(async () => {
+        const c = SillyTavern.getContext(); c.chat[7].mes = 'Edited recent reply.';
+        await c.saveChat(); await c.eventSource.emit(c.eventTypes.MESSAGE_UPDATED, 7);
+    });
+    await waitStatus('synchronized');
+    check('editing retained source makes no embedding write before it leaves the window',
+        calls.filter(call => call.path.endsWith('/docs/upsert')).length === writesBeforeRecentEdit);
+    for (const index of [8, 9]) {
+        await page.evaluate(async index => {
+            const c = SillyTavern.getContext(); c.chat.push({ mes: `New message ${index}`, name: index % 2 ? 'Mira' : 'User', is_user: index % 2 === 0, extra: {} });
+            await c.saveChat(); await c.eventSource.emit(index % 2 ? c.eventTypes.MESSAGE_RECEIVED : c.eventTypes.MESSAGE_SENT, index);
+        }, index);
+        await waitStatus('synchronized');
+    }
+    check('each native boundary crossing immediately writes one displaced message without a batching delay',
+        JSON.stringify(calls.filter(call => call.path.endsWith('/docs/upsert')).slice(writesBeforeRecentEdit).map(call => call.body.docs.map(doc => doc.message))) === '[[3],[4]]');
     for (const extra of [{ file: { name: 'fixture.txt' } }, { media: [{ url: 'fixture-image' }] }, { tool_invocations: [{ name: 'fixture-tool' }] }]) {
         await page.evaluate(async ({ originalSource, extra }) => {
             const c = SillyTavern.getContext();
@@ -293,6 +317,7 @@ try {
         const c = SillyTavern.getContext(); c.chat[0].mes = original; await c.eventSource.emit(c.eventTypes.MESSAGE_UPDATED, 0);
     }, assemblySource.original);
     await field('budget').fill('250'); await field('budget').dispatchEvent('change');
+    await waitStatus('synchronized');
     delayedQuery = 400;
     const olderGeneration = prompt();
     await page.waitForTimeout(100);
@@ -310,7 +335,7 @@ try {
     check('swipe event updates remote source', [...collection.docs.values()].some(d => d.text.includes('Selected swipe')));
     await page.evaluate(async () => { const c = SillyTavern.getContext(); c.chat.splice(0, 1); await c.eventSource.emit(c.eventTypes.MESSAGE_DELETED, 0); });
     await waitStatus('synchronized');
-    check('message deletion reconciles remote documents', collection.docs.size === 7);
+    check('message deletion reconciles remote documents', collection.docs.size === 2);
     delayedQuery = 700;
     const pending = prompt();
     await page.waitForTimeout(150);

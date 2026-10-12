@@ -8,6 +8,13 @@ boundary; publication is confirmed by the corresponding Git tag and GitHub Relea
 
 ### Added
 
+- Search the two most recent eligible messages through the generation anchor in
+  one role-labelled request; longer pending clarification still uses its full span.
+  Archive ordinary source only after it leaves the recent-five window, uploading
+  displaced chunks immediately with no five-message queue. Recent edits wait until
+  displacement; archived edits/deletions reconcile immediately. Checkpoints retain
+  full completed-history synchronization. Write-request savings are not guaranteed.
+
 - Enable clarification continuity by default. The answer's JSON status opens a
   pending span only for ambiguous user intent/referents, then searches and retains
   its complete user/assistant dialogue until answered or insufficient evidence.
@@ -46,11 +53,12 @@ boundary; publication is confirmed by the corresponding Git tag and GitHub Relea
   saved space in search order within the unchanged budget. No LLM processing or
   extra retrieval is added; malformed coordinates retain separate excerpts.
 
-- Index all completed eligible conversation messages independently of generation input
-  retention, and ordinarily retrieve using only the current question; pending clarifications use their complete dialogue. Exclude all retained recent/pending turns and replacement answers
-  from both search legs and local selection. Continue searches the message being
-  extended; pending final user inputs wait for a reply before indexing. Reject
-  retrieval inputs above 8 KiB without silent truncation.
+- Keep five recent eligible messages full and archive older completed source.
+  Search two recent eligible messages in one query, or the complete pending
+  clarification span. Exclude retained positions and replacement answers before
+  both search legs and local selection. Continue anchors on the message being
+  extended; pending final user inputs are not indexed. Reject retrieval input
+  above 8 KiB without silent truncation.
 - Retire npm aliases for historical fixed-window answer evaluations; preserve
   protocols/results with explicit recorded-checkout reproduction instructions.
 - Keep five recent eligible messages including the active input in native roles
@@ -58,7 +66,7 @@ boundary; publication is confirmed by the corresponding Git tag and GitHub Relea
   memory alongside native character/system settings, including when no memory fits.
   This prevents ordinary follow-ups from depending on successful retrieval of the
   preceding exchange. The window is fixed without a new configuration option;
-  current-question/pending queries and completed-history indexing stay unchanged. Continue preserves
+  the two-message/pending query and aged-out storage policies are described above. Continue preserves
   the partial answer, and Impersonate preserves the character response being
   answered; continuity failures abort, while the disabled-continuity fallback retains the original prompt.
 - Add budgeted system guidance to ask a brief clarification for ambiguous intent

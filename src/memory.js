@@ -1,5 +1,5 @@
 import { beginWrites, clearCommit, recordWrite, sameDocument } from './commit.js';
-import { queryAnchor, pendingQuery } from './context.js';
+import { queryAnchor, pendingQuery, recentQueryStart, retentionAnchor, retentionStart } from './context.js';
 import { chunkSpans, CHUNKING_POLICY } from './chunking.js';
 import { hostTimestamp, conversationTime, conversationTimeLabel } from './time.js';
 
@@ -32,17 +32,25 @@ export function capture(context) {
     return { character: avatar, chat: metadata?.id, messages, memory: { story: metadata?.story, source: metadata?.source } };
 }
 export function fingerprint(snapshot) { return JSON.stringify(snapshot); }
-export const RETRIEVAL_POLICY = 'pending-dialogue-v1';
+export const RETRIEVAL_POLICY = 'recent-two-pending-dialogue-v1';
 export function retrievalQueries(snapshot, type = 'normal', config = {}) {
     const messages = snapshot.messages;
     const anchor = queryAnchor(messages, type);
     if (anchor < 0) return [];
-    return [pendingQuery(messages, config.requestStart ?? anchor, anchor)];
+    // A genuinely pending clarification takes precedence over the ordinary
+    // two-message query. A fresh requestStart === anchor still uses query=2.
+    const start = config.requestStart ?? anchor;
+    if (!Number.isInteger(start) || start < 0 || start > anchor) throw new Error('Invalid pending request boundary.');
+    return [pendingQuery(messages, start < anchor ? start : recentQueryStart(messages, anchor), anchor)];
 }
-// Storage is independent of generation input retention. A trailing
-// user input is pending until the assistant replies; completed replies are stored.
+// Checkpoints need the complete completed transcript. Ordinary UI synchronization
+// additionally supplies archiveBefore, excluding the recent five-message window.
 export function completedMessages(snapshot) {
     return snapshot.messages.at(-1)?.user ? snapshot.messages.slice(0, -1) : snapshot.messages;
+}
+export function archiveBoundary(snapshot, type = 'normal') {
+    const anchor = retentionAnchor(snapshot.messages, type);
+    return anchor < 0 ? 0 : retentionStart(snapshot.messages, anchor);
 }
 export function memoryBoundary(snapshot, type = 'normal') {
     // Normal/regenerate/swipe keep only their question; Continue keeps the
@@ -62,10 +70,12 @@ export function interleaveHits(lists) {
 export function chunks(text, limit) { return chunkSpans(text, limit).map(span => span.text); }
 export async function documents(snapshot, owner, config) {
     if (!snapshot.memory?.story || !snapshot.chat) throw new Error('Missing story memory identity.');
+    const before = config.archiveBefore;
+    if (before !== undefined && (!Number.isInteger(before) || before < 0 || before > snapshot.messages.length)) throw new Error('Invalid archive boundary.');
     const scope = await digest(JSON.stringify([owner, snapshot.character, snapshot.memory.story]));
     const docs = [];
     for (const m of completedMessages(snapshot)) {
-        if (!m.eligible || !m.text.trim()) continue;
+        if (before !== undefined && m.index >= before || !m.eligible || !m.text.trim()) continue;
         const time = conversationTime(m);
         const revision = await digest(JSON.stringify([m.index, m.name, m.user, m.swipe, m.text, time]));
         for (const [chunk, { start, end, text }] of chunkSpans(m.text, config.chunkChars).entries()) {

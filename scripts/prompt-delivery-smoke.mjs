@@ -51,10 +51,17 @@ const plan = { version: 2, generationInput: 'recent-five-and-memory',
     { ...base, id: 'disabled', enabled: false, recentRepeats: 80 },
 ] };
 
-// These cases isolate host context loss; question-only retrieval does not append
-// the deliberately oversized recent conversation. Continuation still has limits.
+// Keep query=2 within provider limits while independently stressing the longer
+// retained window. Only the two last source messages are short; message 9 keeps
+// the original context pressure. These are delivery controls, not quality cases.
+function deliveryChat(repeats) {
+    const chat = capacityChat(repeats);
+    chat[9].mes = `RECENT_9: ${'We are discussing the garden. '.repeat(repeats * 3)}`;
+    for (const message of chat.slice(-2)) message.mes = 'We are discussing the garden.';
+    return chat;
+}
 for (const spec of plan.cases.filter(spec => spec.enabled)) {
-    const messages = capacityChat(spec.recentRepeats).map((message, index) => ({ index, text: message.mes, user: message.is_user, eligible: true }));
+    const messages = deliveryChat(spec.recentRepeats).map((message, index) => ({ index, text: message.mes, user: message.is_user, eligible: true }));
     if (spec.type === 'normal') messages.push({ index: messages.length, text: plan.question, user: true, eligible: true });
     const [query] = retrievalQueries({ messages }, spec.type);
     assert(new TextEncoder().encode(query).byteLength <= 8192, `${spec.id}: pressure fixture must fit complete-query limits`);
@@ -133,7 +140,7 @@ const remote = httpsServer({ key: await readFile(key), cert: await readFile(cert
             let docs = knn && noHits ? [] : [...branchDocs.values()].filter(d => d.owner === match[1] && d.scope === match[2] && (match[3] === undefined || d.message <= Number(match[3])));
             if (knn && onlyFirst) docs = docs.filter(d => d.message === 0 && d.chunk === 0);
             if (knn && packing) {
-                assert.equal(knn.queryText, packingQuery, 'Actual host uses the current-question policy');
+                assert.equal(knn.queryText, packingQuery, 'Actual host uses the two-message policy');
                 docs = packingOrder.map(hit => {
                     const doc = docs.find(doc => doc.message === hit.message && doc.chunk === hit.chunk);
                     assert.ok(doc, 'Recorded rank refers to a synchronized source');
@@ -218,7 +225,7 @@ try {
     for (const spec of plan.cases) {
         console.log(`VERIFY ${spec.id}`);
         noHits = spec.noHits === true; onlyFirst = spec.id === 'nothing-fits';
-        const chat = capacityChat(spec.recentRepeats);
+        const chat = deliveryChat(spec.recentRepeats);
         if (spec.earlierAnchor) chat.slice(9).forEach(message => { message.is_user = false; message.name = 'Mira'; });
         if (spec.collision) chat[10].mes = 'BOOK A TRIP';
         if (await field('enabled').isChecked()) await field('enabled').uncheck();
@@ -360,7 +367,7 @@ try {
         const c = SillyTavern.getContext(), { oai_settings } = await import('/scripts/openai.js');
         oai_settings.openai_max_context = 4096;
         c.chat.splice(0, c.chat.length, ...chat); await c.saveChat(); await c.reloadCurrentChat();
-    }, capacityChat(1));
+    }, deliveryChat(1));
     await field('enabled').check(); await waitStatus('synchronized');
     const raceStart = generations.length;
     await page.evaluate(() => {

@@ -29,11 +29,11 @@ test('fixed 62-case corpus keeps every target old and freezes fourteen new shape
     assert.equal(contextTurnDecision([]),null);
 });
 
-test('runtime searches only the current eligible question, even with oversized recent context', async () => {
+test('runtime keeps both complete query messages and leaves context limits to the client', async () => {
     const { retrievalQueries, RETRIEVAL_POLICY } = await import('../src/memory.js');
-    assert.equal(RETRIEVAL_POLICY, 'pending-dialogue-v1');
+    assert.equal(RETRIEVAL_POLICY, 'recent-two-pending-dialogue-v1');
     const messages = [{ user: false, text: 'Context '.repeat(10000) }, { user: true, text: 'Where is the compass?' }];
-    assert.deepEqual(retrievalQueries({ messages }), ['Where is the compass?']);
+    assert.deepEqual(retrievalQueries({ messages }), [`Assistant: ${messages[0].text.trim()}\n\nUser: Where is the compass?`]);
 });
 
 test('generation amendment preserves new cases and adds the two historical boundary controls before execution', async () => {

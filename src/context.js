@@ -1,8 +1,17 @@
-// A retained answer must not steer its own replacement. Continuation instead
-// and impersonation use the latest eligible message, without appending other turns.
+// A retained answer must not steer its own replacement. Continue and
+// impersonate anchor on the latest eligible message instead of a user question.
 export function queryAnchor(messages, type = 'normal') {
     let anchor = messages.findLastIndex(m => m.eligible !== false && (type === 'continue' || type === 'impersonate' || m.user) && m.text.trim());
     if (anchor < 0) anchor = messages.findLastIndex(m => m.eligible !== false && m.text.trim());
+    return anchor;
+}
+
+// One role-labelled query, not two independently ranked searches. Skip source
+// that cannot be indexed, and never look past the replacement input anchor.
+export function recentQueryStart(messages, anchor) {
+    for (let i = anchor - 1; i >= 0; i--) {
+        if (messages[i].eligible !== false && messages[i].text.trim()) return i;
+    }
     return anchor;
 }
 

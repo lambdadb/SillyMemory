@@ -130,7 +130,7 @@ export async function runClarificationScenarios({ page, field, waitStatus, check
     check('native generation retains both user inputs, the assistant clarification and recent source', requests.at(-1).messages.some(m => m.content === 'I visited the city museum on Friday.') && ['Where was it?', 'Which visit do you mean?', 'My Friday visit.'].every(text => request.messages.some(m => m.content === text)));
     check('streaming wrapper stays hidden and final reply/status are separated', await page.evaluate(() => clarificationStreamChecks.length > 0 && clarificationStreamChecks.every(Boolean)) && answer.mes === 'The city museum. Would you like directions?' && answer.extra.sillymemoryRequest.status === 'answered' && !await page.locator('.sm-awaiting-reply').count());
     await generate('What is my account number?', { reply: 'Available evidence does not establish your account number.', status: 'insufficient_evidence' });
-    check('terminal answer clears retrieval accumulation', calls.findLast(c => c.body.query?.bayesian)?.body.query.bayesian[0].knn.queryText === 'What is my account number?');
+    check('terminal answer clears pending accumulation and restores ordinary query=2', calls.findLast(c => c.body.query?.bayesian)?.body.query.bayesian[0].knn.queryText === 'Assistant: The city museum. Would you like directions?\n\nUser: What is my account number?');
     const missing = await page.evaluate(() => SillyTavern.getContext().chat.at(-1).extra.sillymemoryRequest);
     check('insufficient evidence remains terminal rather than opening clarification', missing.root === null && missing.status === 'insufficient_evidence');
     await generate('Which one was it?', { reply: 'Which object do you mean?', status: 'needs_clarification' });
