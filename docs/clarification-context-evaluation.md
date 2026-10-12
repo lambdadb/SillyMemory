@@ -15,26 +15,29 @@ Chat Completions generation. Only decoded text is displayed/saved as the reply;
 status is native reply metadata, not embedded document content. Normal streaming
 is buffered visually until decoded. Source signatures invalidate stale boundaries,
 selected swipes retain their own state, and interrupted/invalid replies preserve
-unresolved context as internal `unknown`. Local selection excludes full pending
-turns before budgeting; v4 below excluded their excerpts after packing. The
+unresolved context as internal `unknown`. Both remote search legs and local selection
+exclude already-retained pending turns before bounded ranking/budgeting. A root at
+message zero skips search after synchronization. V4 below searched before the active
+input and excluded pending excerpts after packing. The
 [default policy](conversation-memory-defaults.md) documents limits and the explicit
 opt-out for providers/settings without compatible JSON schema support.
 
 ### Production validation
 
-- `npm test`: 351/351. Includes status/source binding, reload copies, edits/deletion,
+- `npm test`: 352/352. Includes status/source binding, reload copies, edits/deletion,
   selected swipe restoration, malformed/refused/interrupted replies, schema/tool
   conflicts, native YAML override shapes and duplicate-budget exclusion.
 - `npm run check`, maintained script/test syntax, `npm run check:release` and
   `npm run check:sdk`: passed; locked SDK 0.8.0 remains unchanged.
-- `ST_SOURCE=<pinned host> SM_ARTIFACT_TAG=clarification-integration-final npm run test:browser`:
+- `ST_SOURCE=<pinned host> SM_ARTIFACT_TAG=clarification-review-final npm run test:browser`:
   actual SillyTavern 1.19.0/Chromium with local LambdaDB and deterministic completion
   emulators. Automatic opening, full dialogue in retrieval/generation, terminal
   closure, full page reload/key re-entry, malformed stream, explicit stop,
   regeneration, native swipe selection, source edit, chat isolation and custom
-  schema conflicts passed. These are host-integration tests, not model-quality
+  schema conflicts and the pending-root remote boundary passed. These are host-integration tests, not model-quality
   measurements. Streaming JSON visibility was checked during token events.
-- The same tagged `npm run test:faults` passed existing delayed-query/edit/delete/
+- The earlier `SM_ARTIFACT_TAG=clarification-integration-final npm run test:faults`
+  passed existing delayed-query/edit/delete/
   branch/disable safety checks with continuity disabled to isolate those contracts.
 - Ten real production replies used the pinned native host, direct-CORS LambdaDB
   managed embeddings, Bayesian English/Jev, k=100/candidateSize=100/size=50,
@@ -59,8 +62,9 @@ history remained intact. Ten answer attempts completed without retry or successf
 call waits, reserving 85,298 admission tokens (not billed usage). The run submitted
 2,031 documents in 156 LambdaDB requests; all three owned collections were deleted
 and HTTP 404 verified, with no keys in browser storage and no recorded host errors.
-The live runtime snapshot preceded the final YAML-shape conflict guard refinement;
-that refinement and final runtime are covered by unit and actual-host emulator tests.
+The live runtime snapshot preceded the final YAML-shape guard and remote pending-root
+filter refinements. Those changes are covered by unit and actual-host emulator tests;
+the ten-reply paid run was not repeated and is not exact final-search quality evidence.
 
 This is a bounded functional adoption gate, **not** a new LongMemEval score or proof
 of general intent classification. Some first clarifications suggested the wrong

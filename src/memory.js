@@ -342,7 +342,10 @@ export class MemoryEngine {
         const prepared = await this.sync(snapshot, config, sourceCurrent, progress);
         if (!prepared || !current()) return null;
         const before = memoryBoundary(snapshot, type);
-        const expected = prepared.docs.filter(doc => doc.message < before);
+        // Full pending turns already appear in the prompt. Exclude them before
+        // bounded vector/lexical retrieval so they cannot displace older evidence.
+        const searchBefore = config.requestStart ?? before;
+        const expected = prepared.docs.filter(doc => doc.message < searchBefore);
         if (!expected.length) return { text: '', tokens: 0, passages: [], messages: [] };
         const queries = retrievalQueries(snapshot, type, config);
         if (!queries.length) return null;
@@ -351,14 +354,12 @@ export class MemoryEngine {
         let results;
         try {
             progress({ phase: 'searching', completed: 0, total: 1 });
-            results = await this.client.search(this.collection, this.owner, prepared.scope, queries[0], signal, this.branch, before);
+            results = await this.client.search(this.collection, this.owner, prepared.scope, queries[0], signal, this.branch, searchBefore);
             if (current() && !signal.aborted) progress({ phase: 'searching', completed: 1, total: 1 });
         } finally { reads.abort(); }
         if (!current()) return null;
         progress({ phase: 'budgeting' });
-        // Full pending turns already appear in the prompt; do not spend memory
-        // budget on duplicate excerpts. Retrieval still uses the active anchor.
-        const result = await selectPackedMemory(results, expected.filter(doc => doc.message < (config.requestStart ?? before)), config.budget, countTokens);
+        const result = await selectPackedMemory(results, expected, config.budget, countTokens);
         return current() ? result : null;
     }
     async deleteAll() {

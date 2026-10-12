@@ -1309,3 +1309,19 @@ remain ignored.
 - Local-only, ignored, unavailable in fresh clones and not a CI dependency.
   Earlier v1/v2/v3/v4 clarification evidence remains intact. Production scripts
   do not depend on those private archive paths.
+
+The final review correction excludes the full pending span in both remote search
+legs before bounded ranking, and skips search for a root at message zero. This
+prevents retained dialogue from displacing older evidence in the returned slots.
+It was validated with 352 unit tests and 67 actual-host emulator checks, including
+the native query boundary; no paid answer-quality run was repeated.
+
+- Follow-up archive: `artifacts/archive/clarification-production-review-v1/evidence.tar.gz`
+  under the primary worktree; 39,846 bytes, eight members; SHA-256
+  `a219c8c4a43740e303a2ddcb6811080cc2a82d2af71239ace94b689bc62c7956`.
+- Manifest: `artifacts/archive/clarification-production-review-v1/manifest.json`;
+  SHA-256 `f8c9f2700922713bf8cc4a233c8506c8bfda5c9ee57e24507e82d925a90fddd0`.
+- Base `f1c9e253d1fb8170365e7ea2ab4ceb57904733f1`; exact source/patch and final
+  emulator/unit receipts retained. Byte-for-byte archive read-back and credential
+  scanning passed. Local-only, ignored and unavailable in fresh clones. The paid
+  production snapshot and all previous archives remain unchanged.

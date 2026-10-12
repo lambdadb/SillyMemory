@@ -22,17 +22,24 @@ function setup(storage = new Storage()) {
     const engine = new MemoryEngine({ client, owner, collection: 'test', branch: 'chat_test', journal: new Journal(storage, 'test') });
     return { engine, client, writes, deletes, remote, storage };
 }
-test('pending dialogue uses one query and cannot consume memory budget with duplicate full turns', async () => {
+test('pending dialogue excludes full turns before bounded retrieval and local budgeting', async () => {
     const s = setup(), snap = snapshot();
     const calls = [];
     s.client.search = async (...args) => { calls.push(args); return [...s.remote.values()]; };
     const result = await s.engine.retrieve(snap, { ...config, requestStart: 2 }, text => text.split(/\s+/).length);
     assert.equal(calls.length, 1);
-    assert.equal(calls[0][6], 4); // Active question boundary, not the pending root.
+    assert.equal(calls[0][6], 2); // Exclude pending full turns in both remote search legs.
     assert.equal(calls[0][3], `User: ${snap.messages[2].text}\n\nAssistant: ${snap.messages[3].text}\n\nUser: ${snap.messages[4].text}`);
     assert.deepEqual([...new Set(result.passages.map(p => p.message))], [0, 1]);
     assert(result.messages.every(m => m.index < 2));
     assert(s.remote.size > result.passages.length); // Completed pending turns remain indexed.
+});
+test('a pending request starting at the first message syncs but performs no search', async () => {
+    const s = setup(), snap = snapshot();
+    s.client.search = async () => { throw new Error('No older source is available to search.'); };
+    const result = await s.engine.retrieve(snap, { ...config, requestStart: 0 }, text => text.split(/\s+/).length);
+    assert.deepEqual(result, { text: '', tokens: 0, passages: [], messages: [] });
+    assert(s.remote.size > 0); // Storage still includes all completed eligible messages.
 });
 test('stable content IDs, unique character/chat/branch scopes, and all completed messages', async () => {
     const a = await documents(snapshot(), owner, config);

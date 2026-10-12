@@ -12,7 +12,8 @@ boundary; publication is confirmed by the corresponding Git tag and GitHub Relea
   pending span only for ambiguous user intent/referents, then searches and retains
   its complete user/assistant dialogue until answered or insufficient evidence.
   Use only the current retrieval's memory, excluding already-retained full turns
-  before budgeting. No extra model or retrieval call is added. Bind state to the
+  from both remote search legs and local budgeting. Skip search when the pending
+  request starts at the first message, while still synchronizing completed history. No extra model or retrieval call is added. Bind state to the
   selected native reply and source signature across reload/swipe/branch copies;
   invalidate stale boundaries after edits/deletions. Hide streaming JSON, recover
   interrupted replies conservatively, and reject conflicting schemas/tools.

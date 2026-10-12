@@ -25,11 +25,12 @@ question. `insufficient_evidence` also closes it: missing or conflicting evidenc
 for a clear request must not be mistaken for ambiguity in the user's intent.
 Status expresses request state, not factual correctness.
 
-Both search legs still prefilter positions below the current input. Local selection
-also excludes full pending turns before spending the excerpt budget, preventing
-copies of already retained dialogue from crowding out older evidence. This is a
-small integration refinement over the v4 experiment, which packed before filtering
-those duplicates. Pending dialogue is outside the memory budget but inside the
+Both search legs prefilter positions before the pending root, or before the current
+input when no clarification is pending. Local selection validates the same boundary.
+Already-retained full turns therefore consume neither the bounded result slots nor
+the excerpt budget. A root at the first message skips search after synchronization:
+there is no older memory to retrieve. This refines the v4 experiment, which searched
+before the active input and filtered pending excerpts only after packing. Pending dialogue is outside the memory budget but inside the
 host context and final delivery checks. Search k=100/candidateSize=100/size=50,
 4,096 memory tokens and the one-quarter-context cap are unchanged. Oversized queries
 still fail at 8 KiB without truncation. No extra LLM, rewriting or search call is added.
