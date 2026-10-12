@@ -105,11 +105,11 @@ test('delivery counts assembled excerpts rather than their underlying source pas
 });
 
 
-test('clarification guidance must be delivered as system context even when no memory was selected', () => {
+test('natural memory guidance must be delivered as system context even when no memory was selected', () => {
     const input = { ...expected([], [source('Where was that?', true)]), guidance: [{ role: 'system', content: 'Ask for clarification instead of guessing.', verifiable: true }] };
     const tracker = new PromptDelivery(); tracker.begin(input, () => true);
     const result = tracker.finish([{ role: 'user', content: 'Where was that?' }]);
-    assert.equal(result.lost, true); assert.match(deliverySummary(result.result, true), /clarification guidance is missing/);
+    assert.equal(result.lost, true); assert.match(deliverySummary(result.result, true), /Memory guidance is missing/);
     tracker.begin(input, () => true);
     assert.equal(tracker.finish([{ role: 'system', content: 'Ask for clarification instead of guessing.' }, { role: 'user', content: 'Where was that?' }]).lost, false);
 });

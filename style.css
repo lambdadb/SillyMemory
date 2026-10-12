@@ -10,5 +10,3 @@
 
 #sillymemory .sm-checkpoint { border-top: 1px solid var(--SmartThemeBorderColor); padding: 0.6rem 0; overflow-wrap: anywhere; }
 #sillymemory .sm-checkpoint p { margin: 0.3rem 0; }
-.mes.sm-awaiting-reply .mes_text { visibility: hidden; max-height: 2em; overflow: hidden; }
-.mes.sm-awaiting-reply .mes_text::before { content: 'Preparing reply…'; visibility: visible; }

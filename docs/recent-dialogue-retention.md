@@ -1,5 +1,9 @@
 # Recent dialogue retention
 
+> Historical policy note: the [native reply decision](native-replies.md) removes
+> structured status and complete pending-span retention. Frozen protocols, scores
+> and evidence below describe their producing revisions and remain unchanged.
+
 ## Product decision
 
 Retain at least five recent eligible plain-text messages through the active input,

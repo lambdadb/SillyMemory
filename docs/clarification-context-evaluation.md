@@ -1,5 +1,9 @@
 # Clarification dialogue context policy
 
+> Historical policy note: the [native reply decision](native-replies.md) removes
+> structured status and complete pending-span retention. Frozen protocols, scores
+> and evidence below describe their producing revisions and remain unchanged.
+
 ## Production adoption
 
 **Adopt complete pending-dialogue continuity as the development default.** An

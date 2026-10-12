@@ -31,7 +31,7 @@ test('fixed 62-case corpus keeps every target old and freezes fourteen new shape
 
 test('runtime keeps both complete query messages and leaves context limits to the client', async () => {
     const { retrievalQueries, RETRIEVAL_POLICY } = await import('../src/memory.js');
-    assert.equal(RETRIEVAL_POLICY, 'recent-two-pending-dialogue-v1');
+    assert.equal(RETRIEVAL_POLICY, 'recent-two-native-reply-v1');
     const messages = [{ user: false, text: 'Context '.repeat(10000) }, { user: true, text: 'Where is the compass?' }];
     assert.deepEqual(retrievalQueries({ messages }), [`Assistant: ${messages[0].text.trim()}\n\nUser: Where is the compass?`]);
 });

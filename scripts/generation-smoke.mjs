@@ -31,7 +31,7 @@ const source = process.env.ST_SOURCE || '/tmp/sillymemory-st-source';
 const revision = '06bde939fb1e9c4c8d8641d810f0a916b5bce127';
 if (process.argv.includes('--chunking')) throw new Error('Historical chunking comparison is archived; use its recorded producer.');
 if (process.argv.some(arg => arg.startsWith('--rerank'))) throw new Error('Reranking evaluation is archived; use its recorded producer.');
-if (process.argv.some(arg => ['--hybrid', '--semantic', '--natural', '--comparison', '--heldout', '--challenges', '--korean-eval', '--three-modes', '--native-tuning'].includes(arg))) throw new Error('Historical fixed-window answer evaluations require their recorded producer; current generation keeps only the active input and recalled memory.');
+if (process.argv.some(arg => ['--hybrid', '--semantic', '--natural', '--comparison', '--heldout', '--challenges', '--korean-eval', '--three-modes', '--native-tuning'].includes(arg))) throw new Error('Historical fixed-window answer evaluations require their recorded producer; current generation keeps the recent native window and recalled memory.');
 const env = parseEnv(await readFile(process.env.SM_ENV_FILE || path.join(root, '.env.local'), 'utf8'));
 const hybridMode = process.argv.includes('--hybrid');
 
@@ -398,8 +398,11 @@ try {
         await seed('in the stone tower'); await page.evaluate(async () => { await SillyTavern.getContext().deleteMessage(0); }); await waitStatus('synchronized');
         const deleted = await generate('after-delete');
         assert(!deleted.prompt.includes('in the stone tower') && !deleted.prompt.includes('beneath the cedar tree'), 'deleted source fact is absent from final request');
-        await seed(); failRetrieval = true; const fallback = await generate('retrieval-failure'); failRetrieval = false;
-        assert(fallback.prompt.includes('DISTRACTOR_1') && !fallback.prompt.includes('Past conversation excerpt'), 'retrieval failure still generates from original full prompt');
+        await seed(); failRetrieval = true;
+        const beforeFailure = generations.length;
+        await page.evaluate(async () => { document.querySelector('#send_textarea').value = 'Where is the blue compass?'; await SillyTavern.getContext().generate('normal'); });
+        failRetrieval = false;
+        assert(generations.length === beforeFailure && await page.evaluate(() => SillyTavern.getContext().chat.at(-1).is_user), 'retrieval failure stops dispatch and preserves the submitted user input');
         events = await page.evaluate(() => globalThis.generationTestEvents);
         assert(events.includes('MESSAGE_RECEIVED') && events.includes('STREAM_TOKEN_RECEIVED') && events.includes('MESSAGE_UPDATED') && events.includes('MESSAGE_DELETED'), 'host emitted real generation streaming edit and deletion events');
         await openSettings(); await field('enabled').uncheck();

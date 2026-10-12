@@ -47,7 +47,8 @@ const plan = { version: 2, generationInput: 'recent-five-and-memory',
     { ...base, id: 'no-hits-pressure', recentRepeats: 80, noHits: true, blocked: true },
     { ...base, id: 'no-hits-small', noHits: true },
     { ...base, id: 'history-pressure', recentRepeats: 80, blocked: true },
-    { ...base, id: 'nothing-fits', budget: 100 },
+    { ...base, id: 'nothing-fits', budget: 150 },
+    { ...base, id: 'guidance-does-not-fit', budget: 64, blocked: true, preparationFailure: true },
     { ...base, id: 'disabled', enabled: false, recentRepeats: 80 },
 ] };
 
@@ -218,8 +219,6 @@ try {
     assert.equal(collections.size, 0);
     await field('provision').click(); await waitStatus('Chat memory is ready');
     // Isolate capacity/delivery with plain local completions. The native
-    // clarification suite separately checks structured replies and pending spans.
-    await field('clarification').uncheck();
     for (const name of ['budget']) { await field(name).fill(String(plan[name])); await field(name).dispatchEvent('change'); }
 
     for (const spec of plan.cases) {
@@ -280,7 +279,8 @@ try {
         assert.equal(observation.generating, false, 'Host generation lock released');
         assert.equal(observation.generatingUI, null, 'Host generation UI released');
         if (spec.blocked) {
-            assert.match(observation.delivery, /^Generation stopped:/);
+            if (spec.preparationFailure) assert.match(observation.inspection, /operation failed/);
+            else assert.match(observation.delivery, /^Generation stopped:/);
             if (spec.type === 'normal') {
                 assert.equal(observation.isUser, true, 'No phantom assistant reply after cancellation');
                 assert.equal(observation.chat.length, 13);
@@ -291,7 +291,7 @@ try {
             assert.ok((spec.type === 'impersonate' ? observation.draft : observation.answer).endsWith('LOCAL_FIXTURE_OK'));
             if (spec.enabled) {
                 assert.match(observation.delivery, spec.stopOnLoss ? /^Final host prompt:/ : /^Warning:/);
-                assert(sent[0].messages.some(m => m.role === 'system' && m.content.includes(MEMORY_GUIDANCE)), 'Clarification guidance reaches the completion request, including no hits');
+                assert(sent[0].messages.some(m => m.role === 'system' && m.content.includes(MEMORY_GUIDANCE)), 'Natural memory guidance reaches the completion request, including no hits');
             }
         }
         if (spec.enabled && sent.length) {
@@ -320,7 +320,7 @@ try {
             assert.equal(sent[0].messages.filter(m => m.content.startsWith('[Past conversation excerpt:')).length, 1);
         }
         if (spec.id === 'pressure-warning') {
-            assert.match(observation.delivery, /1 memory excerpts and 0 input messages are missing/);
+            assert.match(observation.delivery, /1 memory excerpts and \d+ input messages are missing/);
             assert.equal(sent[0].messages.filter(m => m.content.startsWith('[Past conversation excerpt:')).length, 0);
         }
         if (spec.id === 'recovered-context') {

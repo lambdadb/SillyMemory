@@ -24,15 +24,12 @@ test('query=2 preserves roles, skips special source and never includes a replace
     ];
     const expected = 'Assistant: The playlist is called Project P.\n\nUser: What was its original name?';
     for (const type of ['normal', 'regenerate', 'swipe']) {
-        assert.deepEqual(retrievalQueries({ messages: source }, type, { requestStart: 4 }), [expected]);
+        assert.deepEqual(retrievalQueries({ messages: source }, type), [expected]);
     }
     assert.deepEqual(retrievalQueries({ messages: source }, 'continue'), [
         'User: What was its original name?\n\nAssistant: Superseded replacement answer',
     ]);
-    assert.deepEqual(retrievalQueries({ messages: source }, 'normal', { requestStart: 0 }), [
-        'User: Older question\n\nAssistant: The playlist is called Project P.\n\nUser: What was its original name?',
-    ]);
-    for (const requestStart of [-1, 5, 1.5]) assert.throws(() => retrievalQueries({ messages: source }, 'normal', { requestStart }), /boundary/);
+
 });
 
 test('ordinary storage contains only completed messages outside the five-message window; checkpoints keep all', async () => {
@@ -79,13 +76,6 @@ test('only adjacent eligible user/assistant messages form an archival pair', () 
     assert.equal(archiveBoundary({ messages: greeting }), 0);
     assert.equal(archiveBoundary({ messages: [...greeting, ...messages.slice(0, 6)] }), 1,
         'a standalone greeting can be archived without splitting the first user/reply pair');
-});
-
-test('retention does not expand the two-message query; a longer pending span takes precedence', () => {
-    assert.deepEqual(retrievalQueries({ messages }, 'normal', { retainedStart: 4 }), ['Assistant: Message 7\n\nUser: Message 8']);
-    assert.deepEqual(retrievalQueries({ messages }, 'normal', { retainedStart: 0, requestStart: 6 }), [
-        'User: Message 6\n\nAssistant: Message 7\n\nUser: Message 8',
-    ]);
 });
 
 test('ineligible and blank active inputs retain the preceding answer without changing query eligibility', () => {

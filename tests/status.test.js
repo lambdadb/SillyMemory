@@ -48,3 +48,13 @@ test('commit readiness progress preserves ownership of the synchronization compl
     assert(operation.current()); operation.finish('Current chat synchronized.');
     assert.equal(rendered.at(-1), 'Current chat synchronized.');
 });
+
+test('generation failure prefix distinguishes stopped generation from background sync', () => {
+    const rendered = [], view = new OperationStatus(text => rendered.push(text));
+    view.start().fail(new ConnectionError('Unavailable.', 503), 'Generation stopped. ');
+    assert.match(rendered.at(-1), /^Generation stopped\./);
+    assert.match(rendered.at(-1), /Local chat preserved/);
+    view.start().fail(new ConnectionError('Unavailable.', 503));
+    assert(!rendered.at(-1).includes('Generation stopped'));
+    assert.match(rendered.at(-1), /Local chat preserved/);
+});

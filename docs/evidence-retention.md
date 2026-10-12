@@ -1604,3 +1604,47 @@ original Retain 5 and 36-answer Query 2 archives are preserved unchanged.
 The maintained tests use small fixed synthetic sources and expected message-index
 pairs. One-off live producers, full prompts, raw service errors and cleanup records
 remain in the archive; no permanent experiment runner or large fixture was added.
+
+## Retired structured reply sources
+
+The [native reply decision](native-replies.md) removes the response adapter and its
+maintained tests/host scenarios. Before removal, their original bytes were archived
+and each member was read back and checksum-verified. Historical paid results, input
+locks and earlier evidence archives remain unchanged.
+
+- Local-only archive: `artifacts/archive/structured-reply-source-v1/source.tar.gz`
+  in the primary workspace; SHA-256
+  `de5793cff479ec5f7d99226f012cc0972801c3c3d50784ab3a448293501ac45c`.
+- Manifest: `artifacts/archive/structured-reply-source-v1/manifest.json`.
+- Producer revision: `092e8f84f1b45c99c267b5bcd6bc54b5bb4ed3c1`, whose tree equals
+  public PR #75 head `9dbf0bcbc2a62ecc900ae2a0189472e012f55e1f`.
+- Members: `src/clarification.js`, `tests/clarification.test.js`, and
+  `scripts/clarification-scenarios.mjs`. This is retired source preservation,
+  not a new run receipt. Fresh clones do not contain the ignored archive.
+
+## Native reply flow validation
+
+The [decision record](native-replies.md) documents adoption, remaining tradeoffs and
+verification limits. Unit tests pass 366/366 on Node.js 20.12.0 and 24.15.0; pinned
+SillyTavern/Chromium passes 97 browser checks, 94 fault checks and 18 delivery
+cases plus overlap/packing/assembly. All final host runs clean up their emulated
+collections, with zero uncaught browser errors. No live service, real model calls,
+new official benchmark score or deployment is established.
+
+- Local-only primary archive: `artifacts/archive/native-reply-flow-v1/evidence.tar.gz`;
+  SHA-256 `0ab55f452fa31890c10e89951001c6c17deab504f9d70e726f44902325f4522d`.
+- Manifest: `artifacts/archive/native-reply-flow-v1/manifest.json`, with per-member
+  checksums and verified archive readback.
+- Base: public PR #75 head `9dbf0bcbc2a62ecc900ae2a0189472e012f55e1f`; the archive
+  contains the implementation patch (excluding this evidence index), measured
+  runtime/harness sources, original intermediate/final reports and attempt logs.
+- Final reports: `browser-smoke-native-reply-final2.json`,
+  `fault-smoke-native-reply-final.json`, `prompt-delivery-native-reply-final.json`.
+  Final captured source hashes match the measured checkout. Scripted answers in
+  these reports are transport/lifecycle fixtures, not model-quality observations.
+- Intermediate attempts preserve stale expectation failures for user-controlled
+  response format plumbing, longer guidance/capacity, explicit failure aborts and
+  reading unavailable verification from the wrong UI element. Original failures
+  are not rewritten as passing reports.
+- The retired adapter's source archive and all older experiment archives remain
+  separate and unchanged. Neither archive is downloadable from a fresh clone.

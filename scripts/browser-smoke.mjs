@@ -1,4 +1,4 @@
-import { runClarificationScenarios } from './clarification-scenarios.mjs';
+import { runNativeReplyScenarios } from './native-reply-scenarios.mjs';
 import { collectionResponse, branchResponse, documentResponse, rerankedResponse } from '../tests/helpers/lambdadb-responses.js';
 // Real pinned SillyTavern + real Chromium + direct browser CORS; LambdaDB is emulated.
 // Never use this harness with personal data or a real API key.
@@ -252,8 +252,6 @@ try {
         if (!aborted) await c.eventSource.emit(c.eventTypes.GENERATE_AFTER_DATA, { prompt: [{ role: 'system', content: c.extensionPrompts.sillymemory.value }, ...chat.map(m => ({ role: m.is_user ? 'user' : 'assistant', content: m.mes }))] }, false);
         return result;
     });
-    check('clarification continuity defaults on', await field('clarification').isChecked());
-    await field('clarification').uncheck(); // Isolate the existing memory/interceptor contracts.
     const result = await prompt();
     const latestSearch = calls.findLast(call => call.body?.query?.bayesian)?.body;
     check('one query=2 request shares the complete preceding reply and question with both search legs and reranking',
@@ -375,7 +373,7 @@ try {
     await page.evaluate(({ index, original }) => { SillyTavern.getContext().chat[index].mes = original; }, originalAnchor);
     failQuery = true;
     const failed = await prompt(); failQuery = false;
-    check('query failure preserves unmodified prompt', !failed.injection && failed.chat.length === 7);
+    check('query failure stops generation and preserves unmodified source', failed.aborted && !failed.injection && failed.before === failed.after && failed.chat.length === 7);
     await field('enabled').uncheck(); const off = await prompt();
     check('disable clears injection and preserves full prompt', !off.injection && off.chat.length === 7);
     const secrets = await page.evaluate(() => JSON.stringify({ local: { ...localStorage }, session: { ...sessionStorage }, settings: SillyTavern.getContext().extensionSettings }));
@@ -470,8 +468,8 @@ try {
     check('current host timestamp is stored on indexed source chunks', [...collections.values()].some(c => [...c.branches.values()].some(branch => [...branch.values()].some(doc => doc.conversationTimestamp === '2024-03-01T00:00:00.000Z' && doc.timestampSource === 'host_message'))));
     // Restore the ordinary test budget before existing fault/cleanup scenarios.
     await field('budget').fill('400'); await field('budget').dispatchEvent('change');
-    let clarificationResults;
-    if (!faultMode) clarificationResults = await runClarificationScenarios({ page, field, waitStatus, check, calls });
+    let nativeReplyResults;
+    if (!faultMode) nativeReplyResults = await runNativeReplyScenarios({ page, field, waitStatus, check, calls });
     if (faultMode) { staleHits = []; faultResults = await runFaultScenarios({ page, field, waitStatus, prompt, check, faults, collections, calls, restartHost: recoveryMode ? async () => { const exited = new Promise(resolve => server.once('exit', resolve)); server.kill('SIGKILL'); await exited; await start(false); } : undefined, screenshot: name => page.screenshot({ path: path.join(artifacts, `${name}${artifactTag ? `-${artifactTag}` : ''}.png`) }) }); }
     else { page.once('dialog', dialog => dialog.accept()); await field('delete').click(); await waitStatus('no longer accessible'); }
     check('owned remote deletion leaves no collections', collections.size === 0);
@@ -494,10 +492,10 @@ try {
 
     if (faultMode) check('fault run has no uncaught browser page errors', errors.length === 0);
     const sourceSha256 = {};
-    for (const file of ['index.js', 'manifest.json', 'settings.html', 'style.css', 'src/chunking.js', 'src/client.js', 'src/credentials.js', 'src/commit.js', 'src/chat-collections.js', 'src/checkpoints.js', 'src/gate.js', 'src/memory.js', 'src/time.js', 'src/context.js', 'src/clarification.js', 'scripts/clarification-scenarios.mjs', 'src/delivery.js', 'src/status.js', 'scripts/browser-smoke.mjs', 'scripts/emulator-cors.mjs', 'scripts/fault-scenarios.mjs', 'scripts/recovery-scenarios.mjs']) {
+    for (const file of ['index.js', 'manifest.json', 'settings.html', 'style.css', 'src/chunking.js', 'src/client.js', 'src/credentials.js', 'src/commit.js', 'src/chat-collections.js', 'src/checkpoints.js', 'src/gate.js', 'src/memory.js', 'src/time.js', 'src/context.js', 'scripts/native-reply-scenarios.mjs', 'src/delivery.js', 'src/status.js', 'scripts/browser-smoke.mjs', 'scripts/emulator-cors.mjs', 'scripts/fault-scenarios.mjs', 'scripts/recovery-scenarios.mjs']) {
         sourceSha256[file] = createHash('sha256').update(await readFile(path.join(root, file))).digest('hex');
     }
-    await writeFile(path.join(artifacts, artifactName), JSON.stringify({ passed: true, faultResults, clarificationResults, sourceSha256, time: new Date().toISOString(), sillyTavern: revision, node: process.version, browser: browser.version(), upstream: 'Local HTTPS LambdaDB emulator; no live managed embeddings', checks, pageErrors: errors, requestCount: calls.length, preflights, proxyRequests, remainingCollections: collections.size }, null, 2));
+    await writeFile(path.join(artifacts, artifactName), JSON.stringify({ passed: true, faultResults, nativeReplyResults, sourceSha256, time: new Date().toISOString(), sillyTavern: revision, node: process.version, browser: browser.version(), upstream: 'Local HTTPS LambdaDB emulator; no live managed embeddings', checks, pageErrors: errors, requestCount: calls.length, preflights, proxyRequests, remainingCollections: collections.size }, null, 2));
 } catch (error) {
     if (faultMode) await writeFile(path.join(artifacts, artifactName), JSON.stringify({ passed: false, checks, faultResults, faultObservations: faults.observations, failure: error.message, pageErrors: errors, pageErrorDetails, hostFailures, remainingCollections: collections.size }, null, 2));
     console.error('Browser failure status:', await debugPage?.locator('[data-sm="status"]').innerText().catch(() => 'unavailable'));

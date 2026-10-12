@@ -44,22 +44,21 @@ Read [CONTRIBUTING.md](CONTRIBUTING.md) before changing this repository.
   limits, source validity, isolation, and authorized total experiment bounds.
 - The product default archives completed eligible messages only after they leave
   the recent-five window. Ordinarily search the two most recent eligible messages
-  through the generation anchor, in one role-labelled request. During a source-verified pending clarification, retain and search the
-  complete pending user/assistant dialogue. Always retain at least five recent eligible
-  messages including the active input, plus any longer pending dialogue and selected
-  memory alongside native system/character settings. Exclude full retained turns
-  from memory selection. Align the recent boundary to an adjacent eligible
+  through the generation anchor, in one role-labelled request. Always retain at
+  least five recent eligible messages including the active input, alongside selected
+  memory and native system/character settings. Exclude full retained turns from
+  memory selection. Align the recent boundary to an adjacent eligible
   user/assistant pair: normal user input retains five, a completed reply can retain
   six. Upload the whole displaced pair together using existing 50-document batches;
   do not introduce a five-message write queue. Query 2 and checkpoint semantics
-  remain independent of this alignment.
-  Checkpoints explicitly synchronize the full completed transcript.
-- Follow an explicitly specified semantic input unit first. Pending-request
-  accumulation uses the complete user/assistant dialogue from ambiguity through
-  completion for retrieval and generation, preserving roles and order. Supply
-  only the current query's selected memory to generation; do not accumulate prior
-  retrieval snapshots. This is the default continuity policy. Missing evidence for a
-  clear request must not open a clarification span; only ambiguous user intent/referents do.
+  remain independent of this alignment. Checkpoints explicitly synchronize the
+  full completed transcript.
+- Preserve native model/API response formats and streaming. Do not impose a reply
+  JSON schema, classify request status, accumulate clarification spans, or decode
+  native replies. Supply natural memory guidance for ambiguous requests and
+  missing/conflicting evidence; this instruction is not a correctness guarantee.
+  Each generation uses only its current selected memory. Memory preparation
+  failures stop generation explicitly; disabling memory restores native history.
 - For contextual query construction without an explicitly specified input unit,
   the initial reference input is the complete recent dialogue outside the indexed older-history partition. Do not impose a
   separate four-message or 600-token context cap. Report model-context overflow as

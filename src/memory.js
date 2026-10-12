@@ -1,5 +1,5 @@
 import { beginWrites, clearCommit, recordWrite, sameDocument } from './commit.js';
-import { queryAnchor, pendingQuery, recentQueryStart, retentionAnchor, retentionStart } from './context.js';
+import { queryAnchor, dialogueQuery, recentQueryStart, retentionAnchor, retentionStart } from './context.js';
 import { chunkSpans, CHUNKING_POLICY } from './chunking.js';
 import { hostTimestamp, conversationTime, conversationTimeLabel } from './time.js';
 
@@ -22,9 +22,7 @@ export function capture(context) {
         return {
             index, text: typeof m.mes === 'string' ? m.mes : '', name: String(m.name || (m.is_user ? 'User' : 'Character')),
             user: Boolean(m.is_user), swipe: m.swipe_id ?? 0,
-            eligible: !m.extra?.file && !m.extra?.media?.length && !m.extra?.tool_invocations?.length && !m.extra?.sillymemoryRequest?.incomplete && !m.extra?.sillymemoryPending,
-            ...(m.extra?.sillymemoryRequest?.incomplete || m.extra?.sillymemoryPending ? { protocolIncomplete: true } : {}),
-            ...(m.extra?.sillymemoryRequest ? { requestState: m.extra.sillymemoryRequest } : {}),
+            eligible: !m.extra?.file && !m.extra?.media?.length && !m.extra?.tool_invocations?.length,
             ...(recordedAt ? { recordedAt } : {}),
         };
     });
@@ -32,16 +30,12 @@ export function capture(context) {
     return { character: avatar, chat: metadata?.id, messages, memory: { story: metadata?.story, source: metadata?.source } };
 }
 export function fingerprint(snapshot) { return JSON.stringify(snapshot); }
-export const RETRIEVAL_POLICY = 'recent-two-pending-dialogue-v1';
-export function retrievalQueries(snapshot, type = 'normal', config = {}) {
+export const RETRIEVAL_POLICY = 'recent-two-native-reply-v1';
+export function retrievalQueries(snapshot, type = 'normal') {
     const messages = snapshot.messages;
     const anchor = queryAnchor(messages, type);
     if (anchor < 0) return [];
-    // A genuinely pending clarification takes precedence over the ordinary
-    // two-message query. A fresh requestStart === anchor still uses query=2.
-    const start = config.requestStart ?? anchor;
-    if (!Number.isInteger(start) || start < 0 || start > anchor) throw new Error('Invalid pending request boundary.');
-    return [pendingQuery(messages, start < anchor ? start : recentQueryStart(messages, anchor), anchor)];
+    return [dialogueQuery(messages, recentQueryStart(messages, anchor), anchor)];
 }
 // Checkpoints need the complete completed transcript. Ordinary UI synchronization
 // additionally supplies archiveBefore, excluding the recent five-message window.
@@ -360,12 +354,12 @@ export class MemoryEngine {
         const prepared = await this.sync(snapshot, config, sourceCurrent, progress);
         if (!prepared || !current()) return null;
         const before = memoryBoundary(snapshot, type);
-        // Full pending turns already appear in the prompt. Exclude them before
+        // Recent native turns already appear in the prompt. Exclude them before
         // bounded vector/lexical retrieval so they cannot displace older evidence.
-        const searchBefore = Math.min(config.retainedStart ?? config.requestStart ?? before, before);
+        const searchBefore = Math.min(config.retainedStart ?? before, before);
         const expected = prepared.docs.filter(doc => doc.message < searchBefore);
         if (!expected.length) return { text: '', tokens: 0, passages: [], messages: [] };
-        const queries = retrievalQueries(snapshot, type, config);
+        const queries = retrievalQueries(snapshot, type);
         if (!queries.length) return null;
         const reads = new AbortController();
         const signal = AbortSignal.any([pendingReads, reads.signal]);

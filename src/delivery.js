@@ -48,7 +48,7 @@ export function deliverySummary(result, stopOnLoss) {
     const uncertain = count('memory', 'unverified') + count('input', 'unverified');
     const guidanceLost = (result.guidance || []).some(m => m.outcome === 'missing');
     const totals = `Final host prompt: ${count('memory', 'included')}/${result.memory.length} memory excerpts and ${count('input', 'included')}/${result.input.length} input messages verified.`;
-    if (memoryLost || inputLost || guidanceLost) return `${stopOnLoss ? 'Generation stopped' : 'Warning'}: ${memoryLost} memory excerpts and ${inputLost} input messages are missing or changed.${guidanceLost ? ' Memory clarification guidance is missing or changed.' : ''} ${totals} Increase context, reduce reserved output, then generate again. Disable Stop on missing context to proceed with a warning.${uncertain ? ` ${uncertain} transformed messages could not be verified.` : ''}`;
+    if (memoryLost || inputLost || guidanceLost) return `${stopOnLoss ? 'Generation stopped' : 'Warning'}: ${memoryLost} memory excerpts and ${inputLost} input messages are missing or changed.${guidanceLost ? ' Memory guidance is missing or changed.' : ''} ${totals} Increase context, reduce reserved output, then generate again. Disable Stop on missing context to proceed with a warning.${uncertain ? ` ${uncertain} transformed messages could not be verified.` : ''}`;
     return `${totals}${uncertain ? ` ${uncertain} transformed messages could not be verified; they are not counted as missing.` : ''} Provider receipt is not checked.`;
 }
 
