@@ -14,6 +14,6 @@ test('assistant-topic boundary fixtures keep targets old and distinguish a first
         assert(messages.at(-1).user);
         assert.equal(queries.length, 1);
         assert(queries[0].endsWith(messages.at(-1).text));
-        assert.equal(queries[0], messages.at(-1).text.trim());
+        assert.equal(queries[0], `Assistant: ${messages.at(-2).text.trim()}\n\nUser: ${messages.at(-1).text.trim()}`);
     }
 });

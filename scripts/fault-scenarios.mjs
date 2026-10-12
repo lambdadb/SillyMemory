@@ -59,10 +59,11 @@ export async function runFaultScenarios({ page, field, waitStatus, prompt, check
     async function expectedRemote() {
         return page.evaluate(async () => {
             const c = SillyTavern.getContext();
-            const { capture, documents, options } = await import('/scripts/extensions/third-party/sillymemory/src/memory.js');
+            const { capture, documents, options, archiveBoundary } = await import('/scripts/extensions/third-party/sillymemory/src/memory.js');
             const owner = c.extensionSettings.sillymemory.owner;
             const state = JSON.parse(localStorage.getItem(`sillymemory:state:${owner}`));
-            return documents(capture(c), owner, options(state));
+            const snapshot = capture(c);
+            return documents(snapshot, owner, { ...options(state), archiveBefore: archiveBoundary(snapshot) });
         });
     }
     async function remoteMatches() {
@@ -143,7 +144,7 @@ export async function runFaultScenarios({ page, field, waitStatus, prompt, check
     const firstBatch = faults.arm('upsert', 'hold');
     await page.evaluate(async () => {
         const c = SillyTavern.getContext();
-        c.chat.splice(0, c.chat.length, ...Array.from({ length: 120 }, (_, i) => ({ name: i % 2 ? 'Mira' : 'User', is_user: !(i % 2), is_system: false, send_date: Date.now(), extra: {}, mes: `Progress fixture ${i}: a compass in a wooden box.` })));
+        c.chat.splice(0, c.chat.length, ...Array.from({ length: 125 }, (_, i) => ({ name: i % 2 ? 'Mira' : 'User', is_user: !(i % 2), is_system: false, send_date: Date.now(), extra: {}, mes: `Progress fixture ${i}: a compass in a wooden box.` })));
         await c.saveChat(); await c.eventSource.emit(c.eventTypes.MESSAGE_UPDATED, 0);
     });
     await entered(firstBatch);
@@ -156,7 +157,7 @@ export async function runFaultScenarios({ page, field, waitStatus, prompt, check
     const uploadsBefore = calls.filter(c => c.path.endsWith('/docs/upsert')).length;
     await sync();
     const retried = calls.filter(c => c.path.endsWith('/docs/upsert')).slice(uploadsBefore);
-    check('manual retry skips confirmed chunks and completes the current source', JSON.stringify(retried.map(c => c.body.docs.length)) === '[50,20]' && retried.every(c => c.body.docs.every(d => !firstIds.has(d.id))) && await remoteMatches() && (await field('status').innerText()).includes('120 completed conversation chunks') && await field('progress').isHidden());
+    check('manual retry skips confirmed chunks and completes the current source', JSON.stringify(retried.map(c => c.body.docs.length)) === '[50,20]' && retried.every(c => c.body.docs.every(d => !firstIds.has(d.id))) && await remoteMatches() && (await field('status').innerText()).includes('120 archived conversation chunks') && await field('progress').isHidden());
 
     const queuedWrite = faults.arm('upsert', 'hold');
     await edit('Progress fixture changed: compass moved to an oak chest.'); await entered(queuedWrite);
@@ -172,7 +173,7 @@ export async function runFaultScenarios({ page, field, waitStatus, prompt, check
         const before = calls.filter(c => c.path.endsWith('/query')).length;
         const failure = faults.arm('query', 'http', status);
         const result = await prompt(); await entered(failure);
-        check(`HTTP ${status} clears previous memory and preserves source/full prompt`, !result.injection && result.before === result.after && result.chat.length === 8 && !result.aborted);
+        check(`HTTP ${status} stops generation, clears previous memory and preserves source`, !result.injection && result.before === result.after && result.chat.length === 8 && result.aborted);
         check(`HTTP ${status} explains how to retry and clears progress`, (await field('status').innerText()).includes('Sync this chat') && await field('progress').isHidden());
         const queries = calls.filter(c => c.path.endsWith('/query')).slice(before).map(c => (c.body.query.bayesian?.[0]?.knn || c.body.query.knn).queryText);
         check(`HTTP ${status} does not immediately retry retrieval`, queries.length >= 1 && queries.length <= 2 && new Set(queries).size === queries.length);
@@ -181,7 +182,7 @@ export async function runFaultScenarios({ page, field, waitStatus, prompt, check
     const stalled = faults.arm('query', 'hold');
     const started = performance.now(), timingOut = prompt(); await entered(stalled);
     const timeout = await timingOut; timings.queryTimeoutMs = performance.now() - started; stalled.release();
-    check('real 15-second query timeout retains the original prompt without injection', !timeout.injection && timeout.chat.length === 8 && timeout.before === timeout.after && !timeout.aborted && timings.queryTimeoutMs >= 14000 && timings.queryTimeoutMs < 25000);
+    check('real 15-second query timeout stops generation without changing source or injecting memory', !timeout.injection && timeout.chat.length === 8 && timeout.before === timeout.after && timeout.aborted && timings.queryTimeoutMs >= 14000 && timings.queryTimeoutMs < 25000);
     check('timeout is distinct from an HTTP error and includes recovery guidance', /timed out.*Sync this chat/.test(await field('status').innerText()) && await field('progress').isHidden());
     check('query timeout recovers on a subsequent generation', Boolean((await prompt()).injection));
 

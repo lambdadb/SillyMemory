@@ -17,14 +17,14 @@ export function progressText(value) {
 
 export function failureText(error, { sync = true } = {}) {
     const retry = sync ? 'click Sync this chat' : 'retry this action';
-    if (!(error instanceof ConnectionError)) return `Memory operation failed. Check browser storage${sync ? ' and token counting' : ''}, then ${retry}. Original prompt retained.`;
+    if (!(error instanceof ConnectionError)) return `Memory operation failed. Check browser storage${sync ? ' and token counting' : ''}, then ${retry}. Local chat preserved.`;
     let next = '';
     if (error.status === 401) next = 'Replace your project key and click Save and connect. Memory is disabled; an invalid submitted key is not saved.';
     else if (error.status === 403 || error.status === 400) next = `Check connection settings and permissions, reconnect${sync ? ' and enable memory' : ''}, then ${retry}.`;
     else if (error.code === 'timeout') next = `Wait, then ${retry}. A timed-out write may still have reached the service.`;
     else if (error.status === 429 || error.status >= 500) next = `Wait, then ${retry}.`;
     else if (error.code === 'network') next = `Check the connection, then ${retry}.`;
-    return `${error.message}${next ? ` ${next}` : ''} Original prompt retained.`;
+    return `${error.message}${next ? ` ${next}` : ''} Local chat preserved.`;
 }
 
 // Per-operation display ownership is separate from prompt validity: a newer
@@ -44,7 +44,7 @@ export class OperationStatus {
                 this.render(progressText(last), last);
             },
             finish: text => { if (current()) this.show(text); },
-            fail: error => { if (current()) this.show(`${last ? `${progressText(last)} ` : ''}${failureText(error)}`); },
+            fail: (error, prefix = '') => { if (current()) this.show(`${prefix}${last ? `${progressText(last)} ` : ''}${failureText(error)}`); },
         };
     }
 }

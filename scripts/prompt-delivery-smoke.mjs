@@ -29,7 +29,7 @@ const packingOrder = [...new Map(interleaveHits([primaryRanks.hits, ...packingRa
 let packingQuery, onlyFirst = false;
 
 const base = { enabled: true, context: 1536, output: 256, instructions: 1, recentRepeats: 1, stopOnLoss: true, type: 'normal' };
-const plan = { version: 2, generationInput: 'active-input-and-memory',
+const plan = { version: 2, generationInput: 'recent-five-and-memory',
     host: capacityPlan.host, model: capacityPlan.model, budget: capacityPlan.budget,
     question: capacityPlan.question, character: capacityPlan.character, cases: [
     { ...base, id: 'included' },
@@ -44,17 +44,25 @@ const plan = { version: 2, generationInput: 'active-input-and-memory',
     { ...base, id: 'continue', type: 'continue' },
     { ...base, id: 'impersonate', type: 'impersonate' },
     { ...base, id: 'replacement-with-assistant-suffix', type: 'regenerate', context: 4096, earlierAnchor: true },
-    { ...base, id: 'no-hits-pressure', recentRepeats: 80, noHits: true },
+    { ...base, id: 'no-hits-pressure', recentRepeats: 80, noHits: true, blocked: true },
     { ...base, id: 'no-hits-small', noHits: true },
-    { ...base, id: 'history-pressure', recentRepeats: 80 },
-    { ...base, id: 'nothing-fits', budget: 100 },
+    { ...base, id: 'history-pressure', recentRepeats: 80, blocked: true },
+    { ...base, id: 'nothing-fits', budget: 150 },
+    { ...base, id: 'guidance-does-not-fit', budget: 64, blocked: true, preparationFailure: true },
     { ...base, id: 'disabled', enabled: false, recentRepeats: 80 },
 ] };
 
-// These cases isolate host context loss; question-only retrieval does not append
-// the deliberately oversized recent conversation. Continuation still has limits.
+// Keep query=2 within provider limits while independently stressing the longer
+// retained window. Only the two last source messages are short; message 9 keeps
+// the original context pressure. These are delivery controls, not quality cases.
+function deliveryChat(repeats) {
+    const chat = capacityChat(repeats);
+    chat[9].mes = `RECENT_9: ${'We are discussing the garden. '.repeat(repeats * 3)}`;
+    for (const message of chat.slice(-2)) message.mes = 'We are discussing the garden.';
+    return chat;
+}
 for (const spec of plan.cases.filter(spec => spec.enabled)) {
-    const messages = capacityChat(spec.recentRepeats).map((message, index) => ({ index, text: message.mes, user: message.is_user, eligible: true }));
+    const messages = deliveryChat(spec.recentRepeats).map((message, index) => ({ index, text: message.mes, user: message.is_user, eligible: true }));
     if (spec.type === 'normal') messages.push({ index: messages.length, text: plan.question, user: true, eligible: true });
     const [query] = retrievalQueries({ messages }, spec.type);
     assert(new TextEncoder().encode(query).byteLength <= 8192, `${spec.id}: pressure fixture must fit complete-query limits`);
@@ -133,7 +141,7 @@ const remote = httpsServer({ key: await readFile(key), cert: await readFile(cert
             let docs = knn && noHits ? [] : [...branchDocs.values()].filter(d => d.owner === match[1] && d.scope === match[2] && (match[3] === undefined || d.message <= Number(match[3])));
             if (knn && onlyFirst) docs = docs.filter(d => d.message === 0 && d.chunk === 0);
             if (knn && packing) {
-                assert.equal(knn.queryText, packingQuery, 'Actual host uses the current-question policy');
+                assert.equal(knn.queryText, packingQuery, 'Actual host uses the two-message policy');
                 docs = packingOrder.map(hit => {
                     const doc = docs.find(doc => doc.message === hit.message && doc.chunk === hit.chunk);
                     assert.ok(doc, 'Recorded rank refers to a synchronized source');
@@ -210,12 +218,13 @@ try {
     await field('connect').click(); await field('gate').click(); await waitStatus('Transport gate passed');
     assert.equal(collections.size, 0);
     await field('provision').click(); await waitStatus('Chat memory is ready');
+    // Isolate capacity/delivery with plain local completions. The native
     for (const name of ['budget']) { await field(name).fill(String(plan[name])); await field(name).dispatchEvent('change'); }
 
     for (const spec of plan.cases) {
         console.log(`VERIFY ${spec.id}`);
         noHits = spec.noHits === true; onlyFirst = spec.id === 'nothing-fits';
-        const chat = capacityChat(spec.recentRepeats);
+        const chat = deliveryChat(spec.recentRepeats);
         if (spec.earlierAnchor) chat.slice(9).forEach(message => { message.is_user = false; message.name = 'Mira'; });
         if (spec.collision) chat[10].mes = 'BOOK A TRIP';
         if (await field('enabled').isChecked()) await field('enabled').uncheck();
@@ -270,7 +279,8 @@ try {
         assert.equal(observation.generating, false, 'Host generation lock released');
         assert.equal(observation.generatingUI, null, 'Host generation UI released');
         if (spec.blocked) {
-            assert.match(observation.delivery, /^Generation stopped:/);
+            if (spec.preparationFailure) assert.match(observation.inspection, /operation failed/);
+            else assert.match(observation.delivery, /^Generation stopped:/);
             if (spec.type === 'normal') {
                 assert.equal(observation.isUser, true, 'No phantom assistant reply after cancellation');
                 assert.equal(observation.chat.length, 13);
@@ -281,13 +291,19 @@ try {
             assert.ok((spec.type === 'impersonate' ? observation.draft : observation.answer).endsWith('LOCAL_FIXTURE_OK'));
             if (spec.enabled) {
                 assert.match(observation.delivery, spec.stopOnLoss ? /^Final host prompt:/ : /^Warning:/);
-                assert(sent[0].messages.some(m => m.role === 'system' && m.content.includes(MEMORY_GUIDANCE)), 'Clarification guidance reaches the completion request, including no hits');
+                assert(sent[0].messages.some(m => m.role === 'system' && m.content.includes(MEMORY_GUIDANCE)), 'Natural memory guidance reaches the completion request, including no hits');
             }
         }
         if (spec.enabled && sent.length) {
-            const input = spec.type === 'normal' ? (spec.collision ? 'OK' : plan.question) : chat[['continue', 'impersonate'].includes(spec.type) ? 11 : spec.earlierAnchor ? 8 : 10].mes;
-            for (const prior of chat) if (prior.mes !== input) {
-                assert(!sent[0].messages.some(m => m.content === prior.mes), 'No previous plain turn remains full');
+            const anchor = spec.type === 'normal' ? 12 : ['continue', 'impersonate'].includes(spec.type) ? 11 : spec.earlierAnchor ? 8 : 10;
+            // An assistant-starting window includes its adjacent user; normal
+            // user input still retains exactly five in this alternating fixture.
+            const retainedStart = anchor === 11 ? 6 : anchor - 4;
+            for (const [index, prior] of chat.entries()) {
+                const retained = index >= retainedStart && index <= anchor;
+                const present = sent[0].messages.some(m => m.content === prior.mes || m.content.trim() === prior.mes.trim());
+                if (retained && spec.stopOnLoss && !spec.collision && !spec.names) assert(present, 'Recent source reaches the provider in its native role');
+                if (!retained) assert(!present, 'Older source and replacement replies are not retained in full');
             }
             assert(sent[0].messages.some(m => m.role === 'system' && m.content.includes('Follow the conversation')), 'Native system instructions survive');
             assert(sent[0].messages.some(m => m.role === 'system' && m.content.includes(capacityPlan.character)), 'Native character settings survive');
@@ -295,19 +311,24 @@ try {
         if (spec.type === 'normal') assert.deepEqual(observation.chat.slice(0, 12), chat.map(m => m.mes), 'Original chat text preserved');
         if (!spec.blocked && (spec.noHits || spec.id === 'nothing-fits')) {
             assert.equal(sent[0].messages.filter(m => m.content.startsWith('[Past conversation excerpt:')).length, 0, 'Empty selection sends no excerpts and does not restore full history');
-            assert.match(observation.delivery, /0\/0 memory excerpts and 1\/1 input messages verified/);
+            assert.match(observation.delivery, /0\/0 memory excerpts and 5\/5 input messages verified/);
             const guidanceTokens = await page.evaluate(text => SillyTavern.getContext().getTokenCountAsync(text), MEMORY_GUIDANCE);
             assert.equal(Number(observation.preparedInspection.split(' / ')[0]), guidanceTokens, 'Empty-selection inspection includes the guidance token cost');
         }
         if (spec.id === 'included') {
-            assert.match(observation.delivery, /2\/2 memory excerpts and 1\/1 input messages verified/);
-            assert.equal(sent[0].messages.filter(m => m.content.startsWith('[Past conversation excerpt:')).length, 2);
-        }
-        if (spec.id === 'pressure-warning') {
-            assert.match(observation.delivery, /[12] memory excerpts and 0 input messages are missing/);
+            assert.match(observation.delivery, /1\/1 memory excerpts and 5\/5 input messages verified/);
             assert.equal(sent[0].messages.filter(m => m.content.startsWith('[Past conversation excerpt:')).length, 1);
         }
-        if (spec.id === 'recovered-context') assert.match(observation.delivery, /6\/6 memory excerpts and 1\/1 input messages verified/);
+        if (spec.id === 'pressure-warning') {
+            assert.match(observation.delivery, /1 memory excerpts and \d+ input messages are missing/);
+            assert.equal(sent[0].messages.filter(m => m.content.startsWith('[Past conversation excerpt:')).length, 0);
+        }
+        if (spec.id === 'recovered-context') {
+            assert.match(observation.delivery, /5\/5 memory excerpts and 5\/5 input messages verified/);
+            const recoveredExcerpts = sent[0].messages.filter(m => m.content.startsWith('[Past conversation excerpt:'));
+            assert.equal(recoveredExcerpts.length, 5);
+            for (let index = 0; index < 5; index++) assert(recoveredExcerpts.some(m => m.content.includes(`OLD_${index}:`)), 'Five ranked older sources reach the recovered prompt');
+        }
         if (spec.earlierAnchor) {
             assert(sent[0].messages.some(m => m.role === 'user' && m.content === chat[8].mes), 'User anchor is retained despite following assistant turns');
             assert(!sent[0].messages.some(m => m.role === 'assistant' && m.content === chat[9].mes), 'Replacement answer suffix is not retained as full input');
@@ -338,7 +359,8 @@ try {
             assert.equal(generations.length, recoveryStart + 1);
             assert.deepEqual(recovered.after.slice(0, -1), recovered.before);
             assert.equal(recovered.after.at(-1), 'LOCAL_FIXTURE_OK');
-            assert.match(recovered.delivery, /6\/6 memory excerpts and 1\/1 input messages verified/);
+            assert.match(recovered.delivery, /5\/5 memory excerpts and 5\/5 input messages verified/);
+            assert.equal(generations.at(-1).messages.filter(m => m.content.startsWith('[Past conversation excerpt:')).length, 5);
             rows.at(-1).manualRecovery = { ...recovered, request: generations.at(-1) };
         }
     }
@@ -348,7 +370,7 @@ try {
         const c = SillyTavern.getContext(), { oai_settings } = await import('/scripts/openai.js');
         oai_settings.openai_max_context = 4096;
         c.chat.splice(0, c.chat.length, ...chat); await c.saveChat(); await c.reloadCurrentChat();
-    }, capacityChat(1));
+    }, deliveryChat(1));
     await field('enabled').check(); await waitStatus('synchronized');
     const raceStart = generations.length;
     await page.evaluate(() => {
@@ -417,7 +439,7 @@ try {
     assert.equal(generations.length, packingStart + 1);
     const packingRequest = generations.at(-1), excerpts = packingRequest.messages.filter(m => m.content.startsWith('[Past conversation excerpt:'));
     assert.equal(excerpts.length, 5);
-    assert.match(packed.delivery, /5\/5 memory excerpts and 1\/1 input messages verified/);
+    assert.match(packed.delivery, /5\/5 memory excerpts and 5\/5 input messages verified/);
     for (const index of [0, 1, 2, 27]) {
         const original = packingFixture.item.messages[index];
         assert(excerpts.some(m => m.role === original.role && m.content.endsWith(`\n${original.text}`)), 'Full source and native role reached the completion endpoint');

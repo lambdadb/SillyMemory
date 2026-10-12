@@ -8,24 +8,22 @@ boundary; publication is confirmed by the corresponding Git tag and GitHub Relea
 
 ### Added
 
-- Enable clarification continuity by default. The answer's JSON status opens a
-  pending span only for ambiguous user intent/referents, then searches and retains
-  its complete user/assistant dialogue until answered or insufficient evidence.
-  Use only the current retrieval's memory, excluding already-retained full turns
-  from both remote search legs and local budgeting. Skip search when the pending
-  request starts at the first message, while still synchronizing completed history. No extra model or retrieval call is added. Bind state to the
-  selected native reply and source signature across reload/swipe/branch copies;
-  invalidate stale boundaries after edits/deletions. Hide streaming JSON, recover
-  interrupted replies conservatively, omit incomplete protocol placeholders from
-  later prompts, tolerate a reply deleted before deferred recovery, and reject
-  conflicting schemas/tools. Recover already-open chats at initialization, and
-  validate asynchronous completion before changing native reply text or status.
-  Keep non-streaming recovery markers too, and bind only to the actual plain-user
-  generation target instead of an older eligible turn for blank/special inputs.
-  Preserve newer request state when older searches fail or preparation is canceled.
-  Recover stale marker positions as visible incomplete notices without stale roots;
-  keep streams bound to their original reply and preserve re-authored user text.
-  Requires schema-capable Chat Completions; an explicit checkbox disables it.
+- Search the two most recent eligible messages through the generation anchor in
+  one role-labelled request.
+  Align the recent-five boundary to an adjacent eligible input/reply pair, keeping
+  six after a reply and five at a normal new input. Archive the displaced pair in
+  one upsert when its chunks fit the existing 50-document batch; no five-message
+  queue or combined-pair documents. Recent edits wait until
+  displacement; archived edits/deletions reconcile immediately. Checkpoints retain
+  full completed-history synchronization. Large chunks, edits and retries can still require additional writes.
+
+- Preserve native plain replies and streaming without a forced reply schema or
+  request-status flags. Natural memory guidance asks brief clarifying questions
+  for ambiguous intent and explains missing/conflicting evidence without invention.
+  Remove accumulated clarification spans, reply decoding, recovery markers and
+  the schema-support toggle. Long clarification dialogues rely on the recent
+  window and retrieval. Memory preparation failures stop generation explicitly;
+  disabling memory restores native full-history behavior.
 
 - Save a verified project key in a dedicated account/endpoint/project-bound browser
   record and reconnect automatically after reload. Restore the previous memory
@@ -46,18 +44,22 @@ boundary; publication is confirmed by the corresponding Git tag and GitHub Relea
   saved space in search order within the unchanged budget. No LLM processing or
   extra retrieval is added; malformed coordinates retain separate excerpts.
 
-- Index all completed eligible conversation messages independently of generation input
-  retention, and ordinarily retrieve using only the current question; pending clarifications use their complete dialogue. Exclude the active input and replacement answers
-  from both search legs and local selection. Continue searches the message being
-  extended; pending final user inputs wait for a reply before indexing. Reject
-  retrieval inputs above 8 KiB without silent truncation.
+- Keep at least five recent eligible messages without splitting an eligible
+  input/reply pair, and archive older completed source.
+  Search two recent eligible messages in one query. Exclude retained positions and replacement answers before
+  both search legs and local selection. Continue anchors on the message being
+  extended; pending final user inputs are not indexed. Reject retrieval input
+  above 8 KiB without silent truncation.
 - Retire npm aliases for historical fixed-window answer evaluations; preserve
   protocols/results with explicit recorded-checkout reproduction instructions.
-- Remove the fixed recent-message window and its setting. Successful generation
-  preparation keeps the active input or pending dialogue and recalled memory alongside native
-  character/system settings, including when no memory fits. Continue preserves
+- Keep at least five recent eligible messages including the active input in native roles
+  and source order, plus recalled
+  memory alongside native character/system settings, including when no memory fits.
+  This prevents ordinary follow-ups from depending on successful retrieval of the
+  preceding exchange. The window is fixed without a new configuration option;
+  the two-message query and aged-out storage policies are described above. Continue preserves
   the partial answer, and Impersonate preserves the character response being
-  answered; continuity failures abort, while the disabled-continuity fallback retains the original prompt.
+  answered; memory preparation failures abort explicitly.
 - Add budgeted system guidance to ask a brief clarification for ambiguous intent
   or referents, and state insufficient evidence for clear but unsupported requests.
   Verify final delivery even when no memory is selected; count guidance in the
@@ -68,7 +70,7 @@ boundary; publication is confirmed by the corresponding Git tag and GitHub Relea
   and a 4,096-token initial memory budget. Keep the 4,096-token maximum and host
   one-quarter-context cap. Saved explicit user budgets remain respected. Reject
   unconfirmed reranking instead of silently injecting fallback results.
-  Preserve boundary-aware per-message chunks and session-only project keys.
+  Preserve boundary-aware per-message chunks and the dedicated saved-key scope.
 
 - Use the official LambdaDB TypeScript SDK 0.8.0 through a pinned browser bundle.
   Preserve direct CORS, cancellation, safe errors and explicit

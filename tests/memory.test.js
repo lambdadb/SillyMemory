@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { capture, documents, selectMemory, MemoryEngine, Journal, options, chunks, literal, retrievalQueries, interleaveHits, memoryBoundary } from '../src/memory.js';
+import { capture, documents, selectMemory, MemoryEngine, Journal, options, chunks, literal, retrievalQueries, interleaveHits, memoryBoundary, archiveBoundary } from '../src/memory.js';
 const owner = 'a'.repeat(32);
 const config = { recent: 2, budget: 400, chunkChars: 200 };
 const snapshot = (chat = 'chat', character = 'alice.png') => ({ chat, character, memory: { story: chat }, messages: Array.from({ length: 6 }, (_, index) => ({ index, text: `Synthetic message ${index}: the blue compass is under the tree.`, name: index % 2 ? 'Alice' : 'User', user: !(index % 2), swipe: 0, eligible: true })) });
@@ -22,24 +22,91 @@ function setup(storage = new Storage()) {
     const engine = new MemoryEngine({ client, owner, collection: 'test', branch: 'chat_test', journal: new Journal(storage, 'test') });
     return { engine, client, writes, deletes, remote, storage };
 }
-test('pending dialogue excludes full turns before bounded retrieval and local budgeting', async () => {
+test('archival sends a displaced input/reply pair once and keeps recent changes local', async () => {
+    const s = setup(), snap = snapshot();
+    const archival = () => ({ ...config, archiveBefore: archiveBoundary(snap) });
+    await s.engine.sync(snap, archival());
+    assert.equal(s.writes.length, 0, 'three completed pairs remain local until a new input');
+    snap.messages[5].text = 'Recent edit is not yet embedded.';
+    await s.engine.sync(snap, archival());
+    assert.equal(s.writes.length, 0);
+    for (let index = 6; index < 10; index++) {
+        snap.messages.push({ ...snap.messages[0], index, user: index % 2 === 0, text: `New message ${index}` });
+        await s.engine.sync(snap, archival());
+        assert.equal(s.writes.length, Math.floor((index - 6) / 2) + 1);
+    }
+    assert.deepEqual(s.writes.map(batch => batch.map(d => d.message)), [[0, 1], [2, 3]]);
+    snap.messages.push({ ...snap.messages[0], index: 10, user: true, text: 'Question' }, { ...snap.messages[1], index: 11, text: 'Reply' });
+    await s.engine.sync(snap, archival());
+    assert.deepEqual(s.writes.at(-1).map(d => d.message), [4, 5]);
+    assert(s.writes.at(-1)[1].text.includes('Recent edit'));
+    const before = s.writes.length;
+    await s.engine.sync(snap, archival());
+    const reload = new MemoryEngine({ client: s.client, owner, collection: 'test', branch: 'chat_test', journal: new Journal(s.storage, 'test') });
+    await reload.sync(snap, archival());
+    assert.equal(s.writes.length, before, 'same source/reload never resubmits acknowledged documents');
+});
+
+test('archive reconciliation removes deleted source and restores changed old revisions without touching recent messages', async () => {
+    const s = setup(), snap = snapshot();
+    snap.messages.push({ ...snap.messages[0], index: 6, user: true, text: 'Question' });
+    const archival = () => ({ ...config, archiveBefore: archiveBoundary(snap) });
+    await s.engine.sync(snap, archival());
+    const stale = [...s.remote.values()][0];
+    snap.messages[0].text = 'Edited old source';
+    await s.engine.sync(snap, archival());
+    assert(!s.remote.has(stale.id)); assert.equal(s.remote.size, 2);
+    snap.messages.splice(0, 1); snap.messages.forEach((message, index) => { message.index = index; });
+    await s.engine.sync(snap, archival());
+    assert.equal(s.remote.size, 1);
+    assert.deepEqual([...s.remote.values()].map(d => d.message), [0]);
+    assert(!s.engine.journal.read(stale.scope).includes(stale.id));
+});
+
+test('a failed archive transition cannot query past unacknowledged displaced messages', async () => {
+    const s = setup(), snap = snapshot(); let searches = 0;
+    s.client.upsert = async () => { throw new Error('Unavailable'); };
+    s.client.search = async () => { searches++; return []; };
+    await assert.rejects(s.engine.retrieve(snap, { ...config, archiveBefore: 1, retainedStart: 1 }, text => text.length), /Unavailable/);
+    assert.equal(searches, 0);
+});
+test('recent dialogue is excluded before bounded retrieval and local budgeting', async () => {
     const s = setup(), snap = snapshot();
     const calls = [];
     s.client.search = async (...args) => { calls.push(args); return [...s.remote.values()]; };
-    const result = await s.engine.retrieve(snap, { ...config, requestStart: 2 }, text => text.split(/\s+/).length);
+    const result = await s.engine.retrieve(snap, { ...config, retainedStart: 2 }, text => text.split(/\s+/).length);
     assert.equal(calls.length, 1);
-    assert.equal(calls[0][6], 2); // Exclude pending full turns in both remote search legs.
-    assert.equal(calls[0][3], `User: ${snap.messages[2].text}\n\nAssistant: ${snap.messages[3].text}\n\nUser: ${snap.messages[4].text}`);
+    assert.equal(calls[0][6], 2); // Exclude retained full turns in both remote search legs.
+    assert.equal(calls[0][3], `Assistant: ${snap.messages[3].text}\n\nUser: ${snap.messages[4].text}`);
     assert.deepEqual([...new Set(result.passages.map(p => p.message))], [0, 1]);
     assert(result.messages.every(m => m.index < 2));
-    assert(s.remote.size > result.passages.length); // Completed pending turns remain indexed.
+    assert(s.remote.size > result.passages.length); // This engine-only configuration explicitly syncs full completed source.
 });
-test('a pending request starting at the first message syncs but performs no search', async () => {
+test('a recent window starting at the first message syncs but performs no search', async () => {
     const s = setup(), snap = snapshot();
     s.client.search = async () => { throw new Error('No older source is available to search.'); };
-    const result = await s.engine.retrieve(snap, { ...config, requestStart: 0 }, text => text.split(/\s+/).length);
+    const result = await s.engine.retrieve(snap, { ...config, retainedStart: 0 }, text => text.split(/\s+/).length);
     assert.deepEqual(result, { text: '', tokens: 0, passages: [], messages: [] });
     assert(s.remote.size > 0); // Storage still includes all completed eligible messages.
+});
+test('full-transcript reconciliation excludes recent dialogue from ranking and uses a single two-message query', async () => {
+    const s = setup(), snap = snapshot(), calls = [];
+    s.client.search = async (...args) => { calls.push(args); return [...s.remote.values()]; };
+    const result = await s.engine.retrieve(snap, { ...config, retainedStart: 2 }, text => text.split(/\s+/).length);
+    assert.equal(calls.length, 1);
+    assert.equal(calls[0][3], `Assistant: ${snap.messages[3].text}\n\nUser: ${snap.messages[4].text}`);
+    assert.equal(calls[0][6], 2);
+    assert(result.passages.every(p => p.message < 2));
+    assert.equal(s.remote.size, 6);
+});
+test('a later ineligible active input cannot broaden retrieval past its existing query boundary', async () => {
+    const s = setup(), snap = snapshot();
+    snap.messages.forEach((message, index) => { message.user = index === 0; });
+    snap.messages.push({ index: 6, text: 'Attachment', user: true, eligible: false });
+    s.client.search = async () => { throw new Error('No source precedes the eligible query anchor.'); };
+    const result = await s.engine.retrieve(snap, { ...config, retainedStart: 1 }, text => text.length);
+    assert.deepEqual(result.passages, []);
+    assert.equal(s.remote.size, 6);
 });
 test('stable content IDs, unique character/chat/branch scopes, and all completed messages', async () => {
     const a = await documents(snapshot(), owner, config);
@@ -199,7 +266,7 @@ test('recalled macros are literal before token counting and include host separat
 });
 
 
-test('a single current-question query excludes context and retained replacement answers', () => {
+test('a single two-message query includes the preceding reply and excludes replacement answers', () => {
     const messages = [
         { user: true, text: 'Old unrelated topic' },
         { user: false, text: 'Mira stored a travel document.' },
@@ -209,7 +276,7 @@ test('a single current-question query excludes context and retained replacement 
     const queries = retrievalQueries({ messages });
     assert.equal(queries.length, 1);
     assert(!queries[0].includes(messages[0].text));
-    assert(!queries[0].includes(messages[1].text));
+    assert(queries[0].includes(messages[1].text));
     assert(queries[0].endsWith(messages[2].text));
     assert(!queries[0].includes(messages[3].text));
     assert.deepEqual(retrievalQueries({ messages: messages.slice(0, -1) }), queries);
@@ -394,19 +461,19 @@ test('retrieval uses the actual source partition, not an anchor-relative window'
     const prepared = await documents(snap, owner, config);
     assert.equal(prepared.docs.length, 8);
     const [query] = retrievalQueries(snap, 'swipe', config);
-    assert.equal(query, 'New question');
+    assert.equal(query, `Assistant: ${snap.messages[5].text}\n\nUser: New question`);
     const s = setup(), queries = [];
     s.client.search = async (...args) => { queries.push(args[3]); return [...s.remote.values()]; };
     await s.engine.retrieve(snap, config, t => t.length / 4, () => true, () => {}, 'swipe');
     assert.deepEqual(queries, [query]);
 });
 
-test('identical recent text is not repeated in the current-question query', () => {
+test('identical text retains separate user and assistant attribution in the two-message query', () => {
     assert.deepEqual(retrievalQueries({ messages: [
         { index: 20, user: true, text: 'Repeated topic' },
         { index: 21, user: false, text: 'Repeated topic' },
         { index: 22, user: true, text: ' Repeated topic ' },
-    ] }), ['Repeated topic']);
+    ] }), ['Assistant: Repeated topic\n\nUser: Repeated topic']);
 });
 
 test('removing source time deletes the old dated revision and never recovers it from stale hits', async () => {
@@ -444,7 +511,7 @@ test('retrieval prefilters the active input and replacement answers, including h
     const s = setup(), snap = snapshot(); let request;
     s.client.search = async (...args) => { request = args; return [...s.remote.values()].reverse(); };
     const result = await s.engine.retrieve(snap, { ...config, budget: 2000 }, t => t.length);
-    assert.equal(request[3], snap.messages[4].text); assert.equal(request[6], 4);
+    assert.equal(request[3], `Assistant: ${snap.messages[3].text}\n\nUser: ${snap.messages[4].text}`); assert.equal(request[6], 4);
     assert(result.passages.length); assert(result.passages.every(d => d.message < 4));
     assert.equal(s.remote.size, 6, 'completed messages are stored; the replacement answer is not recalled');
     let searches = 0; s.client.search = async () => { searches++; return []; };
@@ -467,4 +534,16 @@ test('replacement retrieval stops before the user anchor regardless of following
         assert(result.passages.some(d => d.message === 4));
         assert(result.passages.every(d => d.message < 5));
     }
+});
+
+test('native authored JSON remains eligible literal source without reply decoding', () => {
+    const chat = [{ is_user: true, mes: 'Return JSON.', extra: {} },
+        { is_user: false, name: 'Mira', mes: '{"reply":"Keep this literal.","request_status":"answered"}', extra: {} }];
+    const original = JSON.stringify(chat);
+    const captured = capture({ characterId: 0, characters: [{ avatar: 'test.png' }],
+        getCurrentChatId: () => 'synthetic', chat, chatMetadata: { sillymemory: { id: 'synthetic' } } });
+    assert.equal(captured.messages[1].text, chat[1].mes);
+    assert.equal(captured.messages[1].eligible, true);
+    assert.equal(captured.messages[1].user, false);
+    assert.equal(JSON.stringify(chat), original);
 });

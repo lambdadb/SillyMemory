@@ -1493,3 +1493,158 @@ fixture and final reports; see [combined validation](saved-connection.md#integra
   fault count correction; the unchanged run report is authoritative. Initial bytes
   and all prior archives remain preserved. Local-only, ignored, unavailable in a
   fresh clone and never a CI dependency.
+
+## Recent dialogue retention
+
+The [decision and complete interpretation](recent-dialogue-retention.md) records
+Retain 5 as a native source-delivery/usability contract. Two known ordinary
+follow-up failures are restored on replay; the independent twelve-case cohort
+scores 11/12 in both conditions. The 24 regression reference matches change from
+23/24 to 24/24 only on the already interpretively ambiguous Target coupon case,
+without new linking evidence. Do not claim independent quality superiority.
+
+- Primary archive: `artifacts/archive/recent-dialogue-retention-v1/evidence.tar.gz`
+  under the primary SillyMemory worktree; 13,211,182 bytes, 82 members; SHA-256
+  `fc8412bc5fe36792724d872b535b3a926b26360652208e0977a7093d4520b9c8`.
+- Manifest: `artifacts/archive/recent-dialogue-retention-v1/manifest.json`;
+  SHA-256 `36070476ae9b1ae399c191053fe5a885a73750ece6d4f841c6e89a1ccc345b98`.
+- Producer base `a728fc81e47398e23393c685904d23cdcc00016c`; dirty final patch,
+  maintained source/fixtures, exact isolated experimental extension with its
+  count-only control, source/settings/input locks, pacing/runner/preparation source,
+  all phase plans/amendments, all 76 final answers/queries/prompts/provider receipts,
+  92 controlled prefixes, complete answer audit, native observations and cleanup
+  receipts are retained. The two discovery replays are mechanism checks, not a new
+  confirmation cohort. No paid judge or quality retries were used.
+- Retains the failed regression source-hash preflight and initial delivery failures.
+  Regression inputs/references did not change: the full dataset hash and all 24
+  raw source hashes match the archived v4 producer. Its original dataset stays in
+  the existing checksum-locked failure-discovery archive; it is not duplicated.
+- Final validation: 375 units, 82 browser, 88 fault checks and 17 delivery scenarios
+  with local emulators. Live calls: 76 attempts, 667,734 admission tokens (not billed
+  usage), 2,234 LambdaDB requests and 26,888 document submissions. All 32 owned
+  collection creations, including gates/preflight, were deleted and HTTP 404 verified.
+  Keys were removed from browser/native settings and contain zero report matches;
+  temporary profiles/servers were removed and the host link restored.
+- Every archive member was read back and matched to its source bytes. Earlier
+  archives and original failure outputs remain unchanged. Local-only, ignored,
+  unavailable in fresh clones and never a CI dependency. This is neither an
+  official LongMemEval score nor a release/main deployment.
+
+
+The active-position review correction separates native generation retention from
+query eligibility and replacement suffixes, preserving the existing query range.
+Final validation passes 377 units, 86 browser, 91 fault checks and 17 delivery
+cases, with no page errors/resources. File/media/tool metadata is tested at the
+native hook and blank input through actual native generation; real uploaded-file
+or multimodal provider processing is not newly certified. No paid calls; earlier
+eligible-normal evaluation paths remain unchanged.
+
+- Follow-up archive: `artifacts/archive/recent-dialogue-retention-review-v1/evidence.tar.gz`
+  under the primary worktree; 102,667 bytes, 22 members; SHA-256
+  `85fe8dfc071712ac6a817c239304e198b3224ff4d56343f5da17402a8eec8792`.
+- Manifest: `artifacts/archive/recent-dialogue-retention-review-v1/manifest.json`;
+  SHA-256 `c2044df69c57564166a77e7c95b6e6dfb66519b76f0efec96f6ffbbddca16cc9`.
+- Base `02b73475de7c159d75ef393e16ac796e99e074a4`; exact correction sources,
+  patch and verification receipts retained with byte-readback. Original archives
+  are unchanged; local-only, ignored, unavailable in fresh clones and not CI.
+
+
+## Recent query and storage
+
+`recent-query-storage-v1` preserves the completed follow-up to Retain 5: all
+36 Sol final answers, 48 controlled native prefixes and 84 delivered prompts,
+managed LambdaDB request/response and cleanup receipts, all three frozen conditions,
+the ignored producer/experimental extension, agent answer audit, original plans,
+local failures, current native browser/fault/delivery reports and logs. The source
+dataset remains in its existing checksum-locked archive and is not duplicated.
+No configured credentials or personal conversations are included.
+
+- Producing base: `f39a567eb8b688d06a979be498100cd3f1aae249` plus
+  `checkout/changes.patch` and the snapshotted changed source/new input lock.
+- Local archive: `/Users/steven/Dev/sillymemory/artifacts/archive/recent-query-storage-v1/evidence.tar.gz`.
+- SHA-256: `13c37f783d456b1a2dd0b0f7df4466ad45d233decd8f46f42e0f2a1793219219`;
+  5,949,095 bytes, 66 members.
+- Manifest: same directory, `manifest.json`; SHA-256
+  `ebc809357315e6d8c90e9c55d1502d43446e857ef78d32f47e740db75c84e09f`.
+  Every member's original bytes were read back from the archive and verified.
+- Availability: ignored local-only evidence, not downloadable from a fresh clone
+  and not a CI dependency. The existing Retain 5 and review archives are unchanged.
+  This index's receipt append follows archive creation; the final committed index
+  supplies the archive location without a self-referential archive hash.
+
+[Decision, interpretation and limits](recent-dialogue-retention.md#query-2-and-immediate-archival-follow-up)
+and the [frozen follow-up lock](recent-query-storage-inputs.json) are maintained in
+Git. Only the small fixed correctness inputs remain in CI; no raw provider answer,
+large prompt/result fixture, private path dependency or one-off generator is added.
+
+
+## Complete-pair archival
+
+`complete-pair-archival-v1` preserves the pair-boundary refinement's exact dirty
+source/patch, unit/native browser/fault/delivery results and failures, all live
+synthetic query attempts and controlled-completion producers, the request-budget
+recovery cleanup, completed SDK write comparison, and offline 28-state normal
+source/query parity. No new paid generation/judge quality run is claimed. The
+original Retain 5 and 36-answer Query 2 archives are preserved unchanged.
+
+- Base: `50ba01decff406a2e70ce8ff3de6f0d7cec67dad` plus `checkout/changes.patch`.
+- Local archive: `/Users/steven/Dev/sillymemory/artifacts/archive/complete-pair-archival-v1/evidence.tar.gz`.
+- SHA-256: `6a02c01c3597ddbccd7355a1d62d165282a1ff1b4aa25b6bfed6bbc02cac37ad`;
+  903,753 bytes, 81 members, each read back and verified against original bytes.
+- Same-directory manifest SHA-256:
+  `a390372685cdbb60f8b2eb0359bdb6472dfe1458121a9bdf8e9e8d44626ce195`.
+- Availability: ignored local-only evidence, unavailable in a fresh clone and not
+  required by CI. The index append follows archive creation; no self-reference.
+- All eleven live diagnostic/SDK collections have verified deletion and absence,
+  including the two recorded in `write-verification-1/recovery-cleanup.json`.
+  Earlier failed reports are preserved rather than silently rewritten as success.
+  Their inherited live-Sol wording does not establish a model call: all generation
+  counters are zero, as clarified in the [interpretation](recent-dialogue-retention.md#complete-pair-archival-refinement).
+
+The maintained tests use small fixed synthetic sources and expected message-index
+pairs. One-off live producers, full prompts, raw service errors and cleanup records
+remain in the archive; no permanent experiment runner or large fixture was added.
+
+## Retired structured reply sources
+
+The [native reply decision](native-replies.md) removes the response adapter and its
+maintained tests/host scenarios. Before removal, their original bytes were archived
+and each member was read back and checksum-verified. Historical paid results, input
+locks and earlier evidence archives remain unchanged.
+
+- Local-only archive: `artifacts/archive/structured-reply-source-v1/source.tar.gz`
+  in the primary workspace; SHA-256
+  `de5793cff479ec5f7d99226f012cc0972801c3c3d50784ab3a448293501ac45c`.
+- Manifest: `artifacts/archive/structured-reply-source-v1/manifest.json`.
+- Producer revision: `092e8f84f1b45c99c267b5bcd6bc54b5bb4ed3c1`, whose tree equals
+  public PR #75 head `9dbf0bcbc2a62ecc900ae2a0189472e012f55e1f`.
+- Members: `src/clarification.js`, `tests/clarification.test.js`, and
+  `scripts/clarification-scenarios.mjs`. This is retired source preservation,
+  not a new run receipt. Fresh clones do not contain the ignored archive.
+
+## Native reply flow validation
+
+The [decision record](native-replies.md) documents adoption, remaining tradeoffs and
+verification limits. Unit tests pass 366/366 on Node.js 20.12.0 and 24.15.0; pinned
+SillyTavern/Chromium passes 97 browser checks, 94 fault checks and 18 delivery
+cases plus overlap/packing/assembly. All final host runs clean up their emulated
+collections, with zero uncaught browser errors. No live service, real model calls,
+new official benchmark score or deployment is established.
+
+- Local-only primary archive: `artifacts/archive/native-reply-flow-v1/evidence.tar.gz`;
+  SHA-256 `0ab55f452fa31890c10e89951001c6c17deab504f9d70e726f44902325f4522d`.
+- Manifest: `artifacts/archive/native-reply-flow-v1/manifest.json`, with per-member
+  checksums and verified archive readback.
+- Base: public PR #75 head `9dbf0bcbc2a62ecc900ae2a0189472e012f55e1f`; the archive
+  contains the implementation patch (excluding this evidence index), measured
+  runtime/harness sources, original intermediate/final reports and attempt logs.
+- Final reports: `browser-smoke-native-reply-final2.json`,
+  `fault-smoke-native-reply-final.json`, `prompt-delivery-native-reply-final.json`.
+  Final captured source hashes match the measured checkout. Scripted answers in
+  these reports are transport/lifecycle fixtures, not model-quality observations.
+- Intermediate attempts preserve stale expectation failures for user-controlled
+  response format plumbing, longer guidance/capacity, explicit failure aborts and
+  reading unavailable verification from the wrong UI element. Original failures
+  are not rewritten as passing reports.
+- The retired adapter's source archive and all older experiment archives remain
+  separate and unchanged. Neither archive is downloadable from a fresh clone.

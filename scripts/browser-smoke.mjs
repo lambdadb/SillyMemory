@@ -1,4 +1,4 @@
-import { runClarificationScenarios } from './clarification-scenarios.mjs';
+import { runNativeReplyScenarios } from './native-reply-scenarios.mjs';
 import { collectionResponse, branchResponse, documentResponse, rerankedResponse } from '../tests/helpers/lambdadb-responses.js';
 // Real pinned SillyTavern + real Chromium + direct browser CORS; LambdaDB is emulated.
 // Never use this harness with personal data or a real API key.
@@ -252,12 +252,51 @@ try {
         if (!aborted) await c.eventSource.emit(c.eventTypes.GENERATE_AFTER_DATA, { prompt: [{ role: 'system', content: c.extensionPrompts.sillymemory.value }, ...chat.map(m => ({ role: m.is_user ? 'user' : 'assistant', content: m.mes }))] }, false);
         return result;
     });
-    check('clarification continuity defaults on', await field('clarification').isChecked());
-    await field('clarification').uncheck(); // Isolate the existing memory/interceptor contracts.
     const result = await prompt();
+    const latestSearch = calls.findLast(call => call.body?.query?.bayesian)?.body;
+    check('one query=2 request shares the complete preceding reply and question with both search legs and reranking',
+        latestSearch?.query.bayesian[0].knn.queryText === 'Assistant: Synthetic passage 5: the blue compass is beneath the cedar tree.\n\nUser: Synthetic passage 6: the blue compass is beneath the cedar tree.'
+        && latestSearch.rerank.queryText === latestSearch.query.bayesian[0].knn.queryText);
+    const archive = [...collections.values()][0].branches.get(await page.evaluate(() => `chat_${SillyTavern.getContext().chatMetadata.sillymemory.id}`));
+    check('ordinary native synchronization archives one complete pair outside the retained recent exchanges',
+        JSON.stringify([...archive.values()].map(doc => doc.message).sort((a, b) => a - b)) === '[0,1]');
     check('real host dispatcher injects bounded memory', Boolean(result.injection) && /\d+ \/ 250 tokens/.test(result.inspection));
     check('native recalled excerpts keep macros literal within budget', result.rendered.includes('｛｛char｝｝') && result.rendered.includes('＜USER＞') && result.macroValue === undefined && result.renderedTokens <= 250);
-    check('only the question stays full and persisted source chat is preserved', result.chat.filter(m => !m.mes.startsWith('[Past conversation excerpt:')).length === 1 && result.chat.at(-1).mes.includes('passage 6') && result.before === result.after);
+    check('a completed reply retains six messages without splitting a pair and leaves persisted source unchanged', JSON.stringify(result.chat.filter(m => !m.mes.startsWith('[Past conversation excerpt:')).map(m => m.index)) === '[2,3,4,5,6,7]' && result.chat.at(-1).mes.includes('passage 7') && result.before === result.after);
+    // Ineligible active inputs still preserve recent dialogue. The actual native
+    // hook is exercised with attachment/media/tool metadata, without uploading files.
+    const originalSource = await page.evaluate(() => structuredClone(SillyTavern.getContext().chat));
+    const writesBeforeRecentEdit = calls.filter(call => call.path.endsWith('/docs/upsert')).length;
+    await page.evaluate(async () => {
+        const c = SillyTavern.getContext(); c.chat[7].mes = 'Edited recent reply.';
+        await c.saveChat(); await c.eventSource.emit(c.eventTypes.MESSAGE_UPDATED, 7);
+    });
+    await waitStatus('synchronized');
+    check('editing retained source makes no embedding write before it leaves the window',
+        calls.filter(call => call.path.endsWith('/docs/upsert')).length === writesBeforeRecentEdit);
+    for (const index of [8, 9]) {
+        await page.evaluate(async index => {
+            const c = SillyTavern.getContext(); c.chat.push({ mes: `New message ${index}`, name: index % 2 ? 'Mira' : 'User', is_user: index % 2 === 0, extra: {} });
+            await c.saveChat(); await c.eventSource.emit(index % 2 ? c.eventTypes.MESSAGE_RECEIVED : c.eventTypes.MESSAGE_SENT, index);
+        }, index);
+        await waitStatus('synchronized');
+    }
+    check('a native user input writes one displaced pair and its reply causes no second upsert',
+        JSON.stringify(calls.filter(call => call.path.endsWith('/docs/upsert')).slice(writesBeforeRecentEdit).map(call => call.body.docs.map(doc => doc.message))) === '[[2,3]]');
+    for (const extra of [{ file: { name: 'fixture.txt' } }, { media: [{ url: 'fixture-image' }] }, { tool_invocations: [{ name: 'fixture-tool' }] }]) {
+        await page.evaluate(async ({ originalSource, extra }) => {
+            const c = SillyTavern.getContext();
+            c.chat.splice(0, c.chat.length, ...originalSource.slice(0, 8), { mes: 'Special active input.', name: 'User', is_user: true, extra });
+            await c.saveChat();
+        }, { originalSource, extra });
+        const special = await prompt();
+        check('an ineligible active input preserves recent source without splitting an eligible pair', !special.aborted
+            && JSON.stringify(special.chat.filter(m => !m.mes.startsWith('[Past conversation excerpt:')).map(m => m.index)) === '[2,3,4,5,6,7,8]'
+            && special.before === special.after);
+    }
+    await page.evaluate(async originalSource => {
+        const c = SillyTavern.getContext(); c.chat.splice(0, c.chat.length, ...originalSource); await c.saveChat();
+    }, originalSource);
     // Exercise assembly through the real extension dispatcher with multiple stored chunks.
     await field('budget').fill('1600'); await field('budget').dispatchEvent('change');
     const assemblySource = await page.evaluate(async () => {
@@ -276,6 +315,7 @@ try {
         const c = SillyTavern.getContext(); c.chat[0].mes = original; await c.eventSource.emit(c.eventTypes.MESSAGE_UPDATED, 0);
     }, assemblySource.original);
     await field('budget').fill('250'); await field('budget').dispatchEvent('change');
+    await waitStatus('synchronized');
     delayedQuery = 400;
     const olderGeneration = prompt();
     await page.waitForTimeout(100);
@@ -293,7 +333,7 @@ try {
     check('swipe event updates remote source', [...collection.docs.values()].some(d => d.text.includes('Selected swipe')));
     await page.evaluate(async () => { const c = SillyTavern.getContext(); c.chat.splice(0, 1); await c.eventSource.emit(c.eventTypes.MESSAGE_DELETED, 0); });
     await waitStatus('synchronized');
-    check('message deletion reconciles remote documents', collection.docs.size === 7);
+    check('message deletion reconciles remote documents without splitting the surviving first pair', collection.docs.size === 1);
     delayedQuery = 700;
     const pending = prompt();
     await page.waitForTimeout(150);
@@ -333,7 +373,7 @@ try {
     await page.evaluate(({ index, original }) => { SillyTavern.getContext().chat[index].mes = original; }, originalAnchor);
     failQuery = true;
     const failed = await prompt(); failQuery = false;
-    check('query failure preserves unmodified prompt', !failed.injection && failed.chat.length === 7);
+    check('query failure stops generation and preserves unmodified source', failed.aborted && !failed.injection && failed.before === failed.after && failed.chat.length === 7);
     await field('enabled').uncheck(); const off = await prompt();
     check('disable clears injection and preserves full prompt', !off.injection && off.chat.length === 7);
     const secrets = await page.evaluate(() => JSON.stringify({ local: { ...localStorage }, session: { ...sessionStorage }, settings: SillyTavern.getContext().extensionSettings }));
@@ -428,8 +468,8 @@ try {
     check('current host timestamp is stored on indexed source chunks', [...collections.values()].some(c => [...c.branches.values()].some(branch => [...branch.values()].some(doc => doc.conversationTimestamp === '2024-03-01T00:00:00.000Z' && doc.timestampSource === 'host_message'))));
     // Restore the ordinary test budget before existing fault/cleanup scenarios.
     await field('budget').fill('400'); await field('budget').dispatchEvent('change');
-    let clarificationResults;
-    if (!faultMode) clarificationResults = await runClarificationScenarios({ page, field, waitStatus, check, calls });
+    let nativeReplyResults;
+    if (!faultMode) nativeReplyResults = await runNativeReplyScenarios({ page, field, waitStatus, check, calls });
     if (faultMode) { staleHits = []; faultResults = await runFaultScenarios({ page, field, waitStatus, prompt, check, faults, collections, calls, restartHost: recoveryMode ? async () => { const exited = new Promise(resolve => server.once('exit', resolve)); server.kill('SIGKILL'); await exited; await start(false); } : undefined, screenshot: name => page.screenshot({ path: path.join(artifacts, `${name}${artifactTag ? `-${artifactTag}` : ''}.png`) }) }); }
     else { page.once('dialog', dialog => dialog.accept()); await field('delete').click(); await waitStatus('no longer accessible'); }
     check('owned remote deletion leaves no collections', collections.size === 0);
@@ -452,10 +492,10 @@ try {
 
     if (faultMode) check('fault run has no uncaught browser page errors', errors.length === 0);
     const sourceSha256 = {};
-    for (const file of ['index.js', 'manifest.json', 'settings.html', 'style.css', 'src/chunking.js', 'src/client.js', 'src/credentials.js', 'src/commit.js', 'src/chat-collections.js', 'src/checkpoints.js', 'src/gate.js', 'src/memory.js', 'src/time.js', 'src/context.js', 'src/clarification.js', 'scripts/clarification-scenarios.mjs', 'src/delivery.js', 'src/status.js', 'scripts/browser-smoke.mjs', 'scripts/emulator-cors.mjs', 'scripts/fault-scenarios.mjs', 'scripts/recovery-scenarios.mjs']) {
+    for (const file of ['index.js', 'manifest.json', 'settings.html', 'style.css', 'src/chunking.js', 'src/client.js', 'src/credentials.js', 'src/commit.js', 'src/chat-collections.js', 'src/checkpoints.js', 'src/gate.js', 'src/memory.js', 'src/time.js', 'src/context.js', 'scripts/native-reply-scenarios.mjs', 'src/delivery.js', 'src/status.js', 'scripts/browser-smoke.mjs', 'scripts/emulator-cors.mjs', 'scripts/fault-scenarios.mjs', 'scripts/recovery-scenarios.mjs']) {
         sourceSha256[file] = createHash('sha256').update(await readFile(path.join(root, file))).digest('hex');
     }
-    await writeFile(path.join(artifacts, artifactName), JSON.stringify({ passed: true, faultResults, clarificationResults, sourceSha256, time: new Date().toISOString(), sillyTavern: revision, node: process.version, browser: browser.version(), upstream: 'Local HTTPS LambdaDB emulator; no live managed embeddings', checks, pageErrors: errors, requestCount: calls.length, preflights, proxyRequests, remainingCollections: collections.size }, null, 2));
+    await writeFile(path.join(artifacts, artifactName), JSON.stringify({ passed: true, faultResults, nativeReplyResults, sourceSha256, time: new Date().toISOString(), sillyTavern: revision, node: process.version, browser: browser.version(), upstream: 'Local HTTPS LambdaDB emulator; no live managed embeddings', checks, pageErrors: errors, requestCount: calls.length, preflights, proxyRequests, remainingCollections: collections.size }, null, 2));
 } catch (error) {
     if (faultMode) await writeFile(path.join(artifacts, artifactName), JSON.stringify({ passed: false, checks, faultResults, faultObservations: faults.observations, failure: error.message, pageErrors: errors, pageErrorDetails, hostFailures, remainingCollections: collections.size }, null, 2));
     console.error('Browser failure status:', await debugPage?.locator('[data-sm="status"]').innerText().catch(() => 'unavailable'));

@@ -1,5 +1,5 @@
 import { beginWrites, clearCommit, recordWrite, sameDocument } from './commit.js';
-import { queryAnchor, pendingQuery } from './context.js';
+import { queryAnchor, dialogueQuery, recentQueryStart, retentionAnchor, retentionStart } from './context.js';
 import { chunkSpans, CHUNKING_POLICY } from './chunking.js';
 import { hostTimestamp, conversationTime, conversationTimeLabel } from './time.js';
 
@@ -22,9 +22,7 @@ export function capture(context) {
         return {
             index, text: typeof m.mes === 'string' ? m.mes : '', name: String(m.name || (m.is_user ? 'User' : 'Character')),
             user: Boolean(m.is_user), swipe: m.swipe_id ?? 0,
-            eligible: !m.extra?.file && !m.extra?.media?.length && !m.extra?.tool_invocations?.length && !m.extra?.sillymemoryRequest?.incomplete && !m.extra?.sillymemoryPending,
-            ...(m.extra?.sillymemoryRequest?.incomplete || m.extra?.sillymemoryPending ? { protocolIncomplete: true } : {}),
-            ...(m.extra?.sillymemoryRequest ? { requestState: m.extra.sillymemoryRequest } : {}),
+            eligible: !m.extra?.file && !m.extra?.media?.length && !m.extra?.tool_invocations?.length,
             ...(recordedAt ? { recordedAt } : {}),
         };
     });
@@ -32,17 +30,28 @@ export function capture(context) {
     return { character: avatar, chat: metadata?.id, messages, memory: { story: metadata?.story, source: metadata?.source } };
 }
 export function fingerprint(snapshot) { return JSON.stringify(snapshot); }
-export const RETRIEVAL_POLICY = 'pending-dialogue-v1';
-export function retrievalQueries(snapshot, type = 'normal', config = {}) {
+export const RETRIEVAL_POLICY = 'recent-two-native-reply-v1';
+export function retrievalQueries(snapshot, type = 'normal') {
     const messages = snapshot.messages;
     const anchor = queryAnchor(messages, type);
     if (anchor < 0) return [];
-    return [pendingQuery(messages, config.requestStart ?? anchor, anchor)];
+    return [dialogueQuery(messages, recentQueryStart(messages, anchor), anchor)];
 }
-// Storage is independent of generation input retention. A trailing
-// user input is pending until the assistant replies; completed replies are stored.
+// Checkpoints need the complete completed transcript. Ordinary UI synchronization
+// additionally supplies archiveBefore, excluding the recent five-message window.
 export function completedMessages(snapshot) {
     return snapshot.messages.at(-1)?.user ? snapshot.messages.slice(0, -1) : snapshot.messages;
+}
+export function archiveBoundary(snapshot, type = 'normal') {
+    const anchor = retentionAnchor(snapshot.messages, type);
+    if (anchor < 0) return 0;
+    const start = retentionStart(snapshot.messages, anchor);
+    const first = snapshot.messages[start], previous = snapshot.messages[start - 1];
+    // Keep an adjacent eligible input/reply together. A normal new user input
+    // already aligns the five-message window; after its reply this retains six,
+    // avoiding a second small write until that whole pair leaves the window.
+    return first.eligible !== false && first.text.trim() && !first.user
+        && previous?.user && previous.eligible !== false && previous.text.trim() ? start - 1 : start;
 }
 export function memoryBoundary(snapshot, type = 'normal') {
     // Normal/regenerate/swipe keep only their question; Continue keeps the
@@ -62,10 +71,12 @@ export function interleaveHits(lists) {
 export function chunks(text, limit) { return chunkSpans(text, limit).map(span => span.text); }
 export async function documents(snapshot, owner, config) {
     if (!snapshot.memory?.story || !snapshot.chat) throw new Error('Missing story memory identity.');
+    const before = config.archiveBefore;
+    if (before !== undefined && (!Number.isInteger(before) || before < 0 || before > snapshot.messages.length)) throw new Error('Invalid archive boundary.');
     const scope = await digest(JSON.stringify([owner, snapshot.character, snapshot.memory.story]));
     const docs = [];
     for (const m of completedMessages(snapshot)) {
-        if (!m.eligible || !m.text.trim()) continue;
+        if (before !== undefined && m.index >= before || !m.eligible || !m.text.trim()) continue;
         const time = conversationTime(m);
         const revision = await digest(JSON.stringify([m.index, m.name, m.user, m.swipe, m.text, time]));
         for (const [chunk, { start, end, text }] of chunkSpans(m.text, config.chunkChars).entries()) {
@@ -343,12 +354,12 @@ export class MemoryEngine {
         const prepared = await this.sync(snapshot, config, sourceCurrent, progress);
         if (!prepared || !current()) return null;
         const before = memoryBoundary(snapshot, type);
-        // Full pending turns already appear in the prompt. Exclude them before
+        // Recent native turns already appear in the prompt. Exclude them before
         // bounded vector/lexical retrieval so they cannot displace older evidence.
-        const searchBefore = config.requestStart ?? before;
+        const searchBefore = Math.min(config.retainedStart ?? before, before);
         const expected = prepared.docs.filter(doc => doc.message < searchBefore);
         if (!expected.length) return { text: '', tokens: 0, passages: [], messages: [] };
-        const queries = retrievalQueries(snapshot, type, config);
+        const queries = retrievalQueries(snapshot, type);
         if (!queries.length) return null;
         const reads = new AbortController();
         const signal = AbortSignal.any([pendingReads, reads.signal]);

@@ -7,80 +7,40 @@ boundary chunks with an 800-code-point ceiling. The 4,096-token maximum and host
 one-quarter-context cap remain; explicit saved budgets are respected. These are
 development defaults, not a release or a universal optimum.
 
-### Current request and clarification continuity
+### Current native dialogue policy
 
-Index all completed eligible plain-text messages, including the preceding exchange.
-A trailing user input waits for a reply before indexing. Ordinarily, retrieve with
-only the current question and retain only that input plus selected memory alongside
-native system/character settings. No fixed recent-message window is added.
+Completed eligible messages are archived only after they leave the recent-five
+window, aligned to keep an adjacent plain-text input/reply pair together. Normal
+user input retains five; a completed reply can retain six. Displaced pairs share
+an upsert with separate per-message chunks, subject to the existing 50-document
+batch. No five-message queue. A trailing user input waits for its answer.
+Checkpoints explicitly synchronize the full completed transcript.
 
-**Clarification continuity is enabled by default.** The same answer generation
-returns the visible reply and a structured status. `needs_clarification` means the
-user's request or referent is ambiguous. It opens a pending span at that user input.
-On subsequent turns, one search uses the complete pending user/assistant dialogue,
-with roles and order preserved. Generation keeps the same full span plus only the
-current query's selected memory. Earlier retrieval snapshots are never accumulated.
-`answered` closes the span even if the reply contains an optional conversational
-question. `insufficient_evidence` also closes it: missing or conflicting evidence
-for a clear request must not be mistaken for ambiguity in the user's intent.
-Status expresses request state, not factual correctness.
+One role-labelled Query 2 includes the preceding eligible message and generation
+anchor. Regenerate/swipe exclude replacement replies; Continue/Impersonate retain
+their native active-message behavior. Both search legs and local selection exclude
+retained full positions. Query and memory limits remain unchanged; queries above
+8,192 UTF-8 bytes fail explicitly. Each generation uses only its current memory.
 
-Both search legs prefilter positions before the pending root, or before the current
-input when no clarification is pending. Local selection validates the same boundary.
-Already-retained full turns therefore consume neither the bounded result slots nor
-the excerpt budget. A root at the first message skips search after synchronization:
-there is no older memory to retrieve. This refines the v4 experiment, which searched
-before the active input and filtered pending excerpts only after packing. Pending dialogue is outside the memory budget but inside the
-host context and final delivery checks. Search k=100/candidateSize=100/size=50,
-4,096 memory tokens and the one-quarter-context cap are unchanged. Oversized queries
-still fail at 8 KiB without truncation. No extra LLM, rewriting or search call is added.
+Native replies and streaming are preserved, including user-selected response
+formats. There is no reply schema, request-status classification, pending-span
+accumulation, stream hiding or decoding/recovery adapter. Natural system guidance
+asks for clarification when intent/referents are ambiguous and explains missing
+or conflicting evidence without inventing facts. It shares the excerpt budget and
+Chat Completion delivery checks. This instruction is not a factual correctness
+or model-compliance guarantee. A clarification dialogue longer than the recent
+window relies on retrieval. Memory-on preparation failures abort explicitly;
+disabling memory restores native history. Group/tool chats remain unsupported.
 
-The selected native reply stores source-bound status metadata. Reload and native
-branch copies preserve it; edits, deletions or changed earlier swipes invalidate
-its source signature. Regenerate and new swipes classify the replacement reply,
-while selecting an existing swipe restores that reply's state. The complete span
-can grow until resolved; query/provider/context limits remain explicit constraints.
-Incomplete structured streams are excluded from indexing and later generation
-prompts, while their recovery notice remains in the native chat UI. Missing/invalid status
-or interrupted generation retains unresolved context conservatively as internal
-`unknown`, rather than fabricating completion. Recovery cleans saved in-flight
-replies when the chat loads or is already open at initialization. Decoding commits
-only after asynchronous source and current-chat ownership checks succeed. Both
-streaming and non-streaming replies keep an in-flight marker until that commit.
-Each interceptor attempt clears only its own request object; canceled asynchronous
-preparation cannot overwrite newer state. Source insertion/deletion or an invalid
-marker produces a visible incomplete notice with no pending root, rather than a
-permanently hidden fragment. Explicitly re-authored user/system text keeps its
-content while obsolete reply controls are cleared. This is separate from the three model statuses.
-
-The adapter applies only to the actual nonempty plain-user generation target;
-blank/file/media/tool inputs bypass it instead of binding to an older eligible turn.
-Normal, regenerate and swipe follow the pinned native insertion/replacement slots.
-The supported adapter requires Chat Completions with JSON-schema support. The live
-provider gate used Sol; other providers are not thereby certified. Streaming text
-is shown after the complete reply is decoded, so internal JSON is hidden during
-normal streaming. Conflicting response schemas, tool calls, multiple replies and
-custom protocol overrides are rejected rather than overwritten. Disable the
-**Clarification continuity** checkbox for unsupported configurations; that retains
-the ordinary current-input policy. Continue while a request is pending is blocked:
-send a clarification or regenerate instead. Ordinary Continue and Impersonate keep
-their existing active-message behavior. Group/tool chats remain unsupported.
-Continuity preparation failures abort rather than dispatching an untracked reply;
-with continuity disabled, the existing visible-error/original-prompt fallback remains.
-
-Product decision: adopt complete pending dialogue based on the derived confirmation
-and the production integration gates in the [decision record](clarification-context-evaluation.md).
-The confirmation's audited scores were 6/12 latest-input, 7/12 user-only and 11/12
-full-dialogue retrieval; both contextual methods retained 12/12 previous regressions.
-These are consumed-source, derived dialogues, not an official LongMemEval score.
-The later ten live production replies validate automatic state handling and three
-known facts, not a new broad quality benchmark. Generic questions can still need
-clarification; evidence gaps and interpretively ambiguous source remain limitations.
+See [the native reply decision and verification](native-replies.md). Earlier
+[structured-continuity results](clarification-context-evaluation.md) and the
+[retention evaluation](recent-dialogue-retention.md) remain historical evidence,
+not reruns of this policy or a promise of unchanged long-span quality.
 
 ### Validation of the preceding current-input baseline
 
-The checks below predate production clarification continuity. See the linked
-decision record for the current integration receipt.
+The checks below predate production clarification continuity. Their original integration receipts remain linked; current validation is in
+[native reply behavior](native-replies.md).
 
 - `npm test`: 340/340; runtime, maintained script/test syntax, release metadata
   and locked SDK 0.8.0 checks passed.
@@ -104,7 +64,7 @@ decision record for the current integration receipt.
   cleanup returned HTTP 404. The client and SDK are unchanged by this follow-up.
   This is historical transport evidence, not a new browser/provider run.
 
-The active-input revision removes recent-history capacity pressure; the maintained
+At the historical active-input revision, recent-history capacity pressure was removed; the maintained
 harness therefore separates a long-history control from actual system-instruction
 pressure. The latter uses 110 instruction repetitions to exercise host truncation,
 Stop on missing context, streaming, swipe/regenerate and manual context recovery.
@@ -117,7 +77,8 @@ expected excerpt totals or pressure assumptions; no paid answer reruns occurred.
 Historical producer revisions are required for fixed-window answer experiments;
 current generation refuses those old modes rather than silently changing their
 frozen protocol. Their npm aliases are removed, and historical execution documents
-explicitly require the recorded checkout. Current contract runners no longer configure a recent window.
+explicitly require the recorded checkout. That historical validation had no recent window. Current retention uses a fixed five
+messages; its new capacity/delivery receipts are documented separately.
 
 See the [active-input evidence record](evidence-retention.md#active-input-policy-final-validation). Previous current-question and first active-input archives
 preserve the intermediate recent-12 implementation and its validation. They are

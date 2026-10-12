@@ -95,7 +95,10 @@ real-provider acceptance. No benchmark rerun is needed for persistence.
 See [retained evidence](evidence-retention.md#saved-browser-connection-verification).
 
 
-## Integration with clarification continuity
+## Historical integration with clarification continuity
+
+The later [native reply decision](native-replies.md) retires the response adapter;
+credential persistence and ownership boundaries remain unchanged.
 
 After PR #73 merged as `effc2211724280dc49e664800124356c847e3f2f`, the saved
 connection branch incorporated that develop baseline. Both defaults and settings

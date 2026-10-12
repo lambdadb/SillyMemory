@@ -30,13 +30,13 @@ when regenerating. The extension does not rewrite stored source chat.
 
 This resolves silent loss, not semantic selection quality or the hard context
 limit. The quarter cap and configured memory preference are unchanged. Managed
-embeddings, ordinary upserts, `knn.queryText`, direct browser CORS and session-only
-LambdaDB key remain the product path.
+embeddings, ordinary upserts, `knn.queryText`, direct browser CORS and scoped saved
+LambdaDB credentials remain the product path.
 
 ## Contract and limits
 
 The adapter captures expected native roles and full text after retrieval, including
-the active input and clarification guidance even when no memory fits. It consumes the
+the active input and memory guidance even when no memory fits. It consumes the
 non-dry-run `GENERATE_AFTER_DATA` event once for that generation, checks the
 captured chat/scope revision, and compares against `data.prompt` for Chat
 Completion. It uses the host's cancellation API because the host catches event
