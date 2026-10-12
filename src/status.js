@@ -15,8 +15,8 @@ export function progressText(value) {
     }
 }
 
-export function failureText(error, { sync = true } = {}) {
-    const retry = sync ? 'click Sync this chat' : 'retry this action';
+export function failureText(error, { sync = true, generation = false } = {}) {
+    const retry = generation ? 'regenerate to retry this request' : sync ? 'click Sync this chat' : 'retry this action';
     if (!(error instanceof ConnectionError)) return `Memory operation failed. Check browser storage${sync ? ' and token counting' : ''}, then ${retry}. Local chat preserved.`;
     let next = '';
     if (error.status === 401) next = 'Replace your project key and click Save and connect. Memory is disabled; an invalid submitted key is not saved.';
@@ -24,6 +24,7 @@ export function failureText(error, { sync = true } = {}) {
     else if (error.code === 'timeout') next = `Wait, then ${retry}. A timed-out write may still have reached the service.`;
     else if (error.status === 429 || error.status >= 500) next = `Wait, then ${retry}.`;
     else if (error.code === 'network') next = `Check the connection, then ${retry}.`;
+    if (generation && (!next || error.status === 401)) next += `${next ? ' ' : ''}After recovery, ${retry}.`;
     return `${error.message}${next ? ` ${next}` : ''} Local chat preserved.`;
 }
 
@@ -44,7 +45,7 @@ export class OperationStatus {
                 this.render(progressText(last), last);
             },
             finish: text => { if (current()) this.show(text); },
-            fail: (error, prefix = '') => { if (current()) this.show(`${prefix}${last ? `${progressText(last)} ` : ''}${failureText(error)}`); },
+            fail: (error, prefix = '', generation = false) => { if (current()) this.show(`${prefix}${last ? `${progressText(last)} ` : ''}${failureText(error, { generation })}`); },
         };
     }
 }

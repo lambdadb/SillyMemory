@@ -73,7 +73,8 @@ export async function runNativeReplyScenarios({ page, field, waitStatus, check, 
     await page.evaluate(async () => { document.querySelector('#send_textarea').value = 'A transient search failure.'; await SillyTavern.getContext().generate('normal'); });
     await waitStatus('synchronized');
     check('native generation aborts before dispatch on search failure', requests.length === completedBeforeFailure);
-    check('generation failure stays visible after generation-ended background synchronization', (await field('delivery').textContent()).includes('Generation stopped: memory preparation failed.') && (await field('delivery').textContent()).includes('HTTP 503'));
+    const failureGuidance = await field('delivery').textContent();
+    check('generation failure stays visible with the correct recovery action after background synchronization', failureGuidance.includes('Generation stopped: memory preparation failed.') && failureGuidance.includes('HTTP 503') && failureGuidance.includes('regenerate to retry this request') && !failureGuidance.includes('Sync this chat'));
     check('failed native generation preserves source and the pending user input', await page.evaluate(source => {
         const chat = SillyTavern.getContext().chat;
         return chat.at(-1).is_user && chat.at(-1).mes === 'A transient search failure.' && JSON.stringify(chat.slice(0, -1).map(m => m.mes)) === JSON.stringify(source);

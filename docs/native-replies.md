@@ -86,3 +86,5 @@ generation retries, and complete swipe-right UI selection is verified separately
 with controlled completions. This does not certify other providers or establish a
 new benchmark score. Preparation failure now stays in the last-prompt delivery
 status even when native generation-ended synchronization updates operation progress.
+It tells the user to regenerate the pending request after recovery; ordinary
+background synchronization retains its own Sync guidance.

@@ -1698,3 +1698,25 @@ issue is fixed and covered by 102 actual-host/emulator checks.
 - Archives and raw receipts are local-only and unavailable in fresh clones.
   Fresh Git URL installation, arbitrary provider/API support, unresolved-dialogue
   scale and main promotion/release/deployment are not established by this run.
+
+### Native reply generation-recovery review correction
+
+The valid [review finding](https://github.com/lambdadb/SillyMemory/pull/76#discussion_r4251371954)
+identified that persistent generation failure still suggested only Sync, which does
+not resume the input. Generation error guidance now explicitly targets Regenerate;
+ordinary background Sync guidance, failure classification and remote effects are
+unchanged. Units pass 367/367 on both supported Node versions, and the native
+actual-host/emulator run passes 102 checks with no page errors/resources.
+
+- Local-only archive: `artifacts/archive/native-reply-live-ux-review-v1/evidence.tar.gz`;
+  SHA-256 `391f2de57a5c0d2c26571ae435e23589a6d7a3dd638ad7b8290c16473f25ea58`.
+- Manifest: `artifacts/archive/native-reply-live-ux-review-v1/manifest.json`.
+  Member bytes were read back and verified; source locks match the measured
+  follow-up checkout. Base `c7bb31e725908edfe96c51a989a165cd969e7f0b`.
+- Command: `ST_SOURCE=<pinned host> ST_TEST_PORT=18136 SM_ARTIFACT_TAG=native-ux-recovery-final npm run test:browser`.
+  Includes native generation failure after background sync and complete native
+  swipe-right selection/reload, plus explicit unit recovery-category coverage.
+- This is recovery rendering only. The original live run measured the first
+  visibility patch; real provider answers, source histories and query bodies
+  remain in their original archive. No paid answer was rerun, and no new
+  managed-service validation or quality score is claimed for this follow-up.

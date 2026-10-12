@@ -91,7 +91,8 @@ boundary; publication is confirmed by the corresponding Git tag and GitHub Relea
 
 - Keep generation preparation failures visible in the last-prompt status after
   native generation-ended background synchronization, including transient search
-  errors. Preserve the submitted input and explicit recovery guidance.
+  errors. Preserve the submitted input and direct generation recovery to Regenerate,
+  while background synchronization keeps its Sync guidance.
 
 ## [0.3.0] - 2026-10-04
 

@@ -97,7 +97,10 @@ There is no product automatic query retry added by this change.
 
 The operation status is overwritten by `GENERATION_ENDED` scheduling background
 sync, so it can say “Waiting to synchronize” after an aborted generation. Keep the
-failure and recovery guidance in the independent last-prompt delivery line. Its
+failure and recovery guidance in the independent last-prompt delivery line.
+For a generation failure, recovery explicitly says to wait and regenerate the
+pending request; Sync alone does not resume an aborted generation. Background
+synchronization retains its own Sync guidance. Its
 ownership guard, sanitized errors, auth handling, query limits, cancellation and
 remote effects remain unchanged. Do not raise production timeouts or alter search
 settings to conceal the service failure.
@@ -115,3 +118,14 @@ original evidence is retained in [the evidence index](evidence-retention.md).
 Fresh Git URL installation, other models/APIs, long unresolved-dialogue quality,
 large-context limits and official benchmark accuracy remain unverified here.
 Main promotion, release and deployment are separate decisions.
+
+## Review follow-through
+
+Automatic review identified that the initial persistent error still directed users
+only to Sync. The correction changes generation recovery copy in both operation
+and last-prompt status, with coverage across auth, permission, rate-limit, timeout,
+network, query-limit and generic errors. Background Sync guidance is unchanged.
+Final units pass 367/367 on Node.js 20.12.0 and 24.15.0; the actual-host/emulator
+run again passes 102 checks with zero page errors/resources. The original paid run
+measured the first visibility fix; this follow-up changes recovery rendering only.
+All real answers and failed attempts stay unchanged; no paid answer is regenerated.

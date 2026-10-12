@@ -93,7 +93,7 @@ function schedule() {
 function fail(error, operation, generation = false) {
     // Native generation-ended sync can replace operation progress immediately.
     // Keep the failed generation visible independently of background progress.
-    if (root && generation) element('delivery').textContent = `Generation stopped: memory preparation failed. ${failureText(error)}`;
+    if (root && generation) element('delivery').textContent = `Generation stopped: memory preparation failed. ${failureText(error, { generation: true })}`;
     if (error.status === 401 && client) {
         state.enabled = false; element('enabled').checked = false;
         client.forget(); invalidate();
@@ -104,7 +104,7 @@ function fail(error, operation, generation = false) {
     }
     clearInjection();
     if (root) element('inspection').textContent = 'No memory injected: operation failed.';
-    if (operation) operation.fail(error, generation ? 'Generation stopped. ' : ''); else status(failureText(error, { sync: false }));
+    if (operation) operation.fail(error, generation ? 'Generation stopped. ' : '', generation); else status(failureText(error, { sync: false }));
 }
 async function action(job) {
     if (busy) return;

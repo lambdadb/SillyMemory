@@ -51,10 +51,30 @@ test('commit readiness progress preserves ownership of the synchronization compl
 
 test('generation failure prefix distinguishes stopped generation from background sync', () => {
     const rendered = [], view = new OperationStatus(text => rendered.push(text));
-    view.start().fail(new ConnectionError('Unavailable.', 503), 'Generation stopped. ');
+    view.start().fail(new ConnectionError('Unavailable.', 503), 'Generation stopped. ', true);
     assert.match(rendered.at(-1), /^Generation stopped\./);
+    assert.match(rendered.at(-1), /Wait, then regenerate to retry this request/);
+    assert(!rendered.at(-1).includes('Sync this chat'));
+
     assert.match(rendered.at(-1), /Local chat preserved/);
     view.start().fail(new ConnectionError('Unavailable.', 503));
     assert(!rendered.at(-1).includes('Generation stopped'));
     assert.match(rendered.at(-1), /Local chat preserved/);
+});
+
+test('generation recovery targets the pending input across failure categories', () => {
+    const failures = [new ConnectionError('Authentication failed.', 401),
+        new ConnectionError('Permission denied.', 403), new ConnectionError('Rate limited.', 429),
+        new ConnectionError('Unavailable.', 503), new ConnectionError('Timed out.', 0, 'timeout'),
+        new ConnectionError('Network failed.', 0, 'network'), new ConnectionError('Query too large.', 0, 'query-limit'),
+        new Error('private key and chat')];
+    for (const error of failures) {
+        const text = failureText(error, { generation: true });
+        assert.match(text, /regenerate to retry this request/);
+        assert(!text.includes('Sync this chat'));
+        assert(!text.includes('private'));
+    }
+    assert.match(failureText(failures[0], { generation: true }), /Save and connect.*Memory is disabled/);
+    assert.match(failureText(failures[4], { generation: true }), /timed-out write may still have reached/);
+    assert.match(failureText(failures[3]), /Wait, then click Sync this chat/);
 });
