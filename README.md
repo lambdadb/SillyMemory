@@ -98,8 +98,9 @@ is ambiguous (`needs_clarification`). A clear request with missing/conflicting
 evidence ends with `insufficient_evidence`; a completed answer ends with `answered`,
 even with an optional conversational question. Status and visible reply come from
 the same generation. This is a model instruction, not a correctness guarantee.
-Continuity requires Chat Completions with JSON-schema support; turn it off for an
-unsupported API or conflicting schema/tools settings. Streaming replies appear only
+Continuity covers nonempty plain-user normal/regenerate/swipe targets; blank or
+special inputs bypass its reply protocol. It requires schema-capable Chat Completions;
+turn it off for an unsupported API or conflicting schema/tools settings. Streaming replies appear only
 after completion. Saved reply metadata preserves pending state across reloads and
 selected swipes; source edits invalidate it. Continue during clarification is
 blocked; send a follow-up or regenerate. The system guidance is budgeted with

@@ -45,8 +45,12 @@ prompts, while their recovery notice remains in the native chat UI. Missing/inva
 or interrupted generation retains unresolved context conservatively as internal
 `unknown`, rather than fabricating completion. Recovery cleans saved in-flight
 replies when the chat loads or is already open at initialization. Decoding commits
-only after asynchronous source and current-chat ownership checks succeed. This is separate from the three model statuses.
+only after asynchronous source and current-chat ownership checks succeed. Both
+streaming and non-streaming replies keep an in-flight marker until that commit. This is separate from the three model statuses.
 
+The adapter applies only to the actual nonempty plain-user generation target;
+blank/file/media/tool inputs bypass it instead of binding to an older eligible turn.
+Normal, regenerate and swipe follow the pinned native insertion/replacement slots.
 The supported adapter requires Chat Completions with JSON-schema support. The live
 provider gate used Sol; other providers are not thereby certified. Streaming text
 is shown after the complete reply is decoded, so internal JSON is hidden during

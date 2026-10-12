@@ -1357,3 +1357,21 @@ change during hashing leaves raw text and its in-flight marker recoverable.
   source/ownership while the real asynchronous digest is pending, without replacing
   global crypto or changing other tests' state. Archive read-back and credential
   scan passed. No paid rerun; prior archives remain unchanged. Local-only and not CI.
+
+The final target/recovery review limits the reply protocol to the actual nonempty
+plain-user insertion/replacement target. Blank or special active inputs cannot
+redirect it to an older eligible user/assistant pair. Non-streaming completion now
+establishes the same recoverable in-flight marker before asynchronous validation.
+
+- Follow-up archive: `artifacts/archive/clarification-production-review-v4/evidence.tar.gz`
+  under the primary worktree; 66,577 bytes, thirteen members; SHA-256
+  `8c747c221c1a6c386076a6eea35ec012913a2d520203358f171ad74abacfe541`.
+- Manifest: `artifacts/archive/clarification-production-review-v4/manifest.json`;
+  SHA-256 `8e0bab0a4726eec01df6d0553f5124368411b42a986dcac0cf1550610559abc3`.
+- Base `9c2bfcc37030d1badf4e44ad52b31aa3fbb98b34`; exact sources/patch,
+  356-unit-test receipt and 71-check native-host emulator report retained, including
+  plain native generation after a blank active input. File/media/tool target guards
+  are unit evidence, not live attachment/provider support. Ownership-loss recovery
+  is tested for streaming and non-streaming replies. Intermediate non-streaming
+  recovery receipts are retained too. Archive read-back and credential scan passed;
+  no paid rerun. Prior archives remain unchanged; local-only and not a CI dependency.

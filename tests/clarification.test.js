@@ -1,9 +1,21 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { ClarificationRequest, pendingRequestStart, decodeReply, recoverPendingReplies, conflictsWithReplyProtocol } from '../src/clarification.js';
+import { ClarificationRequest, pendingRequestStart, decodeReply, recoverPendingReplies, conflictsWithReplyProtocol, isReplyTarget } from '../src/clarification.js';
 import { retrievalQueries, capture } from '../src/memory.js';
 const user = mes => ({ mes, is_user: true, name: 'User' });
 const assistant = mes => ({ mes, is_user: false, name: 'Character', extra: {} });
+test('the reply protocol binds only to the actual native plain-user target', () => {
+    assert.equal(isReplyTarget([user('Question')], 0), true);
+    assert.equal(isReplyTarget([user('Question')], 0, 'regenerate'), true);
+    assert.equal(isReplyTarget([user('Question'), assistant('Old reply')], 0, 'swipe'), true);
+    assert.equal(isReplyTarget([user('Question'), assistant('Old reply')], 0), false);
+    for (const input of [user(''), { ...user('File question'), extra: { file: {} } },
+        { ...user('Image question'), extra: { media: [{}] } }, { ...user('Tool question'), extra: { tool_invocations: [{}] } }]) {
+        const chat = [user('Old question'), assistant('Old reply'), input];
+        assert.equal(isReplyTarget(chat, 0), false); assert.equal(isReplyTarget(chat, 2), false);
+    }
+    assert.equal(isReplyTarget([user('Question'), { mes: 'System', is_system: true }], 0), false);
+});
 test('custom request conflicts match all native YAML merge and exclusion shapes', () => {
     for (const [included, excluded] of [[[{ response_format: {} }], []], [{}, 'json_schema'], [{}, { messages: true }], [{}, ['stream']], [{ n: 2 }, []]]) {
         assert.equal(conflictsWithReplyProtocol(included, excluded), true);
@@ -91,14 +103,20 @@ test('source changes during completion validation leave the reply and recovery m
     assert.equal(chat[1].extra.sillymemoryRequest.root, null);
 });
 test('ownership loss during completion validation cannot mutate a reply', async () => {
-    const chat = [user('Where?')], request = new ClarificationRequest();
-    await request.prepare(chat, 0, 'a'); request.configure({}, chat, 'a');
-    chat.push(assistant('{"reply":"Which event?","request_status":"needs_clarification"}')); request.streaming(chat, 'a');
-    const original = structuredClone(chat[1]); let owned = true;
-    const completion = request.finish(chat, 'a', 1, () => owned);
-    owned = false;
-    assert.equal(await completion, null);
-    assert.deepEqual(chat[1], original);
+    for (const streaming of [false, true]) {
+        const chat = [user('Where?')], request = new ClarificationRequest();
+        await request.prepare(chat, 0, 'a'); request.configure({}, chat, 'a');
+        const raw = '{"reply":"Which event?","request_status":"needs_clarification"}';
+        chat.push(assistant(raw)); if (streaming) request.streaming(chat, 'a');
+        let owned = true;
+        const completion = request.finish(chat, 'a', 1, () => owned);
+        owned = false;
+        assert.equal(await completion, null);
+        assert.equal(chat[1].mes, raw); assert.equal(chat[1].extra.sillymemoryRequest, undefined);
+        assert.equal(chat[1].extra.sillymemoryPending.root, 0);
+        assert.deepEqual(await recoverPendingReplies(chat), [1]);
+        chat.push(user('The museum.')); assert.equal(await pendingRequestStart(chat, 2), 0);
+    }
 });
 test('schema, tools and multiple-reply conflicts are rejected without overwriting settings', async () => {
     for (const data of [{ json_schema: { name: 'other' } }, { response_format: { type: 'json_object' } }, { tools: [{}] }, { n: 2 }]) {

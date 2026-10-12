@@ -7,7 +7,7 @@ export async function runClarificationScenarios({ page, field, waitStatus, check
         const body = route.request().postDataJSON(); requests.push(body);
         const next = replies.shift();
         assert(next, 'Unexpected generation');
-        assert.equal(body.json_schema?.name, 'sillymemory_reply');
+        assert.equal(body.json_schema?.name, next.protocol === false ? undefined : 'sillymemory_reply');
         const content = next.raw ?? JSON.stringify({ reply: next.reply, request_status: next.status });
         if (body.stream) {
             const parts = [content.slice(0, 12), content.slice(12)];
@@ -49,7 +49,7 @@ export async function runClarificationScenarios({ page, field, waitStatus, check
         return page.evaluate(() => structuredClone(SillyTavern.getContext().chat.at(-1)));
     }
     const opening = await generate('Where was it?', { reply: 'Which visit do you mean?', status: 'needs_clarification' });
-    check('native clarification opens on intent ambiguity and saves plain reply only', opening.extra.sillymemoryRequest.status === 'needs_clarification' && opening.mes === 'Which visit do you mean?');
+    check('native clarification opens on intent ambiguity and saves plain reply only', opening.extra.sillymemoryRequest.status === 'needs_clarification' && opening.mes === 'Which visit do you mean?' && !opening.extra.sillymemoryPending);
     await page.evaluate(async () => { const c = SillyTavern.getContext(); await c.saveChat(); await (await import('/script.js')).saveSettings(); });
     const savedChat = await page.evaluate(() => { const c = SillyTavern.getContext(); return { avatar: c.characters[c.characterId].avatar, file: c.getCurrentChatId() }; });
     await page.evaluate(async () => {
@@ -123,6 +123,17 @@ export async function runClarificationScenarios({ page, field, waitStatus, check
     // Replace the last answer through the native regenerate path.
     const regenerated = await generate('', { reply: 'I cannot establish that location.', status: 'insufficient_evidence' }, false, 'regenerate');
     check('native regeneration binds state to the replacement answer', regenerated.mes === 'I cannot establish that location.' && regenerated.extra.sillymemoryRequest.root === null);
+    const priorReply = await page.evaluate(() => {
+        const c = SillyTavern.getContext(), index = c.chat.length - 1;
+        const reply = { index, mes: c.chat[index].mes, state: c.chat[index].extra.sillymemoryRequest };
+        c.chat.push({ mes: '', name: 'User', is_user: true, extra: {} });
+        return reply;
+    });
+    const plain = await generate('', { protocol: false, raw: 'A plain reply to the blank native input.' });
+    check('an ineligible active input cannot bind the protocol to an older user or reply', plain.mes === 'A plain reply to the blank native input.' && !plain.extra.sillymemoryRequest && await page.evaluate(saved => {
+        const reply = SillyTavern.getContext().chat[saved.index];
+        return reply.mes === saved.mes && !reply.extra.sillymemoryPending && JSON.stringify(reply.extra.sillymemoryRequest) === JSON.stringify(saved.state);
+    }, priorReply));
     await generate('Where was that?', { reply: 'Which event?', status: 'needs_clarification' });
     check('terminal closure does not retain old protocol placeholders in later requests', requests.at(-1).messages.every(m => !String(m.content).includes('[SillyMemory: no complete reply was received.')));
     replies.push({ reply: 'The city museum.', status: 'answered' });

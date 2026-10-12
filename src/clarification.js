@@ -5,6 +5,15 @@ export const REPLY_SCHEMA = Object.freeze({ name: 'sillymemory_reply', strict: t
     required: ['reply', 'request_status'], additionalProperties: false,
 } });
 const statuses = REPLY_SCHEMA.value.properties.request_status.enum;
+export function isReplyTarget(chat, anchor, type = 'normal') {
+    // The pinned host removes regenerated replies before interception; swipes
+    // replace the final assistant slot. Normal replies append after the user.
+    const message = chat[anchor];
+    return ['normal', 'regenerate', 'swipe'].includes(type) && anchor === chat.length - (type === 'swipe' ? 2 : 1)
+        && Boolean(message?.is_user) && !message.is_system && typeof message.mes === 'string' && Boolean(message.mes.trim())
+        && !message.extra?.file && !message.extra?.media?.length && !message.extra?.tool_invocations?.length
+        && (type !== 'swipe' || !chat.at(-1)?.is_user && !chat.at(-1)?.is_system);
+}
 export function conflictsWithReplyProtocol(included, excluded) {
     // Match the pinned host's YAML merge/exclusion shapes, including arrays of
     // objects for inclusion and a scalar key for exclusion.
@@ -79,17 +88,21 @@ export class ClarificationRequest {
     async finish(chat, key, index, valid = () => true) {
         const current = this.current;
         if (!valid() || !current?.requested || current.chat !== chat || current.key !== key || index !== current.anchor + 1 || !chat[index] || chat[index].is_user) return null;
+        const message = chat[index];
+        message.extra ??= {};
+        // Non-streaming replies need the same recoverable in-flight identity as
+        // streams while asynchronous validation is pending.
+        message.extra.sillymemoryPending ??= { version: 1, anchor: current.anchor, root: current.start, prefixHash: current.prefixHash };
         this.current = null;
         const unchanged = projection(chat, current.anchor) === current.prefix;
         const decoded = decodeReply(String(chat[index].mes || ''));
         if (current.canceled || !unchanged) decoded.status = 'unknown';
-        const message = chat[index];
         const root = unchanged && ['needs_clarification', 'unknown'].includes(decoded.status) ? current.start : null;
         const source = projection(chat, index, false);
         const candidate = chat.slice(0, index + 1);
         candidate[index] = { ...message, mes: decoded.reply };
         const sourceHash = await hash(projection(candidate, index, false));
-        // No live text, marker or selected-swipe state changes before the final
+        // No decoded text, existing marker or selected-swipe state changes before the final
         // source/ownership check. Invalidated candidates remain recoverable.
         if (!valid() || chat[index] !== message || projection(chat, index, false) !== source) return null;
         message.mes = decoded.reply;

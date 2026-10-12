@@ -19,7 +19,9 @@ boundary; publication is confirmed by the corresponding Git tag and GitHub Relea
   interrupted replies conservatively, omit incomplete protocol placeholders from
   later prompts, tolerate a reply deleted before deferred recovery, and reject
   conflicting schemas/tools. Recover already-open chats at initialization, and
-  validate asynchronous completion before changing native reply text or metadata.
+  validate asynchronous completion before changing native reply text or status.
+  Keep non-streaming recovery markers too, and bind only to the actual plain-user
+  generation target instead of an older eligible turn for blank/special inputs.
   Requires schema-capable Chat Completions; an explicit checkbox disables it.
 
 - Store available UTC host-message provenance on every chunk, separately from

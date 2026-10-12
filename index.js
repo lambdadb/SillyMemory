@@ -6,7 +6,7 @@ import { MemoryEngine, Journal, capture, fingerprint, options, DEFAULTS, memoryB
 import { OperationStatus, failureText } from './src/status.js';
 import { PromptDelivery, expectedMessages, deliverySummary } from './src/delivery.js';
 import { MEMORY_GUIDANCE } from './src/context.js';
-import { ClarificationRequest, REQUEST_GUIDANCE, recoverPendingReplies, pendingRequestStart, conflictsWithReplyProtocol } from './src/clarification.js';
+import { ClarificationRequest, REQUEST_GUIDANCE, recoverPendingReplies, pendingRequestStart, conflictsWithReplyProtocol, isReplyTarget } from './src/clarification.js';
 
 const context = () => SillyTavern.getContext();
 const uuid = () => crypto.randomUUID().replaceAll('-', '');
@@ -148,13 +148,15 @@ globalThis.sillymemory_intercept = async (chat, contextSize, abort, type) => {
             if (await pendingRequestStart(source, source.length) < source.length) throw new ConnectionError('This request is awaiting clarification. Send a clarification or regenerate the reply instead of continuing it.', 0, 'request-protocol');
         }
         if (state.clarification !== false && !['continue', 'impersonate'].includes(type) && snapshot.messages[before]?.user) {
-            if (context().mainApi !== 'openai') throw new ConnectionError('Clarification continuity requires Chat Completions with JSON schema support. Disable clarification continuity to use this API.', 0, 'request-protocol');
             const source = context().chat;
             const anchor = source.indexOf(source.filter(m => !m.is_system)[before]);
-            const start = await clarification.prepare(source, anchor, requestKey());
-            config.requestStart = source.slice(0, start).filter(m => !m.is_system).length;
-            protectedMessages = chat.filter(m => m.index >= config.requestStart && m.index <= before && !snapshot.messages[m.index]?.protocolIncomplete);
-            requestGuidance += `\n${REQUEST_GUIDANCE}`;
+            if (isReplyTarget(source, anchor, type)) {
+                if (context().mainApi !== 'openai') throw new ConnectionError('Clarification continuity requires Chat Completions with JSON schema support. Disable clarification continuity to use this API.', 0, 'request-protocol');
+                const start = await clarification.prepare(source, anchor, requestKey());
+                config.requestStart = source.slice(0, start).filter(m => !m.is_system).length;
+                protectedMessages = chat.filter(m => m.index >= config.requestStart && m.index <= before && !snapshot.messages[m.index]?.protocolIncomplete);
+                requestGuidance += `\n${REQUEST_GUIDANCE}`;
+            }
         }
         // The extension budget includes its complete wrapper; SillyTavern still manages
         // total prompt overhead, character instructions, and final model context limits.
