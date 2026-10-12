@@ -44,9 +44,10 @@ Read [CONTRIBUTING.md](CONTRIBUTING.md) before changing this repository.
   question, while retaining only the active input and selected memory in the answer
   prompt alongside native system/character settings.
 - Follow an explicitly specified semantic input unit first. Pending-request
-  accumulation here means user inputs from ambiguity through completion for
-  retrieval, with the full clarification dialogue supplied to generation. This
-  is not a token/message-window optimization of a broader query.
+  accumulation uses the complete user/assistant dialogue from ambiguity through
+  completion for retrieval and generation, preserving roles and order. Supply
+  only the current query's selected memory to generation; do not accumulate prior
+  retrieval snapshots. This is the evaluation reference, not a promoted default.
 - For contextual query construction without an explicitly specified input unit,
   the initial reference input is the complete recent dialogue outside the indexed older-history partition. Do not impose a
   separate four-message or 600-token context cap. Report model-context overflow as

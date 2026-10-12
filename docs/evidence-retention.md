@@ -1124,6 +1124,54 @@ adds a provider call or changes the numeric search/budget defaults.
 
 See [current policy and remaining quality limits](conversation-memory-defaults.md).
 
+## Complete pending-dialogue confirmation
+
+The [confirmation analysis](clarification-context-evaluation.md#complete-pending-dialogue-confirmation)
+and [input lock](clarification-dialogue-inputs.json) record all 24 dialogues and
+60 final answers, including the unchanged 12-case regression cohort. The new
+12-case cohort scores 6/12, 8/12 and 11/12 under the released judge for latest
+input, pending user inputs and complete pending dialogue. A complete-set agent
+answer audit identifies one false positive in the user-only arm, yielding
+6/12, 7/12 and 11/12; original judge outputs are preserved. This is derived
+dialogue evidence over already consumed histories, not a new benchmark score.
+
+- Producer base: `e2dd66fb6850df91bbb01d40787521f84301e815` plus the archived
+  experimental extension, exact runner, pacing code and preparation scripts.
+- Primary archive: `artifacts/archive/clarification-dialogue-v4/evidence.tar.gz`
+  in the primary `sillymemory` worktree; 8,327,224 bytes, 36 members; SHA-256
+  `e6f59bcce453b0cdc55325c2a8dd9249fc567cbfdf871cd9a7387e7c57343d32`.
+- Manifest: `artifacts/archive/clarification-dialogue-v4/manifest.json`; SHA-256
+  `ac8f6910784b39ff01c72403bd5703ca1a71a4c532427fd17347d4a153b934d4`.
+  Each member was read back and checked against its source bytes. Exact configured
+  API-key scans found zero matches. The v1/v2/v3 archives remain byte-identical.
+- Retains the pre-run plan, source/settings hashes, original 50 MB report, all
+  queries/prompts/provider replies/grades, all 60 audit dispositions, native
+  state/delivery observations, cleanup receipts, input locks, and producer
+  dependencies. Audit metadata explicitly corrects inherited query/delivery
+  descriptions without modifying the original plan or report.
+- `protocol-audit.json` beside the archive corrects additional inherited v2/v3
+  plan prose (`queryProtocol`, `hypothesis`, `liveProtocol`, `captureProtocol`).
+  The frozen `scope`, per-case queries, bounds, decision gate and producer hash
+  define v4. All 60 recorded final vector/reranker queries independently match
+  those exact frozen turn lists and queries. The sidecar SHA-256 is
+  `cf2b47deaeca2b4ee3eaede6f0bc5e535a720fc5c8602ef6f90cb442ac03e952`;
+  it supplements the original archive without overwriting it. The maintained
+  lock's recording note explains this correction.
+- Actual pinned SillyTavern, live managed LambdaDB and live Sol final delivery;
+  69 controlled prefix replies plus 60 paid final answers and 60 paid judge calls.
+  All 129 native observations use only their current selected memory; all 60
+  terminal replies close the pending root. Controlled prefixes do not establish
+  automatic ambiguity detection or production lifecycle safety.
+- 14,101 document submissions, 1,702 LambdaDB requests, 15 owned collections,
+  all deleted with HTTP 404 verification. No pending ownership file remains,
+  no browser-stored keys, and the original host extension link is restored.
+  One initial LambdaDB gate HTTP 503 recovered through bounded polling; provider
+  attempts are exactly 120 with no Sol/judge retries or admission waits.
+- Local-only, ignored, unavailable in fresh clones and never a CI dependency.
+  The full dataset remains in the existing checksum-locked source archive;
+  pinned host/dependencies and fresh credentials are external reproduction
+  inputs. The prototype is not installed as a new product default.
+
 ## Clarification context live diagnosis
 
 The [decision record](clarification-context-evaluation.md) preserves the six-case

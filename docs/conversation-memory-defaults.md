@@ -63,8 +63,15 @@ On the same frozen twelve dialogue cases, accumulating pending user inputs in th
 query restores all four retrieval losses and changes answers from 8/12 to 12/12,
 with the same complete pending dialogue in generation and unchanged search/budget
 settings. This is derived consumed-source evidence, not a new benchmark score.
-The combined formulation still requires a separately frozen confirmation cohort
-before selecting a product policy in the same unfinished PR. Three-state JSON
+The subsequent [complete-dialogue confirmation](clarification-context-evaluation.md#complete-pending-dialogue-confirmation)
+keeps both contextual arms at 12/12 on those regressions. On twelve separately
+frozen derived dialogues, audited results are 6/12 for latest-input retrieval,
+7/12 for pending user inputs and 11/12 for complete pending dialogue. The released
+judge incorrectly accepts one user-only abstention (8/12 raw); its result remains
+preserved separately. This supports including assistant clarification questions
+in the pending query and only the current query's memory in generation. These
+are consumed-source dialogue results, not a new benchmark score. Production
+response/state integration remains unfinished in the same PR. Three-state JSON
 and retention remain prototype behavior, not product defaults.
 A generic follow-up such as "Where was that?" can still need clarification when
 neither the pending dialogue nor recalled evidence identifies its referent. The

@@ -1,5 +1,117 @@
 # Clarification dialogue context policy
 
+## Complete pending-dialogue confirmation
+
+**Carry the complete pending user/assistant dialogue into both retrieval and
+generation, and supply only the current query's selected memory.** The completed
+confirmation supports this formulation for product integration. It does not yet
+promote the prototype to a product default; PR #73 remains unfinished for the
+response adapter and state-safety gates listed below.
+
+The [confirmation input lock](clarification-dialogue-inputs.json) freezes twelve
+new dialogues over eight different LongMemEval-S histories, plus the previous
+twelve regression dialogues. Source selection uses the first eight
+`single-session-user` sources with answers at most 70 characters, ordered by
+SHA-256 of the recorded seed and ID, excluding the earlier six sources. Four
+prespecified controls reuse those eight histories. Inputs and criteria were
+frozen before retrieval/provider calls. The full 500-source dataset was already
+consumed by earlier work: this is a separate **derived dialogue confirmation**,
+not an independent or official LongMemEval-S score.
+
+All arms retain the complete pending dialogue for generation. Retrieval differs:
+
+- **Latest input:** the final user input verbatim.
+- **Pending user inputs:** every pending user input, labeled `User:`.
+- **Pending dialogue:** every pending user and assistant turn, labeled `User:`
+  or `Assistant:`, in order, separated by two newlines.
+
+The common role labels in the two contextual arms isolate assistant inclusion.
+The earlier v3 user-only query had no role labels; its results below remain
+historical. Before a pending root exists, every arm searches just the current
+input. No rewriting/model call, last-N window, silent truncation, memory union,
+search-count increase or budget increase is introduced. Pending turns remain
+eligible for retrieval under the existing `message < active anchor` filter;
+their excerpts are excluded from injection because the full turns are supplied.
+
+All 60 final answers used the actual pinned SillyTavern host, live direct-CORS
+LambdaDB managed embeddings, English Bayesian/Jev and Sol (`gpt-6.1-sol`, low).
+The search profile remains k=100/candidateSize=100/size=50, consistent reads,
+4,096 memory tokens, 800-character boundary chunks and overlap assembly. Each
+native final request went to the provider, and the parsed provider reply was
+verified against the saved native reply. This is not the earlier captured-prompt
+replay. The initial clarification questions are **frozen controlled responses**,
+not model-generated clarifications or autonomous ambiguity detection.
+
+| Cohort / retrieval query | Released judge | Full-set answer audit |
+| --- | --- | --- |
+| Previous 12 / pending user inputs | 12/12 | 12/12 |
+| Previous 12 / pending dialogue | 12/12 | 12/12 |
+| New 12 / latest input | 6/12 | 6/12 |
+| New 12 / pending user inputs | 8/12 | 7/12 |
+| New 12 / pending dialogue | 11/12 | 11/12 |
+
+The released judge falsely accepted the user-only mixer answer, which says it
+cannot determine the giver and never supplies the reference, “my sister.” Its
+raw `yes` is preserved. A separate agent audit inspected **all 60** answers,
+references and source/selected evidence, changing this one result. It is not a
+blinded or independent human review; no selective judge retry was performed.
+The two identifier-absence controls use their frozen absence rubrics. All other
+cases retain the released full-question/reference scoring, including the coupon
+failure. The following table uses audited results:
+
+| New dialogue | Latest input | User inputs | Complete dialogue |
+| --- | --- | --- | --- |
+| Mixer giver: first option | No | No | Yes |
+| Sister's gift: second option | Yes | Yes | Yes |
+| Comedian count: first group | No | No | Yes |
+| Yarn count: second group | No | No | Yes |
+| Ethnicity: latter option | No | Yes | Yes |
+| Playlist count: former option | No | Yes | Yes |
+| Coupon redemption store | No | No | No |
+| Book title reference | Yes | Yes | Yes |
+| Explicit cancellation/topic change | Yes | Yes | Yes |
+| Unrecorded mixer serial number | Yes | Yes | Yes |
+| Yarn count after two clarifications | Yes | No | Yes |
+| Book answer with an optional question | Yes | Yes | Yes |
+
+The four gains over user-only accumulation are mixer giver, comedian count and
+both yarn dialogues. Their original user facts are absent from that arm's final
+50 results; complete dialogue retrieves each at rank 1 and delivers it within
+4,096 tokens. The assistant question supplies the missing subject for replies
+such as “The first one” and “The second group.” This is retrieval recovery,
+not an increased prompt budget. The latest-input two-clarification yarn answer
+instead finds an assistant restatement of 17 skeins; the original user fact is
+absent. Likewise the weaker gift arms find assistant summaries. A correct answer
+therefore does not prove retrieval of the original user statement.
+
+The sole complete-dialogue failure is `51a45a95`, the coupon store. Original
+zero-based message 444 says the user redeemed a $5 coffee-creamer coupon; nearby
+442/443/445/446 discuss Target. The complete-dialogue prompt includes all of this
+context, but no explicit sentence ties that redemption to Target. Sol mentions
+Target while declining to confirm the store. Preserve the released failure and
+its interpretive ambiguity; do not diagnose it as a missing chunk or budget loss.
+
+Every one of the 129 native generation observations (69 controlled prefixes and
+60 paid answers) delivered exactly the current selection, with no accumulated
+retrieval snapshots, and left original source history unchanged. All 60 final
+responses satisfied the schema and cleared the pending root on `answered` or
+`insufficient_evidence`. The book control actually emitted “Are you enjoying it?”
+while remaining `answered` in all three arms. Status correctness is separate
+from factual correctness. Automatic opening, malformed/refused responses,
+incomplete streaming, edit/swipe/regeneration, reload and cross-chat safety for
+this new state still require production implementation and verification.
+
+The run completed 60 answer and 60 judge calls without provider retries or
+fixed successful-call waits; peak concurrency was one. It reserved 523,095
+input/output admission tokens (not billed usage), submitted 14,101 documents
+and made 1,702 LambdaDB requests. All 15 owned collections were deleted with
+404 verification; no keys remained in browser storage and no host errors were
+recorded. One real HTTP 503 during the initial LambdaDB transport gate recovered
+through the existing bounded polling; it was not a Sol/judge retry.
+Original reports retain inherited descriptive labels; the archived audit records
+their correction without rewriting raw evidence. See the
+[retention receipt](evidence-retention.md#complete-pending-dialogue-confirmation).
+
 ## Corrected scope: retrieval and generation accumulation
 
 The maintainer intended accumulating user inputs from ambiguity through completion
