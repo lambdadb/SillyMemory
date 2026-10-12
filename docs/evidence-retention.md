@@ -1576,3 +1576,31 @@ No configured credentials or personal conversations are included.
 and the [frozen follow-up lock](recent-query-storage-inputs.json) are maintained in
 Git. Only the small fixed correctness inputs remain in CI; no raw provider answer,
 large prompt/result fixture, private path dependency or one-off generator is added.
+
+
+## Complete-pair archival
+
+`complete-pair-archival-v1` preserves the pair-boundary refinement's exact dirty
+source/patch, unit/native browser/fault/delivery results and failures, all live
+synthetic query attempts and controlled-completion producers, the request-budget
+recovery cleanup, completed SDK write comparison, and offline 28-state normal
+source/query parity. No new paid generation/judge quality run is claimed. The
+original Retain 5 and 36-answer Query 2 archives are preserved unchanged.
+
+- Base: `50ba01decff406a2e70ce8ff3de6f0d7cec67dad` plus `checkout/changes.patch`.
+- Local archive: `/Users/steven/Dev/sillymemory/artifacts/archive/complete-pair-archival-v1/evidence.tar.gz`.
+- SHA-256: `6a02c01c3597ddbccd7355a1d62d165282a1ff1b4aa25b6bfed6bbc02cac37ad`;
+  903,753 bytes, 81 members, each read back and verified against original bytes.
+- Same-directory manifest SHA-256:
+  `a390372685cdbb60f8b2eb0359bdb6472dfe1458121a9bdf8e9e8d44626ce195`.
+- Availability: ignored local-only evidence, unavailable in a fresh clone and not
+  required by CI. The index append follows archive creation; no self-reference.
+- All eleven live diagnostic/SDK collections have verified deletion and absence,
+  including the two recorded in `write-verification-1/recovery-cleanup.json`.
+  Earlier failed reports are preserved rather than silently rewritten as success.
+  Their inherited live-Sol wording does not establish a model call: all generation
+  counters are zero, as clarified in the [interpretation](recent-dialogue-retention.md#complete-pair-archival-refinement).
+
+The maintained tests use small fixed synthetic sources and expected message-index
+pairs. One-off live producers, full prompts, raw service errors and cleanup records
+remain in the archive; no permanent experiment runner or large fixture was added.

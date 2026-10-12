@@ -10,11 +10,14 @@ development defaults, not a release or a universal optimum.
 ### Current request and clarification continuity
 
 Index completed eligible plain-text messages only when they leave the recent-five
-window. Upload newly displaced source immediately, grouping chunks available at the
-same synchronization in existing batches of up to 50 documents. A trailing user
+window, rounding back one message if it would split an adjacent eligible input/reply
+pair. Normal user generation keeps five; after the answer it keeps six, uploading
+one displaced pair at the next input rather than one message at each boundary
+crossing. Chunk/document identities remain per message, with at most 50 documents
+in one upsert. No five-message queue. A trailing user
 input remains pending. Checkpoints index the entire completed transcript. Ordinarily,
 retrieve with the two most recent eligible messages through the generation anchor
-in a single role-labelled query (usually the preceding reply and current question). Retain the five most recent eligible messages including
+in a single role-labelled query (usually the preceding reply and current question). Retain at least five recent eligible messages including
 that input, in native roles and source order, plus selected memory alongside native
 system/character settings. Recent completed turns remain authoritative native source until they leave that window. See
 [the retention decision and limits](recent-dialogue-retention.md).
@@ -23,7 +26,7 @@ system/character settings. Recent completed turns remain authoritative native so
 returns the visible reply and a structured status. `needs_clarification` means the
 user's request or referent is ambiguous. It opens a pending span at that user input.
 On subsequent turns, one search uses the complete pending user/assistant dialogue,
-with roles and order preserved. Generation keeps the union of that full span and the five recent eligible messages,
+with roles and order preserved. Generation keeps the union of that full span and the recent eligible messages,
 plus only the current query's selected memory. Earlier retrieval snapshots are never accumulated.
 `answered` closes the span even if the reply contains an optional conversational
 question. `insufficient_evidence` also closes it: missing or conflicting evidence

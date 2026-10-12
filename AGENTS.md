@@ -45,11 +45,14 @@ Read [CONTRIBUTING.md](CONTRIBUTING.md) before changing this repository.
 - The product default archives completed eligible messages only after they leave
   the recent-five window. Ordinarily search the two most recent eligible messages
   through the generation anchor, in one role-labelled request. During a source-verified pending clarification, retain and search the
-  complete pending user/assistant dialogue. Always retain five recent eligible
+  complete pending user/assistant dialogue. Always retain at least five recent eligible
   messages including the active input, plus any longer pending dialogue and selected
   memory alongside native system/character settings. Exclude full retained turns
-  from memory selection. Upload displaced source immediately; do not introduce
-  a five-message write queue or expand the raw generation window for batching.
+  from memory selection. Align the recent boundary to an adjacent eligible
+  user/assistant pair: normal user input retains five, a completed reply can retain
+  six. Upload the whole displaced pair together using existing 50-document batches;
+  do not introduce a five-message write queue. Query 2 and checkpoint semantics
+  remain independent of this alignment.
   Checkpoints explicitly synchronize the full completed transcript.
 - Follow an explicitly specified semantic input unit first. Pending-request
   accumulation uses the complete user/assistant dialogue from ambiguity through

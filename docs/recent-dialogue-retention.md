@@ -2,11 +2,16 @@
 
 ## Product decision
 
-Retain the five most recent eligible plain-text messages through the active input,
+Retain at least five recent eligible plain-text messages through the active input,
 with their native roles and source order, regardless of retrieval or the previous
 answer's request status. Include the entire unresolved clarification span when it
 starts earlier. Normal alternating dialogue therefore retains the preceding two
-user/assistant exchanges plus the current input. Blank/ineligible turns do not
+user/assistant exchanges plus the current input. If the window starts at an
+assistant reply with an adjacent eligible user input, include that user too.
+After a normal reply this keeps six messages, so the next input displaces a whole
+input/reply pair with one write instead of two partial writes. Each message retains
+its own chunks and IDs; pairs are grouped in a request, not merged into documents.
+Blank/ineligible turns do not
 consume slots, and replacement reply suffixes are never retained.
 
 This is a usability and source-delivery contract: an ordinary follow-up should
@@ -19,8 +24,8 @@ with no observed new regression in the frozen controls.
 Ordinary storage now archives completed eligible messages only after they leave
 this five-message window. Upload displaced chunks immediately, grouping whatever
 is ready at the same synchronization in existing batches of up to 50 documents.
-There is no queue waiting for five displaced messages and no extra raw context to
-support batching. Checkpoints synchronize the complete completed transcript.
+There is no queue waiting for five displaced messages. The only ordinary extension
+is the one user message needed to avoid splitting its adjacent reply. Checkpoints synchronize the complete completed transcript.
 Ordinary retrieval uses the two most recent eligible messages through the query
 anchor, normally the preceding assistant reply and current user question, with
 roles/order preserved in one request. A longer unresolved span takes precedence.
@@ -199,14 +204,15 @@ than a question-only query. The UI reports the limit rather than dropping contex
 
 ### Cost boundary
 
-This changes write timing, not guaranteed write-request savings. With exact
+Before pair alignment, this changed write timing without guaranteed write-request savings. With exact
 five-message retention, a user input and its subsequent assistant reply can each
 move one old message across the boundary, producing two small upserts per exchange
 instead of the former completed-pair upsert. The initial archive excludes recent
 messages, and repeated changes while still recent avoid embedding obsolete
 versions. Two messages displaced at the same synchronization share one upsert
-when their chunks fit the existing 50-document batch. Ordinary generation raw
-input remains five eligible messages; it does not grow to nine for batching.
+when their chunks fit the existing 50-document batch. This historical exact-five revision kept ordinary raw generation at five rather
+than growing it to nine. The subsequent pair-boundary refinement below keeps five
+at a normal new user input and six after a reply.
 
 LambdaDB documents a 50 KB minimum per upsert and a fixed 100 KB write charge per
 delete request. Fewer submitted documents therefore do not alone prove a smaller
@@ -310,3 +316,77 @@ were shortened. The current delivery fixture preserves the original pressure
 in an earlier retained message. These were harness corrections, not paid-case,
 reference or model changes; the live comparison completed in one attempt.
 See the [evidence index](evidence-retention.md#recent-query-and-storage).
+
+
+## Complete-pair archival refinement
+
+After the Query 2 comparison, the user chose to group a completed input and reply
+in one write without waiting for five displaced messages. The current boundary
+starts with the recent-five eligible window, then moves back exactly one source
+position only if that first message is an assistant reply with an adjacent eligible,
+nonblank user input. Both storage and raw retention use this same boundary. This
+keeps five at a normal alternating new user input and six after the reply, avoiding
+a source gap or a second write immediately after that reply. An initial greeting,
+consecutive same-role messages, blanks, special/incomplete source are not invented
+into pairs. Their existing eligibility, native handling and source validation stay.
+A longer pending clarification span remains complete.
+
+Pairs share an upsert request, not a document: per-message IDs, text chunks,
+metadata, roles, positions and the existing 50-document ceiling are unchanged.
+Large pairs can require more than one request. Archived edits/deletions, insertion
+renumbering, uncertain writes and explicit retries can also require extra writes;
+this is not a universal one-request-per-turn guarantee. Checkpoints still
+synchronize the full completed transcript. Query 2, search/rerank limits, managed
+embeddings, the memory budget and current-search-only injection do not change.
+Continue/Impersonate can retain six eligible messages and still obey final context
+verification; this is an intentional one-message extension, not a nine-message
+write buffer or a new setting.
+
+### Verification and interpretation
+
+- `npm test`: 384 pass. Runtime/script/test syntax, release and SDK checks pass.
+  Small regressions independently derive five/six boundaries, paired request
+  contents/counts, recent-edit deferral, old-source deletion and reload deduplication.
+- Actual pinned SillyTavern/Chromium with local service and completion emulators:
+  browser `pair-archive-v3` passes 90 checks, faults `pair-archive` passes 95,
+  delivery `prompt-delivery-pair-archive-v2.json` passes 17 cases plus assembly/overlap.
+  Zero page errors and remaining emulator collections. The native event fixture
+  sends one `[2,3]` upsert on the next user input and no second write for its reply.
+  Native branch, checkpoint, replace/continue, pending clarification and context
+  guards retain their distinct coverage. Ports are separated for parallel checks.
+- Actual SDK 0.8.0 and managed LambdaDB, two isolated chat branches in one owned
+  synthetic collection: four input/reply exchanges produce eight ordinary
+  incremental upserts versus four paired upserts. Each paired write contains two
+  adjacent source messages. Including setup, the former has one initial upsert
+  and the latter none: 13 actual upserts, 17 document submissions and 42 requests
+  across both conditions and cleanup. Consistent fetches match every expected
+  document field. Owned deletion and absence are verified. This is a real write
+  transport/cadence test, not browser CORS, retrieval or generation-model evidence.
+- Offline reconstruction of all 28 unique ordinary input states behind the
+  previous 36-answer comparison verifies identical normal five-message boundaries
+  and Query 2 inputs. The historical 11/12, 11/12, 12/12 scores are preserved and
+  not claimed as a new paid run. Native tests separately cover the intentional
+  six-message Continue/Impersonate change; no new answer-quality score is assigned.
+
+The initial native live-query attempts were blocked by actual LambdaDB HTTP 503
+responses. All attempted writes/owned resources were retained and cleaned. A
+subsequent write-isolation attempt used controlled native replies and empty local
+retrieval, but exhausted its inherited aggregate request allowance before the
+second condition; its two remaining collections were explicitly ownership-checked,
+deleted and absence-verified by the retained recovery receipt. No paid generation
+or judge calls occurred. Do not report those attempts as completed live retrieval
+or answer-quality validation. One inherited report label incorrectly described
+live Sol; its counters and retained source show zero such calls, and subsequent
+producer labels explicitly distinguish controlled completions. The SDK-only
+write comparison above completed without retries and did not bypass search in
+production. All eleven collections created across these local live diagnostics
+and the SDK comparison have verified cleanup.
+
+Local unit/native early failures were incorrect test expectations for the new
+six-message boundary and an overlapping test-server port, not changes to the
+frozen quality questions or production service contract. Original raw failures,
+plans, producers, source/delivery parity and verified cleanup receipts are retained
+with checksums at the [evidence index](evidence-retention.md#complete-pair-archival).
+The adoption is the requested pair-aware archival semantics with measured write
+counts for small ordinary exchanges; no account-invoice savings, model-quality
+improvement, service-availability fix, merge or deployment is claimed.

@@ -22,23 +22,24 @@ function setup(storage = new Storage()) {
     const engine = new MemoryEngine({ client, owner, collection: 'test', branch: 'chat_test', journal: new Journal(storage, 'test') });
     return { engine, client, writes, deletes, remote, storage };
 }
-test('crossing the retained window immediately writes only displaced messages, with no five-message queue', async () => {
+test('archival sends a displaced input/reply pair once and keeps recent changes local', async () => {
     const s = setup(), snap = snapshot();
     const archival = () => ({ ...config, archiveBefore: archiveBoundary(snap) });
     await s.engine.sync(snap, archival());
-    assert.deepEqual(s.writes.map(batch => batch.map(d => d.message)), [[0]]);
+    assert.equal(s.writes.length, 0, 'three completed pairs remain local until a new input');
     snap.messages[5].text = 'Recent edit is not yet embedded.';
     await s.engine.sync(snap, archival());
-    assert.equal(s.writes.length, 1);
+    assert.equal(s.writes.length, 0);
     for (let index = 6; index < 10; index++) {
         snap.messages.push({ ...snap.messages[0], index, user: index % 2 === 0, text: `New message ${index}` });
         await s.engine.sync(snap, archival());
+        assert.equal(s.writes.length, Math.floor((index - 6) / 2) + 1);
     }
-    assert.deepEqual(s.writes.map(batch => batch.map(d => d.message)), [[0], [1], [2], [3], [4]]);
+    assert.deepEqual(s.writes.map(batch => batch.map(d => d.message)), [[0, 1], [2, 3]]);
     snap.messages.push({ ...snap.messages[0], index: 10, user: true, text: 'Question' }, { ...snap.messages[1], index: 11, text: 'Reply' });
     await s.engine.sync(snap, archival());
-    assert.deepEqual(s.writes.at(-1).map(d => d.message), [5, 6]);
-    assert(s.writes.at(-1)[0].text.includes('Recent edit'));
+    assert.deepEqual(s.writes.at(-1).map(d => d.message), [4, 5]);
+    assert(s.writes.at(-1)[1].text.includes('Recent edit'));
     const before = s.writes.length;
     await s.engine.sync(snap, archival());
     const reload = new MemoryEngine({ client: s.client, owner, collection: 'test', branch: 'chat_test', journal: new Journal(s.storage, 'test') });
@@ -48,16 +49,18 @@ test('crossing the retained window immediately writes only displaced messages, w
 
 test('archive reconciliation removes deleted source and restores changed old revisions without touching recent messages', async () => {
     const s = setup(), snap = snapshot();
+    snap.messages.push({ ...snap.messages[0], index: 6, user: true, text: 'Question' });
     const archival = () => ({ ...config, archiveBefore: archiveBoundary(snap) });
     await s.engine.sync(snap, archival());
     const stale = [...s.remote.values()][0];
     snap.messages[0].text = 'Edited old source';
     await s.engine.sync(snap, archival());
-    assert(!s.remote.has(stale.id)); assert.equal(s.remote.size, 1);
+    assert(!s.remote.has(stale.id)); assert.equal(s.remote.size, 2);
     snap.messages.splice(0, 1); snap.messages.forEach((message, index) => { message.index = index; });
     await s.engine.sync(snap, archival());
-    assert.equal(s.remote.size, 0);
-    assert.deepEqual(s.engine.journal.read(stale.scope), []);
+    assert.equal(s.remote.size, 1);
+    assert.deepEqual([...s.remote.values()].map(d => d.message), [0]);
+    assert(!s.engine.journal.read(stale.scope).includes(stale.id));
 });
 
 test('a failed archive transition cannot query past unacknowledged displaced messages', async () => {

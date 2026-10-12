@@ -260,11 +260,11 @@ try {
         latestSearch?.query.bayesian[0].knn.queryText === 'Assistant: Synthetic passage 5: the blue compass is beneath the cedar tree.\n\nUser: Synthetic passage 6: the blue compass is beneath the cedar tree.'
         && latestSearch.rerank.queryText === latestSearch.query.bayesian[0].knn.queryText);
     const archive = [...collections.values()][0].branches.get(await page.evaluate(() => `chat_${SillyTavern.getContext().chatMetadata.sillymemory.id}`));
-    check('ordinary native synchronization stores exactly the three messages outside the retained five',
-        JSON.stringify([...archive.values()].map(doc => doc.message).sort((a, b) => a - b)) === '[0,1,2]');
+    check('ordinary native synchronization archives one complete pair outside the retained recent exchanges',
+        JSON.stringify([...archive.values()].map(doc => doc.message).sort((a, b) => a - b)) === '[0,1]');
     check('real host dispatcher injects bounded memory', Boolean(result.injection) && /\d+ \/ 250 tokens/.test(result.inspection));
     check('native recalled excerpts keep macros literal within budget', result.rendered.includes('｛｛char｝｝') && result.rendered.includes('＜USER＞') && result.macroValue === undefined && result.renderedTokens <= 250);
-    check('five recent messages stay full in source order and persisted source chat is preserved', JSON.stringify(result.chat.filter(m => !m.mes.startsWith('[Past conversation excerpt:')).map(m => m.index)) === '[3,4,5,6,7]' && result.chat.at(-1).mes.includes('passage 7') && result.before === result.after);
+    check('a completed reply retains six messages without splitting a pair and leaves persisted source unchanged', JSON.stringify(result.chat.filter(m => !m.mes.startsWith('[Past conversation excerpt:')).map(m => m.index)) === '[2,3,4,5,6,7]' && result.chat.at(-1).mes.includes('passage 7') && result.before === result.after);
     // Ineligible active inputs still preserve recent dialogue. The actual native
     // hook is exercised with attachment/media/tool metadata, without uploading files.
     const originalSource = await page.evaluate(() => structuredClone(SillyTavern.getContext().chat));
@@ -283,8 +283,8 @@ try {
         }, index);
         await waitStatus('synchronized');
     }
-    check('each native boundary crossing immediately writes one displaced message without a batching delay',
-        JSON.stringify(calls.filter(call => call.path.endsWith('/docs/upsert')).slice(writesBeforeRecentEdit).map(call => call.body.docs.map(doc => doc.message))) === '[[3],[4]]');
+    check('a native user input writes one displaced pair and its reply causes no second upsert',
+        JSON.stringify(calls.filter(call => call.path.endsWith('/docs/upsert')).slice(writesBeforeRecentEdit).map(call => call.body.docs.map(doc => doc.message))) === '[[2,3]]');
     for (const extra of [{ file: { name: 'fixture.txt' } }, { media: [{ url: 'fixture-image' }] }, { tool_invocations: [{ name: 'fixture-tool' }] }]) {
         await page.evaluate(async ({ originalSource, extra }) => {
             const c = SillyTavern.getContext();
@@ -292,8 +292,8 @@ try {
             await c.saveChat();
         }, { originalSource, extra });
         const special = await prompt();
-        check('an ineligible active input preserves the preceding response and five eligible recent turns', !special.aborted
-            && JSON.stringify(special.chat.filter(m => !m.mes.startsWith('[Past conversation excerpt:')).map(m => m.index)) === '[3,4,5,6,7,8]'
+        check('an ineligible active input preserves recent source without splitting an eligible pair', !special.aborted
+            && JSON.stringify(special.chat.filter(m => !m.mes.startsWith('[Past conversation excerpt:')).map(m => m.index)) === '[2,3,4,5,6,7,8]'
             && special.before === special.after);
     }
     await page.evaluate(async originalSource => {
@@ -335,7 +335,7 @@ try {
     check('swipe event updates remote source', [...collection.docs.values()].some(d => d.text.includes('Selected swipe')));
     await page.evaluate(async () => { const c = SillyTavern.getContext(); c.chat.splice(0, 1); await c.eventSource.emit(c.eventTypes.MESSAGE_DELETED, 0); });
     await waitStatus('synchronized');
-    check('message deletion reconciles remote documents', collection.docs.size === 2);
+    check('message deletion reconciles remote documents without splitting the surviving first pair', collection.docs.size === 1);
     delayedQuery = 700;
     const pending = prompt();
     await page.waitForTimeout(150);

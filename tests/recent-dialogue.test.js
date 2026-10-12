@@ -44,7 +44,7 @@ test('ordinary storage contains only completed messages outside the five-message
     snapshot.messages.push({ index: 9, user: false, text: 'Replacement answer', eligible: true });
     assert.equal(archiveBoundary(snapshot, 'regenerate'), 4);
     assert.equal(archiveBoundary(snapshot, 'swipe'), 4);
-    assert.equal(archiveBoundary(snapshot), 5);
+    assert.equal(archiveBoundary(snapshot), 4);
     assert.equal(archiveBoundary({ messages: [] }), 0);
     for (const archiveBefore of [-1, 11, 1.5]) await assert.rejects(documents(snapshot, 'owner', { ...config, archiveBefore }), /boundary/);
 });
@@ -53,6 +53,32 @@ test('blank and ineligible messages cannot consume recent dialogue slots', () =>
     const source = structuredClone(messages);
     source[5].eligible = false; source[3].text = '  ';
     assert.equal(retentionStart(source, 6), 0);
+});
+
+test('pair-aligned retention is five at a new user input and six after its reply', () => {
+    for (let length = 5; length <= 9; length++) {
+        const snapshot = { messages: messages.slice(0, length) };
+        assert.equal(archiveBoundary(snapshot), length % 2 ? length - 5 : Math.max(0, length - 6));
+    }
+    const snapshot = { messages: [...messages, { user: false, eligible: true, text: 'Replacement' }] };
+    for (const type of ['regenerate', 'swipe']) assert.equal(archiveBoundary(snapshot, type), 4);
+    for (const type of ['continue', 'impersonate']) assert.equal(archiveBoundary(snapshot, type), 4);
+});
+
+test('only adjacent eligible user/assistant messages form an archival pair', () => {
+    const source = structuredClone(messages.slice(0, 8));
+    assert.equal(archiveBoundary({ messages: source }), 2);
+    source[2].eligible = false;
+    assert.equal(archiveBoundary({ messages: source }), 3, 'an ineligible input cannot form an indexed pair');
+    // A greeting or consecutive assistant turn is not paired with a remote user.
+    source[2].eligible = true; source[2].user = false;
+    assert.equal(archiveBoundary({ messages: source }), 3);
+    source[2].user = true; source[2].text = '';
+    assert.equal(archiveBoundary({ messages: source }), 3);
+    const greeting = [{ user: false, text: 'Greeting', eligible: true }];
+    assert.equal(archiveBoundary({ messages: greeting }), 0);
+    assert.equal(archiveBoundary({ messages: [...greeting, ...messages.slice(0, 6)] }), 1,
+        'a standalone greeting can be archived without splitting the first user/reply pair');
 });
 
 test('retention does not expand the two-message query; a longer pending span takes precedence', () => {

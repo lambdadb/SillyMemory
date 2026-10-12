@@ -296,8 +296,11 @@ try {
         }
         if (spec.enabled && sent.length) {
             const anchor = spec.type === 'normal' ? 12 : ['continue', 'impersonate'].includes(spec.type) ? 11 : spec.earlierAnchor ? 8 : 10;
+            // An assistant-starting window includes its adjacent user; normal
+            // user input still retains exactly five in this alternating fixture.
+            const retainedStart = anchor === 11 ? 6 : anchor - 4;
             for (const [index, prior] of chat.entries()) {
-                const retained = index >= anchor - 4 && index <= anchor;
+                const retained = index >= retainedStart && index <= anchor;
                 const present = sent[0].messages.some(m => m.content === prior.mes || m.content.trim() === prior.mes.trim());
                 if (retained && spec.stopOnLoss && !spec.collision && !spec.names) assert(present, 'Recent source reaches the provider in its native role');
                 if (!retained) assert(!present, 'Older source and replacement replies are not retained in full');

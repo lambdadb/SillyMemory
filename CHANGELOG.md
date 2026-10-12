@@ -10,10 +10,12 @@ boundary; publication is confirmed by the corresponding Git tag and GitHub Relea
 
 - Search the two most recent eligible messages through the generation anchor in
   one role-labelled request; longer pending clarification still uses its full span.
-  Archive ordinary source only after it leaves the recent-five window, uploading
-  displaced chunks immediately with no five-message queue. Recent edits wait until
+  Align the recent-five boundary to an adjacent eligible input/reply pair, keeping
+  six after a reply and five at a normal new input. Archive the displaced pair in
+  one upsert when its chunks fit the existing 50-document batch; no five-message
+  queue or combined-pair documents. Recent edits wait until
   displacement; archived edits/deletions reconcile immediately. Checkpoints retain
-  full completed-history synchronization. Write-request savings are not guaranteed.
+  full completed-history synchronization. Large chunks, edits and retries can still require additional writes.
 
 - Enable clarification continuity by default. The answer's JSON status opens a
   pending span only for ambiguous user intent/referents, then searches and retains
@@ -53,7 +55,8 @@ boundary; publication is confirmed by the corresponding Git tag and GitHub Relea
   saved space in search order within the unchanged budget. No LLM processing or
   extra retrieval is added; malformed coordinates retain separate excerpts.
 
-- Keep five recent eligible messages full and archive older completed source.
+- Keep at least five recent eligible messages without splitting an eligible
+  input/reply pair, and archive older completed source.
   Search two recent eligible messages in one query, or the complete pending
   clarification span. Exclude retained positions and replacement answers before
   both search legs and local selection. Continue anchors on the message being
@@ -61,7 +64,7 @@ boundary; publication is confirmed by the corresponding Git tag and GitHub Relea
   above 8 KiB without silent truncation.
 - Retire npm aliases for historical fixed-window answer evaluations; preserve
   protocols/results with explicit recorded-checkout reproduction instructions.
-- Keep five recent eligible messages including the active input in native roles
+- Keep at least five recent eligible messages including the active input in native roles
   and source order, plus any longer unresolved clarification span and recalled
   memory alongside native character/system settings, including when no memory fits.
   This prevents ordinary follow-ups from depending on successful retrieval of the

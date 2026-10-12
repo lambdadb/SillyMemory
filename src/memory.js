@@ -50,7 +50,14 @@ export function completedMessages(snapshot) {
 }
 export function archiveBoundary(snapshot, type = 'normal') {
     const anchor = retentionAnchor(snapshot.messages, type);
-    return anchor < 0 ? 0 : retentionStart(snapshot.messages, anchor);
+    if (anchor < 0) return 0;
+    const start = retentionStart(snapshot.messages, anchor);
+    const first = snapshot.messages[start], previous = snapshot.messages[start - 1];
+    // Keep an adjacent eligible input/reply together. A normal new user input
+    // already aligns the five-message window; after its reply this retains six,
+    // avoiding a second small write until that whole pair leaves the window.
+    return first.eligible !== false && first.text.trim() && !first.user
+        && previous?.user && previous.eligible !== false && previous.text.trim() ? start - 1 : start;
 }
 export function memoryBoundary(snapshot, type = 'normal') {
     // Normal/regenerate/swipe keep only their question; Continue keeps the
