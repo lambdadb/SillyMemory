@@ -64,7 +64,7 @@ The development baseline is **SillyTavern 1.19.0**, pinned to commit [`06bde939f
 5. Click **Use key for this session**. The input is immediately cleared. The key lives only in the client instance's browser memory, never in saved settings, local/session storage, a URL, or extension logs. A reload or **Forget key** requires re-entry. Other trusted extensions and the browser runtime can still observe network requests; this is not an isolation boundary against malicious extensions.
 6. Click **Test synthetic upsert / query / delete**. This creates a dedicated `smtest_<random>` collection, upserts a synthetic story, queries `knn.queryText`, deletes its document, verifies it no longer appears, then deletes the owned test collection. This consumes LambdaDB resources and inference usage. The test must pass before **Prepare chat memory** becomes available.
 7. If a test fails, use **Clean up test collection**. Pending test identity is preserved across reloads so cleanup can be retried after reconnecting. A failed cleanup is not reported as successful.
-8. Click **Prepare chat memory**, select a character chat, then enable memory. Native branches automatically reuse committed history in separate LambdaDB branches within one story collection. Generation retains only the current input and recalled memory alongside native character/system settings. Default settings allow 4,096 memory tokens, including excerpt content, source labels and available conversation timestamps; provider message-envelope overhead is managed by the host. Configure the memory budget in the panel. Disable built-in Vector Storage chat vectorization and other prompt-rewriting memory extensions for this prototype.
+8. Click **Prepare chat memory**, select a character chat, then enable memory. Native branches automatically reuse committed history in separate LambdaDB branches within one story collection. Generation retains the current input (or the complete pending clarification dialogue) and recalled memory alongside native character/system settings. Default settings allow 4,096 memory tokens, including excerpt content, source labels and available conversation timestamps; provider message-envelope overhead is managed by the host. Configure the memory budget in the panel. Disable built-in Vector Storage chat vectorization and other prompt-rewriting memory extensions for this prototype.
 
 Optionally enter a checkpoint name and use **Save / finish checkpoint** to save the current transcript and memory state. **Refresh story checkpoints** shows names, creation times and verified states, with controls to finish pending saves, resume a new path, rename or delete individual checkpoints. See [recovery, integrity and restore limits](docs/checkpoints.md).
 
@@ -78,20 +78,33 @@ indexing chunks: long messages now prefer paragraph, sentence and word boundarie
 [controlled budget comparison](docs/memory-budget-calibration.md) for evidence
 and limitations, and the [design review](docs/memory-design-followups.md) for
 chunking and hybrid-search work. The [chat collection lifecycle](docs/chat-collections.md) describes the implemented isolation and cleanup behavior.
-Each answer searches only the current user question, without appending recent
-conversation or using an LLM to rewrite it. All completed eligible messages are
+Ordinarily, each answer searches only the current user question. With default-on
+**Clarification continuity**, an ambiguous request opens a pending span; subsequent
+searches include every user input and assistant clarification in that span, with
+roles and order preserved. Generation retains the same span, while using only the
+current search's memory. This adds no rewriting model or extra search call. All completed eligible messages are
 indexed, independently of the generation prompt; a pending final user
-input is indexed after the assistant replies. Generation retains only the active
-input and selected memory alongside native character/system settings. The active
-input and replacement answers are excluded from both search legs and local selection. Regenerate/swipe search the user question; Continue searches
+input is indexed after the assistant replies. Generation retains the active
+input or pending dialogue and selected memory alongside native character/system settings. The full pending span (or the active
+input when no span is pending) and replacement answers are excluded from both search
+legs and local selection.
+Regenerate/swipe use the user question and any preceding unresolved span; Continue searches
 the eligible message being extended, while Impersonate uses the latest eligible
 character response. Inputs above 8 KiB fail before search rather
 than being silently shortened.
 
-A system instruction asks the answer model to use available conversation evidence
-and ask one brief clarifying question when the referent or requested fact is
-unclear, rather than guess. This is a model instruction, not a guarantee of
-abstention or retrieval recall. It is budgeted with memory and checked at the final
+The answer model asks one brief clarification only when user intent or its referent
+is ambiguous (`needs_clarification`). A clear request with missing/conflicting
+evidence ends with `insufficient_evidence`; a completed answer ends with `answered`,
+even with an optional conversational question. Status and visible reply come from
+the same generation. This is a model instruction, not a correctness guarantee.
+Continuity covers nonempty plain-user normal/regenerate/swipe targets; blank or
+special inputs bypass its reply protocol. It requires schema-capable Chat Completions;
+turn it off for an unsupported API or conflicting schema/tools settings. Streaming replies appear only
+after completion. Saved reply metadata preserves pending state across reloads and
+selected swipes; source edits invalidate it. Continue during clarification is
+blocked; send a follow-up or regenerate. The system guidance is budgeted with
+memory and checked at the final
 host prompt boundary, including empty search results. See the
 [current policy and validation limits](docs/conversation-memory-defaults.md).
 
@@ -148,10 +161,10 @@ release notes describe their original versions, not the current contract.
 - The status panel shows preparation, queued writes, ownership checks, outdated-chunk deletion, upload, search, and token budgeting. Upload totals count completed conversation chunks; confirmed chunks include this session's earlier successful writes. Counts advance only after a service response, not merely after sending a request. They do not measure embedding/index visibility or bytes transferred. A failed operation keeps the last confirmed count and shows retry guidance.
 - Send messages normally. Message generation, edits, selected swipes, deletion, chat changes, and reload/re-enable trigger reconciliation. Click **Sync this chat** to retry after a network failure. For authentication errors, re-enter the key using **Use key for this session** first; for rate limits or timeouts, wait before retrying. Successful batches are skipped within the session. A lost response can require an idempotent re-upsert, and reload conservatively rechecks current records after key re-entry and re-enabling memory. Progress is not saved across reloads.
 - Long messages use boundary-aware chunks with exact source offsets. The first sync after this update deletes journal-tracked old-layout IDs and reindexes the current chat; this incurs managed embedding usage. See [the controlled comparison and limits](docs/boundary-chunking.md).
-- All completed eligible plain-text messages are embedded. Only the active input stays full in the generation array alongside selected memory. Files, media, and tool messages are not indexed; group chats and chats with system tool invocations are bypassed.
+- All completed eligible plain-text messages are embedded. The active input or complete pending clarification dialogue stays full alongside selected memory. Files, media, and tool messages are not indexed; group chats and chats with system tool invocations are bypassed.
 - Each story uses one owned collection and each chat path uses an isolated writable branch. Saved native metadata defines the story and chat IDs. Renaming preserves them; verified native forks inherit committed memory without re-embedding. Independent copies receive a new story. Every query applies an owner/story filter and validates results against the current local chat. See [the storage model](docs/versioned-memory.md).
-- Before generation, the extension synchronizes current source text and retrieves matching past chunks with one current-question query. Vector and English lexical legs share owner, story scope and message-index filters; the active input and replacement answers are excluded before ranking. Continue anchors on the eligible message being extended, Impersonate on the latest eligible response; regenerate and swipe use the user question. Every result is validated against current local text, IDs and the active-input boundary. The host tokenizer counts excerpts and guidance together. Macro braces and legacy macro markers are shown with fullwidth delimiters so recalled dialogue stays literal during host prompt assembly.
-- After successful retrieval, past eligible full messages are removed from the ephemeral prompt array and selected passages are injected. Zero hits or nothing fitting the budget still retains only the active input and clarification guidance, alongside native character/system settings. Source chat messages on disk are not modified. If an operation fails, the original prompt remains. A mid-request chat change aborts that generation; generate again in the new chat.
+- Before generation, the extension synchronizes current source text and retrieves matching past chunks with one current-question or pending-dialogue query. Vector and English lexical legs share owner, story scope and message-index filters; the pending full span, active input and replacement answers are excluded before ranking. Continue anchors on the eligible message being extended, Impersonate on the latest eligible response; regenerate and swipe use the user question. Every result is validated against current local text, IDs and the active-input boundary. The host tokenizer counts excerpts and guidance together. Macro braces and legacy macro markers are shown with fullwidth delimiters so recalled dialogue stays literal during host prompt assembly.
+- After successful retrieval, past eligible full messages are removed from the ephemeral prompt array and selected passages are injected. Zero hits or nothing fitting the budget still retains the active input or pending dialogue and clarification guidance, alongside native character/system settings. Source chat messages on disk are not modified. Continuity preparation failures abort; with continuity disabled, the original-prompt error fallback remains. A mid-request chat change aborts that generation; generate again in the new chat.
 - Identical selected passages from the same speaker and role share one full body with every selected source position listed. If this saves tokens, additional distinct retrieved passages may fit; no already-selected source is dropped. Repeated groups appear at their latest selected occurrence. The inspection panel exposes these labels.
 - Every indexed chunk stores available UTC **host message timestamps** from current `send_date` metadata, separately from embedding text. Selection budgets the complete excerpt, its timestamp and clarification guidance together. These are explicitly not story/event dates; unsupported or missing timestamps remain unknown. Time edits update document revisions and can trigger embedding again. See [provenance, budget and validation](docs/conversation-time.md).
 - **Memory in the last prompt** separates prepared excerpts from those verified in the final host prompt. **Stop on missing context** is enabled by default: if prepared memory, clarification guidance or the verifiable current input are missing or changed, generation is canceled before the completion request. Increase context, reduce reserved output, then generate again; the submitted user message remains in the chat. Turn the option off to proceed with a visible warning. There is no automatic retry. See [behavior, limits and validation](docs/prompt-delivery.md).
@@ -161,7 +174,7 @@ release notes describe their original versions, not the current contract.
 
 ## Data, usage, and cleanup
 
-A LambdaDB project/API key with collection create/read/delete, document write/query and branch list/create/delete access is required. Source text, speaker labels, message/chunk positions, hashed scope/revision identities, and query text go directly from your browser to LambdaDB. LambdaDB sends embedding inputs to its managed embedding provider (currently configured here as OpenAI `text-embedding-3-small`). Each retrieval submits up to two distinct queries concurrently. Managed embeddings incur inference usage; storage and retrieval have service costs. See [managed embeddings](https://docs.lambdadb.ai/guides/collections/managed-embeddings) and [LambdaDB costs](https://docs.lambdadb.ai/guides/costs/understanding-costs).
+A LambdaDB project/API key with collection create/read/delete, document write/query and branch list/create/delete access is required. Source text, speaker labels, message/chunk positions, hashed scope/revision identities, and query text go directly from your browser to LambdaDB. LambdaDB sends embedding inputs to its managed embedding provider (currently configured here as OpenAI `text-embedding-3-small`). Each retrieval submits one current-question or pending-dialogue query. Managed embeddings incur inference usage; storage and retrieval have service costs. See [managed embeddings](https://docs.lambdadb.ai/guides/collections/managed-embeddings) and [LambdaDB costs](https://docs.lambdadb.ai/guides/costs/understanding-costs).
 
 Ordinary document deletion removes current retrievable records; snapshot retention and provider backup policies are separate. The extension requests one-day historical snapshot retention. Explicitly saved checkpoints retain their own unchanged branch for future forks; see [checkpoint usage and cleanup](docs/checkpoints.md). Removing the extension or deleting a native SillyTavern chat does **not** delete its remote collection automatically. Use current-chat deletion before removing the local chat, or all-owned cleanup afterward. Renaming preserves the same memory. Delete all owned memory and any pending test collection before uninstalling or changing connection settings.
 

@@ -1123,3 +1123,284 @@ adds a provider call or changes the numeric search/budget defaults.
   limits as v1 apply; these archives are never CI dependencies.
 
 See [current policy and remaining quality limits](conversation-memory-defaults.md).
+
+## Complete pending-dialogue confirmation
+
+The [confirmation analysis](clarification-context-evaluation.md#complete-pending-dialogue-confirmation)
+and [input lock](clarification-dialogue-inputs.json) record all 24 dialogues and
+60 final answers, including the unchanged 12-case regression cohort. The new
+12-case cohort scores 6/12, 8/12 and 11/12 under the released judge for latest
+input, pending user inputs and complete pending dialogue. A complete-set agent
+answer audit identifies one false positive in the user-only arm, yielding
+6/12, 7/12 and 11/12; original judge outputs are preserved. This is derived
+dialogue evidence over already consumed histories, not a new benchmark score.
+
+- Producer base: `e2dd66fb6850df91bbb01d40787521f84301e815` plus the archived
+  experimental extension, exact runner, pacing code and preparation scripts.
+- Primary archive: `artifacts/archive/clarification-dialogue-v4/evidence.tar.gz`
+  in the primary `sillymemory` worktree; 8,327,224 bytes, 36 members; SHA-256
+  `e6f59bcce453b0cdc55325c2a8dd9249fc567cbfdf871cd9a7387e7c57343d32`.
+- Manifest: `artifacts/archive/clarification-dialogue-v4/manifest.json`; SHA-256
+  `ac8f6910784b39ff01c72403bd5703ca1a71a4c532427fd17347d4a153b934d4`.
+  Each member was read back and checked against its source bytes. Exact configured
+  API-key scans found zero matches. The v1/v2/v3 archives remain byte-identical.
+- Retains the pre-run plan, source/settings hashes, original 50 MB report, all
+  queries/prompts/provider replies/grades, all 60 audit dispositions, native
+  state/delivery observations, cleanup receipts, input locks, and producer
+  dependencies. Audit metadata explicitly corrects inherited query/delivery
+  descriptions without modifying the original plan or report.
+- `protocol-audit.json` beside the archive corrects additional inherited v2/v3
+  plan prose (`queryProtocol`, `hypothesis`, `liveProtocol`, `captureProtocol`).
+  The frozen `scope`, per-case queries, bounds, decision gate and producer hash
+  define v4. All 60 recorded final vector/reranker queries independently match
+  those exact frozen turn lists and queries. The sidecar SHA-256 is
+  `cf2b47deaeca2b4ee3eaede6f0bc5e535a720fc5c8602ef6f90cb442ac03e952`;
+  it supplements the original archive without overwriting it. The maintained
+  lock's recording note explains this correction.
+- Actual pinned SillyTavern, live managed LambdaDB and live Sol final delivery;
+  69 controlled prefix replies plus 60 paid final answers and 60 paid judge calls.
+  All 129 native observations use only their current selected memory; all 60
+  terminal replies close the pending root. Controlled prefixes do not establish
+  automatic ambiguity detection or production lifecycle safety.
+- 14,101 document submissions, 1,702 LambdaDB requests, 15 owned collections,
+  all deleted with HTTP 404 verification. No pending ownership file remains,
+  no browser-stored keys, and the original host extension link is restored.
+  One initial LambdaDB gate HTTP 503 recovered through bounded polling; provider
+  attempts are exactly 120 with no Sol/judge retries or admission waits.
+- Local-only, ignored, unavailable in fresh clones and never a CI dependency.
+  The full dataset remains in the existing checksum-locked source archive;
+  pinned host/dependencies and fresh credentials are external reproduction
+  inputs. The prototype is not installed as a new product default.
+
+## Clarification context live diagnosis
+
+The [decision record](clarification-context-evaluation.md) preserves the six-case
+current-policy diagnosis, all nine derived flow comparisons, native Sol flag
+transport checks, interpretation limits and the decision not to change defaults.
+The base is `15c781289aff2448ed5e7afce595d677121f7479`; the pinned host is
+`06bde939fb1e9c4c8d8641d810f0a916b5bce127`. Prototype retention changes exist
+only in the captured runtime copy and producer, not maintained runtime code.
+
+- Primary local archive: `artifacts/archive/clarification-context-v1/evidence.tar.gz`
+  under the primary SillyMemory worktree; 27,877,845 bytes, 46 members; SHA-256
+  `48263f0dece357b45de830898b4f2c056df33305bbe2b031f3cefd51fa092705`.
+- Manifest: `artifacts/archive/clarification-context-v1/manifest.json`; SHA-256
+  `a12e36987451a32fa76e4c2df9e03f7102a2b112590919ae9813ee367b3ec669`.
+- All original plans/amendments, exact producers with verified locked hashes,
+  pacing helper, prototype source/patch, raw native dispatched prompts/provider
+  replies/queries, interruption records, resumed comparisons, schema probes and
+  compact summary are retained. Every archived member was read back and matched
+  to its original SHA-256. Credential-content scanning found zero matches.
+- The checksum-locked original dataset remains in the prior local failure-discovery
+  archive at the plan's recorded path; its SHA-256 is
+  `d6f21ea9d60a0d56f34a05b609c79c88a451d2ae03597821ea3d5a9678c3a442`.
+  The new bundle does not duplicate the entire dataset or include environment files,
+  private host/browser profiles or credentials. All 11 owned collection creations
+  were deleted and HTTP 404 verified; no cleanup obligations remain.
+- These artifacts are local-only, ignored, unavailable in a fresh clone and not
+  dependencies of maintained tests or CI. Historical evidence archives are unchanged.
+
+## Generation-only clarification dialogue policy completion
+
+The [generation-only policy decision](clarification-context-evaluation.md) supersedes
+the initial diagnosis's promotion inference while preserving its original evidence.
+The [small input/settings lock](clarification-context-policy-inputs.json) keeps
+twelve paired dialogue cases and six live user profiles; no producer or large run
+fixture becomes a maintained CI dependency. This narrower generation-only evaluation
+did not meet its promotion gate. It is not a decision against accumulating retrieval queries; the corrected combined
+scope below was subsequently integrated; see the production receipt.
+
+- Primary local archive: `artifacts/archive/clarification-policy-v2/evidence.tar.gz`
+  under the primary SillyMemory worktree; 56,483,051 bytes, 60 members; SHA-256
+  `98ce27c5987ae6639bc6833e1e4db717b9033f0ddf5f6a6b5dcd1b28777e9d5b`.
+- Manifest: `artifacts/archive/clarification-policy-v2/manifest.json`; SHA-256
+  `b19285a4ad052ab9f1d0aa8fbd71716a8444ba322138035cb3fff261a63d0422`.
+- Producing revision: `475dee672722dd947b60af69ba8b22510be1ed8d`; pinned host
+  `06bde939fb1e9c4c8d8641d810f0a916b5bce127`. Exact prototype/runtime patches,
+  producer hashes, initial plan, interpretation lock, native-stage amendment and
+  arm-blind response router are retained. The router was frozen before live calls
+  while the paired stage was running; this is not an independent benchmark cohort.
+- Raw captures, full native prompts/transcripts/provider replies, official judge
+  receipts, status observations, local state-contract reasoning, summary and all
+  cleanup receipts are retained. Twelve capture replies are explicitly emulated;
+  36 paired answers replay actual captured LambdaDB rankings, and 14 native live
+  answers use actual queries/plain generation. All 50 answers and 50 judge calls
+  completed without retry or harness recovery.
+- Every archived member was read back and matched to its original checksum; exact
+  producing-script hashes and the live router lock were verified. Secret-content
+  scanning found zero matches after correcting a local scan-command syntax error;
+  no environment files or private browser/host profiles are included. All 14 owned
+  collection creations were deleted and HTTP 404 verified, with no outstanding cleanup.
+- The original dataset remains checksum-locked in the prior local failure-discovery
+  archive, not duplicated in this bundle. Both this archive and the initial
+  `clarification-context-v1` archive are local-only, ignored, unavailable in fresh
+  clones and never CI dependencies. Historical evidence was not deleted or rewritten.
+
+## Clarification query accumulation
+
+The [corrected evaluation](clarification-context-evaluation.md) preserves the
+maintainer's intended retrieval-and-generation accumulation and supersedes any
+application of the earlier generation-only defer conclusion to that combined
+policy. The same twelve frozen cases score **8/12 → 12/12** when only retrieval
+query construction changes and generation keeps the complete pending dialogue.
+All four lost user facts are restored within the unchanged 4,096-token budget.
+At this historical stage production defaults were unchanged; the later production
+receipt records integration.
+
+- Primary local archive: `artifacts/archive/clarification-query-v3/evidence.tar.gz`
+  under the primary SillyMemory worktree; 63,263,044 bytes, 33 members; SHA-256
+  `1db2fad3cd2aa0e9b453656dc007b683e6a0392c0264b8a347f4afa30c6d50a4`.
+- Manifest: `artifacts/archive/clarification-query-v3/manifest.json`; SHA-256
+  `c41a8f495a59a1bc22c9cec13d12516b7e08e5fb5635b21b94469460603e9caa`.
+- Producing base: `80dab585491fb3cccdc840c1140fa86544465b95`; pinned host
+  `06bde939fb1e9c4c8d8641d810f0a916b5bce127`. Exact prototype/runtime files,
+  three producer scripts, frozen plans, phase bounds, provider pacing and summary
+  are retained. Full benchmark source stays in its prior checksum-locked archive.
+- Capture stage: 24 actual-host/live managed LambdaDB queries with emulated
+  completions. Known pending roots isolate query construction; assistant turns
+  are excluded from the accumulated search string, retained in generation.
+- Paired answers: 24 unchanged captured host requests sent to Sol and 24
+  released-judge/custom-absence calls. All 48 attempts completed without retries
+  or rate-header waits. This does not re-run native paid reply delivery.
+- Lifecycle stage: twelve actual-host flows with live managed retrieval and 39
+  controlled status replies. They verify opening without a seeded root, repeated
+  accumulation and terminal closure. Final answer text is reused from the paired
+  stage, not generated anew against that stage's ranking; automatic model status
+  classification, mutation/isolation and provider integration are not established.
+- Total: 11,989 document submissions, 970 LambdaDB requests and 14 owned
+  collections, all deleted with HTTP 404 verification. Browser storage and exact
+  archived bytes contain zero key matches. Every archive member was read back
+  and matched to its original checksum. No environment/private host profiles are
+  included. The inherited broad audit report label is qualified by its explicit
+  zero paid-call count; it is not live-answer evidence.
+- The archive is local-only, ignored, unavailable in fresh clones and never a CI
+  dependency. Earlier v1/v2 evidence archives were neither removed nor rewritten.
+
+## Clarification production integration
+
+The [adoption record](clarification-context-evaluation.md#production-adoption)
+completes PR #73's response/state integration, rather than treating another
+diagnostic run as a separate merge milestone. Maintained runtime and small native
+host/unit scenarios stay in Git; the bounded live producer and detailed evidence
+remain ignored.
+
+- Primary local archive: `artifacts/archive/clarification-production-v1/evidence.tar.gz`
+  under the primary SillyMemory worktree; 1,038,847 bytes, 70 members; SHA-256
+  `df1bd4111075221b1700b0e8b430439a9a65c3d4d8968e0b13afe76b70aafa43`.
+- Manifest: `artifacts/archive/clarification-production-v1/manifest.json`; SHA-256
+  `1a071305b0c91d5661ede9ad970713ba8c157e5617649d84c030c78c761030de`.
+- Producing base: `47824651f1ac7b35d3bfe68e762e56bee72965db`; pinned host
+  `06bde939fb1e9c4c8d8641d810f0a916b5bce127`. Exact paid-run runtime snapshot,
+  frozen plan, ten native prompts/replies/statuses, queries, selected memory,
+  source/cleanup receipts, one-off producer and pacing implementation are retained.
+  The plan SHA-256 is `67c3303ea0eb00dc4423307a9150f73dd88430d2aff53f288bed95567a59ab90`.
+- Final runtime/test sources and patch, 351-test receipt, 66-check host emulator
+  report and 78-check fault report are included separately. The fault run disables
+  continuity to isolate existing synchronization/cancellation contracts. Final YAML
+  override-shape guards were added after the paid run and verified with unit/native
+  emulator tests, not additional paid calls. Intermediate failure logs preserve the
+  fixed stream event-ordering defect and harness reload/expected-stop corrections.
+- All ten live statuses match the frozen expectations; three known-fact answers
+  supply their references. This functional gate has no judge calls and is not an
+  official benchmark score. All three created collections were deleted/404 verified;
+  no credentials remained in browser storage. All archive members were read back
+  byte-for-byte, and an exact credential scan found zero matches. No environment
+  file or private browser/host profile is included.
+- Local-only, ignored, unavailable in fresh clones and not a CI dependency.
+  Earlier v1/v2/v3/v4 clarification evidence remains intact. Production scripts
+  do not depend on those private archive paths.
+
+The final review correction excludes the full pending span in both remote search
+legs before bounded ranking, and skips search for a root at message zero. This
+prevents retained dialogue from displacing older evidence in the returned slots.
+It was validated with 352 unit tests and 67 actual-host emulator checks, including
+the native query boundary; no paid answer-quality run was repeated.
+
+- Follow-up archive: `artifacts/archive/clarification-production-review-v1/evidence.tar.gz`
+  under the primary worktree; 39,846 bytes, eight members; SHA-256
+  `a219c8c4a43740e303a2ddcb6811080cc2a82d2af71239ace94b689bc62c7956`.
+- Manifest: `artifacts/archive/clarification-production-review-v1/manifest.json`;
+  SHA-256 `f8c9f2700922713bf8cc4a233c8506c8bfda5c9ee57e24507e82d925a90fddd0`.
+- Base `f1c9e253d1fb8170365e7ea2ab4ceb57904733f1`; exact source/patch and final
+  emulator/unit receipts retained. Byte-for-byte archive read-back and credential
+  scanning passed. Local-only, ignored and unavailable in fresh clones. The paid
+  production snapshot and all previous archives remain unchanged.
+
+A second review correction removes owned incomplete protocol placeholders from
+later generation prompts, independently of storage eligibility, while preserving
+the native recovery UI. Deferred completion also ignores a reply deleted before
+recovery. Both pending and post-terminal actual requests omit the placeholder.
+
+- Follow-up archive: `artifacts/archive/clarification-production-review-v2/evidence.tar.gz`
+  under the primary worktree; 46,027 bytes, ten members; SHA-256
+  `76e9bb16f0532237e85d15cf3b5663efa362e71a93a34108f31f7440e371b65c`.
+- Manifest: `artifacts/archive/clarification-production-review-v2/manifest.json`;
+  SHA-256 `a0f80b5e0fc2a19721610cd1e9ec680a138416f577372b85676f3705ae33e4b3`.
+- Base `5d9abfe234aaae83e7fdc96deea9c3815c0ec9b0`; exact runtime/test sources,
+  patch, 353-unit-test receipt and 69-check native-host emulator report retained.
+  Archive byte-readback and credential scan passed. No paid rerun or new answer
+  score; previous archives remain unchanged. Local-only and not a CI dependency.
+
+The final state-safety review adds recovery for a chat already open at initialization,
+plus candidate hashing before native reply mutation. A source edit or ownership
+change during hashing leaves raw text and its in-flight marker recoverable.
+
+- Follow-up archive: `artifacts/archive/clarification-production-review-v3/evidence.tar.gz`
+  under the primary worktree; 47,755 bytes, ten members; SHA-256
+  `71cf8e2409fae92cba75b75a2bef57bb6ecc1adff7f683a0fcba483ae035527c`.
+- Manifest: `artifacts/archive/clarification-production-review-v3/manifest.json`;
+  SHA-256 `6fbd7f415567f905700ed77f12b9c62faa35ee26f2185d378b8b459be1a4af91`.
+- Base `3e941c33383672d59ef4e082e4c8c5bfabbbcd44`; exact sources/patch,
+  355-unit-test receipt and 70-check native-host emulator report retained. The
+  startup fixture delays extension initialization until native auto-load has opened
+  the marked chat, proving recovery without a later chat switch. Unit tests change
+  source/ownership while the real asynchronous digest is pending, without replacing
+  global crypto or changing other tests' state. Archive read-back and credential
+  scan passed. No paid rerun; prior archives remain unchanged. Local-only and not CI.
+
+The final target/recovery review limits the reply protocol to the actual nonempty
+plain-user insertion/replacement target. Blank or special active inputs cannot
+redirect it to an older eligible user/assistant pair. Non-streaming completion now
+establishes the same recoverable in-flight marker before asynchronous validation.
+
+- Follow-up archive: `artifacts/archive/clarification-production-review-v4/evidence.tar.gz`
+  under the primary worktree; 66,577 bytes, thirteen members; SHA-256
+  `8c747c221c1a6c386076a6eea35ec012913a2d520203358f171ad74abacfe541`.
+- Manifest: `artifacts/archive/clarification-production-review-v4/manifest.json`;
+  SHA-256 `8e0bab0a4726eec01df6d0553f5124368411b42a986dcac0cf1550610559abc3`.
+- Base `9c2bfcc37030d1badf4e44ad52b31aa3fbb98b34`; exact sources/patch,
+  356-unit-test receipt and 71-check native-host emulator report retained, including
+  plain native generation after a blank active input. File/media/tool target guards
+  are unit evidence, not live attachment/provider support. Ownership-loss recovery
+  is tested for streaming and non-streaming replies. Intermediate non-streaming
+  recovery receipts are retained too. Archive read-back and credential scan passed;
+  no paid rerun. Prior archives remain unchanged; local-only and not a CI dependency.
+
+The request-ownership review binds preparation and cleanup to one interceptor
+attempt. A late older failure cannot clear newer state, and an invalidated digest
+cannot install a stale prepared request. These concurrency invariants are focused
+unit evidence; normal native-host integration remains a separate check.
+
+- Follow-up archive: `artifacts/archive/clarification-production-review-v5/evidence.tar.gz`
+  under the primary worktree; 47,310 bytes, ten members; SHA-256
+  `5918e674b8b2b1fc78098901483a12494a22087ea80b6c0a7fbd95e1f86eb3e7`.
+- Manifest: `artifacts/archive/clarification-production-review-v5/manifest.json`;
+  SHA-256 `ba7cd2d99e4242f45f4a8eed806174b22b6631112fbce16485f93a86033588a4`.
+- Base `b911b94677038b397bdfaa3b8ec31672d74bd4e7`; exact source/patch,
+  358-unit-test receipt and 71-check native-host emulator report retained.
+  Archive read-back and credential scan passed; no new paid run or quality score.
+  Prior archives remain unchanged; local-only and not a CI dependency.
+
+The source-position recovery correction turns stale owned assistant markers into
+visible incomplete recovery state with no stale root. Stream writes remain bound
+to the original reply object; re-authored user/system text is preserved.
+
+- Follow-up archive: `artifacts/archive/clarification-production-review-v6/evidence.tar.gz`
+  under the primary worktree; 48,891 bytes, ten members; SHA-256
+  `93a3ed75ba0aa34d3c3748c674cbd09e52dc4a6c50aa1ca09b3f7f72e8ad9161`.
+- Manifest: `artifacts/archive/clarification-production-review-v6/manifest.json`;
+  SHA-256 `5df4b97458d010b27d85ac8661346a2c0d84f384b564fa34a0887a9e4b8a02c2`.
+- Base `e2313e6a58324a4d791898568bcd3ee5aabef7f9`; exact source/patch,
+  361-unit-test receipt and 72-check native-host emulator report retained.
+  Archive read-back and credential scan passed; no paid rerun or new quality score.
+  Previous archives remain unchanged; local-only and not a CI dependency.
