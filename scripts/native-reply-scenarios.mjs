@@ -52,6 +52,34 @@ export async function runNativeReplyScenarios({ page, field, waitStatus, check, 
     await generate('', 'A replacement native reply.', { type: 'regenerate', stream: true });
     await page.evaluate(async () => { await SillyTavern.getContext().saveChat(); await SillyTavern.getContext().reloadCurrentChat(); });
     check('reload preserves plain selected replies without recovery markers', await page.evaluate(() => SillyTavern.getContext().chat.at(-1).mes === 'A replacement native reply.' && SillyTavern.getContext().chat.every(m => !m.extra?.sillymemoryRequest && !m.extra?.sillymemoryPending)));
+    const previousSwipe = await page.evaluate(() => SillyTavern.getContext().chat.at(-1).mes);
+    const requestsBeforeSwipe = requests.length; reply = 'A selected native swipe.';
+    // Use the same native action as the swipe-right UI, including selected index
+    // advancement. Generate('swipe') alone is not the complete UI transition.
+    await page.evaluate(async () => { await (await import('/script.js')).swipe_right(); });
+    await page.waitForFunction(() => SillyTavern.getContext().chat.at(-1).mes === 'A selected native swipe.' && !document.body.dataset.generating);
+    check('native swipe-right advances selection and preserves the previous variant', requests.length === requestsBeforeSwipe + 1 && await page.evaluate(previous => {
+        const m = SillyTavern.getContext().chat.at(-1);
+        return m.swipe_id > 0 && m.swipes[0] === previous && m.swipes[m.swipe_id] === m.mes;
+    }, previousSwipe));
+    await page.evaluate(async () => { const c = SillyTavern.getContext(); await c.saveChat(); await c.reloadCurrentChat(); });
+    check('reload keeps the selected native swipe and its source text aligned', await page.evaluate(() => {
+        const m = SillyTavern.getContext().chat.at(-1);
+        return m.mes === 'A selected native swipe.' && m.swipes[m.swipe_id] === m.mes;
+    }));
+    const completedBeforeFailure = requests.length;
+    const sourceBeforeFailure = await page.evaluate(() => SillyTavern.getContext().chat.map(m => m.mes));
+    await page.route('**/projects/synthetic/collections/*/query', route => route.fulfill({ status: 503, json: { message: 'Service unavailable' } }));
+    await page.evaluate(async () => { document.querySelector('#send_textarea').value = 'A transient search failure.'; await SillyTavern.getContext().generate('normal'); });
+    await waitStatus('synchronized');
+    check('native generation aborts before dispatch on search failure', requests.length === completedBeforeFailure);
+    check('generation failure stays visible after generation-ended background synchronization', (await field('delivery').textContent()).includes('Generation stopped: memory preparation failed.') && (await field('delivery').textContent()).includes('HTTP 503'));
+    check('failed native generation preserves source and the pending user input', await page.evaluate(source => {
+        const chat = SillyTavern.getContext().chat;
+        return chat.at(-1).is_user && chat.at(-1).mes === 'A transient search failure.' && JSON.stringify(chat.slice(0, -1).map(m => m.mes)) === JSON.stringify(source);
+    }, sourceBeforeFailure));
+    await page.unroute('**/projects/synthetic/collections/*/query');
+    await page.evaluate(async () => { const c = SillyTavern.getContext(); await c.deleteMessage(c.chat.length - 1); });
     await page.evaluate(async () => { const { oai_settings } = await import('/scripts/openai.js'); oai_settings.custom_include_body = 'response_format:\n  type: json_object'; });
     await generate('Use my existing native response format.', '{"answer":"User-controlled format."}');
     check('user-selected response formats survive without a schema conflict', requests.at(-1).custom_include_body?.includes('type: json_object') && !JSON.stringify(requests.at(-1)).includes('sillymemory_reply'));

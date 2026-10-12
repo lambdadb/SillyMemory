@@ -91,6 +91,9 @@ function schedule() {
     timer = setTimeout(sync, 400);
 }
 function fail(error, operation, generation = false) {
+    // Native generation-ended sync can replace operation progress immediately.
+    // Keep the failed generation visible independently of background progress.
+    if (root && generation) element('delivery').textContent = `Generation stopped: memory preparation failed. ${failureText(error)}`;
     if (error.status === 401 && client) {
         state.enabled = false; element('enabled').checked = false;
         client.forget(); invalidate();

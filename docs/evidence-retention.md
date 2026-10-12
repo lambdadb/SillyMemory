@@ -1648,3 +1648,53 @@ new official benchmark score or deployment is established.
   are not rewritten as passing reports.
 - The retired adapter's source archive and all older experiment archives remain
   separate and unchanged. Neither archive is downloadable from a fresh clone.
+
+## Native reply live UX completion
+
+The [decision and interpretation](native-reply-validation.md) and
+[frozen input/settings lock](native-reply-ux-inputs.json) record the completed
+bounded run. The final actual pinned-host/managed LambdaDB/Sol attempt completes
+eleven logical generations and 78 integration assertions. Assistant semantic
+inspection finds expected narrow behavior in all eleven answers; no independent
+human/paid judge or official benchmark score is claimed. Source, retention,
+budget, storage and model defaults remain unchanged. One demonstrated failure-UI
+issue is fixed and covered by 102 actual-host/emulator checks.
+
+- Primary local archive: `artifacts/archive/native-reply-live-ux-v1/evidence.tar.gz`;
+  SHA-256 `a5e4f8bfe2cd025f99bf942c22ce935626907632b5facffffb1d08fcaea94745`.
+- Manifest: `artifacts/archive/native-reply-live-ux-v1/manifest.json`; per-member
+  checksums, complete readback and known-credential audit verified.
+- Base: `b262dc5dac942a50a9fd247974d748060b89761b`; the archive includes the runtime
+  patch, final plan and producer, original first/second failed receipts, inherited
+  second-attempt producer, all actual provider requests/replies/SSE, source histories,
+  semantic inspection and ownership/credential cleanup records. The first-attempt
+  one-off producer was not independently hash-locked; original runtime locks and
+  exact transmitted requests are preserved. No retroactive source-identity claim.
+- Original sources: the retained `conversation-memory-v1` archive, plus the
+  unchanged book-prefix lock `docs/recent-dialogue-inputs.json`. Full histories and
+  original/adapted hashes are retained locally, not large new CI fixtures.
+- The first two attempts make zero OpenAI calls and stop on transient query 503s.
+  The final attempt explicitly retries three failed pending inputs with identical
+  request bodies; eleven OpenAI calls succeed on their first provider attempt.
+  Original failure receipts are not rewritten.
+- Eight owned collections across all attempts are deleted with absence verified;
+  saved/runtime keys are forgotten and absent from native/browser storage and
+  reports. The final attempt has 193 submitted documents and 156 browser-observed
+  LambdaDB requests. Fallback Node cleanup calls are outside that browser count.
+- Billed usage exists for only five non-streamed responses: 21,834 input and
+  124 output tokens, not total run cost. There are no rate-limit admission waits
+  or artificial success-call spacing. Managed inference cost remains unmeasured.
+- The live `Generate('swipe')` probe verifies native completion dispatch, not the
+  complete selected-index UI action. Maintained controlled-completion checks
+  separately exercise `swipe_right()`, preserved variants and reload alignment.
+- Commands: `npm test`, Node.js 20.12.0 `node --test tests/*.test.js`,
+  `npm run check`, `npm run check:release`, `npm run check:sdk`, and maintained
+  script/test syntax checks pass. Host command:
+  `ST_SOURCE=<pinned host> ST_TEST_PORT=18136 SM_ARTIFACT_TAG=native-ux-final npm run test:browser`.
+  Live producer: from the measured worktree,
+  `SM_UX_PLAN=native-plan-final.json node artifacts/native-ux-live/run.mjs attempt-3`.
+  Requires owned test credentials and the archived plan/source location; private
+  paths in local producers are not maintained test dependencies.
+- Archives and raw receipts are local-only and unavailable in fresh clones.
+  Fresh Git URL installation, arbitrary provider/API support, unresolved-dialogue
+  scale and main promotion/release/deployment are not established by this run.

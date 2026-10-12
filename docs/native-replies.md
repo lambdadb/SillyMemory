@@ -76,3 +76,13 @@ questions and evidence-gap explanations. They establish delivery/lifecycle behav
 not answer quality or spontaneous model clarification. Older paid model results
 are not new validation of this instruction. Initial fixture failures and final
 receipts are preserved in [the evidence index](evidence-retention.md).
+
+## Subsequent live validation
+
+The [bounded native reply UX run](native-reply-validation.md) exercises actual
+managed LambdaDB and Sol without a reply schema. Eleven native generations finish
+with the expected narrow behavior; actual service failures require explicit failed
+generation retries, and complete swipe-right UI selection is verified separately
+with controlled completions. This does not certify other providers or establish a
+new benchmark score. Preparation failure now stays in the last-prompt delivery
+status even when native generation-ended synchronization updates operation progress.
