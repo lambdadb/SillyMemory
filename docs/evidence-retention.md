@@ -1390,3 +1390,17 @@ unit evidence; normal native-host integration remains a separate check.
   358-unit-test receipt and 71-check native-host emulator report retained.
   Archive read-back and credential scan passed; no new paid run or quality score.
   Prior archives remain unchanged; local-only and not a CI dependency.
+
+The source-position recovery correction turns stale owned assistant markers into
+visible incomplete recovery state with no stale root. Stream writes remain bound
+to the original reply object; re-authored user/system text is preserved.
+
+- Follow-up archive: `artifacts/archive/clarification-production-review-v6/evidence.tar.gz`
+  under the primary worktree; 48,891 bytes, ten members; SHA-256
+  `93a3ed75ba0aa34d3c3748c674cbd09e52dc4a6c50aa1ca09b3f7f72e8ad9161`.
+- Manifest: `artifacts/archive/clarification-production-review-v6/manifest.json`;
+  SHA-256 `5df4b97458d010b27d85ac8661346a2c0d84f384b564fa34a0887a9e4b8a02c2`.
+- Base `e2313e6a58324a4d791898568bcd3ee5aabef7f9`; exact source/patch,
+  361-unit-test receipt and 72-check native-host emulator report retained.
+  Archive read-back and credential scan passed; no paid rerun or new quality score.
+  Previous archives remain unchanged; local-only and not a CI dependency.

@@ -158,3 +158,31 @@ test('a saved in-flight reply is excluded from indexing and recovered on a fresh
     const ordinary = [user('Where?'), assistant('{"reply":"quoted JSON"}')];
     assert.deepEqual(await recoverPendingReplies(ordinary), []); assert.equal(ordinary[1].mes, '{"reply":"quoted JSON"}');
 });
+test('stale owned markers after insertion, root deletion or malformed positions become visible incomplete state', async () => {
+    for (const change of [c => c.unshift(user('Inserted')), c => c.shift(), c => c[1].extra.sillymemoryPending.root = 99]) {
+        const chat = [user('Where?')], request = new ClarificationRequest();
+        await request.prepare(chat, 0, 'a'); request.configure({}, chat, 'a');
+        chat.push(assistant('{"reply":"unfinished')); request.streaming(chat, 'a'); change(chat);
+        const index = chat.findIndex(m => m.extra?.sillymemoryPending);
+        assert.deepEqual(await recoverPendingReplies(chat), [index]);
+        assert.match(chat[index].mes, /Please regenerate/); assert.equal(chat[index].extra.sillymemoryPending, undefined);
+        assert.equal(chat[index].extra.sillymemoryRequest.root, null); assert.equal(chat[index].extra.sillymemoryRequest.status, 'unknown');
+        assert.equal(chat[index].extra.sillymemoryRequest.incomplete, true);
+    }
+});
+test('a shifted stream cannot mark or decode another assistant at its old slot', async () => {
+    const chat = [user('Where?')], request = new ClarificationRequest();
+    await request.prepare(chat, 0, 'a'); request.configure({}, chat, 'a');
+    chat.push(assistant('{"reply":"unfinished')); request.streaming(chat, 'a');
+    const other = assistant('Unrelated answer'); chat.splice(1, 0, other);
+    assert.equal(request.streaming(chat, 'a'), null); assert.equal(await request.finish(chat, 'a', 1), null);
+    assert.deepEqual(other, assistant('Unrelated answer')); assert.deepEqual(await recoverPendingReplies(chat), [2]);
+});
+test('re-authored user text clears stale reply controls without being decoded', async () => {
+    const chat = [user('Where?')], request = new ClarificationRequest();
+    await request.prepare(chat, 0, 'a'); request.configure({}, chat, 'a');
+    chat.push(assistant('{"reply":"unfinished')); request.streaming(chat, 'a');
+    chat[1].mes = 'New authored input.'; chat[1].is_user = true;
+    assert.deepEqual(await recoverPendingReplies(chat), [1]); assert.equal(chat[1].mes, 'New authored input.');
+    assert.equal(chat[1].extra.sillymemoryPending, undefined); assert.equal(chat[1].extra.sillymemoryRequest, undefined);
+});

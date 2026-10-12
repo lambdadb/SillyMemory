@@ -81,6 +81,23 @@ export async function runClarificationScenarios({ page, field, waitStatus, check
         c.chat.splice(4); // Restore the original dialogue after the controlled startup fixture.
         await c.saveChat(); await (await import('/script.js')).saveSettings();
     });
+    await page.evaluate(async () => {
+        const c = SillyTavern.getContext(), { ClarificationRequest } = await import('/scripts/extensions/third-party/sillymemory/src/clarification.js');
+        c.chat.push({ mes: 'Stale position fixture.', name: 'User', is_user: true, extra: {} });
+        const pending = new ClarificationRequest(), anchor = c.chat.length - 1;
+        await pending.prepare(c.chat, anchor, 'fixture'); pending.configure({}, c.chat, 'fixture');
+        c.chat.push({ mes: '{"reply":"unfinished', name: 'Mira', is_user: false, extra: {} }); pending.streaming(c.chat, 'fixture');
+        c.chat.unshift({ mes: 'Inserted source.', name: 'User', is_user: true, extra: {} });
+        await c.saveChat(); await c.reloadCurrentChat();
+    });
+    check('a shifted saved reply becomes visible recovery state without a stale root', !await page.locator('.sm-awaiting-reply').count() && await page.evaluate(() => {
+        const m = SillyTavern.getContext().chat.at(-1);
+        return !m.extra.sillymemoryPending && m.extra.sillymemoryRequest.root === null && m.extra.sillymemoryRequest.incomplete && m.mes.includes('Please regenerate');
+    }));
+    await page.evaluate(async () => {
+        const c = SillyTavern.getContext(); c.chat.shift(); c.chat.splice(4);
+        await c.saveChat(); await c.reloadCurrentChat();
+    });
     await page.evaluate(async saved => { const c = SillyTavern.getContext(); await c.selectCharacterById(c.characters.findIndex(x => x.avatar === saved.avatar)); await c.openCharacterChat(saved.file); }, savedChat);
     await page.waitForFunction(() => SillyTavern.getContext().chat.some(m => m.extra?.sillymemoryRequest));
     if (!await field('key').isVisible()) {

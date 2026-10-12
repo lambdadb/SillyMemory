@@ -81,7 +81,9 @@ export class ClarificationRequest {
     cancel() { if (this.current) this.current.canceled = true; }
     streaming(chat, key) {
         const current = this.current, message = chat[current?.anchor + 1];
-        if (!current?.requested || current.chat !== chat || current.key !== key || !message || message.is_user) return null;
+        if (!current?.requested || current.chat !== chat || current.key !== key || !message || message.is_user
+            || projection(chat, current.anchor) !== current.prefix || current.responseMessage && current.responseMessage !== message) return null;
+        current.responseMessage = message;
         current.responseSeen = true;
         message.extra ??= {};
         message.extra.sillymemoryPending = { version: 1, anchor: current.anchor, root: current.start, prefixHash: current.prefixHash };
@@ -89,7 +91,8 @@ export class ClarificationRequest {
     }
     async finish(chat, key, index, valid = () => true) {
         const current = this.current;
-        if (!valid() || !current?.requested || current.chat !== chat || current.key !== key || index !== current.anchor + 1 || !chat[index] || chat[index].is_user) return null;
+        if (!valid() || !current?.requested || current.chat !== chat || current.key !== key || index !== current.anchor + 1 || !chat[index] || chat[index].is_user
+            || current.responseMessage && current.responseMessage !== chat[index]) return null;
         const message = chat[index];
         message.extra ??= {};
         // Non-streaming replies need the same recoverable in-flight identity as
@@ -97,7 +100,7 @@ export class ClarificationRequest {
         message.extra.sillymemoryPending ??= { version: 1, anchor: current.anchor, root: current.start, prefixHash: current.prefixHash };
         this.current = null;
         const unchanged = projection(chat, current.anchor) === current.prefix;
-        const decoded = decodeReply(String(chat[index].mes || ''));
+        const decoded = current.invalidated || !unchanged ? decodeReply('') : decodeReply(String(chat[index].mes || ''));
         if (current.canceled || !unchanged) decoded.status = 'unknown';
         const root = unchanged && ['needs_clarification', 'unknown'].includes(decoded.status) ? current.start : null;
         const source = projection(chat, index, false);
@@ -125,12 +128,22 @@ export async function recoverPendingReplies(chat, valid = () => true) {
     for (let index = 0; index < chat.length; index++) {
         if (!valid()) break;
         const message = chat[index], marker = message.extra?.sillymemoryPending;
-        if (marker?.version !== 1 || marker.anchor !== index - 1 || !Number.isInteger(marker.root) || marker.root < 0 || marker.root > marker.anchor || !chat[marker.root]?.is_user) continue;
-        const prefix = projection(chat, marker.anchor);
+        if (marker?.version !== 1) continue;
+        // A user can re-author or change the role of a message. Clear only our
+        // stale control metadata rather than decoding their current authored text.
+        if (message.is_user || message.is_system) {
+            delete message.extra.sillymemoryPending; delete message.extra.sillymemoryRequest;
+            if (message.swipe_info?.[message.swipe_id ?? 0]) message.swipe_info[message.swipe_id ?? 0].extra = structuredClone(message.extra);
+            recovered.push(index); continue;
+        }
+        const anchor = index - 1;
+        const prefix = projection(chat, anchor);
         const prefixHash = await hash(prefix);
-        if (!valid() || chat[index] !== message || projection(chat, marker.anchor) !== prefix) continue;
+        if (!valid() || chat[index] !== message || projection(chat, anchor) !== prefix) continue;
+        const intact = marker.anchor === anchor && Number.isInteger(marker.root) && marker.root >= 0
+            && marker.root <= anchor && chat[marker.root]?.is_user && !chat[marker.root]?.is_system && prefixHash === marker.prefixHash;
         const request = new ClarificationRequest();
-        request.current = { chat, key: '', anchor: marker.anchor, start: marker.root, prefix: prefixHash === marker.prefixHash ? prefix : '', requested: true, canceled: true };
+        request.current = { chat, key: '', anchor, start: intact ? marker.root : index, prefix: intact ? prefix : '', requested: true, canceled: true, invalidated: !intact };
         if (await request.finish(chat, '', index, valid)) recovered.push(index);
     }
     return recovered;

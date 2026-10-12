@@ -23,6 +23,8 @@ boundary; publication is confirmed by the corresponding Git tag and GitHub Relea
   Keep non-streaming recovery markers too, and bind only to the actual plain-user
   generation target instead of an older eligible turn for blank/special inputs.
   Preserve newer request state when older searches fail or preparation is canceled.
+  Recover stale marker positions as visible incomplete notices without stale roots;
+  keep streams bound to their original reply and preserve re-authored user text.
   Requires schema-capable Chat Completions; an explicit checkbox disables it.
 
 - Store available UTC host-message provenance on every chunk, separately from
