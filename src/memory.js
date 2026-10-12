@@ -1,5 +1,5 @@
 import { beginWrites, clearCommit, recordWrite, sameDocument } from './commit.js';
-import { queryAnchor } from './context.js';
+import { queryAnchor, pendingQuery } from './context.js';
 import { chunkSpans, CHUNKING_POLICY } from './chunking.js';
 import { hostTimestamp, conversationTime, conversationTimeLabel } from './time.js';
 
@@ -22,7 +22,9 @@ export function capture(context) {
         return {
             index, text: typeof m.mes === 'string' ? m.mes : '', name: String(m.name || (m.is_user ? 'User' : 'Character')),
             user: Boolean(m.is_user), swipe: m.swipe_id ?? 0,
-            eligible: !m.extra?.file && !m.extra?.media?.length && !m.extra?.tool_invocations?.length,
+            eligible: !m.extra?.file && !m.extra?.media?.length && !m.extra?.tool_invocations?.length && !m.extra?.sillymemoryRequest?.incomplete && !m.extra?.sillymemoryPending,
+            ...(m.extra?.sillymemoryRequest?.incomplete || m.extra?.sillymemoryPending ? { protocolIncomplete: true } : {}),
+            ...(m.extra?.sillymemoryRequest ? { requestState: m.extra.sillymemoryRequest } : {}),
             ...(recordedAt ? { recordedAt } : {}),
         };
     });
@@ -30,12 +32,12 @@ export function capture(context) {
     return { character: avatar, chat: metadata?.id, messages, memory: { story: metadata?.story, source: metadata?.source } };
 }
 export function fingerprint(snapshot) { return JSON.stringify(snapshot); }
-export const RETRIEVAL_POLICY = 'current-question-v8';
-export function retrievalQueries(snapshot, type = 'normal') {
+export const RETRIEVAL_POLICY = 'pending-dialogue-v1';
+export function retrievalQueries(snapshot, type = 'normal', config = {}) {
     const messages = snapshot.messages;
     const anchor = queryAnchor(messages, type);
     if (anchor < 0) return [];
-    return [messages[anchor].text.trim()];
+    return [pendingQuery(messages, config.requestStart ?? anchor, anchor)];
 }
 // Storage is independent of generation input retention. A trailing
 // user input is pending until the assistant replies; completed replies are stored.
@@ -341,16 +343,19 @@ export class MemoryEngine {
         const prepared = await this.sync(snapshot, config, sourceCurrent, progress);
         if (!prepared || !current()) return null;
         const before = memoryBoundary(snapshot, type);
-        const expected = prepared.docs.filter(doc => doc.message < before);
+        // Full pending turns already appear in the prompt. Exclude them before
+        // bounded vector/lexical retrieval so they cannot displace older evidence.
+        const searchBefore = config.requestStart ?? before;
+        const expected = prepared.docs.filter(doc => doc.message < searchBefore);
         if (!expected.length) return { text: '', tokens: 0, passages: [], messages: [] };
-        const queries = retrievalQueries(snapshot, type);
+        const queries = retrievalQueries(snapshot, type, config);
         if (!queries.length) return null;
         const reads = new AbortController();
         const signal = AbortSignal.any([pendingReads, reads.signal]);
         let results;
         try {
             progress({ phase: 'searching', completed: 0, total: 1 });
-            results = await this.client.search(this.collection, this.owner, prepared.scope, queries[0], signal, this.branch, before);
+            results = await this.client.search(this.collection, this.owner, prepared.scope, queries[0], signal, this.branch, searchBefore);
             if (current() && !signal.aborted) progress({ phase: 'searching', completed: 1, total: 1 });
         } finally { reads.abort(); }
         if (!current()) return null;

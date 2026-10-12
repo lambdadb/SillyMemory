@@ -7,6 +7,7 @@ import { MemoryEngine, Journal, capture, fingerprint, options, DEFAULTS, memoryB
 import { OperationStatus, failureText } from './src/status.js';
 import { PromptDelivery, expectedMessages, deliverySummary } from './src/delivery.js';
 import { MEMORY_GUIDANCE } from './src/context.js';
+import { ClarificationRequest, REQUEST_GUIDANCE, recoverPendingReplies, pendingRequestStart, conflictsWithReplyProtocol, isReplyTarget } from './src/clarification.js';
 
 const context = () => SillyTavern.getContext();
 const uuid = () => crypto.randomUUID().replaceAll('-', '');
@@ -21,6 +22,8 @@ let checkpointRevision = 0;
 const engines = new Map();
 const entryKey = entry => `${entry.collection}:${entry.branch}`;
 const delivery = new PromptDelivery();
+const clarification = new ClarificationRequest();
+const requestKey = () => JSON.stringify([context().characterId, context().getCurrentChatId()]);
 const element = name => root.querySelector(`[data-sm="${name}"]`);
 const status = text => statusView.show(text);
 function clearInjection() {
@@ -134,7 +137,7 @@ globalThis.sillymemory_intercept = async (chat, contextSize, abort, type) => {
     clearTimeout(timer); // Retrieval below replaces the pending synchronization.
     let instance; const config = options(state);
     const before = memoryBoundary(snapshot, type);
-    const protectedMessages = chat.every(message => Number.isInteger(message.index))
+    let protectedMessages = chat.every(message => Number.isInteger(message.index))
         ? chat.filter(message => message.index === before) : [];
     const promptBefore = JSON.stringify(chat);
     const sourceBefore = JSON.stringify([context().getCurrentChatId(), snapshot.character, snapshot.messages]);
@@ -144,31 +147,51 @@ globalThis.sillymemory_intercept = async (chat, contextSize, abort, type) => {
     const valid = () => retrieval === retrievalSequence && unchangedPrompt();
     const operation = statusView.start(() => retrieval === retrievalSequence && sequence === promptSequence);
     retrievalOperation = operation;
-    let preparedMessages = [], guidance = [], abandoned = false;
+    let preparedMessages = [], guidance = [], abandoned = false, request;
     try {
         const prepared = await prepareMemory(() => sequence === promptSequence && sessionReady && state.enabled && sameSource() && JSON.stringify(chat) === promptBefore);
         if (!prepared) { abandoned = true; abort(true); return; }
         ({ snapshot, instance } = prepared);
+        let requestGuidance = MEMORY_GUIDANCE;
+        if (state.clarification !== false && type === 'continue') {
+            const source = context().chat;
+            if (await pendingRequestStart(source, source.length) < source.length) throw new ConnectionError('This request is awaiting clarification. Send a clarification or regenerate the reply instead of continuing it.', 0, 'request-protocol');
+        }
+        if (state.clarification !== false && !['continue', 'impersonate'].includes(type) && snapshot.messages[before]?.user) {
+            const source = context().chat;
+            const anchor = source.indexOf(source.filter(m => !m.is_system)[before]);
+            if (isReplyTarget(source, anchor, type)) {
+                if (context().mainApi !== 'openai') throw new ConnectionError('Clarification continuity requires Chat Completions with JSON schema support. Disable clarification continuity to use this API.', 0, 'request-protocol');
+                request = await clarification.prepare(source, anchor, requestKey(), valid);
+                config.requestStart = source.slice(0, request.start).filter(m => !m.is_system).length;
+                protectedMessages = chat.filter(m => m.index >= config.requestStart && m.index <= before && !snapshot.messages[m.index]?.protocolIncomplete);
+                requestGuidance += `\n${REQUEST_GUIDANCE}`;
+            }
+        }
         // The extension budget includes its complete wrapper; SillyTavern still manages
         // total prompt overhead, character instructions, and final model context limits.
         config.budget = Math.min(config.budget, Math.max(0, Math.floor(contextSize / 4)));
-        const countMemory = text => context().getTokenCountAsync([MEMORY_GUIDANCE, text].filter(Boolean).join('\n'));
+        const countMemory = text => context().getTokenCountAsync([requestGuidance, text].filter(Boolean).join('\n'));
         const result = await instance.retrieve(snapshot, config, countMemory, unchangedPrompt, operation.update, type);
         if (!valid()) { operation.finish('Memory operation canceled because the prompt changed. Generate again.'); abandoned = true; abort(true); return; }
         const guidanceTokens = await countMemory('');
         if (!valid()) { abandoned = true; abort(true); return; }
         if (!Number.isFinite(guidanceTokens) || guidanceTokens < 0 || guidanceTokens > config.budget) throw new Error('Memory guidance does not fit the token budget.');
-        context().setExtensionPrompt('sillymemory', MEMORY_GUIDANCE, 1, 0, false, 0);
-        guidance = [{ role: 'system', content: MEMORY_GUIDANCE, verifiable: true }];
+        context().setExtensionPrompt('sillymemory', requestGuidance, 1, 0, false, 0);
+        guidance = [{ role: 'system', content: requestGuidance, verifiable: true }];
         if (!result) throw new Error('Memory retrieval did not complete.');
         const preparedTokens = result.text ? result.tokens : guidanceTokens;
-        // Protect only the active input; keep special/file/tool messages intact.
+        // Protect the active input or complete pending dialogue; keep special messages intact.
         const indexedMessages = new Set(result.passages.map(p => p.message));
         // Drop full plain history, including answers following a replacement question.
-        const eligible = new Set(snapshot.messages.filter(m => m.index !== before && m.eligible && m.text.trim()).map(m => m.index));
+        const start = config.requestStart ?? before;
+        const eligible = new Set(snapshot.messages.filter(m => (m.index < start || m.index > before) && m.eligible && m.text.trim()).map(m => m.index));
+        // Incomplete protocol output is neither searchable source nor retained
+        // dialogue. Preserve its native recovery UI, but never feed it to the model.
+        const incomplete = new Set(snapshot.messages.filter(m => m.protocolIncomplete).map(m => m.index));
         // Require the pinned coreChat index contract before pruning anything.
         if (!chat.every(m => Number.isInteger(m.index))) { operation.finish('Unexpected prompt shape. Original prompt retained.'); return; }
-        if (![...indexedMessages].every(i => i < before && eligible.has(i))) { operation.finish('Memory no longer matches eligible source. Original prompt retained.'); return; }
+        if (![...indexedMessages].every(i => i < start && eligible.has(i))) { operation.finish('Memory no longer matches eligible source. Original prompt retained.'); return; }
         // Replace eligible past prompt messages, in place and in source order.
         // Preserve native user/assistant roles instead of flattening all excerpts
         // into one system message. These copies never enter the persisted chat.
@@ -178,19 +201,22 @@ globalThis.sillymemory_intercept = async (chat, contextSize, abort, type) => {
             group.push(message); recalled.set(message.index, group);
         }
         for (let i = chat.length - 1; i >= 0; i--) {
-            if (eligible.has(chat[i].index)) chat.splice(i, 1, ...(recalled.get(chat[i].index) || []));
+            if (incomplete.has(chat[i].index)) chat.splice(i, 1);
+            else if (eligible.has(chat[i].index)) chat.splice(i, 1, ...(recalled.get(chat[i].index) || []));
         }
         element('inspection').textContent = `${preparedTokens} / ${config.budget} tokens\n\n${result.text}`;
         preparedMessages = result.messages;
         operation.finish(`Prepared ${result.passages.length} source passages in ${result.messages.length} memory excerpts (${preparedTokens} tokens); awaiting final prompt verification.`);
     } catch (e) {
+        const trackedRequest = Boolean(request);
+        clarification.discard(request);
         if (!instance) { if (operation.current()) fail(e, operation); abandoned = true; abort(true); return; }
         if (!valid()) { operation.finish('Memory operation canceled because the prompt changed. Generate again.'); abandoned = true; abort(true); return; }
         guidance = [];
         if (operation.current()) fail(e, operation);
         // A service limit must not silently turn the current-question policy into
         // a truncated search or a generation without the requested memory.
-        if (e instanceof ConnectionError && e.code === 'query-limit') { abandoned = true; abort(true); return; }
+        if (trackedRequest || e instanceof ConnectionError && ['query-limit', 'request-protocol'].includes(e.code)) { abandoned = true; abort(true); return; }
     } finally {
         // Reserve only after retrieval: superseded in-flight reads still abort
         // through the existing validity check and never claim a final event.
@@ -205,6 +231,7 @@ globalThis.sillymemory_intercept = async (chat, contextSize, abort, type) => {
 
 async function initialize() {
     const ctx = context();
+    const { yaml } = await import('/lib.js');
     ctx.extensionSettings.sillymemory ??= {};
     owner = ctx.extensionSettings.sillymemory.owner;
     if (!/^[a-f0-9]{32}$/.test(owner || '')) {
@@ -220,7 +247,7 @@ async function initialize() {
     }
     stateKey = `sillymemory:state:${owner}`;
     savedKey = new SavedKey(localStorage, owner);
-    state = { endpoint: '', project: '', enabled: false, ready: false, budget: DEFAULTS.budget, stopOnLoss: true, chatCollections: [], ...JSON.parse(localStorage.getItem(stateKey) || '{}') };
+    state = { endpoint: '', project: '', enabled: false, ready: false, budget: DEFAULTS.budget, stopOnLoss: true, clarification: true, chatCollections: [], ...JSON.parse(localStorage.getItem(stateKey) || '{}') };
     const folder = new URL('.', import.meta.url).pathname.split('/scripts/extensions/')[1].replace(/\/$/, '');
     const html = await ctx.renderExtensionTemplateAsync(folder, 'settings');
     document.querySelector('#extensions_settings2').insertAdjacentHTML('beforeend', html);
@@ -235,6 +262,8 @@ async function initialize() {
     for (const name of ['endpoint', 'project', 'budget']) element(name).value = state[name];
     element('stopOnLoss').checked = state.stopOnLoss !== false;
     element('stopOnLoss').onchange = () => { state.stopOnLoss = element('stopOnLoss').checked; persist(); };
+    element('clarification').checked = state.clarification !== false;
+    element('clarification').onchange = () => { state.clarification = element('clarification').checked; persist(); schedule(); };
     const restoreEnabled = state.enabled;
     element('enabled').checked = false; state.enabled = false;
     root.querySelectorAll('button,input').forEach(x => { x.disabled = true; });
@@ -487,6 +516,67 @@ async function initialize() {
     element('delete').onclick = () => action(() => deleteMemory(true));
     element('delete-chat').onclick = () => action(() => deleteMemory(false));
     const events = ctx.eventTypes;
+    const revealReply = index => {
+        const message = context().chat[index];
+        if (message) context().updateMessageBlock(index, message);
+        document.querySelector(`#chat .mes[mesid="${index}"]`)?.classList.remove('sm-awaiting-reply');
+    };
+    const recoverCurrentChat = async () => {
+        const source = context().chat, key = requestKey();
+        const valid = () => context().chat === source && requestKey() === key;
+        source.forEach((m, index) => {
+            if (m.extra?.sillymemoryPending) document.querySelector(`#chat .mes[mesid="${index}"]`)?.classList.add('sm-awaiting-reply');
+        });
+        const recovered = await recoverPendingReplies(source, valid);
+        if (!valid()) return;
+        recovered.forEach(revealReply);
+        if (recovered.length) await context().saveChat();
+    };
+    ctx.eventSource.on(events.CHAT_COMPLETION_SETTINGS_READY, data => {
+        if (!data.messages?.some(m => m.role === 'system' && typeof m.content === 'string' && m.content.includes(REQUEST_GUIDANCE))) return;
+        try {
+            const included = yaml.parse(data.custom_include_body || '') || {};
+            const excluded = yaml.parse(data.custom_exclude_body || '') || [];
+            if (conflictsWithReplyProtocol(included, excluded)) {
+                throw new Error('Custom request overrides conflict with clarification continuity. Remove the override or disable clarification continuity.');
+            }
+            if (!clarification.configure(data, context().chat, requestKey())) throw new Error('Clarification context changed before the request. Generate again.');
+        }
+        catch (error) { clarification.current = null; ctx.stopGeneration(); status(error.message); }
+    });
+    ctx.eventSource.on(events.STREAM_TOKEN_RECEIVED, () => {
+        const index = clarification.streaming(context().chat, requestKey());
+        if (index !== null) document.querySelector(`#chat .mes[mesid="${index}"]`)?.classList.add('sm-awaiting-reply');
+    });
+    ctx.eventSource.makeFirst(events.MESSAGE_RECEIVED, async index => {
+        const source = context().chat, key = requestKey();
+        const valid = () => context().chat === source && requestKey() === key;
+        const decoded = await clarification.finish(source, key, index, valid);
+        if (!decoded) return;
+        revealReply(index);
+        if (decoded.status === 'unknown') status('No valid request status was received. Existing unresolved context is retained; regenerate if the reply was incomplete.');
+    });
+    ctx.eventSource.on(events.GENERATION_STOPPED, () => clarification.cancel());
+    ctx.eventSource.makeFirst(events.CHAT_CHANGED, async () => {
+        if (clarification.current?.requested) ctx.stopGeneration();
+        clarification.current = null;
+        await recoverCurrentChat();
+    });
+    ctx.eventSource.makeFirst(events.GENERATION_ENDED, () => {
+        const current = clarification.current;
+        // The pinned host unlocks streaming UI before MESSAGE_RECEIVED. Let that
+        // final event consume valid replies before recovering an interrupted one.
+        setTimeout(async () => {
+            if (!current || clarification.current !== current) return;
+            if (current.responseSeen && current.chat === context().chat && current.key === requestKey()) {
+                clarification.cancel();
+                const valid = () => current.chat === context().chat && current.key === requestKey();
+                const decoded = await clarification.finish(current.chat, current.key, current.anchor + 1, valid);
+                if (decoded) { revealReply(current.anchor + 1); await context().saveChat(); }
+            }
+            if (clarification.current === current) clarification.current = null;
+        }, 0);
+    });
     ctx.eventSource.on(events.GENERATE_AFTER_DATA, (data, dryRun) => {
         const finished = delivery.finish(context().mainApi === 'openai' ? data?.prompt : null, dryRun);
         if (!finished) return;
@@ -519,5 +609,6 @@ async function initialize() {
         });
     }
     addEventListener('pagehide', () => { client?.forget(); element('key').value = ''; });
+    await recoverCurrentChat(); // APP_READY can follow the selected chat's initial load.
 }
 context().eventSource.on(context().eventTypes.APP_READY, () => { setTimeout(() => initialize().catch(() => { globalThis.toastr?.error('SillyMemory could not initialize. Check browser storage access and the supported SillyTavern version.'); }), 0); });
