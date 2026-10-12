@@ -48,7 +48,7 @@ checkpoint creation also persists a fresh chat identity before remote use.
    without another write. Successful opening clears the intent, so a later
    deliberate resume creates a new path.
 
-API keys remain session-only. The checkpoint's transcript stays on the existing
+API keys use the account-bound [saved browser connection](saved-connection.md). The checkpoint's transcript stays on the existing
 SillyTavern server as a normal JSONL chat; it is not put in browser storage or in a
 new service. Only normal older memory chunks go to LambdaDB. Back up native host
 data: a remote branch alone cannot reconstruct the complete transcript/swipes.

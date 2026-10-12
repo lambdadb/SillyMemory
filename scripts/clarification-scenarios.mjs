@@ -55,21 +55,28 @@ export async function runClarificationScenarios({ page, field, waitStatus, check
     await page.evaluate(async () => {
         const c = SillyTavern.getContext(), { ClarificationRequest } = await import('/scripts/extensions/third-party/sillymemory/src/clarification.js');
         const { power_user } = await import('/scripts/power-user.js'); power_user.auto_load_chat = true;
+        // Programmatic selection does not update the host's last-clicked character.
+        // Make the auto-load fixture explicit, as native character selection does.
+        const { setActiveCharacter } = await import('/script.js');
+        setActiveCharacter(c.characters[c.characterId].avatar);
         c.chat.push({ mes: 'Startup recovery fixture.', name: 'User', is_user: true, extra: {} });
         const pending = new ClarificationRequest(), anchor = c.chat.length - 1;
         await pending.prepare(c.chat, anchor, 'fixture'); pending.configure({}, c.chat, 'fixture');
         c.chat.push({ mes: '{"reply":"unfinished', name: 'Mira', is_user: false, extra: {} }); pending.streaming(c.chat, 'fixture');
         await c.saveChat(); await (await import('/script.js')).saveSettings();
     });
-    let loadedBeforeInitialization = false;
+    let loadedBeforeInitialization = false, startupError;
     await page.route('**/scripts/extensions/third-party/sillymemory/settings.html', async route => {
         // Hold extension initialization until the native auto-loaded chat exists.
         // Its CHAT_CHANGED event therefore cannot run our future recovery listener.
-        await page.waitForFunction(() => globalThis.SillyTavern?.getContext().chat.at(-1)?.extra?.sillymemoryPending);
-        loadedBeforeInitialization = true;
-        await route.continue();
+        try {
+            await page.waitForFunction(() => globalThis.SillyTavern?.getContext().chat.at(-1)?.extra?.sillymemoryPending);
+            loadedBeforeInitialization = true;
+        } catch (error) { startupError = error; }
+        finally { await route.continue(); }
     });
-    await page.reload(); await page.locator('#sillymemory').waitFor({ state: 'attached' });
+    await page.reload(); await page.locator('#sillymemory').waitFor({ state: 'attached', timeout: 45000 });
+    if (startupError) throw startupError;
     await page.waitForFunction(() => SillyTavern.getContext().chat.at(-1)?.extra?.sillymemoryRequest?.status === 'unknown');
     check('initialization recovers a pending reply already opened by native auto-load', loadedBeforeInitialization && await page.evaluate(() => {
         const m = SillyTavern.getContext().chat.at(-1);
@@ -104,11 +111,10 @@ export async function runClarificationScenarios({ page, field, waitStatus, check
         if (!await page.locator('#sillymemory .inline-drawer-toggle').isVisible()) await page.locator('#extensions-settings-button .drawer-toggle').click();
         if (!await field('key').isVisible()) await page.locator('#sillymemory .inline-drawer-toggle').click();
     }
-    check('pending request survives page reload while the API key does not', await field('key').inputValue() === '' && !await field('enabled').isChecked());
-    await field('key').fill('synthetic-session-key'); await field('connect').click();
+    await waitStatus('synchronized');
+    check('pending request survives verified automatic reconnect without exposing the key', await field('key').inputValue() === '' && await field('enabled').isChecked() && await field('clarification').isChecked());
     await page.locator('#api_button_openai').dispatchEvent('click');
     await page.waitForFunction(() => SillyTavern.getContext().onlineStatus !== 'no_connection');
-    await field('enabled').check(); await waitStatus('synchronized');
     await page.evaluate(() => {
         globalThis.clarificationStreamChecks = [];
         const c = SillyTavern.getContext();
@@ -211,6 +217,9 @@ export async function runClarificationScenarios({ page, field, waitStatus, check
     }
     await page.evaluate(async () => { const { oai_settings } = await import('/scripts/openai.js'); oai_settings.custom_include_body = ''; oai_settings.custom_exclude_body = ''; });
     await field('enabled').uncheck();
+    const queriesBeforeDisabled = calls.filter(c => c.body.query?.bayesian).length;
+    const disabled = await generate('A clear request while memory is off.', { protocol: false, raw: 'A plain native reply.' });
+    check('disabled memory bypasses the reply protocol and retrieval while preserving native history', disabled.mes === 'A plain native reply.' && !disabled.extra?.sillymemoryRequest && queriesBeforeDisabled === calls.filter(c => c.body.query?.bayesian).length && requests.at(-1).messages.some(m => m.content === 'I visited the city museum on Friday.'));
     await page.unroute('**/api/backends/chat-completions/generate'); await page.unroute('**/api/backends/chat-completions/status');
     return { generations: requests.length, requests, streamChecks: await page.evaluate(() => clarificationStreamChecks) };
 }

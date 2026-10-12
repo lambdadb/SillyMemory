@@ -1,6 +1,7 @@
 import { LambdaDBClient, HTTPClient } from '../vendor/lambdadb.js';
 
-// Keys live only in this instance. Never include server response bodies in errors.
+// Runtime keys stay private; browser persistence is owned by SavedKey.
+// Never include server response bodies in errors.
 export class ConnectionError extends Error {
     constructor(message, status = 0, code = '') { super(message); this.name = 'ConnectionError'; this.status = status; this.code = code; }
 }
@@ -35,7 +36,7 @@ export class LambdaClient {
     constructor(config, key, { fetcher = (...args) => globalThis.fetch(...args), timeoutMs = 15000 } = {}) {
         this.config = connectionConfig(config);
         this.#key = key.trim();
-        if (!this.#key) throw new ConnectionError('Enter your API key again. Keys are cleared on reload.');
+        if (!this.#key) throw new ConnectionError('Enter your project API key and save and connect.');
         this.timeoutMs = timeoutMs;
         const base = `${this.config.endpoint}/projects/${encodeURIComponent(this.config.project)}/`;
         this.#sdk = new LambdaDBClient({
@@ -45,7 +46,7 @@ export class LambdaClient {
             // Explicitly suppress the SDK's environment-controlled debug logger.
             debugLogger: { log() {}, group() {}, groupEnd() {} },
             httpClient: new HTTPClient({ fetcher: async request => {
-                if (!this.#key) throw new ConnectionError('Enter your API key again. Keys are cleared on reload.');
+                if (!this.#key) throw new ConnectionError('Enter your project API key and save and connect.');
                 if (!request.url.startsWith(base)) throw new ConnectionError('Unexpected memory service URL.');
                 const body = request.body ? await request.text() : undefined;
                 request.signal.throwIfAborted();
@@ -70,7 +71,7 @@ export class LambdaClient {
     }
     forget() { this.#key = ''; this.#session.abort(); }
     async call(operation, signal) {
-        if (!this.#key) throw new ConnectionError('Enter your API key again. Keys are cleared on reload.');
+        if (!this.#key) throw new ConnectionError('Enter your project API key and save and connect.');
         const timeout = AbortSignal.timeout(this.timeoutMs);
         const combined = AbortSignal.any([this.#session.signal, timeout, ...(signal ? [signal] : [])]);
         try {
@@ -87,6 +88,10 @@ export class LambdaClient {
             }
             throw new ConnectionError('Memory request failed. Check the endpoint, network and LambdaDB CORS access for this page’s origin.', 0, 'network');
         }
+    }
+    async checkConnection() {
+        const result = await this.call((sdk, opts) => sdk.listCollections({ size: 1 }, opts));
+        if (!Array.isArray(result.collections)) throw new ConnectionError('Invalid connection check response. No connection was adopted.', 0, 'validation');
     }
     path(collection, suffix = '') {
         if (!/^[a-zA-Z0-9_-]{3,52}$/.test(collection)) throw new ConnectionError('Invalid collection name.');

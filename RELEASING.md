@@ -94,8 +94,9 @@ bundle and third-party licenses ship in Git; run `npm run check:sdk` before prom
 Users install the repository URL from **Extensions → Install extension** and
 normally leave the optional branch/tag field empty, selecting default `main`.
 They update through **Manage extensions → SillyMemory → Update**, then reload.
-Automatic updates are disabled in the manifest. Reload clears the session key
-and starts memory disabled; reconnect and re-enable it when ready.
+Automatic updates are disabled in the manifest. Reload verifies the saved browser key and restores the previous memory-enabled
+state. Forget key removes that credential and disables memory. Browser-storage
+loss or rejected authentication requires a new key; see [reconnection](docs/saved-connection.md).
 
 For a problem, first disable memory to preserve ordinary chat operation. Back up
 SillyTavern data before changing versions. Do not uninstall or delete collections

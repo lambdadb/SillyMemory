@@ -27,6 +27,12 @@ boundary; publication is confirmed by the corresponding Git tag and GitHub Relea
   keep streams bound to their original reply and preserve re-authored user text.
   Requires schema-capable Chat Completions; an explicit checkbox disables it.
 
+- Save a verified project key in a dedicated account/endpoint/project-bound browser
+  record and reconnect automatically after reload. Restore the previous memory
+  enabled/disabled state only after a bounded authenticated read. Remove rejected restored
+  keys, preserve the prior key on candidate validation failure, and disable memory; Forget key removes browser and runtime credentials.
+  Browser persistence is disclosed before saving and is not an isolated secret vault.
+
 - Store available UTC host-message provenance on every chunk, separately from
   embedding text. Budget the complete excerpt and date together; reject stale or
   mismatched remote dates. Missing dates remain unknown, and host time is explicitly
@@ -65,7 +71,7 @@ boundary; publication is confirmed by the corresponding Git tag and GitHub Relea
   Preserve boundary-aware per-message chunks and session-only project keys.
 
 - Use the official LambdaDB TypeScript SDK 0.8.0 through a pinned browser bundle.
-  Preserve session-only keys, direct CORS, cancellation, safe errors and explicit
+  Preserve direct CORS, cancellation, safe errors and explicit
   retry/inline-result policies; Git URL installation needs no user build step.
 
 - Story collections and isolated chat branches are now the only memory storage
@@ -74,7 +80,7 @@ boundary; publication is confirmed by the corresponding Git tag and GitHub Relea
 - Removed the opt-in conversion button, per-chat/shared collection paths and
   previous-release upgrade adapter. This experimental project has no installed
   user data to migrate; unsupported metadata fails safely without conversion.
-- Checkpoints remain explicitly saved and resumed. Session-only keys, managed
+- Checkpoints remain explicitly saved and resumed. Managed
   embeddings, current-source validation and scoped cleanup remain unchanged.
 - Fresh installation and current story lifecycle checks replace the historical
   upgrade compatibility test. Original experiment evidence is retained.

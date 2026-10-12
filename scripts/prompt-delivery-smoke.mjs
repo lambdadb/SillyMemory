@@ -65,7 +65,7 @@ const source = process.env.ST_SOURCE || '/tmp/sillymemory-st-prompt-delivery';
 const output = path.resolve(process.argv[2] || path.join(root, 'artifacts/prompt-delivery.json'));
 assert.equal(execFileSync('git', ['-C', source, 'rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(), plan.host);
 assert.equal(await realpath(path.join(source, 'public/scripts/extensions/third-party/sillymemory')), root);
-const sourceFiles = ['vendor/lambdadb.js', 'package-lock.json', 'tests/helpers/lambdadb-responses.js', 'index.js', 'src/chat-collections.js', 'manifest.json', 'src/chunking.js', 'src/client.js', 'src/context.js', 'src/gate.js', 'src/memory.js', 'src/time.js', 'src/status.js', 'scripts/prompt-delivery-smoke.mjs', 'scripts/emulator-cors.mjs', 'src/delivery.js', 'settings.html', 'scripts/prompt-capacity-cases.mjs'];
+const sourceFiles = ['vendor/lambdadb.js', 'package-lock.json', 'tests/helpers/lambdadb-responses.js', 'index.js', 'src/chat-collections.js', 'manifest.json', 'src/chunking.js', 'src/client.js', 'src/credentials.js', 'src/context.js', 'src/gate.js', 'src/memory.js', 'src/time.js', 'src/status.js', 'scripts/prompt-delivery-smoke.mjs', 'scripts/emulator-cors.mjs', 'src/delivery.js', 'settings.html', 'scripts/prompt-capacity-cases.mjs'];
 sourceFiles.push('scripts/semantic-long.mjs', 'tests/fixtures/semantic-long-v1.json', 'tests/fixtures/packing-ranks.json');
 const hostFiles = ['public/script.js', 'public/scripts/openai.js', 'public/scripts/PromptManager.js', 'public/scripts/tokenizers.js', 'src/endpoints/tokenizers.js', 'src/endpoints/backends/chat-completions.js', 'package-lock.json'];
 async function hashes() {
@@ -458,21 +458,22 @@ try {
     await field('stopOnLoss').uncheck();
     await page.reload(); await page.locator('#sillymemory').waitFor({ state: 'attached' });
     assert.equal(await field('stopOnLoss').isChecked(), false, 'Warning preference survives reload');
-    assert.equal(await field('key').inputValue(), '', 'Reload clears session key');
-    assert.equal(await field('enabled').isChecked(), false, 'Reload disables memory');
+    await page.waitForFunction(() => !document.querySelector('#sillymemory [data-sm=connect]').disabled);
+    assert.equal(await field('key').inputValue(), '', 'Reload restores the key without exposing it in the input');
     assert.equal(await field('delivery').innerText(), 'No prompt checked in this chat.', 'No stale final prompt after reload');
     await page.locator('#extensions-settings-button .drawer-toggle').click();
     if (!await field('endpoint').isVisible()) await page.locator('#sillymemory .inline-drawer-toggle').click();
     await field('key').fill('synthetic-session-key'); await field('connect').click();
     page.once('dialog', dialog => dialog.accept()); await field('delete').click(); await waitStatus('no longer accessible');
     assert.equal(collections.size, 0);
+    await field('forget').click(); await waitStatus('Saved key removed');
     const stored = await page.evaluate(() => JSON.stringify({ local: { ...localStorage }, session: { ...sessionStorage }, settings: SillyTavern.getContext().extensionSettings }));
     assert.ok(!stored.includes('synthetic-session-key'));
     assert.ok(!(await readFile(profilePath, 'utf8')).includes('synthetic-session-key'));
     assert.deepEqual(errors, []);
     assert.deepEqual(await hashes(), frozen.sourceSha256, 'Measured sources remain frozen');
     assert.deepEqual(await hostHashes(), frozen.hostSha256, 'Measured host sources remain frozen');
-    Object.assign(report, { passed: true, node: process.version, browser: browser.version(), requests, remainingCollections: collections.size, sessionKeyAbsentFromStorage: true });
+    Object.assign(report, { passed: true, node: process.version, browser: browser.version(), requests, remainingCollections: collections.size, forgottenKeyAbsentFromStorage: true });
 } catch (error) {
     Object.assign(report, { passed: false, failure: error.message, errors, remainingCollections: collections.size });
     console.error('Delivery status:', await page?.locator('[data-sm="delivery"]').innerText().catch(() => 'unavailable'));

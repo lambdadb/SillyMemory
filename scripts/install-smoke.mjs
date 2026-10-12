@@ -76,15 +76,15 @@ try {
     await settings();
     check('installed extension shows product branding', (await page.locator('#sillymemory').innerText()).includes('Powered by LambdaDB'));
     await field('endpoint').fill('https://release-test.invalid'); await field('project').fill('release-test');
-    await field('key').fill('synthetic-release-session-key'); await field('connect').click();
+    await field('key').fill('synthetic-release-unsaved-key');
     await field('budget').fill('600'); await field('budget').dispatchEvent('change');
     await field('stopOnLoss').uncheck();
-    check('session key input clears after connecting', await field('key').inputValue() === '');
+    check('key field accepts an unsaved input without connection side effects', await field('key').inputValue() === 'synthetic-release-unsaved-key');
     const owner = await page.evaluate(() => SillyTavern.getContext().extensionSettings.sillymemory.owner);
     await page.evaluate(async () => { const { saveSettings } = await import('/script.js'); await saveSettings(); });
     await page.reload(); await page.locator('#sillymemory').waitFor({ state: 'attached' }); await settings();
     check('reload preserves installation ownership', await page.evaluate(owner => SillyTavern.getContext().extensionSettings.sillymemory.owner === owner, owner));
-    check('reload clears the key and leaves memory disabled', await field('key').inputValue() === '' && !await field('enabled').isChecked());
+    check('reload clears unsaved key input and leaves memory disabled', await field('key').inputValue() === '' && !await field('enabled').isChecked());
     check('configured token bounds and warning-only preference survive reload', await field('budget').inputValue() === '600' && !await field('stopOnLoss').isChecked());
     check('settings link to the canonical source and license', await page.locator('#sillymemory a', { hasText: 'Source' }).getAttribute('href') === repository && await page.locator('#sillymemory a', { hasText: 'AGPL-3.0-only' }).getAttribute('href') === `${repository}/blob/main/LICENSE`);
     check('panel explains direct CORS without a proxy setup', (await page.locator('#sillymemory').innerText()).includes('No SillyTavern proxy setting or restart is needed.'));
@@ -97,7 +97,7 @@ try {
     check('extension manager displays the candidate version', (await page.locator('.extensions_info .extension_block').filter({ hasText: 'SillyMemory' }).innerText()).includes(candidate.version));
     await page.screenshot({ path: path.join(artifacts, `${artifactTag}.png`) });
     const persisted = await page.evaluate(() => JSON.stringify({ local: { ...localStorage }, session: { ...sessionStorage }, settings: SillyTavern.getContext().extensionSettings }));
-    check('session keys are absent from persistent browser state', !persisted.includes('synthetic-release-session-key'));
+    check('unsaved keys are absent from persistent browser state', !persisted.includes('synthetic-release-unsaved-key'));
     check('fresh installation and reload have no uncaught errors or provider requests', report.pageErrors.length === 0 && report.remoteRequests === 0);
     report.passed = true;
  } catch (error) {

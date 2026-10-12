@@ -1404,3 +1404,92 @@ to the original reply object; re-authored user/system text is preserved.
   361-unit-test receipt and 72-check native-host emulator report retained.
   Archive read-back and credential scan passed; no paid rerun or new quality score.
   Previous archives remain unchanged; local-only and not a CI dependency.
+
+## Saved browser connection verification
+
+The candidate replaces session-only keys with explicit Save and connect and
+verified automatic reconnection. Native account and exact endpoint/project
+scoping, enabled/disabled retention, blocked tabs, 401 removal, transient-error
+retention and complete Forget key are verified without real credentials or paid
+provider calls. Original session-only acceptance remains historical evidence.
+
+- Archive: `artifacts/archive/saved-connection-v1/evidence.tar.gz` under the
+  primary worktree; 122,774 bytes, 30 members; SHA-256
+  `694550c0c740cf827dcf3e5688060da71f9bfbb0b830ec98007c58db391cc297`.
+- Manifest: `artifacts/archive/saved-connection-v1/manifest.json`; SHA-256
+  `3144e25dd3a49dc0e9ee7f4ecb7034c31be7d8b12cfb1dbad234b223bcd5f741`.
+- Base `15c781289aff2448ed5e7afce595d677121f7479`; dirty patch and new runtime/test
+  sources retained with 346-unit, 52-browser, 84-fault and 17-delivery receipts.
+  Intermediate browser failures and the generation runner's missing-env preflight
+  are retained; no provider run is claimed. Earlier fault/delivery snapshots precede
+  the final storage-error sanitization and unsupported-lock UI guard; final browser
+  and unit receipts include them. Archive byte-readback passed.
+- All emulator runs ended with zero remaining collections and no browser errors.
+  Local-only, ignored, unavailable in fresh clones and never a CI dependency.
+
+The review correction preserves the previous validated key when an explicit
+candidate is rejected. Only the exact restored endpoint/project/key can be removed
+after failed validation. Final verification passed 347 units and 53 native-host
+emulator checks, including a different-project rejected candidate and successful
+password-free recovery of the prior connection. No paid calls or real keys.
+
+- Follow-up archive: `artifacts/archive/saved-connection-review-v1/evidence.tar.gz`
+  under the primary worktree; 53,384 bytes, 13 members; SHA-256
+  `e5c3ee9836795344c97b373ce05029d5cac2ac0066fc0e7dcb07bdbc87d39dfe`.
+- Manifest: `artifacts/archive/saved-connection-review-v1/manifest.json`; SHA-256
+  `a246a6989b6010cd07bb57f99c4b7c7101ba1f94d49ee1bfcb69a4e8ca5d58e6`.
+- Base `fc5191e69abee1568363e34fd25a85ab90beaba0`; exact sources/patch and
+  reports/logs retained, including an intermediate assertion requiring lowercase
+  wording. Byte-readback passed; original archive unchanged. Local-only and not CI.
+
+The final removal review makes Forget key independent of ordinary connection
+settings. A deliberately lost settings record cannot leave its separate account
+credential behind. An explicit retry after transient reconnection failure restores
+the saved enabled preference after authentication. Final units: 347; native-host
+emulator checks: 54; no browser errors or remaining collections; no paid calls.
+
+- Follow-up archive: `artifacts/archive/saved-connection-review-v2/evidence.tar.gz`
+  under the primary worktree; 37,894 bytes, 8 members; SHA-256
+  `fcae192749eec8bca3ffb74a15beb2817060131d77a43feacfa6d69a865bdeff`.
+- Manifest: `artifacts/archive/saved-connection-review-v2/manifest.json`; SHA-256
+  `86f466163e2b96b549660e684213c60bb82d08da3d4189a5e6aa02c9cac8545a`.
+- Base `af241c0d1f35da8274eba0f83574580383dd6ab2`; exact sources/patch and
+  verification receipts retained. Byte-readback passed; all previous archives
+  remain unchanged. Local-only and not a CI dependency.
+
+The storage-failure review writes ordinary settings before replacing the key,
+restores their exact previous bytes if credential storage fails and adopts runtime
+state only after both writes succeed. Unit tests independently cover settings-write
+failure, credential-write failure, failed initial save and unavailable rollback;
+a scoped native browser quota fixture restores its prototype in a finally block.
+Final units: 350; native-host emulator checks: 55; zero browser errors/remaining
+collections; no real keys or paid calls.
+
+- Follow-up archive: `artifacts/archive/saved-connection-review-v3/evidence.tar.gz`
+  under the primary worktree; 41,493 bytes, 10 members; SHA-256
+  `d5592de1c1a12a9073a42765f3a0c673db9cc54d48c857975f1dc8955546ab57`.
+- Manifest: `artifacts/archive/saved-connection-review-v3/manifest.json`; SHA-256
+  `f8f5f3ee933e70859a99c10e14a19ac1d7b4c545d6c41f145757748032ceb221`.
+- Base `47057276f0cae1f75ef00f4a90ba7d873b7c7632`; sources/patch and
+  verification receipts retained. Byte-readback passed; all prior archives
+  unchanged. Local-only and not a CI dependency.
+
+
+The post-PR #73 merge revalidation preserves both product behaviors. Final units:
+371; actual-host browser/completion/LambdaDB emulator checks: 83; fault checks: 88.
+No page errors or remaining collections, real keys or paid provider calls. The
+initial auto-load fixture failure and diagnosis are retained alongside the fixed
+fixture and final reports; see [combined validation](saved-connection.md#integration-with-clarification-continuity).
+
+- Integration archive: `artifacts/archive/saved-connection-integration-v1/evidence.tar.gz`
+  under the primary worktree; 114,911 bytes, 35 members; SHA-256
+  `cad8aef6d98ee01bd9215036556b545ccc3a66e0426f39a8f72ccf569a34470b`.
+- Manifest: `artifacts/archive/saved-connection-integration-v1/manifest.json`;
+  SHA-256 `36da33024df8a04d31a119ffef24f0b0ac69024629a57d304ba014fc8ca8da1f`.
+- Topic base `f9252389f7ac78f9fbef18540f4c9991871ee54c`, develop base
+  `effc2211724280dc49e664800124356c847e3f2f`; dirty integration patch, exact
+  source files, complete reports and logs retained. Every archived member was read
+  back and matched to its source. The manifest records the initial manually copied
+  fault count correction; the unchanged run report is authoritative. Initial bytes
+  and all prior archives remain preserved. Local-only, ignored, unavailable in a
+  fresh clone and never a CI dependency.

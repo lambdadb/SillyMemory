@@ -31,10 +31,10 @@ test('partial failure retains the last confirmed count, hides progress and gives
 });
 
 test('failure guidance separates reconnect, rate limiting, network and unknown errors', () => {
-    assert.match(failureText(new ConnectionError('Authentication failed.', 401)), /Use key for this session/);
-    assert.match(failureText(new ConnectionError('Authentication failed.', 401)), /memory is enabled/);
+    assert.match(failureText(new ConnectionError('Authentication failed.', 401)), /Save and connect/);
+    assert.match(failureText(new ConnectionError('Authentication failed.', 401)), /[Mm]emory is disabled/);
     const setupFailure = failureText(new ConnectionError('Authentication failed.', 401), { sync: false });
-    assert.match(setupFailure, /retry this action/); assert(!setupFailure.includes('Sync this chat'));
+    assert.match(setupFailure, /Save and connect/); assert(!setupFailure.includes('Sync this chat'));
     assert.match(failureText(new ConnectionError('Rate limited.', 429)), /Wait.*Sync this chat/);
     assert.match(failureText(new ConnectionError('Memory service returned HTTP 503.', 503)), /HTTP 503.*Wait/);
     assert.match(failureText(new ConnectionError('Network failed.', 0, 'network')), /Check the connection/);

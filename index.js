@@ -1,5 +1,6 @@
 import { createCheckpoint, finishCheckpoint, resumeCheckpoint, listCheckpoints, checkpointRows, renameCheckpoint, deleteCheckpoint } from './src/checkpoints.js';
 import { LambdaClient, ConnectionError, connectionConfig } from './src/client.js';
+import { SavedKey } from './src/credentials.js';
 import { ChatCollections, chatCollection, ensureChatIdentity } from './src/chat-collections.js';
 import { runTransportGate } from './src/gate.js';
 import { MemoryEngine, Journal, capture, fingerprint, options, DEFAULTS, memoryBoundary } from './src/memory.js';
@@ -12,6 +13,7 @@ const context = () => SillyTavern.getContext();
 const uuid = () => crypto.randomUUID().replaceAll('-', '');
 let client, engine, root, state, stateKey, owner, timer, busy = false, gatePassed = false;
 let sessionReady = false;
+let savedKey, connectingClient;
 let promptSequence = 0;
 let retrievalSequence = 0, retrievalOperation;
 let statusView, collections, identityKey;
@@ -28,7 +30,7 @@ function clearInjection() {
     context().setExtensionPrompt('sillymemory', '', 1, 0, false, 0);
 }
 function invalidate() { promptSequence++; engine?.invalidate(); clearInjection(); delivery.clear(); }
-function persist() { localStorage.setItem(stateKey, JSON.stringify(state)); }
+function persist(next = state) { localStorage.setItem(stateKey, JSON.stringify(next)); }
 function makeCollections() {
     engine = undefined; engines.clear(); identityKey = undefined;
     collections = client ? new ChatCollections(client, owner, entry => {
@@ -85,13 +87,21 @@ async function sync() {
 function schedule() {
     if (!sessionReady) return; // Preserve the lock-conflict explanation.
     invalidate(); clearTimeout(timer);
-    if (!client) { status('Enter your project API key. Keys are cleared on reload.'); return; }
+    if (!client) { status('Enter your project API key and click Save and connect.'); return; }
     if (!state.enabled) { status('Memory disabled. Remote data is retained until deleted.'); return; }
     if (!state.ready || !capture(context())) { status('Select a supported character chat and connect to a memory collection.'); return; }
     status('Waiting to synchronize current chat…');
     timer = setTimeout(sync, 400);
 }
 function fail(error, operation) {
+    if (error.status === 401 && client) {
+        state.enabled = false; element('enabled').checked = false;
+        client.forget(); invalidate();
+        try { savedKey.forget(); persist(); }
+        catch { status('Authentication failed. Memory is disabled. Browser storage could not be updated; allow storage, then click Forget key again.'); return; }
+        client = undefined; collections = undefined;
+        status(failureText(error)); return;
+    }
     clearInjection();
     if (root) element('inspection').textContent = 'No memory injected: operation failed.';
     if (operation) operation.fail(error); else status(failureText(error, { sync: false }));
@@ -236,6 +246,7 @@ async function initialize() {
         if (JSON.parse(stored.settings).extension_settings?.sillymemory?.owner !== owner) throw new Error('Installation identity was not persisted.');
     }
     stateKey = `sillymemory:state:${owner}`;
+    savedKey = new SavedKey(localStorage, owner);
     state = { endpoint: '', project: '', enabled: false, ready: false, budget: DEFAULTS.budget, stopOnLoss: true, clarification: true, chatCollections: [], ...JSON.parse(localStorage.getItem(stateKey) || '{}') };
     const folder = new URL('.', import.meta.url).pathname.split('/scripts/extensions/')[1].replace(/\/$/, '');
     const html = await ctx.renderExtensionTemplateAsync(folder, 'settings');
@@ -253,32 +264,74 @@ async function initialize() {
     element('stopOnLoss').onchange = () => { state.stopOnLoss = element('stopOnLoss').checked; persist(); };
     element('clarification').checked = state.clarification !== false;
     element('clarification').onchange = () => { state.clarification = element('clarification').checked; persist(); schedule(); };
-    element('enabled').checked = false; state.enabled = false; persist();
+    const restoreEnabled = state.enabled;
+    element('enabled').checked = false; state.enabled = false;
+    root.querySelectorAll('button,input').forEach(x => { x.disabled = true; });
     if (!navigator.locks) { status('This browser needs Web Locks support (localhost or HTTPS) to use SillyMemory safely.'); return; }
     // One live instance per account/browser, preventing cross-tab write/delete races.
     navigator.locks.request(`sillymemory-session:${owner}`, { ifAvailable: true }, async lock => {
         if (!lock) { status('SillyMemory is already open in another tab. Close that tab and reload this one.'); root.querySelectorAll('button,input').forEach(x => { x.disabled = true; }); return; }
         sessionReady = true;
-        await new Promise(resolve => addEventListener('pagehide', resolve, { once: true }));
-        sessionReady = false; client?.forget(); invalidate();
+        const closed = new Promise(resolve => addEventListener('pagehide', () => {
+            sessionReady = false; connectingClient?.forget(); client?.forget(); invalidate(); resolve();
+        }, { once: true }));
+        root.querySelectorAll('button,input').forEach(x => { x.disabled = false; });
+        await action(async () => {
+            if (!state.endpoint || !state.project) return;
+            const key = savedKey.read(state);
+            if (key) await connect(state, key, restoreEnabled, true);
+        });
+        await closed;
     });
+    async function connect(config, key, enabled, restoring = false) {
+        const candidate = connectionConfig(config);
+        if ((state.testCollection || state.chatCollections.length) && (candidate.endpoint !== state.endpoint || candidate.project !== state.project)) throw new ConnectionError('Clean up owned collections before changing the connection.');
+        const changed = candidate.endpoint !== state.endpoint || candidate.project !== state.project;
+        const candidateClient = new LambdaClient(candidate, key);
+        state.enabled = false; element('enabled').checked = false;
+        invalidate(); status('Connecting: waiting for earlier writes to finish…');
+        connectingClient = candidateClient;
+        try {
+            await drain(); client?.forget(); client = undefined; makeCollections();
+            if (!sessionReady) throw new ConnectionError('Connection canceled because the session changed.', 0, 'canceled');
+            status(restoring ? 'Reconnecting with the saved key…' : 'Checking the project key before saving…');
+            await candidateClient.checkConnection();
+            if (!sessionReady || context().extensionSettings.sillymemory?.owner !== owner) throw new ConnectionError('Connection canceled because the session changed.', 0, 'canceled');
+            const ready = !changed && state.ready;
+            const nextState = { ...state, ...candidate, ready, enabled: Boolean(enabled && ready) };
+            if (restoring) persist(nextState);
+            else savedKey.commit(candidate, key, nextState);
+            state = nextState;
+            client = candidateClient; makeCollections(); gatePassed = false;
+            element('enabled').checked = state.enabled;
+            if (state.enabled) schedule();
+            else status(state.ready ? 'Connected. Memory remains disabled.' : 'Connected. Run the synthetic transport test, then prepare chat memory.');
+        } catch (error) {
+            candidateClient.forget(); state.enabled = false; element('enabled').checked = false;
+            if (error.status === 401) {
+                if (restoring) savedKey.forgetMatching(candidate, key);
+                persist();
+            }
+            throw error;
+        } finally { if (connectingClient === candidateClient) connectingClient = undefined; }
+    }
     element('connect').onclick = () => action(async () => {
         const candidate = connectionConfig({ endpoint: element('endpoint').value.trim(), project: element('project').value.trim() });
-        if ((state.testCollection || state.chatCollections.length) && (candidate.endpoint !== state.endpoint || candidate.project !== state.project)) throw new ConnectionError('Clean up owned collections before changing the connection.');
-        invalidate(); status('Connecting: waiting for earlier writes to finish…');
-        await drain(); client?.forget();
-        client = new LambdaClient(candidate, element('key').value);
-        element('key').value = ''; gatePassed = false;
-        Object.assign(state, candidate); persist(); makeCollections();
-        status('Key is in browser memory. Run the synthetic transport test before creating a memory collection.');
+        const typed = element('key').value.trim();
+        const key = typed || savedKey.read(candidate) || ''; element('key').value = '';
+        const enabled = state.enabled || (!client && !typed && Boolean(JSON.parse(localStorage.getItem(stateKey) || '{}').enabled));
+        await connect(candidate, key, enabled, !typed);
     });
     element('forget').onclick = () => action(async () => {
-        state.enabled = false; element('enabled').checked = false; persist(); invalidate();
+        state.enabled = false; element('enabled').checked = false; invalidate();
+        element('key').value = ''; client?.forget(); connectingClient?.forget();
+        savedKey.forget();
+        persist();
         status('Forgetting key: waiting for earlier writes to finish…');
         await drain(); client?.forget(); client = undefined; makeCollections();
         element('delivery').textContent = 'Key forgotten. No pending prompt verification.';
         element('inspection').textContent = 'No memory prepared.';
-        element('key').value = ''; gatePassed = false; status('Key forgotten. Enter it again to reconnect.');
+        element('key').value = ''; gatePassed = false; status('Saved key removed. Memory disabled. Enter your key to reconnect.');
     });
     element('gate').onclick = () => action(async () => {
         if (!client) throw new ConnectionError('Enter your API key first.');
