@@ -279,7 +279,7 @@ so its pre-run amendment raises cumulative creation/submission bounds to 14 and
 settings are unchanged. Both stages completed without harness recovery. Raw
 prompts, transcripts, rankings, exact runtime/producer bytes, all locks/amendments,
 status observations, source-support checks and cleanup receipts are local-only
-and checksum verified. See [evidence retention](evidence-retention.md#clarification-dialogue-policy-completion).
+and checksum verified. See [evidence retention](evidence-retention.md#generation-only-clarification-dialogue-policy-completion).
 
 ## Initial diagnosis: preserved intermediate observations
 
