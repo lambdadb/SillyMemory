@@ -205,8 +205,9 @@ try {
     check('transient reconnect failure retains the saved key but cannot enable memory', !await field('enabled').isChecked() && await page.evaluate(() => Object.keys(localStorage).some(k => k.startsWith('sillymemory:credential:'))));
     await page.locator('#extensions-settings-button .drawer-toggle').click();
     if (!await field('key').isVisible()) await page.locator('#sillymemory .inline-drawer-toggle').click();
-    await field('connect').click(); await waitStatus('Connected. Memory remains disabled.');
-    check('retry can use the saved key without password re-entry', await field('key').inputValue() === '');
+    await field('connect').click();
+    await page.waitForFunction(() => !document.querySelector('#sillymemory [data-sm=connect]').disabled && document.querySelector('#sillymemory [data-sm=enabled]').checked);
+    check('retry uses the saved key and restores the prior enabled preference without password re-entry', await field('key').inputValue() === '' && await field('enabled').isChecked());
     await page.evaluate(() => {
         const key = Object.keys(localStorage).find(k => k.startsWith('sillymemory:credential:'));
         localStorage.setItem(key, JSON.stringify({ ...JSON.parse(localStorage.getItem(key)), key: 'wrong-synthetic-key' }));
@@ -413,6 +414,11 @@ try {
     await page.reload(); await page.locator('#sillymemory').waitFor({ state: 'attached', timeout: 45000 });
     await waitStatus('Connected.');
     check('remote deletion leaves reconnection available but preserves disabled memory', await field('key').inputValue() === '' && !await field('enabled').isChecked());
+    check('explicit user budget survives reload without default replacement', await field('budget').inputValue() === '512');
+    await page.evaluate(() => localStorage.removeItem(`sillymemory:state:${SillyTavern.getContext().extensionSettings.sillymemory.owner}`));
+    await page.reload(); await page.locator('#sillymemory').waitFor({ state: 'attached', timeout: 45000 });
+    await page.waitForFunction(() => !document.querySelector('#sillymemory [data-sm=connect]').disabled);
+    check('a credential remains removable when its ordinary connection settings are lost', await field('endpoint').inputValue() === '' && await field('project').inputValue() === '' && await page.evaluate(() => Object.keys(localStorage).some(k => k.startsWith('sillymemory:credential:'))));
     await page.locator('#extensions-settings-button .drawer-toggle').click();
     if (!await field('forget').isVisible()) await page.locator('#sillymemory .inline-drawer-toggle').click();
     await field('forget').click(); await waitStatus('Saved key removed');
@@ -420,7 +426,7 @@ try {
     await page.reload(); await page.locator('#sillymemory').waitFor({ state: 'attached', timeout: 45000 });
     await page.waitForFunction(() => !document.querySelector('#sillymemory [data-sm=connect]').disabled);
     check('Forget key removes persistence and reload makes no credential request', calls.length === beforeForgottenReload && await page.evaluate(() => !Object.keys(localStorage).some(k => k.startsWith('sillymemory:credential:'))) && !await field('enabled').isChecked());
-    check('explicit user budget survives reload without default replacement', await field('budget').inputValue() === '512');
+
     if (faultMode) check('fault run has no uncaught browser page errors', errors.length === 0);
     const sourceSha256 = {};
     for (const file of ['index.js', 'manifest.json', 'settings.html', 'style.css', 'src/chunking.js', 'src/client.js', 'src/credentials.js', 'src/commit.js', 'src/chat-collections.js', 'src/checkpoints.js', 'src/gate.js', 'src/memory.js', 'src/time.js', 'src/context.js', 'src/delivery.js', 'src/status.js', 'scripts/browser-smoke.mjs', 'scripts/emulator-cors.mjs', 'scripts/fault-scenarios.mjs', 'scripts/recovery-scenarios.mjs']) {

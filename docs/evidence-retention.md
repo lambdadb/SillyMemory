@@ -1160,3 +1160,18 @@ password-free recovery of the prior connection. No paid calls or real keys.
 - Base `fc5191e69abee1568363e34fd25a85ab90beaba0`; exact sources/patch and
   reports/logs retained, including an intermediate assertion requiring lowercase
   wording. Byte-readback passed; original archive unchanged. Local-only and not CI.
+
+The final removal review makes Forget key independent of ordinary connection
+settings. A deliberately lost settings record cannot leave its separate account
+credential behind. An explicit retry after transient reconnection failure restores
+the saved enabled preference after authentication. Final units: 347; native-host
+emulator checks: 54; no browser errors or remaining collections; no paid calls.
+
+- Follow-up archive: `artifacts/archive/saved-connection-review-v2/evidence.tar.gz`
+  under the primary worktree; 37,894 bytes, 8 members; SHA-256
+  `fcae192749eec8bca3ffb74a15beb2817060131d77a43feacfa6d69a865bdeff`.
+- Manifest: `artifacts/archive/saved-connection-review-v2/manifest.json`; SHA-256
+  `86f466163e2b96b549660e684213c60bb82d08da3d4189a5e6aa02c9cac8545a`.
+- Base `af241c0d1f35da8274eba0f83574580383dd6ab2`; exact sources/patch and
+  verification receipts retained. Byte-readback passed; all previous archives
+  remain unchanged. Local-only and not a CI dependency.

@@ -288,12 +288,13 @@ async function initialize() {
         const candidate = connectionConfig({ endpoint: element('endpoint').value.trim(), project: element('project').value.trim() });
         const typed = element('key').value.trim();
         const key = typed || savedKey.read(candidate) || ''; element('key').value = '';
-        await connect(candidate, key, state.enabled, !typed);
+        const enabled = state.enabled || (!client && !typed && Boolean(JSON.parse(localStorage.getItem(stateKey) || '{}').enabled));
+        await connect(candidate, key, enabled, !typed);
     });
     element('forget').onclick = () => action(async () => {
         state.enabled = false; element('enabled').checked = false; invalidate();
         element('key').value = ''; client?.forget(); connectingClient?.forget();
-        if (state.endpoint && state.project) savedKey.forget();
+        savedKey.forget();
         persist();
         status('Forgetting key: waiting for earlier writes to finish…');
         await drain(); client?.forget(); client = undefined; makeCollections();

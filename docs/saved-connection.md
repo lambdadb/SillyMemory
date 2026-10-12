@@ -36,9 +36,11 @@ checks still guard writes and generation.
   **Save and connect**; switching back can retry the prior saved connection.
 - Network/CORS, timeout, 403 and transient service errors leave saved credentials
   available but do not enable memory. An empty key input may retry the saved key
-  for the exact selected connection via **Save and connect**. No automatic retry loop.
+  for the exact selected connection via **Save and connect**, restoring the saved
+  enabled preference after verified recovery. No automatic retry loop.
 - **Forget key** clears the input and runtime key, cancels requests, removes the
-  account credential, disables memory and drains pending work. It retains remote
+  account credential even if ordinary connection settings were lost, disables
+  memory and drains pending work. It retains remote
   memory and owned cleanup journals. A storage-removal failure is visible and is
   not reported as successful deletion.
 - The exclusive tab lock blocks automatic credential restoration and service calls
@@ -66,7 +68,7 @@ read contract. Completed validation on SillyTavern 1.19.0 at
 
 - `npm test`: 347 passed; runtime/script/test syntax, release metadata and the
   pinned SDK 0.8.0 bundle checks passed.
-- `SM_ARTIFACT_TAG=saved-connection-review npm run test:browser`: 53 actual-host
+- `SM_ARTIFACT_TAG=saved-connection-removal npm run test:browser`: 54 actual-host
   Chromium checks with the local HTTPS LambdaDB emulator. Confirmed verified
   automatic reconnect, enabled/disabled retention, no duplicate upserts, delayed
   authentication staying disabled, exclusive-tab behavior, HTTP 401 removal,
@@ -77,8 +79,8 @@ read contract. Completed validation on SillyTavern 1.19.0 at
 - `node scripts/prompt-delivery-smoke.mjs`: 17 native prompt-delivery cases,
   including streaming, swipe, regeneration, capacity failure and literal assembly.
   Both fault and prompt runs preceded the final storage-error message sanitization
-  and unsupported-lock control disabling; final units and the 53-check browser
-  run include those guards and the candidate-key review correction. All emulator runs ended with zero remaining collections
+  and unsupported-lock control disabling; final units and the 54-check browser
+  run include those guards and the candidate-key/removal review corrections. All emulator runs ended with zero remaining collections
   and no browser errors.
 
 The paid generation/lifecycle runners were updated and syntax checked but not
