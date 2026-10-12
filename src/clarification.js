@@ -78,7 +78,7 @@ export class ClarificationRequest {
     }
     async finish(chat, key, index) {
         const current = this.current;
-        if (!current?.requested || current.chat !== chat || current.key !== key || index !== current.anchor + 1 || chat[index]?.is_user) return null;
+        if (!current?.requested || current.chat !== chat || current.key !== key || index !== current.anchor + 1 || !chat[index] || chat[index].is_user) return null;
         this.current = null;
         const unchanged = projection(chat, current.anchor) === current.prefix;
         const decoded = decodeReply(String(chat[index].mes || ''));

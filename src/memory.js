@@ -23,6 +23,7 @@ export function capture(context) {
             index, text: typeof m.mes === 'string' ? m.mes : '', name: String(m.name || (m.is_user ? 'User' : 'Character')),
             user: Boolean(m.is_user), swipe: m.swipe_id ?? 0,
             eligible: !m.extra?.file && !m.extra?.media?.length && !m.extra?.tool_invocations?.length && !m.extra?.sillymemoryRequest?.incomplete && !m.extra?.sillymemoryPending,
+            ...(m.extra?.sillymemoryRequest?.incomplete || m.extra?.sillymemoryPending ? { protocolIncomplete: true } : {}),
             ...(m.extra?.sillymemoryRequest ? { requestState: m.extra.sillymemoryRequest } : {}),
             ...(recordedAt ? { recordedAt } : {}),
         };

@@ -60,6 +60,7 @@ test('invalid and interrupted responses preserve unknown state rather than false
     chat.push(user('Try again.')); assert.equal(await pendingRequestStart(chat, 4), 0);
     const ctx = { chat, characterId: 0, characters: [{ avatar: 'a.png' }], getCurrentChatId: () => 'chat' };
     assert.equal(capture(ctx).messages[3].eligible, false);
+    assert.equal(capture(ctx).messages[3].protocolIncomplete, true);
 });
 test('a foreign chat or mismatched source cannot adopt a pending provider result', async () => {
     const chat = [user('Where?')], request = new ClarificationRequest(); await request.prepare(chat, 0, 'a'); request.configure({}, chat, 'a');
@@ -67,6 +68,14 @@ test('a foreign chat or mismatched source cannot adopt a pending provider result
     assert.equal(await request.finish(other, 'b', 1), null); assert.equal(other[1].mes, 'Other answer');
     chat[0].mes = 'Edited'; chat.push(assistant('{"reply":"Which event?","request_status":"needs_clarification"}'));
     await request.finish(chat, 'a', 1); assert.equal(chat[1].extra.sillymemoryRequest.root, null);
+});
+test('a deleted streaming reply cannot be adopted by deferred completion recovery', async () => {
+    const chat = [user('Where?')], request = new ClarificationRequest();
+    await request.prepare(chat, 0, 'a'); request.configure({}, chat, 'a');
+    chat.push(assistant('{"reply":"unfinished')); request.streaming(chat, 'a');
+    chat.pop(); request.cancel();
+    assert.equal(await request.finish(chat, 'a', 1), null);
+    assert.deepEqual(chat, [user('Where?')]);
 });
 test('schema, tools and multiple-reply conflicts are rejected without overwriting settings', async () => {
     for (const data of [{ json_schema: { name: 'other' } }, { response_format: { type: 'json_object' } }, { tools: [{}] }, { n: 2 }]) {

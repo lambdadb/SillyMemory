@@ -153,7 +153,7 @@ globalThis.sillymemory_intercept = async (chat, contextSize, abort, type) => {
             const anchor = source.indexOf(source.filter(m => !m.is_system)[before]);
             const start = await clarification.prepare(source, anchor, requestKey());
             config.requestStart = source.slice(0, start).filter(m => !m.is_system).length;
-            protectedMessages = chat.filter(m => m.index >= config.requestStart && m.index <= before);
+            protectedMessages = chat.filter(m => m.index >= config.requestStart && m.index <= before && !snapshot.messages[m.index]?.protocolIncomplete);
             requestGuidance += `\n${REQUEST_GUIDANCE}`;
         }
         // The extension budget includes its complete wrapper; SillyTavern still manages
@@ -174,6 +174,9 @@ globalThis.sillymemory_intercept = async (chat, contextSize, abort, type) => {
         // Drop full plain history, including answers following a replacement question.
         const start = config.requestStart ?? before;
         const eligible = new Set(snapshot.messages.filter(m => (m.index < start || m.index > before) && m.eligible && m.text.trim()).map(m => m.index));
+        // Incomplete protocol output is neither searchable source nor retained
+        // dialogue. Preserve its native recovery UI, but never feed it to the model.
+        const incomplete = new Set(snapshot.messages.filter(m => m.protocolIncomplete).map(m => m.index));
         // Require the pinned coreChat index contract before pruning anything.
         if (!chat.every(m => Number.isInteger(m.index))) { operation.finish('Unexpected prompt shape. Original prompt retained.'); return; }
         if (![...indexedMessages].every(i => i < start && eligible.has(i))) { operation.finish('Memory no longer matches eligible source. Original prompt retained.'); return; }
@@ -186,7 +189,8 @@ globalThis.sillymemory_intercept = async (chat, contextSize, abort, type) => {
             group.push(message); recalled.set(message.index, group);
         }
         for (let i = chat.length - 1; i >= 0; i--) {
-            if (eligible.has(chat[i].index)) chat.splice(i, 1, ...(recalled.get(chat[i].index) || []));
+            if (incomplete.has(chat[i].index)) chat.splice(i, 1);
+            else if (eligible.has(chat[i].index)) chat.splice(i, 1, ...(recalled.get(chat[i].index) || []));
         }
         element('inspection').textContent = `${preparedTokens} / ${config.budget} tokens\n\n${result.text}`;
         preparedMessages = result.messages;

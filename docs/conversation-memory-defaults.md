@@ -40,7 +40,8 @@ branch copies preserve it; edits, deletions or changed earlier swipes invalidate
 its source signature. Regenerate and new swipes classify the replacement reply,
 while selecting an existing swipe restores that reply's state. The complete span
 can grow until resolved; query/provider/context limits remain explicit constraints.
-Incomplete structured streams are excluded from indexing. Missing/invalid status
+Incomplete structured streams are excluded from indexing and later generation
+prompts, while their recovery notice remains in the native chat UI. Missing/invalid status
 or interrupted generation retains unresolved context conservatively as internal
 `unknown`, rather than fabricating completion. Recovery cleans saved in-flight
 replies when the chat loads. This is separate from the three model statuses.

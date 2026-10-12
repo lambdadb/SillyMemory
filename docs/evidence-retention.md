@@ -1325,3 +1325,18 @@ the native query boundary; no paid answer-quality run was repeated.
   emulator/unit receipts retained. Byte-for-byte archive read-back and credential
   scanning passed. Local-only, ignored and unavailable in fresh clones. The paid
   production snapshot and all previous archives remain unchanged.
+
+A second review correction removes owned incomplete protocol placeholders from
+later generation prompts, independently of storage eligibility, while preserving
+the native recovery UI. Deferred completion also ignores a reply deleted before
+recovery. Both pending and post-terminal actual requests omit the placeholder.
+
+- Follow-up archive: `artifacts/archive/clarification-production-review-v2/evidence.tar.gz`
+  under the primary worktree; 46,027 bytes, ten members; SHA-256
+  `76e9bb16f0532237e85d15cf3b5663efa362e71a93a34108f31f7440e371b65c`.
+- Manifest: `artifacts/archive/clarification-production-review-v2/manifest.json`;
+  SHA-256 `a0f80b5e0fc2a19721610cd1e9ec680a138416f577372b85676f3705ae33e4b3`.
+- Base `5d9abfe234aaae83e7fdc96deea9c3815c0ec9b0`; exact runtime/test sources,
+  patch, 353-unit-test receipt and 69-check native-host emulator report retained.
+  Archive byte-readback and credential scan passed. No paid rerun or new answer
+  score; previous archives remain unchanged. Local-only and not a CI dependency.

@@ -16,7 +16,9 @@ boundary; publication is confirmed by the corresponding Git tag and GitHub Relea
   request starts at the first message, while still synchronizing completed history. No extra model or retrieval call is added. Bind state to the
   selected native reply and source signature across reload/swipe/branch copies;
   invalidate stale boundaries after edits/deletions. Hide streaming JSON, recover
-  interrupted replies conservatively, and reject conflicting schemas/tools.
+  interrupted replies conservatively, omit incomplete protocol placeholders from
+  later prompts, tolerate a reply deleted before deferred recovery, and reject
+  conflicting schemas/tools.
   Requires schema-capable Chat Completions; an explicit checkbox disables it.
 
 - Store available UTC host-message provenance on every chunk, separately from

@@ -91,10 +91,12 @@ export async function runClarificationScenarios({ page, field, waitStatus, check
     await generate('The blue one.', { reply: 'The city museum.', status: 'answered' });
     const repaired = calls.findLast(c => c.body.query?.bayesian)?.body.query.bayesian[0].knn.queryText;
     check('retry keeps unresolved input span while excluding incomplete protocol output', repaired.includes('Which one was it?') && repaired.includes('Which object do you mean?') && repaired.includes('The compass.') && !repaired.includes('unfinished'));
+    check('pending generation excludes incomplete protocol placeholders from the actual request', requests.at(-1).messages.every(m => !String(m.content).includes('[SillyMemory: no complete reply was received.')));
     // Replace the last answer through the native regenerate path.
     const regenerated = await generate('', { reply: 'I cannot establish that location.', status: 'insufficient_evidence' }, false, 'regenerate');
     check('native regeneration binds state to the replacement answer', regenerated.mes === 'I cannot establish that location.' && regenerated.extra.sillymemoryRequest.root === null);
     await generate('Where was that?', { reply: 'Which event?', status: 'needs_clarification' });
+    check('terminal closure does not retain old protocol placeholders in later requests', requests.at(-1).messages.every(m => !String(m.content).includes('[SillyMemory: no complete reply was received.')));
     replies.push({ reply: 'The city museum.', status: 'answered' });
     await page.evaluate(async () => { await SillyTavern.getContext().swipe.right(); });
     await page.waitForFunction(() => SillyTavern.getContext().chat.at(-1)?.extra?.sillymemoryRequest?.status === 'answered');
