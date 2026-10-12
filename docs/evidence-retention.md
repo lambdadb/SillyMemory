@@ -1208,7 +1208,7 @@ The [small input/settings lock](clarification-context-policy-inputs.json) keeps
 twelve paired dialogue cases and six live user profiles; no producer or large run
 fixture becomes a maintained CI dependency. This narrower generation-only evaluation
 did not meet its promotion gate. It is not a decision against accumulating retrieval queries; the corrected combined
-scope below remains unfinished for production integration.
+scope below was subsequently integrated; see the production receipt.
 
 - Primary local archive: `artifacts/archive/clarification-policy-v2/evidence.tar.gz`
   under the primary SillyMemory worktree; 56,483,051 bytes, 60 members; SHA-256
@@ -1244,7 +1244,8 @@ application of the earlier generation-only defer conclusion to that combined
 policy. The same twelve frozen cases score **8/12 → 12/12** when only retrieval
 query construction changes and generation keeps the complete pending dialogue.
 All four lost user facts are restored within the unchanged 4,096-token budget.
-Production defaults remain unchanged; PR #73 remains unfinished for integration.
+At this historical stage production defaults were unchanged; the later production
+receipt records integration.
 
 - Primary local archive: `artifacts/archive/clarification-query-v3/evidence.tar.gz`
   under the primary SillyMemory worktree; 63,263,044 bytes, 33 members; SHA-256
@@ -1274,3 +1275,37 @@ Production defaults remain unchanged; PR #73 remains unfinished for integration.
   zero paid-call count; it is not live-answer evidence.
 - The archive is local-only, ignored, unavailable in fresh clones and never a CI
   dependency. Earlier v1/v2 evidence archives were neither removed nor rewritten.
+
+## Clarification production integration
+
+The [adoption record](clarification-context-evaluation.md#production-adoption)
+completes PR #73's response/state integration, rather than treating another
+diagnostic run as a separate merge milestone. Maintained runtime and small native
+host/unit scenarios stay in Git; the bounded live producer and detailed evidence
+remain ignored.
+
+- Primary local archive: `artifacts/archive/clarification-production-v1/evidence.tar.gz`
+  under the primary SillyMemory worktree; 1,038,847 bytes, 70 members; SHA-256
+  `df1bd4111075221b1700b0e8b430439a9a65c3d4d8968e0b13afe76b70aafa43`.
+- Manifest: `artifacts/archive/clarification-production-v1/manifest.json`; SHA-256
+  `1a071305b0c91d5661ede9ad970713ba8c157e5617649d84c030c78c761030de`.
+- Producing base: `47824651f1ac7b35d3bfe68e762e56bee72965db`; pinned host
+  `06bde939fb1e9c4c8d8641d810f0a916b5bce127`. Exact paid-run runtime snapshot,
+  frozen plan, ten native prompts/replies/statuses, queries, selected memory,
+  source/cleanup receipts, one-off producer and pacing implementation are retained.
+  The plan SHA-256 is `67c3303ea0eb00dc4423307a9150f73dd88430d2aff53f288bed95567a59ab90`.
+- Final runtime/test sources and patch, 351-test receipt, 66-check host emulator
+  report and 78-check fault report are included separately. The fault run disables
+  continuity to isolate existing synchronization/cancellation contracts. Final YAML
+  override-shape guards were added after the paid run and verified with unit/native
+  emulator tests, not additional paid calls. Intermediate failure logs preserve the
+  fixed stream event-ordering defect and harness reload/expected-stop corrections.
+- All ten live statuses match the frozen expectations; three known-fact answers
+  supply their references. This functional gate has no judge calls and is not an
+  official benchmark score. All three created collections were deleted/404 verified;
+  no credentials remained in browser storage. All archive members were read back
+  byte-for-byte, and an exact credential scan found zero matches. No environment
+  file or private browser/host profile is included.
+- Local-only, ignored, unavailable in fresh clones and not a CI dependency.
+  Earlier v1/v2/v3/v4 clarification evidence remains intact. Production scripts
+  do not depend on those private archive paths.

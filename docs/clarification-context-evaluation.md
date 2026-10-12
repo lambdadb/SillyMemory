@@ -1,12 +1,88 @@
 # Clarification dialogue context policy
 
+## Production adoption
+
+**Adopt complete pending-dialogue continuity as the development default.** An
+ordinary request searches only its current question. When the answer model marks
+ambiguous user intent/referents as `needs_clarification`, subsequent retrieval and
+generation include the complete pending user/assistant span. Use only the latest
+query's selected memory. `answered` and `insufficient_evidence` close the span;
+missing/conflicting evidence for a clear request must not open one. No additional
+model or retrieval call is introduced. Search and token defaults are unchanged.
+
+The production adapter returns the reply and status in the same schema-constrained
+Chat Completions generation. Only decoded text is displayed/saved as the reply;
+status is native reply metadata, not embedded document content. Normal streaming
+is buffered visually until decoded. Source signatures invalidate stale boundaries,
+selected swipes retain their own state, and interrupted/invalid replies preserve
+unresolved context as internal `unknown`. Local selection excludes full pending
+turns before budgeting; v4 below excluded their excerpts after packing. The
+[default policy](conversation-memory-defaults.md) documents limits and the explicit
+opt-out for providers/settings without compatible JSON schema support.
+
+### Production validation
+
+- `npm test`: 351/351. Includes status/source binding, reload copies, edits/deletion,
+  selected swipe restoration, malformed/refused/interrupted replies, schema/tool
+  conflicts, native YAML override shapes and duplicate-budget exclusion.
+- `npm run check`, maintained script/test syntax, `npm run check:release` and
+  `npm run check:sdk`: passed; locked SDK 0.8.0 remains unchanged.
+- `ST_SOURCE=<pinned host> SM_ARTIFACT_TAG=clarification-integration-final npm run test:browser`:
+  actual SillyTavern 1.19.0/Chromium with local LambdaDB and deterministic completion
+  emulators. Automatic opening, full dialogue in retrieval/generation, terminal
+  closure, full page reload/key re-entry, malformed stream, explicit stop,
+  regeneration, native swipe selection, source edit, chat isolation and custom
+  schema conflicts passed. These are host-integration tests, not model-quality
+  measurements. Streaming JSON visibility was checked during token events.
+- The same tagged `npm run test:faults` passed existing delayed-query/edit/delete/
+  branch/disable safety checks with continuity disabled to isolate those contracts.
+- Ten real production replies used the pinned native host, direct-CORS LambdaDB
+  managed embeddings, Bayesian English/Jev, k=100/candidateSize=100/size=50,
+  4,096 memory tokens and `gpt-6.1-sol`/low, context 32,768, output limit 4,096.
+  No assistant prefix was emulated and no judge was called. The six frozen flows
+  below used two already-consumed public LongMemEval sources and fixed user followups.
+
+| Flow | Actual statuses | Answer inspection |
+| --- | --- | --- |
+| Ambiguous mixer giver → explicit referent | needs_clarification → answered | Sister |
+| Ambiguous yarn count → explicit referent | needs_clarification → answered | 17 skeins |
+| Ambiguous detail → unrecorded serial number | needs_clarification → insufficient_evidence | No fabricated serial |
+| Clear mixer-giver question | answered | Sister |
+| Clear unrecorded serial-number question | insufficient_evidence | No clarification loop |
+| Ambiguous person → explicit cancellation/serial question | needs_clarification → insufficient_evidence | Follows the new intent |
+
+All ten expected statuses matched: four clarification, three answered and three
+insufficient-evidence replies. The three known-fact answers were inspected against
+source/reference and all three supplied the fact. Two final replies used real
+streaming. All current selected memory reached the native provider requests; source
+history remained intact. Ten answer attempts completed without retry or successful-
+call waits, reserving 85,298 admission tokens (not billed usage). The run submitted
+2,031 documents in 156 LambdaDB requests; all three owned collections were deleted
+and HTTP 404 verified, with no keys in browser storage and no recorded host errors.
+The live runtime snapshot preceded the final YAML-shape conflict guard refinement;
+that refinement and final runtime are covered by unit and actual-host emulator tests.
+
+This is a bounded functional adoption gate, **not** a new LongMemEval score or proof
+of general intent classification. Some first clarifications suggested the wrong
+retrieved topic; fixed user followups explicitly identified the intended referent
+and the model then pivoted correctly. Broader clarification wording quality,
+non-Sol providers, arbitrary regex/prompt-rewriting extensions and multilingual
+quality remain unverified. The product still cannot recover facts absent from
+retrieved evidence, and context/search limits can stop an unresolved long dialogue.
+Continue while pending is explicitly blocked rather than appending a new structured
+response onto a prior reply. No release, main promotion or deployment is included.
+
+See the [immutable production evidence receipt](evidence-retention.md#clarification-production-integration).
+All sections below describe the experiments leading to adoption; their original
+scores and limitations remain historical evidence.
+
 ## Complete pending-dialogue confirmation
 
 **Carry the complete pending user/assistant dialogue into both retrieval and
 generation, and supply only the current query's selected memory.** The completed
-confirmation supports this formulation for product integration. It does not yet
-promote the prototype to a product default; PR #73 remains unfinished for the
-response adapter and state-safety gates listed below.
+confirmation supported this formulation for product integration. At that stage,
+the response adapter and state-safety gates were still unfinished; the production
+validation above subsequently completed them.
 
 The [confirmation input lock](clarification-dialogue-inputs.json) freezes twelve
 new dialogues over eight different LongMemEval-S histories, plus the previous
@@ -99,7 +175,8 @@ responses satisfied the schema and cleared the pending root on `answered` or
 while remaining `answered` in all three arms. Status correctness is separate
 from factual correctness. Automatic opening, malformed/refused responses,
 incomplete streaming, edit/swipe/regeneration, reload and cross-chat safety for
-this new state still require production implementation and verification.
+this new state were not established by that run; see the subsequent production
+validation above.
 
 The run completed 60 answer and 60 judge calls without provider retries or
 fixed successful-call waits; peak concurrency was one. It reserved 523,095
@@ -118,8 +195,8 @@ The maintainer intended accumulating user inputs from ambiguity through completi
 for **both retrieval and generation**. The generation-only comparison below omitted
 the retrieval part. Its defer conclusion cannot establish that the intended combined
 policy is ineffective. Historical inputs, results and archives remain unchanged.
-PR #73 is unfinished for the combined product integration; keep this work in that
-PR rather than merging a diagnosis as a separate milestone.
+The combined product integration remained in PR #73 until the adoption gate above
+was completed, rather than merging each diagnosis as a separate milestone.
 
 ### Same-input query comparison
 

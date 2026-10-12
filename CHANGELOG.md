@@ -8,6 +8,16 @@ boundary; publication is confirmed by the corresponding Git tag and GitHub Relea
 
 ### Added
 
+- Enable clarification continuity by default. The answer's JSON status opens a
+  pending span only for ambiguous user intent/referents, then searches and retains
+  its complete user/assistant dialogue until answered or insufficient evidence.
+  Use only the current retrieval's memory, excluding already-retained full turns
+  before budgeting. No extra model or retrieval call is added. Bind state to the
+  selected native reply and source signature across reload/swipe/branch copies;
+  invalidate stale boundaries after edits/deletions. Hide streaming JSON, recover
+  interrupted replies conservatively, and reject conflicting schemas/tools.
+  Requires schema-capable Chat Completions; an explicit checkbox disables it.
+
 - Store available UTC host-message provenance on every chunk, separately from
   embedding text. Budget the complete excerpt and date together; reject stale or
   mismatched remote dates. Missing dates remain unknown, and host time is explicitly
@@ -22,19 +32,19 @@ boundary; publication is confirmed by the corresponding Git tag and GitHub Relea
   extra retrieval is added; malformed coordinates retain separate excerpts.
 
 - Index all completed eligible conversation messages independently of generation input
-  retention, and retrieve using only the current question. Exclude the active input and replacement answers
+  retention, and ordinarily retrieve using only the current question; pending clarifications use their complete dialogue. Exclude the active input and replacement answers
   from both search legs and local selection. Continue searches the message being
   extended; pending final user inputs wait for a reply before indexing. Reject
   retrieval inputs above 8 KiB without silent truncation.
 - Retire npm aliases for historical fixed-window answer evaluations; preserve
   protocols/results with explicit recorded-checkout reproduction instructions.
 - Remove the fixed recent-message window and its setting. Successful generation
-  preparation keeps only the active input and recalled memory alongside native
+  preparation keeps the active input or pending dialogue and recalled memory alongside native
   character/system settings, including when no memory fits. Continue preserves
   the partial answer, and Impersonate preserves the character response being
-  answered; preparation failures retain the original prompt.
-- Add budgeted system guidance to ask a brief clarification instead of guessing
-  when conversation evidence is insufficient or the referent is ambiguous.
+  answered; continuity failures abort, while the disabled-continuity fallback retains the original prompt.
+- Add budgeted system guidance to ask a brief clarification for ambiguous intent
+  or referents, and state insufficient evidence for clear but unsupported requests.
   Verify final delivery even when no memory is selected; count guidance in the
   prepared token display for empty selections as well.
 

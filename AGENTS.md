@@ -40,14 +40,16 @@ Read [CONTRIBUTING.md](CONTRIBUTING.md) before changing this repository.
 - Establish quality and meaning first, then optimize latency, cost, and resource
   use against that measured reference. Retain operational safety, provider context
   limits, source validity, isolation, and authorized total experiment bounds.
-- The product default indexes completed history and searches only the current
-  question, while retaining only the active input and selected memory in the answer
-  prompt alongside native system/character settings.
+- The product default indexes completed history and ordinarily searches the current
+  question. During a source-verified pending clarification, retain and search the
+  complete pending user/assistant dialogue; otherwise retain only the active input
+  and selected memory alongside native system/character settings.
 - Follow an explicitly specified semantic input unit first. Pending-request
   accumulation uses the complete user/assistant dialogue from ambiguity through
   completion for retrieval and generation, preserving roles and order. Supply
   only the current query's selected memory to generation; do not accumulate prior
-  retrieval snapshots. This is the evaluation reference, not a promoted default.
+  retrieval snapshots. This is the default continuity policy. Missing evidence for a
+  clear request must not open a clarification span; only ambiguous user intent/referents do.
 - For contextual query construction without an explicitly specified input unit,
   the initial reference input is the complete recent dialogue outside the indexed older-history partition. Do not impose a
   separate four-message or 600-token context cap. Report model-context overflow as
