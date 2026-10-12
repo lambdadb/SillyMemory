@@ -112,4 +112,6 @@ Terminal states hide the progress bar. Failure retains the last confirmed stage
 and count, with separate key/permission, rate-limit, network, and timeout guidance.
 Timeout classification covers both fetching headers and consuming a response body.
 No raw exception or upstream response body is used in the generic UI failure path.
-The live status is not persisted; reload still disables memory and clears the key.
+The live status is not persisted. Reload verifies the account/endpoint/project-bound
+browser credential before restoring the previous memory-enabled state; see
+[saved connections](saved-connection.md).

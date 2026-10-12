@@ -27,7 +27,7 @@ test('direct CORS preserves auth/body and query scope without host credentials',
     assert.deepEqual(body.rerank, { provider: 'typesafe', model: 'jev-1.13.0', queryText: 'compass', fields: ['text'], candidateSize: 100, onFailure: 'error' });
     assert.equal(body.consistentRead, true); assert.deepEqual(body.ref, { kind: 'branch', name: 'main' });
     assert.ok(!JSON.stringify(client).includes('secret-test-only'));
-    client.forget(); await assert.rejects(client.get('test'), /Enter your API key again/);
+    client.forget(); await assert.rejects(client.get('test'), /Enter your project API key/);
 });
 test('reject unsafe config and no key; response errors never leak body', async () => {
     for (const endpoint of ['http://bad.test', 'https://key@bad.test', 'https://bad.test/path', 'https://bad.test/?key=secret']) assert.throws(() => connectionConfig({ ...config, endpoint }));
@@ -154,7 +154,7 @@ test('forget cancels an in-flight SDK request and prevents later authentication'
     } });
     const pending = client.get('test'); await ready; client.forget();
     await assert.rejects(pending, error => error.code === 'canceled');
-    await assert.rejects(client.get('test'), /Enter your API key again/);
+    await assert.rejects(client.get('test'), /Enter your project API key/);
     assert.equal(calls, 1); assert(!JSON.stringify(client).includes('test-key'));
 });
 
@@ -242,4 +242,18 @@ test('message boundary filters both search legs before ranking and rejects inval
     assert.deepEqual(calls[0].query.bayesian[1].bool[0], { ...filter, occur: 'filter' });
     for (const boundary of [0, -1, 1.5, NaN, '4']) assert.throws(() => client.search('test', owner, scope, 'Where?', undefined, 'chat_test', boundary), /boundary/);
     assert.equal(calls.length, 1);
+});
+
+test('connection verification is one bounded read with no mutations or retry on rejected authentication', async () => {
+    const calls = [];
+    const client = new LambdaClient(config, 'synthetic', { fetcher: async (url, init) => { calls.push({ url, init }); return Response.json({ collections: [] }); } });
+    await client.checkConnection();
+    assert.equal(calls.length, 1); assert.equal(calls[0].init.method, 'GET');
+    assert.equal(new URL(calls[0].url).searchParams.get('size'), '1');
+    assert.equal(new URL(calls[0].url).pathname, '/projects/synthetic/collections');
+    let rejected = 0;
+    const denied = new LambdaClient(config, 'synthetic', { fetcher: async () => { rejected++; return new Response('{}', { status: 401 }); } });
+    await assert.rejects(denied.checkConnection(), error => error.status === 401); assert.equal(rejected, 1);
+    const malformed = new LambdaClient(config, 'synthetic', { fetcher: async () => Response.json({}) });
+    await assert.rejects(malformed.checkConnection(), error => error.code === 'validation');
 });

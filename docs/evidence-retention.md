@@ -1123,3 +1123,25 @@ adds a provider call or changes the numeric search/budget defaults.
   limits as v1 apply; these archives are never CI dependencies.
 
 See [current policy and remaining quality limits](conversation-memory-defaults.md).
+
+## Saved browser connection verification
+
+The candidate replaces session-only keys with explicit Save and connect and
+verified automatic reconnection. Native account and exact endpoint/project
+scoping, enabled/disabled retention, blocked tabs, 401 removal, transient-error
+retention and complete Forget key are verified without real credentials or paid
+provider calls. Original session-only acceptance remains historical evidence.
+
+- Archive: `artifacts/archive/saved-connection-v1/evidence.tar.gz` under the
+  primary worktree; 122,774 bytes, 30 members; SHA-256
+  `694550c0c740cf827dcf3e5688060da71f9bfbb0b830ec98007c58db391cc297`.
+- Manifest: `artifacts/archive/saved-connection-v1/manifest.json`; SHA-256
+  `3144e25dd3a49dc0e9ee7f4ecb7034c31be7d8b12cfb1dbad234b223bcd5f741`.
+- Base `15c781289aff2448ed5e7afce595d677121f7479`; dirty patch and new runtime/test
+  sources retained with 346-unit, 52-browser, 84-fault and 17-delivery receipts.
+  Intermediate browser failures and the generation runner's missing-env preflight
+  are retained; no provider run is claimed. Earlier fault/delivery snapshots precede
+  the final storage-error sanitization and unsupported-lock UI guard; final browser
+  and unit receipts include them. Archive byte-readback passed.
+- All emulator runs ended with zero remaining collections and no browser errors.
+  Local-only, ignored, unavailable in fresh clones and never a CI dependency.

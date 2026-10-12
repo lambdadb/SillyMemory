@@ -72,7 +72,8 @@ export async function runFaultScenarios({ page, field, waitStatus, prompt, check
     }
     async function reconnect(chatId) {
         await page.locator('#sillymemory').waitFor({ state: 'attached', timeout: 45000 });
-        check('fault reload clears the key and keeps memory disabled', await field('key').inputValue() === '' && !await field('enabled').isChecked());
+        await page.waitForFunction(() => !document.querySelector('#sillymemory [data-sm=connect]').disabled);
+        check('fault reload reconnects without key re-entry', await field('key').inputValue() === '' && await page.evaluate(() => Object.keys(localStorage).some(k => k.startsWith('sillymemory:credential:'))));
         check('reload discards transient progress and previous failure status', await field('progress').isHidden() && !(await field('status').innerText()).includes('chunks confirmed'));
         if (await page.evaluate(() => SillyTavern.getContext().characterId === undefined)) {
             await page.locator('#rightNavHolder .drawer-toggle').click();
@@ -83,7 +84,6 @@ export async function runFaultScenarios({ page, field, waitStatus, prompt, check
             if (!await page.locator('#sillymemory .inline-drawer-toggle').isVisible()) await page.locator('#extensions-settings-button .drawer-toggle').click();
             if (!await field('endpoint').isVisible()) await page.locator('#sillymemory .inline-drawer-toggle').click();
         }
-        await field('key').fill('synthetic-session-key'); await field('connect').click();
         await field('enabled').check(); await waitStatus('synchronized');
     }
     // Fault recovery verifies reconciliation, not ranking: the emulator returns

@@ -47,3 +47,10 @@ owner/story scope filter and verifies the collection’s owner/story tags. Gener
 transport tests still use `main`. Branch list/create/delete, committed-list and
 consistent-fetch contracts are exercised by the [default story acceptance](default-story-memory.md).
 No old per-chat or shared-collection mode remains.
+
+## Current browser credential contract
+
+See [saved connections](saved-connection.md). The candidate authenticates one
+`GET /projects/{project}/collections?size=1` before saving/restoring a key. It
+creates no collection and invokes no embedding or answer model during reconnection.
+Direct memory requests still omit host cookies/CSRF and reject redirects.

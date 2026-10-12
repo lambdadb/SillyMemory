@@ -24,7 +24,9 @@ Only `smstory_*` memory families are discovered by all-owned cleanup. The separa
 
 Retained: complete metadata persistence, ownership checks, copy/fork isolation,
 ordered commit confirmation, current-source validation, branch-specific journals,
-uncertain-write recovery, session-only keys and direct browser CORS. Generic
+uncertain-write recovery and direct browser CORS. The current candidate uses
+[saved browser connections](saved-connection.md); session-only key observations
+below retain their historical verification scope. Generic
 LambdaDB client calls can still address `main` for transport tests and empty fork
 sources; this is not a second product storage mode. Checkpoints still validate
 both transcripts and remote state before resume.

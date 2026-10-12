@@ -1,5 +1,9 @@
 # Direct browser CORS transport
 
+The transport acceptance below records the original session-only key policy.
+The current candidate instead uses [saved browser connections](saved-connection.md);
+direct CORS and omission of host credentials remain unchanged.
+
 ## Decision and acceptance boundary
 
 Replace the built-in SillyTavern proxy with browser-to-LambdaDB HTTPS requests.

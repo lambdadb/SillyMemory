@@ -151,7 +151,8 @@ try {
         });
         const resumed = await identity();
         await page.reload(); await page.locator('#sillymemory').waitFor({ state: 'attached' });
-        check('large reload clears key and disables memory', await field('key').inputValue() === '' && !await field('enabled').isChecked());
+        await page.waitForFunction(() => !document.querySelector('#sillymemory [data-sm=connect]').disabled);
+        check('reload reconnects without exposing the saved key in the input', await field('key').inputValue() === '');
         await page.locator('#rightNavHolder .drawer-toggle').click(); await page.locator('.character_select').filter({ hasText: 'Collection Lifecycle' }).click();
         await page.evaluate(async name => SillyTavern.getContext().openCharacterChat(name), resumed.file); await connect();
         await measure('large reload sync', async () => { await field('enabled').check(); await status('synchronized'); await field('enabled').uncheck(); });
@@ -201,7 +202,8 @@ try {
     check('individual deletion confirmed absent before fallback cleanup', await absent(copy));
     check('deleting current copy preserves parent and branch', (await inspect(parent)).length === 4 && (await inspect(branch)).length === 4);
     stage = 'reload'; await page.reload(); await page.locator('#sillymemory').waitFor({ state: 'attached' });
-    check('reload requires key entry and leaves memory disabled', await field('key').inputValue() === '' && !await field('enabled').isChecked());
+    await page.waitForFunction(() => !document.querySelector('#sillymemory [data-sm=connect]').disabled);
+    check('reload reconnects without exposing the saved key in the input', await field('key').inputValue() === '');
     await page.locator('#rightNavHolder .drawer-toggle').click(); await page.locator('.character_select').filter({ hasText: 'Collection Lifecycle' }).click();
     await page.evaluate(async name => SillyTavern.getContext().openCharacterChat(name), renamed.file);
     await connect(); await field('enabled').check(); await status('synchronized');
@@ -233,7 +235,8 @@ try {
         }, name);
         const reopen = async name => {
             await page.reload(); await page.locator('#sillymemory').waitFor({ state: 'attached' });
-            check('recovery reload clears key and disables memory', await field('key').inputValue() === '' && !await field('enabled').isChecked());
+            await page.waitForFunction(() => !document.querySelector('#sillymemory [data-sm=connect]').disabled);
+            check('reload reconnects without exposing the saved key in the input', await field('key').inputValue() === '');
             await page.locator('#rightNavHolder .drawer-toggle').click();
             await page.locator('.character_select').filter({ hasText: 'Collection Lifecycle' }).click();
             await page.evaluate(async name => SillyTavern.getContext().openCharacterChat(name), name); await connect();
