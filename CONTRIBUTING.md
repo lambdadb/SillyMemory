@@ -103,6 +103,13 @@ cohort, not only cases selected after observing wrong baseline answers. A perfec
 baseline makes efficacy inconclusive; do not infer that the candidate has no effect
 or expand paid runs merely to find a favorable result.
 
+The unit of work is the product decision, not each diagnostic run. Define that
+whole scope before starting, and keep the necessary diagnostic and confirmation
+runs on the same work branch and PR until there is an evidence-supported adoption,
+defer or rejection decision. A completed run with an unresolved policy question
+is intermediate evidence, even when its report and CI are complete. Do not create
+a separate documentation PR or merge milestone for each such diagnosis.
+
 A normal experiment change includes the needed harness changes, the bounded run,
 analysis of positive/negative results, limitations, and verified owned-data cleanup.
 Do not split preparation, retry handling, another preflight, and each intermediate

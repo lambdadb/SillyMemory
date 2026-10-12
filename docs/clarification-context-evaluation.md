@@ -1,6 +1,11 @@
 # Clarification context: bounded live diagnosis
 
-## Decision
+## Intermediate observation; policy decision pending
+
+This diagnosis is part of the clarification-dialogue context policy work, not
+its completion. The final adoption, defer or rejection decision is pending.
+Keeping current defaults during evaluation does not close that product question;
+these notes must not become a separate merge milestone.
 
 Keep the current product defaults. A single response can carry an ordinary reply
 and a structured clarification flag through the pinned SillyTavern host with Sol;

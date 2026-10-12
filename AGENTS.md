@@ -21,6 +21,9 @@ Read [CONTRIBUTING.md](CONTRIBUTING.md) before changing this repository.
   experiments. Default to one reviewable change covering the necessary harness,
   completed run or concrete blocker, analysis, and cleanup; do not open a new PR
   for every preflight, retry helper, or intermediate run.
+- A completed diagnosis is not completion of its parent product decision. Keep
+  follow-up trials and the adoption/defer/reject conclusion in the same work branch
+  and PR; do not submit intermediate diagnosis notes as a separate merge milestone.
 - Keep reusable evaluation code, small regression fixtures, frozen inputs/settings
   and concise conclusions. Store detailed run outputs and historical source bundles
   as ignored artifacts with checksums and explicit availability, not permanent CI
