@@ -293,8 +293,9 @@ Generation retention alone could preserve intent but could not recover a missing
 "Just its name." had discarded the request's subject. The combined approach fixes
 that mechanism without increasing the search result count or memory budget.
 It does not establish that every conversation needs accumulation, nor does it
-justify retaining unrelated history once the request is completed. Production
-defaults are unchanged while production state handling and provider integration are unfinished.
+justify retaining unrelated history once the request is completed. At that stage, production
+defaults remained unchanged while state handling and provider integration were unfinished;
+the production-adoption section above records their subsequent completion.
 
 ### Native status lifecycle mechanism
 
@@ -343,7 +344,8 @@ complete: it found no measured answer or clarification-turn gain under controlle
 inputs and actual followup routing, and the three statuses alone cannot establish
 all request boundaries. This is a decision against default promotion on this
 evidence, not a claim that context retention never helps other conversations.
-No production response schema, state machine or recent-message setting is added.
+That generation-only stage added no production response schema, state machine or
+recent-message setting. The subsequent product integration is recorded above.
 
 The original three-flow diagnosis below remains preserved. Its fixed user replies
 sometimes did not answer the model's clarification, so its 0/3, 1/3, 2/3 result
@@ -645,7 +647,8 @@ hashes are preserved, including the failures.
 At the initial stage, neither retention candidate was ready for promotion. The
 proposed follow-up was a controlled dialogue comparison followed by actual
 clarification routing, now completed above with its independence limits disclosed.
-The initial recommendation to validate response-schema lifecycle behavior remains
-an adoption prerequisite; no such adapter is shipped by this completed decision.
+The initial response-schema lifecycle prerequisite was subsequently satisfied by
+the shipped adapter and production validation recorded above. The historical
+diagnosis alone did not ship an adapter; this completed product decision does.
 
 See the [retained evidence](evidence-retention.md#clarification-context-live-diagnosis).
