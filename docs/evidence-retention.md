@@ -1529,3 +1529,21 @@ without new linking evidence. Do not claim independent quality superiority.
   archives and original failure outputs remain unchanged. Local-only, ignored,
   unavailable in fresh clones and never a CI dependency. This is neither an
   official LongMemEval score nor a release/main deployment.
+
+
+The active-position review correction separates native generation retention from
+query eligibility and replacement suffixes, preserving the existing query range.
+Final validation passes 377 units, 86 browser, 91 fault checks and 17 delivery
+cases, with no page errors/resources. File/media/tool metadata is tested at the
+native hook and blank input through actual native generation; real uploaded-file
+or multimodal provider processing is not newly certified. No paid calls; earlier
+eligible-normal evaluation paths remain unchanged.
+
+- Follow-up archive: `artifacts/archive/recent-dialogue-retention-review-v1/evidence.tar.gz`
+  under the primary worktree; 102,667 bytes, 22 members; SHA-256
+  `85fe8dfc071712ac6a817c239304e198b3224ff4d56343f5da17402a8eec8792`.
+- Manifest: `artifacts/archive/recent-dialogue-retention-review-v1/manifest.json`;
+  SHA-256 `c2044df69c57564166a77e7c95b6e6dfb66519b76f0efec96f6ffbbddca16cc9`.
+- Base `02b73475de7c159d75ef393e16ac796e99e074a4`; exact correction sources,
+  patch and verification receipts retained with byte-readback. Original archives
+  are unchanged; local-only, ignored, unavailable in fresh clones and not CI.

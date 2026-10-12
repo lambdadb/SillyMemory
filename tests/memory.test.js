@@ -51,6 +51,15 @@ test('recent dialogue stays stored but is excluded from ranked memory without ch
     assert(result.passages.every(p => p.message < 2));
     assert.equal(s.remote.size, 6);
 });
+test('a later ineligible active input cannot broaden retrieval past its existing query boundary', async () => {
+    const s = setup(), snap = snapshot();
+    snap.messages.forEach((message, index) => { message.user = index === 0; });
+    snap.messages.push({ index: 6, text: 'Attachment', user: true, eligible: false });
+    s.client.search = async () => { throw new Error('No source precedes the eligible query anchor.'); };
+    const result = await s.engine.retrieve(snap, { ...config, retainedStart: 1 }, text => text.length);
+    assert.deepEqual(result.passages, []);
+    assert.equal(s.remote.size, 6);
+});
 test('stable content IDs, unique character/chat/branch scopes, and all completed messages', async () => {
     const a = await documents(snapshot(), owner, config);
     assert.equal(a.docs.length, 6); assert.ok(a.docs.every(d => d.message < 6));

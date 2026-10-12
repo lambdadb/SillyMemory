@@ -38,7 +38,11 @@ instead uses its complete user/assistant span for the single retrieval query.
 All completed history is stored, independently of generation retention. Generation
 retains the five most recent eligible messages through the active anchor, together
 with any longer unresolved span and selected memory alongside native settings.
-Continue/Impersonate retain recent dialogue through their existing eligible anchor.
+Generation retention uses the actual native position, independently of query
+eligibility. Continue/Impersonate retain through the final source position;
+regenerate/swipe exclude replies after the latest user position, including
+ineligible/blank inputs. The existing query boundary remains an additional retrieval
+constraint.
 Answers following a replacement question are removed from ephemeral generation
 input and excluded from retrieval.
 See the [current default policy](conversation-memory-defaults.md).

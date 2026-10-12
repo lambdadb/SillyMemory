@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { retentionStart } from '../src/context.js';
+import { retentionStart, retentionAnchor } from '../src/context.js';
 import { retrievalQueries } from '../src/memory.js';
 
 const messages = Array.from({ length: 9 }, (_, index) => ({ index, user: index % 2 === 0, text: `Message ${index}`, eligible: true }));
@@ -24,4 +24,19 @@ test('retention leaves current and complete pending search text unchanged', () =
     assert.deepEqual(retrievalQueries({ messages }, 'normal', { retainedStart: 0, requestStart: 6 }), [
         'User: Message 6\n\nAssistant: Message 7\n\nUser: Message 8',
     ]);
+});
+
+test('ineligible and blank active inputs retain the preceding answer without changing query eligibility', () => {
+    for (const active of [{ user: true, text: 'Attached input', eligible: false }, { user: true, text: '', eligible: true }]) {
+        const source = [...messages.slice(0, 8), active, { user: false, text: 'Replacement reply', eligible: true }];
+        assert.equal(retentionAnchor(source.slice(0, -1), 'normal'), 8);
+        assert.equal(retentionAnchor(source, 'regenerate'), 8);
+        assert.equal(retentionAnchor(source, 'swipe'), 8);
+        assert.equal(retentionStart(source, 8), 3);
+        assert.deepEqual(retrievalQueries({ messages: source }), ['Message 6']);
+        assert.equal(retentionAnchor(source, 'continue'), 9);
+        assert.equal(retentionAnchor(source, 'impersonate'), 9);
+    }
+    assert.equal(retentionAnchor([]), -1);
+    assert.equal(retentionAnchor(messages.slice(0, 8), 'normal'), 7);
 });

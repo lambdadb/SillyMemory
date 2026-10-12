@@ -129,3 +129,30 @@ were not changed. The two candidate failure replays were declared before their
 calls and are explicitly separate from the unchanged confirmation cohort.
 
 See [original evidence and availability](evidence-retention.md#recent-dialogue-retention).
+
+
+### Active-input review correction
+
+Recent retention now uses the actual native generation position, independently
+of query eligibility. Normal/Continue/Impersonate use the final source position;
+regenerate/swipe use the latest user position, including blank or ineligible inputs,
+and exclude replacement replies afterward. An empty source has no retained input.
+Five eligible text turns remain protected before an active special/blank input;
+special content keeps the existing native handling. Retrieval also intersects the
+recent boundary with its existing eligible-query boundary, so this correction
+cannot broaden the candidate range or search the query's own source.
+
+Unit and native-hook regressions cover file/media/tool metadata, a blank actual
+native generation, response preservation and replacement exclusion. They do not
+certify real uploaded-file or multimodal provider processing. The earlier paid
+comparison used nonempty eligible normal inputs, where the actual position equals
+the old query anchor; its query/window paths are unchanged by this correction.
+No paid quality rerun is needed or claimed. Original evidence remains preserved.
+
+Final correction validation: 377 units; runtime/script/test syntax, release and SDK
+checks pass. With the same pinned host, port 18136 and tag
+`recent-retention-anchor`, the browser suite passes 86 checks and the fault suite
+passes 91. `scripts/prompt-delivery-smoke.mjs` with output
+`artifacts/prompt-delivery-recent-retention-anchor.json` passes all 17 cases plus
+assembly/overlap. No page errors or remaining emulator collections. These supersede
+the earlier runtime shape checks; original paid quality receipts remain unchanged.

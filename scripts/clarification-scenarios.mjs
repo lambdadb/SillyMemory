@@ -156,6 +156,7 @@ export async function runClarificationScenarios({ page, field, waitStatus, check
         const reply = SillyTavern.getContext().chat[saved.index];
         return reply.mes === saved.mes && !reply.extra.sillymemoryPending && JSON.stringify(reply.extra.sillymemoryRequest) === JSON.stringify(saved.state);
     }, priorReply));
+    check('a blank active input keeps the immediately preceding answer in the actual native request', requests.at(-1).messages.some(m => m.content === priorReply.mes));
     await generate('Where was that?', { reply: 'Which event?', status: 'needs_clarification' });
     check('terminal closure does not retain old protocol placeholders in later requests', requests.at(-1).messages.every(m => !String(m.content).includes('[SillyMemory: no complete reply was received.')));
     replies.push({ reply: 'The city museum.', status: 'answered' });

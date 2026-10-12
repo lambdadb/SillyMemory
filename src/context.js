@@ -15,6 +15,14 @@ export function pendingQuery(messages, start, anchor) {
 
 // Count the active message as part of the recent window. Replacement replies
 // after the anchor are never retained. Incomplete/special source is not dialogue.
+export function retentionAnchor(messages, type = 'normal') {
+    if (type !== 'regenerate' && type !== 'swipe') return messages.length - 1;
+    // The active input can be blank or carry an attachment. Query eligibility
+    // must not move the generation window back to a previously answered request.
+    const user = messages.findLastIndex(message => message.user);
+    return user < 0 ? messages.length - 1 : user;
+}
+
 export function retentionStart(messages, anchor, count = 5) {
     if (!Number.isInteger(anchor) || anchor < 0 || anchor >= messages.length
         || !Number.isInteger(count) || count < 1) throw new Error('Invalid recent dialogue boundary.');

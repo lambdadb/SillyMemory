@@ -257,7 +257,24 @@ try {
     const result = await prompt();
     check('real host dispatcher injects bounded memory', Boolean(result.injection) && /\d+ \/ 250 tokens/.test(result.inspection));
     check('native recalled excerpts keep macros literal within budget', result.rendered.includes('｛｛char｝｝') && result.rendered.includes('＜USER＞') && result.macroValue === undefined && result.renderedTokens <= 250);
-    check('five recent messages stay full in source order and persisted source chat is preserved', JSON.stringify(result.chat.filter(m => !m.mes.startsWith('[Past conversation excerpt:')).map(m => m.index)) === '[2,3,4,5,6]' && result.chat.at(-1).mes.includes('passage 6') && result.before === result.after);
+    check('five recent messages stay full in source order and persisted source chat is preserved', JSON.stringify(result.chat.filter(m => !m.mes.startsWith('[Past conversation excerpt:')).map(m => m.index)) === '[3,4,5,6,7]' && result.chat.at(-1).mes.includes('passage 7') && result.before === result.after);
+    // Ineligible active inputs still preserve recent dialogue. The actual native
+    // hook is exercised with attachment/media/tool metadata, without uploading files.
+    const originalSource = await page.evaluate(() => structuredClone(SillyTavern.getContext().chat));
+    for (const extra of [{ file: { name: 'fixture.txt' } }, { media: [{ url: 'fixture-image' }] }, { tool_invocations: [{ name: 'fixture-tool' }] }]) {
+        await page.evaluate(async ({ originalSource, extra }) => {
+            const c = SillyTavern.getContext();
+            c.chat.splice(0, c.chat.length, ...originalSource.slice(0, 8), { mes: 'Special active input.', name: 'User', is_user: true, extra });
+            await c.saveChat();
+        }, { originalSource, extra });
+        const special = await prompt();
+        check('an ineligible active input preserves the preceding response and five eligible recent turns', !special.aborted
+            && JSON.stringify(special.chat.filter(m => !m.mes.startsWith('[Past conversation excerpt:')).map(m => m.index)) === '[3,4,5,6,7,8]'
+            && special.before === special.after);
+    }
+    await page.evaluate(async originalSource => {
+        const c = SillyTavern.getContext(); c.chat.splice(0, c.chat.length, ...originalSource); await c.saveChat();
+    }, originalSource);
     // Exercise assembly through the real extension dispatcher with multiple stored chunks.
     await field('budget').fill('1600'); await field('budget').dispatchEvent('change');
     const assemblySource = await page.evaluate(async () => {
