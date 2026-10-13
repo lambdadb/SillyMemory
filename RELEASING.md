@@ -10,7 +10,7 @@ The prepared release boundary is **0.4.0 (experimental)**, dated **2026-10-13**.
 A dated preparation entry is not main promotion or publication.
 See the [release notes](docs/releases/0.4.0.md), [validation record](docs/releases/0.4.0-validation.md)
 and [GitHub Releases](https://github.com/lambdadb/SillyMemory/releases) to confirm
-publication. Never reuse a published version. Main promotion, tag push and GitHub
+publication. Never recreate or move a published version tag. Main promotion, tag push and GitHub
 Release publication require maintainer authorization, which may cover the full
 sequence in one request.
 
@@ -45,8 +45,10 @@ sequence in one request.
 4. Open `develop` → `main` with release notes and validation links. The main-target
    CI requires a dated current changelog entry and compares the candidate against
    the PR base commit and fetched version tags. Once main has a dated entry, the
-   candidate must have higher SemVer precedence; a version already tagged cannot
-   be reused (build metadata does not make a new version). The first untagged
+   candidate must have higher SemVer precedence for runtime changes; a version
+   already tagged cannot be republished (build metadata does not make a new
+   version). The documentation/help-text exception below may keep the existing
+   version without publishing a tag or Release. The first untagged
    candidate may retain 0.1.0 when main has no dated entry. Obtain maintainer
    approval and merge with a **merge commit**, not squash/rebase.
 5. Verify the resulting main tree and CI. Record its full commit SHA. Users who
@@ -56,9 +58,30 @@ sequence in one request.
 To run the promotion check locally, fetch the base and tags, then use
 `npm run check:release -- --base-ref origin/main`. This also requires dated notes.
 Development PRs may retain the current version while preparing the next release;
-version advancement is checked for every PR targeting main, including hotfixes
-and documentation changes. These checks rely on the PR workflow and do not
-prevent direct main pushes without branch protection.
+version advancement is checked for every PR targeting main, including hotfixes.
+A narrow maintenance exception permits the exact same dated version when the
+committed diff contains only these non-runtime changes:
+
+- Root `README.md`, `CONTRIBUTING.md`, `AGENTS.md`, `RELEASING.md`, and Markdown
+  documents under `docs/`. Data fixtures, release metadata and changelog edits
+  are not included.
+- The release validator `scripts/check-release.mjs` and its regression file
+  `tests/release.test.js`. These are development tools, never loaded by the
+  installed extension; their changes still require code review and CI.
+- Plain text inside attribute-free `<p>...</p>` help paragraphs in `settings.html`.
+  All controls, attributes, markup and other text must remain byte-identical.
+  Templates containing raw script/style or other raw-text elements do not qualify.
+
+Only regular non-executable files qualify; symlinks and mode changes to executable
+files do not. The CLI checks the committed base-to-HEAD diff and refuses the
+exception when tracked working-tree changes are present. Unknown files fail
+closed. Runtime, defaults, dependencies, bundles and metadata still require a
+version increase. There is no skip flag or PR-label bypass.
+
+For qualifying maintenance, merge develop into main normally and verify main CI;
+keep the existing tag and Release untouched. This is a branch documentation/help
+update, not a new release. These checks rely on the PR workflow and do not prevent
+direct main pushes without branch protection.
 
 ## Tag and announce (maintainer authorization required)
 

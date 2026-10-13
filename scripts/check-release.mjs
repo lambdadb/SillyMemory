@@ -33,9 +33,40 @@ export function compareVersions(left, right) {
     }
     return 0;
 }
-export function checkPromotion({ version, baseVersion, baseChangelog = '', tags = [] }) {
+// These files are not loaded by the installed extension. Keep the allowlist
+// narrow: documentation payloads such as JSON and general tooling are excluded.
+export function documentationOnly(changes) {
+    if (!changes.length) return false;
+    return changes.every(({ path, beforeMode, afterMode, before = '', after = '' }) => {
+        if (![beforeMode, afterMode].every(mode => ['000000', '100644'].includes(mode))) return false;
+        if (['README.md', 'CONTRIBUTING.md', 'AGENTS.md', 'RELEASING.md',
+            'scripts/check-release.mjs', 'tests/release.test.js'].includes(path)
+            || /^docs\/.+\.md$/.test(path)) return true;
+        if (path !== 'settings.html' || beforeMode !== '100644' || afterMode !== '100644') return false;
+        // Only plain, attribute-free help paragraphs may change. Preserve every
+        // control, attribute, tag and all other text byte-for-byte. Reject raw
+        // script/style content so embedded markup cannot masquerade as help.
+        if (/<(?:script|style|textarea|title|xmp|iframe|noembed|noframes|plaintext)\b/i.test(before + after)) return false;
+        const withoutHelp = text => {
+            // Quoted attributes are single tokens, even when they contain <p>.
+            const tokens = [...text.matchAll(/<(?:[^"'<>]|"[^"]*"|'[^']*')*>|[^<]+/g)];
+            let end = 0;
+            for (const token of tokens) {
+                if (token.index !== end) return null;
+                end += token[0].length;
+            }
+            if (end !== text.length) return null;
+            return tokens.map((token, i) => tokens[i - 1]?.[0] === '<p>'
+                && tokens[i + 1]?.[0] === '</p>' && !/[<>&]/.test(token[0]) ? '' : token[0]).join('');
+        };
+        const normalized = withoutHelp(before);
+        return normalized !== null && normalized === withoutHelp(after);
+    });
+}
+export function checkPromotion({ version, baseVersion, baseChangelog = '', tags = [], changes = [] }) {
     const datedBase = [...baseChangelog.matchAll(/^## \[([^\]]+)\] - (\d{4}-\d{2}-\d{2})\s*$/gm)]
         .some(entry => entry[1] === baseVersion);
+    if (datedBase && version === baseVersion && documentationOnly(changes)) return 'documentation';
     const order = compareVersions(version, baseVersion);
     assert(order >= 0 && (!datedBase || order > 0), 'Main promotion must advance the previously dated base version');
     const reusedTag = tags.find(tag => tag.startsWith('v') && validVersion(tag.slice(1)) && compareVersions(version, tag.slice(1)) === 0);
@@ -78,7 +109,23 @@ if (process.argv[1] && import.meta.url === pathToFileURL(realpathSync(process.ar
         const base = git('rev-parse', '--verify', '--end-of-options', `${baseRef}^{commit}`);
         const baseVersion = JSON.parse(git('show', `${base}:manifest.json`)).version;
         const baseChangelog = git('ls-tree', '--name-only', base, '--', 'CHANGELOG.md') ? git('show', `${base}:CHANGELOG.md`) : '';
-        checkPromotion({ version: result.version, baseVersion, baseChangelog, tags: git('tag', '--list', 'v*').split('\n') });
+        // Only committed changes qualify. A dirty tracked file cannot borrow
+        // a documentation-only committed diff to bypass release validation.
+        const clean = !git('diff', 'HEAD', '--');
+        const fields = git('diff', '--raw', '--no-abbrev', '--no-renames', '-z', base, 'HEAD').split('\0');
+        const changes = [];
+        for (let i = 0; fields[i]; i += 2) {
+            const [beforeMode, afterMode, beforeId, afterId] = fields[i].slice(1).split(' ');
+            const path = fields[i + 1];
+            const contents = id => execFileSync('git', ['cat-file', 'blob', id], { cwd: root, encoding: 'utf8' });
+            changes.push({ path, beforeMode, afterMode, ...(path === 'settings.html' ? {
+                before: beforeMode === '100644' ? contents(beforeId) : '',
+                after: afterMode === '100644' ? contents(afterId) : '',
+            } : {}) });
+        }
+        const kind = checkPromotion({ version: result.version, baseVersion, baseChangelog,
+            tags: git('tag', '--list', 'v*').split('\n'), changes: clean ? changes : [] });
+        if (kind === 'documentation') console.log('Documentation/help-text maintenance: keeping the published version; no new tag or release.');
     }
     console.log(`Release metadata valid: ${result.version} (${result.date})`);
 }

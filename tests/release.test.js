@@ -79,3 +79,54 @@ test('promotion CLI reads actual Git base metadata and tags and rejects stale re
         writeFixture('2026-09-29', '0.1.1'); assert.notEqual(run('missing-ref').status, 0);
     } finally { rmSync(root, { recursive: true, force: true }); }
 });
+
+test('same-version maintenance accepts docs and plain help but rejects runtime and markup changes', () => {
+    const base = { version: '0.4.0', baseVersion: '0.4.0', baseChangelog: fixture('2026-10-13', '0.4.0').changelog, tags: ['v0.4.0'] };
+    const change = (path, before = '', after = '') => ({ path, beforeMode: '100644', afterMode: '100644', before, after });
+    const help = change('settings.html', '<p>Old help.</p><input value="1">', '<p>New help.</p><input value="1">');
+    assert.equal(checkPromotion({ ...base, changes: [change('README.md'), help] }), 'documentation');
+    for (const path of ['index.js', 'src/client.js', 'manifest.json', 'package.json', 'package-lock.json', 'docs/fixture.json', 'scripts/build-sdk.mjs', '.github/workflows/ci.yml', 'CHANGELOG.md']) {
+        assert.throws(() => checkPromotion({ ...base, changes: [change('README.md'), change(path)] }), /advance/);
+    }
+    for (const [before, after] of [
+        ['<p>Help</p><input value="1">', '<p>Help</p><input value="2">'],
+        ['<p>Help</p>', '<p onclick="run()">Help</p>'],
+        ['<p data-sm="status">Ready</p>', '<p data-sm="status">Failed</p>'],
+        ['<p>Help</p>', '<p><b>Help</b></p>'],
+        ['<script>let x="<p>A</p>";</script>', '<script>let x="<p>B</p>";</script>'],
+        ['<input value="<p>A</p>">', '<input value="<p>B</p>">'],
+        ['<textarea><p>A</p></textarea>', '<textarea><p>B</p></textarea>'],
+        ['<p>Help</p>\n', '<p>Help</p>'],
+    ]) assert.throws(() => checkPromotion({ ...base, changes: [change('settings.html', before, after)] }), /advance/);
+    assert.throws(() => checkPromotion({ ...base, changes: [{ ...change('README.md'), afterMode: '120000' }] }), /advance/);
+    assert.throws(() => checkPromotion({ ...base, version: '0.4.0+new', changes: [change('README.md')] }), /advance/);
+    assert.throws(() => checkPromotion({ ...base, version: '0.3.0', changes: [change('README.md')] }), /advance/);
+});
+
+test('committed documentation-only promotion keeps a tag without permitting a dirty runtime or symlink', () => {
+    const root = mkdtempSync(path.join(tmpdir(), 'sillymemory-doc-promotion-'));
+    const git = (...args) => execFileSync('git', args, { cwd: root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
+    try {
+        mkdirSync(path.join(root, 'scripts'));
+        const script = path.join(root, 'scripts/check-release.mjs');
+        copyFileSync(new URL('../scripts/check-release.mjs', import.meta.url), script);
+        const f = fixture('2026-10-13', '0.4.0');
+        for (const [name, value] of [['manifest.json', f.manifest], ['package.json', f.pkg], ['package-lock.json', f.lock]]) writeFileSync(path.join(root, name), JSON.stringify(value));
+        writeFileSync(path.join(root, 'CHANGELOG.md'), f.changelog);
+        writeFileSync(path.join(root, 'settings.html'), '<p>Old help.</p>\n<input data-sm="key">\n');
+        writeFileSync(path.join(root, 'index.js'), 'export const enabled = true;\n');
+        git('init'); git('config', 'user.name', 'Release test'); git('config', 'user.email', 'release-test@example.invalid');
+        git('add', '.'); git('commit', '-m', 'Published'); git('tag', 'v0.4.0'); const base = git('rev-parse', 'HEAD');
+        const run = () => spawnSync(process.execPath, [script, '--base-ref', base], { cwd: tmpdir(), encoding: 'utf8' });
+        writeFileSync(path.join(root, 'README.md'), '# Getting started\n');
+        writeFileSync(path.join(root, 'settings.html'), '<p>New help.</p>\n<input data-sm="key">\n');
+        git('add', '.'); git('commit', '-m', 'Docs and help');
+        assert.equal(run().status, 0); assert.match(run().stdout, /Documentation\/help-text maintenance/);
+        writeFileSync(path.join(root, 'index.js'), 'export const enabled = false;\n');
+        assert.notEqual(run().status, 0);
+        git('checkout', '--', 'index.js');
+        rmSync(path.join(root, 'README.md')); symlinkSync('index.js', path.join(root, 'README.md'));
+        git('add', '.'); git('commit', '-m', 'Not a document'); assert.notEqual(run().status, 0);
+        assert.equal(git('rev-parse', 'v0.4.0'), base, 'published tag stays unchanged');
+    } finally { rmSync(root, { recursive: true, force: true }); }
+});
