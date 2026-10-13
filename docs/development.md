@@ -47,7 +47,7 @@ completed; that evaluation did not change the runtime.
 ## Development and verification
 
 For local development, symlink this checkout into
-`SillyTavern/public/scripts/extensions/third-party/SillyMemory`; do not also install
+`SillyTavern/public/scripts/extensions/third-party/sillymemory`; do not also install
 a user-scoped copy. The pinned host is SillyTavern 1.19.0 at
 `06bde939fb1e9c4c8d8641d810f0a916b5bce127`. Manual copies without Git metadata
 cannot use the native Git-based update flow.
