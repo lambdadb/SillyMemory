@@ -24,13 +24,15 @@ remains historical and is not relabeled as direct-CORS validation.
 ## Configuration and security boundary
 
 The LambdaDB regional HTTPS origin must be reachable from the user's browser,
-not only from the SillyTavern server. Configure CORS access for the SillyTavern page
-origin where required. The origin includes scheme, hostname and port: for example,
-`http://localhost:8000` differs from `http://127.0.0.1:8000` and from an HTTPS
-remote-host URL. The extension cannot configure LambdaDB CORS on the user's behalf.
-The synthetic transport button validates create/upsert/query/delete from that
-browser. A deployment announcement alone does not establish that a given endpoint
-and page origin work together.
+not only from the SillyTavern server. Normal setup does not include a manual
+origin-allowlist step or the SillyTavern CORS proxy. On 2026-10-13, unauthenticated
+OPTIONS probes against the configured LambdaDB endpoint accepted both
+`http://localhost:8000` and an unregistered HTTPS origin for POST with
+`Content-Type,x-api-key`. This verifies that endpoint's preflight behavior, not
+all regions or an authenticated document lifecycle. The synthetic transport
+button checks create/upsert/query/delete from the user's actual browser.
+If connection fails, check the regional endpoint and browser network response;
+do not infer that users need a CORS setting from a generic network error.
 
 Requests use `mode: cors`, `credentials: omit` and `redirect: error`. Only
 `Content-Type` and `x-api-key` application headers are sent. The browser supplies
