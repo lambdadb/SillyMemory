@@ -6,12 +6,15 @@ Long-term memory for SillyTavern.
 
 An installable, experimental UI extension for character chats. SillyMemory keeps at least five recent eligible messages (including the active input), keeping an adjacent plain-text input/reply pair together, intact at its prompt hook and replaces older plain-text history with relevant source passages under a fixed memory token budget. SillyTavern may subsequently truncate the prompt to fit its context limit. It uses LambdaDB managed embeddings over direct browser HTTPS/CORS. No server plugin or LambdaDB modification is required.
 
-**0.4.0 is an unreleased experimental candidate.**
+**0.4.0 is prepared as an experimental pre-release, dated 2026-10-13.**
 [Story memory](docs/versioned-memory.md) is automatic for every enabled chat;
 [checkpoints](docs/checkpoints.md) are saved and resumed explicitly. Public
-`main` still follows its published version. Check [GitHub Releases](https://github.com/lambdadb/SillyMemory/releases)
-for publication, and [the default-storage decision](docs/default-story-memory.md)
-for this candidate's behavior and validation.
+`main` is the public installation baseline; preparation on `develop` does not
+change it. A dated entry alone is not publication. Check
+[GitHub Releases](https://github.com/lambdadb/SillyMemory/releases) for publication,
+[0.4.0 notes](docs/releases/0.4.0.md) and [installation validation](docs/releases/0.4.0-validation.md)
+for this boundary, and [the default-storage decision](docs/default-story-memory.md)
+for storage behavior.
 
 The [managed recall validation](docs/managed-packed-results.md) completed 64 real
 SillyTavern/LambdaDB/model responses. All 28 known-answer memory-on samples
@@ -134,7 +137,7 @@ Git-based update flow.
 
 ## Version and updates
 
-**0.3.0 is an experimental pre-release.** See [CHANGELOG.md](CHANGELOG.md) for changes and
+**0.4.0 is an experimental release boundary.** See [CHANGELOG.md](CHANGELOG.md) for changes and
 [GitHub Releases](https://github.com/lambdadb/SillyMemory/releases) for published
 versions. A dated changelog entry can precede publication. The `main` branch is
 the public installation baseline; `develop` contains ongoing work. The version
@@ -146,7 +149,7 @@ the newest GitHub Release/tag. Automatic updates are currently disabled. After
 reload, the saved LambdaDB key is verified and the previous memory-enabled state is restored. If memory was disabled, it stays disabled. Budget, delivery preferences and installation ownership are retained. Normal updates do not require
 deleting the owned memory collection or reinstalling the extension.
 
-The current development candidate uses story collections and chat branches by
+This release boundary uses story collections and chat branches by
 default. There is no legacy storage mode or data migration. Checkpoints remain
 explicit: save a checkpoint to preserve a resumable transcript. See the
 [storage decision and validation](docs/default-story-memory.md). Historical
