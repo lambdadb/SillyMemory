@@ -1732,9 +1732,9 @@ This is actual pinned SillyTavern/Chromium with GitHub clone/pull, not a simulat
 update response, paid quality run or published main upgrade. No product runtime
 changes or remote collections; all disposable profiles and temporary host removed.
 
-- Local-only archive: `artifacts/archive/install-update-040-v1/evidence.tar.gz`;
-  SHA-256 `1603566e4c065e4682639b01a865e5722d1d2959ff3bcb7f806339a7b99aef81`.
-- Manifest: `artifacts/archive/install-update-040-v1/manifest.json`; all 24 member
+- Local-only archive: `artifacts/archive/install-update-040-v2/evidence.tar.gz`;
+  SHA-256 `d70d07a5c00dc9368687d25b6ed76c6c9add62cf5bf759abee2d00c16b5867fc`.
+- Manifest: `artifacts/archive/install-update-040-v2/manifest.json`; all 24 uniquely named member
   bytes read back and verified. Archive is unavailable in a fresh clone.
 - Producer/measured candidate revision: `cd3664968ee3a4884a94ad686a4d4d226fe75442`.
   Final producer is retained with its report SHA-256 locks; pinned native install/
@@ -1744,9 +1744,11 @@ changes or remote collections; all disposable profiles and temporary host remove
   byte-for-byte against their recorded harness hashes before retention. Final
   default installation leaves the branch field empty; native Update restores the
   preparation branch from `b262dc5dac942a50a9fd247974d748060b89761b`.
-- Original pre-completion notes in the archive incorrectly counted update assertions
-  as 23; the actual receipts have 22. The maintained readiness record corrects this
-  reporting error without changing original evidence.
+- The initial archive remains unchanged at `artifacts/archive/install-update-040-v1/`
+  (SHA-256 `1603566e4c065e4682639b01a865e5722d1d2959ff3bcb7f806339a7b99aef81`).
+  Its host source filenames collided and its pre-completion notes counted 23
+  assertions instead of the receipts' 22. The corrected archive uses unique source
+  names and current notes; all original reports/producers are preserved unchanged.
 - Commands: `npm test` (367 passed, Node.js 24.15.0), `npm run check`,
   `npm run check:release`, `npm run check:sdk`, all script/test syntax checks,
   and the `npm run test:install` commands in the readiness record. Main/tag
