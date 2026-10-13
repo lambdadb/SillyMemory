@@ -1,4 +1,5 @@
-// Fresh GitHub installation through the pinned host UI. No provider calls.
+// GitHub installation and optional same-branch update through the pinned host UI.
+// No provider calls; only a disposable installation is rewound for update testing.
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { chromium } from '@playwright/test';
@@ -10,6 +11,8 @@ import { fileURLToPath } from 'node:url';
 const root = fileURLToPath(new URL('../', import.meta.url));
 const source = process.env.ST_SOURCE;
 const installBranch = process.env.SM_INSTALL_BRANCH || 'main';
+const updateFrom = process.env.SM_UPDATE_FROM;
+if (updateFrom) assert(/^[a-f0-9]{40}$/.test(updateFrom), 'SM_UPDATE_FROM must be a full commit SHA');
 assert(source, 'ST_SOURCE must be an isolated pinned host without an extension symlink');
 const git = (cwd, ...args) => execFileSync('git', ['-C', cwd, ...args], { encoding: 'utf8' }).trim();
 git(root, 'check-ref-format', '--branch', installBranch);
@@ -30,7 +33,7 @@ await writeFile(reportPath, '{}', { flag: 'wx' });
 const port = Number(process.env.ST_INSTALL_PORT || 18129), url = `http://127.0.0.1:${port}`;
 const installed = path.join(work, 'data/default-user/extensions', installFolder);
 const harnessSha256 = createHash('sha256').update(await readFile(fileURLToPath(import.meta.url))).digest('hex');
-const report = { harnessSha256, host: revision, repository, installFolder, installBranch, installSha, checks: [], api: [], pageErrors: [], remoteRequests: 0, passed: false };
+const report = { harnessSha256, host: revision, repository, installFolder, installBranch, branchSelection: process.env.SM_INSTALL_BRANCH || '(default)', installSha, updateFrom, checks: [], api: [], pageErrors: [], remoteRequests: 0, passed: false };
 const check = (name, value) => { assert(value, name); report.checks.push(name); console.log(`PASS ${name}`); };
 let server, browser, page;
 try {
@@ -58,7 +61,7 @@ try {
     await page.locator('#extensions-settings-button .drawer-toggle').click();
     await page.locator('#third_party_extension_button').click();
     await page.locator('dialog[open] .popup-input').fill(repository);
-    await page.locator('#extension_branch_name').fill(installBranch);
+    if (process.env.SM_INSTALL_BRANCH) await page.locator('#extension_branch_name').fill(installBranch);
     await page.getByText('Install just for me', { exact: true }).click();
     await page.getByText('Yes, install it', { exact: true }).click();
     await page.locator('#sillymemory').waitFor({ state: 'attached', timeout: 90000 });
@@ -90,15 +93,60 @@ try {
     check('panel explains direct CORS without a proxy setup', (await page.locator('#sillymemory').innerText()).includes('No SillyTavern proxy setting or restart is needed.'));
     const candidate = JSON.parse(await readFile(path.join(installed, 'manifest.json'), 'utf8'));
     check('candidate manifest version agrees with package version', candidate.version === JSON.parse(await readFile(path.join(installed, 'package.json'), 'utf8')).version);
-    report.updatedVersion = candidate.version;
-    await page.locator('#extensions_details').click();
-    await page.getByText('Loading third-party extensions... Please wait...', { exact: true }).waitFor({ state: 'hidden' });
-    await page.waitForFunction(() => [...document.querySelectorAll('dialog[open]')].some(d => d.querySelector('.extensions_info') && Number(getComputedStyle(d).opacity) === 1));
-    check('extension manager displays the candidate version', (await page.locator('.extensions_info .extension_block').filter({ hasText: 'SillyMemory' }).innerText()).includes(candidate.version));
+    report.installedVersion = candidate.version;
+    async function manager() {
+        await page.locator('#extensions_details').click();
+        await page.getByText('Loading third-party extensions... Please wait...', { exact: true }).waitFor({ state: 'hidden' });
+        await page.waitForFunction(() => [...document.querySelectorAll('dialog[open]')].some(d => d.querySelector('.extensions_info') && Number(getComputedStyle(d).opacity) === 1));
+        // The loading label may be absent until the asynchronous manager renders.
+        // Wait for the completed native version check, not only dialog visibility.
+        const stamp = `${installBranch}-${git(installed, 'rev-parse', 'HEAD').slice(0, 7)}`;
+        await page.waitForFunction(stamp => [...document.querySelectorAll('dialog[open] .extension_block')].some(row => row.textContent.includes('SillyMemory') && row.textContent.includes(stamp)), stamp, { timeout: 90000 });
+    }
+    const extensionRow = () => page.locator('.extensions_info .extension_block').filter({ hasText: 'SillyMemory' });
+    if (updateFrom) {
+        // Simulate an older checkout on this exact branch, without publishing a
+        // throwaway remote branch or claiming a previous data-layout migration.
+        // SillyTavern installs with depth 1; restore ancestry before validating
+        // the controlled rewind target. This changes only the test checkout.
+        if (git(installed, 'rev-parse', '--is-shallow-repository') === 'true') git(installed, 'fetch', '--unshallow', 'origin');
+        git(installed, 'fetch', 'origin', updateFrom);
+        git(installed, 'merge-base', '--is-ancestor', updateFrom, installSha);
+        assert.notEqual(updateFrom, installSha, 'The update source must precede the candidate');
+        check('disposable checkout is clean before controlled rewind', git(installed, 'status', '--porcelain') === '');
+        git(installed, 'reset', '--hard', updateFrom);
+        report.updateSourceVersion = JSON.parse(await readFile(path.join(installed, 'manifest.json'), 'utf8')).version;
+        check('same installed branch starts behind its remote', git(installed, 'rev-parse', 'HEAD') === updateFrom && git(installed, 'branch', '--show-current') === installBranch);
+        await page.reload(); await page.locator('#sillymemory').waitFor({ state: 'attached' }); await settings();
+        await manager();
+        await extensionRow().locator('.btn_update').waitFor({ state: 'visible', timeout: 90000 });
+        const responsePromise = page.waitForResponse(r => new URL(r.url()).pathname === '/api/extensions/update', { timeout: 90000 });
+        await extensionRow().locator('.btn_update').click();
+        const response = await responsePromise;
+        check('native Update endpoint advances a behind checkout', response.ok());
+        const result = await response.json();
+        check('update response reports an actual pull to the candidate', result.isUpToDate === false && result.shortCommitHash === installSha.slice(0, 7));
+        check('Update pulls the installed branch to the exact GitHub commit', git(installed, 'rev-parse', 'HEAD') === installSha && git(installed, 'branch', '--show-current') === installBranch && git(installed, 'status', '--porcelain') === '');
+        report.updatedSha = git(installed, 'rev-parse', 'HEAD');
+        await page.reload(); await page.locator('#sillymemory').waitFor({ state: 'attached' }); await settings();
+        check('update reload mounts one extension and preserves ownership', await page.locator('#sillymemory').count() === 1 && await page.evaluate(owner => SillyTavern.getContext().extensionSettings.sillymemory.owner === owner, owner));
+        check('update reload preserves preferences and clears unsaved credentials', await field('budget').inputValue() === '600' && !await field('stopOnLoss').isChecked() && await field('key').inputValue() === '' && !await field('enabled').isChecked());
+        const scriptPath = '/scripts/extensions/third-party/SillyMemory/index.js';
+        const served = await page.evaluate(async scriptPath => {
+            const response = await fetch(scriptPath, { cache: 'no-store' });
+            if (!response.ok) throw new Error('Updated script unavailable');
+            return response.text();
+        }, scriptPath);
+        check('host serves the candidate runtime after update', served === await readFile(path.join(installed, 'index.js'), 'utf8'));
+        report.updatedRuntimeSha256 = createHash('sha256').update(served).digest('hex');
+        report.updatedVersion = JSON.parse(await readFile(path.join(installed, 'manifest.json'), 'utf8')).version;
+    }
+    await manager();
+    check('extension manager displays the candidate version', (await extensionRow().innerText()).includes(candidate.version));
     await page.screenshot({ path: path.join(artifacts, `${artifactTag}.png`) });
     const persisted = await page.evaluate(() => JSON.stringify({ local: { ...localStorage }, session: { ...sessionStorage }, settings: SillyTavern.getContext().extensionSettings }));
     check('unsaved keys are absent from persistent browser state', !persisted.includes('synthetic-release-unsaved-key'));
-    check('fresh installation and reload have no uncaught errors or provider requests', report.pageErrors.length === 0 && report.remoteRequests === 0);
+    check('installation, update and reload have no uncaught errors or provider requests', report.pageErrors.length === 0 && report.remoteRequests === 0);
     report.passed = true;
  } catch (error) {
     report.failure = error.message;

@@ -1720,3 +1720,38 @@ actual-host/emulator run passes 102 checks with no page errors/resources.
   visibility patch; real provider answers, source histories and query bodies
   remain in their original archive. No paid answer was rerun, and no new
   managed-service validation or quality score is claimed for this follow-up.
+
+
+## 0.4.0 Git installation and update readiness
+
+The [readiness decision](releases/0.4.0-validation.md) completes the no-service
+installation gate. Public default-branch installation passes 14 checks; candidate
+installation and a native same-branch Update pass 22 checks. Settings/owner survive
+reload, unsaved input does not persist, and exact commit/served runtime are verified.
+This is actual pinned SillyTavern/Chromium with GitHub clone/pull, not a simulated
+update response, paid quality run or published main upgrade. No product runtime
+changes or remote collections; all disposable profiles and temporary host removed.
+
+- Local-only archive: `artifacts/archive/install-update-040-v2/evidence.tar.gz`;
+  SHA-256 `d70d07a5c00dc9368687d25b6ed76c6c9add62cf5bf759abee2d00c16b5867fc`.
+- Manifest: `artifacts/archive/install-update-040-v2/manifest.json`; all 24 uniquely named member
+  bytes read back and verified. Archive is unavailable in a fresh clone.
+- Producer/measured candidate revision: `cd3664968ee3a4884a94ad686a4d4d226fe75442`.
+  Final producer is retained with its report SHA-256 locks; pinned native install/
+  update endpoint and manager source, raw receipts/screenshots and unit log included.
+- The initial shallow-ancestry failure and successful develop/candidate/main attempts
+  remain unchanged. Intermediate producer variants were reconstructed and verified
+  byte-for-byte against their recorded harness hashes before retention. Final
+  default installation leaves the branch field empty; native Update restores the
+  preparation branch from `b262dc5dac942a50a9fd247974d748060b89761b`.
+- The initial archive remains unchanged at `artifacts/archive/install-update-040-v1/`
+  (SHA-256 `1603566e4c065e4682639b01a865e5722d1d2959ff3bcb7f806339a7b99aef81`).
+  Its host source filenames collided and its pre-completion notes counted 23
+  assertions instead of the receipts' 22. The corrected archive uses unique source
+  names and current notes; all original reports/producers are preserved unchanged.
+- Commands: `npm test` (367 passed, Node.js 24.15.0), `npm run check`,
+  `npm run check:release`, `npm run check:sdk`, all script/test syntax checks,
+  and the `npm run test:install` commands in the readiness record. Main/tag
+  promotion checks requiring a dated release were deliberately not run; 0.4.0
+  remains Unreleased. This preparation establishes neither publication nor
+  data migration, arbitrary model/API support or improved answer quality.

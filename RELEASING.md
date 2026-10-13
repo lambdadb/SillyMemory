@@ -127,7 +127,7 @@ from code installation checks. Historical release acceptance remains in
 
 Use an isolated pinned host checkout with no global SillyMemory symlink. The
 runner installs the requested GitHub branch through the actual installation UI,
-checks its exact commit, branding/version, saved preferences and session-key
+checks its exact commit, branding/version, saved preferences and unsaved-key input
 clearing, then removes its disposable profile. It makes no provider/model calls.
 
 ```sh
@@ -137,6 +137,13 @@ SM_INSTALL_BRANCH=your-published-candidate-branch SM_ARTIFACT_TAG=install-unique
 ```
 
 The branch must exist on GitHub. Omit `SM_INSTALL_BRANCH` to test public main.
+For a controlled same-branch update, set `SM_UPDATE_FROM` to a full earlier
+commit SHA contained in that candidate branch. After fresh installation, the
+runner rewinds only its disposable checkout, reloads it, clicks the native
+Update button, and checks the exact remote commit, served runtime, version and
+preserved preferences after another reload. This validates Git update mechanics;
+it does not establish storage migration from an older published release.
+
 A candidate-branch installation is not a main deployment. Reports/screenshots
 stay under ignored `artifacts/`; retain concise results and exact source hashes.
 
