@@ -33,7 +33,7 @@ await writeFile(reportPath, '{}', { flag: 'wx' });
 const port = Number(process.env.ST_INSTALL_PORT || 18129), url = `http://127.0.0.1:${port}`;
 const installed = path.join(work, 'data/default-user/extensions', installFolder);
 const harnessSha256 = createHash('sha256').update(await readFile(fileURLToPath(import.meta.url))).digest('hex');
-const report = { harnessSha256, host: revision, repository, installFolder, installBranch, installSha, updateFrom, checks: [], api: [], pageErrors: [], remoteRequests: 0, passed: false };
+const report = { harnessSha256, host: revision, repository, installFolder, installBranch, branchSelection: process.env.SM_INSTALL_BRANCH || '(default)', installSha, updateFrom, checks: [], api: [], pageErrors: [], remoteRequests: 0, passed: false };
 const check = (name, value) => { assert(value, name); report.checks.push(name); console.log(`PASS ${name}`); };
 let server, browser, page;
 try {
@@ -61,7 +61,7 @@ try {
     await page.locator('#extensions-settings-button .drawer-toggle').click();
     await page.locator('#third_party_extension_button').click();
     await page.locator('dialog[open] .popup-input').fill(repository);
-    await page.locator('#extension_branch_name').fill(installBranch);
+    if (process.env.SM_INSTALL_BRANCH) await page.locator('#extension_branch_name').fill(installBranch);
     await page.getByText('Install just for me', { exact: true }).click();
     await page.getByText('Yes, install it', { exact: true }).click();
     await page.locator('#sillymemory').waitFor({ state: 'attached', timeout: 90000 });
