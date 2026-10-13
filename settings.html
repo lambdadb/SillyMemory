@@ -8,7 +8,7 @@
     <label>Project API key <input data-sm="key" class="text_pole" type="password" autocomplete="off" spellcheck="false"></label>
     <div class="sm-actions"><button data-sm="connect" class="menu_button">Save and connect</button><button data-sm="forget" class="menu_button">Forget key</button></div>
     <small>Save and connect stores your key in this browser for automatic reconnection. Other extensions on this page can access browser storage. Forget key removes it and disables memory.</small>
-    <p>Connects directly to LambdaDB from this browser. Allow this page’s origin in LambdaDB CORS settings. No SillyTavern proxy setting or restart is needed.</p>
+    <p>Connects directly to LambdaDB from this browser. No SillyTavern proxy setting or restart is needed.</p>
     <div class="sm-actions"><button data-sm="gate" class="menu_button">Test synthetic upsert / query / delete</button><button data-sm="cleanup" class="menu_button">Clean up test collection</button><button data-sm="provision" class="menu_button">Prepare chat memory</button></div>
     <label class="sm-toggle"><input data-sm="enabled" type="checkbox"> Enable memory (isolated chat history)</label>
     <p>Each story has its own collection. Native branches reuse committed memory in isolated LambdaDB branches automatically. Completed eligible messages are indexed when they leave the recent-five window, keeping adjacent input/reply pairs together. Checkpoints synchronize the full completed transcript. Initial indexing consumes managed embedding usage. Save a checkpoint explicitly when you want to preserve a resumable transcript.</p>
