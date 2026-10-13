@@ -29,25 +29,11 @@ test('fixed 62-case corpus keeps every target old and freezes fourteen new shape
     assert.equal(contextTurnDecision([]),null);
 });
 
-test('v5 runtime matches the frozen relative candidate for all 62 cases and generation anchors', async () => {
+test('runtime keeps both complete query messages and leaves context limits to the client', async () => {
     const { retrievalQueries, RETRIEVAL_POLICY } = await import('../src/memory.js');
-    assert.equal(RETRIEVAL_POLICY, 'latest-anchor-with-context-selection-v5');
-    for (const item of contextTurnCases()) for (const type of ['normal', 'regenerate', 'swipe', 'continue']) {
-        assert.deepEqual(retrievalQueries(item.snapshot, type), contextTurnQueries(item.snapshot, type).queries, `${item.id}/${type}`);
-    }
-});
-
-test('context selection respects lexical evidence, Unicode normalization and the reference window', async () => {
-    const { retrievalQueries } = await import('../src/memory.js');
-    const message = (text, user = false, eligible = true) => ({ text, user, eligible });
-    const question = message('Who brings it?', true), user = message('Other subject', true), assistant = message('ＬＡＮＴＥＲＮ');
-    assert.deepEqual(retrievalQueries({messages:[message('lantern'), user, assistant, question]}), ['Who brings it?', 'ＬＡＮＴＥＲＮ']);
-    assert.deepEqual(retrievalQueries({messages:[message('lantern', false, false), user, assistant, question]}), ['Who brings it?', 'Other subject']);
-    assert.deepEqual(retrievalQueries({messages:[message('lantern'), ...Array.from({length:256},()=>message('unrelated')), user, assistant, question]}), ['Who brings it?', 'Other subject']);
-    assert.deepEqual(retrievalQueries({messages:[message('lantern'), assistant, user, question]}), ['Who brings it?', 'Other subject']);
-    assert.deepEqual(retrievalQueries({messages:[message('ab'), user, message('ab'), question]}), ['Who brings it?', 'Other subject']);
-    // A candidate's words beyond the same 6,000-unit query boundary cannot steer selection.
-    assert.deepEqual(retrievalQueries({messages:[message('lantern'), user, message('x'.repeat(6000)+' lantern'), question]}), ['Who brings it?', 'Other subject']);
+    assert.equal(RETRIEVAL_POLICY, 'recent-two-native-reply-v1');
+    const messages = [{ user: false, text: 'Context '.repeat(10000) }, { user: true, text: 'Where is the compass?' }];
+    assert.deepEqual(retrievalQueries({ messages }), [`Assistant: ${messages[0].text.trim()}\n\nUser: Where is the compass?`]);
 });
 
 test('generation amendment preserves new cases and adds the two historical boundary controls before execution', async () => {
@@ -74,22 +60,10 @@ test('adoption rejects individual source regressions and follows the frozen cand
     assert.equal(contextTurnDecision(rows.filter(r => r.case !== 'boundaries/ko-assistant-topic')), null);
 });
 
-test('captured file, media and tool assistant turns cannot supply the contextual query', async () => {
+test('file, media and tool turns cannot become the current query anchor', async () => {
     const { capture, retrievalQueries } = await import('../src/memory.js');
-    const { preferAssistantContext } = await import('../src/context.js');
-    const captureChat = chat => capture({chat,characterId:0,characters:[{avatar:'test.png'}],getCurrentChatId:()=> 'special-context'});
     for (const extra of [{file:{name:'synthetic.txt'}}, {media:[{url:'synthetic'}]}, {tool_invocations:[{name:'synthetic'}]}]) {
-        const message = (mes, is_user, extra = {}) => ({mes,is_user,extra});
-        const snapshot = captureChat([message('Lantern repair history',false), message('Unrelated schedule',true), message('Lantern repair history',false,extra), message('Who brings it?',true)]);
-        assert.equal(snapshot.messages[2].eligible,false);
-        assert.equal(preferAssistantContext(snapshot.messages,1,2),false);
-        for (const type of ['normal','regenerate','swipe','continue']) assert.deepEqual(retrievalQueries(snapshot,type),['Who brings it?','Unrelated schedule']);
-        snapshot.messages[2].eligible=true;
-        assert.deepEqual(retrievalQueries(snapshot),['Who brings it?','Lantern repair history']);
-        // The no-prior-user fallback must obey the same eligibility rule.
-        const fallback = captureChat([message('Plain introduction',false),message('Special introduction',false,extra),message('First question',true)]);
-        assert.deepEqual(retrievalQueries(fallback),['First question','Plain introduction']);
-        fallback.messages.shift();
-        assert.deepEqual(retrievalQueries(fallback),['First question']);
+        const snapshot = capture({chat:[{mes:'Plain question',is_user:true},{mes:'Special reply',is_user:false,extra}],characterId:0,characters:[{avatar:'test.png'}],getCurrentChatId:()=> 'test'});
+        for (const type of ['normal','swipe','regenerate','continue']) assert.deepEqual(retrievalQueries(snapshot,type), ['Plain question']);
     }
 });

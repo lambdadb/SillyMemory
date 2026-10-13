@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { capture, documents, selectMemory, MemoryEngine, Journal, options, chunks, literal, retrievalQueries, interleaveHits } from '../src/memory.js';
+import { capture, documents, selectMemory, MemoryEngine, Journal, options, chunks, literal, retrievalQueries, interleaveHits, memoryBoundary, archiveBoundary } from '../src/memory.js';
 const owner = 'a'.repeat(32);
 const config = { recent: 2, budget: 400, chunkChars: 200 };
-const snapshot = (chat = 'chat', character = 'alice.png') => ({ chat, character, messages: Array.from({ length: 6 }, (_, index) => ({ index, text: `Synthetic message ${index}: the blue compass is under the tree.`, name: index % 2 ? 'Alice' : 'User', user: !(index % 2), swipe: 0, eligible: true })) });
+const snapshot = (chat = 'chat', character = 'alice.png') => ({ chat, character, memory: { story: chat }, messages: Array.from({ length: 6 }, (_, index) => ({ index, text: `Synthetic message ${index}: the blue compass is under the tree.`, name: index % 2 ? 'Alice' : 'User', user: !(index % 2), swipe: 0, eligible: true })) });
 class Storage {
     values = new Map(); get length() { return this.values.size; } key(i) { return [...this.values.keys()][i]; }
     getItem(k) { return this.values.get(k) ?? null; } setItem(k, v) { this.values.set(k, v); } removeItem(k) { this.values.delete(k); }
@@ -12,17 +12,105 @@ function setup(storage = new Storage()) {
     const remote = new Map(); const writes = []; const deletes = [];
     const client = {
         async assertOwned() {},
+        async listDocs() { return [...remote.values()]; },
+        async fetchDocs(_, ids) { return ids.map(id => remote.get(id)).filter(Boolean); },
         async upsert(_, docs) { writes.push(docs); docs.forEach(x => remote.set(x.id, x)); },
         async deleteIds(_, ids) { deletes.push(ids); ids.forEach(x => remote.delete(x)); },
         async search(_, o, scope) { return [...remote.values()].filter(x => x.owner === o && x.scope === scope); },
-        async deleteOwnedCollection() { remote.clear(); },
+        async deleteBranch() { remote.clear(); },
     };
-    const engine = new MemoryEngine({ client, owner, collection: 'test', journal: new Journal(storage, 'test') });
+    const engine = new MemoryEngine({ client, owner, collection: 'test', branch: 'chat_test', journal: new Journal(storage, 'test') });
     return { engine, client, writes, deletes, remote, storage };
 }
-test('stable content IDs, unique character/chat/branch scopes, and only older messages', async () => {
+test('archival sends a displaced input/reply pair once and keeps recent changes local', async () => {
+    const s = setup(), snap = snapshot();
+    const archival = () => ({ ...config, archiveBefore: archiveBoundary(snap) });
+    await s.engine.sync(snap, archival());
+    assert.equal(s.writes.length, 0, 'three completed pairs remain local until a new input');
+    snap.messages[5].text = 'Recent edit is not yet embedded.';
+    await s.engine.sync(snap, archival());
+    assert.equal(s.writes.length, 0);
+    for (let index = 6; index < 10; index++) {
+        snap.messages.push({ ...snap.messages[0], index, user: index % 2 === 0, text: `New message ${index}` });
+        await s.engine.sync(snap, archival());
+        assert.equal(s.writes.length, Math.floor((index - 6) / 2) + 1);
+    }
+    assert.deepEqual(s.writes.map(batch => batch.map(d => d.message)), [[0, 1], [2, 3]]);
+    snap.messages.push({ ...snap.messages[0], index: 10, user: true, text: 'Question' }, { ...snap.messages[1], index: 11, text: 'Reply' });
+    await s.engine.sync(snap, archival());
+    assert.deepEqual(s.writes.at(-1).map(d => d.message), [4, 5]);
+    assert(s.writes.at(-1)[1].text.includes('Recent edit'));
+    const before = s.writes.length;
+    await s.engine.sync(snap, archival());
+    const reload = new MemoryEngine({ client: s.client, owner, collection: 'test', branch: 'chat_test', journal: new Journal(s.storage, 'test') });
+    await reload.sync(snap, archival());
+    assert.equal(s.writes.length, before, 'same source/reload never resubmits acknowledged documents');
+});
+
+test('archive reconciliation removes deleted source and restores changed old revisions without touching recent messages', async () => {
+    const s = setup(), snap = snapshot();
+    snap.messages.push({ ...snap.messages[0], index: 6, user: true, text: 'Question' });
+    const archival = () => ({ ...config, archiveBefore: archiveBoundary(snap) });
+    await s.engine.sync(snap, archival());
+    const stale = [...s.remote.values()][0];
+    snap.messages[0].text = 'Edited old source';
+    await s.engine.sync(snap, archival());
+    assert(!s.remote.has(stale.id)); assert.equal(s.remote.size, 2);
+    snap.messages.splice(0, 1); snap.messages.forEach((message, index) => { message.index = index; });
+    await s.engine.sync(snap, archival());
+    assert.equal(s.remote.size, 1);
+    assert.deepEqual([...s.remote.values()].map(d => d.message), [0]);
+    assert(!s.engine.journal.read(stale.scope).includes(stale.id));
+});
+
+test('a failed archive transition cannot query past unacknowledged displaced messages', async () => {
+    const s = setup(), snap = snapshot(); let searches = 0;
+    s.client.upsert = async () => { throw new Error('Unavailable'); };
+    s.client.search = async () => { searches++; return []; };
+    await assert.rejects(s.engine.retrieve(snap, { ...config, archiveBefore: 1, retainedStart: 1 }, text => text.length), /Unavailable/);
+    assert.equal(searches, 0);
+});
+test('recent dialogue is excluded before bounded retrieval and local budgeting', async () => {
+    const s = setup(), snap = snapshot();
+    const calls = [];
+    s.client.search = async (...args) => { calls.push(args); return [...s.remote.values()]; };
+    const result = await s.engine.retrieve(snap, { ...config, retainedStart: 2 }, text => text.split(/\s+/).length);
+    assert.equal(calls.length, 1);
+    assert.equal(calls[0][6], 2); // Exclude retained full turns in both remote search legs.
+    assert.equal(calls[0][3], `Assistant: ${snap.messages[3].text}\n\nUser: ${snap.messages[4].text}`);
+    assert.deepEqual([...new Set(result.passages.map(p => p.message))], [0, 1]);
+    assert(result.messages.every(m => m.index < 2));
+    assert(s.remote.size > result.passages.length); // This engine-only configuration explicitly syncs full completed source.
+});
+test('a recent window starting at the first message syncs but performs no search', async () => {
+    const s = setup(), snap = snapshot();
+    s.client.search = async () => { throw new Error('No older source is available to search.'); };
+    const result = await s.engine.retrieve(snap, { ...config, retainedStart: 0 }, text => text.split(/\s+/).length);
+    assert.deepEqual(result, { text: '', tokens: 0, passages: [], messages: [] });
+    assert(s.remote.size > 0); // Storage still includes all completed eligible messages.
+});
+test('full-transcript reconciliation excludes recent dialogue from ranking and uses a single two-message query', async () => {
+    const s = setup(), snap = snapshot(), calls = [];
+    s.client.search = async (...args) => { calls.push(args); return [...s.remote.values()]; };
+    const result = await s.engine.retrieve(snap, { ...config, retainedStart: 2 }, text => text.split(/\s+/).length);
+    assert.equal(calls.length, 1);
+    assert.equal(calls[0][3], `Assistant: ${snap.messages[3].text}\n\nUser: ${snap.messages[4].text}`);
+    assert.equal(calls[0][6], 2);
+    assert(result.passages.every(p => p.message < 2));
+    assert.equal(s.remote.size, 6);
+});
+test('a later ineligible active input cannot broaden retrieval past its existing query boundary', async () => {
+    const s = setup(), snap = snapshot();
+    snap.messages.forEach((message, index) => { message.user = index === 0; });
+    snap.messages.push({ index: 6, text: 'Attachment', user: true, eligible: false });
+    s.client.search = async () => { throw new Error('No source precedes the eligible query anchor.'); };
+    const result = await s.engine.retrieve(snap, { ...config, retainedStart: 1 }, text => text.length);
+    assert.deepEqual(result.passages, []);
+    assert.equal(s.remote.size, 6);
+});
+test('stable content IDs, unique character/chat/branch scopes, and all completed messages', async () => {
     const a = await documents(snapshot(), owner, config);
-    assert.equal(a.docs.length, 4); assert.ok(a.docs.every(d => d.message < 4));
+    assert.equal(a.docs.length, 6); assert.ok(a.docs.every(d => d.message < 6));
     assert.deepEqual(a, await documents(snapshot(), owner, config));
     for (const other of [snapshot('branch'), snapshot('chat', 'bob.png')]) assert.notEqual(a.scope, (await documents(other, owner, config)).scope);
 });
@@ -35,26 +123,52 @@ test('deduplication, edits, swipe, deletion and reload reconcile uncertain write
     const beforeSwipe = [...s.remote.keys()]; snap.messages[1].swipe = 1;
     await s.engine.sync(snap, config); assert.ok(beforeSwipe.some(x => !s.remote.has(x)));
     snap.messages.splice(1, 1); snap.messages.forEach((m, i) => { m.index = i; });
-    await s.engine.sync(snap, config); assert.equal(s.remote.size, 3);
+    await s.engine.sync(snap, config); assert.equal(s.remote.size, 5);
     // Reload loses in-memory acknowledgements, but journal preserves remote IDs.
-    const reloaded = new MemoryEngine({ client: s.client, owner, collection: 'test', journal: new Journal(s.storage, 'test') });
+    const reloaded = new MemoryEngine({ client: s.client, owner, collection: 'test', branch: 'chat_test', journal: new Journal(s.storage, 'test') });
     snap.messages[0].text = 'Edited while extension was not loaded';
     await reloaded.sync(snap, config);
     assert.deepEqual([...s.remote.keys()].sort(), (await documents(snap, owner, config)).docs.map(x => x.id).sort());
+});
+test('timestamp-only edits reconcile remote provenance and reload deduplicates the updated documents', async () => {
+    const s = setup(), snap = snapshot();
+    snap.messages[0].recordedAt = '2024-01-01T00:00:00.000Z';
+    await s.engine.sync(snap, config);
+    snap.messages[0].recordedAt = '2024-01-02T00:00:00.000Z';
+    const result = await s.engine.retrieve(snap, { ...config, budget: 2000 }, t => t.length);
+    assert(result.text.includes('2024-01-02T00:00:00.000Z'));
+    assert(!result.text.includes('2024-01-01')); assert.equal(s.writes.length, 2);
+    assert([...s.remote.values()].some(d => d.conversationTimestamp === '2024-01-02T00:00:00.000Z'));
+    assert(![...s.remote.values()].some(d => d.conversationTimestamp === '2024-01-01T00:00:00.000Z'));
+    const reloaded = new MemoryEngine({ client: s.client, owner, collection: 'test', branch: 'chat_test', journal: new Journal(s.storage, 'test') });
+    assert.equal((await reloaded.retrieve(snap, { ...config, budget: 2000 }, t => t.length)).text, result.text);
+    assert.equal(s.writes.length, 2); assert.equal(s.deletes.length, 1);
+});
+
+test('a timestamp change during asynchronous selection cannot deliver the old prompt', async () => {
+    const s = setup(), snap = snapshot(); let current = true, release, started;
+    snap.messages[0].recordedAt = '2024-01-01T00:00:00.000Z';
+    const annotating = new Promise(resolve => { started = resolve; });
+    const pending = s.engine.retrieve(snap, { ...config, budget: 2000 }, async text => {
+        if (!release && text.includes('[Conversation timestamp:')) { started(); await new Promise(resolve => { release = resolve; }); }
+        return text.length;
+    }, () => current);
+    await annotating; current = false; release();
+    assert.equal(await pending, null);
 });
 test('intent journal survives server acceptance followed by a timeout', async () => {
     const s = setup(); const real = s.client.upsert;
     s.client.upsert = async (...args) => { await real(...args); throw new Error('timeout'); };
     await assert.rejects(s.engine.sync(snapshot(), config));
-    const ids = [...s.remote.keys()]; assert.equal(ids.length, 4);
+    const ids = [...s.remote.keys()]; assert.equal(ids.length, 6);
     s.client.upsert = real;
     const changed = snapshot(); changed.messages = changed.messages.slice(-2);
-    await s.engine.sync(changed, config); assert.equal(s.remote.size, 0);
+    await s.engine.sync(changed, config); assert.equal(s.remote.size, 2);
 });
 test('late results after chat switch/edit are rejected', async () => {
     const s = setup(); const resolvers = [], signals = []; let started;
     const searching = new Promise(r => { started = r; });
-    s.client.search = async (_, o, scope, query, signal) => { signals.push(signal); return new Promise(r => { resolvers.push(r); if (resolvers.length === 2) started(); }); };
+    s.client.search = async (_, o, scope, query, signal) => { signals.push(signal); return new Promise(r => { resolvers.push(r); if (resolvers.length === 1) started(); }); };
     const pending = s.engine.retrieve(snapshot(), config, t => t.length / 4);
     await searching; s.engine.invalidate();
     assert.ok(signals.every(signal => signal.aborted));
@@ -130,8 +244,11 @@ test('deletion drains pending writes and clears local journal', async () => {
     assert.equal(s.remote.size, 0); assert.equal(s.storage.length, 0);
 });
 test('settings are clamped and capture refuses group/no character chats', () => {
+    assert.equal(options().budget, 4096);
+    assert.equal(options({ budget: 800 }).budget, 800);
+    assert.equal(options({ budget: NaN }).budget, 4096);
     assert.equal(options({ budget: 999999, recent: 0 }).budget, 4096);
-    assert.equal(options({ recent: 0 }).recent, 2);
+    assert.equal(Object.hasOwn(options({ recent: 100 }), 'recent'), false);
     assert.equal(capture({ groupId: 'group' }), null);
     assert.equal(capture({ characterId: undefined }), null);
 });
@@ -149,21 +266,27 @@ test('recalled macros are literal before token counting and include host separat
 });
 
 
-test('query anchors on the latest user; contextual retrieval stays separate from the question', () => {
+test('a single two-message query includes the preceding reply and excludes replacement answers', () => {
     const messages = [
         { user: true, text: 'Old unrelated topic' },
         { user: false, text: 'Mira stored a travel document.' },
         { user: true, text: 'Where did she put it?' },
         { user: false, text: 'Incorrect previous answer during swipe or regenerate' },
     ];
-    assert.deepEqual(retrievalQueries({ messages }), ['Where did she put it?', 'Old unrelated topic']);
-    assert.deepEqual(retrievalQueries({ messages: messages.slice(0, -1) }), retrievalQueries({ messages }));
+    const queries = retrievalQueries({ messages });
+    assert.equal(queries.length, 1);
+    assert(!queries[0].includes(messages[0].text));
+    assert(queries[0].includes(messages[1].text));
+    assert(queries[0].endsWith(messages[2].text));
+    assert(!queries[0].includes(messages[3].text));
+    assert.deepEqual(retrievalQueries({ messages: messages.slice(0, -1) }), queries);
     assert.deepEqual(retrievalQueries({ messages: [{ user: true, text: '  Question  ' }] }), ['Question']);
     assert.deepEqual(retrievalQueries({ messages: [{ user: false, text: 'Opening scene' }] }), ['Opening scene']);
     assert.deepEqual(retrievalQueries({ messages: [{ user: true, text: '  ' }] }), []);
     const long = retrievalQueries({ messages: [{ user: true, text: 'context' }, { user: true, text: 'x'.repeat(7000) }] });
-    assert.deepEqual(long, ['x'.repeat(6000), 'context']);
+    assert(long[0].endsWith('x'.repeat(7000)));
 });
+
 test('rank interleaving keeps question and contextual top hits inside a bounded selection', async () => {
     const { docs } = await documents(snapshot(), owner, config);
     const count = text => text.length;
@@ -174,19 +297,18 @@ test('rank interleaving keeps question and contextual top hits inside a bounded 
     assert.equal(result.tokens, expected.tokens);
     assert.deepEqual(interleaveHits([[1, 2, 3], [4]]), [1, 4, 2, 3]);
 });
-test('a query failure cancels the sibling and rejects partial memory', async () => {
-    const s = setup(); let count = 0, siblingAborted = false;
+test('a failed single search aborts its read scope and exposes no partial memory', async () => {
+    const s = setup(); let count = 0, readSignal;
     s.client.search = async (_, o, scope, query, signal) => {
-        if (++count === 1) throw new Error('query failed');
-        return new Promise((resolve, reject) => signal.addEventListener('abort', () => { siblingAborted = true; reject(signal.reason); }, { once: true }));
+        count++; readSignal = signal; throw new Error('query failed');
     };
     await assert.rejects(s.engine.retrieve(snapshot(), config, text => text.length), /query failed/);
-    assert.equal(count, 2); assert.equal(siblingAborted, true);
+    assert.equal(count, 1); assert.equal(readSignal.aborted, true);
 });
 
 test('progress counts only acknowledged batches and retry skips earlier successful uploads', async () => {
     const s = setup(), snap = snapshot();
-    snap.messages = Array.from({ length: 122 }, (_, index) => ({ ...snap.messages[0], index, text: `Synthetic chunk ${index}` }));
+    snap.messages = Array.from({ length: 121 }, (_, index) => ({ ...snap.messages[0], index, text: `Synthetic chunk ${index}` }));
     const original = s.client.upsert, events = [];
     let calls = 0;
     s.client.upsert = async (...args) => { await original(...args); if (++calls === 2) throw new Error('response lost'); };
@@ -194,11 +316,11 @@ test('progress counts only acknowledged batches and retry skips earlier successf
     assert.deepEqual(events.filter(e => e.phase === 'uploading'), [
         { phase: 'uploading', completed: 0, total: 120 }, { phase: 'uploading', completed: 50, total: 120 },
     ]);
-    const firstBatch = new Set(s.writes[0].map(d => d.id));
+    const accepted = new Set(s.writes.flat().map(d => d.id));
     const retried = [];
     await s.engine.sync(snap, config, () => true, e => retried.push(e));
-    assert.deepEqual(retried.filter(e => e.phase === 'uploading').map(e => e.completed), [50, 100, 120]);
-    assert(s.writes.slice(2).every(batch => batch.every(d => !firstBatch.has(d.id))));
+    assert.deepEqual(retried.filter(e => e.phase === 'uploading').map(e => e.completed), [100, 120]);
+    assert(s.writes.slice(2).every(batch => batch.every(d => !accepted.has(d.id))));
     assert.equal(s.remote.size, 120);
     assert.deepEqual(new Set(s.engine.journal.read((await documents(snap, owner, config)).scope)), new Set(s.remote.keys()));
     assert(!JSON.stringify(events).includes('Synthetic chunk'));
@@ -213,16 +335,16 @@ test('invalidation during an accepted write suppresses late progress and keeps r
     await started; const count = events.length;
     s.engine.invalidate(); release();
     assert.equal(await pending, null); assert.equal(events.length, count);
-    assert.equal(s.engine.journal.read((await documents(snapshot(), owner, config)).scope).length, 4);
+    assert.equal(s.engine.journal.read((await documents(snapshot(), owner, config)).scope).length, 6);
     s.client.upsert = write;
     const retried = []; await s.engine.sync(snapshot(), config, () => true, e => retried.push(e));
     assert.equal(s.writes.length, 1);
-    assert.deepEqual(retried.at(-1), { phase: 'uploading', completed: 4, total: 4 });
+    assert.deepEqual(retried.at(-1), { phase: 'uploading', completed: 6, total: 6 });
 });
 
 test('deletion progress stops at invalidation and a fresh pass reconciles the remaining IDs', async () => {
     const s = setup(), snap = snapshot();
-    snap.messages = Array.from({ length: 122 }, (_, index) => ({ ...snap.messages[0], index, text: `Delete fixture ${index}` }));
+    snap.messages = Array.from({ length: 121 }, (_, index) => ({ ...snap.messages[0], index, text: `Delete fixture ${index}` }));
     await s.engine.sync(snap, config);
     snap.messages = snap.messages.slice(-2);
     const events = [], remove = s.client.deleteIds;
@@ -232,14 +354,14 @@ test('deletion progress stops at invalidation and a fresh pass reconciles the re
     assert.deepEqual(events.filter(e => e.phase === 'deleting').map(e => e.completed), [0]);
     s.client.deleteIds = remove;
     await s.engine.sync(snap, config);
-    assert.equal(s.remote.size, 0);
-    assert.deepEqual(s.engine.journal.read((await documents(snap, owner, config)).scope), []);
+    assert.equal(s.remote.size, 1);
+    assert.equal(s.engine.journal.read((await documents(snap, owner, config)).scope).length, 1);
 });
 
 test('retrieval reports query completion and budgeting without source text', async () => {
     const s = setup(), events = [];
     await s.engine.retrieve(snapshot(), config, t => t.length / 4, () => true, e => events.push(e));
-    assert.deepEqual(events.filter(e => e.phase === 'searching').map(e => [e.completed, e.total]), [[0, 2], [1, 2], [2, 2]]);
+    assert.deepEqual(events.filter(e => e.phase === 'searching').map(e => [e.completed, e.total]), [[0, 1], [1, 1]]);
     assert.equal(events.at(-1).phase, 'budgeting');
     assert(!JSON.stringify(events).includes('compass'));
 });
@@ -262,7 +384,7 @@ test('journal cleanup tolerates storage key reordering during removal and preser
 
 test('canceling retrieval during synchronization preserves all source writes and starts no query', async () => {
     const s = setup(), snap = snapshot();
-    snap.messages = Array.from({ length: 122 }, (_, index) => ({ ...snap.messages[0], index, text: `Quiet overlap fixture ${index}` }));
+    snap.messages = Array.from({ length: 121 }, (_, index) => ({ ...snap.messages[0], index, text: `Quiet overlap fixture ${index}` }));
     let release, started, searches = 0;
     const writing = new Promise(resolve => { started = resolve; });
     const write = s.client.upsert;
@@ -286,14 +408,14 @@ test('read cancellation rejects late results even when transport ignores abort',
     const searching = new Promise(resolve => { started = resolve; });
     s.client.search = async (_, o, scope, query, signal) => {
         signals.push(signal);
-        return new Promise(resolve => { resolvers.push(resolve); if (resolvers.length === 2) started(); });
+        return new Promise(resolve => { resolvers.push(resolve); if (resolvers.length === 1) started(); });
     };
     const pending = s.engine.retrieve(snapshot(), config, text => text.length / 4);
     await searching; s.engine.cancelReads();
     assert(signals.every(signal => signal.aborted));
     resolvers.forEach(resolve => resolve([...s.remote.values()]));
     assert.equal(await pending, null);
-    assert.equal(s.remote.size, 4);
+    assert.equal(s.remote.size, 6);
 });
 
 test('read cancellation while token counting rejects the completed selection', async () => {
@@ -305,16 +427,16 @@ test('read cancellation while token counting rejects the completed selection', a
     });
     await counting; s.engine.cancelReads(); release();
     assert.equal(await pending, null);
-    assert.equal(s.remote.size, 4);
+    assert.equal(s.remote.size, 6);
 });
 
 test('explicit continuation anchors on the continued message while regenerate and swipe keep the user anchor', () => {
     const snap = snapshot();
     snap.messages.push({ ...snap.messages[0], index: 6, user: true, text: 'Tell me about the red passport.' });
     snap.messages.push({ ...snap.messages[0], index: 7, user: false, text: 'Now return to the blue compass. Its location is' });
-    assert.equal(retrievalQueries(snap, 'continue')[0], snap.messages[7].text);
+    assert(retrievalQueries(snap, 'continue')[0].endsWith(snap.messages[7].text));
     for (const type of ['normal', 'regenerate', 'swipe']) {
-        assert.equal(retrievalQueries(snap, type)[0], snap.messages[6].text);
+        assert(retrievalQueries(snap, type)[0].endsWith(snap.messages[6].text));
         assert(retrievalQueries(snap, type).every(q => !q.includes(snap.messages[7].text)));
     }
 });
@@ -332,72 +454,96 @@ test('native excerpt order follows source and chunk order without changing retri
 });
 
 
-test('reference retrieval keeps the prior user topic separate from generic acknowledgments and questions', () => {
-    const messages = [
-        { user: true, text: 'An older unrelated topic' },
-        { user: true, text: '전시실에 걸 자주색 천 현수막 이야기를 다시 해요.' },
-        { user: false, text: '네, 그 물건에 대해 무엇을 확인하고 싶으세요?' },
-        { user: true, text: '  ' },
-        { user: true, text: '그건 누가 언제 가져오기로 했죠?' },
-        { user: false, text: 'An incorrect answer to be replaced' },
-    ];
-    for (const type of ['normal', 'regenerate', 'swipe']) {
-        assert.deepEqual(retrievalQueries({ messages }, type), [messages[4].text, messages[1].text]);
-    }
-    assert.deepEqual(retrievalQueries({ messages }, 'continue'), [messages[5].text, messages[4].text]);
-});
-
-test('prior-user queries stay bounded and preserve fallback when there is no reference corpus', () => {
-    assert.deepEqual(retrievalQueries({ messages: [
-        { user: false, text: 'An assistant introduction' }, { user: true, text: 'A first question' },
-    ] }), ['A first question', 'An assistant introduction']);
-    assert.deepEqual(retrievalQueries({ messages: [
-        { user: true, text: 'Repeated topic' }, { user: false, text: 'A reply' }, { user: true, text: ' Repeated topic ' },
-    ] }), ['Repeated topic']);
-    const long = retrievalQueries({ messages: [
-        { user: true, text: 'y'.repeat(7000) }, { user: false, text: 'A reply' }, { user: true, text: 'x'.repeat(7000) },
-    ] });
-    assert.deepEqual(long, ['x'.repeat(6000), 'y'.repeat(6000)]);
-});
-
-test('assistant-only fallback cancels its other query and exposes no partial memory on failure', async () => {
-    const s = setup(), snap = snapshot();
-    snap.messages.forEach(m => { m.user = false; });
-    snap.messages.push({ ...snap.messages[0], index: 6, user: true, text: 'First user question' });
-    const queries = []; let aborted = false;
-    s.client.search = async (_, o, scope, query, signal) => {
-        queries.push(query);
-        if (query === 'First user question') return new Promise((resolve,reject) => signal.addEventListener('abort', () => { aborted = true; reject(signal.reason); }, { once: true }));
-        throw new Error('assistant context query failed');
-    };
-    await assert.rejects(s.engine.retrieve(snap, config, text => text.length), /assistant context query failed/);
-    assert.deepEqual(queries, ['First user question', snap.messages[5].text]);
-    assert.equal(aborted, true);
-});
-
-test('selected assistant context still cancels sibling failures and rejects results after source invalidation', async () => {
+test('retrieval uses the actual source partition, not an anchor-relative window', async () => {
     const snap = snapshot();
-    snap.messages.push({ ...snap.messages[0], index: 6, text: 'An unrelated schedule', user: true });
-    snap.messages.push({ ...snap.messages[0], index: 7, text: 'Return to the blue compass under the tree', user: false });
-    snap.messages.push({ ...snap.messages[0], index: 8, text: 'Where is it?', user: true });
-    assert.deepEqual(retrievalQueries(snap), ['Where is it?', snap.messages[7].text]);
-    const failing = setup(); let siblingAborted = false;
-    failing.client.search = async (_, owner, scope, query, signal) => {
-        if (query !== snap.messages[7].text) return new Promise((resolve, reject) => signal.addEventListener('abort', () => { siblingAborted = true; reject(signal.reason); }, { once: true }));
-        throw new Error('selected assistant search failed');
-    };
-    await assert.rejects(failing.engine.retrieve(snap, config, text => text.length), /selected assistant search failed/);
-    assert.equal(siblingAborted, true);
-    const late = setup(), queries = [], signals = [], resolvers = []; let start;
-    const started = new Promise(resolve => { start = resolve; });
-    late.client.search = async (_, owner, scope, query, signal) => {
-        queries.push(query); signals.push(signal);
-        return new Promise(resolve => { resolvers.push(resolve); if (queries.length === 2) start(); });
-    };
-    const pending = late.engine.retrieve(snap, config, text => text.length / 4);
-    await started; late.engine.invalidate();
-    assert(signals.every(signal => signal.aborted));
-    resolvers.forEach(resolve => resolve([...late.remote.values()]));
-    assert.equal(await pending, null);
-    assert.deepEqual(queries, retrievalQueries(snap));
+    snap.messages.push({ ...snap.messages[0], index: 6, text: 'New question', user: true });
+    snap.messages.push({ ...snap.messages[0], index: 7, text: 'Retained answer', user: false });
+    const prepared = await documents(snap, owner, config);
+    assert.equal(prepared.docs.length, 8);
+    const [query] = retrievalQueries(snap, 'swipe', config);
+    assert.equal(query, `Assistant: ${snap.messages[5].text}\n\nUser: New question`);
+    const s = setup(), queries = [];
+    s.client.search = async (...args) => { queries.push(args[3]); return [...s.remote.values()]; };
+    await s.engine.retrieve(snap, config, t => t.length / 4, () => true, () => {}, 'swipe');
+    assert.deepEqual(queries, [query]);
+});
+
+test('identical text retains separate user and assistant attribution in the two-message query', () => {
+    assert.deepEqual(retrievalQueries({ messages: [
+        { index: 20, user: true, text: 'Repeated topic' },
+        { index: 21, user: false, text: 'Repeated topic' },
+        { index: 22, user: true, text: ' Repeated topic ' },
+    ] }), ['Assistant: Repeated topic\n\nUser: Repeated topic']);
+});
+
+test('removing source time deletes the old dated revision and never recovers it from stale hits', async () => {
+    const s = setup(), snap = snapshot(); snap.messages[0].recordedAt = '2024-01-01T00:00:00.000Z';
+    await s.engine.sync(snap, config);
+    const old = [...s.remote.values()].find(d => d.message === 0);
+    delete snap.messages[0].recordedAt;
+    await s.engine.sync(snap, config);
+    assert(!s.remote.has(old.id));
+    const current = [...s.remote.values()].find(d => d.message === 0);
+    assert(!('conversationTimestamp' in current));
+    s.client.search = async () => [old, current];
+    const recalled = await s.engine.retrieve(snap, { ...config, budget: 2000 }, t => t.length);
+    assert(!recalled.text.includes('2024-01-01'));
+    assert.deepEqual(recalled.passages, [current]);
+});
+
+
+test('completed history storage is independent of the injection budget and excludes pending user input', async () => {
+    const s = setup(), snap = snapshot();
+    snap.messages.push({ ...snap.messages[0], index: 6, text: 'Current question?' });
+    await s.engine.sync(snap, config);
+    assert.deepEqual([...s.remote.values()].map(d => d.message), [0,1,2,3,4,5]);
+    await s.engine.sync(snap, { ...config, budget: 100 });
+    assert.equal(s.writes.length, 1); assert.equal(s.deletes.length, 0);
+    const recalled = await s.engine.retrieve(snap, { ...config, budget: 2000 }, t => t.length);
+    assert(recalled.passages.some(d => d.message === 5), 'Immediately preceding completed answer is searchable');
+    assert(recalled.passages.every(d => d.message < 6), 'Pending question is not recalled');
+    snap.messages.push({ ...snap.messages[1], index: 7, text: 'Completed answer.' });
+    await s.engine.sync(snap, config);
+    assert.deepEqual(s.writes[1].map(d => d.message), [6,7]);
+});
+
+test('retrieval prefilters the active input and replacement answers, including hostile results', async () => {
+    const s = setup(), snap = snapshot(); let request;
+    s.client.search = async (...args) => { request = args; return [...s.remote.values()].reverse(); };
+    const result = await s.engine.retrieve(snap, { ...config, budget: 2000 }, t => t.length);
+    assert.equal(request[3], `Assistant: ${snap.messages[3].text}\n\nUser: ${snap.messages[4].text}`); assert.equal(request[6], 4);
+    assert(result.passages.length); assert(result.passages.every(d => d.message < 4));
+    assert.equal(s.remote.size, 6, 'completed messages are stored; the replacement answer is not recalled');
+    let searches = 0; s.client.search = async () => { searches++; return []; };
+    assert.equal((await s.engine.retrieve({ ...snap, messages: snap.messages.slice(0, 1) }, config, t => t.length)).text, '');
+    assert.equal(searches, 0, 'no preceding history means no unnecessary search');
+});
+
+
+test('replacement retrieval stops before the user anchor regardless of following assistant turns', async () => {
+    const s = setup(), snap = snapshot();
+    snap.messages.slice(3).forEach(m => { m.user = false; });
+    for (const type of ['normal','regenerate','swipe']) {
+        assert.equal(memoryBoundary(snap, type), 2);
+        const result = await s.engine.retrieve(snap, { ...config, budget: 2000 }, t => t.length, () => true, () => {}, type);
+        assert.deepEqual(result.passages.map(d => d.message), [0,1]);
+    }
+    for (const type of ['continue', 'impersonate']) {
+        assert.equal(memoryBoundary(snap, type), 5);
+        const result = await s.engine.retrieve(snap, { ...config, budget: 2000 }, t => t.length, () => true, () => {}, type);
+        assert(result.passages.some(d => d.message === 4));
+        assert(result.passages.every(d => d.message < 5));
+    }
+});
+
+test('native authored JSON remains eligible literal source without reply decoding', () => {
+    const chat = [{ is_user: true, mes: 'Return JSON.', extra: {} },
+        { is_user: false, name: 'Mira', mes: '{"reply":"Keep this literal.","request_status":"answered"}', extra: {} }];
+    const original = JSON.stringify(chat);
+    const captured = capture({ characterId: 0, characters: [{ avatar: 'test.png' }],
+        getCurrentChatId: () => 'synthetic', chat, chatMetadata: { sillymemory: { id: 'synthetic' } } });
+    assert.equal(captured.messages[1].text, chat[1].mes);
+    assert.equal(captured.messages[1].eligible, true);
+    assert.equal(captured.messages[1].user, false);
+    assert.equal(JSON.stringify(chat), original);
 });

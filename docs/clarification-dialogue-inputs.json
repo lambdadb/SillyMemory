@@ -1,0 +1,342 @@
+{
+  "scope": "Pre-run confirmation dialogue inputs and regression references for complete pending-dialogue retrieval. Previously consumed LongMemEval-S histories; no independent benchmark score.",
+  "frozenAt": "2026-10-12T06:52:44.543218+00:00",
+  "producingBase": "e2dd66fb6850df91bbb01d40787521f84301e815",
+  "dataset": {
+    "source": "LongMemEval/longmemeval_s_cleaned.json",
+    "sha256": "d6f21ea9d60a0d56f34a05b609c79c88a451d2ae03597821ea3d5a9678c3a442"
+  },
+  "hostRevision": "06bde939fb1e9c4c8d8641d810f0a916b5bce127",
+  "settings": {
+    "model": "gpt-6.1-sol",
+    "reasoningEffort": "low",
+    "context": 32768,
+    "output": 4096,
+    "k": 100,
+    "candidateSize": 100,
+    "size": 50,
+    "budget": 4096,
+    "chunkChars": 800,
+    "query": "Use queryProtocol for the three retrieval arms; all use the same source/range filters and generation retention."
+  },
+  "selection": "New confirmation dialogues use the first eight distinct single-session-user sources with answers <=70 characters, ordered by SHA256(seed:id), excluding prior six sources. Four prespecified cancellation, absence, multiple-clarification and answered-with-question controls reuse those new sources. All sources were consumed by prior whole-500 work; this is a fresh dialogue cohort, not an independent benchmark.",
+  "selectionSeed": "clarification-dialogue-confirmation-v4",
+  "queryProtocol": {
+    "latest-input": "Current input verbatim.",
+    "pending-user-inputs": "All pending user turns, each prefixed User: and separated by two newlines.",
+    "pending-dialogue": "All pending user and assistant turns, each prefixed User: or Assistant: and separated by two newlines.",
+    "opening": "Before a pending root exists, every arm searches the current input verbatim. Frozen assistant clarifications use controlled needs_clarification responses to open the state through native events.",
+    "generation": "Complete pending dialogue in native roles, native system/character settings, and only this query’s selected memory. No union of earlier memory snapshots.",
+    "interpretation": "Role labels are common to both contextual arms, isolating assistant-turn inclusion; the older v3 user-only query had no labels and is historical evidence.",
+    "terminal": "Read actual final provider request_status; answered and insufficient_evidence clear the pending root. Status is not a factual correctness certificate."
+  },
+  "regressionInputs": "clarification-context-policy-inputs.json",
+  "regressionCaseIds": [
+    "degree-referent",
+    "commute-referent",
+    "play-referent",
+    "degree-multiple",
+    "bookshelf-multiple",
+    "playlist-multiple",
+    "degree-stored",
+    "internet-stored",
+    "commute-stored",
+    "degree-optional",
+    "internet-missing",
+    "playlist-topic-switch"
+  ],
+  "confirmationCases": [
+    {
+      "id": "mixer-first-choice",
+      "source": "f4f1d8a4",
+      "prefix": [
+        {
+          "role": "user",
+          "content": "Who was it?"
+        },
+        {
+          "role": "assistant",
+          "content": "Do you mean who gave you the new stand mixer as a birthday gift, or what you bought for your sister's birthday?"
+        }
+      ],
+      "input": "The first one.",
+      "kind": "choice",
+      "expectedStatus": "answered",
+      "reference": "my sister",
+      "fullQuestion": "Who gave me a new stand mixer as a birthday gift?",
+      "pendingRootFromPrefix": 0,
+      "sourceMessagesSha256": "2f5e22ed8b637bd9dc732a031efc5d0730c796b4917b645d44d60c9384b53d1c"
+    },
+    {
+      "id": "gift-second-choice",
+      "source": "66f24dbb",
+      "prefix": [
+        {
+          "role": "user",
+          "content": "What was it?"
+        },
+        {
+          "role": "assistant",
+          "content": "Do you mean the stand mixer you received, or the gift you bought for your sister's birthday?"
+        }
+      ],
+      "input": "The second one.",
+      "kind": "choice",
+      "expectedStatus": "answered",
+      "reference": "a yellow dress",
+      "fullQuestion": "What did I buy for my sister's birthday gift?",
+      "pendingRootFromPrefix": 0,
+      "sourceMessagesSha256": "20a74ef15f8994d1bf0fe9dcbcae62918fbdcf39388c6c280c099baafec8f57c"
+    },
+    {
+      "id": "comedians-first-group",
+      "source": "95bcc1c8",
+      "prefix": [
+        {
+          "role": "user",
+          "content": "How many were there?"
+        },
+        {
+          "role": "assistant",
+          "content": "Do you mean the amateur comedians you watched at the open mic night or the worsted-weight yarn skeins you found in your stash?"
+        }
+      ],
+      "input": "The first group.",
+      "kind": "choice",
+      "expectedStatus": "answered",
+      "reference": "10",
+      "fullQuestion": "How many amateur comedians did I watch perform at the open mic night?",
+      "pendingRootFromPrefix": 0,
+      "sourceMessagesSha256": "cee8a0a666724229f0d01e57d301d012203ef0556c47439484d4973b9f3b1344"
+    },
+    {
+      "id": "yarn-second-group",
+      "source": "8e9d538c",
+      "prefix": [
+        {
+          "role": "user",
+          "content": "How many were there?"
+        },
+        {
+          "role": "assistant",
+          "content": "Do you mean the amateur comedians you watched at the open mic night or the worsted-weight yarn skeins you found in your stash?"
+        }
+      ],
+      "input": "The second group.",
+      "kind": "choice",
+      "expectedStatus": "answered",
+      "reference": "17",
+      "fullQuestion": "How many skeins of worsted weight yarn did I find in my stash?",
+      "pendingRootFromPrefix": 0,
+      "sourceMessagesSha256": "98bc6513aa2c798f4a91ed557a74e117415f84ab619f1d4e8cb97f93fe76aa1e"
+    },
+    {
+      "id": "ethnicity-latter",
+      "source": "4100d0a0",
+      "prefix": [
+        {
+          "role": "user",
+          "content": "What was that detail about me?"
+        },
+        {
+          "role": "assistant",
+          "content": "Do you mean your occupation or your ethnicity?"
+        }
+      ],
+      "input": "The latter.",
+      "kind": "choice",
+      "expectedStatus": "answered",
+      "reference": "A mix of Irish and Italian",
+      "fullQuestion": "What is my ethnicity?",
+      "pendingRootFromPrefix": 0,
+      "sourceMessagesSha256": "a2eee4c6f580780f85f10043e93f64e1ef102fce67d16516f8f0c21566325d58"
+    },
+    {
+      "id": "playlists-former",
+      "source": "c960da58",
+      "prefix": [
+        {
+          "role": "user",
+          "content": "How many do I have?"
+        },
+        {
+          "role": "assistant",
+          "content": "Do you mean your Spotify playlists or your streaming service subscriptions?"
+        }
+      ],
+      "input": "The former.",
+      "kind": "choice",
+      "expectedStatus": "answered",
+      "reference": "20",
+      "fullQuestion": "How many playlists do I have on Spotify?",
+      "pendingRootFromPrefix": 0,
+      "sourceMessagesSha256": "4abdd70916358684d5a9079e6fcf009eeeef8306862c9914b6d40597c1c004ae"
+    },
+    {
+      "id": "coupon-reference",
+      "source": "51a45a95",
+      "prefix": [
+        {
+          "role": "user",
+          "content": "Where was it?"
+        },
+        {
+          "role": "assistant",
+          "content": "Do you mean where you redeemed the $5 coffee-creamer coupon or where you attended the concert?"
+        }
+      ],
+      "input": "The coupon.",
+      "kind": "choice",
+      "expectedStatus": "answered",
+      "reference": "Target",
+      "fullQuestion": "Where did I redeem a $5 coupon on coffee creamer?",
+      "pendingRootFromPrefix": 0,
+      "sourceMessagesSha256": "26ec63b7fcfef71781456229d0918068cb68d10291bae8172607a43ee7fca629"
+    },
+    {
+      "id": "book-reference",
+      "source": "86f00804",
+      "prefix": [
+        {
+          "role": "user",
+          "content": "What was it called?"
+        },
+        {
+          "role": "assistant",
+          "content": "Do you mean the TV series or the book you are currently reading?"
+        }
+      ],
+      "input": "The book.",
+      "kind": "choice",
+      "expectedStatus": "answered",
+      "reference": "The Seven Husbands of Evelyn Hugo",
+      "fullQuestion": "What book am I currently reading?",
+      "pendingRootFromPrefix": 0,
+      "sourceMessagesSha256": "d72951af6ad9ed31492a11d5f449dec1612ddd8e6222469b8f5878bd9abeabe9"
+    },
+    {
+      "id": "gift-topic-cancel",
+      "source": "66f24dbb",
+      "prefix": [
+        {
+          "role": "user",
+          "content": "Who was it?"
+        },
+        {
+          "role": "assistant",
+          "content": "Do you mean who gave you the stand mixer?"
+        }
+      ],
+      "input": "I do not need that anymore. What did I buy for my sister's birthday gift?",
+      "kind": "cancellation",
+      "expectedStatus": "answered",
+      "reference": "a yellow dress",
+      "fullQuestion": "What did I buy for my sister's birthday gift?",
+      "pendingRootFromPrefix": 0,
+      "sourceMessagesSha256": "20a74ef15f8994d1bf0fe9dcbcae62918fbdcf39388c6c280c099baafec8f57c"
+    },
+    {
+      "id": "mixer-missing-serial",
+      "source": "f4f1d8a4",
+      "prefix": [
+        {
+          "role": "user",
+          "content": "What was that detail?"
+        },
+        {
+          "role": "assistant",
+          "content": "Do you mean who gave you the birthday stand mixer or its exact serial number?"
+        }
+      ],
+      "input": "The second one.",
+      "kind": "absence",
+      "expectedStatus": "insufficient_evidence",
+      "reference": "my sister",
+      "fullQuestion": "Who gave me a new stand mixer as a birthday gift?",
+      "pendingRootFromPrefix": 0,
+      "rubric": "Evaluate whether the answer explicitly admits that the exact serial number of the birthday stand mixer cannot be determined, without inventing a serial number or claiming that missing retrieval proves it was never mentioned. Answer only yes or no.",
+      "sourceMessagesSha256": "2f5e22ed8b637bd9dc732a031efc5d0730c796b4917b645d44d60c9384b53d1c"
+    },
+    {
+      "id": "yarn-two-clarifications",
+      "source": "8e9d538c",
+      "prefix": [
+        {
+          "role": "user",
+          "content": "How many were there?"
+        },
+        {
+          "role": "assistant",
+          "content": "Which count: the amateur comedians at the open mic night or the worsted-weight yarn skeins in your stash?"
+        },
+        {
+          "role": "user",
+          "content": "The second group."
+        },
+        {
+          "role": "assistant",
+          "content": "Are you asking how many skeins or their price?"
+        }
+      ],
+      "input": "How many.",
+      "kind": "multiple",
+      "expectedStatus": "answered",
+      "reference": "17",
+      "fullQuestion": "How many skeins of worsted weight yarn did I find in my stash?",
+      "pendingRootFromPrefix": 0,
+      "sourceMessagesSha256": "98bc6513aa2c798f4a91ed557a74e117415f84ab619f1d4e8cb97f93fe76aa1e"
+    },
+    {
+      "id": "book-answered-with-question",
+      "source": "86f00804",
+      "prefix": [
+        {
+          "role": "user",
+          "content": "What was it called?"
+        },
+        {
+          "role": "assistant",
+          "content": "Do you mean the TV series or the book you are currently reading?"
+        }
+      ],
+      "input": "Name the book, and after answering ask whether I'm enjoying it.",
+      "kind": "optional-question",
+      "expectedStatus": "answered",
+      "reference": "The Seven Husbands of Evelyn Hugo",
+      "fullQuestion": "What book am I currently reading?",
+      "pendingRootFromPrefix": 0,
+      "sourceMessagesSha256": "d72951af6ad9ed31492a11d5f449dec1612ddd8e6222469b8f5878bd9abeabe9"
+    }
+  ],
+  "judge": {
+    "templateRevision": "9e0b455f4ef0e2ab8f2e582289761153549043fc",
+    "model": "gpt-4o-2024-08-06",
+    "method": "Released full-question/reference judge for factual requests; frozen custom absence rubrics for missing account/serial number.",
+    "status": "Desired status and actual emitted status are recorded separately from answer correctness."
+  },
+  "completionCriterion": "Require all frozen cases to be reported. Full dialogue must preserve the twelve user-only regression outcomes and improve referent-dependent confirmation cases without unsupported facts/cancellation failures. Verify fresh-only memory at every native request and terminal status closure. No new cases after observing outcomes; stop on hard limits or cleanup failure. This phase does not establish general provider/streaming/mutation compatibility.",
+  "bounds": {
+    "collections": 15,
+    "documents": 22000,
+    "lambdaRequests": 3500,
+    "completionAttempts": 150,
+    "answerCalls": 60,
+    "judgeCalls": 60,
+    "reservedTokens": 900000,
+    "elapsedMinutes": 65,
+    "maxConcurrent": 1,
+    "maxAttempts": 3
+  },
+  "recordingNote": "Original pre-run plan retained unchanged. Its scope, exact per-case queries, decisionGate and producer hash define this run; several inherited v2/v3 prose fields are stale. The post-run protocol audit independently verifies all 60 recorded final queries against the frozen turns/queries. This maintained lock describes the executed protocol.",
+  "conditionsByCohort": {
+    "regression": [
+      "pending-user-inputs",
+      "pending-dialogue"
+    ],
+    "confirmation": [
+      "latest-input",
+      "pending-user-inputs",
+      "pending-dialogue"
+    ]
+  }
+}

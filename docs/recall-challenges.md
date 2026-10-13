@@ -1,5 +1,10 @@
 # Ambiguous references, continuation, and context overflow
 
+> Historical protocol: execution commands below require the recorded producing
+> checkout from the [evidence index](evidence-retention.md). Fixed recent-window
+> generation modes and their npm aliases are retired from the current package.
+> Original inputs, scores and reports remain unchanged.
+
 Protocol `recall-challenges-v1` fixes six synthetic cases before the first live
 run: English and Korean versions of three stressors, with one memory-off and
 one memory-on generation per case (12 planned answers). This is a diagnostic

@@ -1,3 +1,4 @@
+import { collectionResponse, branchResponse, documentResponse, rerankedResponse } from '../tests/helpers/lambdadb-responses.js';
 import { emulatorCors } from './emulator-cors.mjs';
 // Real pinned host/Chromium/direct CORS, local LambdaDB and completion emulators only.
 // Does not load .env.local. Never supply a personal profile or real credentials.
@@ -13,34 +14,66 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { capacityPlan, capacityChat, capacityInstructions } from './prompt-capacity-cases.mjs';
 import { hostSource, loadLong } from './semantic-long.mjs';
+import { MEMORY_GUIDANCE } from '../src/context.js';
+import { retrievalQueries, interleaveHits } from '../src/memory.js';
 
 const packingRanks = JSON.parse(await readFile(new URL('../tests/fixtures/packing-ranks.json', import.meta.url)));
-const packingFixture = { item: loadLong().cases.find(item => item.id === packingRanks.case), original: packingRanks };
+const packingFixture = { item: loadLong().cases.find(item => item.id === packingRanks.case) };
 assert.ok(packingFixture);
+const primaryRanks = packingRanks.queries.find(query => query.query === packingFixture.item.question);
+assert.ok(primaryRanks);
+// Preserve the historical packing input order, not historical query routing.
+// This emulator checks source delivery; it makes no current retrieval-quality claim.
+const packingOrder = [...new Map(interleaveHits([primaryRanks.hits, ...packingRanks.queries.filter(query => query !== primaryRanks).map(query => query.hits)])
+    .map(hit => [`${hit.message}:${hit.chunk}`, hit])).values()].slice(0, 30);
+let packingQuery, onlyFirst = false;
 
 const base = { enabled: true, context: 1536, output: 256, instructions: 1, recentRepeats: 1, stopOnLoss: true, type: 'normal' };
-const plan = { ...capacityPlan, cases: [
+const plan = { version: 2, generationInput: 'recent-five-and-memory',
+    host: capacityPlan.host, model: capacityPlan.model, budget: capacityPlan.budget,
+    question: capacityPlan.question, character: capacityPlan.character, cases: [
     { ...base, id: 'included' },
     { ...base, id: 'speaker-prefix', names: 2 },
     { ...base, id: 'substring-collision', context: 4096, noHits: true, collision: true, blocked: true },
-    { ...base, id: 'pressure-stopped', recentRepeats: 100, blocked: true },
-    { ...base, id: 'pressure-warning', recentRepeats: 100, stopOnLoss: false },
-    { ...base, id: 'pressure-streaming', recentRepeats: 100, streaming: true, blocked: true },
-    { ...base, id: 'pressure-swipe', recentRepeats: 100, type: 'swipe', blocked: true },
-    { ...base, id: 'pressure-regenerate', recentRepeats: 100, type: 'regenerate', blocked: true },
-    { ...base, id: 'recovered-context', recentRepeats: 100, context: 4096 },
+    { ...base, id: 'pressure-stopped', instructions: 110, blocked: true },
+    { ...base, id: 'pressure-warning', instructions: 110, stopOnLoss: false },
+    { ...base, id: 'pressure-streaming', instructions: 110, streaming: true, blocked: true },
+    { ...base, id: 'pressure-swipe', instructions: 110, type: 'swipe', blocked: true },
+    { ...base, id: 'pressure-regenerate', instructions: 110, type: 'regenerate', blocked: true },
+    { ...base, id: 'recovered-context', instructions: 110, context: 4096 },
     { ...base, id: 'continue', type: 'continue' },
-    { ...base, id: 'no-hits-pressure', recentRepeats: 100, noHits: true, blocked: true },
+    { ...base, id: 'impersonate', type: 'impersonate' },
+    { ...base, id: 'replacement-with-assistant-suffix', type: 'regenerate', context: 4096, earlierAnchor: true },
+    { ...base, id: 'no-hits-pressure', recentRepeats: 80, noHits: true, blocked: true },
     { ...base, id: 'no-hits-small', noHits: true },
-    { ...base, id: 'disabled', enabled: false, recentRepeats: 100 },
+    { ...base, id: 'history-pressure', recentRepeats: 80, blocked: true },
+    { ...base, id: 'nothing-fits', budget: 150 },
+    { ...base, id: 'guidance-does-not-fit', budget: 64, blocked: true, preparationFailure: true },
+    { ...base, id: 'disabled', enabled: false, recentRepeats: 80 },
 ] };
+
+// Keep query=2 within provider limits while independently stressing the longer
+// retained window. Only the two last source messages are short; message 9 keeps
+// the original context pressure. These are delivery controls, not quality cases.
+function deliveryChat(repeats) {
+    const chat = capacityChat(repeats);
+    chat[9].mes = `RECENT_9: ${'We are discussing the garden. '.repeat(repeats * 3)}`;
+    for (const message of chat.slice(-2)) message.mes = 'We are discussing the garden.';
+    return chat;
+}
+for (const spec of plan.cases.filter(spec => spec.enabled)) {
+    const messages = deliveryChat(spec.recentRepeats).map((message, index) => ({ index, text: message.mes, user: message.is_user, eligible: true }));
+    if (spec.type === 'normal') messages.push({ index: messages.length, text: plan.question, user: true, eligible: true });
+    const [query] = retrievalQueries({ messages }, spec.type);
+    assert(new TextEncoder().encode(query).byteLength <= 8192, `${spec.id}: pressure fixture must fit complete-query limits`);
+}
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const source = process.env.ST_SOURCE || '/tmp/sillymemory-st-prompt-delivery';
 const output = path.resolve(process.argv[2] || path.join(root, 'artifacts/prompt-delivery.json'));
 assert.equal(execFileSync('git', ['-C', source, 'rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(), plan.host);
 assert.equal(await realpath(path.join(source, 'public/scripts/extensions/third-party/sillymemory')), root);
-const sourceFiles = ['index.js', 'src/chat-collections.js', 'manifest.json', 'src/chunking.js', 'src/client.js', 'src/context.js', 'src/gate.js', 'src/memory.js', 'src/status.js', 'scripts/prompt-delivery-smoke.mjs', 'scripts/emulator-cors.mjs', 'src/delivery.js', 'settings.html', 'scripts/prompt-capacity-cases.mjs'];
+const sourceFiles = ['vendor/lambdadb.js', 'package-lock.json', 'tests/helpers/lambdadb-responses.js', 'index.js', 'src/chat-collections.js', 'manifest.json', 'src/chunking.js', 'src/client.js', 'src/credentials.js', 'src/context.js', 'src/gate.js', 'src/memory.js', 'src/time.js', 'src/status.js', 'scripts/prompt-delivery-smoke.mjs', 'scripts/emulator-cors.mjs', 'src/delivery.js', 'settings.html', 'scripts/prompt-capacity-cases.mjs'];
 sourceFiles.push('scripts/semantic-long.mjs', 'tests/fixtures/semantic-long-v1.json', 'tests/fixtures/packing-ranks.json');
 const hostFiles = ['public/script.js', 'public/scripts/openai.js', 'public/scripts/PromptManager.js', 'public/scripts/tokenizers.js', 'src/endpoints/tokenizers.js', 'src/endpoints/backends/chat-completions.js', 'package-lock.json'];
 async function hashes() {
@@ -61,7 +94,7 @@ const work = await mkdtemp(path.join(tmpdir(), 'sillymemory-capacity-'));
 const cert = path.join(work, 'cert.pem'), key = path.join(work, 'key.pem');
 execFileSync('openssl', ['req', '-x509', '-newkey', 'rsa:2048', '-nodes', '-keyout', key, '-out', cert, '-days', '1', '-subj', '/CN=localhost', '-addext', 'subjectAltName=DNS:localhost,IP:127.0.0.1'], { stdio: 'ignore' });
 const collections = new Map(), requests = [], generations = [], rows = [], errors = [];
-const send = (res, status, body = {}) => { res.writeHead(status, { 'Content-Type': 'application/json' }); res.end(JSON.stringify(body)); };
+const send = (res, status, body = { message: 'OK' }) => { res.writeHead(status, { 'Content-Type': 'application/json' }); res.end(JSON.stringify(body)); };
 async function json(req) { const buffers = []; for await (const b of req) buffers.push(b); return buffers.length ? JSON.parse(Buffer.concat(buffers).toString()) : {}; }
 const remote = httpsServer({ key: await readFile(key), cert: await readFile(cert) }, async (req, res) => {
     if (emulatorCors(req, res)) return;
@@ -74,33 +107,49 @@ const remote = httpsServer({ key: await readFile(key), cert: await readFile(cert
         if (!name && req.method === 'POST') {
             assert.equal(body.indexConfigs.embedding.managedEmbedding, true);
             assert.ok(!collections.has(body.collectionName));
-            collections.set(body.collectionName, { definition: body, docs: new Map() });
-            return send(res, 201, { collection: body });
+            collections.set(body.collectionName, { definition: collectionResponse(body), branches: new Map([['main', new Map()]]) });
+            return send(res, 201, { collection: collectionResponse(body) });
         }
         if (!name && req.method === 'GET') return send(res, 200, { collections: [...collections.values()].map(c => c.definition) });
         const c = collections.get(name); if (!c) return send(res, 404);
         if (parts.length === 4 && req.method === 'GET') return send(res, 200, { collection: c.definition });
         if (parts.length === 4 && req.method === 'DELETE') { collections.delete(name); return send(res, 200); }
-        if (parts[4] === 'docs' && parts[5] === 'upsert') { body.docs.forEach(d => c.docs.set(d.id, d)); return send(res, 202); }
-        if (parts[4] === 'docs' && parts[5] === 'delete') { body.ids.forEach(id => c.docs.delete(id)); return send(res, 202); }
+        if (parts[4] === 'branches') {
+            if (req.method === 'GET') return send(res, 200, { branches: [...c.branches.keys()].map(name => branchResponse(name)) });
+            if (req.method === 'POST') {
+                if (c.branches.has(body.branchName)) return send(res, 409);
+                const source = c.branches.get(body.source.name); if (!source) return send(res, 404);
+                c.branches.set(body.branchName, new Map(source)); return send(res, 201, { branch: branchResponse(body.branchName, body.source.name) });
+            }
+            if (req.method === 'DELETE') { c.branches.delete(parts[5]); return send(res, 200); }
+        }
+        const branch = body.branch || body.ref?.name || new URL(req.url, 'https://localhost').searchParams.get('refName') || 'main';
+        const branchDocs = c.branches.get(branch); if (!branchDocs) return send(res, 404);
+        const inline = docs => documentResponse(docs, name);
+        if (parts[4] === 'docs' && req.method === 'GET') return send(res, 200, inline([...branchDocs.values()]));
+        if (parts[4] === 'docs' && parts[5] === 'fetch') return send(res, 200, inline(body.ids.map(id => branchDocs.get(id)).filter(Boolean)));
+        if (parts[4] === 'docs' && parts[5] === 'upsert') { body.docs.forEach(d => branchDocs.set(d.id, d)); return send(res, 202); }
+        if (parts[4] === 'docs' && parts[5] === 'delete') { body.ids.forEach(id => branchDocs.delete(id)); return send(res, 202); }
         if (parts[4] === 'query') {
-            const filter = body.query.knn?.filter || body.query;
-            const match = /^owner:([a-f0-9]+) AND scope:([a-f0-9]+)$/.exec(filter.queryString?.query || '');
+            const knn = body.query.bayesian?.[0]?.knn || body.query.knn;
+            const filter = knn?.filter || body.query;
+            if (body.query.bayesian) assert.deepEqual(body.query.bayesian[1].bool[0], { ...filter, occur: 'filter' });
+            const match = /^owner:([a-f0-9]+) AND scope:([a-f0-9]+)(?: AND message:\[0 TO (\d+)\])?$/.exec(filter.queryString?.query || '');
             assert.ok(match);
-            if (body.query.knn) assert.equal(typeof body.query.knn.queryText, 'string');
+            if (knn) assert.equal(typeof knn.queryText, 'string');
             // Fixed source order, deliberately no embeddings or ANN simulation.
-            let docs = body.query.knn && noHits ? [] : [...c.docs.values()].filter(d => d.owner === match[1] && d.scope === match[2]);
-            if (body.query.knn && packing) {
-                const recorded = packingFixture.original.queries.find(query => query.query === body.query.knn.queryText);
-                assert.ok(recorded, 'Actual host query matches the recorded synthetic query');
-                docs = recorded.hits.map(hit => {
+            let docs = knn && noHits ? [] : [...branchDocs.values()].filter(d => d.owner === match[1] && d.scope === match[2] && (match[3] === undefined || d.message <= Number(match[3])));
+            if (knn && onlyFirst) docs = docs.filter(d => d.message === 0 && d.chunk === 0);
+            if (knn && packing) {
+                assert.equal(knn.queryText, packingQuery, 'Actual host uses the two-message policy');
+                docs = packingOrder.map(hit => {
                     const doc = docs.find(doc => doc.message === hit.message && doc.chunk === hit.chunk);
                     assert.ok(doc, 'Recorded rank refers to a synchronized source');
                     assert.equal(createHash('sha256').update(doc.text).digest('hex'), hit.textSha256);
                     return doc;
                 });
             }
-            return send(res, 200, { docs: docs.map(doc => ({ collection: name, doc })), isDocsInline: true, total: docs.length, took: 1 });
+            return send(res, 200, body.rerank ? rerankedResponse(docs, name) : documentResponse(docs, name));
         }
         throw new Error('Unexpected emulator operation');
     } catch (error) { errors.push(error.message); send(res, 500); }
@@ -169,15 +218,18 @@ try {
     await field('connect').click(); await field('gate').click(); await waitStatus('Transport gate passed');
     assert.equal(collections.size, 0);
     await field('provision').click(); await waitStatus('Chat memory is ready');
-    for (const name of ['recent', 'budget']) { await field(name).fill(String(plan[name])); await field(name).dispatchEvent('change'); }
+    // Isolate capacity/delivery with plain local completions. The native
+    for (const name of ['budget']) { await field(name).fill(String(plan[name])); await field(name).dispatchEvent('change'); }
 
     for (const spec of plan.cases) {
         console.log(`VERIFY ${spec.id}`);
-        noHits = spec.noHits === true;
-        const chat = capacityChat(spec.recentRepeats);
-        if (spec.collision) chat[10].mes = 'OK';
+        noHits = spec.noHits === true; onlyFirst = spec.id === 'nothing-fits';
+        const chat = deliveryChat(spec.recentRepeats);
+        if (spec.earlierAnchor) chat.slice(9).forEach(message => { message.is_user = false; message.name = 'Mira'; });
+        if (spec.collision) chat[10].mes = 'BOOK A TRIP';
         if (await field('enabled').isChecked()) await field('enabled').uncheck();
         await field('stopOnLoss').setChecked(spec.stopOnLoss);
+        await field('budget').fill(String(spec.budget ?? plan.budget)); await field('budget').dispatchEvent('change');
         await page.evaluate(async ({ spec, chat, instructions }) => {
             const c = SillyTavern.getContext(), { oai_settings } = await import('/scripts/openai.js');
             Object.assign(oai_settings, { openai_max_context: spec.context, openai_max_tokens: spec.output, stream_openai: Boolean(spec.streaming), names_behavior: spec.names ?? 0 });
@@ -200,15 +252,18 @@ try {
         const observation = await page.evaluate(async ({ question, type }) => {
             const c = SillyTavern.getContext();
             if (type === 'normal') document.querySelector('#send_textarea').value = question;
-            let generationError;
+            let generationError, preparedInspection;
+            const inspectPrepared = (_data, dryRun) => { if (!dryRun) preparedInspection = document.querySelector('[data-sm="inspection"]').textContent; };
+            c.eventSource.makeFirst(c.eventTypes.GENERATE_AFTER_DATA, inspectPrepared);
             try { await c.generate(type); } catch (error) { generationError = String(error?.name || error); }
-            return { generationError, answer: c.chat.at(-1)?.mes, isUser: c.chat.at(-1)?.is_user,
+            finally { c.eventSource.removeListener(c.eventTypes.GENERATE_AFTER_DATA, inspectPrepared); }
+            return { generationError, preparedInspection, draft: document.querySelector('#send_textarea').value, answer: c.chat.at(-1)?.mes, isUser: c.chat.at(-1)?.is_user,
                 chat: c.chat.map(m => m.mes),
                 delivery: document.querySelector('[data-sm="delivery"]').textContent,
                 inspection: document.querySelector('[data-sm="inspection"]').textContent,
                 generating: (await import('/script.js')).is_send_press,
                 generatingUI: document.body.dataset.generating || null };
-        }, { question: spec.collision ? 'BOOK A TRIP' : plan.question, type: spec.type });
+        }, { question: spec.collision ? 'OK' : plan.question, type: spec.type });
         if (spec.collision) {
             const removed = await page.evaluate(() => {
                 const c = SillyTavern.getContext();
@@ -216,7 +271,7 @@ try {
                 return deliveryCollision.removed;
             });
             assert.equal(removed, 1, 'Fixture omits exactly the short protected turn before verification');
-            assert.match(observation.delivery, /1 recent messages are missing/);
+            assert.match(observation.delivery, /1 input messages are missing/);
         }
         const sent = generations.slice(requestStart);
         rows.push({ spec, ...observation, requests: sent });
@@ -224,7 +279,8 @@ try {
         assert.equal(observation.generating, false, 'Host generation lock released');
         assert.equal(observation.generatingUI, null, 'Host generation UI released');
         if (spec.blocked) {
-            assert.match(observation.delivery, /^Generation stopped:/);
+            if (spec.preparationFailure) assert.match(observation.inspection, /operation failed/);
+            else assert.match(observation.delivery, /^Generation stopped:/);
             if (spec.type === 'normal') {
                 assert.equal(observation.isUser, true, 'No phantom assistant reply after cancellation');
                 assert.equal(observation.chat.length, 13);
@@ -232,20 +288,60 @@ try {
         }
         else {
             assert.equal(observation.generationError, undefined);
-            assert.ok(observation.answer.endsWith('LOCAL_FIXTURE_OK'));
-            if (spec.enabled) assert.match(observation.delivery, spec.stopOnLoss ? /^Final host prompt:/ : /^Warning:/);
+            assert.ok((spec.type === 'impersonate' ? observation.draft : observation.answer).endsWith('LOCAL_FIXTURE_OK'));
+            if (spec.enabled) {
+                assert.match(observation.delivery, spec.stopOnLoss ? /^Final host prompt:/ : /^Warning:/);
+                assert(sent[0].messages.some(m => m.role === 'system' && m.content.includes(MEMORY_GUIDANCE)), 'Natural memory guidance reaches the completion request, including no hits');
+            }
+        }
+        if (spec.enabled && sent.length) {
+            const anchor = spec.type === 'normal' ? 12 : ['continue', 'impersonate'].includes(spec.type) ? 11 : spec.earlierAnchor ? 8 : 10;
+            // An assistant-starting window includes its adjacent user; normal
+            // user input still retains exactly five in this alternating fixture.
+            const retainedStart = anchor === 11 ? 6 : anchor - 4;
+            for (const [index, prior] of chat.entries()) {
+                const retained = index >= retainedStart && index <= anchor;
+                const present = sent[0].messages.some(m => m.content === prior.mes || m.content.trim() === prior.mes.trim());
+                if (retained && spec.stopOnLoss && !spec.collision && !spec.names) assert(present, 'Recent source reaches the provider in its native role');
+                if (!retained) assert(!present, 'Older source and replacement replies are not retained in full');
+            }
+            assert(sent[0].messages.some(m => m.role === 'system' && m.content.includes('Follow the conversation')), 'Native system instructions survive');
+            assert(sent[0].messages.some(m => m.role === 'system' && m.content.includes(capacityPlan.character)), 'Native character settings survive');
         }
         if (spec.type === 'normal') assert.deepEqual(observation.chat.slice(0, 12), chat.map(m => m.mes), 'Original chat text preserved');
+        if (!spec.blocked && (spec.noHits || spec.id === 'nothing-fits')) {
+            assert.equal(sent[0].messages.filter(m => m.content.startsWith('[Past conversation excerpt:')).length, 0, 'Empty selection sends no excerpts and does not restore full history');
+            assert.match(observation.delivery, /0\/0 memory excerpts and 5\/5 input messages verified/);
+            const guidanceTokens = await page.evaluate(text => SillyTavern.getContext().getTokenCountAsync(text), MEMORY_GUIDANCE);
+            assert.equal(Number(observation.preparedInspection.split(' / ')[0]), guidanceTokens, 'Empty-selection inspection includes the guidance token cost');
+        }
         if (spec.id === 'included') {
-            assert.match(observation.delivery, /3\/3 memory passages and 4\/4 recent messages verified/);
-            assert.equal(sent[0].messages.filter(m => m.content.startsWith('[Past conversation excerpt:')).length, 3);
+            assert.match(observation.delivery, /1\/1 memory excerpts and 5\/5 input messages verified/);
+            assert.equal(sent[0].messages.filter(m => m.content.startsWith('[Past conversation excerpt:')).length, 1);
         }
         if (spec.id === 'pressure-warning') {
-            assert.match(observation.delivery, /3 memory passages and 2 recent messages are missing/);
+            assert.match(observation.delivery, /1 memory excerpts and \d+ input messages are missing/);
             assert.equal(sent[0].messages.filter(m => m.content.startsWith('[Past conversation excerpt:')).length, 0);
         }
-        if (spec.id === 'recovered-context') assert.match(observation.delivery, /8\/8 memory passages and 4\/4 recent messages verified/);
-        if (spec.id === 'continue') assert.match(observation.delivery, /could not be verified/);
+        if (spec.id === 'recovered-context') {
+            assert.match(observation.delivery, /5\/5 memory excerpts and 5\/5 input messages verified/);
+            const recoveredExcerpts = sent[0].messages.filter(m => m.content.startsWith('[Past conversation excerpt:'));
+            assert.equal(recoveredExcerpts.length, 5);
+            for (let index = 0; index < 5; index++) assert(recoveredExcerpts.some(m => m.content.includes(`OLD_${index}:`)), 'Five ranked older sources reach the recovered prompt');
+        }
+        if (spec.earlierAnchor) {
+            assert(sent[0].messages.some(m => m.role === 'user' && m.content === chat[8].mes), 'User anchor is retained despite following assistant turns');
+            assert(!sent[0].messages.some(m => m.role === 'assistant' && m.content === chat[9].mes), 'Replacement answer suffix is not retained as full input');
+        }
+        if (spec.id === 'continue') {
+            assert.match(observation.delivery, /could not be verified/);
+            assert(sent[0].messages.some(m => m.role === 'assistant' && m.content.trim() === chat[11].mes.trim()), 'Native partial answer reaches the completion endpoint');
+            assert(observation.answer.startsWith(chat[11].mes.trim()), 'Continue appends to the original partial answer');
+        }
+        if (spec.id === 'impersonate') {
+            assert(sent[0].messages.some(m => m.role === 'assistant' && m.content.trim() === chat[11].mes.trim()), 'Impersonation answers the latest character response');
+            assert.deepEqual(observation.chat, chat.map(m => m.mes), 'Impersonation writes a draft without changing source history');
+        }
         if (spec.id === 'disabled') assert.doesNotMatch(observation.delivery, /Generation stopped|verified/);
         if (spec.id === 'pressure-stopped') {
             await field('delivery').scrollIntoViewIfNeeded();
@@ -263,16 +359,18 @@ try {
             assert.equal(generations.length, recoveryStart + 1);
             assert.deepEqual(recovered.after.slice(0, -1), recovered.before);
             assert.equal(recovered.after.at(-1), 'LOCAL_FIXTURE_OK');
-            assert.match(recovered.delivery, /8\/8 memory passages and 4\/4 recent messages verified/);
+            assert.match(recovered.delivery, /5\/5 memory excerpts and 5\/5 input messages verified/);
+            assert.equal(generations.at(-1).messages.filter(m => m.content.startsWith('[Past conversation excerpt:')).length, 5);
             rows.at(-1).manualRecovery = { ...recovered, request: generations.at(-1) };
         }
     }
+    onlyFirst = false;
     await field('stopOnLoss').check();
     await page.evaluate(async chat => {
         const c = SillyTavern.getContext(), { oai_settings } = await import('/scripts/openai.js');
         oai_settings.openai_max_context = 4096;
         c.chat.splice(0, c.chat.length, ...chat); await c.saveChat(); await c.reloadCurrentChat();
-    }, capacityChat(1));
+    }, deliveryChat(1));
     await field('enabled').check(); await waitStatus('synchronized');
     const raceStart = generations.length;
     await page.evaluate(() => {
@@ -314,13 +412,19 @@ try {
     report.overlap = { ...rejected, ...race, rejectedCompletionRequests: 0, recoveryCompletionRequests: 1 };
     console.log('VERIFY repeated-passage-packing');
     await field('enabled').uncheck();
-    for (const [name, value] of [['recent', 8], ['budget', 400]]) {
+    // Reserve guidance headroom so this source-integrity fixture still exercises
+    // repeated citations; the small-context cases above retain their old limits.
+    for (const [name, value] of [['budget', 500]]) {
         await field(name).fill(String(value)); await field(name).dispatchEvent('change');
     }
     const packingChat = hostSource(packingFixture.item);
+    packingQuery = retrievalQueries({ messages: [
+        ...packingChat.map((message, index) => ({ index, text: message.mes, user: message.is_user, eligible: true })),
+        { index: packingChat.length, text: packingFixture.item.question, user: true, eligible: true },
+    ] }, 'normal')[0];
     await page.evaluate(async chat => {
         const c = SillyTavern.getContext(), { oai_settings } = await import('/scripts/openai.js');
-        Object.assign(oai_settings, { openai_max_context: 1536, openai_max_tokens: 256, stream_openai: false });
+        Object.assign(oai_settings, { openai_max_context: 2048, openai_max_tokens: 256, stream_openai: false });
         c.chat.splice(0, c.chat.length, ...chat); await c.saveChat(); await c.reloadCurrentChat();
     }, packingChat);
     packing = true;
@@ -334,39 +438,70 @@ try {
     }, packingFixture.item.question);
     assert.equal(generations.length, packingStart + 1);
     const packingRequest = generations.at(-1), excerpts = packingRequest.messages.filter(m => m.content.startsWith('[Past conversation excerpt:'));
-    assert.equal(excerpts.length, 4);
-    assert.match(packed.delivery, /4\/4 memory passages and 8\/8 recent messages verified/);
+    assert.equal(excerpts.length, 5);
+    assert.match(packed.delivery, /5\/5 memory excerpts and 5\/5 input messages verified/);
     for (const index of [0, 1, 2, 27]) {
         const original = packingFixture.item.messages[index];
         assert(excerpts.some(m => m.role === original.role && m.content.endsWith(`\n${original.text}`)), 'Full source and native role reached the completion endpoint');
     }
     assert(excerpts.some(m => m.content.includes('identical text at message:passage 3:1, 43:1]')));
     assert.deepEqual(packed.chat.slice(0, 60), packingChat.map(m => m.mes), 'Packing never changes stored history');
-    report.packing = { evidence: 'Actual host generation with recorded query ranks and a local completion fixture', case: packingFixture.item.id, configuredBudget: 400, effectiveBudget: 320, delivery: packed.delivery, request: packingRequest, storedHistoryUnchanged: true };
+    report.packing = { evidence: 'Actual host generation with recorded query ranks and a local completion fixture', case: packingFixture.item.id, configuredBudget: 500, effectiveBudget: 448, delivery: packed.delivery, request: packingRequest, storedHistoryUnchanged: true };
     packing = false;
+    console.log('VERIFY same-message-assembly');
+    await field('enabled').uncheck();
+    for (const [name, value] of [['budget', 1600]]) {
+        await field(name).fill(String(value)); await field(name).dispatchEvent('change');
+    }
+    const assemblyChat = Array.from({ length: 8 }, (_, index) => ({
+        mes: index ? `Synthetic assembly turn ${index}.` : Array.from({ length: 75 }, (_, i) => `Archive shelf ${i}: the cedar maps are here.`).join('\n'),
+        name: index % 2 ? 'Mira' : 'User', is_user: !(index % 2), is_system: false, send_date: '2026-01-01T00:00:00.000Z', extra: {},
+    }));
+    await page.evaluate(async chat => {
+        const c = SillyTavern.getContext(), { oai_settings } = await import('/scripts/openai.js');
+        Object.assign(oai_settings, { openai_max_context: 8192, openai_max_tokens: 256, stream_openai: false });
+        c.chat.splice(0, c.chat.length, ...chat); await c.saveChat(); await c.reloadCurrentChat();
+    }, assemblyChat);
+    await field('enabled').check(); await waitStatus('synchronized');
+    const assemblyStart = generations.length;
+    const assembled = await page.evaluate(async () => {
+        const c = SillyTavern.getContext(); document.querySelector('#send_textarea').value = 'Where are the cedar maps?';
+        await c.generate('normal');
+        return { source: c.chat[0].mes, delivery: document.querySelector('[data-sm="delivery"]').textContent };
+    });
+    assert.equal(generations.length, assemblyStart + 1);
+    const assemblyRequest = generations.at(-1), joined = assemblyRequest.messages.find(m => m.content.includes('message 1, passages 1-'));
+    assert(joined && joined.role === 'user' && joined.content.endsWith(assemblyChat[0].mes), 'All assembled source text reached the completion endpoint');
+    assert.equal(joined.content.split('[Conversation timestamp:').length - 1, 1);
+    assert.equal(assembled.source, assemblyChat[0].mes, 'Assembly does not alter stored history');
+    assert.match(assembled.delivery, /^Final host prompt:/); assert(!assembled.delivery.includes('missing or changed'));
+    report.assembly = { evidence: 'Actual host assembled prompt dispatched to a local completion fixture; LambdaDB emulated',
+        configuredBudget: 1600, sourceUnchanged: true, delivery: assembled.delivery, request: assemblyRequest };
     await field('stopOnLoss').uncheck();
     await page.reload(); await page.locator('#sillymemory').waitFor({ state: 'attached' });
     assert.equal(await field('stopOnLoss').isChecked(), false, 'Warning preference survives reload');
-    assert.equal(await field('key').inputValue(), '', 'Reload clears session key');
-    assert.equal(await field('enabled').isChecked(), false, 'Reload disables memory');
+    await page.waitForFunction(() => !document.querySelector('#sillymemory [data-sm=connect]').disabled);
+    assert.equal(await field('key').inputValue(), '', 'Reload restores the key without exposing it in the input');
     assert.equal(await field('delivery').innerText(), 'No prompt checked in this chat.', 'No stale final prompt after reload');
     await page.locator('#extensions-settings-button .drawer-toggle').click();
     if (!await field('endpoint').isVisible()) await page.locator('#sillymemory .inline-drawer-toggle').click();
     await field('key').fill('synthetic-session-key'); await field('connect').click();
     page.once('dialog', dialog => dialog.accept()); await field('delete').click(); await waitStatus('no longer accessible');
     assert.equal(collections.size, 0);
+    await field('forget').click(); await waitStatus('Saved key removed');
     const stored = await page.evaluate(() => JSON.stringify({ local: { ...localStorage }, session: { ...sessionStorage }, settings: SillyTavern.getContext().extensionSettings }));
     assert.ok(!stored.includes('synthetic-session-key'));
     assert.ok(!(await readFile(profilePath, 'utf8')).includes('synthetic-session-key'));
     assert.deepEqual(errors, []);
     assert.deepEqual(await hashes(), frozen.sourceSha256, 'Measured sources remain frozen');
     assert.deepEqual(await hostHashes(), frozen.hostSha256, 'Measured host sources remain frozen');
-    Object.assign(report, { passed: true, node: process.version, browser: browser.version(), requests, remainingCollections: collections.size, sessionKeyAbsentFromStorage: true });
+    Object.assign(report, { passed: true, node: process.version, browser: browser.version(), requests, remainingCollections: collections.size, forgottenKeyAbsentFromStorage: true });
 } catch (error) {
     Object.assign(report, { passed: false, failure: error.message, errors, remainingCollections: collections.size });
     console.error('Delivery status:', await page?.locator('[data-sm="delivery"]').innerText().catch(() => 'unavailable'));
     throw error;
 } finally {
+    report.generations = generations;
     await writeFile(output, JSON.stringify(report, null, 2) + '\n');
     await browser?.close();
     if (server && server.exitCode === null) { const exited = new Promise(r => server.once('exit', r)); server.kill('SIGTERM'); await exited; }

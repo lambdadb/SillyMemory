@@ -38,16 +38,17 @@ export function inspectPrompt(expected, prompt) {
         if (index >= 0) used.add(index);
         return { ...message, outcome: index >= 0 ? 'included' : 'missing' };
     });
-    return { memory: match(expected.memory), recent: match(expected.recent) };
+    return { memory: match(expected.memory), input: match(expected.input), guidance: match(expected.guidance || []) };
 }
 
 export function deliverySummary(result, stopOnLoss) {
     if (!result) return 'Final prompt verification unavailable for this completion format. Prepared memory is not confirmed.';
     const count = (group, outcome) => result[group].filter(m => m.outcome === outcome).length;
-    const memoryLost = count('memory', 'missing'), recentLost = count('recent', 'missing');
-    const uncertain = count('memory', 'unverified') + count('recent', 'unverified');
-    const totals = `Final host prompt: ${count('memory', 'included')}/${result.memory.length} memory passages and ${count('recent', 'included')}/${result.recent.length} recent messages verified.`;
-    if (memoryLost || recentLost) return `${stopOnLoss ? 'Generation stopped' : 'Warning'}: ${memoryLost} memory passages and ${recentLost} recent messages are missing or changed. ${totals} Increase context, reduce reserved output or recent-message count, then generate again. Disable Stop on missing context to proceed with a warning.${uncertain ? ` ${uncertain} transformed messages could not be verified.` : ''}`;
+    const memoryLost = count('memory', 'missing'), inputLost = count('input', 'missing');
+    const uncertain = count('memory', 'unverified') + count('input', 'unverified');
+    const guidanceLost = (result.guidance || []).some(m => m.outcome === 'missing');
+    const totals = `Final host prompt: ${count('memory', 'included')}/${result.memory.length} memory excerpts and ${count('input', 'included')}/${result.input.length} input messages verified.`;
+    if (memoryLost || inputLost || guidanceLost) return `${stopOnLoss ? 'Generation stopped' : 'Warning'}: ${memoryLost} memory excerpts and ${inputLost} input messages are missing or changed.${guidanceLost ? ' Memory guidance is missing or changed.' : ''} ${totals} Increase context, reduce reserved output, then generate again. Disable Stop on missing context to proceed with a warning.${uncertain ? ` ${uncertain} transformed messages could not be verified.` : ''}`;
     return `${totals}${uncertain ? ` ${uncertain} transformed messages could not be verified; they are not counted as missing.` : ''} Provider receipt is not checked.`;
 }
 
@@ -71,6 +72,6 @@ export class PromptDelivery {
         this.pending = undefined;
         if (canceled || !valid()) return { canceled: true };
         const result = inspectPrompt(expected, prompt);
-        return { result, lost: Boolean(result && [...result.memory, ...result.recent].some(m => m.outcome === 'missing')) };
+        return { result, lost: Boolean(result && [...result.memory, ...result.input, ...result.guidance].some(m => m.outcome === 'missing')) };
     }
 }

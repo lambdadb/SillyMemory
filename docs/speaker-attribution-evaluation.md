@@ -4,6 +4,7 @@
 > [pre-cleanup revision](https://github.com/lambdadb/SillyMemory/tree/94b9bc04cf664587ae4c96b7739c22af87897b6b).
 > Reproduction commands below require their recorded producer; see
 > [evidence retention](evidence-retention.md) for archives and recovery.
+> Fixed recent-window modes and their npm aliases are retired from the current package.
 
 Declared before generation on 2026-09-29. This is a focused development
 regression, not a new blind held-out benchmark or a replacement for the historical

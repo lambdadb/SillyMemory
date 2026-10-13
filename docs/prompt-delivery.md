@@ -9,7 +9,7 @@
 
 SillyMemory now checks the host's assembled Chat Completion prompt before a
 generation request proceeds. It no longer describes prepared memory as confirmed
-delivery. The panel reports how many memory passages and recent messages are
+delivery. The panel reports how many memory passages and active input messages are
 verified, and the inspection view separates included memory from missing/changed
 memory. This result remains visible when background synchronization updates the
 separate operation-status line.
@@ -18,11 +18,11 @@ separate operation-status line.
 When verifiable content is missing or changed, SillyMemory calls the host's
 `stopGeneration()` API before the completion request. It does not execute an
 automatic retry, change the model context setting, summarize/delete source text
-or silently relax the user's recent-message choice. Turn the option off to
+or silently relax delivery checks. Turn the option off to
 continue with a visible warning. The choice is stored with non-secret settings.
 
 If a generation stops, increase the model context limit within the provider's
-supported range, reduce reserved output or reduce the recent-message count, then
+supported range, reduce reserved output, then
 generate again. The submitted question stays in the chat; it need not be sent a
 second time. Regenerate can resume from that question. SillyTavern's normal
 swipe/regenerate behavior still applies, including removal of a prior answer
@@ -30,13 +30,13 @@ when regenerating. The extension does not rewrite stored source chat.
 
 This resolves silent loss, not semantic selection quality or the hard context
 limit. The quarter cap and configured memory preference are unchanged. Managed
-embeddings, ordinary upserts, `knn.queryText`, the built-in proxy and session-only
-LambdaDB key remain the product path.
+embeddings, ordinary upserts, `knn.queryText`, direct browser CORS and scoped saved
+LambdaDB credentials remain the product path.
 
 ## Contract and limits
 
 The adapter captures expected native roles and full text after retrieval, including
-the protected recent window even when search returns no hits. It consumes the
+the active input and memory guidance even when no memory fits. It consumes the
 non-dry-run `GENERATE_AFTER_DATA` event once for that generation, checks the
 captured chat/scope revision, and compares against `data.prompt` for Chat
 Completion. It uses the host's cancellation API because the host catches event

@@ -169,3 +169,12 @@ hybrid correction still does not fit; it first appears at 1,717 for those exact
 recorded lists. The new vector-only answer comparison does not justify raising
 the default either. Keep vector/800 and the existing adjustable budget; these
 are bounded findings, not proof of a globally optimal search policy or budget.
+
+## Follow-up: managed reranking
+
+The [completed Jev adoption review](managed-reranking.md) recovered all eight known
+diagnostic answers with hybrid + Jev, then found a loss in the six-case confirmation
+set. It also tested a common relevance target and fixed-prompt generation. The
+closed decision retains vector/800; diagnostic retrieval gains do not establish a
+reliable general answer improvement. Full historical sources and outcomes remain
+in the review's evidence archives.

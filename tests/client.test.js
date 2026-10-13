@@ -1,3 +1,4 @@
+import { collectionResponse, documentResponse, rerankedResponse, accepted } from './helpers/lambdadb-responses.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { LambdaClient, connectionConfig, scopeFilter } from '../src/client.js';
@@ -7,7 +8,7 @@ const owner = 'a'.repeat(32), scope = 'b'.repeat(64);
 test('direct CORS preserves auth/body and query scope without host credentials', async () => {
     const calls = [];
     const client = new LambdaClient(config, 'secret-test-only', { headers: () => ({ 'X-CSRF-Token': 'csrf' }), fetcher: async (url, init) => {
-        calls.push({ url, init }); return new Response(JSON.stringify({ docs: [], isDocsInline: true }));
+        calls.push({ url, init }); return url.endsWith('/query') ? Response.json(rerankedResponse()) : accepted();
     } });
     await client.upsert('test', [{ id: '1', text: 'synthetic' }]);
     await client.search('test', owner, scope, 'compass');
@@ -19,10 +20,14 @@ test('direct CORS preserves auth/body and query scope without host credentials',
         assert.deepEqual(Object.keys(init.headers).sort(), ['Content-Type', 'x-api-key']);
     }
     const body = JSON.parse(calls[1].init.body);
-    assert.equal(body.query.knn.queryText, 'compass'); assert.deepEqual(body.query.knn.filter, scopeFilter(owner, scope));
+    assert.equal(body.size, 50); assert.equal(body.query.bayesian[0].knn.k, 100);
+    assert.equal(body.query.bayesian[0].knn.queryText, 'compass'); assert.deepEqual(body.query.bayesian[0].knn.filter, scopeFilter(owner, scope));
+    assert.deepEqual(body.query.bayesian[1].bool[0], { ...scopeFilter(owner, scope), occur: 'filter' });
+    assert.deepEqual(body.query.bayesian[1].bool[1], { queryString: { query: 'compass', defaultField: 'text', skipSyntax: true }, occur: 'must' });
+    assert.deepEqual(body.rerank, { provider: 'typesafe', model: 'jev-1.13.0', queryText: 'compass', fields: ['text'], candidateSize: 100, onFailure: 'error' });
     assert.equal(body.consistentRead, true); assert.deepEqual(body.ref, { kind: 'branch', name: 'main' });
     assert.ok(!JSON.stringify(client).includes('secret-test-only'));
-    client.forget(); await assert.rejects(client.get('test'), /Enter your API key again/);
+    client.forget(); await assert.rejects(client.get('test'), /Enter your project API key/);
 });
 test('reject unsafe config and no key; response errors never leak body', async () => {
     for (const endpoint of ['http://bad.test', 'https://key@bad.test', 'https://bad.test/path', 'https://bad.test/?key=secret']) assert.throws(() => connectionConfig({ ...config, endpoint }));
@@ -35,7 +40,7 @@ test('reject unsafe config and no key; response errors never leak body', async (
 test('ownership mismatch blocks deletion; external result URL receives no key', async () => {
     const calls = [];
     const client = new LambdaClient(config, 'test-key', { fetcher: async (url, init) => {
-        calls.push(init.method); return new Response(JSON.stringify({ collection: { tags: { owner: 'someoneelse' } }, docs: [], isDocsInline: false, docsUrl: 'https://untrusted.test' }));
+        calls.push(init.method); return Response.json({ collection: collectionResponse({ tags: { owner: 'someoneelse' } }), ...documentResponse(), isDocsInline: false, docsUrl: 'https://untrusted.test' });
     } });
     await assert.rejects(client.deleteOwnedCollection('test', owner), /Ownership/); assert.deepEqual(calls, ['GET']);
     await assert.rejects(client.search('test', owner, scope, 'query'), /external download/); assert.equal(calls.length, 2);
@@ -99,7 +104,7 @@ test('network failure, timeout and explicit cancellation have distinct safe erro
 test('a response-body deadline is reported as timeout instead of invalid JSON', async () => {
     const keeper = setTimeout(() => {}, 1000);
     try {
-        const client = new LambdaClient(config, 'test-key', { timeoutMs: 10, fetcher: async (_, { signal }) => ({ ok: true, status: 200, json: () => new Promise((resolve, reject) => signal.addEventListener('abort', () => reject(signal.reason), { once: true })) }) });
+        const client = new LambdaClient(config, 'test-key', { timeoutMs: 10, fetcher: async (_, { signal }) => new Response(new ReadableStream({ start(controller) { signal.addEventListener('abort', () => controller.error(signal.reason), { once: true }); } }), { headers: { 'Content-Type': 'application/json' } }) });
         await assert.rejects(client.get('test'), e => e.code === 'timeout');
     } finally { clearTimeout(keeper); }
 });
@@ -108,7 +113,7 @@ test('versioned read/write operations select a direct branch and preserve safe t
     const requests = [];
     const client = new LambdaClient(config, 'synthetic', { fetcher: async (url, init) => {
         requests.push({ url, init, body: init.body ? JSON.parse(init.body) : undefined });
-        return new Response(JSON.stringify({ docs: [], isDocsInline: true, branches: [] }));
+        return /\/docs\/(upsert|delete)$/.test(url) ? accepted() : Response.json(url.endsWith('/query') ? rerankedResponse([], 'memory') : documentResponse([], 'memory'));
     } });
     await client.upsert('memory', [{ id: 'doc' }], undefined, 'chat_child');
     await client.deleteIds('memory', ['doc'], undefined, 'chat_child');
@@ -123,4 +128,132 @@ test('versioned read/write operations select a direct branch and preserve safe t
     assert(requests.every(r => r.init.credentials === 'omit' && !Object.hasOwn(r.init.headers, 'X-CSRF-Token')));
     await assert.rejects(client.deleteBranch('memory', 'main'), /default branch/);
     assert.throws(() => client.upsert('memory', [], undefined, '../other'), /Invalid memory branch/);
+});
+
+test('SDK validates responses and never exposes malformed payloads or response bodies', async () => {
+    for (const payload of ['private-invalid-json', JSON.stringify({ collection: { secret: 'private-invalid-shape' } })]) {
+        const client = new LambdaClient(config, 'test-key', { fetcher: async () => new Response(payload, { headers: { 'Content-Type': 'application/json' } }) });
+        await assert.rejects(client.get('test'), error => error.code === 'validation' && !JSON.stringify(error).includes('private') && !error.cause);
+    }
+});
+
+test('SDK retries stay disabled for reads and writes, including ambiguous failures', async () => {
+    for (const status of [429, 503]) {
+        let count = 0;
+        const client = new LambdaClient(config, 'test-key', { fetcher: async () => { count++; return new Response('private', { status }); } });
+        await assert.rejects(client.get('test'), error => error.status === status);
+        await assert.rejects(client.upsert('test', [{ id: 'one' }]), error => error.status === status);
+        assert.equal(count, 2);
+    }
+});
+
+test('forget cancels an in-flight SDK request and prevents later authentication', async () => {
+    let started; const ready = new Promise(resolve => { started = resolve; }); let calls = 0;
+    const client = new LambdaClient(config, 'test-key', { fetcher: async (_, { signal }) => {
+        calls++; started(); return new Promise((resolve, reject) => signal.addEventListener('abort', () => reject(signal.reason), { once: true }));
+    } });
+    const pending = client.get('test'); await ready; client.forget();
+    await assert.rejects(pending, error => error.code === 'canceled');
+    await assert.rejects(client.get('test'), /Enter your project API key/);
+    assert.equal(calls, 1); assert(!JSON.stringify(client).includes('test-key'));
+});
+
+test('external downloads are blocked for query, fetch, and list before any storage request', async () => {
+    let calls = 0;
+    const client = new LambdaClient(config, 'test-key', { fetcher: async url => {
+        calls++; assert(url.startsWith(config.endpoint));
+        return Response.json({ ...documentResponse(), isDocsInline: false, docsUrl: 'https://storage.example.test/private' });
+    } });
+    for (const run of [() => client.query('test', {}), () => client.fetchDocs('test', ['one']), () => client.listDocs('test')]) {
+        await assert.rejects(run(), /external download/);
+    }
+    assert.equal(calls, 3);
+});
+
+test('SDK diagnostics remain silent even when environment debugging is requested', async () => {
+    const old = process.env.LAMBDADB_DEBUG, log = console.log, group = console.group, end = console.groupEnd;
+    const logged = []; process.env.LAMBDADB_DEBUG = 'true';
+    console.log = console.group = console.groupEnd = (...args) => logged.push(args);
+    try {
+        const client = new LambdaClient(config, 'synthetic-secret', { fetcher: async () => Response.json({ collection: collectionResponse() }) });
+        await client.get('test'); assert.deepEqual(logged, []);
+    } finally {
+        console.log = log; console.group = group; console.groupEnd = end;
+        if (old === undefined) delete process.env.LAMBDADB_DEBUG; else process.env.LAMBDADB_DEBUG = old;
+    }
+});
+
+test('managed rerank metadata must confirm application or an empty candidate pool', async () => {
+    for (const change of [r => { delete r.rerank; }, r => { r.rerank.status = 'fallback'; },
+        r => { r.rerank.provider = 'different-provider'; }, r => { r.rerank.model = 'different-model'; },
+        r => { r.rerank.scoredCount = 0; }, r => { r.rerank.candidateCount = 101; r.rerank.scoredCount = 101; },
+        r => { delete r.docs[0].retrievalScore; }]) {
+        const response = rerankedResponse([{ id: 'one' }]); change(response);
+        const client = new LambdaClient(config, 'test-key', { fetcher: async () => Response.json(response) });
+        await assert.rejects(client.search('test', owner, scope, 'What happened?', undefined, 'chat_child'), e => e.code === 'validation');
+    }
+    for (const key of ['provider', 'model']) {
+        const response = rerankedResponse(); response.rerank[key] = 'different';
+        const client = new LambdaClient(config, 'test-key', { fetcher: async () => Response.json(response) });
+        await assert.rejects(client.search('test', owner, scope, 'What happened?', undefined, 'chat_child'), e => e.code === 'validation');
+    }
+    const client = new LambdaClient(config, 'test-key', { fetcher: async () => Response.json(rerankedResponse([{ id: 'one' }])) });
+    assert.deepEqual(await client.search('test', owner, scope, 'What happened?', undefined, 'chat_child'), [{ id: 'one' }]);
+});
+
+
+test('search rejects oversized complete queries without sending a truncated request', () => {
+    let calls = 0;
+    const client = new LambdaClient(config, 'synthetic', { fetcher: async () => { calls++; return Response.json(rerankedResponse()); } });
+    for (const input of ['x'.repeat(8193), '界'.repeat(3000), '🧭'.repeat(3000), 'x'.repeat(8191) + '🧭z']) {
+        assert.throws(() => client.search('test', owner, scope, input), error =>
+            error.name === 'ConnectionError' && error.code === 'query-limit' && error.message.includes('no search was sent'));
+    }
+    assert.equal(calls, 0);
+});
+
+test('the exact UTF-8 query limit preserves identical vector, lexical and reranker signals', async () => {
+    for (const input of ['x'.repeat(8192), 'x'.repeat(8188) + '🧭']) {
+        const calls = [];
+        const client = new LambdaClient(config, 'synthetic', { fetcher: async (url, init) => {
+            calls.push(JSON.parse(init.body)); return Response.json(rerankedResponse());
+        } });
+        await client.search('test', owner, scope, input, undefined, 'chat_child');
+        assert.equal(calls.length, 1);
+        const body = calls[0];
+        assert.equal(body.query.bayesian[0].knn.queryText, input);
+        assert.equal(body.query.bayesian[1].bool[1].queryString.query, input);
+        assert.equal(body.rerank.queryText, input);
+        assert.equal(Buffer.byteLength(input, 'utf8'), 8192);
+        assert.equal(body.query.bayesian[0].knn.k, 100);
+        assert.deepEqual(body.ref, { kind: 'branch', name: 'chat_child' });
+    }
+});
+
+
+test('message boundary filters both search legs before ranking and rejects invalid bounds without a request', async () => {
+    const calls = [];
+    const client = new LambdaClient(config, 'synthetic-key', { fetcher: async (_, init) => {
+        calls.push(JSON.parse(init.body)); return Response.json(rerankedResponse());
+    } });
+    await client.search('test', owner, scope, 'Where?', undefined, 'chat_test', 4);
+    const filter = { queryString: { query: `owner:${owner} AND scope:${scope} AND message:[0 TO 3]` } };
+    assert.deepEqual(calls[0].query.bayesian[0].knn.filter, filter);
+    assert.deepEqual(calls[0].query.bayesian[1].bool[0], { ...filter, occur: 'filter' });
+    for (const boundary of [0, -1, 1.5, NaN, '4']) assert.throws(() => client.search('test', owner, scope, 'Where?', undefined, 'chat_test', boundary), /boundary/);
+    assert.equal(calls.length, 1);
+});
+
+test('connection verification is one bounded read with no mutations or retry on rejected authentication', async () => {
+    const calls = [];
+    const client = new LambdaClient(config, 'synthetic', { fetcher: async (url, init) => { calls.push({ url, init }); return Response.json({ collections: [] }); } });
+    await client.checkConnection();
+    assert.equal(calls.length, 1); assert.equal(calls[0].init.method, 'GET');
+    assert.equal(new URL(calls[0].url).searchParams.get('size'), '1');
+    assert.equal(new URL(calls[0].url).pathname, '/projects/synthetic/collections');
+    let rejected = 0;
+    const denied = new LambdaClient(config, 'synthetic', { fetcher: async () => { rejected++; return new Response('{}', { status: 401 }); } });
+    await assert.rejects(denied.checkConnection(), error => error.status === 401); assert.equal(rejected, 1);
+    const malformed = new LambdaClient(config, 'synthetic', { fetcher: async () => Response.json({}) });
+    await assert.rejects(malformed.checkConnection(), error => error.code === 'validation');
 });

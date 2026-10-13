@@ -52,6 +52,14 @@ Keep manifest, package and root lockfile versions equal. Development candidates
 use an `Unreleased` changelog date; main promotion requires a reviewed date.
 A main merge makes code available to branch-based installers immediately.
 
+## Pre-release storage scope
+
+There are no installed users or existing user chats to migrate. Story collections
+and chat branches are the only supported storage model. Do not add legacy modes,
+conversion UI or previous-layout cleanup paths without a new product requirement.
+Keep format/ownership checks and failure recovery; these are current safety
+invariants, not compatibility support. Preserve historical experiment evidence.
+
 ## Validation and evidence
 
 Run `npm test`, `npm run check`, and `npm run check:release`. CI checks all runtime, script, and test syntax
@@ -73,6 +81,34 @@ Before adding a benchmark or extending its harness, state the product question,
 which observation will support a decision, the authorized input/cost/time bounds,
 and the stopping condition. Prefer existing runners. Add infrastructure only when
 it is necessary to complete that evaluation or has a concrete recurring use.
+
+Evaluate the semantically justified reference method before introducing quality
+heuristics for performance or cost. For example, a contextual query constructor
+should initially receive the entire recent dialogue outside the indexed older
+history, rather than an arbitrary last-N-message or token-truncated subset.
+After establishing utility, compare bounded-window, truncation, or cheaper-model
+optimizations against that reference and disclose quality losses. This sequencing
+does not remove source/isolation invariants, provider context limits, or authorized
+aggregate experiment resource bounds. Record a context-limit blocker explicitly;
+do not silently reduce the reference input and claim an unrestricted evaluation.
+
+Before a paid answer-quality improvement comparison, identify a demonstrated
+baseline failure relevant to the proposed change. Inspect the question, original
+source and final delivered prompt: distinguish retrieval loss, budget/dependency
+loss, ambiguous targets and interpretation errors with sufficient evidence.
+Already correct cases are regression controls, not evidence of improvement.
+Use discovery cases to diagnose the mechanism, then freeze a separate confirmation
+cohort and scoring criteria before comparing candidates. Report the entire frozen
+cohort, not only cases selected after observing wrong baseline answers. A perfect
+baseline makes efficacy inconclusive; do not infer that the candidate has no effect
+or expand paid runs merely to find a favorable result.
+
+The unit of work is the product decision, not each diagnostic run. Define that
+whole scope before starting, and keep the necessary diagnostic and confirmation
+runs on the same work branch and PR until there is an evidence-supported adoption,
+defer or rejection decision. A completed run with an unresolved policy question
+is intermediate evidence, even when its report and CI are complete. Do not create
+a separate documentation PR or merge milestone for each such diagnosis.
 
 A normal experiment change includes the needed harness changes, the bounded run,
 analysis of positive/negative results, limitations, and verified owned-data cleanup.

@@ -73,15 +73,16 @@ export async function auditNaturalDialogue(fixture = loadNaturalFixture()) {
     const cases = naturalCases(fixture), config = options(fixture.settings), rows = [];
     for (const item of cases) {
         const chat = [...item.input.source, { mes: item.input.question, name: 'User', is_user: true, is_system: false, extra: {} }];
-        const snapshot = capture({ chat, characterId: 0, characters: [{ avatar: `${item.story}.png` }], getCurrentChatId: () => item.id });
+        const snapshot = capture({ chat, characterId: 0, characters: [{ avatar: `${item.story}.png` }], chatMetadata: { sillymemory: { version: 1, id: item.id, story: item.id } }, getCurrentChatId: () => item.id });
         const prepared = await documents(snapshot, 'synthetic-natural-protocol-owner', config);
         const evidence = item.rubric.requiredEvidence.map(ref => {
             const matches = prepared.docs.filter(doc => doc.message === ref.message && doc.text.includes(ref.quote));
             assert(matches.length, 'Ground truth is not indexable under current chunking/recent settings');
             return { message: ref.message, documentIds: matches.map(doc => doc.id) };
         });
-        const queries = retrievalQueries(snapshot, item.input.type);
-        assert.equal(queries[0], item.input.question, 'Normal retrieval must anchor on the question');
+        const queries = retrievalQueries(snapshot, item.input.type, config);
+        assert.equal(queries.length, 1);
+        assert(queries[0].endsWith(item.input.question), 'Normal retrieval must end with the current question');
         rows.push({ case: item.id, sourceMessages: snapshot.messages.length, indexableChunks: prepared.docs.length, queries, requiredEvidence: evidence });
     }
     return { passed: true, kind: 'offline fixture audit', serviceCalls: 0, fixtureHash: hash(fixture), cases: cases.length, scheduledSamples: naturalSchedule(fixture).length, rows };
@@ -91,7 +92,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(realpathSync(process.ar
     const args = process.argv.slice(2);
     assert([2, 4].includes(args.length) && args[0] === '--output' && args[1] && (args.length === 2 || args[2] === '--fixture'), 'Usage: node scripts/natural-dialogue.mjs --output artifacts/unique-plan.json [--fixture version]');
     const fixture = loadNaturalFixture(args[3]), audit = await auditNaturalDialogue(fixture);
-    const sourceFiles = ['index.js', 'src/client.js', 'src/gate.js', 'src/memory.js', 'src/context.js', 'src/status.js', 'scripts/natural-dialogue.mjs', ...fixtureFiles(fixture.version)];
+    const sourceFiles = ['index.js', 'src/client.js', 'vendor/lambdadb.js', 'package-lock.json', 'src/gate.js', 'src/memory.js', 'src/time.js', 'src/context.js', 'src/status.js', 'scripts/natural-dialogue.mjs', ...fixtureFiles(fixture.version)];
     const sourceSha256 = Object.fromEntries(sourceFiles.map(file => [file, createHash('sha256').update(readFileSync(path.join(root, file))).digest('hex')]));
     const plan = { version: fixture.version, settings: fixture.settings, generation: fixture.generation, sourceSha256, audit, cases: naturalCases(fixture), schedule: naturalSchedule(fixture), results: null };
     const output = path.resolve(args[1]); await mkdir(path.dirname(output), { recursive: true });

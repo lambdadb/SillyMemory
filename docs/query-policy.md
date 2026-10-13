@@ -1,5 +1,10 @@
 # Latest-user and contextual retrieval
 
+> Historical protocol: execution commands below require the recorded producing
+> checkout from the [evidence index](evidence-retention.md). Fixed recent-window
+> generation modes and their npm aliases are retired from the current package.
+> Original inputs, scores and reports remain unchanged.
+
 The original fixed comparison scored 6/18 with SillyMemory. A subsequent vector diagnostic reproduced all six unique old-fact misses with exhaustive search, and retrieved all six when querying the latest user question. That motivated `latest-user-plus-context-v1`; no LambdaDB implementation changes are involved. Historical reports remain unchanged.
 
 ## Policy

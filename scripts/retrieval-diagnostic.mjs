@@ -35,7 +35,17 @@ const check=(condition,name)=>{assert(condition,name);report.checks.push(name);}
 let browser,page,server,stage='startup',failed=false;
 async function request(collection,suffix,body,method='POST') {
     const out=await page.evaluate(async ({collection,suffix,body,method})=>{
-        try {const c=globalThis.retrievalClient;return {ok:true,data:await c.request(c.path(collection,suffix),{body,method})};}
+        try {
+            const c=globalThis.retrievalClient;
+            const data=await c.call((sdk, options)=>{
+                const handle=sdk.collection(collection);
+                if(suffix==='/docs/upsert')return handle.docs.upsert(body,options);
+                if(suffix==='/docs/fetch')return handle.docs.fetch(body,options);
+                if(suffix==='/query')return handle.query(body,options);
+                throw new Error('Unsupported diagnostic operation');
+            });
+            return {ok:true,data};
+        }
         catch(e){return {ok:false,status:Number(e.status)||0};}
     },{collection,suffix,body,method});
     report.requests.push({stage,operation:suffix||method,status:out.ok?200:out.status});
@@ -68,13 +78,13 @@ try {
     await page.evaluate(async credentials=>{const {LambdaClient}=await import('/scripts/extensions/third-party/sillymemory/src/client.js');globalThis.retrievalClient=new LambdaClient(credentials,credentials.key,{timeoutMs:30000});},credentials);
     stage='create owned collections';
     for(const [name,indexConfigs] of [[managed,schema],[mirror,{...schema,embedding:{type:'vector',dimensions:1536,similarity:'cosine'}}]]) {
-        await page.evaluate(async ({name,indexConfigs,owner})=>{await globalThis.retrievalClient.request('/collections',{body:{collectionName:name,indexConfigs,tags:{application:'sillymemory',owner},description:'Synthetic retrieval diagnosis',snapshotRetentionInDays:1}});},{name,indexConfigs,owner});
+        await page.evaluate(async ({name,indexConfigs,owner})=>{await globalThis.retrievalClient.call((sdk,options)=>sdk.createCollection({collectionName:name,indexConfigs,tags:{application:'sillymemory',owner},description:'Synthetic retrieval diagnosis',snapshotRetentionInDays:1},options));},{name,indexConfigs,owner});
     }
     const jobs=[], corpus=[];const probeScope='f'.repeat(64);
     for(const scenario of scenarios) {
         for(const item of scenario.cases) {
             const variants=queryVariants(scenario.messages,item.question);
-            const snapshot={character:'diagnostic-mira.png',chat:scenario.id,messages:[...scenario.messages,{name:'User',is_user:true,mes:variants.latest}].map((m,index)=>({index,text:m.mes,name:m.name,user:m.is_user,swipe:0,eligible:true}))};
+            const snapshot={character:'diagnostic-mira.png',chat:scenario.id,memory:{story:scenario.id},messages:[...scenario.messages,{name:'User',is_user:true,mes:variants.latest}].map((m,index)=>({index,text:m.mes,name:m.name,user:m.is_user,swipe:0,eligible:true}))};
             const prepared=await documents(snapshot,owner,report.config);
             if(!corpus.some(d=>d.scope===prepared.scope))corpus.push(...prepared.docs);
             const targets=item.required?prepared.docs.filter(d=>item.required.every(p=>normalize(d.text).includes(normalize(p)))).map(d=>d.id):[];
@@ -138,7 +148,7 @@ finally {
     report.cleanupComplete=report.cleanup.length===2&&report.cleanup.every(x=>x.absent);
     if(report.cleanupComplete)await rm(pendingPath,{force:true});
     report.passed=!failed&&report.complete&&report.cleanupComplete;report.completedAt=new Date().toISOString();report.sourceSha256={};
-    for(const file of ['src/client.js','src/memory.js','scripts/comparison-fixture.mjs','scripts/retrieval-analysis.mjs','scripts/retrieval-diagnostic.mjs'])report.sourceSha256[file]=createHash('sha256').update(await readFile(path.join(root,file))).digest('hex');
+    for(const file of ['src/client.js','src/memory.js', 'src/time.js','scripts/comparison-fixture.mjs','scripts/retrieval-analysis.mjs','scripts/retrieval-diagnostic.mjs'])report.sourceSha256[file]=createHash('sha256').update(await readFile(path.join(root,file))).digest('hex');
     const vectorText=JSON.stringify(vectors);report.vectorArtifact=`retrieval-vectors-${tag}.json`;report.vectorSha256=createHash('sha256').update(vectorText).digest('hex');
     let output=JSON.stringify(report,null,2);
     for(const secret of [credentials.key,env.LLM_API_KEY,credentials.endpoint,credentials.project].filter(Boolean)){assert(!vectorText.includes(secret),'Vector artifact secret guard');output=output.replaceAll(secret,'[REDACTED]');}

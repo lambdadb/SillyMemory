@@ -6,8 +6,9 @@ Release or highest version tag. Keep `main` at reviewed release boundaries.
 `develop` integrates ongoing work. Merge `develop` into `main` with a merge
 commit to preserve long-lived branch ancestry.
 
-The current release boundary is **0.3.0 (experimental)**, dated **2026-10-04**.
-See the [release notes](docs/releases/0.3.0.md), [validation record](docs/releases/0.3.0-validation.md)
+The prepared release boundary is **0.4.0 (experimental)**, dated **2026-10-13**.
+A dated preparation entry is not main promotion or publication.
+See the [release notes](docs/releases/0.4.0.md), [validation record](docs/releases/0.4.0-validation.md)
 and [GitHub Releases](https://github.com/lambdadb/SillyMemory/releases) to confirm
 publication. Never reuse a published version. Main promotion, tag push and GitHub
 Release publication require maintainer authorization, which may cover the full
@@ -67,34 +68,36 @@ After approval, in a clean checkout synchronized with the reviewed remote main:
 git fetch origin --tags
 git switch main
 git merge --ff-only origin/main
-npm run check:release -- --tag v0.3.0
+npm run check:release -- --tag v0.4.0
 # Confirm HEAD is the approved main commit before creating the tag.
-git tag -a v0.3.0 -m 'SillyMemory 0.3.0 (experimental)'
-git push origin refs/tags/v0.3.0
+git tag -a v0.4.0 -m 'SillyMemory 0.4.0 (experimental)'
+git push origin refs/tags/v0.4.0
 ```
 
 Use the actual approved version in these commands. The tag CI checks metadata,
 the dated changelog, tests and whether the tagged commit is contained in
 `origin/main`. Wait for it to pass before publishing the GitHub Release at that
-existing tag. Mark the experimental 0.3.0 release as **pre-release**, describing it as
+existing tag. Mark the experimental 0.4.0 release as **pre-release**, describing it as
 experimental and linking the installation guide. Use a reviewed release-notes
-file with `gh release create v0.3.0 --verify-tag --prerelease --title
-'SillyMemory 0.3.0 (experimental)' --notes-file docs/releases/0.3.0.md`.
+file with `gh release create v0.4.0 --verify-tag --prerelease --title
+'SillyMemory 0.4.0 (experimental)' --notes-file docs/releases/0.4.0.md`.
 
 Tags and Releases are not published automatically. CI detects mistakes after a
 push; it is not a server-side prohibition on changing branches or tags. Branch
 and tag protection/rulesets are separate repository administration settings.
 If tag checks fail, stop publication and investigate; do not silently move a
 public tag. GitHub's pre-release flag does not prevent main-branch installation.
-No npm package or compiled bundle is required for installation.
+No npm install or local compilation is required for users. The locked SDK browser
+bundle and third-party licenses ship in Git; run `npm run check:sdk` before promotion.
 
 ## User updates and rollback
 
 Users install the repository URL from **Extensions → Install extension** and
 normally leave the optional branch/tag field empty, selecting default `main`.
 They update through **Manage extensions → SillyMemory → Update**, then reload.
-Automatic updates are disabled in the manifest. Reload clears the session key
-and starts memory disabled; reconnect and re-enable it when ready.
+Automatic updates are disabled in the manifest. Reload verifies the saved browser key and restores the previous memory-enabled
+state. Forget key removes that credential and disables memory. Browser-storage
+loss or rejected authentication requires a new key; see [reconnection](docs/saved-connection.md).
 
 For a problem, first disable memory to preserve ordinary chat operation. Back up
 SillyTavern data before changing versions. Do not uninstall or delete collections
@@ -116,75 +119,37 @@ fetch `git fetch origin main:refs/remotes/origin/main`, then use
 `git switch -c main --track origin/main` instead. These examples only work after
 that tag exists. Check GitHub Releases before choosing a rollback target.
 
-Code rollback does not undo LambdaDB writes, chat edits or data migrations.
-Review each release's compatibility notes before downgrading. The installation
-smoke test checks the published 0.2.0 → candidate → 0.2.0 → candidate code changes. In live
-mode it removes the test's remote data before rollback; it does not prove that
-0.2.0 can manage 0.3.0 story branches or reverse data/metadata changes.
+Code rollback does not restore local or remote data. This pre-release project
+has no user data migration contract; do not make storage compatibility claims
+from code installation checks. Historical release acceptance remains in
+[0.3.0 validation](docs/releases/0.3.0-validation.md).
 
-## Installation smoke test
-
-The [0.3.0 acceptance record](docs/releases/0.3.0-validation.md) verifies the
-0.2.0-to-0.3.0 UI upgrade, opt-in branch/checkpoint lifecycle and complete cleanup.
-The runner is intentionally locked to the historical 0.2.0 public baseline. After
-0.3.0 promotion, review that baseline before using it for another release; do not
-present an old run as a fresh installation test.
-
-The 0.2.0 direct-CORS release is tested with the host proxy disabled. Its
-[current transport evidence](docs/direct-cors.md) supplements earlier proxy-path
-release checks; the [final acceptance record](docs/releases/0.2.0-validation.md#final-publication-acceptance) covers the combined release tree.
+## Fresh installation smoke test
 
 Use an isolated pinned host checkout with no global SillyMemory symlink. The
-script creates/removes its own host data directory and browser profile. It
-installs public main from the actual GitHub URL through the UI. In the disposable
-installed clone, it finds the common ancestor of main and the candidate and
-requires its tree to equal the installed main tree. It creates a local branch
-there tracking the published candidate PR branch, then clicks the actual UI
-Update button. This avoids the divergent merge-commit history of the two
-long-lived branches while preserving exactly the installed files. This
-checks real GitHub fetch/pull without promoting public main or publishing a tag.
-It also checks version display, settings/owner preservation, key clearing and
-commit rollback/return. By default it makes no LambdaDB/model calls.
+runner installs the requested GitHub branch through the actual installation UI,
+checks its exact commit, branding/version, saved preferences and unsaved-key input
+clearing, then removes its disposable profile. It makes no provider/model calls.
 
 ```sh
 ST_SOURCE=/path/to/isolated/pinned/SillyTavern \
-SM_UPDATE_BRANCH=your-published-candidate-branch SM_ARTIFACT_TAG=install-unique \
+SM_INSTALL_BRANCH=your-published-candidate-branch SM_ARTIFACT_TAG=install-unique \
   npm run test:install
 ```
 
-The test branch must exist on GitHub and differ from main. The report identifies
-the exact commits; it must not be presented as a published main-to-main release
-upgrade. Artifact tags must be unique. Reports/screenshots stay in ignored local
-`artifacts/`; checked-in validation records retain results and limits.
+The branch must exist on GitHub. Omit `SM_INSTALL_BRANCH` to test public main.
+For a controlled same-branch update, set `SM_UPDATE_FROM` to a full earlier
+commit SHA contained in that candidate branch. After fresh installation, the
+runner rewinds only its disposable checkout, reloads it, clicks the native
+Update button, and checks the exact remote commit, served runtime, version and
+preserved preferences after another reload. This validates Git update mechanics;
+it does not establish storage migration from an older published release.
 
-For the bounded real managed-memory upgrade check, use the same isolated host:
+A candidate-branch installation is not a main deployment. Reports/screenshots
+stay under ignored `artifacts/`; retain concise results and exact source hashes.
 
-```sh
-ST_SOURCE=/path/to/isolated/pinned/SillyTavern \
-SM_ENV_FILE=/absolute/path/to/.env.local \
-SM_UPDATE_BRANCH=your-published-candidate-branch SM_ARTIFACT_TAG=upgrade-unique \
-  npm run test:install -- --live-memory
-```
-
-This reads the existing `LAMBDADB_BASE_URL`, `LAMBDADB_PROJECT_NAME` and
-`LAMBDADB_PROJECT_API_KEY` values. It creates at most three synthetic owned
-collections (transport gate, published per-chat memory, opted-in story family)
-and submits at most 50 documents. Both baseline and candidate run with the host
-proxy disabled. The fixture explicitly requires the published 0.2.0 baseline;
-review it when that baseline changes rather than silently reusing old expectations.
-
-It verifies settings/ownership and old per-chat data preservation, no automatic
-story opt-in, explicit story indexing, zero-upsert native forks and checkpoint
-save/resume, edit isolation, managed queryText through the interceptor, key re-entry,
-scoped/all-owned deletion, and code rollback/return after remote cleanup. No
-generation model is called; the final-prompt event is synthetic. This does not
-establish answer quality, provider-generation reliability, or rollback of opted-in
-metadata. Screenshots are disabled in live mode, credentials are redacted from
-reports, and keys must be absent from persistent browser/host settings.
-
-Cleanup confirms each recorded collection is unavailable. A failed cleanup
-preserves `artifacts/<tag>-pending.json` and the isolated host profile named in
-the report. Resolve those owned resources before rerunning; never discard the
-pending record while remote cleanup is uncertain. Raw reports stay local and
-ignored; archive exact reports/producer source with checksums and record their
-availability in the release validation document.
+Use `scripts/chat-collections-live.mjs --checkpoint-manager` for bounded current
+story/branch/checkpoint acceptance with real managed embeddings. See
+[default story memory](docs/default-story-memory.md) for the current acceptance
+scope and retained evidence. The previous 0.2.0 upgrade/rollback adapter is
+archived; it is no longer a compatibility requirement.

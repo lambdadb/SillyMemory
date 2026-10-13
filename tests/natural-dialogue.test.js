@@ -1,10 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { mkdtempSync, readFileSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { verifyNaturalPlan } from '../scripts/natural-eval.mjs';
 import { loadNaturalFixture, hash, naturalCases, naturalSchedule, auditNaturalDialogue } from '../scripts/natural-dialogue.mjs';
 
 test('natural corpus and oracle are frozen with bilingual category coverage and unique dialogue turns', () => {
@@ -58,7 +59,7 @@ test('offline audit proves source eligibility without claiming ranking or genera
     assert.equal(audit.accuracy, undefined);
 });
 
-test('offline CLI exports reviewable inputs/oracle identities and refuses to overwrite evidence', () => {
+test('offline CLI exports reviewable inputs/oracle identities and refuses to overwrite evidence', async () => {
     const directory = mkdtempSync(path.join(tmpdir(), 'sillymemory-natural-'));
     try {
         const output = path.join(directory, 'plan.json');
@@ -71,6 +72,14 @@ test('offline CLI exports reviewable inputs/oracle identities and refuses to ove
         assert(plan.sourceSha256['docs/natural-dialogue-evaluation.md']);
         assert(plan.sourceSha256['src/memory.js']);
         assert.notEqual(run().status, 0); assert.equal(readFileSync(output, 'utf8'), contents);
+        assert(plan.sourceSha256['src/time.js']);
+        await verifyNaturalPlan(output);
+        plan.sourceSha256['src/time.js'] = '0'.repeat(64);
+        writeFileSync(output, JSON.stringify(plan));
+        await assert.rejects(verifyNaturalPlan(output), /Frozen source changed: src\/time.js/);
+        delete plan.sourceSha256['src/time.js'];
+        writeFileSync(output, JSON.stringify(plan));
+        await assert.rejects(verifyNaturalPlan(output), /Frozen source changed: src\/time.js/);
     } finally { rmSync(directory, { recursive: true, force: true }); }
 });
 

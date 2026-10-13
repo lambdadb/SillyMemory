@@ -74,7 +74,7 @@ test('ablation summary rechecks actual prompts and reports four contrasts withou
 function reportFixture(version) {
     const fixture = loadNaturalFixture(version), cases = new Map(naturalCases(fixture).map(c => [c.id, c]));
     const rows = naturalSchedule(fixture).map((sample, index) => ({ ...sample, chatId: `chat-${index}`, language: cases.get(sample.case).language, kind: cases.get(sample.case).kind, answer: 'Synthetic answer, deliberately ungraded.', memoryTokens: 0, requiredEvidence: cases.get(sample.case).rubric.requiredEvidence.map(e => ({ message: e.message, inMemory: false, inPrompt: true })), supersededEvidence: cases.get(sample.case).rubric.supersededEvidence.map(e => ({ message: e.message, inMemory: false, inPrompt: true })), baselineTruncated: false, syncMs: 1, retrievalMs: sample.mode === 'on' ? 2 : null, generationMs: 3, usage: { prompt_tokens: 100, completion_tokens: 10 } }));
-    const sourceSha256 = Object.fromEntries(Array.from({ length: 11 }, (_, i) => [`test-file-${i}`, 'a'.repeat(64)]));
+    const sourceSha256 = Object.fromEntries([...Array.from({ length: 11 }, (_, i) => `test-file-${i}`), 'vendor/lambdadb.js', 'package-lock.json'].map(file => [file, 'a'.repeat(64)]));
     return { sillyTavern: '06bde939fb1e9c4c8d8641d810f0a916b5bce127', passed: true, cleanupComplete: true, nativeCleanupComplete: true, model: fixture.generation.model, hostContextTokens: fixture.settings.context, providerCalls: rows.length, initialSourceSha256: sourceSha256, sourceSha256: structuredClone(sourceSha256), evaluation: { version: fixture.version, complete: true, fixtureHash: hash(fixture), planSha256: 'b'.repeat(64), settings: fixture.settings, generation: fixture.generation, rows }, generations: rows.map(row => ({ naturalSampleId: row.id, upstreamStatus: 200, attempts: [{ status: 200 }], finishReason: 'stop', providerAnswer: row.answer, answer: row.answer, requestOptions: { temperature: 0, model: fixture.generation.model }, maxOutputTokens: 256 })), lambdaRequests: [{ stage: 'cleanup', method: 'GET', path: '/collections/synthetic-owned', status: 404 }] };
 }
 
@@ -105,6 +105,10 @@ test('natural aggregation rejects failed, partial, retried, duplicated, mismatch
         r => { r.generations[0].finishReason = 'length'; },
         r => { r.evaluation.rows[0].memoryTokens = 801; },
         r => { r.sourceSha256['test-file-0'] = 'modified'; },
+        ...['vendor/lambdadb.js', 'package-lock.json'].flatMap(file => [
+            r => { delete r.initialSourceSha256[file]; delete r.sourceSha256[file]; },
+            r => { r.sourceSha256[file] = 'b'.repeat(64); },
+        ]),
         r => { r.lambdaRequests[0].status = null; },
     ]) { const report = reportFixture(); mutate(report); assert.throws(() => summarizeNatural(report)); }
 });

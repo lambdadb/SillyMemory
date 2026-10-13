@@ -1,9 +1,12 @@
-# Chat collection lifecycle
+# Chat collection lifecycle (historical)
 
 > Historical evidence: detailed runs and retired tools are preserved at the
 > [pre-cleanup revision](https://github.com/lambdadb/SillyMemory/tree/94b9bc04cf664587ae4c96b7739c22af87897b6b).
 > Reproduction commands below require their recorded producer; see
 > [evidence retention](evidence-retention.md) for archives and recovery.
+
+The current implementation uses [story collections and chat branches](versioned-memory.md).
+This document preserves the earlier experiment, not the current storage contract.
 
 ## Decision and scope
 
@@ -77,7 +80,7 @@ measure final model quality, ANN ranking quality, latency at scale or provider
 outage behavior. Its interceptor check uses a synthetic final prompt event;
 full host prompt dispatch remains covered by the existing delivery harness.
 
-The maintained live command is `npm run test:collections:live` with `ST_SOURCE`
+At the recorded revision, the live command was `npm run test:collections:live` with `ST_SOURCE`
 pointing to pinned SillyTavern `06bde939fb1e9c4c8d8641d810f0a916b5bce127` and
 `SM_ENV_FILE` pointing to credentials outside Git. At most four collections (one
 transport, three chat memories), tiny English synthetic history and no direct

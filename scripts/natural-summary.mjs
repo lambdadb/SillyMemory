@@ -36,6 +36,7 @@ export function summarizeNatural(report) {
     assert(attemptCount >= schedule.length && attemptCount <= schedule.length + (retryEnabled ? NATURAL_RETRY.maxRetriesPerRun : 0), 'Retry run bound exceeded');
     assert.equal(report.model, fixture.generation.model); assert.equal(report.hostContextTokens, fixture.settings.context);
     assert(report.initialSourceSha256 && Object.keys(report.initialSourceSha256).length >= 11, 'Missing initial source identity');
+    for (const file of ['vendor/lambdadb.js', 'package-lock.json']) assert(/^[a-f0-9]{64}$/.test(report.initialSourceSha256?.[file]), `Missing SDK source identity: ${file}`);
     for (const [file, digest] of Object.entries(report.initialSourceSha256)) assert.equal(report.sourceSha256[file], digest, 'Source changed during execution');
     assert.equal(new Set(evaluation.rows.map(row => row.chatId)).size, schedule.length, 'Chat identities must be isolated');
     for (const [i, sample] of schedule.entries()) {

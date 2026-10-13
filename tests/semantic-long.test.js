@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { loadLong, validateLong, longSchedule, semanticPromptEvidence, hostSource, buildLongPlan } from '../scripts/semantic-long.mjs';
 import { capture, documents, memoryMessages, packedMemoryMessages } from '../src/memory.js';
 const fixture=loadLong();
-async function docsFor(item){const chat=hostSource(item);chat.push({mes:item.question,name:'User',is_user:true});return (await documents(capture({chat,characterId:0,characters:[{avatar:'synthetic.png'}],getCurrentChatId:()=>item.id}),'test-owner',{recent:8,chunkChars:800})).docs;}
+async function docsFor(item){const chat=hostSource(item);chat.push({mes:item.question,name:'User',is_user:true});return (await documents(capture({chat,characterId:0,characters:[{avatar:'synthetic.png'}],chatMetadata: { sillymemory: { version: 1, id: item.id, story: item.id } }, getCurrentChatId: () => item.id}),'test-owner',{recent:8,chunkChars:800})).docs;}
 const outgoing=docs=>memoryMessages(docs).map(m=>({role:m.is_user?'user':'assistant',content:m.mes}));
 test('long fixture preserves all frozen semantic facts and creates 64 balanced isolated samples',()=>{
     validateLong(fixture);const schedule=longSchedule(fixture);assert.equal(schedule.length,64);assert.equal(new Set(schedule.map(s=>s.id)).size,64);

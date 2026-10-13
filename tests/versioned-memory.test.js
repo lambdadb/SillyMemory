@@ -33,35 +33,35 @@ test('story-scoped identities share unchanged prefix documents while branches is
     assert.equal(ea.collection, eb.collection); assert.notEqual(ea.branch, eb.branch);
     assert.notEqual(ea.collection, (await chatCollection({ ...b, memory: { story: child } }, owner)).collection);
     const f = fixture(), parent = await f.engine(a); await parent.sync(a, config);
-    assert.equal(f.writes.length, 4);
+    assert.equal(f.writes.length, 6);
     const branch = await f.engine(b); await branch.sync(b, config);
-    assert.equal(f.writes.length, 4, 'no inherited upserts');
+    assert.equal(f.writes.length, 6, 'no inherited upserts');
     const reload = await f.engine(b); await reload.sync(b, config);
-    assert.equal(f.writes.length, 4, 'reload reuses verified remote documents');
+    assert.equal(f.writes.length, 6, 'reload reuses verified remote documents');
     b.messages[0].text = 'The compass is red.'; b.messages[0].swipe++;
     await reload.sync(b, config);
-    assert.equal(f.writes.length, 5, 'only changed chunk submitted');
+    assert.equal(f.writes.length, 7, 'only changed chunk submitted');
     const recalled = await parent.retrieve(a, config, text => text.length / 10);
     assert(recalled.text.includes('compass is blue'));
     assert(!recalled.text.includes('compass is red'));
     await f.manager.delete(eb);
-    assert.equal((await f.client.listDocs(ea.collection, ea.branch)).length, 4);
+    assert.equal((await f.client.listDocs(ea.collection, ea.branch)).length, 6);
 });
-test('earlier-point fork deletes future and now-recent chunks only in the child', async () => {
+test('earlier-point fork deletes future chunks only in the child', async () => {
     const f = fixture(), a = snapshot(), b = snapshot(child); b.messages = b.messages.slice(0, 4);
     await (await f.engine(a)).sync(a, config);
     const branch = await f.engine(b); await branch.sync(b, config);
-    assert.equal(f.writes.length, 4);
-    assert.equal((await f.client.listDocs(branch.collection, branch.branch)).length, 2);
+    assert.equal(f.writes.length, 6);
+    assert.equal((await f.client.listDocs(branch.collection, branch.branch)).length, 4);
     const parent = await chatCollection(a, owner);
-    assert.equal((await f.client.listDocs(parent.collection, parent.branch)).length, 4);
+    assert.equal((await f.client.listDocs(parent.collection, parent.branch)).length, 6);
 });
 test('uncertain upsert is verified on retry instead of embedding again', async () => {
     const f = fixture(), a = snapshot(), engine = await f.engine(a), original = f.client.upsert;
     f.client.upsert = async function (...args) { await original.apply(this, args); throw new ConnectionError('Timeout'); };
     await assert.rejects(engine.sync(a, config), /Timeout/);
     f.client.upsert = original; await engine.sync(a, config);
-    assert.equal(f.writes.length, 4);
+    assert.equal(f.writes.length, 6);
 });
 test('native branch inherits the verified story, copied chat metadata starts an independent story', async () => {
     const old = { id: root, integrity: 'parent', version: 1, story: root };
@@ -150,10 +150,11 @@ test('reload and deletion-only sync retain full inherited-content checks', async
     f.client.fetchDocs = async function (name, ids, branch, consistent) { calls.push({ ids, consistent }); return fetch.call(this, name, ids, branch); };
     const fresh = new ChatCollections({ ...f.client }, owner, () => {}, () => {});
     await fresh.ensure(snapshot(child), undefined, config);
+    assert.deepEqual(calls.map(x => [x.ids.length, x.consistent]), [[6, undefined], [6, false]]);
+    a.messages = a.messages.slice(0, 4); await parent.sync(a, config); calls.length = 0;
+    const shortened = snapshot('d'.repeat(32)); shortened.messages = shortened.messages.slice(0, 4);
+    await f.manager.ensure(shortened, undefined, config);
     assert.deepEqual(calls.map(x => [x.ids.length, x.consistent]), [[4, undefined], [4, false]]);
-    await parent.sync(a, options({ recent: 3 })); calls.length = 0;
-    await f.manager.ensure(snapshot('d'.repeat(32)), undefined, options({ recent: 3 }));
-    assert.deepEqual(calls.map(x => [x.ids.length, x.consistent]), [[3, undefined], [3, false]]);
 });
 
 test('lost write acknowledgement invalidates fast commit knowledge even if retry adopts its documents', async () => {
@@ -164,7 +165,7 @@ test('lost write acknowledgement invalidates fast commit knowledge even if retry
     const calls = [], fetch = f.client.fetchDocs;
     f.client.fetchDocs = async function (name, ids, branch, consistent) { calls.push(ids.length); return fetch.call(this, name, ids, branch, consistent); };
     await f.manager.ensure(snapshot(child), undefined, config);
-    assert.deepEqual(calls, [4, 4]); assert.equal(f.writes.length, 4);
+    assert.deepEqual(calls, [6, 6]); assert.equal(f.writes.length, 6);
 });
 
 test('stale revision and cancellation cannot confirm an ordered commit witness', async () => {
@@ -194,7 +195,7 @@ test('a pending reinsert identical to old committed content is not a new-write w
     const calls = [];
     f.client.fetchDocs = async function (name, ids, branch, consistent) { calls.push(ids.length); return fetch.call(this, name, ids, branch, consistent); };
     await f.manager.ensure(snapshot(child), undefined, config);
-    assert.deepEqual(calls, [4, 4], 'use full reconciliation when an old committed value already matches');
+    assert.deepEqual(calls, [6, 6], 'use full reconciliation when an old committed value already matches');
 });
 
 

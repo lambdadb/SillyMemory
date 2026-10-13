@@ -20,9 +20,10 @@ or large-history performance. Preserve complete failed/successful run evidence.
 ## Use
 
 Use 0.3.0 with the validated SillyTavern 1.19.0 host.
-Connect, prepare memory and opt the selected story into versioned memory first.
+Connect, prepare memory and select a character chat. Story branches are automatic;
+checkpoint creation also persists a fresh chat identity before remote use.
 
-1. Click **Save / finish checkpoint** on a normal versioned chat. The extension
+1. Click **Save / finish checkpoint** on a normal story path. The extension
    disables memory and drains previous writes, saves a separate native chat with
    a unique `SillyMemory checkpoint ...` name, then prepares its memory branch.
    The original chat stays selected. Re-enable memory to continue that original
@@ -47,7 +48,7 @@ Connect, prepare memory and opt the selected story into versioned memory first.
    without another write. Successful opening clears the intent, so a later
    deliberate resume creates a new path.
 
-API keys remain session-only. The checkpoint's transcript stays on the existing
+API keys use the account-bound [saved browser connection](saved-connection.md). The checkpoint's transcript stays on the existing
 SillyTavern server as a normal JSONL chat; it is not put in browser storage or in a
 new service. Only normal older memory chunks go to LambdaDB. Back up native host
 data: a remote branch alone cannot reconstruct the complete transcript/swipes.

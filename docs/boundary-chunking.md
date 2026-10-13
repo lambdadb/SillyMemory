@@ -101,6 +101,11 @@ a harness failure, not evidence of an embedding or generation-provider outage.
 
 ## Reproduce and review
 
+This is a historical comparison. Use the [recorded producer](https://github.com/lambdadb/SillyMemory/tree/ae53978bf1d27950b12922340a6ea1ac8d1b4baf),
+not the current runtime: the old baseline engine cannot preserve current branch
+routing. Its execution adapter is archived; frozen inputs and results remain.
+
+
 ```sh
 ST_SOURCE=/path/to/pinned/SillyTavern \
 SM_ENV_FILE=/path/outside/repo/.env.local \
@@ -108,7 +113,7 @@ SM_ARTIFACT_TAG=unique-run-name \
 node scripts/generation-smoke.mjs --chunking
 ```
 
-Install this checkout as the host's extension symlink. The maintained command
+Install that recorded checkout as the host's extension symlink. The historical command
 uses the existing generation runner, six small fixtures and bounded transport
 retry policy (20 calls maximum per run). It incurs actual LambdaDB/OpenAI usage.
 Do not repeat the accepted run merely to change documentation. Use a new artifact

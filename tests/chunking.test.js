@@ -29,7 +29,7 @@ test('fallback splits long sentences at whitespace and bounds unbroken tokens', 
 });
 test('layout changes cannot reuse old IDs or inject old source coordinates', async () => {
     const message = { text: 'An ordinary sentence. '.repeat(90), index: 0, name: 'Mira', user: false, swipe: 0, eligible: true };
-    const snap = { character: 'mira.png', chat: 'chat', messages: [message, { ...message, index: 1 }, { ...message, index: 2 }] };
+    const snap = { character: 'mira.png', chat: 'chat', memory: { story: 'chat' }, messages: [message, { ...message, index: 1 }, { ...message, index: 2 }] };
     const a = await documents(snap, 'a'.repeat(32), { recent: 2, chunkChars: 800 });
     const b = await documents(snap, 'a'.repeat(32), { recent: 2, chunkChars: 400 });
     assert(a.docs.every(d => d.text === message.text.slice(d.start, d.end)));
@@ -38,21 +38,21 @@ test('layout changes cannot reuse old IDs or inject old source coordinates', asy
     assert.equal((await selectMemory([old], a.docs, 800, text => text.length / 4)).text, '');
 });
 
-test('reindex deletes old layout IDs before writes, survives reload and skips duplicate writes', async () => {
+test('resizing deletes superseded chunk IDs before writes, survives reload and skips duplicate writes', async () => {
     const { MemoryEngine, Journal } = await import('../src/memory.js');
     const owner = 'a'.repeat(32), data = new Map(), remote = new Map(), events = [];
     const storage = { getItem: key => data.get(key) ?? null, setItem: (key, value) => data.set(key, value), removeItem: key => data.delete(key) };
-    const journal = new Journal(storage, 'chunk-migration');
-    const snap = { character: 'Mira.png', chat: 'one', messages: Array.from({ length: 3 }, (_, index) => ({ text: 'An ordinary sentence. '.repeat(100), index, name: 'Mira', user: false, swipe: 0, eligible: true })) };
+    const journal = new Journal(storage, 'chunk-resizing');
+    const snap = { character: 'Mira.png', chat: 'one', memory: { story: 'one' }, messages: Array.from({ length: 3 }, (_, index) => ({ text: 'An ordinary sentence. '.repeat(100), index, name: 'Mira', user: false, swipe: 0, eligible: true })) };
     const config = { recent: 2, chunkChars: 800, budget: 800 };
     const current = await documents(snap, owner, config);
-    const old = Array.from({ length: Math.ceil(snap.messages[0].text.length / 800) }, (_, i) => `${current.scope}_${current.docs[0].revision}_${i}`);
-    for (const id of old) remote.set(id, { id, text: 'old chunk layout' }); journal.write(current.scope, old);
-    const client = { assertOwned: async () => {}, deleteIds: async (_, ids) => { events.push('delete'); ids.forEach(id => remote.delete(id)); }, upsert: async (_, docs) => { events.push('upsert'); docs.forEach(d => remote.set(d.id, d)); } };
-    const engine = new MemoryEngine({ client, owner, collection: 'test', journal });
+    const previous = await documents(snap, owner, { ...config, chunkChars: 400 });
+    for (const d of previous.docs) remote.set(d.id, d); journal.write(current.scope, previous.docs.map(d => d.id));
+    const client = { listDocs: async () => [...remote.values()], fetchDocs: async (_, ids) => ids.map(id => remote.get(id)).filter(Boolean), assertOwned: async () => {}, deleteIds: async (_, ids) => { events.push('delete'); ids.forEach(id => remote.delete(id)); }, upsert: async (_, docs) => { events.push('upsert'); docs.forEach(d => remote.set(d.id, d)); } };
+    const engine = new MemoryEngine({ client, owner, collection: 'test', branch: 'chat_test', journal });
     await engine.sync(snap, config); assert.equal(events[0], 'delete'); assert.deepEqual([...remote.keys()].sort(), current.docs.map(d => d.id).sort());
     const writes = events.length; await engine.sync(snap, config); assert.equal(events.length, writes);
     const next = { ...config, chunkChars: 400 }; const wanted = await documents(snap, owner, next);
-    const reloaded = new MemoryEngine({ client, owner, collection: 'test', journal: new Journal(storage, 'chunk-migration') });
+    const reloaded = new MemoryEngine({ client, owner, collection: 'test', branch: 'chat_test', journal: new Journal(storage, 'chunk-resizing') });
     await reloaded.sync(snap, next); assert.deepEqual([...remote.keys()].sort(), wanted.docs.map(d => d.id).sort());
 });

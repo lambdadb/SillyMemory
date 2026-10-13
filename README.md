@@ -4,15 +4,17 @@ Long-term memory for SillyTavern.
 
 **Powered by LambdaDB**
 
-An installable, experimental UI extension for character chats. SillyMemory keeps recent messages intact at its prompt hook and replaces older plain-text history with relevant source passages under a fixed memory token budget. SillyTavern may subsequently truncate the prompt to fit its context limit. It uses LambdaDB managed embeddings over direct browser HTTPS/CORS. No server plugin or LambdaDB modification is required.
+An installable, experimental UI extension for character chats. SillyMemory keeps at least five recent eligible messages (including the active input), keeping an adjacent plain-text input/reply pair together, intact at its prompt hook and replaces older plain-text history with relevant source passages under a fixed memory token budget. SillyTavern may subsequently truncate the prompt to fit its context limit. It uses LambdaDB managed embeddings over direct browser HTTPS/CORS. No server plugin or LambdaDB modification is required.
 
-**0.3.0 is experimental.** Its opt-in
-[versioned story memory](docs/versioned-memory.md) reuses committed history across
-native branches and supports [saved transcript/memory checkpoints](docs/checkpoints.md).
-See the [release notes](docs/releases/0.3.0.md) for installation evidence, opt-in,
-cleanup and rollback, and [GitHub Releases](https://github.com/lambdadb/SillyMemory/releases)
-to confirm publication. Normal updates preserve the existing per-chat layout until
-you explicitly opt a story in.
+**0.4.0 is prepared as an experimental pre-release, dated 2026-10-13.**
+[Story memory](docs/versioned-memory.md) is automatic for every enabled chat;
+[checkpoints](docs/checkpoints.md) are saved and resumed explicitly. Public
+`main` is the public installation baseline; preparation on `develop` does not
+change it. A dated entry alone is not publication. Check
+[GitHub Releases](https://github.com/lambdadb/SillyMemory/releases) for publication,
+[0.4.0 notes](docs/releases/0.4.0.md) and [installation validation](docs/releases/0.4.0-validation.md)
+for this boundary, and [the default-storage decision](docs/default-story-memory.md)
+for storage behavior.
 
 The [managed recall validation](docs/managed-packed-results.md) completed 64 real
 SillyTavern/LambdaDB/model responses. All 28 known-answer memory-on samples
@@ -59,31 +61,74 @@ The development baseline is **SillyTavern 1.19.0**, pinned to commit [`06bde939f
 ## Install
 
 1. Prepare SillyTavern **1.19.0** and Git on the host. Other host revisions are unverified.
-2. Open **Extensions → Install extension**, enter `https://github.com/lambdadb/SillyMemory`, leave the optional branch/tag field empty, and choose **Install just for me** (or **Install** for a non-admin account). Review SillyTavern's third-party-extension prompt and confirm. The default branch is `main`; `develop` and PR branches are for development. The extension has no runtime npm dependencies or build step. Do not install two copies.
+2. Open **Extensions → Install extension**, enter `https://github.com/lambdadb/SillyMemory`, leave the optional branch/tag field empty, and choose **Install just for me** (or **Install** for a non-admin account). Review SillyTavern's third-party-extension prompt and confirm. The default branch is `main`; `develop` and PR branches are for development. The extension includes its pinned browser SDK bundle; users do not run npm or a build step. Do not install two copies.
 3. Allow your SillyTavern page origin in LambdaDB CORS settings where required. Include scheme, host and port (for example, `http://localhost:8000`); `127.0.0.1` is a different origin. SillyMemory connects directly from the browser. No `enableCorsProxy` setting or SillyTavern restart is required. See [direct CORS configuration and validation](docs/direct-cors.md).
 4. Reload SillyTavern. Open **Extensions → SillyMemory**. Enter your region-specific HTTPS base origin, project name, and project API key from LambdaDB. The endpoint field accepts an origin such as `https://<regional-host>`, without `/projects/...`. The extension adds the project path. There is no hardcoded global endpoint.
-5. Click **Use key for this session**. The input is immediately cleared. The key lives only in the client instance's browser memory, never in saved settings, local/session storage, a URL, or extension logs. A reload or **Forget key** requires re-entry. Other trusted extensions and the browser runtime can still observe network requests; this is not an isolation boundary against malicious extensions.
+5. Click **Save and connect**. The input is cleared and a bounded read checks the project key before saving it. The key is stored in a dedicated browser credential record for this SillyTavern account and exact endpoint/project, separately from ordinary settings. It is restored on future visits; only the current connection key is retained for each account. Other extensions on this page can access browser storage: this is convenience storage, not an encrypted or isolated vault. **Forget key** removes the saved and runtime key and disables memory. Keys never appear in URLs, native settings or extension logs. See [reconnection and limits](docs/saved-connection.md).
 6. Click **Test synthetic upsert / query / delete**. This creates a dedicated `smtest_<random>` collection, upserts a synthetic story, queries `knn.queryText`, deletes its document, verifies it no longer appears, then deletes the owned test collection. This consumes LambdaDB resources and inference usage. The test must pass before **Prepare chat memory** becomes available.
 7. If a test fails, use **Clean up test collection**. Pending test identity is preserved across reloads so cleanup can be retried after reconnecting. A failed cleanup is not reported as successful.
-8. Click **Prepare chat memory**, select a character chat, then enable memory. By default, the extension creates a separate owned collection on first use of each chat or native branch. Optionally select **Use versioned memory for this story** before enabling; future native branches then reuse unchanged history in separate LambdaDB branches within one story collection. Default settings retain 12 recent messages and allow 800 memory tokens, including excerpt content and source labels; provider message-envelope overhead is managed by the host. Configure the bounds in the panel. Disable built-in Vector Storage chat vectorization and other prompt-rewriting memory extensions for this prototype.
+8. Click **Prepare chat memory**, select a character chat, then enable memory. Native branches automatically reuse committed history in separate LambdaDB branches within one story collection. Generation retains at least five recent eligible messages, without splitting an adjacent eligible input/reply pair, and recalled memory alongside native character/system settings. Default settings allow 4,096 memory tokens, including excerpt content, source labels and available conversation timestamps; provider message-envelope overhead is managed by the host. Configure the memory budget in the panel. Disable built-in Vector Storage chat vectorization and other prompt-rewriting memory extensions for this prototype.
 
-For an opted-in story, optionally enter a checkpoint name and use **Save / finish checkpoint** to save the current transcript and memory state. **Refresh story checkpoints** shows names, creation times and verified states, with controls to finish pending saves, resume a new path, rename or delete individual checkpoints. See [recovery, integrity and restore limits](docs/checkpoints.md).
+Optionally enter a checkpoint name and use **Save / finish checkpoint** to save the current transcript and memory state. **Refresh story checkpoints** shows names, creation times and verified states, with controls to finish pending saves, resume a new path, rename or delete individual checkpoints. See [recovery, integrity and restore limits](docs/checkpoints.md).
 
 The memory budget applies **per generated answer**, not cumulatively across a
 chat. Recent messages and character instructions are separate from that budget.
 You can set 64–4,096 memory tokens; the effective limit is also capped at one
-quarter of the context size passed by the host. The default 800 is a heuristic,
-not an established optimum. It is unrelated to the current 800-**character**
+quarter of the context size passed by the host. The default 4,096 uses the tested
+budget ceiling, not an established optimum. On smaller host contexts the
+one-quarter cap lowers the effective budget. It is unrelated to the current 800-**character**
 indexing chunks: long messages now prefer paragraph, sentence and word boundaries within that ceiling, without overlap. Exact source text is retained; a sentence longer than the ceiling can still be split. See the
 [controlled budget comparison](docs/memory-budget-calibration.md) for evidence
 and limitations, and the [design review](docs/memory-design-followups.md) for
 chunking and hybrid-search work. The [chat collection lifecycle](docs/chat-collections.md) describes the implemented isolation and cleanup behavior.
-The [controlled hybrid comparison](docs/hybrid-retrieval.md) found an answer
-regression despite broader candidate coverage, so production retrieval remains
-vector-only.
-The [budget follow-up](docs/budget-confirmation.md) distinguishes missing
-candidates, budget exclusions and wrong answers despite complete evidence;
-it does not justify changing the adjustable 800-token default.
+Each answer searches the two most recent eligible messages through its generation
+anchor together, using one role-labelled query (usually the preceding reply and
+current user input). This adds no rewriting model or extra search call. Completed
+eligible messages are indexed when they leave the recent-five window. Adjacent
+plain input/reply pairs share an upsert request while keeping separate documents;
+there is no five-message queue. A trailing user input waits for its answer.
+Normal alternating input retains two completed exchanges plus the current question
+(five messages). After the reply, retain six until the next input displaces an old
+pair. Continue/Impersonate can use six raw messages. Special or nonalternating
+source follows existing eligibility handling. Query 2 does not append all five
+retained messages. Retained positions and replacement answers are excluded from
+both search legs and local selection. See [retention and archival evidence](docs/recent-dialogue-retention.md).
+Regenerate/swipe anchor on the user question; Continue anchors on the message
+being extended; Impersonate anchors on the latest eligible character response.
+Each includes the preceding eligible message. Queries above 8 KiB fail explicitly.
+
+Replies and streaming use SillyTavern's native model/API settings. SillyMemory does
+not force JSON, decode replies, or accumulate unresolved-request state. Its system
+guidance asks a brief clarification for ambiguous requests and explains missing,
+insufficient or conflicting evidence without inventing facts. The model may fail
+to follow this guidance. Clarification conversations extending beyond the retained
+window depend on retrieval; there is no guaranteed long-span retention. Guidance
+shares the memory budget and is checked at the final Chat Completion prompt boundary,
+including empty results. See [current policy and validation limits](docs/conversation-memory-defaults.md)
+and [native reply behavior](docs/native-replies.md).
+
+Current retrieval combines managed vector and raw English text search with
+Bayesian fusion with vector k=100, followed by managed Typesafe Jev reranking
+over at most 100 candidates and a final return limit of 50 chunks. These are
+search candidates, not a promise that all 50 fit the memory budget. Both signals
+use the
+same owner/scope filter and explicit chat branch. Reranking failure or unconfirmed
+rerank metadata rejects injection; there is no silent fallback. The user supplies
+only a LambdaDB project key. See the [default adoption and validation limits](docs/profile-50-host-validation.md#product-default-adoption).
+Managed embedding and reranking may incur additional
+LambdaDB inference usage. See [the default decision and bounded English evaluation](docs/conversation-memory-defaults.md).
+Selected chunks from the same message and revision share one source/time header.
+Touching text and matching overlaps are joined from the returned chunks; missing
+intervals remain explicitly marked. Existing selected evidence and repeated-text
+citations are preserved, and saved space admits additional retrieved passages in
+rank order within the same budget. This adds no model or retrieval calls. The
+formatter does not need a complete local message; the extension still validates
+retrieval against the current chat before injecting it. See the
+[source assembly implementation and validation](docs/source-assembly.md).
+
+The earlier [hybrid comparison](docs/hybrid-retrieval.md) and
+[budget follow-up](docs/budget-confirmation.md) describe historical configurations;
+their adverse results remain evidence rather than current-default claims.
 
 For local development, symlink the checkout into
 `SillyTavern/public/scripts/extensions/third-party/sillymemory`; do not also install
@@ -92,7 +137,7 @@ Git-based update flow.
 
 ## Version and updates
 
-**0.3.0 is an experimental pre-release.** See [CHANGELOG.md](CHANGELOG.md) for changes and
+**0.4.0 is an experimental release boundary.** See [CHANGELOG.md](CHANGELOG.md) for changes and
 [GitHub Releases](https://github.com/lambdadb/SillyMemory/releases) for published
 versions. A dated changelog entry can precede publication. The `main` branch is
 the public installation baseline; `develop` contains ongoing work. The version
@@ -101,46 +146,38 @@ shown in the extension manager comes from `manifest.json`.
 Open **Extensions → Manage extensions** and use SillyMemory's update button,
 then reload. It pulls your installed branch, normally `main`; it does not select
 the newest GitHub Release/tag. Automatic updates are currently disabled. After
-reload, re-enter the LambdaDB key and re-enable memory. Budget, recent-message
-settings and installation ownership are retained. Normal updates do not require
+reload, the saved LambdaDB key is verified and the previous memory-enabled state is restored. If memory was disabled, it stays disabled. Budget, delivery preferences and installation ownership are retained. Normal updates do not require
 deleting the owned memory collection or reinstalling the extension.
 
-Updating from 0.2.0 preserves per-chat memory. Explicit versioned-story opt-in
-indexes older local history once into a new family collection and retains the old
-memory for all-owned cleanup. Initial opt-in consumes managed embedding/storage
-usage; future unchanged native branches and checkpoints reuse committed documents.
-Review the [0.3.0 update and rollback notes](docs/releases/0.3.0.md), especially
-before downgrading: 0.2.0 cannot manage the new story/checkpoint layout. For older
-0.1.0 installations, the earlier [per-chat migration notes](docs/releases/0.2.0.md)
-also apply.
-
-For rollback and maintainer publication steps, see [RELEASING.md](RELEASING.md).
-Use only a tag listed in the published releases for rollback. Disable memory
-first if an update causes a problem; code rollback does not restore chat edits
-or undo remote data changes.
+This release boundary uses story collections and chat branches by
+default. There is no legacy storage mode or data migration. Checkpoints remain
+explicit: save a checkpoint to preserve a resumable transcript. See the
+[storage decision and validation](docs/default-story-memory.md). Historical
+release notes describe their original versions, not the current contract.
 
 ## Use and behavior
 
-- The status panel shows preparation, queued writes, ownership checks, outdated-chunk deletion, upload, search, and token budgeting. Upload totals count current older chunks; confirmed chunks include this session's earlier successful writes. Counts advance only after a service response, not merely after sending a request. They do not measure embedding/index visibility or bytes transferred. A failed operation keeps the last confirmed count and shows retry guidance.
-- Send messages normally. Message generation, edits, selected swipes, deletion, chat changes, and reload/re-enable trigger reconciliation. Click **Sync this chat** to retry after a network failure. For authentication errors, re-enter the key using **Use key for this session** first; for rate limits or timeouts, wait before retrying. Successful batches are skipped within the session. A lost response can require an idempotent re-upsert, and reload conservatively rechecks current records after key re-entry and re-enabling memory. Progress is not saved across reloads.
+- The status panel shows preparation, queued writes, ownership checks, outdated-chunk deletion, upload, search, and token budgeting. Upload totals count archived conversation chunks; confirmed chunks include this session's earlier successful writes. Counts advance only after a service response, not merely after sending a request. They do not measure embedding/index visibility or bytes transferred. A failed operation keeps the last confirmed count and shows retry guidance.
+- Send messages normally. Message generation, edits, selected swipes, deletion, chat changes, and reload/re-enable trigger reconciliation. Click **Sync this chat** to retry after a network failure. For authentication errors, replace the key using **Save and connect** first; for rate limits or timeouts, wait before retrying. Successful batches are skipped within the session. A lost response can require an idempotent re-upsert, and reload conservatively rechecks current records after verified reconnection. Progress is not saved across reloads.
 - Long messages use boundary-aware chunks with exact source offsets. The first sync after this update deletes journal-tracked old-layout IDs and reindexes the current chat; this incurs managed embedding usage. See [the controlled comparison and limits](docs/boundary-chunking.md).
-- Only older plain-text messages are embedded. Recent messages stay in the generation array. Files, media, and tool messages are not indexed; group chats and chats with system tool invocations are bypassed.
-- By default, each character chat and native branch uses its own collection. Installation owner, character avatar and a saved chat-metadata ID define its scope. Renaming a chat preserves memory; branching or opening a duplicate rotates the ID and reindexes that chat’s current source in a separate collection. Opt-in versioned stories instead share a family collection with isolated writable branches; see [versioning and migration](docs/versioned-memory.md). Every query still applies an owner/scope filter and validates results against the current local chat.
-- Before generation, the extension synchronizes current source text and retrieves matching chunks with `knn.queryText`: the latest user message and the preceding nonempty user message are searched independently. A first user turn has only one query; generic assistant acknowledgments are not concatenated into the topic query. Explicit **Continue** generation instead anchors on the latest message being extended; regenerate and swipe still use the user question. It interleaves the two result lists, validates every result against current local text and IDs, and token-counts the complete injected string using the host tokenizer. Macro braces and legacy macro markers are shown with fullwidth delimiters so recalled dialogue stays literal during host prompt assembly.
-- If at least one valid passage fits, older eligible full messages are removed from the ephemeral prompt array and the selected passages are injected. Source chat messages on disk are not modified. If nothing fits or an operation fails, the original prompt remains. A mid-request chat change aborts that generation; generate again in the new chat.
+- Completed eligible plain-text messages outside the recent-five window are embedded. At least five recent eligible messages stay full alongside selected memory. Files, media, and tool messages are not indexed; group chats and chats with system tool invocations are bypassed.
+- Each story uses one owned collection and each chat path uses an isolated writable branch. Saved native metadata defines the story and chat IDs. Renaming preserves them; verified native forks inherit committed memory without re-embedding. Independent copies receive a new story. Every query applies an owner/story filter and validates results against the current local chat. See [the storage model](docs/versioned-memory.md).
+- Before generation, the extension synchronizes current source text and retrieves matching past chunks with one two-message query. Vector and English lexical legs share owner, story scope and message-index filters; all retained recent turns and replacement answers are excluded before ranking. Continue anchors on the eligible message being extended, Impersonate on the latest eligible response; regenerate and swipe use the user question. Every result is validated against current local text, IDs and the active-input boundary. The host tokenizer counts excerpts and guidance together. Macro braces and legacy macro markers are shown with fullwidth delimiters so recalled dialogue stays literal during host prompt assembly.
+- After successful retrieval, past eligible full messages are removed from the ephemeral prompt array and selected passages are injected. Zero hits or nothing fitting the budget still retains at least five recent eligible messages, memory guidance, alongside native character/system settings. Source chat messages on disk are not modified. Preparation failures stop generation explicitly; disable memory to use native full history. A mid-request chat change aborts that generation; generate again in the new chat.
 - Identical selected passages from the same speaker and role share one full body with every selected source position listed. If this saves tokens, additional distinct retrieved passages may fit; no already-selected source is dropped. Repeated groups appear at their latest selected occurrence. The inspection panel exposes these labels.
-- **Memory in the last prompt** separates prepared excerpts from those verified in the final host prompt. **Stop on missing context** is enabled by default: if prepared memory or verifiable recent messages are missing or changed, generation is canceled before the completion request. Increase context, reduce reserved output or recent-message count, then generate again; the submitted user message remains in the chat. Turn the option off to proceed with a visible warning. There is no automatic retry. See [behavior, limits and validation](docs/prompt-delivery.md).
-- Verification uses the pinned host's Chat Completion prompt boundary, not provider receipt or billed tokens. Name macros are supported; arbitrary macros and the final continuation prefix are explicitly unverified rather than falsely counted as missing. Other completion formats report verification unavailable. Later provider transformations and other prompt-rewriting extensions are outside this check. The default 800-token allocation and one-quarter cap remain heuristics, not exact remaining capacity; the [capacity audit](docs/prompt-capacity-results.md) records why.
-- **Disable** stops synchronization/retrieval and clears the injection. It retains remote data. **Forget key** also disables memory. Reload starts disabled and requires key re-entry.
-- **Delete this chat’s remote memory** removes only the current chat’s owned collection, or its writable branch for versioned stories; parent and sibling branches remain. **Delete all owned remote memory** discovers this installation’s chat collections and any previous shared memory, including collections absent from browser bookkeeping. Both disable memory, drain outstanding writes and verify ownership tags. Collection deletion waits for a 404; branch deletion checks that the branch is absent from the list. Local chats are preserved. This is not proof of physical erasure from provider backups.
+- Every indexed chunk stores available UTC **host message timestamps** from current `send_date` metadata, separately from embedding text. Selection budgets the complete excerpt, its timestamp and memory guidance together. These are explicitly not story/event dates; unsupported or missing timestamps remain unknown. Time edits update document revisions and can trigger embedding again. See [provenance, budget and validation](docs/conversation-time.md).
+- **Memory in the last prompt** separates prepared excerpts from those verified in the final host prompt. **Stop on missing context** is enabled by default: if prepared memory, memory guidance or any verifiable retained recent turn is missing or changed, generation is canceled before the completion request. Increase context, reduce reserved output, then generate again; the submitted user message remains in the chat. Turn the option off to proceed with a visible warning. There is no automatic retry. See [behavior, limits and validation](docs/prompt-delivery.md).
+- Verification uses the pinned host's Chat Completion prompt boundary, not provider receipt or billed tokens. Name macros are supported; arbitrary macros and the final continuation prefix are explicitly unverified rather than falsely counted as missing. Other completion formats report verification unavailable. Later provider transformations and other prompt-rewriting extensions are outside this check. The default 4,096-token allocation and one-quarter cap remain heuristics, not exact remaining capacity; the [capacity audit](docs/prompt-capacity-results.md) records why.
+- **Disable** stops synchronization/retrieval and clears the injection. It retains remote data. **Forget key** also removes the saved credential and disables memory. Reload verifies the saved key before restoring the previous enabled/disabled state. Rejected keys are removed and memory remains disabled; network failures retain the saved key for a later connection attempt.
+- **Delete this chat’s remote memory** removes its writable branch; parent and sibling branches remain. **Delete all owned remote memory** discovers and deletes this installation’s story collections, including those absent from browser bookkeeping. Both drain pending writes and verify ownership and API absence. Local chats remain; this does not prove physical erasure from provider backups.
 
 ## Data, usage, and cleanup
 
-A LambdaDB project/API key with collection create/read/delete, document write/query and (for versioned stories) branch list/create/delete access is required. Source text, speaker labels, message/chunk positions, hashed scope/revision identities, and query text go directly from your browser to LambdaDB. LambdaDB sends embedding inputs to its managed embedding provider (currently configured here as OpenAI `text-embedding-3-small`). Each retrieval submits up to two distinct queries concurrently. Managed embeddings incur inference usage; storage and retrieval have service costs. See [managed embeddings](https://docs.lambdadb.ai/guides/collections/managed-embeddings) and [LambdaDB costs](https://docs.lambdadb.ai/guides/costs/understanding-costs).
+A LambdaDB project/API key with collection create/read/delete, document write/query and branch list/create/delete access is required. Source text, speaker labels, message/chunk positions, hashed scope/revision identities, and query text go directly from your browser to LambdaDB. LambdaDB sends embedding inputs to its managed embedding provider (currently configured here as OpenAI `text-embedding-3-small`). Each retrieval submits one two-message query. Managed embeddings incur inference usage; storage and retrieval have service costs. See [managed embeddings](https://docs.lambdadb.ai/guides/collections/managed-embeddings) and [LambdaDB costs](https://docs.lambdadb.ai/guides/costs/understanding-costs).
 
 Ordinary document deletion removes current retrievable records; snapshot retention and provider backup policies are separate. The extension requests one-day historical snapshot retention. Explicitly saved checkpoints retain their own unchanged branch for future forks; see [checkpoint usage and cleanup](docs/checkpoints.md). Removing the extension or deleting a native SillyTavern chat does **not** delete its remote collection automatically. Use current-chat deletion before removing the local chat, or all-owned cleanup afterward. Renaming preserves the same memory. Delete all owned memory and any pending test collection before uninstalling or changing connection settings.
 
-Browser storage loss does not delete chat metadata or account ownership stored by SillyTavern. Re-enter the endpoint/project/key and prepare memory to reconnect the same saved chat; all-owned cleanup can discover tagged `smstory_*` and `smchat_*` collections and earlier `sillymemory_*` collections. If the account owner metadata is lost too, inspect ownership tags manually; the extension must not adopt another owner’s data. Pending `smtest_*` collections have a separate cleanup button. Simultaneous writers on different devices are unsupported; browser locks do not coordinate them. See [lifecycle and recovery limits](docs/chat-collections.md).
+Browser storage loss does not delete chat metadata or account ownership stored by SillyTavern. If the browser credential record is gone, enter the endpoint/project/key and reconnect the same saved chat; all-owned cleanup can discover tagged `smstory_*` collections. If the account owner metadata is lost too, inspect ownership tags manually; the extension must not adopt another owner’s data. Pending `smtest_*` collections have a separate cleanup button. Simultaneous writers on different devices are unsupported; browser locks do not coordinate them. See [lifecycle and recovery limits](docs/versioned-memory.md).
 
 ## Development and verification
 
@@ -200,6 +237,8 @@ does not use LambdaDB or model credentials.
 Browser/emulator checks and paid live integration runs remain separate commands
 below; a green CI result alone does not establish live integration success.
 
+See the [SDK migration and next experiment design](docs/sdk-migration.md) for the official client integration and validation boundary.
+
 See the [final local review](docs/review.md) for the commit scope, review fixes,
 verification boundaries, and file inventory. Raw `artifacts/` reports are ignored
 local evidence and are not included in a fresh clone; checked-in documents retain
@@ -208,6 +247,7 @@ new reports. Historical summaries require their exact recorded source versions.
 
 ```sh
 npm ci
+npm run check:sdk
 npm test
 npm run check
 npm run check:release
@@ -227,11 +267,18 @@ To explicitly run the live test, put `LAMBDADB_BASE_URL`, `LAMBDADB_PROJECT_NAME
 ST_SOURCE=/absolute/path/to/pinned/SillyTavern npm run test:live
 ```
 
-This starts an isolated host on localhost port 18127 (`ST_LIVE_PORT` overrides it), creates dedicated `smtest_*` and `smlive_*` collections, and uses only synthetic text. It incurs real service usage. The harness reads the credential file into process memory and passes the key to the browser client without changing normal extension key storage. It disables host log output and records only check names/status codes, not credentials or response bodies. Cleanup checks ownership and confirms collection disappearance. If cleanup fails, `artifacts/live-pending.json` preserves the exact non-secret resource identities; resolve cleanup before another run. Results are in `artifacts/live-smoke.json`. This live harness tests the shipped client and memory engine in a real browser; the complete settings-button/LLM flow is a separate test boundary.
+This exercises the real settings UI, native branches, reload, queryText and
+owned-data cleanup against LambdaDB using only synthetic English text. It creates
+at most four small owned collections and calls no generation model. Set
+`SM_ENV_FILE` to use credentials outside this worktree. Failed cleanup leaves
+`artifacts/<tag>/chat-collections-live-pending.json`; preserve it until resolved.
+Use `SM_ARTIFACT_TAG` for distinct runs. `npm run test:live:faults` includes
+checkpoint recovery after accepted responses are lost; `--checkpoint-manager`
+on `scripts/chat-collections-live.mjs` additionally covers the manager controls.
+See [current validation and limits](docs/default-story-memory.md).
 
-Historical proxy-path results below retain their original test boundary; see [direct-CORS acceptance](docs/direct-cors.md) for current transport validation.
-
-Run `npm run test:live:faults` to additionally discard an acknowledged real upsert response and delay a real query response across an edit. The browser test wrapper injects these failures after the real service/proxy operation; it does not provoke a service outage. The latest run passed 15 checks, including durable-journal recovery with a fresh engine, rejection of stale live results, and owned collection cleanup. It calls live LambdaDB but no generation model. Evidence and any failed-cleanup record use `artifacts/live-faults.json` and `artifacts/live-faults-pending.json`. The emulator fault test exercises actual page reload; this live response-loss case recreates the engine while retaining browser storage. See the [validation record](docs/validation.md) for boundaries and the host save/reload caveat. Fault commands overwrite their default reports; use `SM_ARTIFACT_TAG` to preserve a named run.
+Historical proxy-path and retrieval-policy runs require their archived producer
+revision. They are not compatibility requirements for the current runtime.
 
 To exercise the complete settings, chat, and generation path with live LambdaDB:
 
@@ -239,9 +286,9 @@ To exercise the complete settings, chat, and generation path with live LambdaDB:
 ST_SOURCE=/absolute/path/to/pinned/SillyTavern npm run test:generation
 ```
 
-This uses the same LambdaDB credentials, a fresh host on localhost port 18128 (`ST_GENERATION_PORT` overrides it), and a deterministic local response fixture. It runs nine generations, including streaming, regenerate, and swipe; records the final outgoing messages; and deletes the owned collections through the extension's UI. The fixture is not an LLM and cannot measure answer quality. Review `artifacts/generation-fixture-model.json`. A failed cleanup leaves `artifacts/generation-fixture-model-pending.json`; resolve those resources before retrying.
+This uses the same LambdaDB credentials, a fresh host on localhost port 18128 (`ST_GENERATION_PORT` overrides it), and a deterministic local response fixture. It exercises generation, streaming, regenerate, swipe and an explicit retrieval-failure abort; records the final outgoing messages; and deletes the owned collections through the extension's UI. The fixture is not an LLM and cannot measure answer quality. Review `artifacts/generation-fixture-model.json`. A failed cleanup leaves `artifacts/generation-fixture-model-pending.json`; resolve those resources before retrying.
 
-For an actual generation model, additionally put `LLM_BASE_URL`, `LLM_MODEL`, and `LLM_API_KEY` in `.env.local`, then run `npm run test:generation:live`. The endpoint must support compatible `/chat/completions` requests and SSE streaming; include the API prefix in the base URL (for example, `https://<provider>/v1`). This sends the nine synthetic test prompts to that provider and incurs model usage. A loopback bridge holds the provider key in process memory; the host only receives the bridge URL. The bridge is test infrastructure, not part of the extension. Logs are suppressed, and the report contains synthetic prompts, provider replies/usage, and request options with known credentials redacted. Live-mode output and pending resource records use `generation-live-model` filenames. Each live response must complete normally, match the host-saved message, and answer the narrow synthetic fact correctly; this is not a broad quality benchmark. Live runs space actual upstream generation sends (including retries) by at least 15 seconds and use a 256-token output limit. Optional `LLM_REASONING_EFFORT` configures the host request (for example, `low` for the tested Gemini model).
+For an actual generation model, additionally put `LLM_BASE_URL`, `LLM_MODEL`, and `LLM_API_KEY` in `.env.local`, then run `npm run test:generation:live`. The endpoint must support compatible `/chat/completions` requests and SSE streaming; include the API prefix in the base URL (for example, `https://<provider>/v1`). This sends the successful synthetic generation requests to that provider and incurs model usage. A loopback bridge holds the provider key in process memory; the host only receives the bridge URL. The bridge is test infrastructure, not part of the extension. Logs are suppressed, and the report contains synthetic prompts, provider replies/usage, and request options with known credentials redacted. Live-mode output and pending resource records use `generation-live-model` filenames. Each dispatched live response must complete normally, match the host-saved message, and answer the narrow synthetic fact correctly; this is not a broad quality benchmark. Live runs space actual upstream generation sends (including retries) by at least 15 seconds and use a 256-token output limit. Optional `LLM_REASONING_EFFORT` configures the host request (for example, `low` for the tested Gemini model).
 
 For OpenAI, use the following values with your own API key:
 
@@ -256,30 +303,40 @@ This fixes the [GPT-4.1 mini snapshot](https://developers.openai.com/api/docs/mo
 
 The earlier Gemini run used `LLM_MODEL=gemini-3.8-flash` and `LLM_REASONING_EFFORT=low`. For Gemini, use `LLM_BASE_URL=https://generativelanguage.googleapis.com/v1beta/openai`. The harness configures SillyTavern's Custom API body exclusions for `frequency_penalty`, `logprobs`, and `top_logprobs`: the live Gemini endpoint rejected the first two fields from the host's generic request. The loopback bridge forwards the resulting request without altering messages. Check [Google's compatibility guide](https://ai.google.dev/gemini-api/docs/openai) and your project's [model availability and free quota](https://ai.google.dev/gemini-api/docs/pricing); a successful model listing alone does not establish generation access.
 
-Run the longer Korean comparison with `SM_ARTIFACT_TAG=openai-gpt-4.1-mini npm run test:korean:live` for the OpenAI settings above. Optional `SM_MODEL` overrides the model for the run without editing `.env.local`; select a model from the configured provider. The fixed protocol plans 16 model requests; it restores the same source before each, checks complete baseline history and memory bounds, grades factual replies, and measures provider prompt tokens plus warm generation duration. See the [Korean protocol, results, and continuation instructions](docs/korean-evaluation.md). Completed samples are preserved when quota or availability blocks later requests. The summarizer rejects cross-model pooling and duplicates; an explicitly partial summary compares only completed question pairs. Its `--output <path>` option keeps provider summaries separate.
+### Historical answer-quality protocols
 
-Run the fixed three-mode comparison with `SM_ARTIFACT_TAG=openai-gpt-4.1-mini npm run test:comparison:live`. It compares memory off, SillyMemory, and native Vector Storage across three Korean histories (120–240 messages), nine questions and two repetitions: 54 live generations plus embedding calls. The native OpenAI-compatible embedding adapter uses the same private loopback test bridge; no local model or server plugin is installed. Preserve each run with a distinct artifact tag. Review the [protocol and results](docs/comparison-evaluation.md) before running; native Vector Storage retains other old history, so it is not an equal-token-budget comparison.
+The Korean, three-mode comparison, held-out, challenge and natural-dialogue npm
+commands are retired from the current package. Their fixed recent-message
+protocols require the exact producing checkout recorded in the linked documents
+and [evidence index](docs/evidence-retention.md). Do not run those old modes against
+the current active-input policy or label their archived results as current scores.
+The low-level generation runner rejects these modes before credentials or provider
+setup. Original scripts, protocols, reports and scoring remain in recorded source
+revisions and verified archives.
 
-Aggregate completed, nonoverlapping runs with `node scripts/comparison-summary.mjs artifacts/generation-comparison-openai-gpt-4.1-mini.json --output artifacts/comparison-summary-openai-gpt-4.1-mini.json`. The summarizer requires all 54 fixed samples, matching evaluated source/configuration, actual provider usage and verified remote/native cleanup; it rejects duplicate or incomplete evidence. Generation-only cost estimates exclude embeddings and LambdaDB charges.
+The [Korean protocol](docs/korean-evaluation.md) planned 16 model requests, grading
+factual replies and measuring provider input tokens and warm generation duration.
+The [three-mode comparison](docs/comparison-evaluation.md) used three Korean
+histories of 120–240 messages, nine questions and two repetitions: 54 generations
+plus embeddings. Native Vector Storage retained other old history, so this was not
+an equal-token-budget comparison. Its historical summarizer requires all 54 samples,
+matching source/configuration, provider usage and verified cleanup; generation-only
+cost excludes embeddings and LambdaDB charges.
 
-For the search-only diagnosis, run `SM_ARTIFACT_TAG=diagnosis-next node scripts/retrieval-diagnostic.mjs`. It compares four query constructions, actual managed `queryText` results, and an identical-vector server/exhaustive control without any text-generation calls. It still incurs LambdaDB embedding and data usage. The completed experiment reproduced all six old-fact misses in exhaustive search with the current query; the latest user message alone retrieved and selected all six. This is a retrieval result, not a new answer-quality score. See the [diagnostic and committed-index limitation](docs/retrieval-diagnostic.md).
+The [retrieval diagnostic](docs/retrieval-diagnostic.md) compared four query
+constructions and identical-vector server/exhaustive controls. It reproduced all
+six old-fact misses with the old query; latest-user-only retrieval selected all
+six. This is historical retrieval evidence, not a current answer-quality score.
+Reproduction requires its recorded producer and incurs embedding/data usage.
 
 The live harnesses require Node.js 20.12+ for `util.parseEnv`; recorded runs use Node.js 24.15.0.
 
-For the fixed ambiguous-reference, continuation and context-overflow evaluation,
-see [the protocol and results](docs/recall-challenges.md). Run
-`npm run test:challenges:live` only with an authorized synthetic-data scope and
-the configured provider credentials; it makes 12 scheduled model requests plus
-managed embedding operations. A separate existing credential file can be read
-by the generation harness with `SM_ENV_FILE=/absolute/path/to/.env.local` without
-copying it into the worktree.
-
-For 12 new counterbalanced cases (24 real model answers), use
-`npm run test:heldout:live`; aggregate with
-`node scripts/challenge-summary.mjs --heldout <reports...> --output <summary.json>`.
-`npm run test:recovery` adds two real host SIGKILL/restarts and 24 repeated
-edit/swipe/delete cycles to the emulator fault suite. See the
-[held-out and recovery protocol](docs/heldout-recovery.md) for limits and evidence.
+The historical [challenge protocol](docs/recall-challenges.md) covers ambiguous
+references, continuation and overflow with 12 scheduled model requests. The
+[held-out protocol](docs/heldout-recovery.md) added 12 counterbalanced cases and 24
+answers. Their execution commands require their producing checkout. Current
+`npm run test:recovery` remains the emulator-only lifecycle check with two host
+SIGKILL/restarts and 24 repeated edit/swipe/delete cycles.
 
 The natural-dialogue runner uses the frozen 16-case English/Korean corpus for
 64 real memory-off/on responses. An opt-in [transport amendment](docs/natural-dialogue-retry.md)
@@ -296,7 +353,7 @@ it provides no automatic grades and sends no data over the network.
 
 The [prior-user query comparison and follow-up](docs/context-selection-results.md)
 records the v3 selection fix, its fixed-budget evidence and remaining limits.
-Run `SM_ARTIFACT_TAG=next-selection node scripts/live-smoke.mjs --selection` for
+At the recorded pre-default revision, run `SM_ARTIFACT_TAG=next-selection node scripts/live-smoke.mjs --selection` for
 the search-only comparison; the live runner also accepts `SM_ENV_FILE`.
 
 At the recorded v3 revision, run `SM_ARTIFACT_TAG=next-assistant-topic node scripts/live-smoke.mjs --assistant-topic`
@@ -304,11 +361,11 @@ for the [assistant-topic query comparison](docs/assistant-topic-evaluation.md).
 It shares each distinct query response across the frozen policies and makes no
 generation calls; its integrity pass is separate from candidate qualification.
 
-The [assistant fallback protocol](docs/assistant-fallback-evaluation.md) runs with
+At its recorded revision, the [assistant fallback protocol](docs/assistant-fallback-evaluation.md) runs with
 `SM_ARTIFACT_TAG=next-fallback node scripts/live-smoke.mjs --assistant-fallback`.
 See its [results and generation commands](docs/assistant-fallback-results.md).
 
-The [context-turn protocol](docs/context-turn-evaluation.md) runs with
+At its recorded revision, the [context-turn protocol](docs/context-turn-evaluation.md) runs with
 `SM_ARTIFACT_TAG=next-turn node scripts/live-smoke.mjs --context-turn`.
 See its [results and amended generation commands](docs/context-turn-results.md).
 The subsequent [fixed-budget passage-selection replay](docs/budget-selection-results.md)
@@ -328,8 +385,8 @@ the quotation gap but lose other required sources, so neither is adopted.
 
 The [context candidate protocol](docs/context-candidate-evaluation.md) compares
 the current labelled selector, label removal, and label removal plus adjacent-turn
-retention under 400 host tokens. Freeze a plan with fixture `actor-candidate-v1`
-and pass it to the same natural runner. This is a 48-answer controlled prompt
+retention under 400 host tokens. Its recorded producer freezes fixture `actor-candidate-v1`
+and runs the historical natural adapter; use that checkout for reproduction. This is a 48-answer controlled prompt
 experiment with frozen source indices and generation-time retrieval disabled;
 the candidate code is test-only and does not change installed extension behavior.
 
@@ -337,9 +394,9 @@ See [architecture](docs/architecture.md), [pinned contracts](docs/contracts.md),
 
 ## Deferred
 
-Persistent keys, versioned savepoints/rollback, Data Bank, World Info, multi-user administration, and external result downloads are outside this MVP. The synthetic built-in-memory comparison is documented separately; no general recall-quality, latency, or total operating-cost improvement is claimed. Stable release readiness remains under evaluation.
+Automatic checkpoints, in-place transcript rollback, Data Bank, World Info, multi-user administration, and external result downloads are outside this MVP. The synthetic built-in-memory comparison is documented separately; no general recall-quality, latency, or total operating-cost improvement is claimed. Stable release readiness remains under evaluation.
 
-The [latest-user/context query policy](docs/query-policy.md) documents the retrieval change, its regression and held-out checks, and commands for reproducing them. The original comparison and vector diagnostic remain historical evidence from their recorded source hashes.
+The [historical latest-user/context query policy](docs/query-policy.md) documents the earlier retrieval change, its regression and held-out checks. Reproduction requires its recorded producer; it is not the current policy. The original comparison and vector diagnostic remain historical evidence from their recorded source hashes.
 
 ## License
 
@@ -352,4 +409,4 @@ the complete terms. SillyMemory uses the same license family as its
 [SillyTavern host](https://github.com/SillyTavern/SillyTavern/blob/06bde939fb1e9c4c8d8641d810f0a916b5bce127/LICENSE).
 
 This repository contains the extension's source and development tools; the
-SillyTavern host and development dependencies retain their own licenses.
+SillyTavern host and development dependencies retain their own licenses. The bundled LambdaDB SDK and Zod retain their licenses in [vendor/LICENSES.txt](vendor/LICENSES.txt).
