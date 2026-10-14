@@ -254,8 +254,8 @@ try {
     });
     const result = await prompt();
     const latestSearch = calls.findLast(call => call.body?.query?.bayesian)?.body;
-    check('one query=2 request shares the complete preceding reply and question with both search legs and reranking',
-        latestSearch?.query.bayesian[0].knn.queryText === 'Assistant: Synthetic passage 5: the blue compass is beneath the cedar tree.\n\nUser: Synthetic passage 6: the blue compass is beneath the cedar tree.'
+    check('one current-message request shares the active input with both search legs and reranking',
+        latestSearch?.query.bayesian[0].knn.queryText === 'User: Synthetic passage 6: the blue compass is beneath the cedar tree.'
         && latestSearch.rerank.queryText === latestSearch.query.bayesian[0].knn.queryText);
     const archive = [...collections.values()][0].branches.get(await page.evaluate(() => `chat_${SillyTavern.getContext().chatMetadata.sillymemory.id}`));
     check('ordinary native synchronization archives one complete pair outside the retained recent exchanges',

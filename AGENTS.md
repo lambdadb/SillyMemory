@@ -43,14 +43,15 @@ Read [CONTRIBUTING.md](CONTRIBUTING.md) before changing this repository.
   use against that measured reference. Retain operational safety, provider context
   limits, source validity, isolation, and authorized total experiment bounds.
 - The product default archives completed eligible messages only after they leave
-  the recent-five window. Ordinarily search the two most recent eligible messages
-  through the generation anchor, in one role-labelled request. Always retain at
+  the recent-five window. Ordinarily search only the eligible generation anchor
+  in one role-labelled request. Recent dialogue stays in generation, not the
+  retrieval query. Always retain at
   least five recent eligible messages including the active input, alongside selected
   memory and native system/character settings. Exclude full retained turns from
   memory selection. Align the recent boundary to an adjacent eligible
   user/assistant pair: normal user input retains five, a completed reply can retain
   six. Upload the whole displaced pair together using existing 50-document batches;
-  do not introduce a five-message write queue. Query 2 and checkpoint semantics
+  do not introduce a five-message write queue. Query 1 and checkpoint semantics
   remain independent of this alignment. Checkpoints explicitly synchronize the
   full completed transcript.
 - Preserve native model/API response formats and streaming. Do not impose a reply

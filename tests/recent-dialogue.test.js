@@ -13,7 +13,7 @@ test('recent retention counts the active input and never includes replacement re
     for (const anchor of [-1, 9, 1.5]) assert.throws(() => retentionStart(messages, anchor), /boundary/);
 });
 
-test('query=2 preserves roles, skips special source and never includes a replacement answer', () => {
+test('current-message search preserves roles, skips special source and excludes replacement answers', () => {
     const source = [
         { user: true, text: 'Older question' },
         { user: false, text: 'The playlist is called Project P.' },
@@ -22,14 +22,14 @@ test('query=2 preserves roles, skips special source and never includes a replace
         { user: true, text: 'What was its original name?' },
         { user: false, text: 'Superseded replacement answer' },
     ];
-    const expected = 'Assistant: The playlist is called Project P.\n\nUser: What was its original name?';
+    const expected = 'User: What was its original name?';
     for (const type of ['normal', 'regenerate', 'swipe']) {
         assert.deepEqual(retrievalQueries({ messages: source }, type), [expected]);
     }
     assert.deepEqual(retrievalQueries({ messages: source }, 'continue'), [
-        'User: What was its original name?\n\nAssistant: Superseded replacement answer',
+        'Assistant: Superseded replacement answer',
     ]);
-
+    assert.deepEqual(retrievalQueries({ messages: source }, 'impersonate'), ['Assistant: Superseded replacement answer']);
 });
 
 test('ordinary storage contains only completed messages outside the five-message window; checkpoints keep all', async () => {
@@ -85,7 +85,7 @@ test('ineligible and blank active inputs retain the preceding answer without cha
         assert.equal(retentionAnchor(source, 'regenerate'), 8);
         assert.equal(retentionAnchor(source, 'swipe'), 8);
         assert.equal(retentionStart(source, 8), 3);
-        assert.deepEqual(retrievalQueries({ messages: source }), ['Assistant: Message 5\n\nUser: Message 6']);
+        assert.deepEqual(retrievalQueries({ messages: source }), ['User: Message 6']);
         assert.equal(retentionAnchor(source, 'continue'), 9);
         assert.equal(retentionAnchor(source, 'impersonate'), 9);
     }

@@ -41,12 +41,12 @@ export async function runNativeReplyScenarios({ page, field, waitStatus, check, 
     check('natural memory guidance reaches native generation', requests.at(-1).messages.some(m => m.role === 'system' && m.content.includes('ask one brief clarifying question') && m.content.includes('state what can and cannot be established')));
     await generate('My Friday visit.', 'The city museum.', { stream: true });
     const query = calls.findLast(c => c.body?.query?.bayesian)?.body.query.bayesian[0].knn.queryText;
-    check('follow-up search uses only the previous natural reply and latest input', query === 'Assistant: Which visit do you mean?\n\nUser: My Friday visit.');
+    check('follow-up search uses only the latest input', query === 'User: My Friday visit.');
     const observations = await page.evaluate(() => nativeStreamObservations);
     check('stream text is visible while generation is active without a hidden wrapper', observations.some(x => x.generating && x.visible && x.text) && observations.every(x => !x.hiddenWrapper));
     await generate('What is my account number?', 'The available conversation does not establish your account number.');
     await generate('Forget that. What is 7 times 8?', '56');
-    check('topic changes use query=2 without a pending root', calls.findLast(c => c.body?.query?.bayesian)?.body.query.bayesian[0].knn.queryText === 'Assistant: The available conversation does not establish your account number.\n\nUser: Forget that. What is 7 times 8?');
+    check('topic changes search only the current input', calls.findLast(c => c.body?.query?.bayesian)?.body.query.bayesian[0].knn.queryText === 'User: Forget that. What is 7 times 8?');
     await generate('Return this JSON literally.', '{"reply":"This is literal JSON requested by the user."}');
     check('legitimate JSON remains native authored text', await page.evaluate(() => SillyTavern.getContext().chat.at(-1).mes.startsWith('{')));
     await generate('', 'A replacement native reply.', { type: 'regenerate', stream: true });

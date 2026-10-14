@@ -52,8 +52,8 @@ const plan = { version: 2, generationInput: 'recent-five-and-memory',
     { ...base, id: 'disabled', enabled: false, recentRepeats: 80 },
 ] };
 
-// Keep query=2 within provider limits while independently stressing the longer
-// retained window. Only the two last source messages are short; message 9 keeps
+// Keep the current-message query within provider limits while independently
+// stressing the longer retained window. Only the two last source messages are short; message 9 keeps
 // the original context pressure. These are delivery controls, not quality cases.
 function deliveryChat(repeats) {
     const chat = capacityChat(repeats);

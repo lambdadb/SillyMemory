@@ -1,5 +1,5 @@
 import { beginWrites, clearCommit, recordWrite, sameDocument } from './commit.js';
-import { queryAnchor, dialogueQuery, recentQueryStart, retentionAnchor, retentionStart } from './context.js';
+import { queryAnchor, retentionAnchor, retentionStart } from './context.js';
 import { chunkSpans, CHUNKING_POLICY } from './chunking.js';
 import { hostTimestamp, conversationTime, conversationTimeLabel } from './time.js';
 
@@ -30,12 +30,13 @@ export function capture(context) {
     return { character: avatar, chat: metadata?.id, messages, memory: { story: metadata?.story, source: metadata?.source } };
 }
 export function fingerprint(snapshot) { return JSON.stringify(snapshot); }
-export const RETRIEVAL_POLICY = 'recent-two-native-reply-v1';
+export const RETRIEVAL_POLICY = 'current-message-native-reply-v1';
 export function retrievalQueries(snapshot, type = 'normal') {
     const messages = snapshot.messages;
     const anchor = queryAnchor(messages, type);
     if (anchor < 0) return [];
-    return [dialogueQuery(messages, recentQueryStart(messages, anchor), anchor)];
+    const message = messages[anchor];
+    return [`${message.user ? 'User' : 'Assistant'}: ${message.text.trim()}`];
 }
 // Checkpoints need the complete completed transcript. Ordinary UI synchronization
 // additionally supplies archiveBefore, excluding the recent five-message window.

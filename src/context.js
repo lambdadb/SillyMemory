@@ -6,22 +6,6 @@ export function queryAnchor(messages, type = 'normal') {
     return anchor;
 }
 
-// One role-labelled query, not two independently ranked searches. Skip source
-// that cannot be indexed, and never look past the replacement input anchor.
-export function recentQueryStart(messages, anchor) {
-    for (let i = anchor - 1; i >= 0; i--) {
-        if (messages[i].eligible !== false && messages[i].text.trim()) return i;
-    }
-    return anchor;
-}
-
-export function dialogueQuery(messages, start, anchor) {
-    if (!Number.isInteger(start) || start < 0 || start > anchor) throw new Error('Invalid dialogue query boundary.');
-    if (start === anchor) return messages[anchor].text.trim();
-    return messages.slice(start, anchor + 1).filter(m => m.eligible !== false && m.text.trim())
-        .map(m => `${m.user ? 'User' : 'Assistant'}: ${m.text.trim()}`).join('\n\n');
-}
-
 // Count the active message as part of the recent window. Replacement replies
 // after the anchor are never retained. Incomplete/special source is not dialogue.
 export function retentionAnchor(messages, type = 'normal') {
