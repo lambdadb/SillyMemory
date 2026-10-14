@@ -63,8 +63,9 @@ No npm commands, proxy setting, or SillyTavern server restart are needed.
 
 Chat normally. SillyMemory archives older completed messages and recalls relevant
 passages before each reply. It retains at least five recent eligible messages,
-keeping an adjacent user/reply pair together. Search uses the two latest eligible
-messages; edits, swipes and deletions are reconciled against the current chat.
+keeping an adjacent user/reply pair together. Search uses only the current eligible
+message; recent dialogue still accompanies recalled memory in the generation prompt.
+Edits, swipes and deletions are reconciled against the current chat.
 Your original chat file stays intact.
 
 - Open **Memory in the last prompt** to inspect the prepared excerpts. Check the

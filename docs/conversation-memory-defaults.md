@@ -16,8 +16,9 @@ an upsert with separate per-message chunks, subject to the existing 50-document
 batch. No five-message queue. A trailing user input waits for its answer.
 Checkpoints explicitly synchronize the full completed transcript.
 
-One role-labelled Query 2 includes the preceding eligible message and generation
-anchor. Regenerate/swipe exclude replacement replies; Continue/Impersonate retain
+One role-labelled Query 1 includes only the eligible generation anchor. Recent
+dialogue remains in the generation prompt but is not appended to the search query.
+Regenerate/swipe exclude replacement replies; Continue/Impersonate retain
 their native active-message behavior. Both search legs and local selection exclude
 retained full positions. Query and memory limits remain unchanged; queries above
 8,192 UTF-8 bytes fail explicitly. Each generation uses only its current memory.
@@ -31,6 +32,14 @@ Chat Completion delivery checks. This instruction is not a factual correctness
 or model-compliance guarantee. A clarification dialogue longer than the recent
 window relies on retrieval. Memory-on preparation failures abort explicitly;
 disabling memory restores native history. Group/tool chats remain unsupported.
+
+Query 1 was adopted after the actual-host LongMemEval-S comparison improved from
+414/500 to469/500 with the same source partition, recent dialogue, Bayesian/Jev
+settings and4096-token budget. These are consumed English benchmark results, not
+an independent confirmation of roleplay or long dependent follow-up quality.
+Ambiguous references can use the retained recent dialogue in generation; long
+follow-ups beyond that window may still require clarification. See the
+[comparison and remaining-error analysis](product-comparison.md).
 
 See [the native reply decision and verification](native-replies.md). Earlier
 [structured-continuity results](clarification-context-evaluation.md) and the
