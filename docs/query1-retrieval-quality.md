@@ -13,6 +13,12 @@ Keep existing native timestamp formatting; do not promote contextual retrievalTe
 This work changes selection, not search, stored documents or model/API settings.
 The code is validated in the work branch; no merge, release or deployment is claimed.
 
+The fixed-selector
+200/200 follow-up below finishes at 471/500 versus 469/500 for 100/100. It improves
+fact coverage, but the small net score difference and roughly doubled rerank work
+do not establish a clear default-promotion advantage. Defer automatic promotion;
+do not describe 200/200 as ineffective.
+
 This completes one bounded quality decision across the previous diagnostic stages
 and the selector fix. Detailed run outputs and the original stage-by-stage notes
 are retained in verified local archives rather than maintained as growing scratch
@@ -140,6 +146,103 @@ All 500 answers and 500 judges finish: 1000 provider calls, zero retries/errors,
 with no fixed delay after success. Complete responses, request hashes, models,
 finish statuses and independently rebuilt official judge prompts are verified.
 
+## Fixed-selector depth 200 follow-up (2026-10-16)
+
+Product question: did the old selection floor hide the value of deeper candidates?
+Freeze the same 500 questions, new selector from `ffcf19a`, original chunks and date
+format, Query1, final 50, 4096 tokens, Bayesian English/Jev 1.13.0, Sol and official
+judge. Compare only k100/candidate 100 with k200/candidate 200. No intermediate-depth
+sweep, changed budget, metadata formatter or alternate model is introduced.
+
+Reuse the previous real LambdaDB final 50 query responses for each arm. Request
+comparison verifies that only k and candidateSize differ. Source/query hashes and
+the latest 100 baseline's 469 labels are bound to the new plan. Candidate 200 does not
+mean injecting 200 documents: its returned 50 are processed by the same selector.
+No new LambdaDB indexing, search, rerank call or remote resource is needed. Then
+complete all 500 candidate answers and 500 official judges, rather than stopping at
+source-coverage proxies or a favorable pilot.
+
+| Measure | New selector 100/100 | New selector 200/200 |
+| --- | ---: | ---: |
+| Official correct /500 | 469 (93.8%) | 471 (94.2%) |
+| Multi-session correct /133 | 118 | 125 |
+| Annotated messages returned in final 50 | 884 | 891 |
+| Complete annotated message bodies injected | 877 | 883 |
+| Selected passages across 500 | 16798 | 16556 |
+| Answer input tokens | 2523802 | 2523268 |
+| Answer output tokens | 30655 | 30457 |
+| Answer API median /p95 | 2505/5586 ms | 2285/6234 ms |
+| Historically measured Jev documents scored | 50000 | 100000 |
+| Historically measured provider Jev median | 465 ms | 933 ms |
+
+The depth change has 14 gains and 12 losses. Multi-session gains 7 net, offset by
+preference−2, temporal−1, knowledge-update−1 and assistant-recall−1; single-session
+user scores are unchanged. All 26 changed labels and both answers were read against
+delivered context; none was overridden or selectively rejudged. 497 prompts change;
+of the three identical prompts, one abstention gains a label. The 100 baseline was
+generated earlier, and this is an already consumed development cohort. Small net
+score changes cannot establish independent/general or causal quality improvement.
+Timing columns are provider spans from different executions, not a controlled
+speed test; rerank work/time comes from the original matched retrieval run and was
+not remeasured. Fixed prompt budget leaves answer input essentially unchanged,
+while 200 approximately doubles rerank work.
+
+What the individual cases establish:
+
+- Helmet 120, age 32 and the sculpting-tool purchase are newly delivered versus 100, and all
+  three formerly wrong answers become correct. High-school debate/AP economics
+  memories also become available and personalize the reunion answer. These four
+  gains have a demonstrated source-recovery mechanism.
+- The six-museum question still fails despite recovering the marked Contemporary
+  Art Museum source: the generated answer asks whether two other gallery/museum
+  names denote the same institution. More evidence does not settle that alias.
+- Two flagged messages drop. The primary quinoa preference 185 falls at rank 47 and
+  misses the budget, but other selected user/assistant sources still discuss
+  quinoa/roasted vegetables; the new answer still suggests healthy related meals.
+  The other lost flag 205 is a Galapagos question, while the needed Europe 43 and
+  Thailand 195/199 statements remain; the final trip-order answer stays correct.
+  Dataset `has_answer` flags are an imperfect coverage proxy, not an exact list
+  of necessary facts. Do not equate every flag loss with an evidence failure.
+- FarmFresh/Instacart marked bodies remain, but the new selection loses the
+  unmarked session-start message 46 containing January 5. The cancellation body itself
+  is undated past tense, so the model asks for its date rather than answering 54 days.
+  This is a real date dependency missed by message-flag coverage. The benchmark
+  puts raw session clocks only on first turns and sets native send_date 0; current
+  product host-time metadata remains supported and unchanged.
+- Charity fundraising illustrates a reference limitation: 200 adds the user's account
+  of helping organize a benefit concert raising 5000 and answers 8750 rather than 3750.
+  That additional amount is sourced, not invented; its exclusion from the gold
+  creates an inclusion-scope ambiguity. Do not remove related facts merely to
+  match the expected total.
+- Several gains/losses are near-equivalent numeric/name/clarification answers
+  receiving different labels, including 30 days, workshop 720, Miss Bee Providore,
+  Arrowhead 12 and the previous ratio. Shoe-storage and event-date cases also expose
+  ambiguous completed-state versus future-plan/event-time wording. The theme-park
+  output asks for dates rather than offering recommendations despite retaining
+  the user's interests. These are interpretation/generation/judge issues, not
+  demonstrated disappearance of every needed source.
+
+Within 200, the old selector scored 464 and the new one 471 (12 gains, 5 losses), but complete
+flagged-source delivery decreases 885 → 883 with no new flag recovery. The four direct
+source-recovery wins above were already delivered by the old 200 selector. Thus this
+trial does **not** establish that the old floor had hidden those retrieval gains;
+selection, generation and judgment changes must not be collapsed into one cause.
+
+Decision: **defer automatic default promotion and retain 100/100**. Candidate 200 is
+useful for evidence coverage and is a viable cost/coverage tradeoff; it is not
+rejected as ineffective. Nevertheless, 471 versus 469 with 14 gains/12 losses, several
+rubric-sensitive outcomes and doubled historical rerank work does not establish a
+clear aggregate default advantage. Keep the corrected selector. Close this bounded
+comparison without another local parameter sweep or product setting change.
+
+Validation: all 500 candidate selections independently match original returned
+sources, final rendering and 4096 budget; both cached query sets and latest 100 control
+prompts/hashes are checked. All 500 answers and 500 official judges finish in 295899 ms,
+1000 calls, zero retries/errors. Exact model names, request/response hashes, finish
+statuses, official judge templates and unchanged runtime/producer locks pass.
+No new browser/live LambdaDB/deployment evidence is claimed; the prior validated
+runtime is byte-identical. Full outputs stay in ignored local artifacts.
+
 ## Previous candidates and why they remain deferred
 
 | Candidate / observation | Completed evidence | Decision |
@@ -199,6 +302,15 @@ The complete earlier stage notes are preserved byte-for-byte as
 Each archive contains its file manifest; readback verifies every member. The new
 bundles also passed configured-secret scanning including decompressed receipts.
 
+The fixed-selector depth follow-up is preserved separately in
+`artifacts/ranked-depth200-full500-v1/` (plan, 500 selections, query locks, independent
+verification, source snapshot) and `artifacts/ranked-depth200-answers500-v1/`
+(500 frozen inputs, 1000 receipts, official labels, analysis, all 26 reviews and the within-200 audit).
+Both archives pass complete manifest readback and configured-secret scanning.
+Verification entry points are `node artifacts/ranked-depth200-full500-v1/verify.mjs`
+and `python3 artifacts/ranked-depth200-answers500-v1/verify.py`; neither sends new
+provider requests. The earlier search/input and 100-baseline archives remain required.
+
 All archives below are **local-only** under the retained worktree's `artifacts/archive/`;
 they are not uploaded or available from a fresh clone. Reproduction requires these
 bundles and the retained licensed dataset/input/query dependencies identified by
@@ -229,3 +341,5 @@ verified retained copy. Older original archives remain immutable.
 | `muir-woods-injection-audit-v1.tar.gz` | `d6869cd65f55222ccbf240e16140173479a45af25f8be504b585ef49820e52ea` |
 | `ranked-assembly-full500-v1.tar.gz` | `67c7e20e67aa4fae22b318c33d46074cc0e5d2cc4e18ec7efa6824b59ee6bb35` |
 | `ranked-assembly-answers500-v1.tar.gz` | `8008b97f410c69a692215b7790a64dc7c109fe35969ceb3461981956bfeff519` |
+| `ranked-depth200-full500-v1.tar.gz` | `734bd6474f74442666e981dc024c276cdede472202c94c8c6f58c312a1a40b7f` |
+| `ranked-depth200-answers500-v1.tar.gz` | `71088cf776717fa53e80ac1ff4dbdbb007a78aed419c504c30f5f9b1047a8a41` |
