@@ -438,13 +438,16 @@ try {
     }, packingFixture.item.question);
     assert.equal(generations.length, packingStart + 1);
     const packingRequest = generations.at(-1), excerpts = packingRequest.messages.filter(m => m.content.startsWith('[Past conversation excerpt:'));
-    assert.equal(excerpts.length, 5);
-    assert.match(packed.delivery, /5\/5 memory excerpts and 5\/5 input messages verified/);
-    for (const index of [0, 1, 2, 27]) {
+    // Retrieval-order admission now keeps the higher-ranked repeated sources,
+    // not the lower-ranked fifth excerpt reserved by the old source floor.
+    assert.equal(excerpts.length, 4);
+    assert.match(packed.delivery, /4\/4 memory excerpts and 5\/5 input messages verified/);
+    for (const index of [0, 1, 2, 3]) {
         const original = packingFixture.item.messages[index];
         assert(excerpts.some(m => m.role === original.role && m.content.endsWith(`\n${original.text}`)), 'Full source and native role reached the completion endpoint');
     }
-    assert(excerpts.some(m => m.content.includes('identical text at message:passage 3:1, 43:1]')));
+    assert(excerpts.some(m => m.content.includes('identical text at message:passage 3:1, 11:1, 19:1, 27:1, 35:1, 43:1, 51:1]')));
+    assert(excerpts.some(m => m.content.includes('identical text at message:passage 4:1, 12:1, 20:1, 28:1, 36:1, 44:1, 52:1]')));
     assert.deepEqual(packed.chat.slice(0, 60), packingChat.map(m => m.mes), 'Packing never changes stored history');
     report.packing = { evidence: 'Actual host generation with recorded query ranks and a local completion fixture', case: packingFixture.item.id, configuredBudget: 500, effectiveBudget: 448, delivery: packed.delivery, request: packingRequest, storedHistoryUnchanged: true };
     packing = false;

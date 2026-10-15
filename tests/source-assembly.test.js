@@ -70,28 +70,23 @@ test('UTF-16 overlap and macros remain literal after assembly', () => {
     assert(split.endsWith('｛｛char｝｝'));
 });
 
-test('assembly refills ranking without evicting whole-passage or repeated-packing sources', async () => {
-    const a = doc(0, 0, 'Alpha '.repeat(10), timestamp), b = doc(1, 60, 'Beta '.repeat(10), timestamp);
-    const extra = doc(0, 0, 'New fact.', { id: 'extra', message: 1, revision: 'r1' });
-    const baseline = await selectMemory([a, b], [a, b], 2000, count);
-    const before = await selectMemory([a, b, extra], [a, b, extra], baseline.tokens, count);
-    const after = await selectPackedMemory([a, b, extra], [a, b, extra], baseline.tokens, count);
-    assert.deepEqual(before.passages, [a, b]);
-    assert.deepEqual(after.passages, [a, b, extra]);
-    assert.equal(after.tokens, count(after.text));
-    assert(after.tokens <= baseline.tokens);
-    const repeat = { ...a, id: 'repeat', message: 2, revision: 'r2' };
-    const hits = [a, repeat, b, extra];
-    for (const budget of [0, 50, 200, 400, 600, 1000]) {
-        const repeatedFloor = await selectPackedMemory(hits.map(d => ({ ...d, start: undefined, end: undefined })),
-            hits.map(d => ({ ...d, start: undefined, end: undefined })), budget, count);
-        const current = await selectPackedMemory(hits, hits, budget, count);
-        assert(repeatedFloor.passages.every(d => current.passages.some(c => c.id === d.id)));
-        assert(current.tokens <= budget);
-    }
+test('selection budgets assembled text before a lower-ranked short passage can displace evidence', async () => {
+    const a = doc(0, 0, 'A'.repeat(100)), b = doc(1, 100, 'B'.repeat(100));
+    const fact = doc(0, 0, 'Important fact. '.repeat(6), { id: 'fact', message: 1 });
+    const filler = doc(0, 0, 'Short.', { id: 'filler', message: 2 });
+    const expectedText = '[Past conversation excerpt: user "User", message 1, passages 1-2]\n'
+        + 'A'.repeat(100) + 'B'.repeat(100)
+        + '\n[Past conversation excerpt: user "User", message 2, passage 1]\n' + fact.text;
+    const budget = count(expectedText), hits = [a, b, fact, filler];
+    const unassembled = await selectMemory(hits, hits, budget, count);
+    assert.deepEqual(unassembled.passages, [a, b, filler]);
+    const result = await selectPackedMemory(hits, hits, budget, count);
+    assert.deepEqual(result.passages, [a, b, fact]);
+    assert.equal(result.text, expectedText);
+    assert.equal(result.tokens, budget);
 });
 
-test('refill rejects stale/foreign/deleted text and takes attribution/offsets from current documents', async () => {
+test('selection rejects stale/foreign/deleted text and takes attribution/offsets from current documents', async () => {
     const a = doc(0, 0, 'A'.repeat(50), timestamp), b = doc(1, 50, 'B'.repeat(50), timestamp);
     const extra = doc(0, 0, 'Current fact.', { id: 'extra', message: 1, revision: 'r1' });
     const expected = [a, b, extra], budget = (await selectMemory([a, b], expected, 2000, count)).tokens;
@@ -113,7 +108,7 @@ test('expensive assembly falls back exactly and token-count failures fail closed
     }
 });
 
-test('a rejected adjacent chunk fits through assembly even when the source floor is unchanged', async () => {
+test('adjacent chunks fit their assembled budget in either retrieval order', async () => {
     const a = doc(0, 0, 'A'.repeat(100)), b = doc(1, 100, 'B'.repeat(100));
     const expectedText = '[Past conversation excerpt: user "User", message 1, passages 1-2]\n'
         + 'A'.repeat(100) + 'B'.repeat(100);
@@ -134,7 +129,7 @@ test('a rejected adjacent chunk fits through assembly even when the source floor
     assert.equal((await selectPackedMemory([a, ...invalid, b], expected, budget, count)).text, expectedText);
 });
 
-test('candidate assembly preserves the exact floor when boundaries or budget prevent joining', async () => {
+test('selection keeps separate sources when boundaries or budget prevent joining', async () => {
     const a = doc(0, 0, 'A'.repeat(100)), b = doc(1, 100, 'B'.repeat(100));
     const budget = count('[Past conversation excerpt: user "User", message 1, passages 1-2]\n') + 200;
     for (const fields of [{ revision: 'other' }, { message: 1 }, { role: 'assistant' },
