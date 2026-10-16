@@ -16,8 +16,11 @@ with seven annotation-completeness gains and no losses. Concrete helmet-price an
 unannotated Mike-date recoveries strengthen answers; age/property cases demonstrate
 why binary labels alone miss source-use differences. Whole-body completeness is
 not an all-case semantic-recall measure, and the net two accepted answers do not
-establish overall superiority. Retain Large as the quality-oriented evaluation/
-planning reference without automatically changing the product embedding default.
+establish overall superiority. After reviewing quality and cost, retain managed
+**Small as the product default and the baseline for future default-policy
+evaluations**. Large's measured source gains remain comparison evidence, but the
+uncertain 0.4-percentage-point answer advantage does not justify its higher
+embedding cost as the default. No runtime change is needed: Small is already used.
 The historical Large 470/500 is retained below, not the current paired estimate.
 
 Keep **Sol low** and the original **GPT-4o-2024-08-06 task-specific judge** as the
@@ -27,7 +30,8 @@ to change that reference. Supplemental Luna judging and Mem0 prompts remain audi
 not replacements for the original labels or judging protocol.
 
 Reject preceding-message contextual retrievalText. Defer 200-deep defaults,
-8192-token promotion, external Voyage embedding/reranking and the temporary dev SDK. Their completed tradeoffs and
+8192-token promotion, external Voyage embedding/reranking and the temporary dev SDK.
+Their completed tradeoffs and
 historical scores remain documented in the stage-specific sections and immutable
 local archives below. This is one bounded parent quality decision on a consumed
 English development/regression cohort, not independent held-out confirmation or a
@@ -1772,12 +1776,16 @@ McNemar p=0.8238, consumed cohort and provider/generator/judge nondeterminism do
 establish overall superiority from a net two labels. Source interpretations are
 qualitative coding-agent review, not independent human adjudication or revised gold.
 
-**Decision:** retain managed Large as the quality-oriented evaluation/planning
-reference under the user's priority of improving memory without extra generation
-calls. Its source gains are more persuasive than the small answer-score margin.
-The current paired estimate is **92.6% versus 93.0%, not 94.0%**. This does not
-establish universal dominance or promote the product's managed-small default.
-No additional paid repeat, provider, depth, budget or judging sweep follows.
+**Decision after user cost review (2026-10-16):** retain managed **Small as the
+product default and the baseline for future default-policy evaluations**. The
+current paired estimate is **92.6% versus 93.0%, not 94.0%**. Large improves source
+coverage, but the uncertain net two accepted answers do not justify its higher
+embedding cost as the default. Small is already the product default, so this
+decision requires no runtime change. The immutable run archive retains the
+original run-time assessment favoring Large as a quality-oriented planning
+reference; this subsequent user decision supersedes that guidance, without
+rewriting the results or archived evidence. No additional paid repeat, provider,
+depth, budget or judging sweep follows.
 
 | Cost group, USD before allowances | Small | Large |
 | --- | ---: | ---: |
