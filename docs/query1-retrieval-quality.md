@@ -25,6 +25,11 @@ but the margin remains small and source/reference ambiguities affect some labels
 Keep the official-protocol GPT-4o results alongside the supplemental results; do
 not replace labels or promote a default on the strength of the higher judge score.
 
+Source-based triage of all 31 current-default official errors below identifies
+five missing-source cases. Four have historical pre-Jev ranks outside 100,
+supporting an embedding-only comparison as the next retrieval intervention.
+No provider-model comparison or additional default change is made here.
+
 This completes one bounded quality decision across the previous diagnostic stages
 and the selector fix. Detailed run outputs and the original stage-by-stage notes
 are retained in verified local archives rather than maintained as growing scratch
@@ -292,7 +297,7 @@ human adjudication or replacement gold. Important distinctions:
   12-game claim while warning that the original claim may be inaccurate. Sol
   accepts both. Recalling a previous claim differs from endorsing its truth.
 - Sol acceptance can overlook a missing event association. In `dd2973ad`, the
-  answer mentions the reference's 2 AM but qualifies its connection to the dental
+  answer mentions the reference's 2 AM but qualifies its connection to the doctor's
   appointment. Sources place the appointment on May 18 and that bedtime on
   May 24. Accepting the number alone does not establish the requested linkage.
 - Some references and premises need qualification. In `efc3f7c2`, the 30-minute
@@ -326,6 +331,81 @@ official prompt/label, request parameters, returned model, stop status, usage an
 frozen runtime/producer hashes. No fresh browser, LambdaDB or deployment test was
 performed for this judge-only documentation update.
 `npm test` passes all 369 tests; `npm run check` and `npm run check:release` pass.
+
+## All 31 current-default errors: source-based triage (2026-10-16)
+
+Inspect every official-protocol error in the corrected-selector 469/500 depth100
+run, not only the 34 judge disagreements above. Reuse saved original sources,
+returned 50, actual generation bodies, answers and both label sets. There are
+zero new provider calls and no label, runtime or default changes. Each case has
+one primary observed blocker; categories are diagnostic judgments, not mutually
+exclusive causal proofs or independently adjudicated gold.
+
+| Primary observed blocker | Cases | Interpretation |
+| --- | ---: | --- |
+| Necessary evidence absent from final 50 | 5 | Helmet price, current age, sculpting-tool purchase, positive high-school memories, Contemporary Art Museum visit |
+| Event bodies delivered, conversation-clock dependency missing | 2 | Ukulele/service interval and keyboard/bluegrass interval; benchmark clocks remain attached only to session starts |
+| Available evidence misused or requested response not completed | 5 | Wrong role/project association in two abstention questions, invented graduation, conflicting fare interpretation, clarification instead of publication recommendations |
+| Interpretation, reference or judging sensitivity | 19 | Includes scope/counting units, time windows, approximate values, implicit associations and qualified reference-equivalent answers; not 19 proven bad references or 19 established correct product answers |
+
+All five missing sources are returned and delivered at depth200. Four answers
+then pass; the museum answer still raises a venue-alias question. Their depth200
+positions are sculpting tools 4, age 3, high-school memory 1, museum 18 and helmet 4.
+This is a real evidence-coverage opportunity, even though the full-cohort net
+answer advantage remains small. Do not extrapolate this selected error cohort
+into expected accuracy on new conversations.
+
+Four cases also have earlier reconstructed per-leg search captures with matching
+source text. Their positions before reranking are:
+
+| Necessary source | Vector rank | Lexical rank | Bayesian rank |
+| --- | ---: | ---: | ---: |
+| Helmet price | 103 | 220 | 138 |
+| Current age | 112 | 235 | 114 |
+| Contemporary Art Museum | 104 | 113 | 101 |
+| Sculpting tools | 194 | 169 | 155 |
+
+These are historical reconstructed deep-search results, not in-flight traces of
+the later baseline. They corroborate candidate-recall limits before Jev. The
+helmet's separate exact-vector audit also did not show ANN approximation loss.
+For the high-school case, the baseline per-leg/fusion candidate membership remains
+unknown: final-50 absence alone cannot identify the failing stage.
+
+An important annotation correction: `09ba9854` is **not** a demonstrated necessary
+body-budget failure. Marked user message 137, reporting a $10 train fare, is
+returned at rank 31 but excluded. Unmarked user message 139 repeats that $10 fare
+and is actually delivered, along with the $60 taxi source. The generated answer
+instead follows a delivered assistant estimate of $20–30 for the train. The
+missing annotation is not a missing fact. Across these 31 cases, no additional
+necessary-body budget exclusion is established; that does not prove 4096 tokens
+are sufficient for every question. Missing session clocks remain separate.
+
+Other concrete distinctions: in `81507db6` all three attended graduation sources
+are present, but the answer invents a fourth by turning a professor's future
+lifetime-achievement award into a graduation. In `370a8ff4`, both explicit-today
+events and their dates are present: January 19 to April 10 is independently
+81 days, or 11 weeks 4 days, matching the answer rather than the 15-week reference.
+The first is a response error; the second is a source/reference inconsistency.
+Neither justifies swapping the retrieval model to match the existing label.
+
+Next intervention: compare **one managed embedding alternative** with current
+`text-embedding-3-small`, keeping Query1, chunks, English Bayesian fusion, Jev,
+k100/candidate100/final50, 4096 budget, date formatting and answer/judge settings
+fixed. Verify supported model/access before execution. First test necessary-source
+recall and full-cohort coverage regression; only a supported retrieval improvement
+justifies the subsequent full 500 answer comparison. Do not replace Jev or tune
+depth/budget simultaneously. The five errors are discovery cases; the already-used
+500 are regression evidence, not held-out confirmation. Preserve the two clock
+dependencies and response/reference issues rather than claiming an embedding swap
+will resolve them. No such provider-model comparison has been executed here.
+
+Offline verification covers all 31 frozen errors, original input/answer receipts,
+source bytes, selected passages in actual generation bodies, final hit ranks,
+the repeated train-fare evidence, missing clock anchors and four historical
+per-leg captures. Detailed case notes remain in the ignored evidence bundle.
+`npm test` passes 369 tests; `npm run check`, `npm run check:release` and
+`git diff --check` pass. Runtime hashes match the completed judge audit; browser,
+live LambdaDB and model integrations were not rerun for this offline analysis.
 
 ## Previous candidates and why they remain deferred
 
@@ -403,6 +483,14 @@ the original answer bundles, official judge source and dataset are dependencies.
 The archive passes full manifest readback and configured-secret scanning. Full
 outputs remain ignored; only this concise decision record is maintained in Git.
 
+The all-errors analysis is retained in `artifacts/query1-errors31-v1/`: frozen
+31-case plan and original evidence, source-based review notes, aggregate counts,
+historical-rank corroboration, verifier, input dependency hashes and unchanged
+runtime hashes. `python3 artifacts/query1-errors31-v1/verify.py` performs offline
+checks against the retained original bundles/dataset. Its archive passes every
+file's manifest readback and configured-secret scanning; no earlier archive was
+rewritten or evidence deleted.
+
 All archives below are **local-only** under the retained worktree's `artifacts/archive/`;
 they are not uploaded or available from a fresh clone. Reproduction requires these
 bundles and the retained licensed dataset/input/query dependencies identified by
@@ -436,3 +524,4 @@ verified retained copy. Older original archives remain immutable.
 | `ranked-depth200-full500-v1.tar.gz` | `734bd6474f74442666e981dc024c276cdede472202c94c8c6f58c312a1a40b7f` |
 | `ranked-depth200-answers500-v1.tar.gz` | `71088cf776717fa53e80ac1ff4dbdbb007a78aed419c504c30f5f9b1047a8a41` |
 | `sol-judge-audit1000-v1.tar.gz` | `76688b7fe665f473e18690778b59190462acfffa77adcf4ec4f191cd44089e4a` |
+| `query1-errors31-v1.tar.gz` | `91195674a65ed93fdc3eec419665e9c1fde9cc8ad8c6b0ac8decf2cac320062f` |
