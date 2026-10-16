@@ -4,10 +4,20 @@
 
 Adopt retrieval-order admission using the final rendered memory size and compact
 `sent` headers with one budgeted explanation. Keep Query1, original per-message
-chunks, managed embeddings, Bayesian English, Jev 1.13.0, k100/candidate100/final50,
+chunks, managed embeddings, Bayesian English, Jev 1.13.0, final50,
 4096-token memory and native recent-five/pair retention. These selection/time
 changes are implemented and validated in this work branch; no merge, release or
 deployment is claimed. Product managed-small and stable SDK 0.8.0 defaults remain.
+
+The completed **current-policy Small depth comparison** recommends **k200 /
+candidate200** as the next retrieval profile, retaining final50/4096. It restores
+all three clear missing-fact answers and improves source delivery; the paired
+official scores are **466/500 (93.2%) versus 468/500 (93.6%)**. This is a coverage-led
+tradeoff with two recipe-personalization regressions, not proof of general
+superiority from two labels. **Runtime stays at 100/100**: SDK 0.8.0 rejects
+candidate200, so supported SDK integration and product validation remain adoption
+prerequisites. No dev dependency, validation bypass or automatic default promotion
+is included.
 
 The latest **fresh matched Small/Large comparison** gives **463/500 (92.6%) versus
 465/500 (93.0%)**, using fresh retrieval and fresh Sol-low answers in both arms.
@@ -27,8 +37,8 @@ The subsequent [Small-default error analysis](small-default-error-analysis.md)
 reviews all 37 original failures: 5 returned fact/dependency gaps, 6 available-evidence
 response choices, 22 source/target uncertainties and 4 reference-value rejections by
 the judge; no necessary-fact loss caused only by delivery was identified in that
-subset. This offline diagnosis preserves 463/500 and motivates fact/dependency
-retrieval work rather than another default model/depth/budget change.
+subset. That offline diagnosis preserves its original 463/500. The subsequent
+current-policy breadth comparison below addresses the demonstrated search gaps.
 
 A bounded three-case [live stage reconstruction](small-default-error-analysis.md#live-reconstruction-of-the-three-clear-gaps-2026-10-16)
 now reproduces the helmet-price, sculpting-purchase and Mike-date misses in both
@@ -44,7 +54,8 @@ retained 465 control; Sol-medium scores 463 versus 465. Neither establishes a re
 to change that reference. Supplemental Luna judging and Mem0 prompts remain audits,
 not replacements for the original labels or judging protocol.
 
-Reject preceding-message contextual retrievalText. Defer 200-deep defaults,
+Reject preceding-message contextual retrievalText. Keep runtime depth100 pending
+supported integration of the recommended depth200 profile. Defer
 8192-token promotion, external Voyage embedding/reranking and the temporary dev SDK.
 Their completed tradeoffs and
 historical scores remain documented in the stage-specific sections and immutable
@@ -1848,6 +1859,140 @@ verified local-only archive indexed below. The licensed canonical dataset and
 original retained source archive are explicit local dependencies; no historical
 source, answer, label or evidence archive is removed.
 
+## Current-policy Small breadth comparison: 100 versus 200 (2026-10-16)
+
+**Decision:** recommend k200/candidate200 as the next Small retrieval profile,
+keeping Query1, final50, current sent/ranked assembly, 4096 memory and recent-five/
+pair retention. Five source-backed changed answers improve, including all three
+clear discovery failures, without another generation model call per user turn.
+Two recipe-personalization regressions and interpretation/judging limits remain.
+Runtime is still 100/100: SDK 0.8.0 rejects candidate200. Supported SDK integration
+and product/host validation are prerequisites; do not bypass validation, install a
+dev dependency or describe this replay as an already shipped default change.
+
+Reuse the actual matched product100/rerank200 final50 responses from
+`retrieval-200-full500-v1`. Every pair came from the same source collection. All
+1000 source/query hashes match the retained archive manifest; 500 paired requests
+have exactly two differences: vector k100→200 and rerank candidateSize100→200.
+Managed OpenAI Small, original 483385 chunks/text/IDs/spans, English Bayesian,
+Query1, strong branch filter, Jev 1.13.0 and default-relevance-v1 remain fixed.
+No LambdaDB reindex, search, rerank request or remote resource is newly created.
+These are cached real search results, not newly measured retrieval performance.
+The original producer used an isolated dev SDK; product 0.8.0 stays unchanged.
+
+Apply the **current common sent policy** and 4096 ranked admission independently
+to both arms. Preserve the native prefix/recent suffix and current natural memory
+guidance. Generate and judge all 500 cases in both arms afresh, interleaving arms
+and alternating first depth by frozen question order, at most 6 concurrent requests.
+Generator remains Sol low; judge remains the exact original task-specific
+GPT-4o-2024-08-06 prompt/options. Do not use historical 463, 469 or 471 as this comparison's
+control, selectively rejudge, change gold or introduce contextual queries.
+
+| Measure | k100 / candidate100 | k200 / candidate200 |
+| --- | ---: | ---: |
+| Original-protocol correct /500 | **466 (93.2%)** | **468 (93.6%)** |
+| Complete indexed annotated bodies returned /894 | 878 | 888 |
+| Complete indexed annotated bodies delivered /894 | 876 | 881 |
+| All indexed annotated bodies complete in prompt /478 questions | 460 | 465 |
+| Fresh generation input tokens | 2519462 | 2518926 |
+| Fresh generation cost estimate /500, USD | $6.564491 | $6.572555 |
+| Fresh generation median /p95, ms | 2408 /5723 | 2388 /6075 |
+| Historical query median /p95, ms | 707 /919 | 1181 /1430 |
+| Historical Jev median /p95, ms | 465 /646 | 933 /1133 |
+| Historical Jev documents scored /500 | 50000 | 100000 |
+
+All 15 changed annotation states and all 20 changed answer labels are source-reviewed.
+Returned complete-body coverage gains 10 and loses 0; delivered coverage gains 9 and
+loses 4. The previously frozen six necessary-span components remain 6/6 both ways.
+Whole-body annotation coverage is structural, not all-case necessary-fact recall;
+21 questions have no marked evidence and 2 annotations are retained through native
+recent dialogue. An unmarked source can be essential.
+
+Concrete answer gains:
+
+- Helmet $120 source 117 returns at 4 and is delivered: the supported subtotal $65
+  becomes the supported $185 sum, while planned bike-rack purchase stays excluded.
+- Sculpting-tool purchase 436 returns at 4 and is delivered: the model can name the
+  tools rather than only recall the competition setup 434.
+- Unmarked Mike-BBQ source 30 returns at 5 with its sent clock and two-weeks-ago
+  phrase: all three dinner parties can be placed in the past-month window.
+- The positive high-school debate/AP-economics source 113 returns at 1 and improves
+  reunion personalization.
+- Muir Woods 326 is already returned at 29 in 100 but misses 4096 packing. In 200 it is at 15
+  and delivered, restoring the destination/date anchor for the three-trip order.
+  Other repeated-trip chronology and identity caveats remain in the source.
+
+Age 32 also returns/delivers at 3 and gets an accepted wedding-age answer, but gold 33
+is not uniquely entailed without birthday/wedding dates. The generated 32-or-33 range
+itself is not guaranteed to cover every possible birthday ordering. Keep this as
+age-fact recovery with an ambiguous exact target. Theme-park recommendations improve
+from clarification-only to actionable suggestions despite shared interests; that
+is response completion, not demonstrated new necessary evidence.
+
+Two recipe preference labels regress: lemon-poppyseed cake for colleagues, and
+quinoa/roasted-vegetable meal prep. Their direct user sources move 21→27 and 30→47 and
+fall outside the same 4096 budget. Relevant assistant acknowledgments/recipes remain;
+the 200 responses use less of the recorded precedent or deliberately offer different
+healthy recipes. These are personalization/provenance and rubric-fit tradeoffs,
+not proof that all related information disappeared or the suggestions are useless.
+The garden-harvest user source also drops, but basil/mint and the assistant's
+acknowledgment of the user's cherry tomatoes remain. The excluded Galapagos
+planning annotation is not needed for the preserved Europe/Thailand ordering.
+
+There are 11 official gains and 9 losses. Eight changed-label pairs are near-equivalent
+requested answers with different caveats or phrasing: three months plus nine days,
+Walmart versus an April Thrive order, workshop $720 with conflicting dates, conditional
+airport estimates, exact 12/30-day answers, volleyball-first, and historical 1:10 with
+correction. The 92 byte-identical answers have no conflicting labels. The descriptive
+paired McNemar p=0.8238 and this consumed development cohort do not establish a
+statistically persuasive general answer advantage from two labels. Additional
+source-bound disagreements include ownership versus purchase of a vinyl record,
+an unmarked $5000 benefit-concert amount excluded by charity gold, and confirmed 1250
+versus a later unverified near 1300 follower estimate. Preserve every original label;
+no corrected headline score or medical/current-price adjudication is introduced.
+
+By type, temporal answers improve 124→127 and user recall 68→69; multi-session 118 and
+preference 24 are unchanged, while knowledge updates 77→76 and assistant recall 55→54.
+These small, rubric-sensitive movements are regression evidence, not independent
+held-out confirmation. The recommendation rests on concrete source recovery and
+acceptable observed tradeoffs, not treating all 11 gains as new facts or all 9 losses
+as retrieval failures. It does not compare Small 200 against a separately run Large
+score or establish that a larger candidate pool is universally preferable.
+
+The fresh run makes 2000 actual completion attempts, zero retries/errors, in 602650 ms
+(10 minutes 3 seconds), with server-header admission and no fixed success delay.
+Frozen 2026-10-16 rates and actual cache-aware usage give $13.6630864 for both arms'
+answers and judging: generation $6.5644914/$6.5725550, evaluation judging
+$0.2630600/$0.2629800. This is an estimate before allowances, not an invoice.
+Generation input differs by only −0.0213%; observed cache partitions explain why
+cost need not follow that tiny token difference exactly.
+
+A product search still uses one native query and one answer generation. Its
+minimum-based strong-read estimate $0.005 per 500 queries and managed query-embedding
+text-token proxy $0.000410 are common under the prior frozen rate card. Initial import
+and Small embeddings are shared, not another reindex charge per depth. Jev's
+scored document count doubles; actual full 100/200 input tokens/LIU, physical storage
+and ongoing edit/sync costs remain unavailable, not zero or exactly 2x. Historical
+query/rerank spans above were not remeasured and must not be summed with fresh
+answer medians as measured browser end-to-end latency.
+
+Independent source/candidate checks, exact current rendered budgets and clocks,
+all 1000 generation inputs and 2000 answer/judge receipt bindings, the 20 answer/15 source
+reviews, runtime hashes and Decimal cost arithmetic pass. SDK 100 serialization
+passes and SDK 200 rejection is explicitly retained as a product prerequisite.
+There is no maintained runtime/harness/test/dependency change, fresh browser run,
+new PR, push, merge, release or deployment. The same runtime's 373 passing tests from
+the preceding validation are not rerun for this documentation-only result.
+
+Full plans, queries, source locks, inputs, replies, labels, reviews, initial SDK-limit
+log, producers, costs and verifiers are ignored under
+`artifacts/small-depth100-200-sent500-v1` and retained in its checksummed local-only
+archive below. The licensed canonical dataset and original matched retrieval
+archive remain explicit local dependencies; no original evidence is overwritten.
+Close this bounded comparison without another provider/depth/budget sweep or a
+source-linking implementation. The next implementation step is supported SDK 200
+integration and product validation of this recommended profile.
+
 ## Previous candidates and why they remain deferred
 
 | Candidate / observation | Completed evidence | Decision |
@@ -1996,3 +2141,4 @@ verified retained copy. Older original archives remain immutable.
 | `embedding-small-large-matched500-v1.tar.gz` | `f5e572d54934e08056bb5bd86eedd85204baa2427de0aeb13f958a7128ec2fe2` |
 | `small-default-error-audit-v1.tar.gz` | `b37a68fcd84ba86ae1d178ddd2701d5e4bbd910161971e80cb31f14fe8f08c85` |
 | `small-retrieval-stage3-v1.tar.gz` | `ed8abb6acd4271b5009ef7583712a21973bf7dbbb755c45a7aed4c9cbbe81c8b` |
+| `small-depth100-200-sent500-v1.tar.gz` | `93255946e574588a899c81056c209a869048a73b249ef3af5c3998b7001c6a93` |

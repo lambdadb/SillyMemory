@@ -10,6 +10,13 @@ That initial classification uses **zero new API calls**, no regrading and no
 adjusted accuracy claim. The subsequent bounded native retrieval reconstruction
 below adds search/indexing observations without new generation or judging.
 
+The subsequent [current-policy Small breadth comparison](query1-retrieval-quality.md#current-policy-small-breadth-comparison-100-versus-200-2026-10-16)
+is complete: 466/500 versus 468/500 with fresh paired answers, and all three clear
+missing-fact answers recover at 200. It recommends depth 200 as the next Small
+profile, pending supported SDK/product integration; runtime remains 100. The 37 No
+cases classified here belong to the earlier 463/500 run and are not the failure set
+of that newer comparison. Earlier archived diagnoses remain unchanged.
+
 The reference uses Query1, managed `text-embedding-3-small`, Bayesian English,
 vector k100, native Jev 1.13.0 candidate100/final50, ranked 4096-token memory,
 compact `sent` headers and recent-five/pair retention. Benchmark generation is
@@ -107,12 +114,12 @@ There is a semantic-linkage hypothesis, distinct from that observed stage:
 These explain why context linking is worth considering, not why a particular
 embedding score must occur or proof that linking fixes the full cohort. Both
 single legs also miss the facts, so a Bayesian-only weighting diagnosis is
-insufficient. No ANN error is established. Prior deeper-candidate and whole-
-preceding-message trials remain regression evidence; do not repeat them or
-promote depth/budget simply because these selected failures exist. The next
-intervention needs a general mechanism for discovering related fact-bearing
-sources, with the unchanged 500 as regression controls and separate confirmation
-data, before adoption. No new retrieval transformation is selected here.
+insufficient. No ANN error is established. Earlier depth 200 trials already showed
+source recoveries and a small aggregate gain; the user-requested follow-up now
+compares breadth under the current common clock/assembly policy, as linked above.
+That completed comparison supports a depth 200 profile before introducing a more
+complex source-linking mechanism. Whole-preceding-message augmentation remains
+rejected by its full regression; no source-linking transformation is selected.
 
 The first no-Jev Bayesian diagnostic omitted top-level `candidateSize`; the server
 returned 400 requiring `size <= candidateSize <= 1000`. The original product request
@@ -218,15 +225,16 @@ rejudging, suppressing corrections or inventing a revised headline score.
 
 ## Next product decision
 
-1. Keep Small, Query1, k100/candidate100/final50, 4096 memory and recent-five/pair
-   retention. This audit does not justify another embedding change, a wider default
-   or a larger budget. Earlier depth/budget regressions remain relevant.
-2. Prioritize the demonstrated **missing facts and cross-message dependencies**:
-   helmet price, sculpting purchase and Mike's date. Any search/data change needs a
-   general source-based explanation and a frozen comparison, not gold-specific
-   rules or indiscriminate preceding-message augmentation, which already regressed.
-   The bounded reconstruction above now establishes absence from matched 100-ID
-   Bayesian/Jev candidate sets; ANN approximation remains unproven.
+1. Runtime remains Small, Query1, k100/candidate100/final50, 4096 memory and recent-
+   five/pair retention. The completed paired breadth comparison now recommends
+   k200/candidate200 as the next profile; SDK 0.8.0's candidate100 validation limit
+   requires supported integration before product adoption. No embedding/budget
+   change or automatic promotion is included.
+2. The **helmet price, sculpting purchase and Mike's date** are now returned,
+   delivered and correctly answered in the 200 arm of that comparison. Use this
+   direct candidate-breadth result before a more complex source-linking design.
+   Whole-cohort regression, cost and interpretation limits remain part of the
+   decision; ANN approximation is still unproven.
 3. Treat useful personalization, unsupported joins and fact-versus-estimate
    handling as a separate response-policy question. Preserve legitimate follow-up
    questions, uncertain dates and safe corrections. Do not optimize all 37 labels as
