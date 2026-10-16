@@ -261,7 +261,14 @@ try {
     check('ordinary native synchronization archives one complete pair outside the retained recent exchanges',
         JSON.stringify([...archive.values()].map(doc => doc.message).sort((a, b) => a - b)) === '[0,1]');
     check('real host dispatcher injects bounded memory', Boolean(result.injection) && /\d+ \/ 250 tokens/.test(result.inspection));
-    check('native recalled excerpts keep macros literal within budget', result.rendered.includes('｛｛char｝｝') && result.rendered.includes('＜USER＞') && result.macroValue === undefined && result.renderedTokens <= 250);
+    check('small memory stays inside its budget with sent guidance', result.renderedTokens <= 250);
+    // The longer macro-bearing source can be skipped at 250 once the shared
+    // time explanation is counted. Test literal delivery when that whole source
+    // fits, independently of the small-budget admission assertion above.
+    await field('budget').fill('400'); await field('budget').dispatchEvent('change');
+    const macroResult = await prompt();
+    check('native recalled excerpts keep macros literal within budget', macroResult.rendered.includes('｛｛char｝｝') && macroResult.rendered.includes('＜USER＞') && macroResult.macroValue === undefined && macroResult.renderedTokens <= 400);
+    await field('budget').fill('250'); await field('budget').dispatchEvent('change');
     check('a completed reply retains six messages without splitting a pair and leaves persisted source unchanged', JSON.stringify(result.chat.filter(m => !m.mes.startsWith('[Past conversation excerpt:')).map(m => m.index)) === '[2,3,4,5,6,7]' && result.chat.at(-1).mes.includes('passage 7') && result.before === result.after);
     // Ineligible active inputs still preserve recent dialogue. The actual native
     // hook is exercised with attachment/media/tool metadata, without uploading files.
@@ -458,13 +465,13 @@ try {
     });
     await field('enabled').check(); await waitStatus('synchronized');
     const timed = await prompt();
-    check('host timestamp reaches interceptor with explicit non-event attribution', timed.chat.some(m => m.mes.includes('2024-02-29T12:34:56.123Z') && m.mes.includes('not story/event date')));
+    check('host timestamp reaches interceptor with explicit non-event attribution', timed.chat.some(m => m.mes.includes('sent: 2024-02-29T12:34:56.123Z') && m.mes.includes('not necessarily event time')));
     const beforeTimestampEdit = calls.filter(call => call.path.endsWith('/upsert')).length;
     await page.evaluate(async () => { const c = SillyTavern.getContext(); c.chat[0].send_date = '2024-03-01T00:00:00.000Z'; await c.saveChat(); });
     const changedTime = await prompt();
     check('timestamp-only edit replaces stale remote provenance', changedTime.chat.some(m => m.mes.includes('2024-03-01T00:00:00.000Z')) && !JSON.stringify(changedTime.chat).includes('2024-02-29T12:34:56.123Z') && calls.filter(call => call.path.endsWith('/upsert')).length > beforeTimestampEdit);
     const timestampSource = await page.evaluate(() => SillyTavern.getContext().chat.map(m => m.mes));
-    check('time labels never enter source or embedding text', timestampSource.every(text => !text.includes('[Conversation timestamp:')) && [...collections.values()].every(c => [...c.branches.values()].every(branch => [...branch.values()].every(doc => !doc.text.includes('[Conversation timestamp:')))));
+    check('time labels never enter source or embedding text', timestampSource.every(text => !text.includes(', sent:')) && [...collections.values()].every(c => [...c.branches.values()].every(branch => [...branch.values()].every(doc => !doc.text.includes(', sent:')))));
     check('current host timestamp is stored on indexed source chunks', [...collections.values()].some(c => [...c.branches.values()].some(branch => [...branch.values()].some(doc => doc.conversationTimestamp === '2024-03-01T00:00:00.000Z' && doc.timestampSource === 'host_message'))));
     // Restore the ordinary test budget before existing fault/cleanup scenarios.
     await field('budget').fill('400'); await field('budget').dispatchEvent('change');

@@ -15,6 +15,7 @@ import { fileURLToPath } from 'node:url';
 import { capacityPlan, capacityChat, capacityInstructions } from './prompt-capacity-cases.mjs';
 import { hostSource, loadLong } from './semantic-long.mjs';
 import { MEMORY_GUIDANCE } from '../src/context.js';
+import { SENT_GUIDANCE } from '../src/time.js';
 import { retrievalQueries, interleaveHits } from '../src/memory.js';
 
 const packingRanks = JSON.parse(await readFile(new URL('../tests/fixtures/packing-ranks.json', import.meta.url)));
@@ -475,7 +476,8 @@ try {
     assert.equal(generations.length, assemblyStart + 1);
     const assemblyRequest = generations.at(-1), joined = assemblyRequest.messages.find(m => m.content.includes('message 1, passages 1-'));
     assert(joined && joined.role === 'user' && joined.content.endsWith(assemblyChat[0].mes), 'All assembled source text reached the completion endpoint');
-    assert.equal(joined.content.split('[Conversation timestamp:').length - 1, 1);
+    assert.equal(joined.content.split(', sent:').length - 1, 1);
+    assert.equal(assemblyRequest.messages.map(m => m.content).join('\n').split(SENT_GUIDANCE).length - 1, 1);
     assert.equal(assembled.source, assemblyChat[0].mes, 'Assembly does not alter stored history');
     assert.match(assembled.delivery, /^Final host prompt:/); assert(!assembled.delivery.includes('missing or changed'));
     report.assembly = { evidence: 'Actual host assembled prompt dispatched to a local completion fixture; LambdaDB emulated',

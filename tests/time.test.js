@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { hostTimestamp } from '../src/time.js';
+import { hostTimestamp, SENT_GUIDANCE } from '../src/time.js';
 import { capture, fingerprint, documents, selectPackedMemory, memoryMessages, packedMemoryMessages } from '../src/memory.js';
 
 const stamp = '2024-02-29T12:34:56.123Z';
@@ -45,8 +45,9 @@ test('selection budgets full dated excerpts and rejects forged, missing and stal
     const { docs } = await documents(capture(context(chat())), 'owner', config);
     const dated = docs[0], plain = memoryMessages([{ ...dated, conversationTimestamp: undefined }])[0].mes;
     const full = memoryMessages([dated])[0].mes;
-    assert(full.startsWith('[Past conversation excerpt: user "User", message 1, passage 1]\n'));
-    assert(full.includes('source=host_message; UTC, not story/event date; original local timezone unknown'));
+    assert(full.startsWith('[Past conversation excerpt: user "User", message 1, passage 1, sent: 2024-02-29T12:34:56.123Z]\n'));
+    assert(full.includes(SENT_GUIDANCE));
+    assert(!full.includes('source=host_message'));
     assert(full.endsWith('The treaty was signed in Frostmonth, year 812.'));
     assert.equal((await selectPackedMemory([dated], docs, count(full), count)).text, full);
     assert.equal((await selectPackedMemory([dated], docs, count(full) - 1, count)).text, '');
@@ -72,4 +73,28 @@ test('identical bodies with distinct known or unknown times are not collapsed', 
     const packed = packedMemoryMessages([docs[0], same]);
     assert.equal(packed.length, 1); assert(packed[0].mes.includes('1:1, 2:1'));
     assert.equal(packed[0].mes.split(stamp).length, 2);
+});
+
+test('sent headers preserve each source clock and explain its meaning once per independent render', async () => {
+    const source = chat(); source[1].send_date = '2024-03-01T00:00:00Z';
+    const { docs } = await documents(capture(context(source)), 'owner', config);
+    const before = structuredClone(docs);
+    for (const render of [memoryMessages, packedMemoryMessages]) {
+        const result = render(docs), text = result.map(m => m.mes).join('\n');
+        assert.equal(text.split(SENT_GUIDANCE).length - 1, 1);
+        assert.equal(text.split(', sent:').length - 1, 2);
+        assert(result[0].mes.startsWith('[Past conversation excerpt: user "User", message 1, passage 1, sent: 2024-02-29T12:34:56.123Z]\n'));
+        assert(result[1].mes.startsWith('[Past conversation excerpt: assistant "Mira", message 2, passage 1, sent: 2024-03-01T00:00:00.000Z]\n'));
+        assert(result.every(m => m.mes.endsWith(docs.find(d => d.message === m.index).text)));
+        assert(!result[2].mes.includes(', sent:'));
+        assert.equal(render([docs[1]])[0].mes.split(SENT_GUIDANCE).length - 1, 1);
+        assert(!render([docs[2]])[0].mes.includes(SENT_GUIDANCE));
+        assert.deepEqual(render([]), []);
+    }
+    assert.deepEqual(docs, before);
+    const text = packedMemoryMessages(docs).map(m => m.mes).join('\n');
+    const selected = await selectPackedMemory(docs, docs, count(text), count);
+    assert.equal(selected.tokens, count(text)); assert.equal(selected.text, text);
+    const short = await selectPackedMemory(docs, docs, count(text) - 1, count);
+    assert(short.tokens <= count(text) - 1); assert(short.passages.length < docs.length);
 });

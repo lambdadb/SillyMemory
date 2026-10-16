@@ -7,6 +7,20 @@ boundary chunks with an 800-code-point ceiling. The 4,096-token maximum and host
 one-quarter-context cap remain; explicit saved budgets are respected. These are
 development defaults, not a release or a universal optimum.
 
+### Conversation time
+
+Store available source time and provenance on every chunk, separately from its
+embedding text. Present the time as `sent` in each recalled excerpt header and
+count one shared explanation with the memory. No new metadata extraction, user
+option, query, embedding or generation call is required. Native timestamps retain
+their UTC precision. The benchmark uses its provided session clock for each
+message, with the same `sent` label and no invented timezone or seconds.
+
+These dates anchor expressions such as today/yesterday. They do not establish
+when an undated past event happened. Missing dates remain unknown. The stored
+source distinguishes native message time from a shared benchmark session time;
+the prompt does not need separate field names or a date-reference dictionary.
+
 ### Current native dialogue policy
 
 Completed eligible messages are archived only after they leave the recent-five

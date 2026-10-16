@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { adaptLongMemEval, sha } from '../scripts/benchmark-audit.mjs';
-import { prepareDevelopmentCase, literalBenchmarkText, withBenchmarkSessionTimes } from '../scripts/benchmark-development-input.mjs';
+import { prepareDevelopmentCase, literalBenchmarkText, withBenchmarkSessionTimes, benchmarkSentLabel } from '../scripts/benchmark-development-input.mjs';
 test('uniform adaptation changes only macro spellings and preserves original provenance', () => {
     const row = { question_id: 'x', question: 'Who?', question_date: '2023/01/02 (Mon) 12:00', haystack_dates: ['2023/01/01 (Sun) 12:00'], haystack_session_ids: ['hidden'],
         answer: 'SECRET', haystack_sessions: [[{ role: 'user', content: '<User> {{char}} {"json": 1}', has_answer: true }]] };
@@ -52,5 +52,12 @@ test('session-clock adaptation rejects missing, conflicting or native provenance
     assert.throws(() => withBenchmarkSessionTimes({ ...row, haystack_dates: [] }, []), /count mismatch/);
     for (const date of [undefined, '', '2023-03-18T14:30:00Z', '{{date}}']) {
         assert.throws(() => withBenchmarkSessionTimes({ ...row, haystack_dates: [date] }, []), /session clock/);
+    }
+});
+
+test('benchmark sent labels use the provided wall clock without invented seconds or timezone', () => {
+    assert.equal(benchmarkSentLabel({ benchmarkDate: '2023/03/18 (Sat) 14:30' }), ', sent: 2023-03-18 14:30');
+    for (const benchmarkDate of [undefined, null, 123, '', '2023-03-18T14:30:00Z', '{{date}}']) {
+        assert.throws(() => benchmarkSentLabel({ benchmarkDate }), /session clock/);
     }
 });

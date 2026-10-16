@@ -27,6 +27,11 @@ source documents. Remote role/speaker/offset fields never override those documen
 - Count all provenance, time labels, gap markers and host guidance through the
   supplied token counter. An adjacent chunk can fit by sharing a header; no
   accepted body is shortened. Failed token counting stops selection.
+- Keep a source timestamp inline as `sent` in its excerpt header. Explain the
+  meaning once per selected memory, inside the same counted text. Native UTC
+  precision is unchanged; unknown dates stay absent. Message time does not
+  establish the date of an undated story/event. Benchmark session clocks use
+  the same label through an explicit adapter, without inventing UTC or seconds.
 - Render the selected sources in original conversation/chunk order. This
   presentation order does not change their retrieval-order admission priority.
 

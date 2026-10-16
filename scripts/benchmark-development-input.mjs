@@ -3,6 +3,7 @@
 import assert from 'node:assert/strict';
 import { adaptLongMemEval, sha } from './benchmark-audit.mjs';
 import { prepareHostCase } from './benchmark-host-input.mjs';
+import { sentLabel } from '../src/time.js';
 export const literalBenchmarkText = text => text.replace(/\{\{([\s\S]*?)\}\}/g, (_, body) => `｛｛${body}｝｝`)
     .replace(/<(USER|BOT|CHAR|CHARIFNOTGROUP|GROUP)>/gi, '＜$1＞');
 
@@ -26,6 +27,14 @@ export function withBenchmarkSessionTimes(row, docs) {
             && (doc.benchmarkDate === undefined || doc.benchmarkDate === time.benchmarkDate), 'Conflicting session provenance');
         return { ...doc, ...time };
     });
+}
+
+// Preserve the supplied wall clock without assigning UTC or message-level precision.
+export function benchmarkSentLabel(document) {
+    const date = document.benchmarkDate;
+    const match = typeof date === 'string' && date.match(/^(\d{4})\/(\d{2})\/(\d{2}) \([A-Za-z]{3}\) (\d{2}):(\d{2})$/);
+    assert(match, 'Missing or unsupported session clock');
+    return sentLabel(`${match[1]}-${match[2]}-${match[3]} ${match[4]}:${match[5]}`);
 }
 
 export function prepareDevelopmentCase(row, sample) {

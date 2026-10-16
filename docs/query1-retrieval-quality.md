@@ -8,12 +8,16 @@ hits before higher-ranked evidence was reconsidered through assembly.
 
 Retain Query1, original source chunks, managed embeddings, English Bayesian fusion,
 Jev, vector k100, rerank candidate 100, final size 50 and the 4096-token memory budget.
-Keep existing native timestamp formatting; do not promote contextual retrievalText,
-200-deep search/reranking, the temporary dev SDK or the benchmark session-time map.
-The product change affects selection, not search, stored documents or model/API settings.
+Preserve native timestamp storage and use compact `sent` excerpt headers with one
+counted explanation. Do not promote contextual retrievalText, 200-deep
+search/reranking, the temporary dev SDK or the benchmark session-time map.
+The product changes selection and time presentation, not search, native stored
+documents or model/API settings.
 The completed compact-date follow-up scores 467/500 versus 469/500; preserve
 per-chunk time metadata but defer shared-map promotion. An explicit benchmark
-metadata helper is retained without changing native runtime behavior.
+metadata helper is retained. The later agreed direct-`sent` policy below is now
+implemented and scores 465/500; this is truthful time delivery, not a claimed
+answer-quality improvement. One demonstrated benchmark capacity regression remains.
 The code is validated in the work branch; no merge, release or deployment is claimed.
 
 The fixed-selector
@@ -620,6 +624,150 @@ checks, reviews and the final decision remain ignored under
 `artifacts/compact-date-provenance500-v1`; the immutable local archive is indexed
 below. It is unavailable in a fresh clone; preserve this evidence before cleanup.
 
+## Implemented unified sent policy
+
+The user settled the semantic contract after the shared-map comparison: preserve
+provided conversation time on every chunk and use **`sent` for both native and
+benchmark excerpts**. Different source provenance need not impose different prompt
+field names. No inferred event, entity, topic, importance or other extracted
+metadata is added. Native source-time storage, revisions, schema and embedding
+text remain unchanged. A local before/after native-document comparison confirms
+identical generated fields and IDs.
+
+`src/time.js` supplies the shared `sentLabel` and one `SENT_GUIDANCE` constant.
+`src/memory.js` places dates directly inside separate, repeated and assembled
+excerpt headers and adds the explanation once per selected memory, within its
+counted text. Raw assembly helpers prevent repeated explanations. There is no
+cross-render state or date dictionary. Valid native UTC timestamps retain their
+precision; missing times stay absent. The benchmark adapter formats the provided
+wall clock as `YYYY-MM-DD HH:mm` through the same label helper, preserving its raw
+session clock and identity in metadata. It does not add seconds or a UTC suffix.
+
+```text
+[Past conversation excerpt: user "User", message 309, passage 1, sent: 2023-03-18 14:30]
+```
+
+The common explanation distinguishes conversation time from event time, anchors
+relative dates, leaves undated events unknown, explains UTC/unknown timezones and
+allows shared session timestamps. This is guidance, not proof that generation will
+interpret every date correctly. Source bodies remain verbatim after existing
+macro literalization; all labels/explanation are included in the unchanged budget.
+Validation still precedes ID deduplication, and ownership/scope/revision/time checks,
+rank-order admission, current-chat cancellation and full-source assembly remain.
+Native recent dialogue and the benchmark question-date prefix are unchanged.
+
+The frozen trial reuses all 500 actual small-embedding Query1/Bayesian English/Jev
+query results: k100/candidate100/size50, original chunks/text/IDs/spans, corrected
+selector, 4096-token budget, native prefix/suffix and model options. No new all 500 remote
+index/search or provider/model/depth sweep. It compares the complete agreed time
+policy against the earlier sparse first-turn-only benchmark clocks; **it is not a
+same-source native long-label versus short-label answer-quality experiment**.
+
+| Measure | Retained current control | Unified sent policy |
+| --- | ---: | ---: |
+| Official-protocol correct /500 | 469 (93.8%) | 465 (93.0%) |
+| Multi-session /133 | 118 | 116 |
+| Temporal /133 | 125 | 125 |
+| User recall /70 | 69 | 69 |
+| Assistant recall /56 | 55 | 56 |
+| Preference /30 | 26 | 24 |
+| Knowledge update /78 | 76 | 75 |
+| Selected passages | 16798 | 15184 |
+| Annotated messages with any delivered source | 883 | 882 |
+| Complete annotated original bodies delivered | 877 | 876 |
+| Answer input tokens | 2523802 | 2519462 |
+| Answer output tokens | 30655 | 30908 |
+
+All 500 actual Sol-low answers and exact official GPT-4o-2024-08-06 judgments finish
+in 274,853 ms: 1,000 calls, 0 retries/errors, rate-header pacing without fixed success waits.
+Candidate answer median 2,186 ms / p95 5,489 ms and judge median 633.5 ms are provider spans,
+not a controlled speed comparison against the earlier control. The cohort has
+already been consumed for development; it is not held-out confirmation. The full
+input/source/metadata/render/budget/model/finish/prompt/label/usage checks pass.
+
+On identical selected source sets, direct benchmark sent provenance adds median 355
+cl100k tokens, p95 481 / max 593, versus removing only those added labels/explanation.
+Original source-embedded first-turn date headers remain in both. Separate fixed
+synthetic native arithmetic, including the same memory guidance, is:
+
+| Native dated excerpts | Previous verbose labels | Unified sent labels |
+| --- | ---: | ---: |
+| 1 | 188 | 230 |
+| 2 | 259 | 282 |
+| 5 | 470 | 436 |
+| 10 | 823 | 694 |
+
+One shared explanation has an initial cost and saves repetition across larger
+sets. This arithmetic is not measured provider cost/latency or a quality score.
+Fewer total answer-input tokens do not mean free metadata: different complete
+source sets fill the fixed 4096-token budget.
+
+All **20 changed labels (8 gains, 12 losses)** were inspected against questions,
+received answers, original flagged sources and relevant delivered passages:
+
+- Keyboard/bluegrass and ukulele/servicing gain the missing sent-date anchors and
+  answer accepted 6/24-day intervals. The earlier servicing intention remains an
+  interpretation caveat. Graduation and train-fare gains better use already
+  available bodies, rather than retrieve new necessary facts.
+- **Muir Woods is a real regression.** Its returned rank 29 message 326 falls outside
+  the budget after dates are counted. The answer substitutes another Yosemite
+  trip and fails. This is the only lost annotation; no source-specific swap or
+  budget increase hides it. The original meal-preference source 185 now remains
+  complete, unlike the earlier shared-map loss.
+- All marked grocery, workshop, cashback and dinner-party bodies remain. Dates
+  expose an April purchase against a May question, a March workshop after a
+  February question, May 18 versus May 25 last-Thursday references, and an undated Mike
+  dinner. These are time-scope/reference conflicts or incomplete dates, not lost
+  numeric/source evidence. They do not prove all gold answers are wrong.
+- The baking answer still counts an undated apple-pie event using its mention
+  context. The sneaker answer reads the later closet statement as only a planned
+  move and chooses under-bed storage, despite both dated state sources remaining.
+  Date metadata alone does not guarantee event-time or latest-state interpretation.
+- Eight changes are interpretation/judging-sensitive: jewelry units, fish/iPad
+  clarification, slow-cooker and healthy-meal personalization, museum companion
+  ambiguity, historical dilution recall with a correction, and the identical
+  New Yorker answer. This is not independent human adjudication or medical advice
+  validation. The bus abstention also mixes conflicting assistant/user fare
+  estimates; the accepted control itself does not explicitly abstain.
+
+All 500 generation bodies change; 77 final answers are byte-identical to their
+controls. Their complete official judge request bodies/bindings also match. One
+flips Yes→No: `gpt4_7bc6cf22` still says March 20 and 12 days ago. Preserve every original
+label, including this observed judge variability; no selective rejudging, gold
+edits, adjusted score or replacement answers.
+
+Actual pinned SillyTavern 1.19.0/Chromium checks pass: **103 browser checks** and
+**18 final-prompt scenarios**, including native replies/streaming, time edits,
+source/macro integrity, cancellation, budget pressure, repeated packing and source
+assembly. The actual assembled completion request contains one sent header and
+one explanation, with full source unchanged. LambdaDB and completion endpoints
+are local emulators; these are distinct from the 1,000 real OpenAI calls above. Both
+host suites finish with 0 emulated collections. No new live LambdaDB metadata write
+is claimed; the prior owned 3-document roundtrip covers unchanged storage fields.
+
+The first browser attempt correctly skipped a longer macro-bearing source under
+its 250-token budget once time guidance was counted. Its fixture had assumed that
+particular source would fit. Preserve that failure log; keep the 250-token budget assertion
+and separately verify literal macro delivery under 400 tokens when the whole source
+fits. This changes the test setup, not product budgets or source admission.
+
+`npm test`: 373 passed / 0 failed on Node 24.15.0; `npm run check`,
+`npm run check:release`, `npm run check:sdk` and CI-style development-tool syntax
+checks pass. New fixed tests cover once-per-render guidance, exact native clock
+precision, full-label budgeting and benchmark wall clocks without invented UTC.
+SDK 0.8.0, release 0.4.0 metadata, API response formats, recent-five/pair, batch 50,
+Query1, search parameters and credential behavior are unchanged. Node 20 CI, a new
+live host-plus-LambdaDB run, merge, release and deployment are not claimed.
+
+**Decision:** implement the agreed truthful source-time and unified sent policy in
+this work branch, without claiming an answer-quality gain or a regression-free
+benchmark. Keep the genuine Muir capacity regression and interpretation limits
+visible. Future capacity work must use the frozen sent policy in both arms;
+do not regain labels by suppressing known dates, tune sources to cases or start
+another metadata/provider sweep within this task. Full plans, receipts, failed and
+successful host evidence, reviews, verifiers and decisions remain ignored under
+`artifacts/sent-date-delivery500-v1`; preserve the immutable archive indexed below.
+
 ## Previous candidates and why they remain deferred
 
 | Candidate / observation | Completed evidence | Decision |
@@ -753,3 +901,4 @@ verified retained copy. Older original archives remain immutable.
 | `embedding-large-full500-v1.tar.gz` | `0a823a8e71683970f6a2e9e852aaa854e34b16ed46df45ee7ac27f14b76c86ca` |
 | `embedding-large-answers500-v1.tar.gz` | `4050546035a4fe30f08733d3bb52062d82c0a62ecb59a3f36675af814d190629` |
 | `compact-date-provenance500-v1.tar.gz` | `01c6df24b1dceeeb7527509a55611fa183341250c7cffc251b3491155e84b79f` |
+| `sent-date-delivery500-v1.tar.gz` | `f28bc1bcaca48ac34bbe657ef04731c45a8192d652e5dec0ce9884701086c145` |

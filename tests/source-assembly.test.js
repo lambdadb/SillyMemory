@@ -46,7 +46,7 @@ test('assembly never crosses source identity, role or timestamp boundaries', () 
         assert.deepEqual(packedMemoryMessages(passages), memoryMessages(passages));
     }
     const joined = packedMemoryMessages([a, b])[0].mes;
-    assert.equal(joined.split('[Conversation timestamp:').length - 1, 1);
+    assert.equal(joined.split(', sent:').length - 1, 1);
     assert(joined.endsWith('AlphaBeta'));
 });
 
