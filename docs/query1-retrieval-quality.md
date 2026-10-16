@@ -11,6 +11,9 @@ Jev, vector k100, rerank candidate 100, final size 50 and the 4096-token memory 
 Keep existing native timestamp formatting; do not promote contextual retrievalText,
 200-deep search/reranking, the temporary dev SDK or the benchmark session-time map.
 The product change affects selection, not search, stored documents or model/API settings.
+The completed compact-date follow-up scores 467/500 versus 469/500; preserve
+per-chunk time metadata but defer shared-map promotion. An explicit benchmark
+metadata helper is retained without changing native runtime behavior.
 The code is validated in the work branch; no merge, release or deployment is claimed.
 
 The fixed-selector
@@ -111,7 +114,7 @@ quinoa/roasted-vegetable protein preference. Higher-ranked sources 27–28 now e
 first and consume that space. The original product representation keeps this
 source under both selectors. Defer the map; do not hide this tradeoff with a
 combined score, a larger budget or an oracle-based source rule. No shared-map 500
-answer run is claimed.
+answer run was performed at that stage; the completed follow-up below supplies it.
 
 ## Completed answer regression
 
@@ -479,7 +482,8 @@ this is not provider-reported/billed usage and excludes probe/retries. Before a
 further provider comparison aimed at native product fidelity, settle a common
 conversation-date provenance representation. Do not silently turn session clocks
 with unknown timezone into exact UTC message/event timestamps, or change that
-representation in only one model arm. No additional date experiment is run here.
+representation in only one model arm. The subsequent compact-date follow-up below
+keeps the embedding model fixed and does not revise the large comparison.
 
 All 500 test collections and the probe are ownership-checked and deleted with
 GET 404 confirmation. Eight initial `Writer cold recovery capacity` 429s recover
@@ -492,6 +496,130 @@ All input/source/request/response/model/finish/budget bindings and 25 review rec
 pass offline verification. `npm test` passes 369 tests; syntax/release checks pass.
 No new browser, release, deployment or product integration change is claimed.
 
+## Per-chunk session provenance and compact-date follow-up
+
+Completed on 2026-10-16 against the corrected-selector small-embedding baseline.
+The product decision separates **preserving source dates** from **promoting one
+prompt representation**. Native runtime already captures valid host `send_date`,
+stores `conversationTimestamp`/`timestampSource` on every chunk, validates returned
+times and injects them. This work does not add a missing native timestamp feature.
+
+The benchmark has raw session clocks with unknown timezone and `send_date: 0`.
+`withBenchmarkSessionTimes` in `scripts/benchmark-development-input.mjs` explicitly
+attaches `benchmarkSession` and the unchanged `benchmarkDate` to every chunk by its
+original zero-based message position. It neither edits embedding/source text or
+IDs nor invents native UTC/message/event timestamps. It rejects unsupported clocks,
+invalid message positions, conflicting existing session provenance and native time
+provenance. Callers must first bind documents to the same frozen transcript.
+Existing adapters are not silently changed; historical inputs/hashes remain valid.
+Two small maintained tests cover inheritance/nonmutation and invalid/conflicting
+provenance. Independent replay verifies exact equivalence to all **483,385** metadata
+records used by the completed trial. The helper was extracted after the run and
+verified against it; it did not produce the original paid-run inputs.
+
+A real authenticated LambdaDB probe stores three synthetic documents: a native UTC
+millisecond timestamp, a raw session clock, and an unknown time. Managed-small
+upsert, `consistentRead: true` fetch and knn query preserve every original field.
+The session/unknown documents acquire no invented UTC timestamp. Ownership-checked
+collection deletion is confirmed by GET 404. This establishes a real field
+roundtrip, **not** that all 500 histories were reindexed with these fields.
+
+For the full cohort, attach metadata locally to the frozen real small-embedding
+retrieval/source records. Reproduce all 500 native baseline and frozen shared-map
+selections before issuing calls. Keep source text/IDs/spans, embedded first-turn
+headers, retrieval ranks, corrected selection, k100 / candidate100 / size50,
+Bayesian English/Jev, 4096-token budget, native prefix/suffix and models unchanged.
+Render one raw session-clock dictionary with an explicit reference in every
+excerpt; state once that clocks date conversations, not necessarily events, and
+that timezone is unknown. The complete rendering is budgeted. No formatter sweep,
+budget increase, source-specific swaps, extra searches or rewritten queries.
+
+| Measure | Retained current native-format baseline | Shared session map |
+| --- | ---: | ---: |
+| Official-protocol correct /500 | 469 (93.8%) | 467 (93.4%) |
+| Multi-session /133 | 118 | 121 |
+| Temporal /133 | 125 | 125 |
+| User recall /70 | 69 | 69 |
+| Assistant recall /56 | 55 | 54 |
+| Preference /30 | 26 | 23 |
+| Knowledge update /78 | 76 | 75 |
+| Selected passages | 16798 | 15797 |
+| Annotated messages with any delivered source | 883 | 882 |
+| Complete annotated original bodies delivered | 877 | 876 |
+| Answer input tokens | 2523802 | 2519978 |
+| Answer output tokens | 30655 | 30039 |
+
+Actual calls use Sol reasoning low for 500 answers and the exact official
+GPT-4o-2024-08-06 protocol for 500 judgments. All 1,000 calls finish with 0 retries/errors
+in 270,105 ms. Candidate answer median 2,138 ms / p95 4,997 ms and judge median 650 ms are
+actual provider timings; the earlier control is not contemporaneous, so they do
+not establish a comparative speed benefit. All 500 are previously consumed
+regression/development data, not held-out confirmation. No label is overridden.
+
+On identical accepted source sets, local cl100k arithmetic attributes median 208.5
+added tokens to compact provenance, p95 370 / max 539. Expanding those same map
+references into repeated inline dates costs median 227 more tokens, p95 319 / max 495.
+This is an offline same-source comparison, not the old paid repeated-date score
+or billed usage. A compact map saves repetition but still displaces source text
+relative to the benchmark's sparse first-turn-only clocks.
+
+All **18 changed labels (8 gains, 10 losses)** were inspected against questions,
+old/new answers, original flagged sources and relevant delivered passages:
+
+- Two gains repair a demonstrated missing clock dependency: keyboard March 25 to
+  bluegrass March 31 now answers 6 days; ukulele February 1 to servicing February 25
+  answers the accepted 24 days. The latter history also contains an earlier intention
+  to service the guitar; this does not settle every interpretation of "decided".
+- Graduation and train-fare gains use already available facts better, rather than
+  recover previously missing necessary bodies. In particular, duplicate user
+  train-fare message 139 already supplies $10 in both prompts, even though
+  annotated message 137 remains absent.
+- The predeclared meal-preference source 185 is the only lost annotation. It falls
+  out of the 4096-token budget; related quinoa/lentil/vegetable context remains and both
+  answers give personalized healthy recipes. The source loss is real, but exclusive
+  attribution of the negative label to that source is not established.
+- All four baking bodies remain, but the candidate adds an undated apple pie to
+  its count. Its May 20 conversation date does not prove the pie was baked during
+  the requested two weeks. Preserving this distinction in a provenance warning
+  does not guarantee that generation follows it.
+- Commute preferences remain but the answer adds reading on the bus, which the
+  rubric discourages. Both dated mortgage amounts remain, but the answer still
+  emphasizes the older $350,000 instead of the expected $400,000. These are not missing
+  timestamp/body demonstrations.
+- Ten changes are interpretation/judging-sensitive, not ten proven judge errors.
+  Both restaurant answers name Miss Bee Providore; both church answers say 30 days;
+  near-equivalent fish/iPad/slow-cooker clarifications change labels. Jewelry
+  distinguishes 3 acquisitions from 4 individual pieces. Museum companionship lacks
+  an explicit source assertion of going alone. Google employment has no established
+  start date. Nursery answers share the same order but differ in caveating a
+  mention date. All labels remain untouched.
+
+Of 500 changed generation bodies, 75 produce byte-identical final answers. Their
+complete judge request bodies/bindings also match the old control. One changes
+label: `gpt4_7bc6cf22` answers March 20, 2023 and 12 days ago in both, but Yes becomes No.
+This is observed identical-input judge variability, not an estimated error rate.
+No selective rejudging, replacement answer, gold edit or adjusted headline score.
+
+**Decision:** retain per-chunk source-time metadata as a requirement and keep native
+runtime handling. Keep the explicit benchmark helper for future comparisons;
+do not treat session clocks as precise native message times. **Defer shared-map
+product promotion** because the frozen nondeclining-score gate is not met.
+The two-point difference does not establish intrinsic formatter inferiority, but
+neither does solving two discovery cases establish aggregate superiority. Do not
+launch another format sweep or change embedding/search defaults within this task.
+Future paired comparisons must freeze the same explicit provenance treatment in
+both arms rather than silently repair only the new provider's inputs.
+
+Validation: all 500 input/provenance/source/budget/protocol checks pass, all 483,385
+maintained-helper projections match, all 18 changed-label reviews are retained,
+and the live owned probe is cleaned. `npm test`: 371 passed / 0 failed;
+`npm run check` and `npm run check:release`: passed. Runtime, credential handling,
+SDK and release metadata are unchanged. No new browser/real SillyTavern generation,
+release or deployment is claimed. Raw plans, receipts, metadata projections,
+checks, reviews and the final decision remain ignored under
+`artifacts/compact-date-provenance500-v1`; the immutable local archive is indexed
+below. It is unavailable in a fresh clone; preserve this evidence before cleanup.
+
 ## Previous candidates and why they remain deferred
 
 | Candidate / observation | Completed evidence | Decision |
@@ -501,7 +629,7 @@ No new browser, release, deployment or product integration change is claimed.
 | Temporary dev SDK/depth 1000 and candidate 200 pilots | Recover helmet, age, museum and sculpting facts; age answer remains interpretation-sensitive; increasing rerank pool roughly doubles scored documents | Useful diagnosis, not a default-adoption result. Product SDK remains 0.8.0. |
 | Matched full 500 k100/c100, k200/c100, k200/c200 | 467, 465, 464 correct; candidate 200 query median 1181 ms versus 707 ms, Jev 933 ms versus 465 ms | Defer deeper defaults; fact recoveries do not establish aggregate answer improvement. All 500 owned collections deleted with 404 confirmation. |
 | Explicit date provenance per excerpt | Native path already captures/stores/validates host times, but benchmark send_date was 0. Benchmark session-clock delivery gives 466/500 versus 467; 10 gains, 11 losses | Repairs two date dependencies, but adds prompt pressure and does not establish aggregate gain. Session clocks are not event times. |
-| Shared session-time map | Removes repeated metadata, raises selected passages 14996 → 15937 versus repeated-date format; old selector still loses Muir | Defer after subsequent selector replay also shows a meal-preference loss. No paid answer score for this map. |
+| Shared session-time map, earlier diagnostic | Removes repeated metadata, raises selected passages 14996 → 15937 versus repeated-date format; old selector still loses Muir | Initially deferred without an answer run. The completed corrected-selector follow-up above now scores 467/500 versus 469 and keeps promotion deferred. |
 
 Raw benchmark session clocks have unknown timezone and are shared by many messages.
 They must not be invented as exact UTC message/event instants. Valid native host
@@ -624,3 +752,4 @@ verified retained copy. Older original archives remain immutable.
 | `query1-errors31-v1.tar.gz` | `91195674a65ed93fdc3eec419665e9c1fde9cc8ad8c6b0ac8decf2cac320062f` |
 | `embedding-large-full500-v1.tar.gz` | `0a823a8e71683970f6a2e9e852aaa854e34b16ed46df45ee7ac27f14b76c86ca` |
 | `embedding-large-answers500-v1.tar.gz` | `4050546035a4fe30f08733d3bb52062d82c0a62ecb59a3f36675af814d190629` |
+| `compact-date-provenance500-v1.tar.gz` | `01c6df24b1dceeeb7527509a55611fa183341250c7cffc251b3491155e84b79f` |
