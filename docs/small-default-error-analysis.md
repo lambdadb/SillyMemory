@@ -6,7 +6,9 @@ Keep managed Small and the current retrieval/budget policy. Review all **37 orig
 judge failures** from the latest fresh matched Small run, **463/500 (92.6%)**, before
 choosing another optimization. This is an offline diagnosis using retained source,
 final returned chunks, actual dispatched context, answers and raw judge receipts.
-There are **zero new API calls**, no regrading and no adjusted accuracy claim.
+That initial classification uses **zero new API calls**, no regrading and no
+adjusted accuracy claim. The subsequent bounded native retrieval reconstruction
+below adds search/indexing observations without new generation or judging.
 
 The reference uses Query1, managed `text-embedding-3-small`, Bayesian English,
 vector k100, native Jev 1.13.0 candidate100/final50, ranked 4096-token memory,
@@ -59,6 +61,92 @@ fusion and reranker rejection or diagnose ANN approximation.
 The helmet, sculpting-tools and Mike-date cases give concrete fact/dependency
 targets without relying solely on whole-body annotations. Age and museum sources
 are useful recall targets but require separate answer-interpretation caveats.
+
+## Live reconstruction of the three clear gaps (2026-10-16)
+
+Rebuild only these three original Small corpora, with the same 2857 document
+texts/IDs/spans, original 61 batches of at most 50 documents, English analyzer,
+Query1 text, k100, Jev 1.13.0 candidate100 and strong branch reads. Verify every
+acked document through strong fetch before searching. Product code, stable SDK
+0.8.0, generation and judging remain unchanged. The diagnostic adds five requests
+per corpus: original product50, vector100, lexical100, Bayesian100 without Jev,
+and Bayesian+Jev100 to expose every returned candidate. Only the diagnostic return
+size increases; the product request is still size50.
+
+| Necessary source | Vector top100 | Lexical top100 | Bayesian100 | Jev100 | Product50 |
+| --- | --- | --- | --- | --- | --- |
+| Helmet $120, user message 117 | Absent | Absent | Absent | Absent | Absent |
+| Sculpting-tool purchase, user message 436 | Absent | Absent | Absent | Absent | Absent |
+| Mike's two-weeks-ago timing, user message 30 | Absent | Absent | Absent | Absent | Absent |
+
+**All three original misses reproduce.** The Bayesian100 and Jev100 requests return
+identical sets of 100 document IDs in each case, without the necessary source.
+The helmet and Mike cases also have exactly equal Bayesian scores versus Jev's
+`retrievalScore` across all 100. Sculpting has the same 100 IDs but a maximum score
+difference of 0.0001112; report this instead of claiming an identical scored trace.
+Every product50 ID is in the corresponding Jev100 response, with identical shared
+retrieval scores. Jev relevance scores/order vary across the size50/size100 calls
+(maximum shared-score differences 0.0305/0.0365/0.049), so these separate calls are
+not an in-flight trace or proof of the exact hidden ordering of the original run.
+Their candidate membership nevertheless consistently locates the observed gaps
+**before Jev ranking**, rather than a 50-result cut or prompt-budget exclusion.
+
+Each target is an intact, single original chunk (252/337/327 UTF-16 positions).
+The necessary sentence was not split away or lost during chunk construction.
+There is a semantic-linkage hypothesis, distinct from that observed stage:
+
+- Helmet query asks for all bike spending; the missed source discusses a bike
+  shop and Bell Zephyr purchase. The returned helmet/date source already names
+  that same model, but source linking is not part of independent chunk retrieval.
+- Sculpting query refers to an investment for a competition; the returned user message 434
+  introduces the competition, while user message 436 names tools without repeating that
+  competition or the word investment.
+- Dinner query asks for parties in a time window; returned user message 32 names Mike's
+  BBQ without its date, while user message 30 frames the dated BBQ as recipe/theme advice.
+
+These explain why context linking is worth considering, not why a particular
+embedding score must occur or proof that linking fixes the full cohort. Both
+single legs also miss the facts, so a Bayesian-only weighting diagnosis is
+insufficient. No ANN error is established. Prior deeper-candidate and whole-
+preceding-message trials remain regression evidence; do not repeat them or
+promote depth/budget simply because these selected failures exist. The next
+intervention needs a general mechanism for discovering related fact-bearing
+sources, with the unchanged 500 as regression controls and separate confirmation
+data, before adoption. No new retrieval transformation is selected here.
+
+The first no-Jev Bayesian diagnostic omitted top-level `candidateSize`; the server
+returned 400 requiring `size <= candidateSize <= 1000`. The original product request
+succeeded. Preserve that failed attempt, explicitly set diagnostic
+`candidateSize:100`, and rebuild once. Across both invocations: 3829 actually upserted
+documents in 82 batches, 167 wire attempts, 18 successful queries plus that one 400,
+7 Jev calls / 700 scored documents, 40 strong verification fetches, and 55.06 seconds
+of invocation time. No transient retries or generation/judge calls occurred.
+All four owned collections, including the recovery corpus, have confirmed 404
+cleanup. Failure staging is recovered from the original HTTP receipt; the first
+harness's outer error misleadingly recorded cleanup as the active stage.
+
+Using the existing frozen 2026-10-16 USD rate card, before allowances, the partial
+arithmetic is $0.004117 writes, $0.008707 source-embedding text-token proxy,
+$0.0000108 successful query-embedding proxy, $0.000180 query read minima and
+$0.000400 verification read minima. Actual native Jev LIU, physical storage,
+metadata-call billing and failed-request billing are unavailable, not zero.
+This is evaluation/reconstruction overhead, including recovery, not a total bill
+or a three-chat-turn operating-cost estimate. Product request transport spans
+range 715–873 ms across four observations including recovery; they are not a
+representative latency comparison, generation latency or browser end-to-end time.
+
+`node artifacts/small-retrieval-stage3-v1/verify-wire.mjs` and
+`python3 artifacts/small-retrieval-stage3-v1/verify.py` pass all 15 stage-request
+wire bindings, source/target checks, candidate sets, unchanged runtime hashes,
+cleanup and cost arithmetic. These are local receipt validations of the actual
+API run, not unit or browser tests.
+
+The plan, exact requests/responses, source checks, stage/candidate/score comparison,
+initial failure, cost ledger and producers are retained under ignored
+`artifacts/small-retrieval-stage3-v1`, with its own immutable local archive in the
+parent evidence index. Original benchmark answers, 463/500 score and earlier
+archives remain unchanged. No new PR or product/default change accompanies this
+diagnosis.
 
 ## Available-evidence response choices
 
@@ -137,7 +225,8 @@ rejudging, suppressing corrections or inventing a revised headline score.
    helmet price, sculpting purchase and Mike's date. Any search/data change needs a
    general source-based explanation and a frozen comparison, not gold-specific
    rules or indiscriminate preceding-message augmentation, which already regressed.
-   Unexposed candidates prevent assigning the loss to ANN, fusion or Jev today.
+   The bounded reconstruction above now establishes absence from matched 100-ID
+   Bayesian/Jev candidate sets; ANN approximation remains unproven.
 3. Treat useful personalization, unsupported joins and fact-versus-estimate
    handling as a separate response-policy question. Preserve legitimate follow-up
    questions, uncertain dates and safe corrections. Do not optimize all 37 labels as
@@ -145,15 +234,15 @@ rejudging, suppressing corrections or inventing a revised headline score.
 
 This is the completed diagnosis for the existing parent quality decision, not a
 new experiment or PR milestone. No runtime setting, harness, dependency or judge
-changes accompany it. Further paid intervention/confirmation is not part of this
-offline classification.
+changes accompany it. The subsequent live stage diagnosis above has completed;
+further paid intervention/confirmation is not part of the current scope.
 
 ## Verification and retained evidence
 
 `python3 artifacts/small-default-error-audit-v1/verify.py` passes: the exact 37 No
 cases exhaust the fresh Small 500 failures; 185 original case/input/query/memory/judge
-file hashes and 37 answer receipts match the immutable parent archive manifest; dispatched memory plus recent messages match saved completion
-requests; source IDs/text/UTF-16 spans and returned/delivered annotation coverage
+file hashes and 37 answer receipts match the immutable parent archive manifest;
+dispatched memory plus recent messages match saved completion requests; source IDs/text/UTF-16 spans and returned/delivered annotation coverage
 are checked against original documents. Thirteen explicit source-fact stage checks
 and five independent calendar calculations pass. Original answer/generator/judge
 bindings and original archive checksum remain intact.
@@ -170,8 +259,9 @@ The original matched-run archive remains unchanged:
 `f5e572d54934e08056bb5bd86eedd85204baa2427de0aeb13f958a7128ec2fe2`.
 No source, answer, label, historical score or original evidence was removed.
 
-This is coding-agent qualitative review after seeing outcomes, not independent
-human adjudication or held-out confirmation. The unchanged runtime's 373 passing
+The initial classification is coding-agent qualitative review after seeing
+outcomes, not independent human adjudication or held-out confirmation. The unchanged runtime's 373 passing
 tests were recorded with the preceding run; they were not rerun for this
-documentation-only audit. No new browser-host validation or provider performance
-measurement is claimed.
+documentation-only change. The native stage reconstruction is live API evidence,
+not a new browser-host run, answer-quality comparison or general performance
+measurement.

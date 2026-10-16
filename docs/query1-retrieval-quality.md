@@ -30,6 +30,14 @@ the judge; no necessary-fact loss caused only by delivery was identified in that
 subset. This offline diagnosis preserves 463/500 and motivates fact/dependency
 retrieval work rather than another default model/depth/budget change.
 
+A bounded three-case [live stage reconstruction](small-default-error-analysis.md#live-reconstruction-of-the-three-clear-gaps-2026-10-16)
+now reproduces the helmet-price, sculpting-purchase and Mike-date misses in both
+single-leg top100 results and identical 100-ID Bayesian/Jev candidate sets. The
+observed loss precedes Jev ranking; this does not establish ANN approximation
+failure or a new quality-improvement/default decision. All four owned collections
+(including diagnostic-request recovery) were deleted with 404 confirmation; no new
+generation or judge calls were made.
+
 Keep **Sol low** and the original **GPT-4o-2024-08-06 task-specific judge** as the
 evaluation reference. Same-input Luna-default generation scores 450/500 versus the
 retained 465 control; Sol-medium scores 463 versus 465. Neither establishes a reason
@@ -1987,3 +1995,4 @@ verified retained copy. Older original archives remain immutable.
 | `sol-medium-generator500-v1.tar.gz` | `b79313c5e0444cc630c822677cc0a772c8a26c3487ad59b66db975140d68b3d7` |
 | `embedding-small-large-matched500-v1.tar.gz` | `f5e572d54934e08056bb5bd86eedd85204baa2427de0aeb13f958a7128ec2fe2` |
 | `small-default-error-audit-v1.tar.gz` | `b37a68fcd84ba86ae1d178ddd2701d5e4bbd910161971e80cb31f14fe8f08c85` |
+| `small-retrieval-stage3-v1.tar.gz` | `ed8abb6acd4271b5009ef7583712a21973bf7dbbb755c45a7aed4c9cbbe81c8b` |
