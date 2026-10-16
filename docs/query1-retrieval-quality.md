@@ -18,6 +18,10 @@ per-chunk time metadata but defer shared-map promotion. An explicit benchmark
 metadata helper is retained. The later agreed direct-`sent` policy below is now
 implemented and scores 465/500; this is truthful time delivery, not a claimed
 answer-quality improvement. One demonstrated benchmark capacity regression remains.
+The subsequent same-policy, interleaved 4096/8192 comparison below finishes at
+465/500 versus 469/500, with 8 gains, 4 losses and 50.0% more generation input.
+It repairs Muir Woods, but does not establish a reliable general default gain;
+defer raising the product budget/default maximum and retain 4096.
 The code is validated in the work branch; no merge, release or deployment is claimed.
 
 The fixed-selector
@@ -768,6 +772,110 @@ another metadata/provider sweep within this task. Full plans, receipts, failed a
 successful host evidence, reviews, verifiers and decisions remain ignored under
 `artifacts/sent-date-delivery500-v1`; preserve the immutable archive indexed below.
 
+## Same-policy capacity comparison: 4096 versus 8192
+
+**Decision:** retain the 4096 product default and configuration maximum for now.
+8192 repairs a demonstrated source-capacity failure and has a small positive
+official-score difference. Do not describe it as ineffective. The gain is not yet
+compelling enough to justify increasing generation input by 50% for every request.
+Do not tune another budget or change providers within this bounded trial.
+
+The plan was frozen at `7c63cbd0a8e87943e09d11e4c2161e512870242f` before calls.
+Both arms use exactly the same `sent` metadata/headers/explanation, current source
+assembly, cached actual managed-small Query1/Bayesian English/Jev retrieval,
+k100/c100/final50, original chunks/IDs/spans and native prefix/suffix. Only the
+selector budget changes. All 500 control prompts reproduce the preceding direct
+`sent` prompts byte for byte. This is not a comparison against the earlier sparse
+benchmark clocks or a fresh 500-case LambdaDB index/search run.
+
+Both arms regenerate and judge every case in the same run. Adjacent arm jobs
+alternate which budget starts first by dataset ordinal, sharing a maximum of six
+concurrent calls and the existing rate-header gate. Generator remains Sol-low;
+judge remains the exact official task-specific prompt with GPT-4o-2024-08-06,
+temperature 0 and 10 output tokens. No model, rubric, gold or source edits,
+selective retries or rejudging. All 2000 actual calls finish without retries or
+errors in 556,345 ms (about 9 minutes 16 seconds).
+
+| Measure | 4096 | 8192 |
+| --- | ---: | ---: |
+| Official-protocol correct /500 | 465 (93.0%) | 469 (93.8%) |
+| Multi-session /133 | 116 | 117 |
+| Temporal /133 | 127 | 126 |
+| User recall /70 | 68 | 70 |
+| Assistant recall /56 | 54 | 55 |
+| Preference /30 | 24 | 25 |
+| Knowledge update /78 | 76 | 76 |
+| Selected passages | 15184 | 24990 |
+| Annotated messages with any delivered source /896 | 882 | 884 |
+| Complete annotated original bodies delivered /896 | 876 | 878 |
+| Questions with every annotated body complete /500 | 480 | 482 |
+| Selected-memory tokens, median | 4078 | 6576 |
+| Actual generation input tokens, total | 2519462 | 3779448 |
+| Actual generation input tokens, median | 4967.5 | 7522 |
+| Actual generation output tokens, total | 30934 | 30734 |
+| Generation provider latency, median /p95 | 2244.5 /5674 ms | 2157.5 /5882 ms |
+
+Input rises **50.01%**, with zero cached input reported in either arm. These are
+actual API usage and provider spans, not invoice totals or full SillyTavern turn
+latency; the small latency difference does not establish a speed benefit.
+The returned 50 passages fit completely within 8192 in 497/500 cases: their full
+rendered cost has median 6576, p95 7332 and maximum 8856. No third paid budget arm
+or larger search was added. Annotated coverage is a source diagnostic, not the
+answer metric or proof that every annotated message is individually necessary.
+
+All **12 changed labels (8 gains, 4 losses)** were reviewed against original
+questions, reference answers, flagged source messages and both final memories:
+
+- **Muir Woods is a direct capacity repair.** Returned rank 29, source message
+  326 (zero-based; displayed header 327), is absent at 4096 and complete with its
+  March 10 clock at 8192. The larger arm correctly orders Muir Woods, Big Sur/
+  Monterey and Yosemite. The other newly complete annotation is train-fare
+  message 137; that answer was already accepted from a duplicate fare source.
+- The furniture loss omits the Casper mattress although both arms deliver the
+  complete purchase statement. The remaining coffee table, bookshelf and kitchen
+  table are counted. This is an answer inclusion/classification issue, not lost
+  purchase evidence; mattress taxonomy remains a scope caveat.
+- Grocery, workshop, cashback and baking-class changes retain their necessary
+  marked evidence. They differ on April versus past-month scope, an attended
+  March workshop after a February question, May 18 versus May 25 last-Thursday
+  references, or class-to-cake versus class-to-question intervals. These conflicts
+  are not resolved merely by adding more source text and do not prove all gold
+  answers wrong.
+- Four near-equivalent answer pairs receive different labels: camera duration,
+  estimated airport-bus savings, a 30-day church interval and historical dilution
+  recall with a correction. Album/poster edition scope and commute personalization
+  account for the other two changes. These are qualitative interpretation/judging
+  sensitivities, not six proven judge mistakes or medical/safety validation.
+
+There are 90 byte-identical final answer pairs and no contradictory labels among
+the corresponding identical judge inputs in this run. Near-equivalent comparisons
+above are not claims of identical request bytes. The fresh 4096 arm also scores
+465 like its predecessor, but five cases gain and five lose under identical
+generation requests. That variation and the paired exact McNemar p=0.3877 counsel
+against treating the net four labels as established general superiority. All
+500 cases are consumed development/regression data, not held-out confirmation;
+there is no blinded independent human adjudication or selective label replacement.
+
+Runtime hashes remain unchanged. `npm test`: **373 passed /0 failed** on Node
+24.15.0; runtime syntax, all CI-style script/test syntax, release metadata and
+SDK bundle checks pass. Offline verification independently reconstructs every
+official judge request and binds all 1000 inputs, 2000 responses and source clocks.
+No new maintained harness or fixture is needed. Detailed producers/reviews stay
+ignored in `artifacts/sent-budget4096-8192-500-v1`.
+
+The product currently clamps both the UI setting and parsed budget to 4096;
+8192 was a selector-only experiment. A future configurable 8192 path must raise
+that limit and verify final host delivery. The existing quarter-context cap also
+requires context of at least 32768 to permit the full 8192 memory budget; host
+instructions and recent dialogue still consume their own space. Source checks
+and local arithmetic establish these conditions, not a new 8192 host integration
+test. No product setting, LambdaDB data, merge, PR, release or deployment changes.
+
+Preserve the frozen time policy for subsequent comparisons. Further retrieval or
+reranker-provider work should target source recall/ranking at the fixed input
+budget; no such sweep starts here. Full evidence has a verified local-only archive
+listed below. Earlier archives and original labels were not removed or rewritten.
+
 ## Previous candidates and why they remain deferred
 
 | Candidate / observation | Completed evidence | Decision |
@@ -902,3 +1010,4 @@ verified retained copy. Older original archives remain immutable.
 | `embedding-large-answers500-v1.tar.gz` | `4050546035a4fe30f08733d3bb52062d82c0a62ecb59a3f36675af814d190629` |
 | `compact-date-provenance500-v1.tar.gz` | `01c6df24b1dceeeb7527509a55611fa183341250c7cffc251b3491155e84b79f` |
 | `sent-date-delivery500-v1.tar.gz` | `f28bc1bcaca48ac34bbe657ef04731c45a8192d652e5dec0ce9884701086c145` |
+| `sent-budget4096-8192-500-v1.tar.gz` | `994cd09369a2d50208aec38d3501db833afefaf3468d6d37efd346d07d29550a` |
