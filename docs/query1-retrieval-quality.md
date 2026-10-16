@@ -9,8 +9,16 @@ chunks, managed embeddings, Bayesian English, Jev 1.13.0, final50,
 changes are implemented and validated in this work branch; no merge, release or
 deployment is claimed. Managed Small remains the embedding default.
 
-The completed **current-policy Small depth comparison** recommends **k200 /
-candidate200** as the next retrieval profile, retaining final50/4096. It restores
+The completed [fixed-k200 comparison](#fixed-k200-rerank-candidate-comparison-2026-10-17)
+now isolates **candidate100 versus candidate200**: **455/500 (91.0%) versus
+471/500 (94.2%)**, with three demonstrated missing dependencies recovered and
+final50/4096 unchanged. Retain candidate200. Four changed answers have direct
+source-backed gains; most other label changes require interpretation/judge caveats.
+The same 200-candidate inputs scored 468 in the previous execution, so the score is not a
+deterministic product guarantee.
+
+The preceding **current-policy Small depth comparison** recommended **k200 /
+candidate200**, retaining final50/4096. It restores
 all three clear missing-fact answers and improves source delivery; the paired
 official scores are **466/500 (93.2%) versus 468/500 (93.6%)**. This is a coverage-led
 tradeoff with two recipe-personalization regressions, not proof of general
@@ -127,6 +135,112 @@ changed to satisfy the test.
 No merge, tag, release, deployment or public-main promotion is claimed. The prior
 breadth-comparison archive and its stable-SDK blocker remain immutable historical
 evidence; this separately authorized integration supersedes that blocker.
+
+## Fixed-k200 rerank-candidate comparison (2026-10-17)
+
+**Decision: retain k200/candidate 200/final size 50.** This resolves the preceding
+100/100-versus200/200 comparison's confounding: hold vector **k=200** fixed and
+change only native Jev **candidateSize from 100 to 200**. Keep managed Small, Query1,
+English Bayesian fusion, strong branch reads, final size 50, current sent/ranked 4,096-token
+assembly, recent-five/pair context, Sol low and the original task-specific
+GPT-4o-2024-08-06 judge. No new runtime option, model call, dependency or product
+change is needed after this check; PR #84 already implements the selected profile.
+
+Reuse all 500 matched `vector200`/`rerank200` native response pairs from the same
+original collection per question. All 1,000 query/source hashes match the retained
+original archive; only `rerank.candidateSize` differs. Rebuild both current
+memory arms, verify all source spans/rendering and confirm the 200 arm reproduces
+all 500 preceding current-policy prompts exactly. Generate **1,000 fresh answers
+and 1,000 fresh judgments**, alternating first arm by frozen question order with
+at most six concurrent calls and no normal success delay. This makes zero new
+LambdaDB requests, creates zero remote resources and does not reindex the corpus.
+Historical source ownership records confirm all 500 original collections deleted.
+
+| Measure | k200 / candidate 100 | k200 / candidate 200 |
+| --- | ---: | ---: |
+| Original-protocol correct answers /500 | **455 (91.0%)** | **471 (94.2%)** |
+| Complete indexed annotated bodies returned /894 | 878 | 888 |
+| Complete indexed annotated bodies delivered /894 | 876 | 881 |
+| Questions with all indexed marked bodies delivered /478 | 460 | 465 |
+| Selected passages across all 500 | 15,185 | 15,036 |
+| Generation input tokens | 2,518,989 | 2,518,926 |
+| Generation output tokens, including reasoning | 30,811 | 30,942 |
+| Generation estimate USD /500 | 6.5524449 | 6.5668406 |
+| Judge evaluation estimate USD /500 | 0.2632225 | 0.2630250 |
+| Fresh generation median / p95, ms | 2492 / 6028 | 2454 / 6358 |
+| Historical native query median / p95, ms | 707 / 933 | 1181 / 1430 |
+| Historical native Jev median / p95, ms | 464 / 644 | 933 / 1133 |
+| Historical native documents scored /500 | 50,000 | 100,000 |
+
+Marked-body completeness is not all-case necessary-fact recall. Twenty-one
+questions have no marked positive message; two annotations belong to retained
+native dialogue. The same six frozen necessary-component witnesses remain 6/6
+in each arm and are not a full semantic-recall evaluation. At fixed k200, the 200
+pool produces ten annotation-completeness gains and no losses in final size 50; delivery
+has eight gains and three losses under the unchanged budget.
+
+**Direct utility:** helmet price **$120** is absent with candidate 100 but returned
+rank 4/delivered with candidate 200, restoring **$65→$185**. The sculpting-tool purchase
+is absent→rank 4/delivered and correctly named. Mike's unmarked **two-weeks-ago**
+dependency is absent→rank 5/delivered, allowing the answer to confirm all three
+recent parties. The positive debate-team/AP-economics high-school memory is
+absent→rank 1/delivered, improving the reunion suggestion. These four gains have
+specific source/answer bindings, rather than only a better aggregate label.
+
+All **20 changed labels** were reviewed: **18 gains, 2 losses**. Of the gains,
+four are the direct source-backed cases above, one recovers age 32 but retains an
+ambiguous/nonexhaustive exact-age answer, three change available-evidence response
+use/completion, and ten are sensitive to target scope, counting or judge framing.
+The accepted property answer even initially says six while listing five; preserve
+that inconsistency and its raw Yes rather than presenting the judge as ground truth.
+The descriptive paired McNemar p=0.000402 does not remove these interpretation
+limits or make this consumed development cohort independent confirmation.
+
+The two raw losses are the **cake-personalization** response and the **charity
+sum**. Cake user messages 403/405 drop out while assistant message 404 still acknowledges the prior
+successful lemon-poppyseed cake; the 200 answer favors generic cookies/pastry and
+omits that success. This is a real personalization/rubric regression, without proof
+that packing alone caused it. Charity adds newly delivered user message 501's supported
+benefit concert of over $5,000 and answers over $8,750 instead of gold $3,750; it is a
+source/reference-scope conflict, not missing evidence or bad addition. Other lost
+marked bodies are the direct garden-harvest statement (herbs and assistant garden
+context remain) and nonessential Galapagos planning (Europe/Thailand timing remains).
+
+**Repeat variation:** the exact same 500 candidate 200 generation inputs scored
+468 in the preceding execution and 471 here: five gains, two losses and 107 byte-
+identical answers. No prompt or setting changed between those controls. Likewise,
+do not compare the earlier k100/candidate 100 score 466 with this score 455 as a
+paired estimate of the k-only effect. This new matched comparison supports the
+native candidate-size choice, not a claim that every accepted label is a newly
+retrieved fact. The two new arms produce identical answers for 79 questions, with no conflicting
+judge labels for those identical answer inputs.
+
+**Resources:** the 2,000 completion attempts finish with zero retries/errors,
+peak concurrency 6, in 617,570 ms (about 10m18s). Actual new answer/judge usage priced
+with the frozen 2026-10-16 rate card totals **$13.6455330**, before allowances and
+not an invoice. Generation input differs by only 63 tokens across 500. Shared Small
+index/import/storage and query embedding are unchanged; their prior estimates
+remain scenarios, not fresh charges. Jev scores twice as many documents and
+historically adds about 474 ms to the query median. Full native rerank token/LIU
+billing is unexposed, so its dollar cost is unknown, not zero or proven exactly 2x.
+Physical storage and ongoing synchronization billing remain unmeasured. Native
+timings above are historical, not remeasured E2E latency; do not add stage medians.
+
+This evaluates the **native candidateSize contract**: increasing it can also
+change which fused candidates reach Jev. The complete pre-rerank candidate IDs are
+unexposed, so it is not an offline model comparison on a known fixed 200-ID set.
+No fresh search/backend-performance measurement, browser E2E, language sweep,
+model/criteria/budget tuning, held-out claim, merge or release accompanies this run.
+The product-integration checks in the preceding section remain separate evidence.
+
+`validation.json` verifies all 1,000 generation inputs, 2,000 response/judge bindings,
+all changed-label/source reviews, three discovery recoveries, unchanged runtime
+hashes, exact same 200-candidate prompts, independent Decimal costs and historical cleanup.
+Producers, raw requests/replies, reviews and locks remain ignored under
+`artifacts/small-rerank100-200-k200-sent500-v1/`, preserved in the local-only archive
+listed below. Reproduction also needs the original matched-retrieval archive and
+canonical dataset recorded in its plan; they are not fresh-clone CI dependencies.
+The earlier immutable archives, scores and decisions are preserved.
 
 ## Selection defect and implementation
 
@@ -2208,3 +2322,4 @@ verified retained copy. Older original archives remain immutable.
 | `small-retrieval-stage3-v1.tar.gz` | `ed8abb6acd4271b5009ef7583712a21973bf7dbbb755c45a7aed4c9cbbe81c8b` |
 | `small-depth100-200-sent500-v1.tar.gz` | `93255946e574588a899c81056c209a869048a73b249ef3af5c3998b7001c6a93` |
 | `depth200-product-adoption-v1.tar.gz` | `cc4a2ead26f80b1b2be381927a1455b26aef636658431e21772e7ff00d782caa` |
+| `small-rerank100-200-k200-sent500-v1.tar.gz` | `dd18be5cc97441e835d040e42e9f913fb89c17cb659e482431f4c5a0a1363791` |

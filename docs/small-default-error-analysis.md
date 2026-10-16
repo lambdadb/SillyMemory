@@ -18,6 +18,12 @@ now implements it on this work branch with an exact pinned dev SDK. The 37 No
 cases classified here belong to the earlier 463/500 run and are not the failure set
 of that newer comparison. Earlier archived diagnoses remain unchanged.
 
+A later [fixed-k200 rerank comparison](query1-retrieval-quality.md#fixed-k200-rerank-candidate-comparison-2026-10-17)
+isolates candidate 100 versus 200: 455/500 versus 471/500, with all three clear
+missing dependencies returned, delivered and answered only at 200. It supports
+retaining 200 while preserving one cake-personalization regression and judge/target
+limits; it does not redefine the original 37-case error cohort below.
+
 The reference uses Query1, managed `text-embedding-3-small`, Bayesian English,
 vector k100, native Jev 1.13.0 candidate100/final50, ranked 4096-token memory,
 compact `sent` headers and recent-five/pair retention. Benchmark generation is
