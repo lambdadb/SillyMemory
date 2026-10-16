@@ -32,6 +32,9 @@ The same-sent replay of retained native OpenAI large retrieval finishes at
 versus 876 and 882 at 4096. Keep large as the leading managed candidate for a
 product model-selection decision; this evaluation does not change defaults.
 The code is validated in the work branch; no merge, release or deployment is claimed.
+The same-input Sol-medium generation follow-up scores 463/500 versus retained
+Sol-low 465/500, with 8 gains and 10 losses. Keep Sol low as the evaluation
+reference; this changes no product model or memory default.
 
 The fixed-selector
 200/200 follow-up below finishes at 471/500 versus 469/500 for 100/100. It improves
@@ -1620,6 +1623,94 @@ GitHub CI are not rerun; no PR or push is created. Exact inputs, responses, all
 Original answer/source archives and the licensed canonical dataset remain retained
 local dependencies. No historical evidence or labels are removed.
 
+## Sol medium generation: retain low as the reference
+
+Compare only `gpt-6.1-sol` reasoning effort: retained explicit `low` versus new
+explicit `medium` (the documented API default). Reuse exactly the same 500 saved
+Large/native Jev generation-message arrays used in the Luna comparison. Query1,
+Bayesian English, k100/candidate100/final50, original source chunks, sent provenance,
+4096-token memory, native recent dialogue, completion limit 4096 and nonstreaming
+API remain fixed. Both arms receive exactly 2,518,209 input tokens. Use the unchanged
+original LongMemEval task-specific prompts and `gpt-4o-2024-08-06` judge, temperature
+0 and output limit 10. There are no new retrieval, embedding, reranking or import
+calls. `none` is unsupported by GPT-6.1 Sol and is not attempted; no other model is
+substituted. See [official model support](https://developers.openai.com/api/docs/models/gpt-6.1-sol).
+
+| Measure across the same 500 questions | Retained Sol low | Sol medium |
+| --- | ---: | ---: |
+| Original official judge accepted answers | **465/500 (93.0%)** | **463/500 (92.6%)** |
+| Generation input tokens | 2,518,209 | 2,518,209 |
+| Generation completion tokens, including reasoning | 31,099 | 37,657 |
+| Reported reasoning tokens | 1,504 | 7,434 |
+| Generation list-price estimate | $6.577013 | $6.642593 |
+| Generation request median | 2,369 ms | 2,545.5 ms |
+| Generation request p95, nearest rank | 6,016 ms | 6,899 ms |
+
+| Question type | Questions | Sol low correct | Sol medium correct |
+| --- | ---: | ---: | ---: |
+| Single-session user | 70 | 68 | 69 |
+| Multi-session | 133 | 117 | 117 |
+| Preference | 30 | 25 | 23 |
+| Temporal reasoning | 133 | 127 | 124 |
+| Knowledge update | 78 | 75 | 74 |
+| Single-session assistant | 56 | 53 | 56 |
+
+There are **8 official-label gains and 10 losses**, with 482/500 label agreement.
+All 18 changes were reviewed against original sources and actual delivered memory.
+Retrieval and prompt-delivery recall are unchanged by construction; this trial
+isolates a generation parameter, not a memory/search improvement. Among gains,
+medium states both the baking-class/cake interval and the interval to the question
+date, and separates recalled Chapter 4 from an unverified external book correction.
+Among losses, it omits the available Metropolitan Museum name and prioritizes
+true-crime entertainment over the explicit storytelling stand-up preference.
+
+Several differences are judge- or interpretation-sensitive: both church-date
+answers say exactly 30 days, both mortgage answers give the earlier $350,000 and
+later $400,000 with a caveat, both fish answers distinguish the known 20-gallon
+stock from the unsupported 30-gallon premise, and both song answers give the exact
+reference notes. Keep those labels unchanged rather than treating every flip as a
+factual gain/regression. Of 95 byte-identical answers, all retain the same judge
+label; that does not rule out judging sensitivity for differently worded answers.
+These source interpretations are qualitative coding-agent review, not independent
+human adjudication or revised gold labels.
+
+**Disposition:** retain Sol low as the quality/cost reference. This execution gives
+no aggregate quality gain from medium; it does not establish that low is universally
+better. Generation cost rises about 1.00%, while the median request span rises
+about 7.45%. The input-dominated workload explains why roughly 4.94 times as many
+reported reasoning tokens add little to total cost. The consumed cohort and
+historical, nonconcurrent low controls do not isolate provider/judge variation.
+No further effort sweep, product setting change or additional paid rerun follows.
+
+Costs use the frozen 2026-10-16 standard list rate card and actual reported usage,
+not an account invoice. Both arms report 2,459,209 cache-write tokens and zero cache
+reads; charge ordinary/read/write input partitions once. New official judgments
+consume 102,444 input + 828 output tokens, about **$0.264390**. New medium generation
+plus judging totals **$6.906983**; the retained low generation is not new spend.
+The shared 500-search memory proxy remains **$0.297711**, giving partial
+search-plus-generation scenarios of $6.874723 (low) and $6.940303 (medium). The common
+500-corpus/483,385-document import proxy remains $7.579560; it is not 500 ordinary
+chat turns. Native Jev LIU, physical storage, ongoing mutations and plan allowances
+remain unmeasured; these subtotals are not complete product bills. See the preceding
+cost methodology and its official [Sol](https://developers.openai.com/api/docs/models/gpt-6.1-sol)
+and [GPT-4o](https://developers.openai.com/api/docs/models/gpt-4o) rates.
+
+All **1,000 actual calls** finish successfully with **zero retries/errors**, in
+**323,555 ms**. At most six requests run concurrently; server rate-limit headers
+control admission without fixed delays on successful calls. Latency spans cover
+nonstreaming workstation provider requests, excluding retrieval, admission and
+browser delivery, not time-to-first-token or SillyTavern end-to-end behavior.
+Independent verification confirms all 500 exact input/option bindings, original
+judge construction, returned models/stop finishes/answers/labels/usage and unchanged
+runtime/SDK hashes. Independent Decimal arithmetic confirms the cost totals.
+`npm test` passes 373 tests; `npm run check`, `npm run check:release` and
+`npm run check:sdk` pass on Node 24.15.0. No new host/browser, Node 20/GitHub CI,
+PR, push, merge or deployment is claimed. Inputs, receipts, all 18 source reviews,
+cost ledger and producing scripts remain ignored under
+`artifacts/sol-medium-generator500-v1`, with a verified local-only archive indexed
+below. Retained source/answer archives and the licensed canonical dataset remain
+explicit local dependencies; historical evidence and labels are preserved.
+
 ## Previous candidates and why they remain deferred
 
 | Candidate / observation | Completed evidence | Decision |
@@ -1764,3 +1855,4 @@ verified retained copy. Older original archives remain immutable.
 | `luna-judge-large-jev500-v1.tar.gz` | `12213a97e4d3a1b40a60312fac820248a9beb1d867757ce311fdfa4e193b9156` |
 | `luna-mem0-judge-large-jev500-v1.tar.gz` | `2d47edffa73e83a6f283bf5425a724cdfb4e8868bda267fca15d96cc0011d426` |
 | `luna-generator-default500-v1.tar.gz` | `a78fa1c91f4ce2b3d846318f3ef3dfd60bdef44a4b5cdb58d66f1e88e1f6c8f9` |
+| `sol-medium-generator500-v1.tar.gz` | `b79313c5e0444cc630c822677cc0a772c8a26c3487ad59b66db975140d68b3d7` |
