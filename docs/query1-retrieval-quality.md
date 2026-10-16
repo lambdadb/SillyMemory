@@ -27,6 +27,10 @@ at the same 4096 budget and scores 468/500 versus the retained 465 control.
 Keep Voyage as a promising retrieval candidate, independently of that modest
 answer-score difference. Its external embedding path is experimental; managed
 provider support and a product integration decision remain outstanding.
+The same-sent replay of retained native OpenAI large retrieval finishes at
+470/500, versus small 465 and Voyage 468, delivering 883 complete annotated bodies
+versus 876 and 882 at 4096. Keep large as the leading managed candidate for a
+product model-selection decision; this evaluation does not change defaults.
 The code is validated in the work branch; no merge, release or deployment is claimed.
 
 The fixed-selector
@@ -942,8 +946,8 @@ older sparse-date 469 baseline. No new small reindex/answer run is claimed.
 | Complete annotated body returned /894 | 878 | 885 |
 | Any annotated message delivered /894 | 882 | 886 |
 | Complete annotated body delivered /894 | 876 | 882 |
-| Every indexed annotated body returned, questions /477 | 461 | 468 |
-| Every indexed annotated body delivered, questions /477 | 459 | 465 |
+| Every indexed annotated body returned, questions /478 | 462 | 469 |
+| Every indexed annotated body delivered, questions /478 | 460 | 466 |
 | Official-protocol correct /500 | 465 (93.0%) | 468 (93.6%) |
 | Selected passages | 15184 | 15928 |
 | Generation input tokens, total | 2519462 | 2523135 |
@@ -953,9 +957,13 @@ older sparse-date 469 baseline. No new small reindex/answer run is claimed.
 The historical denominator of 896 includes two annotated messages intentionally
 outside the index: `58ef2f1c:514` and `0e4e4c46:477`. Both are verified verbatim in
 the unchanged native recent-dialogue suffix. They are not search failures. This
-table reports the 894 indexed annotations across 477 questions; the two
-retained-only questions and 21 zero-annotation abstention questions are separate.
-Historical raw 896/479 counts remain in the evidence rather than being overwritten.
+table reports the 894 indexed annotations across 478 questions. One question has
+only a retained annotation; the other also has indexed message 92. The 21
+zero-annotation abstention questions are separate. The subsequent Large sent-policy
+audit corrects an earlier mistaken subtraction of two questions for two retained
+annotations: only one question becomes empty. The mixed question adds one
+all-indexed-complete success to both arms. Message counts and answer labels are
+unchanged. Historical raw 896/479 counts and original archives remain intact.
 
 All six baseline partial messages were inspected against the question/reference,
 original source and returned/delivered spans. Each already contains its needed
@@ -994,8 +1002,11 @@ Source and answer changes support different conclusions:
   to the reference's $3750; rare-item counting adds a vase explicitly called rare,
   though delivered ownership/inheritance is weaker than the answer claims. Keep
   those reference/scope caveats. Near-equivalent workshop, bike, duration, cashback,
-  bus and 30-day answers also change labels. Dinner dates remain underspecified;
-  sneakers still show a state-interpretation loss despite both dated bodies being
+  bus and 30-day answers also change labels. A later source audit confirms that
+  unannotated message 30 dates Mike's BBQ and is delivered by Voyage, unlike small;
+  its dinner-count gain has additional date support, correcting the earlier
+  characterization as an entirely undated event.
+  Sneakers still show a state-interpretation loss despite both dated bodies being
   delivered. No gold edits, selective reruns/rejudging or adjusted score.
 
 There are 101 byte-identical answer/judge-input pairs and no conflicting labels
@@ -1026,6 +1037,118 @@ ignored in `artifacts/embedding-voyage500-v1` and
 Do not expand to another provider/reranker/depth/budget sweep within this completed
 comparison. A product proposal needs a supported managed Voyage path and its
 operational/cost contract; do not impose an external embedding key on product users.
+
+## Native OpenAI large under the same sent policy
+
+**Decision:** complete the three-model comparison and retain native OpenAI large
+as the leading **managed candidate** for a product model-selection decision. It
+improves source delivery at essentially unchanged generation input and does not
+require a separate embedding-provider credential/path. This does not establish
+universal superiority over Voyage or authorize an automatic default change.
+Product managed-small defaults, SDK and runtime remain unchanged.
+
+At revision `8d638fc`, reuse all 500 immutable actual managed-large query receipts
+from the earlier trial. Verify each against its retained manifest, original query,
+collection configuration, source text/IDs/UTF-16 spans, Bayesian English,
+k100/candidate100/final50, Jev 1.13.0 and `consistentRead:true`. Apply the **same
+current sent provenance/guidance and 4096-token assembly** used by the small and
+Voyage comparison. Independently replay rank-order admission using the cheaper
+actual complete layout. No embedding input, query or ranking changes; no new
+embedding, upsert, fetch, search or collection is needed. This is saved real
+retrieval plus new actual completions, not a fresh retrieval/provider-speed test.
+
+| Measure | Retained small | Current large | Retained Voyage |
+| --- | ---: | ---: | ---: |
+| Any indexed annotated message returned /894 | 884 | 889 | 889 |
+| Complete annotated body returned /894 | 878 | 885 | 885 |
+| Any indexed annotated message delivered /894 | 882 | 887 | 886 |
+| Complete annotated body delivered /894 | 876 | 883 | 882 |
+| Every indexed annotated body returned, questions /478 | 462 | 469 | 469 |
+| Every indexed annotated body delivered, questions /478 | 460 | 467 | 466 |
+| Official-protocol correct /500 | 465 (93.0%) | 470 (94.0%) | 468 (93.6%) |
+| Selected passages | 15184 | 15159 | 15928 |
+| Generation input tokens | 2519462 | 2518014 | 2523135 |
+| Generation input tokens, median | 4967.5 | 4964.5 | 4981.5 |
+| Generation provider latency, median /p95 | 2244.5 /5674 ms | 2606 /6109 ms | 2399.5 /5819 ms |
+
+The corrected indexed-question denominator is **478**, as explained above. Only
+`58ef2f1c` has no indexed annotation; `0e4e4c46` also has indexed message 92.
+Exclude two retained-only source annotations from search metrics, not two whole
+questions. Keep the 21 zero-annotation questions separate. No source-message count,
+answer label or original archive is changed by this reporting correction.
+
+All 11 changed source annotations versus small (9 gains, 2 losses) are reviewed:
+
+- **Three necessary-source recoveries:** helmet price, age and positive high-school
+  experiences return at rank 3 and are delivered; all three answers are accepted.
+  An exact wedding age still requires unknown birthday/wedding dates.
+- **Muir Woods:** rank 29 with small becomes 16 with large and fits at 4096.
+  The accepted three-trip order is restored; Yosemite started/returned wording
+  and overlapping mentions remain interpretation caveats.
+- **Additional unannotated evidence:** message 30 explicitly places Mike's BBQ
+  two weeks before May 21. It is absent from small's final50 but returned at large
+  rank 5 and Voyage rank 3, and delivered in both. The dinner-count gain therefore
+  has real date support despite unchanged marked-message coverage. This corrects
+  the earlier Voyage interpretation; it is not an oracle added to runtime.
+- ENT, train fare and cousin-wedding annotations strengthen direct provenance of
+  already delivered facts; workshop/list body completion adds no missing target
+  component. The six previously frozen component spans all remain covered in
+  large's returned/delivered unions. This is not an all-500 semantic-recall audit.
+- **Two direct-user delivery losses:** lemon-poppyseed baking history at rank 27
+  and quinoa/roasted-vegetable preference at rank 33 miss the budget. Their
+  assistant echoes remain. The baking answer fails to use the poppyseed history;
+  meal prep still contains healthy quinoa/roasted-vegetable recipes, so its No
+  label does not prove those facts disappeared.
+
+All 500 Sol-low answers and exact official GPT-4o judgments complete in
+324792 ms (about 5 minutes 25 seconds), 1000 actual calls, zero retries/errors,
+bounded concurrency six and no fixed successful-call waits. Versus current small,
+there are **10 gains and 5 losses**; versus Voyage, **9 gains and 7 losses**.
+All 38 unique changed cases across those comparisons and historical large are
+source-reviewed (15 small, 16 Voyage, 22 historical-large pair differences):
+
+- The historical large tennis-racket and cuttings failures become accepted
+  **7-day and 14-day** answers with per-chunk dates. Keyboard/bluegrass and
+  ukulele/servicing anchors also resolve. The historical score is 468 versus 470
+  now, with 12 gains/10 losses; this is not merely two repaired cases or a
+  controlled causal estimate of date metadata.
+- **Large and Voyage retain different strengths.** Large keeps Metropolitan
+  attendance and the direct 9:30 pm preference that Voyage loses, but its accepted
+  Metropolitan answer is still a clarification. Voyage recovers the sculpting-tool
+  purchase and alternative Contemporary Art lecture sources that large misses.
+  An accepted six-museum answer still has order ambiguity. Neither dominates.
+- Charity and rare-item totals depend on additional unannotated events/ownership
+  scope. Temporal windows for plants/groceries and jewelry counting units remain
+  ambiguous. Website/church intervals, novel counts, cashback, bike advice,
+  restaurant-name correction, role-abstention and historical dilution responses
+  include near-equivalent answers with different labels. Current large's accepted
+  bus estimate is not proof of correct abstention or a confirmed user fare.
+  All gold/labels remain intact; no selective regeneration or rejudging.
+
+There are 89 identical answer/judge-input pairs versus small, 92 versus Voyage and
+79 versus historical large, with no conflicting labels among identical inputs.
+Paired exact McNemar p values are 0.3018, 0.8036 and 0.8318 respectively. The modest
+aggregate differences, consumed development cohort and non-contemporaneous
+controls do not provide independent superiority confirmation. Source-level gains
+remain useful evidence independently of those noisy answer-score differences.
+
+Generation input is 0.057% below small and 0.203% below Voyage, with zero cached
+input reported. No new embedding bill or LambdaDB latency is measured; 3072 versus
+1536 dimensions describes vectors, not physical index/storage charges. Provider
+latencies above are recorded spans, not controlled speed comparisons or full host
+latency. Native managed large avoids Voyage's external two-request experiment path.
+
+`npm test`: 373 passed /0 failed on Node 24.15.0. `npm run check`,
+`npm run check:release` and `npm run check:sdk` pass. Frozen source/query hashes,
+independent admission/rendering, all 500 answer inputs and all 1000 request/response
+bindings and official templates pass verification. No new full SillyTavern-host
+run, Node 20 CI, source/SDK/default change, push, PR, merge, release or deployment.
+The bounded comparison is complete; no further provider/depth/budget run is needed
+to close it. Product adoption is a separate model-selection change, not another
+diagnostic PR. Detailed evidence remains ignored in
+`artifacts/embedding-large-sent500-v1` and
+`artifacts/embedding-large-sent-answers500-v1`; the combined verified archive below
+is local-only. Earlier source bundles and labels remain immutable.
 
 ## Previous candidates and why they remain deferred
 
@@ -1164,3 +1287,4 @@ verified retained copy. Older original archives remain immutable.
 | `sent-budget4096-8192-500-v1.tar.gz` | `994cd09369a2d50208aec38d3501db833afefaf3468d6d37efd346d07d29550a` |
 | `embedding-voyage500-v1.tar.gz` | `94f9296bf35d070daeeba327c02097e94aff0a66e89e47fe24f40c915068a1c7` |
 | `embedding-voyage-answers500-v1.tar.gz` | `543314272d33d578305f279a4edfb49413d6ac9ace563d7c1d98d1a8b9964ccf` |
+| `embedding-large-sent-comparison500-v1.tar.gz` | `b2da2d42147729b8d99e6eeba2331e4b8cdf68b37d6c7871d0d8e2c721ee605c` |
