@@ -1211,6 +1211,81 @@ reranker trial, PR or deployment occurred. The one-off estimator, dated rate car
 per-case counts and summary remain ignored in `artifacts/lambdadb-cost-baseline-v1`;
 its verified local-only archive is indexed below.
 
+## Same-pool reranker comparison: blocked after 144 cases
+
+On 2026-10-16, start one bounded Jev versus Voyage `rerank-3` comparison with
+managed OpenAI large fixed. Preserve the same 500 consumed English development
+cases, original chunks/batches, Query1/Bayesian English, k100/candidate100/final50,
+sent policy and 4096-token assembly. Native no-rerank and Jev queries return all
+100 candidates; require identical candidate IDs and original source fields, give
+Voyage those exact raw texts/query, then cut both rankings to 50 locally. Do not
+rerank only the historical Jev final50. Historical Large470/500 is context, not a
+fresh paired answer control. Product/runtime/SDK defaults remain unchanged.
+
+The real four-document probe passes. Preserve **144/500 completed same-pool
+retrieval/ranking/memory receipts**. Independent verification checks 139,404
+canonical source documents, original UTF16 spans, candidate identity, Voyage
+indices and exact rank-order cheapest-layout sent4096 admission. No new answer
+or official-judge calls started; the incomplete, nonrandom subset cannot support
+an aggregate accuracy estimate or reranker adoption/rejection decision.
+
+The remaining work is blocked by commit availability. An operational attempt to
+overlap 30 logical cases while capping native HTTP operations at 6 did not bound
+active collection/writer resources; 28 cases exceeded a 300-second last-write
+commit-witness deadline. After cleanup, return to the original **6 active cases**:
+all six recovery cases also exceed that deadline. Read-only diagnostics show the
+exact last document and a finite 3072-dimensional managed embedding in a strong
+fetch, an empty ordinary fetch, and `headSnapshot: null`. This locates the observed
+gap between strong visibility and a readable committed branch state; it does not
+establish the backend root cause or rule out effects of earlier concurrency or
+concurrent service work. All **184 corpus attempts plus probe and score diagnostic
+(186 collections)** are deleted with 404 confirmation. No jobs remain active.
+
+The original numeric score guard also stopped two identical-ID/text candidate
+pairs because fused scores differed beyond 1e-6; their full failed bodies were
+not retained, only hashes. A bounded same-source four-query recreation matches
+exactly, leaving the original cause unproven. Since fused scores are not reranker
+inputs, an explicit protocol amendment keeps mandatory ID/text equality and
+records score drift separately. Subsequent raw responses are retained before
+validation. Preserve all original failures and producer generations; no quality
+setting or favorable result was substituted.
+
+Gross observed costs before free allowances, separately from a full invoice:
+
+| Component in the blocked run | Measured/estimated basis | USD |
+| --- | --- | ---: |
+| Corpus upserts, including abandoned/repeated imports | Acknowledged request document bytes with per-request 50 KB minimum | 0.19109 proxy |
+| Managed Large document embeddings, including diagnostic/repeated accepted writes | 19,119,772 local cl100k tokens; actual LIU unavailable | 2.60985 proxy |
+| Voyage reranking for the 144 completed pairs | 1,910,001 provider-reported tokens | 0.09550 |
+| Jev reranking for those same inputs | 1,817,169 local query-document pair tokens; actual tokenizer/instructions unavailable | 0.08014 proxy |
+
+The ledger retains **13,137 actual HTTP attempts**, including transient failures,
+all polling/control/cleanup and evaluation-only duplicate searches. Corpus
+commit-witness reads have a $0.03021 minimum-based estimate, source-validation
+fetches $0.01471, and each native query arm $0.00146. These are request minimums,
+not a physical-size meter. Physical storage, actual Jev LIU and some control or
+failed-call charges remain unknown. Do not add this partial subtotal into a
+claimed invoice or bill the shared initial index separately to each reranker.
+Rates and caveats follow the preceding database accounting baseline.
+
+Stop rather than increase deadlines/concurrency again or shorten the cohort.
+Investigate accepted writes through snapshot creation/branch-head publication,
+then preserve all 144 successful cached pairs and finish the remaining 356 before
+the source gate and conditional fresh paired answers. Record a new bounded
+recovery amendment after availability is restored; existing attempt limits are
+intentionally exhausted for the six failed recovery cases. There is no PR,
+push, default promotion or deployment for this diagnostic checkpoint.
+
+`npm test` passes 373 tests; `npm run check`, `npm run check:release` and
+`npm run check:sdk` pass on Node 24.15.0. These checks and live LambdaDB/Voyage
+requests are distinct from a fresh SillyTavern browser/host run, Node20 CI,
+answer-quality scoring or deployment, none of which was performed here.
+Detailed receipts, dated rates, retry/byte ledger, diagnostics, protocol/producer
+snapshots and the backend handoff remain local-only under
+`artifacts/rerank-voyage-large500-v1`; the verified blocked-run archive is indexed
+below. Its original input manifest was verified inside the retained
+`retrieval-200-full500-v2.tar.gz` source bundle. No earlier evidence was removed.
+
 ## Previous candidates and why they remain deferred
 
 | Candidate / observation | Completed evidence | Decision |
@@ -1350,3 +1425,4 @@ verified retained copy. Older original archives remain immutable.
 | `embedding-voyage-answers500-v1.tar.gz` | `543314272d33d578305f279a4edfb49413d6ac9ace563d7c1d98d1a8b9964ccf` |
 | `embedding-large-sent-comparison500-v1.tar.gz` | `b2da2d42147729b8d99e6eeba2331e4b8cdf68b37d6c7871d0d8e2c721ee605c` |
 | `lambdadb-cost-baseline-v1.tar.gz` | `87bdae13c0fcdb3b182df4276cd0dd8b62a55f90c8e6b9cc185dcb6763c27f9e` |
+| `rerank-voyage-large500-blocked-v1.tar.gz` | `c04202668146d519dbec4283ff418050b7afd7816092990039f2466fe03c0fc1` |
