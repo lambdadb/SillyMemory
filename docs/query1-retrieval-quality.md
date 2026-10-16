@@ -23,6 +23,13 @@ uncertain 0.4-percentage-point answer advantage does not justify its higher
 embedding cost as the default. No runtime change is needed: Small is already used.
 The historical Large 470/500 is retained below, not the current paired estimate.
 
+The subsequent [Small-default error analysis](small-default-error-analysis.md)
+reviews all 37 original failures: 5 returned fact/dependency gaps, 6 available-evidence
+response choices, 22 source/target uncertainties and 4 reference-value rejections by
+the judge; no necessary-fact loss caused only by delivery was identified in that
+subset. This offline diagnosis preserves 463/500 and motivates fact/dependency
+retrieval work rather than another default model/depth/budget change.
+
 Keep **Sol low** and the original **GPT-4o-2024-08-06 task-specific judge** as the
 evaluation reference. Same-input Luna-default generation scores 450/500 versus the
 retained 465 control; Sol-medium scores 463 versus 465. Neither establishes a reason
@@ -1979,3 +1986,4 @@ verified retained copy. Older original archives remain immutable.
 | `luna-generator-default500-v1.tar.gz` | `a78fa1c91f4ce2b3d846318f3ef3dfd60bdef44a4b5cdb58d66f1e88e1f6c8f9` |
 | `sol-medium-generator500-v1.tar.gz` | `b79313c5e0444cc630c822677cc0a772c8a26c3487ad59b66db975140d68b3d7` |
 | `embedding-small-large-matched500-v1.tar.gz` | `f5e572d54934e08056bb5bd86eedd85204baa2427de0aeb13f958a7128ec2fe2` |
+| `small-default-error-audit-v1.tar.gz` | `b37a68fcd84ba86ae1d178ddd2701d5e4bbd910161971e80cb31f14fe8f08c85` |
