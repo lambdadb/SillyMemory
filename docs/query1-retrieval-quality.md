@@ -1513,6 +1513,113 @@ reviews and cost/clock findings remain ignored under
 Original source/answer archives and the licensed dataset remain explicit retained
 local dependencies; no historical evidence is removed.
 
+## Luna default generation: lower cost with answer-quality tradeoffs
+
+At the user's request, keep the original LongMemEval task-specific prompts and
+`gpt-4o-2024-08-06` judge, and compare a cheaper answer generator. Reuse the exact
+500 saved Large + native Jev generation-message arrays from the same-pool run;
+there is no new retrieval, embedding, reranking, import or memory selection.
+All source passages, sent clocks, recent native dialogue and 4096-token memory
+assembly remain identical. Both models receive the same 2,518,209 input tokens.
+
+The candidate is `gpt-6-luna` with **`reasoning_effort` omitted**, as requested;
+its [documented API default is medium](https://developers.openai.com/api/docs/models/gpt-6-luna).
+The retained `gpt-6.1-sol` answers used explicit **low**. This is Luna-default versus
+Sol-low, not equal reasoning budgets or both models at their defaults. Preserve
+`max_completion_tokens: 4096`, `stream: false`, original system/character guidance,
+all question/reference bytes and the original judge's temperature 0 / 10-token
+options. No Mem0 prompt, supplemental judge or quality retry is used.
+
+| Measure on the same 500 inputs | Retained Sol-low | Luna API default |
+| --- | ---: | ---: |
+| Original GPT-4o accepted answers | **465/500 (93.0%)** | **450/500 (90.0%)** |
+| Generation input tokens | 2,518,209 | 2,518,209 |
+| Generation completion tokens | 31,099 | 90,339 |
+| Reported reasoning tokens, within completion | 1,504 | 64,200 |
+| Generation cost estimate, including reported cache writes | **$6.577013** | **$0.358471** |
+| Provider generation median | 2,369 ms | 2,590 ms |
+| Provider generation p95, nearest-rank calculation | 6,016 ms | 5,883 ms |
+
+Luna has **12 label gains and 27 losses**, a net loss of 15 (3 percentage points).
+All **39 changed cases** were inspected against the original question, reference,
+both answers and shared delivered source. Eight byte-identical answers produce
+identical judge requests and no conflicting labels within this observed subset;
+this does not establish judge stability. The retained Sol control is not freshly
+regenerated or simultaneous. The same consumed development cohort and one sample
+per configuration do not establish held-out performance or isolate model/effort,
+time and judge variability.
+
+| Question type | Sol-low | Luna default |
+| --- | ---: | ---: |
+| User recall | 68/70 | 67/70 |
+| Multi-session | 117/133 | 114/133 |
+| Preference | 25/30 | 21/30 |
+| Temporal reasoning | 127/133 | 120/133 |
+| Knowledge update | 75/78 | 72/78 |
+| Assistant recall | 53/56 | 56/56 |
+
+The losses are not all factual regressions. Luna sometimes reasonably declines to
+infer an unstated event date, equate a report date with cancellation, or bridge an
+uncertain interval baseline. Book-title, companion and numeric answers can also
+contain the reference but receive opposite labels because of caveats. Conversely,
+there are concrete generation weaknesses with evidence already available: omitting
+Mike from the three named dinner parties, using assistant airport estimates instead
+of user-reported $60/$10 operands, not combining a three-month booking lead time
+with a trip two months earlier, and losing kitchen/dresser personalization. Luna
+also sometimes replaces personal remembered claims with external factual assertions.
+No retrieval or prompt-budget regression explains these fixed-input differences.
+
+Some gains are likewise not unequivocal semantic improvements. The plant-count
+window and rare-vase inclusion remain source/reference-sensitive; two nearly
+identical temporal abstentions receive different labels. More complete slow-cooker
+troubleshooting is a plausible practical gain, and assistant recall can benefit
+from keeping the earlier claim separate from an external correction. Full source
+interpretations are qualitative coding-agent review, not independent human
+adjudication, gold replacement or a revised official score.
+
+**Disposition:** retain Sol-low as the answer-quality reference and record
+Luna-default as a substantially cheaper option with these observed tradeoffs.
+Generation cost falls approximately **94.55% (18.35 times lower)** under the frozen
+standard rate card and reported token partitions, but median completion latency
+does not improve. SillyTavern users select their generation model; no extension
+setting, credential flow, provider integration or product default changes here.
+No further effort/model/prompt sweep or paid rerun follows automatically.
+
+Costs use [Sol](https://developers.openai.com/api/docs/models/gpt-6.1-sol),
+[Luna](https://developers.openai.com/api/docs/models/gpt-6-luna) and
+[GPT-4o](https://developers.openai.com/api/docs/models/gpt-4o) standard list rates,
+checked 2026-10-16. Both generation arms report 2,459,209 cache-write tokens and
+zero cache reads; input partitions are charged without double counting. The new
+500 judges consume 96,097 input + 825 output tokens (about **$0.248493**), making
+new generation plus judging about **$0.606963**. Retained Sol cost is not charged
+as new spend. These are usage-based estimates, not account invoices.
+
+Keep common memory costs separate: the previous 500-search Jev proxy is about
+**$0.297711**, giving partial search-plus-generation scenarios of **$6.874723**
+(Sol) versus **$0.656181** (Luna). Initial import of the 500 benchmark corpora is
+common, approximately **$7.579560** for writes plus managed large embedding under
+the retained proxy. That corpus import is not 500 ordinary chat turns. Actual
+native Jev LIU, physical storage, ongoing mutation costs and account allowances
+remain unavailable; these partial scenarios are not complete product bills.
+No LambdaDB operation or remote resource is created by the replay itself.
+
+All **1,000 actual calls** complete with stop finishes, **zero retries/errors**,
+in **314,070 ms**, with six-request admission and server rate-limit headers, no
+fixed successful-call delay. Timings are workstation provider spans with
+`stream: false`, excluding retrieval, admission and browser delivery; they do not
+measure streaming time-to-first-token or SillyTavern end-to-end latency. No new
+host/browser run or deployment is claimed.
+
+Independent verification passes all 500 frozen message/model-option bindings,
+retained control responses, original official judge construction, new actual
+response/label/usage bindings and unchanged runtime/SDK hashes. `npm test` passes
+373 tests; syntax, release and SDK checks pass on Node 24.15.0. Node 20 CI and
+GitHub CI are not rerun; no PR or push is created. Exact inputs, responses, all
+39 source reviews, rate/cost ledger and producing scripts remain ignored under
+`artifacts/luna-generator-default500-v1`, with a local-only archive indexed below.
+Original answer/source archives and the licensed canonical dataset remain retained
+local dependencies. No historical evidence or labels are removed.
+
 ## Previous candidates and why they remain deferred
 
 | Candidate / observation | Completed evidence | Decision |
@@ -1656,3 +1763,4 @@ verified retained copy. Older original archives remain immutable.
 | `rerank-voyage-large500-completed-v1.tar.gz` | `d339cea17fbdb61bcdb2d419887ca8184a4f0599e116474bbced08a36f8ea345` |
 | `luna-judge-large-jev500-v1.tar.gz` | `12213a97e4d3a1b40a60312fac820248a9beb1d867757ce311fdfa4e193b9156` |
 | `luna-mem0-judge-large-jev500-v1.tar.gz` | `2d47edffa73e83a6f283bf5425a724cdfb4e8868bda267fca15d96cc0011d426` |
+| `luna-generator-default500-v1.tar.gz` | `a78fa1c91f4ce2b3d846318f3ef3dfd60bdef44a4b5cdb58d66f1e88e1f6c8f9` |
