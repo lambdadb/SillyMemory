@@ -10,7 +10,7 @@ Retain Query1, original source chunks, managed embeddings, English Bayesian fusi
 Jev, vector k100, rerank candidate 100, final size 50 and the 4096-token memory budget.
 Keep existing native timestamp formatting; do not promote contextual retrievalText,
 200-deep search/reranking, the temporary dev SDK or the benchmark session-time map.
-This work changes selection, not search, stored documents or model/API settings.
+The product change affects selection, not search, stored documents or model/API settings.
 The code is validated in the work branch; no merge, release or deployment is claimed.
 
 The fixed-selector
@@ -27,8 +27,10 @@ not replace labels or promote a default on the strength of the higher judge scor
 
 Source-based triage of all 31 current-default official errors below identifies
 five missing-source cases. Four have historical pre-Jev ranks outside 100,
-supporting an embedding-only comparison as the next retrieval intervention.
-No provider-model comparison or additional default change is made here.
+supporting the embedding comparison completed below. Native OpenAI large recovers
+three necessary sources but finishes at 468/500 versus small's 469/500. Defer
+automatic model promotion and retain `text-embedding-3-small`; the retrieval gains
+are real, while this run does not establish an aggregate answer advantage.
 
 This completes one bounded quality decision across the previous diagnostic stages
 and the selector fix. Detailed run outputs and the original stage-by-stage notes
@@ -397,7 +399,7 @@ justifies the subsequent full 500 answer comparison. Do not replace Jev or tune
 depth/budget simultaneously. The five errors are discovery cases; the already-used
 500 are regression evidence, not held-out confirmation. Preserve the two clock
 dependencies and response/reference issues rather than claiming an embedding swap
-will resolve them. No such provider-model comparison has been executed here.
+will resolve them. The following trial evaluates that embedding configuration.
 
 Offline verification covers all 31 frozen errors, original input/answer receipts,
 source bytes, selected passages in actual generation bodies, final hit ranks,
@@ -406,6 +408,89 @@ per-leg captures. Detailed case notes remain in the ignored evidence bundle.
 `npm test` passes 369 tests; `npm run check`, `npm run check:release` and
 `git diff --check` pass. Runtime hashes match the completed judge audit; browser,
 live LambdaDB and model integrations were not rerun for this offline analysis.
+
+## Native OpenAI large comparison (2026-10-16)
+
+Compare current `text-embedding-3-small` with `text-embedding-3-large` using each
+model's native default dimensions, 1536 versus 3072. This is an embedding
+configuration comparison, not a fixed-dimension ablation. Keep original text,
+chunks, dates, 50-document upsert batches, Query1, English Bayesian fusion, Jev
+1.13.0, k100/candidate100/final50, corrected selector, 4096 budget and native
+system/character/recent dialogue unchanged. Product SDK 0.8.0 and defaults remain
+unchanged. No query rewriting, new formatter or additional provider is introduced.
+
+A real two-document native-large probe verifies effective 3072 dimensions and
+search. Then reindex all 483385 frozen documents in their original 10356 batches,
+fetch-validate every source, and execute all 500 actual LambdaDB searches with
+`consistentRead: true`. Reuse the verified small query/answer receipts rather than
+reindexing or regrading the control. This saves a control rerun but makes retrieval
+and generation non-contemporaneous; do not claim independent causal confirmation
+or a controlled speed comparison. All questions are consumed development cases.
+
+| Measure | Retained small | New large |
+| --- | ---: | ---: |
+| Official-protocol correct /500 | 469 (93.8%) | 468 (93.6%) |
+| Multi-session correct /133 | 118 | 121 |
+| Temporal reasoning correct /133 | 125 | 121 |
+| Annotated source messages returned | 884 | 889 |
+| Complete annotated bodies injected | 877 | 885 |
+| Selected passages | 16798 | 16756 |
+| Median / maximum memory tokens | 4080 / 4096 | 4080 / 4096 |
+| Answer input tokens | 2523802 | 2522666 |
+
+The three demonstrated recoveries are helmet price, current age and positive
+high-school memories. Each is returned at rank 3, fully delivered and answered
+correctly. The sculpting tools and Contemporary Art Museum sources remain absent
+from large's final 50. All eight complete-annotation gains were inspected; none
+of the old complete annotations is lost. Other gains include repeated user fares,
+an already-answered doctors count, and complete messages whose needed fact was
+already present in a selected chunk. Eight more complete bodies are not eight
+newly answerable questions. In particular, the train-fare answer improves to $50,
+but the baseline already contained that fare in another user message.
+
+The full answer comparison has 12 gains and 13 losses. All 25 changed answers were
+read against original sources and relevant delivered passages. Two losses expose
+unmarked benchmark clock dependencies despite preserving event bodies:
+
+- Tennis racket `gpt4_7a0daae1`: the March 10 session-start message 87 was selected
+  at baseline rank 25 but is absent from large's final 50. The purchase body and
+  March 17 receipt remain; the model asks for the purchase date.
+- Plant cuttings `gpt4_8e165409`: the March 18 session-start message 301 moves from
+  selected rank 18 to returned rank 35 and misses the budget. Both event bodies
+  remain, but the model asks for the cuttings date.
+
+These are first-turn-only benchmark date dependencies, not proof that the product
+lacks native timestamp support. Other response losses retain their inputs:
+Sephora still supplies 200 points and the 300-point target; baking-class dates
+remain but the answer omits their requested 21-day interval. Fourteen changed
+labels are interpretation/judging-sensitive. For example, website launch 19 days
+before a contract and a contract 19 days after launch receive different labels;
+both are the same interval. No received label is overridden. There are no
+byte-identical-answer label flips here; similar answers are not identical judge
+inputs. Of 499 changed generation bodies, 12 gain and 13 lose; the one identical
+body stays correct. These observations do not isolate every change's cause.
+
+Decision: **defer automatic model promotion; retain small**. Large improves actual
+candidate recall within the unchanged budgets, but its one-point lower aggregate
+does not establish an answer advantage or intrinsic inferiority. Native vector
+dimensionality doubles; inference pricing also differs by model. Local token
+arithmetic finds 51741018 logical embedding input tokens, including questions;
+this is not provider-reported/billed usage and excludes probe/retries. Before a
+further provider comparison aimed at native product fidelity, settle a common
+conversation-date provenance representation. Do not silently turn session clocks
+with unknown timezone into exact UTC message/event timestamps, or change that
+representation in only one model arm. No additional date experiment is run here.
+
+All 500 test collections and the probe are ownership-checked and deleted with
+GET 404 confirmation. Eight initial `Writer cold recovery capacity` 429s recover
+with bounded backoff; no embedding failure stops the run. Actual OpenAI generation
+and official GPT-4o judging complete all 1000 calls in 270454 ms, zero retries or
+errors. Sol reasoning low and official judge parameters/templates remain fixed.
+Large query/Jev provider medians are 729/498 ms; answer median/p95 is 2107/5418 ms.
+These are recorded spans, not controlled comparative speed or browser latency.
+All input/source/request/response/model/finish/budget bindings and 25 review records
+pass offline verification. `npm test` passes 369 tests; syntax/release checks pass.
+No new browser, release, deployment or product integration change is claimed.
 
 ## Previous candidates and why they remain deferred
 
@@ -491,6 +576,18 @@ checks against the retained original bundles/dataset. Its archive passes every
 file's manifest readback and configured-secret scanning; no earlier archive was
 rewritten or evidence deleted.
 
+The native-large trial is retained in `artifacts/embedding-large-full500-v1/`
+(frozen plan, probe, 500 live query receipts/selections, source/coverage verification,
+all eight coverage reviews, cleanup records and product/SDK snapshot) and
+`artifacts/embedding-large-answers500-v1/` (500 frozen prompts, 1000 actual model
+receipts, official labels, all 25 source-based reviews, input strata and decision).
+Offline entry points are `node artifacts/embedding-large-full500-v1/verify.mjs`,
+`python3 artifacts/embedding-large-answers500-v1/verify.py` and
+`python3 artifacts/embedding-large-answers500-v1/verify-review.py`. Prior baseline
+input/answer bundles and the licensed dataset remain dependencies. Both archives
+pass complete manifest readback and configured-secret scanning, including
+decompressed receipts. Full run scripts/data remain ignored, not permanent CI fixtures.
+
 All archives below are **local-only** under the retained worktree's `artifacts/archive/`;
 they are not uploaded or available from a fresh clone. Reproduction requires these
 bundles and the retained licensed dataset/input/query dependencies identified by
@@ -525,3 +622,5 @@ verified retained copy. Older original archives remain immutable.
 | `ranked-depth200-answers500-v1.tar.gz` | `71088cf776717fa53e80ac1ff4dbdbb007a78aed419c504c30f5f9b1047a8a41` |
 | `sol-judge-audit1000-v1.tar.gz` | `76688b7fe665f473e18690778b59190462acfffa77adcf4ec4f191cd44089e4a` |
 | `query1-errors31-v1.tar.gz` | `91195674a65ed93fdc3eec419665e9c1fde9cc8ad8c6b0ac8decf2cac320062f` |
+| `embedding-large-full500-v1.tar.gz` | `0a823a8e71683970f6a2e9e852aaa854e34b16ed46df45ee7ac27f14b76c86ca` |
+| `embedding-large-answers500-v1.tar.gz` | `4050546035a4fe30f08733d3bb52062d82c0a62ecb59a3f36675af814d190629` |
