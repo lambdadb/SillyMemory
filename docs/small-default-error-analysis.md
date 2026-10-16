@@ -1,5 +1,114 @@
 # Small-default error analysis
 
+## Current guidance: all 29 original No cases (2026-10-17)
+
+**Decision: retain the current policy and original 471/500 (94.2%) score.**
+Reviewing every No in the [adopted guidance / actual-budget run](query1-retrieval-quality.md#supported-answer-generation-guidance-2026-10-17)
+does not identify a new missing-fact or delivery-only loss that justifies another
+depth/budget/model sweep. The actionable follow-up is narrower: source use,
+provenance and appropriate uncertainty in generated answers. This audit adds
+**zero API calls**, no runtime change and no replacement labels. It is part of the
+same quality workstream, not a separate experiment/PR milestone.
+
+This is the **new guidance, actual 4096-budget** cohort, not the older original-guidance
+run that also scored 471, nor the historical 463/500 cohort below. Settings remain
+managed Small, Query1, English Bayesian hybrid, k200, native Jev 1.13.0 candidate200,
+final50, ranked admission, compact `sent` headers and recent-five/pair retention.
+Generation is Sol low; judging is the unchanged original task-specific
+GPT-4o-2024-08-06 formatter. Eleven model inputs in the final500 were reused only
+because they were byte-identical before judging; `a2f3aa27` is the one reused No.
+
+### Primary dispositions
+
+Each question has exactly one primary category. Secondary risks overlap; these
+are qualitative observations after seeing answers and labels, not independent
+human adjudications or controlled causal estimates.
+
+| Primary disposition | Cases | Meaning |
+| --- | ---: | --- |
+| Necessary fact absent from returned final50 | **0 identified** | No new concrete missing operand/dependency was established in this 29-case review. This does not prove every unmarked fact was retrieved. |
+| Necessary returned fact lost only during delivery | **0 identified** | No necessary-fact loss caused solely by the 4096 allocation was established here. This does not prove the budget is sufficient for every question. |
+| Available-evidence response/provenance/alignment risk | **4** | Known information can be used more appropriately; some qualified estimates or clarifications are reasonable in conversation despite failing the rubric. |
+| Question/source/reference interpretation or chronology uncertainty | **20** | Counting units, date windows, repeated events, qualifiers, source inconsistencies and state interpretation limit the meaning of the original No. These are not 20 certified reference errors or 20 certified correct model answers. |
+| Reference value or personalization elements present, but judge says No | **5** | Three answers explicitly contain 21/12/30 days; one gives the reference 19-day report interval with a qualification; one includes the requested stew/yogurt personalization. These are not five universally correct answers. |
+| Total original No | **29** | Original score remains **471/500**. |
+
+Separately, **28 cases have all 58 annotated source-message bodies completely
+returned and completely delivered**. One abstention case has no marked positive
+source. This is whole-body annotation coverage, **not necessary-fact recall**. The
+review also checks surrounding/unmarked dependencies: 91 source witnesses in total,
+including Target context, an additional fundraiser, sister/cousin weddings,
+assistant fare estimates and research-conference details. Their roles, source
+hashes, returned ranks and actual delivered excerpts are retained. Source indices
+below are zero-based; rendered prompt message numbers are one higher. Ranks refer
+to the actual returned final50, not the hidden candidate200 set.
+
+### Four response risks worth separating from search quality
+
+| Case | Source and actual answer | Interpretation |
+| --- | --- | --- |
+| `gpt4_59149c78`: art-event venue | User281 names the Metropolitan Museum of Art and a visit on January 15; rank3, fully delivered. The answer asks whether the user means MoMA or a farm retreat, omitting the Metropolitan. | Concrete omission of an available relevant candidate. January 15 is 17 days before the February 1 question, so “two weeks” is approximate; a better response can mention that candidate and qualify the date rather than omit it. |
+| `a96c20ee_abs`: undergraduate poster | User177 describes a thesis poster at a first conference; user517 names Harvard as the first conference. Both are delivered. The answer suggests Harvard with a caveat. | The requested undergraduate-course project is not established. Joining related records does not establish the question's project/role qualifier. |
+| `09ba9854_abs`: airport savings | The answer computes savings from assistant329's estimated bus/taxi fares and flags user52's conflicting $60 taxi quote. Both are delivered; assistant53's earlier fare estimates are delivered too. | The answer labels estimates, so this is not an unqualified fabricated actual fare. Still, prior assistant estimates cannot establish the user's confirmed cost; the official abstention rubric expects that distinction. |
+| `09d032c9`: phone battery | User294's owned power bank is delivered at rank15. The answer acknowledges it but primarily diagnoses battery drain. | Ownership is remembered; the response does not develop advice around using the power bank as the personalization rubric expects. General diagnostic advice remains useful. |
+
+These are four **risks/alignment boundaries**, not four demonstrated implementation
+bugs. Existing guidance already addresses supported answers and event/role matching.
+Do not add another sentence for every failure, discard all assistant turns, or
+force a named benchmark answer. If another intervention is proposed, first state
+which distinction it improves and freeze a separate confirmation cohort including
+correct-answer and legitimate-clarification controls. Do not launch another 500
+merely to improve this consumed cohort's score.
+
+### Other 25 cases
+
+| Case | Primary observation |
+| --- | --- |
+| `51a45a95`: coupon store | Target is plausible from delivered surrounding Cartwheel/Target discussion, but the redemption statement itself names no store; the answer withholds confirmation. |
+| `ec81a493`: limited album | “500 copies” can modify the signed poster or the album; answer and reference choose different referents. |
+| `0a995998`: clothes taken out | Two distinct garments versus three accounts/actions; two sources describe the same February 5 boot exchange. |
+| `3a704032`: plants | Three recent plants, but the snake plant received “last month” is not securely inside the rolling last 30 days. |
+| `dd2973ad`: bedtime before appointment | Appointment and bedtime relative dates resolve to different weeks; the answer does not join them. |
+| `gpt4_2f8be40d`: wedding count | Gold three omits an additional sister-wedding mention; cousin August/last-month accounts and repeated names complicate event deduplication/year scope. |
+| `88432d0a`: baking count | Repeated Tuesday/Thursday/Saturday reports map to different weeks and contain inconsistent first-time wording. Gold four is not uniquely entailed. Secondary answer defect: says seven, then revises to six. |
+| `7024f17c`: exercise time | May 20 jog lies outside last week relative to May 30; the older yoga routine does not fix last-week hours. |
+| `gpt4_2ba83207`: grocery spending | Thrive's $150 was “last month” (April), while the question says “past month” ending May 30; answer chooses Walmart. A weekday phrase also conflicts with its session date. |
+| `9d25d4e0`: jewelry count | Four individual pieces versus three acquisitions: earrings are a pair. The answer explicitly gives both interpretations. |
+| `d851d5ba`: charity total | An additional delivered user report of helping organize a concert that raised over $5000 is absent from the $3750 reference total. Personal versus group credit also matters. |
+| `75832dbd`: publications | Answer includes medical imaging but also robotics/RL, supported by a delivered application-style passage. Reference assumes healthcare-only interest. Persona attribution and exclusive preference scope remain uncertain; bibliography accuracy is not adjudicated. |
+| `caf03d32`: slow cooker | Answer explicitly uses remembered beef-stew success and yogurt interest, yet gets No. Those rubric elements are present; culinary correctness is outside this audit. |
+| `51c32626`: paper submission | February 1 is a general conference deadline, not a confirmed personal submission day. |
+| `7405e8b1`: first-order discount | HelloFresh 40% is explicitly a first order; Uber Eats 20% has no first-order qualifier. |
+| `9a707b81`: class-to-cake interval | Answer gives the reference **21 days**, then separates it from **26 days** as of the question date; raw original judge returns No. |
+| `gpt4_4fc4f797`: suspension feedback-to-test interval | Reference treats a feedback report date and a planned future test as actual event dates. The answer withholds that inferred completed interval. |
+| `370a8ff4`: flu-to-jog interval | Source dates January 19→April 10 give **81 days / 11 weeks 4 days**, unlike reference 15 weeks. Both dated sources are delivered. |
+| `eac54adc`: website-to-contract | Answer gives reference **19 days** between reports, qualified because “just launched” does not fix the actual launch day; raw judge returns No. |
+| `gpt4_7bc6cf22`: New Yorker | Answer directly says **12 days ago**, matching reference 12/13 and March 20→April 1; raw judge request includes that answer and returns No. |
+| `71017277`: jewelry giver | Aunt is recalled, but the source object is a chandelier, not the question's jewelry. |
+| `0bc8ad93`: museum companion | Source does not specify companions; reference No treats absence of mention as proof of absence. |
+| `08f4fc43`: church interval | Answer explicitly gives reference **30 days** between January 2 and February 1; the raw original judge returns No. Source holiday/calendar correctness is not externally checked. |
+| `a2f3aa27`: Instagram count | Answer preserves earlier confirmed 1250 versus later unchecked estimate near 1300; reference treats the estimate as the count. |
+| `07741c45`: sneakers | Clear earlier under-bed storage versus awkward later closet/rack wording and assistant plan paraphrases. Answer may underweight the later state, but a completed move is not unambiguous. |
+
+### Retained evidence and limits
+
+`artifacts/guidance-default-errors29-v1/` retains the frozen plan, all 500 case/receipt
+bindings, 29 full dossiers, manual dispositions, source witnesses and independent
+offline verifier. Verification rechecks **all 500 actual generation/judge request
+pairs**, original task-specific judge formatting and raw labels, exact final-context
+construction, all 29 source mappings and current runtime hashes. Arithmetic checks
+confirm 21/19/12/30/81/17-day differences; arithmetic does not establish that a report
+time is an event time. No source result, original answer, label or archive was changed.
+
+The new archive is `artifacts/archive/guidance-default-errors29-v1.tar.gz`; its
+checksum is in the [parent evidence table](query1-retrieval-quality.md#evidence-and-reproduction).
+It is local-only and unavailable in a fresh clone, as are its required
+`generation-guidance-paired500-v1` and `small-rerank100-200-k200-sent500-v1` bundles
+and the canonical dataset locked in `plan.json`. Full prompts remain ignored.
+The verifier validates recorded inputs, not a new live integration run. No new
+SillyTavern/browser/provider test was performed for this documentation-only audit.
+No adjusted accuracy or “all remaining errors are judge errors” claim is warranted.
+
 ## Decision and scope (2026-10-16)
 
 Keep managed Small and the current retrieval/budget policy. Review all **37 original

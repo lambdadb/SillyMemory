@@ -10,6 +10,13 @@ original-guidance run also scored 471: preserve both records rather than claimin
 a deterministic gain. Contextual helpfulness improves, with disclosed response risks;
 all 500 candidate allocations fit 4096 and actual-host delivery checks pass.
 
+The [latest 29-No audit](small-default-error-analysis.md#current-guidance-all-29-original-no-cases-2026-10-17)
+identifies four available-evidence response risks, 20 source/target uncertainties
+and five answers containing reference values or personalization elements despite
+No labels. No new necessary-fact search or delivery-only gap was established in
+that subset. Keep the original 471/500 and defer another depth/budget/model sweep;
+this offline audit makes no runtime change or new API call.
+
 Adopt retrieval-order admission using the final rendered memory size and compact
 `sent` headers with one budgeted explanation. Keep Query1, original per-message
 chunks, managed embeddings, Bayesian English, Jev 1.13.0, final50,
@@ -49,7 +56,7 @@ uncertain 0.4-percentage-point answer advantage does not justify its higher
 embedding cost as the default. No runtime change is needed: Small is already used.
 The historical Large 470/500 is retained below, not the current paired estimate.
 
-The subsequent [Small-default error analysis](small-default-error-analysis.md)
+The historical [Small-default error analysis](small-default-error-analysis.md#decision-and-scope-2026-10-16)
 reviews all 37 original failures: 5 returned fact/dependency gaps, 6 available-evidence
 response choices, 22 source/target uncertainties and 4 reference-value rejections by
 the judge; no necessary-fact loss caused only by delivery was identified in that
@@ -2580,3 +2587,4 @@ verified retained copy. Older original archives remain immutable.
 | `small-rerank100-200-k200-sent500-v1.tar.gz` | `dd18be5cc97441e835d040e42e9f913fb89c17cb659e482431f4c5a0a1363791` |
 | `judge-minimal-clarification500-v1.tar.gz` | `8e37411b62645340d83594c4deacd5a848be1a632bbbd391f41fc5e00ada346c` |
 | `generation-guidance-paired500-v1.tar.gz` | `d58ee5cbd4400e62727ca0ad99f4ccb90cb22a3a779013d8956d0942ba6fbe7a` |
+| `guidance-default-errors29-v1.tar.gz` | `16dfd2db8af2e33ce52088b80e44ccd4576013758198cfa01717f1c95057cc6e` |
