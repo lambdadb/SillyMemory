@@ -61,6 +61,9 @@ evaluation reference. Same-input Luna-default generation scores 450/500 versus t
 retained 465 control; Sol-medium scores 463 versus 465. Neither establishes a reason
 to change that reference. Supplemental Luna judging and Mem0 prompts remain audits,
 not replacements for the original labels or judging protocol.
+The [minimal-prompt audit](#minimal-judge-clarification-audit-2026-10-17) also retains
+the original protocol: its higher acceptance count includes unresolved rubric and
+abstention boundaries, so it does not establish better judging or product quality.
 
 Reject preceding-message contextual retrievalText. Adopt the depth200 profile
 with the exact pinned dev SDK in this work branch. Defer
@@ -241,6 +244,90 @@ Producers, raw requests/replies, reviews and locks remain ignored under
 listed below. Reproduction also needs the original matched-retrieval archive and
 canonical dataset recorded in its plan; they are not fresh-clone CI dependencies.
 The earlier immutable archives, scores and decisions are preserved.
+
+## Minimal judge clarification audit (2026-10-17)
+
+**Decision: retain the original task-specific judge and its recorded 471/500
+(94.2%).** Test one generic clarification as a supplemental audit, not a new
+product score. Some residual failures reject defensibly equivalent answers, but others involve missing facts, incomplete answers, ambiguous targets
+or source/reference conflicts that a judge without the source cannot resolve.
+
+Freeze the same 500 candidate200 answers from the preceding comparison. Keep
+GPT-4o-2024-08-06, temperature 0, max_tokens 10 and the original task-specific
+formatter/output instructions. Insert only these three sentences immediately before
+the first `Question:` section:
+
+> Do not reject a correct requested answer merely for a non-contradictory caveat or follow-up question. For recall questions, distinguish the recalled historical statement from a clearly labeled present-day correction. Merely mentioning the reference while rejecting its applicability, or giving an incompatible answer to the same question, is not sufficient for a yes.
+
+Run 12 synthetic positive/negative controls with both prompts first; both pass
+12/12, including wrong values, omitted components, rejected reference mentions,
+current-state contradictions, unsupported abstention answers and clarification-only
+replies under an explicit recommendation requirement. Then freshly judge all 500
+fixed answers with each prompt, interleaving the two arms and alternating the first
+arm by frozen question order. Do not selectively rejudge failures, alter references
+or regenerate answers. Evaluate exactly one candidate and stop after semantic review.
+
+| Judging protocol on the same 500 answers | Accepted | Status |
+| --- | ---: | --- |
+| Historical original prompt | **471 (94.2%)** | Preserved primary record |
+| Fresh original prompt control | 469 (93.8%) | Measures repeat variation |
+| Fresh prompt with three-sentence clarification | 476 (95.2%) | Supplemental, not adopted |
+
+The fresh paired comparison has **8 No-to-Yes and 1 Yes-to-No** transitions.
+The unchanged original prompt itself changes four historical labels: one gain and
+three losses. Review all nine prompt transitions and the one additional
+historical-only transition; do not attribute that last change to the amendment.
+
+- **Four defensible equivalence recoveries:** a historical three-month duration
+  with nine days of subsequent elapsed time; an explicit reference-matching
+  12-day answer; the exact recalled restaurant name with a separately labeled
+  location correction; and an explicitly recalled prior ratio with a separately
+  labeled present-day correction. The last concerns historical recall, not medical
+  adjudication. The 12-day answer was already accepted historically, illustrating
+  repeat variation as well as the new pair's reference-equivalence rejection.
+- **Two uncertain-target gains:** age **32 or 33** versus reference 33, and an
+  answer acknowledging a missing Google start date while separately calculating
+  time before NovaTech. Both were already accepted historically. Their new Yes
+  labels are not proof of improved judging.
+- **Two rubric/abstention boundary risks:** a response recalls French/Spanish
+  preferences but only asks which city, without recommending an event; another
+  calculates conditional airport savings from earlier estimates and asks about a
+  conflicting fare, while the reference says the bus fare is missing. The original
+  preference rubric permits partial personalization, so the first is debatable,
+  not independently adjudicated false. Neither new Yes establishes a completed
+  recommendation or a correct recognition of unanswerability. The stricter
+  synthetic controls did not expose these softer real-rubric boundaries.
+- **One stricter current-state judgment:** a response says sneakers are in the
+  closet with a plan for a shoe rack, versus reference current storage on the rack.
+  Yes becomes No. This is defensible under that reference, not a product regression:
+  the answer and retrieval never changed, and the judge does not see the source.
+
+An explicit **30-day** answer against a 30/31-day reference remains No under both
+fresh prompts. The amendment therefore does not consistently eliminate obvious
+reference-equivalence rejections. Do not assume that all 29 historical failures
+are judge errors, substitute acceptance count for independently measured judge
+accuracy, mix whichever arm accepts each answer, or advertise 95.2% as improved
+product performance. No second variant or post-hoc task-specific routing is adopted.
+This consumed English development cohort informed the candidate; there is no
+independent human-labeled judge-validation set or held-out confirmation.
+
+**Resources and verification:** 1,024 actual judge attempts (24 controls plus
+1,000 benchmark judgments), zero errors/retries, maximum concurrency 6 and
+126,929 ms elapsed (about 2m7s), using rate headers without a fixed success delay.
+Actual token usage at the frozen 2026-10-16 rates estimates **$0.6186600**, not an
+invoice. There are **zero new answer calls, LambdaDB requests or remote resources**.
+All 1,024 input/receipt bindings, unchanged original prompt bodies, exact insertion,
+source-answer/archive hashes and unchanged runtime hashes pass offline verification.
+This is live judge-provider evidence only, not a new retrieval/generation/browser run.
+
+The frozen plan, one-off producers, all inputs/receipts, controls, original formatter,
+qualitative reviews, verification and unchanged source bindings are ignored under
+`artifacts/judge-minimal-clarification500-v1/`. Run
+`python3 artifacts/judge-minimal-clarification500-v1/verify.py` and
+`python3 artifacts/judge-minimal-clarification500-v1/review.py` for offline checks.
+Its verified archive is listed below; the prior fixed-k200 answer archive and its
+locked dataset/retrieval dependencies remain necessary. Evidence is local-only,
+not a fresh-clone CI dependency. No original label, archive or product setting is replaced.
 
 ## Selection defect and implementation
 
@@ -2323,3 +2410,4 @@ verified retained copy. Older original archives remain immutable.
 | `small-depth100-200-sent500-v1.tar.gz` | `93255946e574588a899c81056c209a869048a73b249ef3af5c3998b7001c6a93` |
 | `depth200-product-adoption-v1.tar.gz` | `cc4a2ead26f80b1b2be381927a1455b26aef636658431e21772e7ff00d782caa` |
 | `small-rerank100-200-k200-sent500-v1.tar.gz` | `dd18be5cc97441e835d040e42e9f913fb89c17cb659e482431f4c5a0a1363791` |
+| `judge-minimal-clarification500-v1.tar.gz` | `8e37411b62645340d83594c4deacd5a848be1a632bbbd391f41fc5e00ada346c` |
