@@ -54,7 +54,7 @@ Bayesian fusion combines managed embedding `knn.queryText` with English-analyzed
 `text` using the same query and `skipSyntax: true`; both legs use the owner/scope
 prefilter, extended with the indexed `long` message-position range below the
 earliest retained recent boundary. The same boundary also limits local accepted documents,
-so an out-of-bound response cannot consume budget or duplicate a retained turn. Vector k=100, managed Typesafe `jev-1.13.0` candidateSize=100, final
+so an out-of-bound response cannot consume budget or duplicate a retained turn. Vector k=200, managed Typesafe `jev-1.13.0` candidateSize=200, final
 size=50. Unconfirmed applied metadata, mismatched provider/model identity or failure
 rejects injection. Queries above 8,192 UTF-8 bytes fail explicitly before any service
 call; they are never silently truncated.

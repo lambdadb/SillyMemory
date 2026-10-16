@@ -74,7 +74,7 @@ const remote = createServer({ key: await readFile(key), cert: await readFile(cer
         const filter = knn?.filter || body.query;
         if (body.query.bayesian) {
             assert.deepEqual(body.query.bayesian[1].bool[0], { ...filter, occur: 'filter' });
-            assert.equal(knn.k, 100); assert.equal(body.size, 50); assert.equal(body.rerank.candidateSize, 100);
+            assert.equal(knn.k, 200); assert.equal(body.size, 50); assert.equal(body.rerank.candidateSize, 200);
         }
         const match = /^owner:([a-f0-9]+) AND scope:([a-f0-9]+)(?: AND message:\[0 TO (\d+)\])?$/.exec(filter.queryString?.query || '');
         assert.ok(match, 'owner and scope query filters required');

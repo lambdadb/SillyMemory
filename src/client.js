@@ -201,9 +201,9 @@ export class LambdaClient {
             filter.queryString.query += ` AND message:[0 TO ${before - 1}]`;
         }
         return this.query(collection, { bayesian: [
-            { knn: { field: 'embedding', queryText: text, k: 100, filter } },
+            { knn: { field: 'embedding', queryText: text, k: 200, filter } },
             { bool: [{ ...filter, occur: 'filter' }, { queryString: { query: text, defaultField: 'text', skipSyntax: true }, occur: 'must' }] },
-        ] }, { signal, branch, size: 50, rerank: { provider: 'typesafe', model: 'jev-1.13.0', queryText: text, fields: ['text'], candidateSize: 100, onFailure: 'error' } });
+        ] }, { signal, branch, size: 50, rerank: { provider: 'typesafe', model: 'jev-1.13.0', queryText: text, fields: ['text'], candidateSize: 200, onFailure: 'error' } });
     }
 }
 

@@ -47,11 +47,12 @@ the answer quality of the revised selector.
 
 Current defaults retain five recent eligible native messages (six after an
 adjacent reply), plus recalled memory, memory budget4096 (maximum4096), chunk ceiling800
-codepoints, vector k100/rerank candidate100/final size50, Bayesian English fusion with managed Jev and one
+codepoints, vector k200/rerank candidate200/final size50, Bayesian English fusion with managed Jev and one
 current-question query with independent completed-history indexing; see
 [current policy](conversation-memory-defaults.md). The host's existing one-quarter-context budget cap,
 current-chat validation, cancellation, credential handling and prompt-delivery
-checks are unchanged by this selector change. No new mode, stored format, provider option or SDK change. See the
+checks are unchanged by the selector change. The subsequent depth200 adoption
+pins a supported dev SDK; it adds no stored format, provider option or mode. See the
 [later numeric-default adoption](profile-50-host-validation.md#product-default-adoption);
 the assembly verification below retains its originally measured settings.
 

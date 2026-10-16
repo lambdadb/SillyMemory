@@ -1,23 +1,23 @@
 # Query1 retrieval quality and ranked memory assembly
 
-## Decision (2026-10-16)
+## Decision (2026-10-17)
 
 Adopt retrieval-order admission using the final rendered memory size and compact
 `sent` headers with one budgeted explanation. Keep Query1, original per-message
 chunks, managed embeddings, Bayesian English, Jev 1.13.0, final50,
 4096-token memory and native recent-five/pair retention. These selection/time
 changes are implemented and validated in this work branch; no merge, release or
-deployment is claimed. Product managed-small and stable SDK 0.8.0 defaults remain.
+deployment is claimed. Managed Small remains the embedding default.
 
 The completed **current-policy Small depth comparison** recommends **k200 /
 candidate200** as the next retrieval profile, retaining final50/4096. It restores
 all three clear missing-fact answers and improves source delivery; the paired
 official scores are **466/500 (93.2%) versus 468/500 (93.6%)**. This is a coverage-led
 tradeoff with two recipe-personalization regressions, not proof of general
-superiority from two labels. **Runtime stays at 100/100**: SDK 0.8.0 rejects
-candidate200, so supported SDK integration and product validation remain adoption
-prerequisites. No dev dependency, validation bypass or automatic default promotion
-is included.
+superiority from two labels. With explicit maintainer authorization, the work branch
+now uses **k200/candidate200** and pins SDK **0.8.1-dev.38730896042001**. The
+[product adoption checks](#product-adoption-of-depth200-2026-10-17) verify the
+actual bundled request; no validation bypass, merge or release is implied.
 
 The latest **fresh matched Small/Large comparison** gives **463/500 (92.6%) versus
 465/500 (93.0%)**, using fresh retrieval and fresh Sol-low answers in both arms.
@@ -54,15 +54,79 @@ retained 465 control; Sol-medium scores 463 versus 465. Neither establishes a re
 to change that reference. Supplemental Luna judging and Mem0 prompts remain audits,
 not replacements for the original labels or judging protocol.
 
-Reject preceding-message contextual retrievalText. Keep runtime depth100 pending
-supported integration of the recommended depth200 profile. Defer
-8192-token promotion, external Voyage embedding/reranking and the temporary dev SDK.
+Reject preceding-message contextual retrievalText. Adopt the depth200 profile
+with the exact pinned dev SDK in this work branch. Defer
+8192-token promotion and external Voyage embedding/reranking.
 Their completed tradeoffs and
 historical scores remain documented in the stage-specific sections and immutable
 local archives below. This is one bounded parent quality decision on a consumed
 English development/regression cohort, not independent held-out confirmation or a
 new PR milestone for each diagnostic. The base remains Query1 PR 83's squash commit
 `df95a03d6a38a9837be64c62995fcf9cd9238092`.
+
+## Product adoption of depth200 (2026-10-17)
+
+With explicit maintainer authorization, adopt vector **k200** and native Jev
+**candidateSize200**, keeping **final50**, managed OpenAI Small, Query1, 4096 memory,
+strong branch reads, English Bayesian fusion and recent-five/pair retention.
+No second retrieval, query-rewrite/generation call, criteria tuning, stored format
+or credential behavior is added. This completes the parent decision using the
+coverage, answer regressions and cost boundaries recorded below; it is not a new
+500-question quality run.
+
+The official npm registry's `dev` tag resolves to
+`0.8.1-dev.38730896042001`. Stable **0.8.1 still caps candidateSize at 100**.
+Pin the exact prerelease in package.json/package-lock.json and ship its rebuilt
+134997-byte browser bundle; users installing through Git do not run npm or select
+a dist-tag. Compare the published 0.8.0 ESM source with this dev package: executable
+changes expand rerank candidate/return validation from 100 to 1000; other changed
+files contain terminology comments and SDK version metadata. Transport, ordinary
+upsert/delete, branch/version APIs and dependencies remain equivalent. SDK
+validation remains enabled; the product itself requests only 200 and rejects
+unconfirmed, partial, fallback or over-200 rerank metadata. Switch to a stable SDK
+once it supports this same contract and passes these checks.
+
+Validation and raw receipts are retained under ignored
+`artifacts/depth200-product-adoption-v1/`. The actual browser-to-LambdaDB acceptance
+uses the shipped product client/bundle, 201 synthetic documents (200 owned and one
+foreign), five ordinary upserts, a dedicated branch and complete strong-fetch
+verification. The first search confirms **200 candidates scored, 50 returned**;
+after deleting one owned source, **199 scored, 50 returned** with the deleted source
+absent. Both requests use k200/candidate200, final50, consistentRead:true and the
+same owner/scope/message-boundary filter. A deliberately invalid key returns 401
+without a retry. Both small probe collections are ownership-checked, deleted and
+confirmed absent by 404. No cookie or host CSRF header is forwarded. This is real
+Chromium/direct-CORS/provider transport evidence with synthetic data, separate
+from actual-host tests with emulated LambdaDB and generation below. No new answer
+or judge API calls are needed for integration.
+
+The first recovery run exposed a stale harness assertion requiring only two
+recent messages. Its repair verifies exact native text, roles and order for the
+existing eight-message fixture's documented five/six-message pair boundary;
+retained counts also account for the repeated deletion/addition cycles. Original
+failed receipts/screenshots remain preserved. No runtime retention rule was
+changed to satisfy the test.
+
+- `npm ci`, `npm test`, `npm run check`, `npm run check:release`,
+  `npm run check:sdk` and syntax checks for all maintained scripts/tests pass.
+  **375 unit tests** pass on both Node 24.15.0 and Node 20.12.0
+  (`npx --yes --package=node@20.12.0 node --test tests/*.test.js`).
+- `ST_SOURCE=/tmp/sillymemory-st-depth200 ST_TEST_PORT=18148
+  SM_ARTIFACT_TAG=depth200-product-v3 npm run test:recovery` passes **215 checks**,
+  including **24 cycles and two real host kills**; zero page errors and zero
+  emulated collections remain. The host is pinned SillyTavern 1.19.0 and Chromium
+  153.0.8010.12; LambdaDB is emulated in this host test.
+- `ST_SOURCE=/tmp/sillymemory-st-depth200 ST_DELIVERY_PORT=18150 node
+  scripts/prompt-delivery-smoke.mjs artifacts/depth200-product-adoption-v1/prompt-delivery.json`
+  passes **18 allocation/delivery cases**, overlap, repetition and same-message
+  assembly with local LambdaDB/completion emulators; zero collections remain.
+- `node artifacts/depth200-product-adoption-v1/live.mjs` passes the separately
+  described real LambdaDB/direct-CORS acceptance. No full benchmark rerun,
+  prolonged provider outage test or installed-user compatibility is claimed.
+
+No merge, tag, release, deployment or public-main promotion is claimed. The prior
+breadth-comparison archive and its stable-SDK blocker remain immutable historical
+evidence; this separately authorized integration supersedes that blocker.
 
 ## Selection defect and implementation
 
@@ -1866,9 +1930,9 @@ keeping Query1, final50, current sent/ranked assembly, 4096 memory and recent-fi
 pair retention. Five source-backed changed answers improve, including all three
 clear discovery failures, without another generation model call per user turn.
 Two recipe-personalization regressions and interpretation/judging limits remain.
-Runtime is still 100/100: SDK 0.8.0 rejects candidate200. Supported SDK integration
-and product/host validation are prerequisites; do not bypass validation, install a
-dev dependency or describe this replay as an already shipped default change.
+At completion of this run, runtime was still 100/100: SDK 0.8.0 rejected
+candidate200. The later explicitly authorized [SDK/product adoption](#product-adoption-of-depth200-2026-10-17)
+resolves that prerequisite separately; this replay itself did not change runtime.
 
 Reuse the actual matched product100/rerank200 final50 responses from
 `retrieval-200-full500-v1`. Every pair came from the same source collection. All
@@ -1878,7 +1942,8 @@ Managed OpenAI Small, original 483385 chunks/text/IDs/spans, English Bayesian,
 Query1, strong branch filter, Jev 1.13.0 and default-relevance-v1 remain fixed.
 No LambdaDB reindex, search, rerank request or remote resource is newly created.
 These are cached real search results, not newly measured retrieval performance.
-The original producer used an isolated dev SDK; product 0.8.0 stays unchanged.
+The original producer used an isolated dev SDK; product 0.8.0 was unchanged during
+this comparison.
 
 Apply the **current common sent policy** and 4096 ranked admission independently
 to both arms. Preserve the native prefix/recent suffix and current natural memory
@@ -1990,7 +2055,7 @@ log, producers, costs and verifiers are ignored under
 archive below. The licensed canonical dataset and original matched retrieval
 archive remain explicit local dependencies; no original evidence is overwritten.
 Close this bounded comparison without another provider/depth/budget sweep or a
-source-linking implementation. The next implementation step is supported SDK 200
+source-linking implementation. The next implementation step at that point was supported SDK 200
 integration and product validation of this recommended profile.
 
 ## Previous candidates and why they remain deferred
@@ -2142,3 +2207,4 @@ verified retained copy. Older original archives remain immutable.
 | `small-default-error-audit-v1.tar.gz` | `b37a68fcd84ba86ae1d178ddd2701d5e4bbd910161971e80cb31f14fe8f08c85` |
 | `small-retrieval-stage3-v1.tar.gz` | `ed8abb6acd4271b5009ef7583712a21973bf7dbbb755c45a7aed4c9cbbe81c8b` |
 | `small-depth100-200-sent500-v1.tar.gz` | `93255946e574588a899c81056c209a869048a73b249ef3af5c3998b7001c6a93` |
+| `depth200-product-adoption-v1.tar.gz` | `cc4a2ead26f80b1b2be381927a1455b26aef636658431e21772e7ff00d782caa` |

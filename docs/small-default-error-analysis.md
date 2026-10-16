@@ -13,7 +13,8 @@ below adds search/indexing observations without new generation or judging.
 The subsequent [current-policy Small breadth comparison](query1-retrieval-quality.md#current-policy-small-breadth-comparison-100-versus-200-2026-10-16)
 is complete: 466/500 versus 468/500 with fresh paired answers, and all three clear
 missing-fact answers recover at 200. It recommends depth 200 as the next Small
-profile, pending supported SDK/product integration; runtime remains 100. The 37 No
+profile. The [subsequent SDK/product integration](query1-retrieval-quality.md#product-adoption-of-depth200-2026-10-17)
+now implements it on this work branch with an exact pinned dev SDK. The 37 No
 cases classified here belong to the earlier 463/500 run and are not the failure set
 of that newer comparison. Earlier archived diagnoses remain unchanged.
 
@@ -225,11 +226,11 @@ rejudging, suppressing corrections or inventing a revised headline score.
 
 ## Next product decision
 
-1. Runtime remains Small, Query1, k100/candidate100/final50, 4096 memory and recent-
-   five/pair retention. The completed paired breadth comparison now recommends
-   k200/candidate200 as the next profile; SDK 0.8.0's candidate100 validation limit
-   requires supported integration before product adoption. No embedding/budget
-   change or automatic promotion is included.
+1. Adopt Small, Query1, k200/candidate200/final50, 4096 memory and recent-
+   five/pair retention in the work branch. The completed paired breadth comparison
+   supports this coverage-led decision; an explicitly authorized, exact pinned dev
+   SDK removes the stable SDK candidate100 limit. No embedding/budget change or
+   merge/release is implied.
 2. The **helmet price, sculpting purchase and Mike's date** are now returned,
    delivered and correctly answered in the 200 arm of that comparison. Use this
    direct candidate-breadth result before a more complex source-linking design.
@@ -241,9 +242,10 @@ rejudging, suppressing corrections or inventing a revised headline score.
    though every one represented a missing fact.
 
 This is the completed diagnosis for the existing parent quality decision, not a
-new experiment or PR milestone. No runtime setting, harness, dependency or judge
-changes accompany it. The subsequent live stage diagnosis above has completed;
-further paid intervention/confirmation is not part of the current scope.
+new experiment or PR milestone. The original diagnosis changed no runtime setting, harness, dependency or judge.
+The subsequent breadth comparison and explicitly authorized product adoption are
+recorded separately in the parent report; their current k200/candidate200 default
+does not rewrite this original 37-case cohort.
 
 ## Verification and retained evidence
 
