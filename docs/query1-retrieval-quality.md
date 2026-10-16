@@ -1426,6 +1426,93 @@ The original reranker archive remains a retained source dependency. No historica
 evidence or labels were removed. This is the same consumed development cohort,
 not an independent held-out evaluation or a repeated-sampling stability study.
 
+## Mem0 prompt comparison: scoring-policy sensitivity only
+
+At the user's request, compare the complete Mem0 unified judge prompt without
+adopting it as a default. Reuse the exact same 500 saved Large + native Jev answers,
+questions/references and frozen order from the preceding Luna audit. Keep
+`gpt-6-luna`, reasoning `medium`, `max_completion_tokens: 4096`, no temperature,
+no tools or additional system instruction. Only the judge prompt and its requested
+reply format change. Preserve the original GPT-4o and original-prompt Luna labels;
+there is no new retrieval, reranking, generation or remote storage.
+
+Freeze [Mem0 prompts.py at revision 4b61c5d](https://github.com/mem0ai/memory-benchmarks/blob/4b61c5d31b9c668a12b4f5e78064248a02c82d2b/benchmarks/longmemeval/prompts.py#L265).
+Its unified prompt explicitly tolerates qualified numbers, contextual preferences
+and partial personalization, and leans toward acceptance under uncertainty. It also
+requests a visible analysis block before the verdict. Use its exact formatting;
+parse only the final yes/no outside that block, never an occurrence inside it.
+Eight small parser checks and an independent Python verifier check this contract.
+This compares one judging protocol, not the Mem0 product, answer-generation
+prompt, model choices or a complete reproduction of Mem0 benchmark results.
+
+| Protocol on the same 500 answers | Accepted |
+| --- | ---: |
+| Retained original GPT-4o | 465/500 (93.0%) |
+| Original prompt + Luna medium | 461/500 (92.2%) |
+| Mem0 prompt + Luna medium | **464/500 (92.8%)** |
+
+Relative to original-prompt Luna, **13 no-to-yes and 10 yes-to-no** changes leave
+477/500 agreement (95.4%). Against GPT-4o, there are eight gains and nine losses,
+483/500 agreement (96.6%). The union is **29 reviewed cases**; no label is replaced.
+
+| Question type | Original-prompt Luna | Mem0-prompt Luna |
+| --- | ---: | ---: |
+| Preference | 19/30 | **29/30** |
+| Temporal reasoning | 128/133 | 125/133 |
+| Knowledge update | 75/78 | 74/78 |
+| Multi-session | 114/133 | 114/133 |
+| Assistant recall | 56/56 | 53/56 |
+| User recall | 69/70 | 69/70 |
+
+The ten extra preference acceptances include clear iPhone/documentary/dresser
+personalization, but also clarification-only local-events and slow-cooker answers
+that have not yet provided the requested recommendation or remedy. Some accepted
+answers contain secondary non-preferred activities or less specific personalization.
+Conversely, answers that state the reference and then qualify/correct it can still
+be rejected: mortgage amount, potential versus actual audience reach, chapter or
+dish classification, and inconsistent source dates. Merely adding permissive rules
+does not make the model's actual judgments a monotonic superset of prior results.
+Source review of all 29 cases is qualitative coding-agent review, not independent
+human adjudication or a substitute reference set.
+
+One concrete judge-side clock error is `b46e15ed`. The saved answer says about two
+months, with charity events on February 14–15, 2023; the benchmark question date
+is April 18, 2023 and the reference is two. The actual new judge instead rejects
+the answer because those event dates are more than three years before the current
+date. Mem0's pinned `get_judge_prompt` accepts a `question_date` argument but never
+inserts it into the prompt. The unchanged source dates and answer calculation are
+not the failure here. A mechanical scan of all 500 judge outputs finds this one
+explicit current-clock reference; it is not a complete semantic error-rate study.
+No date instruction or prompt fix is added retrospectively to this comparison.
+
+**Disposition: comparison complete; no default change**, as requested. Net +3
+accepted answers is judge sensitivity, not a memory-quality improvement or proof
+that this rubric is more accurate. One sample per protocol and a retained,
+non-simultaneous control do not isolate model/time variability. The cohort remains
+consumed development data, not held-out confirmation. No additional prompt or
+reasoning-effort sweep follows automatically.
+
+All **500 actual calls** finish with valid verdicts, **zero retries/errors**, in
+**197,117 ms**, with at most six requests and server-header admission; successful
+calls have no fixed delay. Provider median/p95 are **2,167.5/3,617 ms**. Reported
+usage is **791,114 input + 71,350 completion tokens**, including 51,805 reasoning
+tokens; zero cache reads and 789,614 cache-write tokens are reported. Applying
+[Luna's standard list rates](https://developers.openai.com/api/docs/models/gpt-6-luna)
+and [cache accounting](https://developers.openai.com/api/docs/guides/prompt-caching)
+on 2026-10-16 gives approximately **$0.134527**, before account-specific adjustments,
+versus $0.017279 for the previous Luna-only grading pass. This is judging overhead,
+not user-generation latency or product operating cost.
+
+All 500 pinned formatter/answer/label/model/options/receipt bindings pass independent
+verification; prior Luna bindings and its immutable archive are also rechecked.
+`npm test` passes 373 tests; syntax, release and SDK checks pass on Node 24.15.0.
+No new browser/host run, Node 20 CI, PR, push, deployment or product default change
+is claimed. Exact prompts, upstream Apache license, inputs, responses, all 29 source
+reviews and cost/clock findings remain ignored under
+`artifacts/luna-mem0-judge-large-jev500-v1`, with a local-only archive indexed below.
+Original source/answer archives and the licensed dataset remain explicit retained
+local dependencies; no historical evidence is removed.
+
 ## Previous candidates and why they remain deferred
 
 | Candidate / observation | Completed evidence | Decision |
@@ -1568,3 +1655,4 @@ verified retained copy. Older original archives remain immutable.
 | `rerank-voyage-large500-blocked-v1.tar.gz` | `c04202668146d519dbec4283ff418050b7afd7816092990039f2466fe03c0fc1` |
 | `rerank-voyage-large500-completed-v1.tar.gz` | `d339cea17fbdb61bcdb2d419887ca8184a4f0599e116474bbced08a36f8ea345` |
 | `luna-judge-large-jev500-v1.tar.gz` | `12213a97e4d3a1b40a60312fac820248a9beb1d867757ce311fdfa4e193b9156` |
+| `luna-mem0-judge-large-jev500-v1.tar.gz` | `2d47edffa73e83a6f283bf5425a724cdfb4e8868bda267fca15d96cc0011d426` |
