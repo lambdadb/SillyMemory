@@ -44,7 +44,9 @@ retained full positions. Query and memory limits remain unchanged; queries above
 Native replies and streaming are preserved, including user-selected response
 formats. There is no reply schema, request-status classification, pending-span
 accumulation, stream hiding or decoding/recovery adapter. Natural system guidance
-asks for clarification when intent/referents are ambiguous and explains missing
+answers supported parts first, builds recommendations on relevant experiences
+and preferences, and distinguishes uncertain event/role matches. It asks for
+clarification when intent/referents are ambiguous and explains missing
 or conflicting evidence without inventing facts. It shares the excerpt budget and
 Chat Completion delivery checks. This instruction is not a factual correctness
 or model-compliance guarantee. A clarification dialogue longer than the recent

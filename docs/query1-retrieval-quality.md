@@ -2,6 +2,14 @@
 
 ## Decision (2026-10-17)
 
+The completed [generation-guidance comparison](#supported-answer-generation-guidance-2026-10-17)
+adopts two brief instructions for supported answers and event/role matching in this
+work branch. Actual-budget results are **462/500 with freshly rerun original guidance
+versus 471/500 with the candidate**, using the unchanged original judge. The earlier
+original-guidance run also scored 471: preserve both records rather than claiming
+a deterministic gain. Contextual helpfulness improves, with disclosed response risks;
+all 500 candidate allocations fit 4096 and actual-host delivery checks pass.
+
 Adopt retrieval-order admission using the final rendered memory size and compact
 `sent` headers with one budgeted explanation. Keep Query1, original per-message
 chunks, managed embeddings, Bayesian English, Jev 1.13.0, final50,
@@ -244,6 +252,166 @@ Producers, raw requests/replies, reviews and locks remain ignored under
 listed below. Reproduction also needs the original matched-retrieval archive and
 canonical dataset recorded in its plan; they are not fresh-clone CI dependencies.
 The earlier immutable archives, scores and decisions are preserved.
+
+## Supported-answer generation guidance (2026-10-17)
+
+**Decision: adopt the two-sentence guidance candidate in this work branch.** Answer
+supported recommendation parts before asking for missing details, and distinguish
+unestablished event/role matches. Keep Query1, managed Small, k200, native Jev
+candidate200/final50, original chunks, recent-five/pair retention, the real
+4,096-token memory budget, native streaming/formats and the original task-specific
+GPT-4o judge. There is no extra query, rewrite, extraction or generation phase.
+The grounds are observed contextual helpfulness and clearer premise handling,
+not a claim that every higher judge label is a corrected memory failure.
+
+Insert exactly these two sentences after the existing statement that recalled
+excerpts are quoted context, before the unchanged ambiguity/missing-evidence rules:
+
+> For recommendations, build on relevant supported experiences and preferences; answer the parts that available context supports before asking only for missing details. Do not merge different events or roles based only on similar wording; if the requested event or role is not established, distinguish it from what the context does establish.
+
+Freeze the candidate before calls and test all 500 LongMemEval-S questions, not
+only the 29 historical failures. The four discovery targets are slow-cooker
+personalization, the successful cake, an unestablished undergraduate-poster event
+and the Manager/Senior Engineer distinction. All remaining questions are transfer
+and regression controls on a consumed English cohort, not independent held-out
+confirmation. The comparison follows the scoped-objective and comparison approach
+in [OpenAI's evaluation guidance](https://developers.openai.com/api/docs/guides/evaluation-best-practices);
+no new evaluation platform or judge rubric is introduced.
+
+First, preserve the exact same selected memory, native recent/system/character
+messages, question, Sol-low options and original judge/reference in both arms.
+Generate and judge all 1,000 answers afresh, alternating first arm by frozen order
+at maximum concurrency six. Each pair changes only the existing guidance system
+message. No LambdaDB request, corpus reimport, collection or other remote resource
+is needed: both arms reuse the same retained native candidate200/final50 results.
+
+| Same 500 questions, original judging protocol | Accepted | Interpretation |
+| --- | ---: | --- |
+| Historical original-guidance run | 471 (94.2%) | Preserved historical record |
+| Fresh original-guidance control | **462 (92.4%)** | Current paired baseline |
+| New guidance, selected memory held fixed | 474 (94.8%) | Isolates guidance; not a budget-valid product profile |
+| New guidance, actual 4,096-token admission | **471 (94.2%)** | Evaluated product candidate |
+
+The unchanged original guidance itself changes 15 historical labels: three gains
+and twelve losses. The initial paired intervention has 17 gains and five losses;
+83 answers are byte-identical, with no conflicting labels for identical answer
+inputs. The historical 471 and new product 471 happen to match; they are different
+runs and do not demonstrate deterministic equality or a general accuracy gain.
+
+**Account for the instruction's own budget.** It adds exactly **57 tokens** under
+the pinned host-budget tokenizer. Holding the old memory fixed puts 489/500 inputs
+above the product's memory allocation. Identify that effect during the initial
+run, freeze a separate adoption gate, and leave the running comparison unchanged.
+Then reselect once from the same final50 under the actual unchanged 4,096 limit
+with the same candidate. Generate/judge the 489 changed model inputs; reuse the
+11 byte-identical initial candidate inputs solely on equality, before looking at
+correctness. This sequential adoption check uses the initial fresh baseline, not
+a second contemporaneous paired control. No second prompt variant is tried.
+
+Actual admission removes 524 previously selected passages and adds 305 later
+passages across the cohort; all 500 allocations fit. Complete indexed annotated
+message bodies delivered decrease **881→878 /894**, with three complete→missing
+transitions and no annotation-completeness gains. Necessary information remains
+in other delivered sources for all three inspected witnesses: French/Spanish
+conversation interests, external-drive/central-backup storage needs, and iPhone
+13 Pro identity. All three product answers remain accepted. This is structural
+annotation coverage, not an all-case necessary-fact recall claim; it does not make
+lost direct evidence free or prove that no other fact can be affected.
+
+**What actually improves:**
+
+- The actual-budget cake answer explicitly recalls the successful lemon-poppyseed
+  bake and offers it as a dependable option. The fixed-context candidate had a
+  Yes label without that explicit recall, so it was not credited with solving
+  the intended discovery failure. The supporting assistant acknowledgement is
+  delivered; do not pretend the excluded direct user statement was injected.
+- Cultural-event and commute answers offer supported French/Spanish or audio/history
+  options before requesting missing location/transport details, rather than only
+  asking a question. They do not invent nearby event availability or a current
+  transport mode. Preference labels are **24/30→27/30** at the actual budget.
+- The slow-cooker answer uses the delivered stew success and yogurt interest,
+  offers advice, and then asks what failed. It remains No under the actual-budget
+  official judge, despite that observed contextual-helpfulness gain. This is not
+  an independent food-safety validation of the suggestions.
+- The role answer identifies the confirmed Senior Software Engineer role and
+  asks whether that is the Manager role intended, while preserving initial four
+  and later five engineers. This improves explicit premise handling, not count
+  retrieval or proof that a Manager role existed. The undergraduate-poster case
+  remains unsolved: Harvard/first-conference/thesis links still do not establish
+  an undergraduate-course presentation.
+
+Review all **19 baseline-to-product label transitions** (**14 gains, five losses**)
+and all **13 fixed-context-to-product transitions**. Many are not clear fact gains:
+poster versus album copies, last-Thursday scope, age/birthday uncertainty,
+conflicting morning schedules and museum/sculpting timelines remain qualified.
+The product project-count answer even leads with three while admitting only two
+explicit leadership roles; preserve that weakness despite its Yes. Exact-name
+recall with a separate correction changes labels without recovering a new fact.
+
+The five product losses include a more precise poster/album distinction, disputed
+conditional airport savings, and an explicit reference-matching **12-day** answer
+incorrectly rejected by the judge. Preserve those raw labels. Two unresolved
+response risks also remain: the art-event clarification omits the Metropolitan
+alternative despite its source still being delivered, and the sneaker answer
+underweights later closet context while treating the rack as an unconfirmed plan.
+These are disclosed tradeoffs, not newly missing retrieval. Do not selectively
+rejudge them, erase regressions, or claim that the amendment solves chronology,
+all ambiguous questions or all historical failures.
+
+**Resources:** the initial 2,000 attempts finish without errors/retries in 647,810 ms;
+the additional 978 finish without errors/retries in 371,583 ms. Total new work is
+**1,489 answer calls plus 1,489 original-judge calls**, estimated **$14.8927298**
+from actual usage at frozen 2026-10-16 rates, not an invoice. Eleven answer/judge
+pairs are reused without a second charge. Initial control generation input is
+2,518,926 tokens; fixed-context candidate 2,547,426; actual-budget candidate
+**2,517,939** across 500. Output grows 30,486→32,303 tokens. Initial generation
+median/p95 is 2,624/6,034 ms versus fixed-context 2,580/6,753; the later 489 fresh
+product generations are 2,768/8,888 ms. These are stage measurements, not host E2E
+or a controlled latency advantage. Warm-cache usage differs materially across
+runs; neither measured list-cost subtotal is a promise of steady-state user cost.
+
+All 1,000 initial input/answer bindings and 500 actual-budget bindings verify,
+including the unchanged official judge, the sole guidance substitution, exact
+model/options, selected source hashes, 11 equal-input reuses and zero new database
+resources. The original runtime hashes are checked before adoption; the runtime
+constant then matches the evaluated candidate exactly and unrelated runtime hashes
+stay unchanged. Producing revision is `b01211aca57714bb659ab043940e6aceb303758d`;
+source snapshots are retained for offline revalidation after later runtime changes.
+
+**Product validation:** `npm test` passes **375/375**; `npm run check`,
+`npm run check:release`, `npm run check:sdk`, changed-script syntax and
+`git diff --check` pass. With pinned SillyTavern 1.19.0/Chromium and local
+LambdaDB/completion emulators, `ST_SOURCE=/tmp/sillymemory-st-depth200
+ST_DELIVERY_PORT=18150 node scripts/prompt-delivery-smoke.mjs
+artifacts/generation-guidance-paired500-v1/product-delivery-v5.json` passes all
+**18 allocation/delivery cases**, overlapping generations, repeated citations and
+same-message assembly, with zero page errors and zero remaining emulated collections.
+Native recent text/roles, streaming, swipe/regenerate, source history, cancellation,
+missing-guidance warnings and saved-key forgetting remain checked. This host test
+makes no paid completion/embedding/rerank requests.
+
+Initial allocation fixtures had hardcoded capacity for the shorter instruction.
+Retain all four failed receipts and adjust only their synthetic sizing: the
+one-excerpt control uses host context 1,792 rather than 1,536; separate instruction
+pressure is 160 repeats; recovery memory allocation 864; guidance-only allocation
+200; repeated-citation context/allocation 2,304/600 (effective 512). The explicit
+warning case also verifies that evicted guidance is disclosed when the user has
+turned off the stop guard; guarded cases still dispatch zero requests. These are
+fixture inputs, not product defaults or relaxed memory/source assertions. In the
+original tiny fixture, zero excerpts was a valid budget outcome. A very small saved
+budget may now fit only guidance or fail preparation; it is not silently increased.
+Failed emulators are closed in `finally`; no external collection was created.
+The evaluated guidance and production limits were not changed to accommodate tests.
+
+One-off producers, original inputs/replies/labels, budget analysis, all transition
+reviews, frozen source and host receipts remain ignored under
+`artifacts/generation-guidance-paired500-v1/`, in the verified local-only archive
+listed below. Offline entry points are `verify.py`, `verify-product.py`,
+`review-initial.py` and `review-product.py` in that bundle. Use the producing
+revision/source snapshots and the retained fixed-k200 answer/retrieval/dataset
+bundles locked in its plan; these are not fresh-clone CI dependencies. No original
+score or archive is overwritten. No merge, main promotion, release or deployment
+is claimed, and no further prompt/model/criteria tuning follows this comparison.
 
 ## Minimal judge clarification audit (2026-10-17)
 
@@ -2411,3 +2579,4 @@ verified retained copy. Older original archives remain immutable.
 | `depth200-product-adoption-v1.tar.gz` | `cc4a2ead26f80b1b2be381927a1455b26aef636658431e21772e7ff00d782caa` |
 | `small-rerank100-200-k200-sent500-v1.tar.gz` | `dd18be5cc97441e835d040e42e9f913fb89c17cb659e482431f4c5a0a1363791` |
 | `judge-minimal-clarification500-v1.tar.gz` | `8e37411b62645340d83594c4deacd5a848be1a632bbbd391f41fc5e00ada346c` |
+| `generation-guidance-paired500-v1.tar.gz` | `d58ee5cbd4400e62727ca0ad99f4ccb90cb22a3a779013d8956d0942ba6fbe7a` |

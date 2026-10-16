@@ -29,26 +29,28 @@ const packingOrder = [...new Map(interleaveHits([primaryRanks.hits, ...packingRa
     .map(hit => [`${hit.message}:${hit.chunk}`, hit])).values()].slice(0, 30);
 let packingQuery, onlyFirst = false;
 
-const base = { enabled: true, context: 1536, output: 256, instructions: 1, recentRepeats: 1, stopOnLoss: true, type: 'normal' };
+// Leave room for one excerpt after current memory guidance; separately sized
+// instruction pressure still tests host eviction and the delivery stop guard.
+const base = { enabled: true, context: 1792, output: 256, instructions: 1, recentRepeats: 1, stopOnLoss: true, type: 'normal' };
 const plan = { version: 2, generationInput: 'recent-five-and-memory',
     host: capacityPlan.host, model: capacityPlan.model, budget: capacityPlan.budget,
     question: capacityPlan.question, character: capacityPlan.character, cases: [
     { ...base, id: 'included' },
     { ...base, id: 'speaker-prefix', names: 2 },
     { ...base, id: 'substring-collision', context: 4096, noHits: true, collision: true, blocked: true },
-    { ...base, id: 'pressure-stopped', instructions: 110, blocked: true },
-    { ...base, id: 'pressure-warning', instructions: 110, stopOnLoss: false },
-    { ...base, id: 'pressure-streaming', instructions: 110, streaming: true, blocked: true },
-    { ...base, id: 'pressure-swipe', instructions: 110, type: 'swipe', blocked: true },
-    { ...base, id: 'pressure-regenerate', instructions: 110, type: 'regenerate', blocked: true },
-    { ...base, id: 'recovered-context', instructions: 110, context: 4096 },
+    { ...base, id: 'pressure-stopped', instructions: 160, blocked: true },
+    { ...base, id: 'pressure-warning', instructions: 160, stopOnLoss: false, guidanceLost: true },
+    { ...base, id: 'pressure-streaming', instructions: 160, streaming: true, blocked: true },
+    { ...base, id: 'pressure-swipe', instructions: 160, type: 'swipe', blocked: true },
+    { ...base, id: 'pressure-regenerate', instructions: 160, type: 'regenerate', blocked: true },
+    { ...base, id: 'recovered-context', instructions: 160, context: 4096, budget: 864 },
     { ...base, id: 'continue', type: 'continue' },
     { ...base, id: 'impersonate', type: 'impersonate' },
     { ...base, id: 'replacement-with-assistant-suffix', type: 'regenerate', context: 4096, earlierAnchor: true },
     { ...base, id: 'no-hits-pressure', recentRepeats: 80, noHits: true, blocked: true },
     { ...base, id: 'no-hits-small', noHits: true },
     { ...base, id: 'history-pressure', recentRepeats: 80, blocked: true },
-    { ...base, id: 'nothing-fits', budget: 150 },
+    { ...base, id: 'nothing-fits', budget: 200 },
     { ...base, id: 'guidance-does-not-fit', budget: 64, blocked: true, preparationFailure: true },
     { ...base, id: 'disabled', enabled: false, recentRepeats: 80 },
 ] };
@@ -292,7 +294,12 @@ try {
             assert.ok((spec.type === 'impersonate' ? observation.draft : observation.answer).endsWith('LOCAL_FIXTURE_OK'));
             if (spec.enabled) {
                 assert.match(observation.delivery, spec.stopOnLoss ? /^Final host prompt:/ : /^Warning:/);
-                assert(sent[0].messages.some(m => m.role === 'system' && m.content.includes(MEMORY_GUIDANCE)), 'Natural memory guidance reaches the completion request, including no hits');
+                const hasGuidance = sent[0].messages.some(m => m.role === 'system' && m.content.includes(MEMORY_GUIDANCE));
+                if (spec.guidanceLost) {
+                    assert.equal(spec.stopOnLoss, false, 'Only explicit warning mode may dispatch without guidance');
+                    assert.equal(hasGuidance, false, 'Pressure fixture evicts the guidance');
+                    assert.match(observation.delivery, /Memory guidance is missing or changed/, 'Missing guidance is disclosed');
+                } else assert(hasGuidance, 'Natural memory guidance reaches the completion request, including no hits');
             }
         }
         if (spec.enabled && sent.length) {
@@ -414,8 +421,8 @@ try {
     console.log('VERIFY repeated-passage-packing');
     await field('enabled').uncheck();
     // Reserve guidance headroom so this source-integrity fixture still exercises
-    // repeated citations; the small-context cases above retain their old limits.
-    for (const [name, value] of [['budget', 500]]) {
+    // repeated citations; the small-context cases above independently test eviction.
+    for (const [name, value] of [['budget', 600]]) {
         await field(name).fill(String(value)); await field(name).dispatchEvent('change');
     }
     const packingChat = hostSource(packingFixture.item);
@@ -425,7 +432,7 @@ try {
     ] }, 'normal')[0];
     await page.evaluate(async chat => {
         const c = SillyTavern.getContext(), { oai_settings } = await import('/scripts/openai.js');
-        Object.assign(oai_settings, { openai_max_context: 2048, openai_max_tokens: 256, stream_openai: false });
+        Object.assign(oai_settings, { openai_max_context: 2304, openai_max_tokens: 256, stream_openai: false });
         c.chat.splice(0, c.chat.length, ...chat); await c.saveChat(); await c.reloadCurrentChat();
     }, packingChat);
     packing = true;
@@ -450,7 +457,7 @@ try {
     assert(excerpts.some(m => m.content.includes('identical text at message:passage 3:1, 11:1, 19:1, 27:1, 35:1, 43:1, 51:1]')));
     assert(excerpts.some(m => m.content.includes('identical text at message:passage 4:1, 12:1, 20:1, 28:1, 36:1, 44:1, 52:1]')));
     assert.deepEqual(packed.chat.slice(0, 60), packingChat.map(m => m.mes), 'Packing never changes stored history');
-    report.packing = { evidence: 'Actual host generation with recorded query ranks and a local completion fixture', case: packingFixture.item.id, configuredBudget: 500, effectiveBudget: 448, delivery: packed.delivery, request: packingRequest, storedHistoryUnchanged: true };
+    report.packing = { evidence: 'Actual host generation with recorded query ranks and a local completion fixture', case: packingFixture.item.id, configuredBudget: 600, effectiveBudget: 512, delivery: packed.delivery, request: packingRequest, storedHistoryUnchanged: true };
     packing = false;
     console.log('VERIFY same-message-assembly');
     await field('enabled').uncheck();

@@ -78,7 +78,10 @@ Selected excerpts replace eligible older messages in the ephemeral `coreChat` at
 Macro braces and legacy `<USER>`/`<CHAR>`-style markers are rendered with fullwidth delimiters before budgeting. The joined excerpt content, source labels, newline separators and memory guidance are counted with the host tokenizer, with a fresh-settings default of 4,096 tokens, additionally capped at a quarter of the host context limit. Provider per-message envelopes and the complete system/persona/response overhead remain the host's responsibility; this is not a cap on total billed tokens or a guarantee that an oversized current input fits. Labeling and native roles are not a comprehensive prompt-injection defense.
 
 Successful preparation supplies a system instruction even with no matching memory:
-use available conversation evidence, ask one brief clarification when the referent
+use available conversation evidence, build recommendations on supported experiences
+and preferences, and answer supported parts before asking for missing details.
+Do not merge different events or roles from similar wording; distinguish the
+requested event or role from what the context establishes. Ask one brief clarification when the referent
 or user intent is unclear, explain missing or conflicting evidence, and do not treat absent retrieval as proof of absence.
 Final delivery validates this instruction alongside excerpts and every verifiable
 retained recent turn. Long raw turns can exceed host context even when the
