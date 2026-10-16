@@ -16,7 +16,7 @@ be meaningful even when generation or judging masks its benefit.
 | Prompt delivery | Is the evidence in the final dispatched generation context? | Selected source spans, final rendered prompt, labels/clocks and counted budget. Separate retrieval loss from budget, assembly or host truncation loss. |
 | Answer generation | Does the answer correctly use the available evidence? | Saved answer, original question and source review, including ambiguity, contradictions and abstention. |
 | Answer judging | How does the chosen scoring protocol label that answer? | Exact judge model/options, rubric, request and original label. Keep supplemental judges separate. |
-| Resources | What does the method consume? | Actual API tokens, cached tokens, calls/retries, indexing/query work and latency, with measurement boundaries. |
+| Resources | What does the method consume? | Actual API tokens, cached tokens, calls/retries, indexing/query work, latency and estimated full operating cost, with measurement boundaries. |
 
 Cached retrieval replay measures downstream selection/generation for those saved
 results. It does not establish new search performance or end-to-end host behavior.
@@ -29,6 +29,62 @@ parts when assessing answer sufficiency. Report that separately from recalled
 memory coverage. Preserve source-time dependencies: a relative-date fact can need
 both its original words and the known conversation clock. A sent date is not
 automatically an event date.
+
+## Account for full operating cost
+
+Every subsequent paid quality comparison must include a cost ledger alongside
+recall, delivery, accuracy and latency. Use one frozen, dated rate card and currency
+across arms; link the official sources. Distinguish measured usage, reconstructed
+estimates, scenario assumptions and unavailable meters. Unknown is not zero.
+Do not label a partial subtotal as total cost or provider list prices as an invoice.
+
+Report these separate cost groups:
+
+| Group | Required accounting |
+| --- | --- |
+| Initial import or reindex | Successful and retried upserts, document payload bytes and per-request minimums; initial managed or external embedding tokens. |
+| Ongoing chat | New/edited message writes, removals, reload/synchronization reads, queries, query embeddings, reranking and final answer generation. State the workload and amortization horizon. |
+| Stored memory | Physical stored GB-hours, version/branch sharing and retained deleted bytes. Raw JSON, vector dimensions and archive size do not measure physical billing. |
+| Evaluation overhead | Corpus verification fetches, probes, repeated corpus construction, diagnosis calls and judge tokens. Keep these out of user-turn operating cost, but include them in experiment spend. |
+
+Count actual server attempts where possible, including SDK retries. Record the
+billing outcome of failed/uncertain attempts as unknown when unavailable. Query
+results alone may omit inference and physical-storage meters. Prefer an isolated
+project/time interval or per-request usage receipts; a shared-project total can
+include unrelated work. Preserve sanitized usage evidence without keys or chats.
+
+For LambdaDB, freeze [the official cost contract](https://docs.lambdadb.ai/guides/costs/understanding-costs)
+and [pricing](https://lambdadb.ai/pricing), checked on 2026-10-16:
+
+- Writes: $1/GB; upsert/update/bulk requests have a 50 KB minimum. A document
+  delete request adds a fixed 100 KB write meter. Native-generated embedding
+  vectors are not client-sent upsert payload; externally supplied JSON vectors are.
+- Reads: $5/PB, with a 1 GB request minimum. Direct-branch query/fetch with
+  `consistentRead:true` adds 1 GB. Use collection/selected physical-partition size
+  as specified; an ordinary owner/chat predicate is not physical partition pruning.
+- Physical storage: $0.33/GB-month from hourly averages. Returned query data and
+  deleted-data retention have published $0.05/GB and $0.10/GB-month rates, currently
+  waived during a promotion. Show the waiver and post-promotion scenario separately.
+- Native inference: $1.05 per million LIU. Input LIU/token is 0.02 for OpenAI
+  small, 0.13 for OpenAI large and 0.042 for Jev 1.13.0; output is zero. Aggregate
+  LIU across the billing period before integer rounding. Do not add direct-provider
+  embedding/rerank list charges again to the native inference charge.
+
+Confirm decimal/binary billing-byte conventions before claiming precision beyond
+a rough estimate. Under an explicitly decimal assumption, a sub-1-GB collection's
+strong branch query has a $0.00001 minimum-based estimate, and a minimum upsert
+costs $0.00005, before inference and plan allowances. These are arithmetic
+examples, not measured server bills or a universal per-turn cost.
+
+Reranker comparisons must preserve the same complete pre-rerank candidate inputs.
+Final50 receipts do not reveal all100 inputs or token usage; scored document count
+is not a token meter. When unavailable, leave native rerank cost unknown, or label
+and justify a tokenizer/prompt-overhead estimate. Use actual external-provider
+usage for its separate charge. Keep shared index construction/storage common;
+do not charge a fresh reindex to each reranker arm or assume a saved-input replay
+means zero product retrieval cost. Report gross usage cost before free allowances,
+then any account-wide allowance/promotion scenario without assigning the same
+remaining free balance independently to every arm.
 
 ## Map chunk results to message annotations
 

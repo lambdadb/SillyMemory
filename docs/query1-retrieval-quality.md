@@ -1150,6 +1150,67 @@ diagnostic PR. Detailed evidence remains ignored in
 `artifacts/embedding-large-sent-answers500-v1`; the combined verified archive below
 is local-only. Earlier source bundles and labels remain immutable.
 
+## Database cost accounting baseline
+
+Subsequent comparisons include [the full cost ledger](memory-evaluation.md#account-for-full-operating-cost).
+Freeze the current planning baseline at managed OpenAI large, Query1, Bayesian
+English, k100/candidate100/final50, sent policy and 4096. Reranker selection is the
+next independent factor; no new reranker quality run starts in this accounting
+update, and product defaults are not changed here.
+
+On 2026-10-16, reconstruct the historical successful corpus operations from the
+same 500 frozen inputs, original 10356 batches and saved external Voyage vectors.
+This is **offline arithmetic**, not a new request, billing export or invoice.
+Apply [LambdaDB's published costs](https://docs.lambdadb.ai/guides/costs/understanding-costs)
+before free allowances, using an explicitly decimal KB/GB/PB convention:
+
+| Component for the 500-history corpus | Reconstructed basis | Approximate cost |
+| --- | --- | ---: |
+| Native managed upsert payload | 464.19 MB serialized document arrays; 50 KB minimum raises metered proxy to 519.57 MB | $0.52 |
+| External Voyage-vector upsert payload | 6.606 GB JSON including vectors; adjusted proxy 6.610 GB | $6.61 |
+| 500 strong branch queries | 1 GB minimum plus 1 GB strong-read surcharge each | $0.005 minimum-based |
+| 5042 strong verification fetches | Same read rule; harness-only source validation | $0.0504 minimum-based |
+| Native small embeddings, source plus query | 51,741,018 local cl100k tokens; $0.021/million | $1.09 |
+| Native large embeddings, same logical tokens | $0.1365/million | $7.06 |
+| External Voyage embeddings | 51,944,689 provider-reported tokens; $0.12/million direct-provider list rate | $6.23 |
+| Native Jev inference | Actual full-candidate token usage unavailable in retained final50 receipts | Unknown |
+| Physical storage and retained deleted bytes | Actual GB-hours not retained | Unknown |
+
+The write proxy uses `sum(max(50 KB, serialized docs))` across actual batches,
+not `max(50 KB, total corpus bytes)`. 8525 native batches fall below the minimum.
+Including the request wrapper changes the native estimate by less than $0.001;
+neither reconstruction is a server meter. Native-generated vectors are absent
+from the client payload. External vector JSON increases write bytes in the
+temporary Voyage path; **this is not intrinsic Voyage model cost**, and it must
+not be applied to a hypothetical managed Voyage implementation.
+
+Read estimates use request minimums, not measured collection/partition sizes.
+Initial probes, retries (eight large and three Voyage upsert 429s), SDK-internal
+attempts and any unverified control/cleanup billing are excluded, not declared
+free. Embedding token arithmetic for native models excludes retries and internal
+provider accounting. No subtotal above is a complete cost comparison.
+Serialized query responses correspond to about $0.0013 at the published returned-
+data rate per arm, but returned data and retention fees are currently promotional
+waivers. Keep that scenario distinct from physical usage and future fees.
+
+This corpus imports 500 independent histories. It is **not** the cost of 500
+ordinary turns against one retained chat. Separate common initial index/storage,
+new/edited message writes, each query/embedding/rerank/generation, and experiment
+verification/judging. A reranker-only comparison reuses one index for both arms;
+the latest large sent-policy replay issued zero new LambdaDB/embedding calls, but
+that does not make the product's retrieval path free.
+
+Before a new comparison, retain request attempts and byte counts, the exact
+pre-rerank candidate inputs and actual inference usage when exposed. Native Jev
+is token-metered at $0.0441/million input tokens; 50,000 scored candidates cannot
+be converted to a bill without token usage or an explicitly justified estimate.
+Physical storage requires an isolated usage interval or meter; raw vector sizes
+cannot substitute. Unknown fields remain unknown rather than making the apparent
+cheapest arm win. No new provider/server/model calls, runtime/SDK changes, paid
+reranker trial, PR or deployment occurred. The one-off estimator, dated rate card,
+per-case counts and summary remain ignored in `artifacts/lambdadb-cost-baseline-v1`;
+its verified local-only archive is indexed below.
+
 ## Previous candidates and why they remain deferred
 
 | Candidate / observation | Completed evidence | Decision |
@@ -1288,3 +1349,4 @@ verified retained copy. Older original archives remain immutable.
 | `embedding-voyage500-v1.tar.gz` | `94f9296bf35d070daeeba327c02097e94aff0a66e89e47fe24f40c915068a1c7` |
 | `embedding-voyage-answers500-v1.tar.gz` | `543314272d33d578305f279a4edfb49413d6ac9ace563d7c1d98d1a8b9964ccf` |
 | `embedding-large-sent-comparison500-v1.tar.gz` | `b2da2d42147729b8d99e6eeba2331e4b8cdf68b37d6c7871d0d8e2c721ee605c` |
+| `lambdadb-cost-baseline-v1.tar.gz` | `87bdae13c0fcdb3b182df4276cd0dd8b62a55f90c8e6b9cc185dcb6763c27f9e` |
