@@ -1211,80 +1211,154 @@ reranker trial, PR or deployment occurred. The one-off estimator, dated rate car
 per-case counts and summary remain ignored in `artifacts/lambdadb-cost-baseline-v1`;
 its verified local-only archive is indexed below.
 
-## Same-pool reranker comparison: blocked after 144 cases
+## Same-pool reranker comparison: retain native Jev
 
-On 2026-10-16, start one bounded Jev versus Voyage `rerank-3` comparison with
-managed OpenAI large fixed. Preserve the same 500 consumed English development
-cases, original chunks/batches, Query1/Bayesian English, k100/candidate100/final50,
-sent policy and 4096-token assembly. Native no-rerank and Jev queries return all
-100 candidates; require identical candidate IDs and original source fields, give
-Voyage those exact raw texts/query, then cut both rankings to 50 locally. Do not
-rerank only the historical Jev final50. Historical Large470/500 is context, not a
-fresh paired answer control. Product/runtime/SDK defaults remain unchanged.
+Complete the 2026-10-16 comparison at managed OpenAI large, with only the reranker
+changed: native Jev 1.13.0 versus experiment-only external Voyage `rerank-3`.
+Preserve all 500 consumed English LongMemEval-S development/regression questions,
+original chunks and maximum-50-document write batches, Query1/Bayesian English,
+k100/candidate100/final50, current sent provenance and 4096-token assembly.
+Capture both complete native candidate lists and require identical 100-candidate
+IDs and original source fields. Voyage receives those same raw texts and query;
+both rankings are cut to 50 locally. Session-clock provenance is joined from the
+frozen benchmark source at assembly, outside unchanged embedding/reranker text.
 
-The real four-document probe passes. Preserve **144/500 completed same-pool
-retrieval/ranking/memory receipts**. Independent verification checks 139,404
-canonical source documents, original UTF16 spans, candidate identity, Voyage
-indices and exact rank-order cheapest-layout sent4096 admission. No new answer
-or official-judge calls started; the incomplete, nonrandom subset cannot support
-an aggregate accuracy estimate or reranker adoption/rejection decision.
+After the complete source gate and review of all nine annotation changes across
+eight questions, generate **500 fresh Sol-low answers per arm**, interleaving
+arms with alternating first arm. Use the unchanged official prompt/reference and
+`gpt-4o-2024-08-06`, temperature 0, for every judgment. No response, reference or
+label is replaced. Historical Large 470/500 is context, not the paired control.
 
-The remaining work is blocked by commit availability. An operational attempt to
-overlap 30 logical cases while capping native HTTP operations at 6 did not bound
-active collection/writer resources; 28 cases exceeded a 300-second last-write
-commit-witness deadline. After cleanup, return to the original **6 active cases**:
-all six recovery cases also exceed that deadline. Read-only diagnostics show the
-exact last document and a finite 3072-dimensional managed embedding in a strong
-fetch, an empty ordinary fetch, and `headSnapshot: null`. This locates the observed
-gap between strong visibility and a readable committed branch state; it does not
-establish the backend root cause or rule out effects of earlier concurrency or
-concurrent service work. All **184 corpus attempts plus probe and score diagnostic
-(186 collections)** are deleted with 404 confirmation. No jobs remain active.
+| Metric | Native Jev | Voyage rerank-3 |
+| --- | ---: | ---: |
+| Whole indexed annotated messages in shared pool (100) | 885/894 | Same pool |
+| Whole indexed annotated messages in returned (50) | 885/894 | 884/894 |
+| Whole indexed annotated messages delivered under 4096 | 883/894 | 876/894 |
+| All indexed annotations complete, returned questions | 469/478 | 468/478 |
+| All indexed annotations complete, delivered questions | 467/478 | 462/478 |
+| Fresh answers accepted by the original official judge | **465/500 (93.0%)** | **464/500 (92.8%)** |
+| Actual generation input tokens | 2,518,209 | 2,518,395 |
 
-The original numeric score guard also stopped two identical-ID/text candidate
-pairs because fused scores differed beyond 1e-6; their full failed bodies were
-not retained, only hashes. A bounded same-source four-query recreation matches
-exactly, leaving the original cause unproven. Since fused scores are not reranker
-inputs, an explicit protocol amendment keeps mandatory ID/text equality and
-records score drift separately. Subsequent raw responses are retained before
-validation. Preserve all original failures and producer generations; no quality
-setting or favorable result was substituted.
+Voyage has **7 official-label gains and 8 losses**; the exact paired McNemar
+p-value is 1. This is no demonstrated answer-quality advantage, not proof of
+universal equivalence. Whole-message completeness is structural, not an all-case
+necessary-fact recall measurement. The two native-recent-only annotations and
+21 zero-annotation questions remain separate. All six previously frozen partial-
+message necessary components survive in both arms.
 
-Gross observed costs before free allowances, separately from a full invoice:
+Every paired label flip and all 17 historical-control flips were source-reviewed.
+Several paired differences concern nearly equivalent calculations, contradictory
+dates, counting rules or recalling an earlier assertion while correcting it.
+Do not infer a search improvement from each Yes/No change. Specific source effects:
 
-| Component in the blocked run | Measured/estimated basis | USD |
-| --- | --- | ---: |
-| Corpus upserts, including abandoned/repeated imports | Acknowledged request document bytes with per-request 50 KB minimum | 0.19109 proxy |
-| Managed Large document embeddings, including diagnostic/repeated accepted writes | 19,119,772 local cl100k tokens; actual LIU unavailable | 2.60985 proxy |
-| Voyage reranking for the 144 completed pairs | 1,910,001 provider-reported tokens | 0.09550 |
-| Jev reranking for those same inputs | 1,817,169 local query-document pair tokens; actual tokenizer/instructions unavailable | 0.08014 proxy |
+- Voyage moves the explicit user quinoa/roasted-vegetable preference from rank 34
+  and excluded to rank 2 and delivered. Both fresh recipe answers pass; Jev already
+  retains ingredient/context evidence from other excerpts.
+- Voyage drops the router upgrade's three-weeks-ago source under the budget
+  (returned at rank 31 versus Jev rank 7). Its thermostat/mesh answer becomes a clarification,
+  while Jev gives the reference order. Router/mesh coreference remains a reasoning
+  step, but this paired label loss is linked to an actual temporal source loss.
+- Voyage drops the age-32 source, gives only a 36–45-year age gap and asks the
+  user's age; Jev answers 43. The official judge accepts both, so binary score
+  hides a precision/source regression.
+- The Galapagos annotation loss does not remove the actual Thailand-last-year and
+  Europe-last-month evidence. The generic condo annotation loss likewise retains
+  all four relevant property reasons. Do not count these as proved fact losses.
 
-The ledger retains **13,137 actual HTTP attempts**, including transient failures,
-all polling/control/cleanup and evaluation-only duplicate searches. Corpus
-commit-witness reads have a $0.03021 minimum-based estimate, source-validation
-fetches $0.01471, and each native query arm $0.00146. These are request minimums,
-not a physical-size meter. Physical storage, actual Jev LIU and some control or
-failed-call charges remain unknown. Do not add this partial subtotal into a
-claimed invoice or bill the shared initial index separately to each reranker.
-Rates and caveats follow the preceding database accounting baseline.
+**Decision: defer Voyage integration and retain native Jev at the fixed Large
+experiment baseline.** Source delivery does not improve, answer quality is a tie
+within observed evaluation variability, and no operating-cost advantage is
+established. This prototype uses an external Voyage key; do not add provider-key
+setup to the product or claim managed Voyage support. Product/default/SDK settings
+are unchanged. Do not expand into another provider, custom criteria or model sweep
+as part of this completed decision.
 
-Stop rather than increase deadlines/concurrency again or shorten the cohort.
-Investigate accepted writes through snapshot creation/branch-head publication,
-then preserve all 144 successful cached pairs and finish the remaining 356 before
-the source gate and conditional fresh paired answers. Record a new bounded
-recovery amendment after availability is restored; existing attempt limits are
-intentionally exhausted for the six failed recovery cases. There is no PR,
-push, default promotion or deployment for this diagnostic checkpoint.
+### Component costs and timing
 
-`npm test` passes 373 tests; `npm run check`, `npm run check:release` and
-`npm run check:sdk` pass on Node 24.15.0. These checks and live LambdaDB/Voyage
-requests are distinct from a fresh SillyTavern browser/host run, Node20 CI,
-answer-quality scoring or deployment, none of which was performed here.
-Detailed receipts, dated rates, retry/byte ledger, diagnostics, protocol/producer
-snapshots and the backend handoff remain local-only under
-`artifacts/rerank-voyage-large500-v1`; the verified blocked-run archive is indexed
-below. Its original input manifest was verified inside the retained
-`retrieval-200-full500-v2.tar.gz` source bundle. No earlier evidence was removed.
+Apply the preceding dated [LambdaDB cost baseline](#database-cost-accounting-baseline)
+and [Voyage reranker list pricing](https://docs.voyageai.com/docs/pricing), before
+free allowances. Both arms share one initial index; do not charge it twice.
+A single logical import of these **500 independent histories** has a **$0.5196**
+write-byte/minimum proxy and **$7.0600** managed Large document-token proxy
+(51,721,513 local cl100k tokens). These components are not a 500-turn chat invoice.
+
+| Component per 500 ordinary search requests against the retained index | Jev path | Voyage prototype path |
+| --- | ---: | ---: |
+| Strong branch read minimum | $0.005 | $0.005 |
+| Managed Large query-embedding arithmetic | $0.00266 | $0.00266 |
+| Reranking | $0.29005 local query-document text-token proxy | $0.34449 from 6,889,815 provider-reported tokens |
+| Approximate subtotal of those components | $0.29771 | $0.35215 |
+
+Native Jev actual tokens/LIU are not exposed. Its 6,577,060-token local proxy
+excludes unknown tokenizer/instruction overhead; do not call the subtotal a meter
+or definitively rank providers by price. Physical storage GB-hours, some control/
+failed-call charges and actual allowances remain unknown. Returned-data/retention
+promotional waivers are distinct from steady-state list rates. Generation input
+varies by only 186 tokens across 500 answers; changing rerankers does not materially
+reduce generation context here. Judging is evaluation-only; neither product path
+adds a generative rewrite/summary call.
+
+The full attempt ledger records **27,663 LambdaDB/Voyage HTTP attempts**. Actual
+corpus acknowledged-write proxies total $0.56095 including abandoned/repeated
+imports; source-embedding arithmetic including diagnostic/repeated accepted writes
+is $7.63887. These differ from the single successful logical import above. Witness
+polling and source-validation reads contribute $0.03021 and $0.05062 minimum-based
+estimates; duplicate paired searches are evaluation overhead. Unknown usage is
+not zero, and no complete invoice total is claimed.
+
+Successful workstation wire medians are 848 ms for the native Jev query, versus
+674 ms for the sum of native search and external Voyage rerank. Jev provider-step
+median is 529 ms; Voyage external call is 337 ms. Fixed query order/cache warming,
+full 100-item capture and backend load confound these observations. They are not
+SillyTavern browser end-to-end or causal production-speed measurements. Generation
+medians are 2.369 s and 2.392 s respectively. All **2,000 actual answer/judge calls**
+finish in 602 seconds with **zero completion retries/errors**, without artificial
+successful-call delays and with six maximum concurrent completion requests.
+
+### Protocol correction, variability and preservation
+
+Preserve the initial 144-case blocked checkpoint below. An unnecessary evaluation-
+only ordinary-read commit witness caused long waits: higher logical concurrency
+failed to bound writer resources, and six-case recovery also exceeded 300 seconds.
+Read-only diagnostics show the exact last document and 3072-dimensional vector in
+strong reads, an empty ordinary fetch and null branch snapshots. Root cause is
+unproven and remains a separate backend observation. It is **not a prerequisite**
+for comparing rerankers after full strong-source validation and exact paired
+candidate ID/text equality. A frozen pilot confirms those required invariants;
+the remaining 356 cases then finish at six active cases without further stops.
+First 144 pairs retain the witness; 356 use this strong-source protocol. No original
+case, failure or successful paid result is dropped or repeated for a better score.
+
+A numeric fused-score equality guard also exceeded input equivalence. Two original
+failures retain hashes but not full failed bodies; this limitation is explicit.
+Later raw native responses are retained before validation, ID/text equality stays
+mandatory, and seven small fused-score drifts are recorded. Do not silently mix
+candidate sets or present the original protocol as if it had never changed.
+
+The historical 470 and fresh 465 Jev controls have 17 label changes, with only 117/500
+identical final memories. The citrus source is lost and the cake source recovered;
+other filler/ranks and generated wording also vary. An exactly identical New Yorker
+judge request receives historical Yes versus fresh No. In an offline audit of a
+retained two-query repeat, identical public requests/candidates/text/fused scores
+produce 54/100 different native rerank scores (maximum absolute change 0.09) and
+different top 50 membership. Backend/provider/internal-batching cause is unproven.
+Do not attribute historical score drift to one product change or rewrite labels.
+
+Independent verifiers pass all **483,385 canonical documents**, original source
+spans, both candidate sets, actual cheapest-layout budget admission, all 1,000
+frozen generation bodies and independently rebuilt official judge prompts/results.
+All **540 corpus attempts plus probe and score diagnostic (542 collections)** have
+verified deletion and 404 confirmation. No jobs or intentionally retained remote
+resources remain. `npm test` passes 373 tests; syntax, release and SDK checks pass
+on Node 24.15.0. No new SillyTavern browser/host run, Node 20 CI, product promotion,
+PR, push or deployment is claimed.
+
+All detailed receipts, rates, original failures, producer generations, interpretation
+notes, cost/timing ledgers and backend handoff remain ignored under
+`artifacts/rerank-voyage-large500-v1`. The completed archive and original blocked
+archive are both local-only; the original input manifest is verified inside the
+retained `retrieval-200-full500-v2.tar.gz` source dependency. The licensed canonical
+dataset remains an explicit local dependency. No prior evidence was deleted.
 
 ## Previous candidates and why they remain deferred
 
@@ -1426,3 +1500,4 @@ verified retained copy. Older original archives remain immutable.
 | `embedding-large-sent-comparison500-v1.tar.gz` | `b2da2d42147729b8d99e6eeba2331e4b8cdf68b37d6c7871d0d8e2c721ee605c` |
 | `lambdadb-cost-baseline-v1.tar.gz` | `87bdae13c0fcdb3b182df4276cd0dd8b62a55f90c8e6b9cc185dcb6763c27f9e` |
 | `rerank-voyage-large500-blocked-v1.tar.gz` | `c04202668146d519dbec4283ff418050b7afd7816092990039f2466fe03c0fc1` |
+| `rerank-voyage-large500-completed-v1.tar.gz` | `d339cea17fbdb61bcdb2d419887ca8184a4f0599e116474bbced08a36f8ea345` |
