@@ -63,10 +63,13 @@ Remote hits are ranking signals: only exact current IDs, ownership, scope, revis
 source text and conversation-time metadata are accepted; injection uses the locally
 reconstructed text. This prevents eventual-index lag, deleted records, malicious
 remote text changes and sibling-chat results from resurrecting stale content.
-Whole source passages are selected under the complete rendered token budget, then
-same-message source assembly can share headers/remove exact overlap and refill in
-retrieval order without removing the established source floor. Final presentation
-remains chronological. Fifty returned chunks need not all fit the configured budget.
+Visit valid hits in retrieval order. For each hit, render the already accepted
+sources together with that complete passage, comparing separate excerpts with
+same-message assembly that shares headers/removes exact overlap. Admit the hit
+only when the cheaper complete rendered layout fits the budget; otherwise continue
+to later hits. There is no preliminary whole-passage selection or source-floor
+refill pass. Final presentation remains chronological. Fifty returned chunks need
+not all fit the configured budget. See [ranked source assembly](source-assembly.md).
 
 An epoch and a full snapshot comparison invalidate work across events, chat switches, disabling, and connection replacement. Pending queries are canceled when possible; canceled server writes are never assumed rolled back. Token counting and the final validity check precede mutation. Failed sync/query/counting preserves local source and stops generation explicitly. A successful selection, including zero hits or nothing fitting the budget, replaces past eligible messages while preserving recent dialogue and special messages. Only the generated `coreChat` array is spliced; persisted chat objects are untouched.
 
