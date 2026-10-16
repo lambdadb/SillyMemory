@@ -2,63 +2,36 @@
 
 ## Decision (2026-10-16)
 
-Adopt retrieval-order admission using the final rendered memory size. Remove the
-unassembled source-floor/refill stages that could reserve space for lower-ranked
-hits before higher-ranked evidence was reconsidered through assembly.
+Adopt retrieval-order admission using the final rendered memory size and compact
+`sent` headers with one budgeted explanation. Keep Query1, original per-message
+chunks, managed embeddings, Bayesian English, Jev 1.13.0, k100/candidate100/final50,
+4096-token memory and native recent-five/pair retention. These selection/time
+changes are implemented and validated in this work branch; no merge, release or
+deployment is claimed. Product managed-small and stable SDK 0.8.0 defaults remain.
 
-Retain Query1, original source chunks, managed embeddings, English Bayesian fusion,
-Jev, vector k100, rerank candidate 100, final size 50 and the 4096-token memory budget.
-Preserve native timestamp storage and use compact `sent` excerpt headers with one
-counted explanation. Do not promote contextual retrievalText, 200-deep
-search/reranking, the temporary dev SDK or the benchmark session-time map.
-The product changes selection and time presentation, not search, native stored
-documents or model/API settings.
-The completed compact-date follow-up scores 467/500 versus 469/500; preserve
-per-chunk time metadata but defer shared-map promotion. An explicit benchmark
-metadata helper is retained. The later agreed direct-`sent` policy below is now
-implemented and scores 465/500; this is truthful time delivery, not a claimed
-answer-quality improvement. One demonstrated benchmark capacity regression remains.
-The subsequent same-policy, interleaved 4096/8192 comparison below finishes at
-465/500 versus 469/500, with 8 gains, 4 losses and 50.0% more generation input.
-It repairs Muir Woods, but does not establish a reliable general default gain;
-defer raising the product budget/default maximum and retain 4096.
-The subsequent Voyage comparison below improves returned and delivered evidence
-at the same 4096 budget and scores 468/500 versus the retained 465 control.
-Keep Voyage as a promising retrieval candidate, independently of that modest
-answer-score difference. Its external embedding path is experimental; managed
-provider support and a product integration decision remain outstanding.
-The same-sent replay of retained native OpenAI large retrieval finishes at
-470/500, versus small 465 and Voyage 468, delivering 883 complete annotated bodies
-versus 876 and 882 at 4096. Keep large as the leading managed candidate for a
-product model-selection decision; this evaluation does not change defaults.
-The code is validated in the work branch; no merge, release or deployment is claimed.
-The same-input Sol-medium generation follow-up scores 463/500 versus retained
-Sol-low 465/500, with 8 gains and 10 losses. Keep Sol low as the evaluation
-reference; this changes no product model or memory default.
+The latest **fresh matched Small/Large comparison** gives **463/500 (92.6%) versus
+465/500 (93.0%)**, using fresh retrieval and fresh Sol-low answers in both arms.
+Large improves complete indexed source bodies returned 879→885 and delivered 876→883,
+with seven annotation-completeness gains and no losses. Concrete helmet-price and
+unannotated Mike-date recoveries strengthen answers; age/property cases demonstrate
+why binary labels alone miss source-use differences. Whole-body completeness is
+not an all-case semantic-recall measure, and the net two accepted answers do not
+establish overall superiority. Retain Large as the quality-oriented evaluation/
+planning reference without automatically changing the product embedding default.
+The historical Large 470/500 is retained below, not the current paired estimate.
 
-The fixed-selector
-200/200 follow-up below finishes at 471/500 versus 469/500 for 100/100. It improves
-fact coverage, but the small net score difference and roughly doubled rerank work
-do not establish a clear default-promotion advantage. Defer automatic promotion;
-do not describe 200/200 as ineffective.
+Keep **Sol low** and the original **GPT-4o-2024-08-06 task-specific judge** as the
+evaluation reference. Same-input Luna-default generation scores 450/500 versus the
+retained 465 control; Sol-medium scores 463 versus 465. Neither establishes a reason
+to change that reference. Supplemental Luna judging and Mem0 prompts remain audits,
+not replacements for the original labels or judging protocol.
 
-A completed supplemental Sol-medium audit of these same 1000 saved answers gives
-475/500 and 479/500, respectively. The direction favors 200 under both judges,
-but the margin remains small and source/reference ambiguities affect some labels.
-Keep the official-protocol GPT-4o results alongside the supplemental results; do
-not replace labels or promote a default on the strength of the higher judge score.
-
-Source-based triage of all 31 current-default official errors below identifies
-five missing-source cases. Four have historical pre-Jev ranks outside 100,
-supporting the embedding comparison completed below. Native OpenAI large recovers
-three necessary sources but finishes at 468/500 versus small's 469/500. Defer
-automatic model promotion and retain `text-embedding-3-small`; the retrieval gains
-are real, while this run does not establish an aggregate answer advantage.
-
-This completes one bounded quality decision across the previous diagnostic stages
-and the selector fix. Detailed run outputs and the original stage-by-stage notes
-are retained in verified local archives rather than maintained as growing scratch
-reports or permanent CI fixtures. The base is Query1 PR 83's squash commit
+Reject preceding-message contextual retrievalText. Defer 200-deep defaults,
+8192-token promotion, external Voyage embedding/reranking and the temporary dev SDK. Their completed tradeoffs and
+historical scores remain documented in the stage-specific sections and immutable
+local archives below. This is one bounded parent quality decision on a consumed
+English development/regression cohort, not independent held-out confirmation or a
+new PR milestone for each diagnostic. The base remains Query1 PR 83's squash commit
 `df95a03d6a38a9837be64c62995fcf9cd9238092`.
 
 ## Selection defect and implementation
@@ -1711,6 +1684,147 @@ cost ledger and producing scripts remain ignored under
 below. Retained source/answer archives and the licensed canonical dataset remain
 explicit local dependencies; historical evidence and labels are preserved.
 
+## Fresh matched Small/Large comparison: Large retains a source-quality advantage
+
+Rebuild both managed OpenAI embedding arms under one frozen protocol at revision
+`aa846ef`: the same 500 English LongMemEval-S development/regression questions,
+483,385 original chunks and 10,356 maximum-50-document batches per arm. Change only
+`text-embedding-3-small` (native 1536 dimensions) versus `text-embedding-3-large`
+(native 3072). Preserve Query1, Bayesian English, vector k100, native Jev 1.13.0
+candidateSize=100, **actual request size=50**, strong branch reads, current sent provenance,
+4096-token ranked assembly, native recent dialogue, Sol low and the original
+GPT-4o-2024-08-06 task-specific judge. There is no candidate-capture second query,
+external vector path, custom rerank criterion, extra model or quality retry.
+
+Six case workers alternate which embedding arm runs first within each question.
+After source verification, generate 500 fresh answers and 500 fresh judgments per
+arm, interleaving the same alternating order. Historical Small 465 / Large 470 and
+later Large 465 runs remain context; neither supplies a control in this comparison.
+These are actual LambdaDB/provider calls and frozen-host-prompt completion replay,
+not a new SillyTavern browser run or held-out confirmation.
+
+| Measure | Fresh Small | Fresh Large |
+| --- | ---: | ---: |
+| Original official-prompt accepted answers /500 | **463 (92.6%)** | **465 (93.0%)** |
+| Indexed annotated messages with any returned text /894 | 885 | 889 |
+| Complete annotated bodies returned /894 | 879 | 885 |
+| Indexed annotated messages with any delivered text /894 | 882 | 887 |
+| Complete annotated bodies delivered /894 | 876 | 883 |
+| Questions with all indexed annotated bodies returned /478 | 463 | 469 |
+| Questions with all indexed annotated bodies delivered /478 | 460 | 467 |
+| Six frozen necessary components returned and delivered | 6/6 | 6/6 |
+| Actual generation input tokens | 2,519,938 | 2,518,309 |
+| Native query request median /p95 | 755 /987 ms | 784.5 /1033 ms |
+| Generation request median /p95 | 2391 /6485 ms | 2429.5 /6218 ms |
+
+| Question type | Questions | Small correct | Large correct |
+| --- | ---: | ---: | ---: |
+| Single-session user | 70 | 68 | 69 |
+| Multi-session | 133 | 116 | 118 |
+| Preference | 30 | 26 | 24 |
+| Temporal reasoning | 133 | 124 | 125 |
+| Knowledge update | 78 | 75 | 75 |
+| Single-session assistant | 56 | 54 | 54 |
+
+Keep 21 zero-annotation questions and two native-recent-only annotations separate.
+The 894/478 denominators concern indexed annotations. Whole-body completeness is
+structural, not an all-500 necessary-fact recall claim. All 1,000 responses confirm
+Jev `resolvedModel=jev-1.13.0`, `criteriaVersion=default-relevance-v1` and 100 scored
+candidates; their full pre-rerank membership is not exposed by size=50.
+
+All **seven changed source annotations** favor Large: six returned-completeness
+improvements and seven delivered-completeness improvements, with no marked-source
+coverage losses. Their meaning differs:
+
+- Helmet price $120 and the age 32 statement are recovered from outside Small's
+  final 50. The bungalow source moves from Small rank 31, omitted by the budget, to
+  Large rank 7 and is delivered. These supply missing facts rather than merely
+  completing long messages.
+- ENT and cousin-wedding user sources strengthen direct provenance, while Small
+  already has other statements supporting those facts.
+- Workshop and prompt-parameter-list bodies become complete, but Small already
+  delivers the needed $20 amount and the 27th Sound-effects entry. The same six
+  frozen component-span checks pass in both arms; these two completeness gains
+  are not newly recovered target facts.
+- Large additionally delivers unannotated Mike-BBQ text explicitly saying two
+  weeks earlier. This supplies a missing date dependency and improves the dinner
+  count despite unchanged marked-message coverage.
+
+There are **11 official-label gains and 9 losses**; all 20 were source-reviewed,
+alongside all 7 coverage changes. Helmet and Mike-date recoveries change wrong labels
+to accepted answers. Other binary labels conceal source-use differences: both age
+answers are rejected, although Large recalls 32 and expresses wedding-age uncertainty
+while Small lacks the age; both property answers are accepted, although Small
+omits the bungalow and counts the target among four, while Large identifies four
+other properties but starts with an inconsistent total of six. Keep the birthday,
+property-count scope and grammar uncertainties, not only the Yes/No outcomes.
+
+Several label changes are near-equivalent statements or reference-sensitive:
+both New Yorker answers say March 20 / 12 days; both novel answers give 440/416 and ask
+for unknown month mapping; both mortgage answers give 350000/400000 with a caveat.
+Plant windows, earrings-as-pair versus individual pieces, an unconfirmed vinyl
+purchase, the grandmother vase, tentative Instagram counts and conflicting
+Harajuku timelines also limit a literal gain/loss interpretation. A genuine
+available-context loss remains: Large omits the baking-class/cake 21-day interval
+that Small explicitly calculates, despite both receiving the date sources.
+The 95 byte-identical answers have no label conflicts. The descriptive paired
+McNemar p=0.8238, consumed cohort and provider/generator/judge nondeterminism do not
+establish overall superiority from a net two labels. Source interpretations are
+qualitative coding-agent review, not independent human adjudication or revised gold.
+
+**Decision:** retain managed Large as the quality-oriented evaluation/planning
+reference under the user's priority of improving memory without extra generation
+calls. Its source gains are more persuasive than the small answer-score margin.
+The current paired estimate is **92.6% versus 93.0%, not 94.0%**. This does not
+establish universal dominance or promote the product's managed-small default.
+No additional paid repeat, provider, depth, budget or judging sweep follows.
+
+| Cost group, USD before allowances | Small | Large |
+| --- | ---: | ---: |
+| One logical import: document writes | $0.519574 | $0.519574 |
+| Same import: managed embedding text-token proxy | $1.086152 | $7.059987 |
+| Import subtotal, writes plus embedding proxy | **$1.605726** | **$7.579560** |
+| 500 product searches: strong-read minimum | $0.005000 | $0.005000 |
+| 500 product searches: query-embedding proxy | $0.000410 | $0.002662 |
+| 500 fresh answers, reported cache-aware usage | $6.563991 | $6.564269 |
+| 500 official judgments, evaluation only | $0.263560 | $0.263278 |
+
+The import covers **500 independent benchmark corpora**, not 500 ordinary chat turns.
+Large embedding's published native LIU rate is 6.5 times Small's; generation cost is
+essentially unchanged here. Import/query embedding arithmetic reuses the verified
+same-source cl100k aggregates, 51,721,513 and 19,505 tokens, not actual native LIU meters.
+Native Jev usage, physical storage, ongoing edits and failed-attempt charges remain
+unexposed: unknown is not zero, and the table is not a complete product bill.
+Each arm's 5,042 successful strong source-fetch requests adds a minimum-based
+$0.050420 validation scenario, excluded from ordinary product-turn cost. Prices use
+the frozen 2026-10-16 [LambdaDB cost contract](https://docs.lambdadb.ai/guides/costs/understanding-costs)
+and [OpenAI rates](https://developers.openai.com/api/docs/models/gpt-6.1-sol).
+Ordinary, cache-read and cache-write input partitions are charged once; independent Decimal
+arithmetic verifies the new completion subtotal of **$13.655098** including judging.
+
+All 1,000 corpus collections and both probe collections are deleted with 404 confirmation.
+The native stage takes 2,358 seconds and records 37,823 wire attempts, including eight
+recovered upsert retries: six writer-cold-recovery 429s, one 504 timeout and one 500.
+The 500/504 bodies do not identify an upstream provider cause. All 1,000 native queries
+succeed without retries. The 2,000 generation/judge calls finish in 602,469 ms with
+zero retries/errors. At most six requests run concurrently; server rate headers
+and bounded transient backoff apply, without fixed successful-call delays. Bulk
+native calls use the established 180-second benchmark deadline, not a product timeout
+change. Query/generation spans are workstation nonstreaming provider spans under
+benchmark load, not time-to-first-token or browser end-to-end latency.
+
+Independent verifiers check original canonical text and current chunk boundaries,
+only-model native index configuration, source/query bindings, ranked admission and
+sent budgets, all fresh answer/judge bodies/models/labels/usage and owned cleanup.
+`npm test` passes 373 tests; `npm run check`, `npm run check:release` and
+`npm run check:sdk` pass on Node 24.15.0. No new Node 20/GitHub CI, browser-host,
+product/runtime/SDK change, PR, push, merge, release or deployment is claimed.
+Full evidence, all 20 answer reviews, 7 source reviews, cost ledger and producers are
+ignored in `artifacts/embedding-small-large-matched500-v1` and preserved in the
+verified local-only archive indexed below. The licensed canonical dataset and
+original retained source archive are explicit local dependencies; no historical
+source, answer, label or evidence archive is removed.
+
 ## Previous candidates and why they remain deferred
 
 | Candidate / observation | Completed evidence | Decision |
@@ -1856,3 +1970,4 @@ verified retained copy. Older original archives remain immutable.
 | `luna-mem0-judge-large-jev500-v1.tar.gz` | `2d47edffa73e83a6f283bf5425a724cdfb4e8868bda267fca15d96cc0011d426` |
 | `luna-generator-default500-v1.tar.gz` | `a78fa1c91f4ce2b3d846318f3ef3dfd60bdef44a4b5cdb58d66f1e88e1f6c8f9` |
 | `sol-medium-generator500-v1.tar.gz` | `b79313c5e0444cc630c822677cc0a772c8a26c3487ad59b66db975140d68b3d7` |
+| `embedding-small-large-matched500-v1.tar.gz` | `f5e572d54934e08056bb5bd86eedd85204baa2427de0aeb13f958a7128ec2fe2` |
