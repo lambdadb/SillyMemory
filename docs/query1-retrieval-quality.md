@@ -1360,6 +1360,72 @@ archive are both local-only; the original input manifest is verified inside the
 retained `retrieval-200-full500-v2.tar.gz` source dependency. The licensed canonical
 dataset remains an explicit local dependency. No prior evidence was deleted.
 
+## Luna judge audit: preserve comparable scores, defer sole-judge replacement
+
+Regrade only the **500 saved Large + native Jev answers** from the completed
+same-pool reranker comparison. Do not rerun retrieval, embedding, reranking or
+answer generation. Keep the original GPT-4o labels, answers, references and exact
+LongMemEval task-specific user-message bytes. Freeze the full cohort before any
+call; blind the judge to the previous label, corpus, arm and generation model.
+Use `gpt-6-luna`, reasoning `medium`, `max_completion_tokens: 4096`, no temperature,
+no tools or extra instructions. This is compatible execution for a reasoning
+model, not identical decoding to the original GPT-4o temperature-0/10-token call.
+See the [Luna model contract](https://developers.openai.com/api/docs/models/gpt-6-luna)
+and [evaluation guidance](https://developers.openai.com/api/docs/guides/evaluation-best-practices).
+
+| Measure on the exact same 500 answers | Result |
+| --- | ---: |
+| Original GPT-4o accepted | **465/500 (93.0%)** |
+| Supplemental Luna accepted | **461/500 (92.2%)** |
+| Judge agreement | **482/500 (96.4%)** |
+| GPT-4o no / Luna yes | 7 |
+| GPT-4o yes / Luna no | 11 |
+| Preference questions, GPT-4o / Luna | 25/30 / 19/30 |
+
+This is a judge-dependent score difference, not a product quality regression.
+All 18 disagreements were inspected against the original marked source messages,
+saved answers and delivered memory, with relevant alternative/contextual sources
+checked. Luna correctly accepts clear reference-equivalent New Yorker date and
+chorus-note recall that GPT-4o rejected; it also accepts remembered names/chapters
+with correction caveats. Conversely, its rejections of explicitly personalized
+iPhone accessories, documentary recommendations, remote-work coffee chats,
+mid-century dresser layouts and quinoa/protein meal prep are difficult to justify
+under their preference rubrics. The meal-prep marked user message was not delivered,
+but alternate assistant/user quinoa context was; annotation loss is not proof of
+missing necessary facts. Other disagreements involve qualified counts, mixed
+preference compliance, an unsupported first-order premise or abstention thresholds.
+Both labels remain intact. This is coding-agent source review, not independent
+human adjudication or proof that either judge is universally correct.
+
+**Decision:** retain Luna as a supplemental audit; do not replace the sole
+historically comparable judge on this evidence. No judge prompt/effort sweep,
+selective rejudging, alternative gold or product/runtime default promotion follows.
+A future sole-judge change should use independently adjudicated calibration cases,
+not whichever model yields a preferred aggregate score. No Voyage judgments were
+added, so this audit does not provide a Luna-based reranker comparison.
+
+All **500 actual calls** finish with valid yes/no labels, **zero retries/errors**,
+in **102,244 ms**, with maximum concurrency six and server rate-limit admission;
+normal successful calls have no artificial wait. Median provider latency is
+**1,060.5 ms**, p95 **2,278 ms**; these are judge spans, not user answer latency.
+Reported usage is **101,792 input + 14,200 completion tokens**, including 10,604
+reported reasoning tokens. At the frozen 2026-10-16 Luna list rates of $0.10/$0.50
+per million input/output tokens, the gross usage subtotal is **$0.0172792** before
+account-specific adjustments; no cached input/cache-write tokens were reported.
+This is evaluation overhead, not product operating cost. New LambdaDB requests,
+imports, stored resources and answer-generation calls are all zero for this step.
+
+The independent verifier checks all 500 original answer/label bindings, rebuilt
+official prompts, actual request/model/stop/usage/response bindings and unchanged
+runtime/producer hashes. `npm test` passes 373 tests; `npm run check`,
+`npm run check:release` and `npm run check:sdk` pass on Node 24.15.0. No new browser,
+SillyTavern host, Node 20 CI, deployment, PR or push is claimed. Detailed receipts,
+frozen inputs, all disagreement reviews and the decision remain ignored under
+`artifacts/luna-judge-large-jev500-v1`; the local-only archive is indexed below.
+The original reranker archive remains a retained source dependency. No historical
+evidence or labels were removed. This is the same consumed development cohort,
+not an independent held-out evaluation or a repeated-sampling stability study.
+
 ## Previous candidates and why they remain deferred
 
 | Candidate / observation | Completed evidence | Decision |
@@ -1501,3 +1567,4 @@ verified retained copy. Older original archives remain immutable.
 | `lambdadb-cost-baseline-v1.tar.gz` | `87bdae13c0fcdb3b182df4276cd0dd8b62a55f90c8e6b9cc185dcb6763c27f9e` |
 | `rerank-voyage-large500-blocked-v1.tar.gz` | `c04202668146d519dbec4283ff418050b7afd7816092990039f2466fe03c0fc1` |
 | `rerank-voyage-large500-completed-v1.tar.gz` | `d339cea17fbdb61bcdb2d419887ca8184a4f0599e116474bbced08a36f8ea345` |
+| `luna-judge-large-jev500-v1.tar.gz` | `12213a97e4d3a1b40a60312fac820248a9beb1d867757ce311fdfa4e193b9156` |
