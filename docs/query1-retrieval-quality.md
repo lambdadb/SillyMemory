@@ -22,6 +22,11 @@ The subsequent same-policy, interleaved 4096/8192 comparison below finishes at
 465/500 versus 469/500, with 8 gains, 4 losses and 50.0% more generation input.
 It repairs Muir Woods, but does not establish a reliable general default gain;
 defer raising the product budget/default maximum and retain 4096.
+The subsequent Voyage comparison below improves returned and delivered evidence
+at the same 4096 budget and scores 468/500 versus the retained 465 control.
+Keep Voyage as a promising retrieval candidate, independently of that modest
+answer-score difference. Its external embedding path is experimental; managed
+provider support and a product integration decision remain outstanding.
 The code is validated in the work branch; no merge, release or deployment is claimed.
 
 The fixed-selector
@@ -839,7 +844,8 @@ counts remain available in commit `58c094b`; the archived evidence is unchanged.
 The six partial messages per arm still need a source-span audit; the completed
 12 changed-label reviews below do not substitute for that audit. Preserve the
 original results and budget decision while applying this separation to follow-up
-comparisons.
+comparisons. The later Voyage comparison completes that six-message component
+audit and separately checks two annotated sources retained in native dialogue.
 
 All **12 changed labels (8 gains, 4 losses)** were reviewed against original
 questions, reference answers, flagged source messages and both final memories:
@@ -893,6 +899,133 @@ Preserve the frozen time policy for subsequent comparisons. Further retrieval or
 reranker-provider work should target source recall/ranking at the fixed input
 budget; no such sweep starts here. Full evidence has a verified local-only archive
 listed below. Earlier archives and original labels were not removed or rewritten.
+
+## Voyage embedding comparison at the fixed 4096 budget
+
+**Decision:** retain Voyage as a promising retrieval-quality candidate. It recovers
+four demonstrated missing necessary sources and repairs Muir Woods delivery
+without raising generation input materially. These are useful source-level gains
+even though the official answer difference is modest. Product provider/default
+adoption remains deferred: this was an external-provider experiment, and the
+current [managed-embedding documentation](https://docs.lambdadb.ai/guides/collections/managed-embeddings)
+and installed SDK 0.8.0 declare only OpenAI. Product managed embeddings, settings,
+native responses/streaming and credentials are unchanged.
+
+The frozen plan at `6f9f896` compares managed `text-embedding-3-small` (1536
+dimensions) with [`voyage-4-large`](https://docs.voyageai.com/docs/embeddings)
+(native default 1024 dimensions, float output, document/query input types and
+truncation disabled). The experimental writer supplies Voyage vectors to an
+unmanaged cosine field and replaces only `knn.queryText` with the corresponding
+`queryVector`. Original text, IDs, offsets, all 483385 chunks and 10356 original
+50-document upsert batches remain. Query1, English Bayesian fusion, Jev 1.13.0,
+k100/candidate100/final50, `onFailure:error`, `consistentRead:true`, sent policy,
+4096 assembly and native prompt parts remain fixed. This is a native embedding
+configuration/path comparison, not a fixed-dimension or identical-backend ablation.
+
+A real two-document Voyage/LambdaDB/Bayesian/Jev probe passes and is deleted.
+All 500 source corpora are then indexed, fetch-validated, queried and cleaned up.
+The 10856 Voyage calls finish without retries, using 51944689 provider tokens in
+1396250 ms (about 23 minutes 16 seconds). Three initial LambdaDB upsert 429s recover
+with bounded backoff; there are no final errors or pending owned resources.
+All 500 experiment collections plus the probe are verified deleted. Successful
+calls have no artificial delay; concurrency is bounded at six.
+
+The source gate reviews every one of the 16 changed annotations (11 gains,
+5 losses) and supports the answer phase. All 500 actual Sol-low answers and exact
+official GPT-4o-2024-08-06 judgments then finish in 302945 ms, 1000 calls with no
+retries/errors. The retained control is the preceding same-sent 4096 arm, not the
+older sparse-date 469 baseline. No new small reindex/answer run is claimed.
+
+| Measure | Retained managed small | External Voyage |
+| --- | ---: | ---: |
+| Any annotated message returned /894 indexed annotations | 884 | 889 |
+| Complete annotated body returned /894 | 878 | 885 |
+| Any annotated message delivered /894 | 882 | 886 |
+| Complete annotated body delivered /894 | 876 | 882 |
+| Every indexed annotated body returned, questions /477 | 461 | 468 |
+| Every indexed annotated body delivered, questions /477 | 459 | 465 |
+| Official-protocol correct /500 | 465 (93.0%) | 468 (93.6%) |
+| Selected passages | 15184 | 15928 |
+| Generation input tokens, total | 2519462 | 2523135 |
+| Generation input tokens, median | 4967.5 | 4981.5 |
+| Generation provider latency, median /p95 | 2244.5 /5674 ms | 2399.5 /5819 ms |
+
+The historical denominator of 896 includes two annotated messages intentionally
+outside the index: `58ef2f1c:514` and `0e4e4c46:477`. Both are verified verbatim in
+the unchanged native recent-dialogue suffix. They are not search failures. This
+table reports the 894 indexed annotations across 477 questions; the two
+retained-only questions and 21 zero-annotation abstention questions are separate.
+Historical raw 896/479 counts remain in the evidence rather than being overwritten.
+
+All six baseline partial messages were inspected against the question/reference,
+original source and returned/delivered spans. Each already contains its needed
+component: degree, workshop fee/date, raised amount, GPA, list item 27 and Andy's
+shirt. The list ordinal/item crosses a chunk boundary and is preserved by the
+span union. All six components also remain with Voyage. Completing workshop/list
+bodies adds no missing target fact. These frozen development annotations were
+made before inspecting candidate answers, after historical outcomes were known;
+they are not blinded/held-out annotations or an all-500 semantic-recall metric.
+
+Source and answer changes support different conclusions:
+
+- **Four prior necessary-source misses recover:** helmet price at returned rank 5,
+  age at rank 1, positive high-school experiences at rank 1 and sculpting tools at
+  rank 1. All are delivered and their answers become accepted. Age still requires
+  a birthday/wedding-date caveat: the answer says 32 or 33 rather than inventing it.
+- **Muir Woods moves from returned rank 29 to 7** and fits at 4096. The answer
+  correctly supplies the three trips while flagging a Yosemite started/returned
+  contradiction. This is a ranking-based budget repair, not added capacity.
+- **Five annotated sources worsen.** Solo Data Mining project and Metropolitan
+  attendance statements leave final50; the latter produces a real venue-answer
+  loss. The project/leadership scope is ambiguous; local saved-vector cosine rank
+  150 is diagnostic arithmetic, not observed server rank or an ANN-failure claim.
+  Three user preference statements remain returned but miss delivery. Their
+  assistant replies still echo 9:30 pm, remote work and quinoa, so direct-user
+  provenance loss is not complete absence of those facts. The evening answer
+  nevertheless over-clarifies instead of personalizing; the other two labels stay.
+- **Alternative sources matter.** ENT and train-fare gains duplicate already
+  delivered facts. Sony adds lens detail to an already known camera setup; cousin
+  wedding gains direct-user support for an existing assistant echo. Museum message
+  95 remains missing, but newly delivered unannotated lecture statements supply
+  the sixth venue. The accepted answer retains uncertainty about the first two
+  museums' order, so acceptance does not prove full chronological recovery.
+- **Answer labels do not isolate retrieval.** All 19 changes (11 gains, 8 losses)
+  were source-reviewed. Charity adds a supported unannotated $5000 benefit concert
+  to the reference's $3750; rare-item counting adds a vase explicitly called rare,
+  though delivered ownership/inheritance is weaker than the answer claims. Keep
+  those reference/scope caveats. Near-equivalent workshop, bike, duration, cashback,
+  bus and 30-day answers also change labels. Dinner dates remain underspecified;
+  sneakers still show a state-interpretation loss despite both dated bodies being
+  delivered. No gold edits, selective reruns/rejudging or adjusted score.
+
+There are 101 byte-identical answer/judge-input pairs and no conflicting labels
+among them. Near-equivalent pairs above are not identical-input claims. The paired
+exact McNemar p=0.6476 and consumed development cohort preclude treating a net
+three labels as independent confirmation. Recall improvement remains observable
+without that stronger answer-quality claim; non-contemporaneous baseline and
+provider/server-path differences also limit attribution.
+
+Generation input increases only 0.146%, with zero cached input reported, but this
+is not a total-cost comparison. The experimental path uses an external embedding
+request followed by LambdaDB: measured query-embedding median 214 ms, LambdaDB
+query median 609.5 ms, paired serial total median 837.5 ms /p95 1085 ms. These spans
+are not native managed-provider or complete host latency. Jev scores 50000
+candidates. Provider tokens, index/write work and inference pricing need their own
+accounting; cross-tokenizer counts are not invoice dollars or measured storage.
+
+`npm test`: 373 passed /0 failed on Node 24.15.0; runtime syntax, release metadata
+and SDK checks pass. Offline verifiers bind all embedding requests/vectors, original
+source fields, queries, final rendering, 500 answer inputs and 1000 official
+request/response receipts. This is real provider/LambdaDB evidence plus direct
+completion replay, not a new full SillyTavern-host run or Node 20 CI result. No
+maintained provider code/harness, SDK change, push, PR, merge, release or deployment.
+
+Full scripts, vectors, receipts, component/source reviews and decisions remain
+ignored in `artifacts/embedding-voyage500-v1` and
+`artifacts/embedding-voyage-answers500-v1`, with verified local-only archives below.
+Do not expand to another provider/reranker/depth/budget sweep within this completed
+comparison. A product proposal needs a supported managed Voyage path and its
+operational/cost contract; do not impose an external embedding key on product users.
 
 ## Previous candidates and why they remain deferred
 
@@ -1029,3 +1162,5 @@ verified retained copy. Older original archives remain immutable.
 | `compact-date-provenance500-v1.tar.gz` | `01c6df24b1dceeeb7527509a55611fa183341250c7cffc251b3491155e84b79f` |
 | `sent-date-delivery500-v1.tar.gz` | `f28bc1bcaca48ac34bbe657ef04731c45a8192d652e5dec0ce9884701086c145` |
 | `sent-budget4096-8192-500-v1.tar.gz` | `994cd09369a2d50208aec38d3501db833afefaf3468d6d37efd346d07d29550a` |
+| `embedding-voyage500-v1.tar.gz` | `94f9296bf35d070daeeba327c02097e94aff0a66e89e47fe24f40c915068a1c7` |
+| `embedding-voyage-answers500-v1.tar.gz` | `543314272d33d578305f279a4edfb49413d6ac9ace563d7c1d98d1a8b9964ccf` |
