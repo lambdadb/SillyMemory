@@ -67,6 +67,11 @@ Read [CONTRIBUTING.md](CONTRIBUTING.md) before changing this repository.
 
 ## Current evaluation priority
 
+- Follow [the memory evaluation criteria](docs/memory-evaluation.md): separate
+  retrieved evidence, final prompt delivery, generated answers and judge labels.
+  Map chunks to source-message spans; distinguish missing/partial/complete
+  annotation coverage from verified necessary-fact recall. Report resource costs
+  alongside quality, and keep evaluation annotations out of the runtime pipeline.
 - Prioritize English for near-term answer-quality evaluation and optimization.
   Defer new Korean/other-language live experiments and targeted optimization.
 - Preserve historical multilingual results and existing inexpensive unit tests.

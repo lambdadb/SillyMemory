@@ -808,7 +808,8 @@ errors in 556,345 ms (about 9 minutes 16 seconds).
 | Selected passages | 15184 | 24990 |
 | Annotated messages with any delivered source /896 | 882 | 884 |
 | Complete annotated original bodies delivered /896 | 876 | 878 |
-| Questions with every annotated body complete /500 | 480 | 482 |
+| Questions with every annotated body complete /479 annotated questions | 459 | 461 |
+| Questions without evidence annotations, reported separately | 21 | 21 |
 | Selected-memory tokens, median | 4078 | 6576 |
 | Actual generation input tokens, total | 2519462 | 3779448 |
 | Actual generation input tokens, median | 4967.5 | 7522 |
@@ -822,6 +823,23 @@ The returned 50 passages fit completely within 8192 in 497/500 cases: their full
 rendered cost has median 6576, p95 7332 and maximum 8856. No third paid budget arm
 or larger search was added. Annotated coverage is a source diagnostic, not the
 answer metric or proof that every annotated message is individually necessary.
+
+Interpret these counts using the [memory evaluation criteria](memory-evaluation.md).
+Returned-retrieval evidence is fixed in this experiment; the reported annotation
+counts measure prompt delivery. Of 896 annotated messages, 4096 has 14 missing,
+6 partial and 876 complete; 8192 has 12 missing, 6 partial and 878 complete.
+The two additional complete messages demonstrate improved source delivery,
+independently of answer labels. Necessary-fact/span recall and conditional answer
+accuracy on independently verified sufficient evidence have not been computed.
+The earlier question-level counts of 480/500 and 482/500 included 21 unannotated
+abstention questions through an empty-set all-complete check. The table now
+excludes them: 459/479 and 461/479. This corrects a coverage denominator, not
+the 465/500 and 469/500 answer scores or the immutable run receipts. The historical
+counts remain available in commit `58c094b`; the archived evidence is unchanged.
+The six partial messages per arm still need a source-span audit; the completed
+12 changed-label reviews below do not substitute for that audit. Preserve the
+original results and budget decision while applying this separation to follow-up
+comparisons.
 
 All **12 changed labels (8 gains, 4 losses)** were reviewed against original
 questions, reference answers, flagged source messages and both final memories:
