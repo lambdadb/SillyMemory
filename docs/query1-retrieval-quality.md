@@ -19,6 +19,12 @@ fact coverage, but the small net score difference and roughly doubled rerank wor
 do not establish a clear default-promotion advantage. Defer automatic promotion;
 do not describe 200/200 as ineffective.
 
+A completed supplemental Sol-medium audit of these same 1000 saved answers gives
+475/500 and 479/500, respectively. The direction favors 200 under both judges,
+but the margin remains small and source/reference ambiguities affect some labels.
+Keep the official-protocol GPT-4o results alongside the supplemental results; do
+not replace labels or promote a default on the strength of the higher judge score.
+
 This completes one bounded quality decision across the previous diagnostic stages
 and the selector fix. Detailed run outputs and the original stage-by-stage notes
 are retained in verified local archives rather than maintained as growing scratch
@@ -243,6 +249,84 @@ statuses, official judge templates and unchanged runtime/producer locks pass.
 No new browser/live LambdaDB/deployment evidence is claimed; the prior validated
 runtime is byte-identical. Full outputs stay in ignored local artifacts.
 
+## Supplemental judge audit (2026-10-16)
+
+Product question: does the small 100-versus-200 difference depend on the official
+judge? Freeze both sets of 500 already generated answers and grade each once with
+`gpt-6.1-sol`, reasoning `medium`. There is no new retrieval, embedding, reranking,
+answer generation, gold editing or selective quality retry. Both arms use the
+corrected selector and original native memory representation described above.
+
+Use the exact original LongMemEval task-specific user-message bytes from
+[`evaluate_qa.py`](https://github.com/xiaowu0162/LongMemEval/blob/main/src/evaluation/evaluate_qa.py).
+The judge sees question, reference/rubric and saved answer, not the corpus,
+experiment arm, previous label or answer-model identity. Preserve all original
+`gpt-4o-2024-08-06` labels. For the reasoning model, omit temperature and replace
+`max_tokens: 10` with `max_completion_tokens: 4096`, which also accommodates
+reasoning; `stream: false`, no tools or extra instructions. These are execution
+parameter differences, not identical decoding settings or a new judging rubric.
+See the [model guide](https://developers.openai.com/api/docs/guides/latest-model?model=gpt-6.1-sol)
+and [completion parameter contract](https://developers.openai.com/api/reference/resources/chat/subresources/completions/methods/create).
+
+| Measure | k100 / candidate 100 | k200 / candidate 200 |
+| --- | ---: | ---: |
+| Original GPT-4o correct /500 | 469 (93.8%) | 471 (94.2%) |
+| Supplemental Sol correct /500 | 475 (95.0%) | 479 (95.8%) |
+| Judge agreement /500 | 482 (96.4%) | 484 (96.8%) |
+| GPT-4o no, Sol yes | 12 | 12 |
+| GPT-4o yes, Sol no | 6 | 4 |
+
+Agreement is 966/1000, with 34 disagreements across 27 questions. The paired depth
+comparison is 14 gains/12 losses under GPT-4o and 9 gains/5 losses under Sol.
+There are 84 groups of byte-identical judge inputs shared across arms; neither
+judge gives conflicting labels within those observed groups. This is not a
+repeated-sampling stability study, and agreement does not establish correctness.
+
+The coding agent read all 34 disputed answers and the relevant original source
+statements, and inspected their passages in both saved memory sets. The retained notes
+cover every disagreement; they are qualitative source review, not independent
+human adjudication or replacement gold. Important distinctions:
+
+- Clear reference-equivalent recall can be rejected by GPT-4o: `08f4fc43` gives
+  30 days within the reference's 30-or-31 range; `4baee567` recalls the earlier
+  12-game claim while warning that the original claim may be inaccurate. Sol
+  accepts both. Recalling a previous claim differs from endorsing its truth.
+- Sol acceptance can overlook a missing event association. In `dd2973ad`, the
+  answer mentions the reference's 2 AM but qualifies its connection to the dental
+  appointment. Sources place the appointment on May 18 and that bedtime on
+  May 24. Accepting the number alone does not establish the requested linkage.
+- Some references and premises need qualification. In `efc3f7c2`, the 30-minute
+  reference reflects an older assistant-proposed 6:30 schedule. The newer user
+  statement says 7:30 daily, followed by a Friday 6:00 exception. The answer's
+  90 minutes has source support even though Sol rejects it against the reference.
+  Jewelry versus chandelier, calendar versus rolling month, and individual
+  earrings versus acquisitions introduce similar interpretation boundaries.
+- Preference and abstention thresholds differ. Personalized follow-up questions
+  may satisfy some preference recall without completing a recommendation.
+  `c8090214_abs` explicitly distinguishes a known iPhone from the unmentioned
+  iPad and asks for the missing date. Conversely, `09ba9854_abs` calculates bus
+  savings from assistant fare estimates despite a different user-reported taxi
+  price and an abstention reference. The estimates exist in the corpus; they do
+  not establish comparable confirmed prices for the same route.
+
+The supplementary judge uses the same model family as the answer generator.
+This comparison neither isolates self-preference nor proves Sol is a better
+judge. All 500 questions are an already-used development/regression cohort, not
+independent held-out confirmation. Preserve both aggregate scores and ambiguous
+cases. The bounded audit is complete: 200 is modestly ahead under both judges,
+but no runtime/default change follows from this judge-only comparison.
+
+All 1000 actual OpenAI calls finish with valid yes/no responses, zero retries and
+zero errors, in 232496 ms with at most six concurrent requests. Normal requests
+have no artificial delay; rate-limit headers govern admission. Reported usage is
+202831 prompt tokens and 5873 completion tokens (1597 reported reasoning tokens).
+Median judge latency is 1313 ms, p95 1982 ms; this is judging latency, not product
+answer latency. Offline verification checks every input/answer binding, unchanged
+official prompt/label, request parameters, returned model, stop status, usage and
+frozen runtime/producer hashes. No fresh browser, LambdaDB or deployment test was
+performed for this judge-only documentation update.
+`npm test` passes all 369 tests; `npm run check` and `npm run check:release` pass.
+
 ## Previous candidates and why they remain deferred
 
 | Candidate / observation | Completed evidence | Decision |
@@ -311,6 +395,14 @@ Verification entry points are `node artifacts/ranked-depth200-full500-v1/verify.
 and `python3 artifacts/ranked-depth200-answers500-v1/verify.py`; neither sends new
 provider requests. The earlier search/input and 100-baseline archives remain required.
 
+The supplemental audit is retained in `artifacts/sol-judge-audit1000-v1/`: frozen
+plan and 1000 inputs, all 1000 actual judge receipts and labels, aggregate analysis,
+all 27 source-review notes, verification and source snapshots. Run
+`python3 artifacts/sol-judge-audit1000-v1/verify.py` for offline binding checks;
+the original answer bundles, official judge source and dataset are dependencies.
+The archive passes full manifest readback and configured-secret scanning. Full
+outputs remain ignored; only this concise decision record is maintained in Git.
+
 All archives below are **local-only** under the retained worktree's `artifacts/archive/`;
 they are not uploaded or available from a fresh clone. Reproduction requires these
 bundles and the retained licensed dataset/input/query dependencies identified by
@@ -343,3 +435,4 @@ verified retained copy. Older original archives remain immutable.
 | `ranked-assembly-answers500-v1.tar.gz` | `8008b97f410c69a692215b7790a64dc7c109fe35969ceb3461981956bfeff519` |
 | `ranked-depth200-full500-v1.tar.gz` | `734bd6474f74442666e981dc024c276cdede472202c94c8c6f58c312a1a40b7f` |
 | `ranked-depth200-answers500-v1.tar.gz` | `71088cf776717fa53e80ac1ff4dbdbb007a78aed419c504c30f5f9b1047a8a41` |
+| `sol-judge-audit1000-v1.tar.gz` | `76688b7fe665f473e18690778b59190462acfffa77adcf4ec4f191cd44089e4a` |
