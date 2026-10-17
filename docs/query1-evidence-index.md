@@ -92,3 +92,4 @@ is not a promise that a raw bundle can be downloaded.
 | `memory-presentation-order-v1.tar.gz` | `5b9a509f137574b11467e02e537dcb4df959c289349c1090fbbb9371ed1b14a3` |
 | `minimal-guidance-ablation-v1.tar.gz` | `3f9cf9e06f9be8ef829be7a7b8785f46f96191a0abc5835dd10bb73dbcf0427b` |
 | `followup-guidance-ablation-v1.tar.gz` | `a02fd108e2f4b4118710d14eba35f6ba7ca69424f92d7262051dbe6de43165a5` |
+| `followup-guidance-full500-v1.tar.gz` | `a03a0ee5ae1ac9e7064fd6360c8d4175a7fdd662ea6b8560e314cb94b77c5397` |

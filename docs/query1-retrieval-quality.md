@@ -9,15 +9,18 @@ English Bayesian hybrid, final 50, the complete 4096-token memory allocation and
 native recent-five/pair retention. No extra rewrite, extraction or generation
 phase is added; native response formats and streaming remain intact.
 
-The evaluated work-branch profile scores **471/500 (94.2%)** with Sol low and the
-original task-specific GPT-4o-2024-08-06 judge. This consumed English development
-cohort is not held-out confirmation or a deterministic accuracy guarantee. It
+The adopted work-branch profile originally scored **471/500 (94.2%)** with Sol low
+and the original task-specific GPT-4o-2024-08-06 judge. The latest full follow-up
+comparison scores **470/500 (94.0%) current versus 472/500 (94.4%) candidate**;
+these are separate executions, not replacement historical labels. This consumed
+English development cohort is not held-out confirmation or a deterministic accuracy guarantee. It
 is not a claim about the currently installed `main` branch. Merge, release and
 main promotion remain separate actions.
 
 Retain Small, Jev, Sol low, chronological presentation and current guidance.
 Defer 8192 and external providers; reject preceding-message retrievalText. The
-latest follow-up-only prompt deletion is not adopted. Source retrieval, prompt
+latest follow-up-only deletion has completed all 500 comparisons; runtime promotion
+is deferred pending actual-budget product admission checks. Source retrieval, prompt
 delivery, generated answers and judge labels remain separate evaluation stages;
 see [evaluation criteria](memory-evaluation.md) and [error analysis](small-default-error-analysis.md).
 
@@ -91,22 +94,64 @@ in `generation-guidance-paired500-v1`; no references or labels are rewritten.
 
 ## Follow-up obligation only: bounded comparison (2026-10-17)
 
-**Retain current guidance.** Remove only the explicit ambiguous-request follow-up
-sentence and additional-context request clause; preserve personalization,
-event/role matching, non-invention and uncertainty disclosure. Same selected
-memory/order/recent dialogue, models and original judge; 28 tokens saved without
-refill. Fresh paired 104 score **79→82**, preference **26→29/30**, abstention
-**28→28/30**, historical 29 No **9→9/29**. Literal-question-mark outputs fall 50→35,
-but that is not a semantic quality metric.
+**Full comparison complete; defer automatic product promotion.** Removing explicit
+follow-up obligations remains a viable UX simplification with localized helpfulness
+and personalization gains, but does not establish broad accuracy superiority.
+Current runtime guidance stays unchanged; no further prompt sweep or regrading.
 
-Some supported personalized advice improves, while a season-versus-series-start
-qualification is lost despite both replies receiving Yes. The frozen condition
-against losing necessary qualifications fails; conditional 396 receive zero calls. This does not
-prove deterministic causality or that current wording is optimal. All 104 paired
-outputs and 18 source-bound cases were reviewed by the coding agent, not independently
-adjudicated. **416 actual attempts, zero retries/errors, 177.572 seconds**, frozen-rate
-estimate **$0.5738493**; zero new database requests/resources. Full original prompts,
-answers, reviews and gate are in `followup-guidance-ablation-v1`.
+Delete only the ambiguous-request clarification sentence and additional-context
+request clause. Preserve personalization, event/role matching, non-invention and
+uncertainty disclosure. Same selected memory, order, recent dialogue, generator
+(Sol low), original GPT-4o judge and references; 28 tokens saved without refill.
+
+The initial 104 comparison stopped under a conservative qualification-loss gate.
+Steven then explicitly authorized completing the already-frozen remaining 396.
+Preserve the earlier decision/archive and reuse those 104 answers/labels unchanged;
+generate and judge both arms freshly for all remaining questions. This is a
+consumed, two-phase development comparison, not held-out confirmation.
+
+| Original-judge accepted | Current | Candidate |
+| --- | ---: | ---: |
+| Original focused 104 | 79/104 | 82/104 |
+| Newly completed remaining 396 | 391/396 | 390/396 |
+| **Full 500** | **470/500 (94.0%)** | **472/500 (94.4%)** |
+| All preference questions | 26/30 | 29/30 |
+| All non-preference questions | 444/470 | 443/470 |
+| All abstention questions, also in non-preference | 28/30 | 28/30 |
+
+There are **10 gains / 8 losses**; historical 29 No score 9/29 in both arms.
+The previous product record of 471/500 is a different execution and remains
+preserved. Do not compare it as this trial's paired control or rewrite its labels.
+
+Personalized recommendations use supported context more helpfully; a music-event
+reply also separates a gala whose musical nature is unknown from known concerts.
+Many other transitions preserve the same named answer, amount, conditional range
+or uncertainty. Undated/repeated museum visits and conflicting mortgage/workshop
+chronology remain unresolved. The earlier season-versus-series-start qualification
+loss remains a risk, not an automatic execution veto or a proven causal effect.
+Question-mark outputs fall 57→36/500, but punctuation is not a quality classifier.
+No new retrieval or prompt-delivery improvement is claimed: sources are identical.
+
+Retain the original 104 review; newly inspect all 9 remaining questions with either
+No and 10 prespecified accepted controls. All 18 label transitions are covered,
+with 37 retained source-bound case records. This is coding-agent review, not an
+independent all-500 fact audit or certification of incidental external claims.
+A simpler UX policy could be chosen, but actual 4096 product admission under the
+shorter instruction must be checked before promotion; this replay does not refill.
+
+The additional run makes **1,584 actual attempts**, zero errors/retries, in
+**402.260 seconds**; both phases together contain 1,000 answers and 1,000 judgments.
+Frozen-rate estimate: **$6.4147019 additional**, **$6.9885512 including the original
+104**. Full generation estimates are $3.2005279 current / $3.2496083 candidate;
+judging is separate evaluation overhead. Generation median / p95 is
+2230.5 / 6698 ms current, 2221 / 6263 ms candidate. These are observed provider spans
+and cache-aware estimates at frozen 2026-10-16 rates, not invoices, steady-state
+savings or browser E2E timings. Zero new LambdaDB requests/resources; product
+operating database/inference costs remain unchanged, not free.
+
+Full plans, source/input locks, requests/replies, all original labels, source reviews,
+resource accounting and decision are in `followup-guidance-full500-v1`; see the
+[evidence index](query1-evidence-index.md). The original subset archive is immutable.
 
 ## Minimal memory-guidance ablation (2026-10-17)
 

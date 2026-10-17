@@ -6,7 +6,9 @@ Retain the adopted work-branch profile and its original **471/500 (94.2%)** reco
 The complete offline audit uses original source, returned final 50, dispatched 4096
 context, generated answer and unchanged original task-specific GPT-4o labels. It
 adds zero API calls and no adjusted score. The cohort is distinct from the older
-463/500 run below; see [the product decision](query1-retrieval-quality.md).
+463/500 run below and the latest full follow-up control (470/500) and deletion
+candidate (472/500). Its 29-case classification is not reassigned to those runs;
+see [the product decision](query1-retrieval-quality.md).
 
 | Primary disposition | Cases | Meaning |
 | --- | ---: | --- |
@@ -36,13 +38,16 @@ forcing a matching label or adding a case-specific prompt rule.
 | --- | --- | --- |
 | Chronological→best-ranked message groups | 29→28/32 | Retain chronological; conditional 74 not run |
 | Current→three-sentence minimal guidance | 81→83/104 | Lost role qualification/personalization and wrong arithmetic; conditional 396 not run |
-| Current→remove only follow-up obligations | 79→82/104 | Useful personalized advice but lost season/series qualification; conditional 396 not run |
+| Current→remove only follow-up obligations | 79→82/104; full 470→472/500 | All 396 remaining pairs completed after explicit authorization; defer automatic runtime promotion |
 
 The last trial retains personalization/event-role instructions. Preference scores
-26→29/30, abstention 28→28/30, historical 29 No 9→9/29. It does not broadly repair the
-original factual-recall failures or establish a new 500 score. A qualification can
-be lost even when both answers receive Yes. None of these bounded diagnoses changes
-the current guidance/default; see [their methods and limits](query1-retrieval-quality.md#follow-up-obligation-only-bounded-comparison-2026-10-17).
+26→29/30, abstention 28→28/30, historical 29 No 9→9/29. Completing the remaining
+396 gives 391→390: the full net two accepted labels do not establish broad factual
+improvement. Many transitions retain the same facts/caveats or have uncertain
+source chronology. The known season/series qualification loss remains disclosed;
+it does not automatically veto the explicitly authorized full comparison.
+Product guidance stays unchanged pending actual-budget adoption checks. Full source
+reviews, original labels and resource costs are retained; see [the full comparison](query1-retrieval-quality.md#follow-up-obligation-only-bounded-comparison-2026-10-17).
 
 ## Decision and scope (2026-10-16)
 
