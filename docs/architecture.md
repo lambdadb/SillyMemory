@@ -30,8 +30,8 @@ No chat text or API key is persisted in the journal. If local storage fails, rem
 
 Queries use the selected `chat_<ID>` branch with `consistentRead: true`, not
 Tags/Aliases. The empty `main` branch is an independent-story fork source. One
-two-message query includes the preceding eligible message and the current anchor,
-with roles and source order preserved (normally assistant reply plus user input).
+role-labelled Query 1 includes only the eligible generation anchor. Recent dialogue
+remains in the generation prompt but is not appended to the search query.
 Regenerate/swipe exclude the answer being replaced; continuation anchors on the
 eligible message being extended; Impersonate anchors on the latest eligible response.
 No query rewriting model or second search is used.
@@ -54,7 +54,7 @@ Bayesian fusion combines managed embedding `knn.queryText` with English-analyzed
 `text` using the same query and `skipSyntax: true`; both legs use the owner/scope
 prefilter, extended with the indexed `long` message-position range below the
 earliest retained recent boundary. The same boundary also limits local accepted documents,
-so an out-of-bound response cannot consume budget or duplicate a retained turn. Vector k=100, managed Typesafe `jev-1.13.0` candidateSize=100, final
+so an out-of-bound response cannot consume budget or duplicate a retained turn. Vector k=200, managed Typesafe `jev-1.13.0` candidateSize=200, final
 size=50. Unconfirmed applied metadata, mismatched provider/model identity or failure
 rejects injection. Queries above 8,192 UTF-8 bytes fail explicitly before any service
 call; they are never silently truncated.
@@ -63,10 +63,13 @@ Remote hits are ranking signals: only exact current IDs, ownership, scope, revis
 source text and conversation-time metadata are accepted; injection uses the locally
 reconstructed text. This prevents eventual-index lag, deleted records, malicious
 remote text changes and sibling-chat results from resurrecting stale content.
-Whole source passages are selected under the complete rendered token budget, then
-same-message source assembly can share headers/remove exact overlap and refill in
-retrieval order without removing the established source floor. Final presentation
-remains chronological. Fifty returned chunks need not all fit the configured budget.
+Visit valid hits in retrieval order. For each hit, render the already accepted
+sources together with that complete passage, comparing separate excerpts with
+same-message assembly that shares headers/removes exact overlap. Admit the hit
+only when the cheaper complete rendered layout fits the budget; otherwise continue
+to later hits. There is no preliminary whole-passage selection or source-floor
+refill pass. Final presentation remains chronological. Fifty returned chunks need
+not all fit the configured budget. See [ranked source assembly](source-assembly.md).
 
 An epoch and a full snapshot comparison invalidate work across events, chat switches, disabling, and connection replacement. Pending queries are canceled when possible; canceled server writes are never assumed rolled back. Token counting and the final validity check precede mutation. Failed sync/query/counting preserves local source and stops generation explicitly. A successful selection, including zero hits or nothing fitting the budget, replaces past eligible messages while preserving recent dialogue and special messages. Only the generated `coreChat` array is spliced; persisted chat objects are untouched.
 
@@ -75,8 +78,12 @@ Selected excerpts replace eligible older messages in the ephemeral `coreChat` at
 Macro braces and legacy `<USER>`/`<CHAR>`-style markers are rendered with fullwidth delimiters before budgeting. The joined excerpt content, source labels, newline separators and memory guidance are counted with the host tokenizer, with a fresh-settings default of 4,096 tokens, additionally capped at a quarter of the host context limit. Provider per-message envelopes and the complete system/persona/response overhead remain the host's responsibility; this is not a cap on total billed tokens or a guarantee that an oversized current input fits. Labeling and native roles are not a comprehensive prompt-injection defense.
 
 Successful preparation supplies a system instruction even with no matching memory:
-use available conversation evidence, ask one brief clarification when the referent
-or user intent is unclear, explain missing or conflicting evidence, and do not treat absent retrieval as proof of absence.
+use available conversation evidence, build recommendations on supported experiences
+and preferences, and answer supported parts before asking for missing details.
+Do not merge different events or roles from similar wording; distinguish the
+requested event or role from what the context establishes. Explain what missing
+or conflicting evidence does and does not establish without inventing facts;
+follow-up questions remain optional. Do not treat absent retrieval as proof of absence.
 Final delivery validates this instruction alongside excerpts and every verifiable
 retained recent turn. Long raw turns can exceed host context even when the
 memory allocation fits; the default loss guard stops that generation.

@@ -37,7 +37,13 @@ export async function runRecoveryScenarios({ page, field, waitStatus, prompt, ch
         await waitStatus('synchronized');
         check(`cycle ${i}: edit/swipe remote state matches source`, await remoteMatches());
         const before = await prompt();
-        check(`cycle ${i}: scoped memory preserves recent messages and budget`, !before.aborted && before.injection?.includes(marker) && !new RegExp(`CYCLE_(?!${i}\\b)\\d+`).test(before.injection) && before.chat.filter(m => !m.mes.startsWith('[Past conversation excerpt:')).length === 2 && before.before === before.after && before.renderedTokens <= 800);
+        const native = before.chat.filter(m => !m.mes.startsWith('[Past conversation excerpt:'));
+        // Each parent/branch drops its first message and appends a user message
+        // after its cycle. Freeze the resulting pair-aligned window sizes; later
+        // cycles consist mostly of consecutive user inputs, not completed pairs.
+        const retained = [6, 5, 6, 5, 6, 5, 5, 5, 5, 5, 5, 5][Math.floor(i / 2)];
+        const source = JSON.parse(before.before), expected = source.slice(-retained);
+        check(`cycle ${i}: scoped memory preserves recent messages and budget`, !before.aborted && before.injection?.includes(marker) && !new RegExp(`CYCLE_(?!${i}\\b)\\d+`).test(before.injection) && native.length === retained && native.every((m, j) => m.index === source.length - retained + j && m.mes === expected[j].mes && m.is_user === expected[j].is_user) && before.before === before.after && before.renderedTokens <= 800);
         await page.evaluate(async i => {
             const c = SillyTavern.getContext(); await c.deleteMessage(0);
             c.chat.push({ mes: `Recent arrival ${i}: ready for tomorrow.`, name: 'User', is_user: true, is_system: false, send_date: 0, extra: {} });

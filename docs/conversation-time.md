@@ -23,16 +23,22 @@ retrieval ranking, introduce date filters, or make the newest statement authorit
 
 ## Selection and generation
 
-The complete excerpt, including its provenance label, is counted during whole-
-chunk selection. A dated chunk either fits with its date or is omitted; the
-extension does not silently inject `today` while dropping its available date.
+The complete assembled or separate excerpt layout, including its time labels and
+shared system guidance, is counted during retrieval-order chunk admission. A dated
+chunk either fits with its date or is omitted; the extension does not silently inject `today` while dropping its available date.
 For example:
 
 ```text
-[Past conversation excerpt: user "User", message 1, passage 1]
-[Conversation timestamp: 2025-04-03T12:00:00.000Z; source=host_message; UTC, not story/event date; original local timezone unknown]
+[Past conversation excerpt: user "User", message 1, passage 1, sent: 2025-04-03T12:00:00.000Z]
 I started flute lessons today.
 ```
+
+The stored `timestampSource` remains validation metadata; it is not repeated in
+each prompt header. One shared explanation is delivered as system memory guidance,
+including no-hit/undated requests, and counted within the same budget. It states
+that sent dates are conversation clocks rather than necessarily event dates, and
+that relative dates require a known local conversation date; UTC alone is insufficient.
+No instruction is inserted into the quoted source body.
 
 UTC identifies the supplied clock representation; it does not establish the
 speaker's original local timezone. Do not infer a historical timezone from the
