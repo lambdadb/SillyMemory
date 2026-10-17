@@ -30,8 +30,8 @@ No chat text or API key is persisted in the journal. If local storage fails, rem
 
 Queries use the selected `chat_<ID>` branch with `consistentRead: true`, not
 Tags/Aliases. The empty `main` branch is an independent-story fork source. One
-two-message query includes the preceding eligible message and the current anchor,
-with roles and source order preserved (normally assistant reply plus user input).
+role-labelled Query 1 includes only the eligible generation anchor. Recent dialogue
+remains in the generation prompt but is not appended to the search query.
 Regenerate/swipe exclude the answer being replaced; continuation anchors on the
 eligible message being extended; Impersonate anchors on the latest eligible response.
 No query rewriting model or second search is used.
