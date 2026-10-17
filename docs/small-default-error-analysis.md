@@ -29,6 +29,13 @@ in both fresh arms. Fewer follow-ups coexist with lost role qualification and an
 accepted arithmetic error. Retain current guidance; this composite ablation does
 not isolate the clarification sentence or replace the original 500 score.
 
+The narrower [follow-up-obligation comparison](query1-retrieval-quality.md#follow-up-obligation-only-bounded-comparison-2026-10-17)
+keeps personalization/event-role matching: **79/104 versus 82/104**, including
+preference 26→29/30 and abstention 28→28/30. All 29 historical No score 9/29 in both
+fresh arms. Candidate improves some supported advice but loses a season-versus-series
+qualification on a control accepted in both arms. Retain current wording under
+the frozen gate; no conditional 396, runtime change or replacement 500 score.
+
 ### Primary dispositions
 
 Each question has exactly one primary category. Secondary risks overlap; these

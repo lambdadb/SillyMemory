@@ -30,6 +30,12 @@ personalized source use can weaken; an accepted answer adds wrong arithmetic.
 Retain current guidance and stop the conditional 396. This is a composite deletion,
 not an isolated test of the clarification sentence or a new product 500 score.
 
+The subsequent [follow-up-only comparison](#follow-up-obligation-only-bounded-comparison-2026-10-17)
+retains personalization/event-role rules and removes only explicit follow-up
+obligations: **79/104 versus 82/104**. Useful personalized replies improve, but a
+season-versus-series-start qualification is lost despite a Yes label. Retain current
+guidance under the frozen no-new-harm gate; conditional 396 remain unexecuted.
+
 Adopt retrieval-order admission using the final rendered memory size and compact
 `sent` headers with one budgeted explanation. Keep Query1, original per-message
 chunks, managed embeddings, Bayesian English, Jev 1.13.0, final50,
@@ -102,6 +108,95 @@ local archives below. This is one bounded parent quality decision on a consumed
 English development/regression cohort, not independent held-out confirmation or a
 new PR milestone for each diagnostic. The base remains Query1 PR 83's squash commit
 `df95a03d6a38a9837be64c62995fcf9cd9238092`.
+
+## Follow-up obligation only: bounded comparison (2026-10-17)
+
+**Decision: retain current guidance; defer this deletion and stop the conditional
+396.** Personalization/event-role instructions stay in both arms. Current scores
+**79/104**, candidate **82/104**, but a source-scope qualification is lost on a
+viewing-order control despite both receiving Yes. That fails the predeclared
+no-new-qualification-loss gate. This conservative decision does not establish
+that current wording is optimal or that the edit deterministically causes the
+observed difference. The product profile and original **471/500** remain unchanged.
+
+The candidate makes exactly two edits to the existing guidance message:
+
+- Delete `If the user request or its referent is ambiguous, ask one brief clarifying question.`
+- Replace the missing/conflicting-context sentence with
+  `If available context is missing, insufficient or conflicting, state what can and cannot be established without inventing facts.`
+
+All other wording stays byte-identical: personalization, supported recommendation
+parts before questions, event/role matching, non-invention, missing recall is not
+proof of nonoccurrence, quoted-context protection and native voice/latest intent.
+This removes explicit follow-up obligations; it does not prohibit natural questions.
+No new answer-first, guessing, arithmetic or case-specific rule is added.
+
+Reuse the exact previously frozen 104: all 29 original No, all 30 preference and
+all 30 abstention questions, plus 20 accepted other-task controls. Both arms get
+fresh Sol-low answers and the unchanged original task-specific GPT-4o judgments.
+The exact selected memory text/IDs/roles/dates/order, native recent-five/pair suffix,
+other messages and model options stay fixed. All 500 prepared allocations pass
+4096; candidate guidance saves 28 tokens, **without refilling memory**. The disjoint
+396 are frozen transfer inputs, not held-out confirmation, and receive zero calls.
+
+| Focused development measure | Current | Candidate |
+| --- | ---: | ---: |
+| Original-judge accepted /104 | **79** | **82** |
+| Historical 29 No, accepted /29 | 9 | 9 |
+| All preference questions, accepted /30 | 26 | 29 |
+| All abstention questions, accepted /30 | 28 | 28 |
+| Answers containing literal `?`, /104 | 50 | 35 |
+| Same punctuation within abstention, /30 | 27 | 14 |
+| Same punctuation within preference, /30 | 17 | 19 |
+| Generation input / output tokens | 517,529 / 12,731 | 514,617 / 13,698 |
+| Generation median / p95 request latency, ms | 2911.5 / 10402 | 2822 / 10146 |
+
+There are **7 label gains / 4 losses**, and six byte-identical answer pairs.
+Question-mark counts are surface observations, not semantic clarification-quality
+scores. Candidate still asks relevant questions; preference question marks increase.
+Read all 104 paired outputs, all 11 transitions and all 30 abstentions; preserve
+source-bound witnesses for 18 cases. This is coding-agent review, not independent
+human adjudication or certification of incidental food/travel/bibliography claims.
+
+- **Useful gains:** cultural-event advice gives supported French/Spanish activity
+  categories before requesting location, while admitting local listings are unknown.
+  Baking advice explicitly uses the successful lemon-poppyseed cake; the delivered
+  assistant acknowledgement supports that recollection, and canonical user messages
+  confirm it. Those confirmations are not new generator inputs.
+- **Preserved boundaries:** Senior Engineer versus Manager roles, missing Google
+  start date and successful stew/yogurt personalization remain distinguished. The
+  Target-coupon reply still withholds a confirmed store; that prior failing answer
+  is not repaired by this edit.
+- **Blocking scope risk (`gpt4_483dd43c`):** a user reports a 14-day binge of
+  *The Crown* season 3, and separately starting *Game of Thrones* about a month
+  earlier. Current limits its answer to those viewing stretches and explicitly
+  says the original season-one start is unknown. Candidate says the user started
+  *The Crown* roughly two weeks before finishing season 3, omitting the series-start
+  boundary. Both are accepted, so the label hides this qualification loss. This is
+  not a claim that an event date was newly fabricated or that every direct answer
+  is unsafe; it blocks the already-frozen no-new-harm condition for this candidate.
+- **Other label changes:** shoe storage, class/cake dates, jewelry counting and fish
+  retain the same underlying facts or uncertainty. Airport savings, fundraising date
+  and Instagram losses likewise retain estimates/qualifications. The grocery-store
+  loss changes which interpretation of “past month” leads the answer, while both
+  preserve the April Thrive/May Walmart distinction. Do not count these as new
+  retrieval failures or automatically accept the judge as a source-use verdict.
+
+The run completes **208 answers + 208 judgments**, 416 attempts, no errors/retries,
+peak concurrency 6, in **177.572 seconds**, using header-aware admission without
+fixed successful-call delays. Frozen 2026-10-16 receipt-rate estimate: **$0.5738493**
+(current generation $0.2136429 / judging $0.0701375; candidate generation $0.2174889 /
+judging $0.0725800). This is not an invoice/current-price check or a steady-state
+latency/cost claim; both generation arms receive 499,329 cached input tokens.
+There are **zero new LambdaDB queries, writes, embeddings, reranks or resources**;
+existing product operating costs are unchanged, not free.
+
+Ignored `artifacts/followup-guidance-ablation-v1/` preserves the frozen plan, exact
+edits, 500 source bindings/token audits, raw requests/responses, paired/source reviews
+and gate decision. Its local-only archive/checksum is indexed below; restore the
+parent guidance/retrieval bundles and canonical dataset for offline verification.
+No prior evidence is overwritten, no new diagnosis PR is opened, and no new
+browser/database compatibility run, product default, merge or deployment is claimed.
 
 ## Minimal memory-guidance ablation (2026-10-17)
 
@@ -2833,3 +2928,4 @@ verified retained copy. Older original archives remain immutable.
 | `guidance-default-errors29-v1.tar.gz` | `16dfd2db8af2e33ce52088b80e44ccd4576013758198cfa01717f1c95057cc6e` |
 | `memory-presentation-order-v1.tar.gz` | `5b9a509f137574b11467e02e537dcb4df959c289349c1090fbbb9371ed1b14a3` |
 | `minimal-guidance-ablation-v1.tar.gz` | `3f9cf9e06f9be8ef829be7a7b8785f46f96191a0abc5835dd10bb73dbcf0427b` |
+| `followup-guidance-ablation-v1.tar.gz` | `a02fd108e2f4b4118710d14eba35f6ba7ca69424f92d7262051dbe6de43165a5` |
