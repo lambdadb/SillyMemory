@@ -39,6 +39,11 @@ Original judge-source SHA-256:
 Licensed dataset/source inputs remain explicit local dependencies; a checksum alone
 is not a promise that a raw bundle can be downloaded.
 
+The full follow-up 500 quality bundle uses the pre-UTC/local-date-fix source at
+`149d3db`; restore that producing source for its frozen runtime verifier. The later
+`utc-local-date-guidance-v2` bundle preserves before/after source and unit/host
+delivery checks, with no new paid answer-quality score.
+
 ## Immutable run archives
 
 | Local archive filename | SHA 256 |
@@ -93,3 +98,4 @@ is not a promise that a raw bundle can be downloaded.
 | `minimal-guidance-ablation-v1.tar.gz` | `3f9cf9e06f9be8ef829be7a7b8785f46f96191a0abc5835dd10bb73dbcf0427b` |
 | `followup-guidance-ablation-v1.tar.gz` | `a02fd108e2f4b4118710d14eba35f6ba7ca69424f92d7262051dbe6de43165a5` |
 | `followup-guidance-full500-v1.tar.gz` | `a03a0ee5ae1ac9e7064fd6360c8d4175a7fdd662ea6b8560e314cb94b77c5397` |
+| `utc-local-date-guidance-v2.tar.gz` | `6914edb4bb7592c5b693c315eae9e6d32c6ce0b2eeb3528050ccde127730d7a6` |

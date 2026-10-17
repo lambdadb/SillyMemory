@@ -22,7 +22,7 @@ export function conversationTime(message) {
     return timestamp ? { conversationTimestamp: timestamp, timestampSource: 'host_message' } : {};
 }
 
-export const SENT_GUIDANCE = "[Sent dates mark conversation time, not necessarily event time. Resolve today/yesterday against sent; do not infer an undated event's date. Z means UTC; no offset means unknown timezone. The original local timezone may be unknown. Session timestamps may be shared by messages; absent dates are unknown.]";
+export const SENT_GUIDANCE = "[Sent dates mark conversation time, not necessarily event time. Resolve today/yesterday only if the local conversation date is known; UTC alone is insufficient. Otherwise keep date ambiguity; do not infer an undated event's date. Z means UTC; no offset means unknown timezone. Session timestamps may be shared; absent dates are unknown.]";
 
 // The caller supplies a source-validated clock, with its original precision.
 export const sentLabel = time => time ? `, sent: ${time}` : '';

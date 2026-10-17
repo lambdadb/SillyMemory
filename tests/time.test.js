@@ -41,6 +41,28 @@ test('every chunk inherits source time separately from text and timestamp edits 
     assert.deepEqual(capture(context(JSON.parse(JSON.stringify(source)))), second);
 });
 
+test('UTC sent time preserves local-day ambiguity across the date line', async () => {
+    const sent = '2024-02-29T23:30:00.000Z';
+    const localDate = timeZone => {
+        const parts = new Intl.DateTimeFormat('en', { timeZone, year: 'numeric', month: '2-digit', day: '2-digit' })
+            .formatToParts(new Date(sent));
+        return ['year', 'month', 'day'].map(type => parts.find(part => part.type === type).value).join('-');
+    };
+    assert.equal(localDate('Pacific/Honolulu'), '2024-02-29');
+    assert.equal(localDate('Pacific/Kiritimati'), '2024-03-01');
+    const source = chat();
+    source[0] = { ...source[0], send_date: sent, mes: 'Yesterday I visited the garden.' };
+    const { docs } = await documents(capture(context(source)), 'owner', config);
+    assert.equal(docs[0].conversationTimestamp, sent);
+    for (const render of [memoryMessages, packedMemoryMessages]) {
+        const recalled = render([docs[0]])[0].mes;
+        assert(recalled.includes(`, sent: ${sent}]`));
+        assert(recalled.endsWith(source[0].mes));
+        assert(recalled.includes('only if the local conversation date is known; UTC alone is insufficient'));
+        assert(recalled.includes('Otherwise keep date ambiguity'));
+    }
+});
+
 test('selection budgets full dated excerpts and rejects forged, missing and stale remote times', async () => {
     const { docs } = await documents(capture(context(chat())), 'owner', config);
     const dated = docs[0], plain = memoryMessages([{ ...dated, conversationTimestamp: undefined }])[0].mes;

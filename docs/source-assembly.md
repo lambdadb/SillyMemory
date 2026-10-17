@@ -32,6 +32,9 @@ source documents. Remote role/speaker/offset fields never override those documen
   precision is unchanged; unknown dates stay absent. Message time does not
   establish the date of an undated story/event. Benchmark session clocks use
   the same label through an explicit adapter, without inventing UTC or seconds.
+  Resolve relative days only against a known local conversation date: a UTC
+  instant alone does not establish the speaker's calendar day. If that date is
+  unknown, preserve the ambiguity rather than assuming a timezone.
 - Render the selected sources in original conversation/chunk order. This
   presentation order does not change their retrieval-order admission priority.
 

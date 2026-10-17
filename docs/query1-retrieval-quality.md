@@ -17,6 +17,10 @@ English development cohort is not held-out confirmation or a deterministic accur
 is not a claim about the currently installed `main` branch. Merge, release and
 main promotion remain separate actions.
 
+These quality scores precede the subsequent UTC/local-date instruction fix.
+That fix has separate unit and host-delivery validation below; no new 500-question
+answer score is claimed for its final wording.
+
 Retain Small, Jev, Sol low, chronological presentation and current guidance.
 Defer 8192 and external providers; reject preceding-message retrievalText. The
 latest follow-up-only deletion has completed all 500 comparisons; runtime promotion
@@ -97,7 +101,7 @@ in `generation-guidance-paired500-v1`; no references or labels are rewritten.
 **Full comparison complete; defer automatic product promotion.** Removing explicit
 follow-up obligations remains a viable UX simplification with localized helpfulness
 and personalization gains, but does not establish broad accuracy superiority.
-Current runtime guidance stays unchanged; no further prompt sweep or regrading.
+Runtime clarification policy stays unchanged; no further prompt sweep or regrading.
 
 Delete only the ambiguous-request clarification sentence and additional-context
 request clause. Preserve personalization, event/role matching, non-invention and
@@ -228,7 +232,7 @@ the corresponding run bundles.
 
 ## Validation boundaries
 
-- Current local: `npm test` **375 passed/0 failed** on Node 24.15.0; `npm run check`,
+- Current local: `npm test` **376 passed/0 failed** on Node 24.15.0; `npm run check`,
   `npm run check:release`, `npm run check:sdk` and `git diff --check` pass. CI also
   executes Node 20.12.0/24. Release metadata remains 0.4.0 dated 2026-10-13.
 - Retained host checks: pinned SillyTavern 1.19.0/Chromium 153 with local database/model
@@ -238,9 +242,14 @@ the corresponding run bundles.
   scored/50 returned, strong reads/isolation, no deleted-source resurrection,
   auth 401 without retry, no forwarded cookies/CSRF; both owned collections return 404 after cleanup.
 - Latest prompt-only trials replay fixed retrieval through actual OpenAI generation
-  and judging; no fresh browser/database compatibility run. All original failure
-  receipts and source/label uncertainties remain retained. No new language/provider
-  sweep, production deployment, release or independent held-out result is claimed.
+  and judging; they do not validate the later UTC/local-date wording. That review
+  fix allows relative-day resolution only when the local conversation date is known;
+  UTC alone is insufficient. It preserves timestamp bytes and date ambiguity.
+  The new near-midnight regression and pinned SillyTavern/Chromium run pass all
+  18 delivery cases plus packing/assembly, with zero remaining emulated collections.
+  No paid model/database call or fresh quality score accompanies that fix. All original
+  failure receipts and source/label uncertainties remain retained; no deployment,
+  release or independent held-out result is claimed.
 
 ## Evidence and reproduction
 

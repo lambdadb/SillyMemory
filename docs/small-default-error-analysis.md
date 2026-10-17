@@ -46,8 +46,10 @@ The last trial retains personalization/event-role instructions. Preference score
 improvement. Many transitions retain the same facts/caveats or have uncertain
 source chronology. The known season/series qualification loss remains disclosed;
 it does not automatically veto the explicitly authorized full comparison.
-Product guidance stays unchanged pending actual-budget adoption checks. Full source
+The clarification policy stays unchanged pending actual-budget adoption checks. Full source
 reviews, original labels and resource costs are retained; see [the full comparison](query1-retrieval-quality.md#follow-up-obligation-only-bounded-comparison-2026-10-17).
+The later UTC/local-date instruction fix is validated separately with unit/host
+delivery checks; these recorded answer scores are not rerun for that wording.
 
 ## Decision and scope (2026-10-16)
 
