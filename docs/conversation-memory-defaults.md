@@ -15,8 +15,9 @@ supported and validated. See [the depth200 decision and checks](query1-retrieval
 
 Store available source time and provenance on every chunk, separately from its
 embedding text. Present the time as `sent` in each recalled excerpt header and
-count one shared explanation with the memory. No new metadata extraction, user
-option, query, embedding or generation call is required. Native timestamps retain
+count one shared explanation in the system memory guidance, including no-hit
+requests. No new metadata extraction, user option, query, embedding or generation
+call is required. Native timestamps retain
 their UTC precision. The benchmark uses its provided session clock for each
 message, with the same `sent` label and no invented timezone or seconds.
 
@@ -102,12 +103,14 @@ The checks below predate production clarification continuity. Their original int
 
 At the historical active-input revision, recent-history capacity pressure was removed; the maintained
 harness therefore separates a long-history control from actual system-instruction
-pressure. The latter uses 110 instruction repetitions to exercise host truncation,
+pressure. The latter uses 160 instruction repetitions to exercise host truncation,
 Stop on missing context, streaming, swipe/regenerate and manual context recovery.
 Previously captured cases retain their original settings in local archives.
-Small-context packing now prepares two excerpts, with six after context recovery;
-the repeated-citation source-integrity fixture keeps its five required excerpts
-under context 2,048/budget 500. These are emulator contract observations, not
+Small-context packing now prepares one excerpt, with six after context recovery;
+the repeated-citation source-integrity fixture keeps four required excerpts
+under context 2,656/configured and effective budget 600. The no-fitting-source
+fixture uses budget 250, while budget 64 tests a guidance-only
+preparation failure. These are emulator contract observations, not
 answer-quality changes. Intermediate attempts failed on stale policy labels,
 expected excerpt totals or pressure assumptions; no paid answer reruns occurred.
 Historical producer revisions are required for fixed-window answer experiments;

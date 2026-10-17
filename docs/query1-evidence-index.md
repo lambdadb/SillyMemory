@@ -99,8 +99,16 @@ all 15 changed-label pairs and unchanged parent source/core-audit bindings.
 All 6,034 members pass full hash readback and configured-secret scanning. The earlier
 recent-deletion result remains a distinct preserved experiment, not its control.
 
+The later `sent-system-review-v1` host validation restores producer
+`5d4ca808de41515075a7fbeb445808a018ec0464` plus its archived patch. It verifies
+system-role date guidance with 18 actual-host prompt cases and 103 browser checks
+against local providers, retaining failed fixture attempts. Both suites clean all
+emulated collections. The 21-member archive passes hash readback and secret scanning.
+This later product fix does not alter the frozen same-history benchmark inputs/scores.
+
 | Local archive filename | SHA 256 |
 | --- | --- |
+| `sent-system-review-v1.tar.gz` | `e6da2707984cb3a367c3cecea87d6becd021e1f3682d4fe56ad43121ef7a9cec` |
 | `standalone-same-history500-v1.tar.gz` | `2d4085b70b70a49f109915fc5d6593fd7f730833642ff8586ba591cd28997365` |
 | `standalone-memory500-v1.tar.gz` | `07b5c51abcd046d5977442ce6c9186a7b7164e52f37431bf7b7d2830f8291b88` |
 | `retrieval-stage-audit-v1.tar.gz` | `8852bc3095bcbb074ff55b60b0ba0a43aa3170b8dedd44031a4e5b15ef90898c` |

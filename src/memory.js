@@ -1,7 +1,7 @@
 import { beginWrites, clearCommit, recordWrite, sameDocument } from './commit.js';
 import { queryAnchor, retentionAnchor, retentionStart } from './context.js';
 import { chunkSpans, CHUNKING_POLICY } from './chunking.js';
-import { hostTimestamp, conversationTime, conversationTimeLabel, SENT_GUIDANCE } from './time.js';
+import { hostTimestamp, conversationTime, conversationTimeLabel } from './time.js';
 
 export const DEFAULTS = Object.freeze({ budget: 4096, chunkChars: 800 });
 export function options(value = {}) {
@@ -92,21 +92,11 @@ export function literal(text) {
     return String(text).replaceAll('{', '｛').replaceAll('}', '｝')
         .replace(/<(USER|BOT|CHAR|CHARIFNOTGROUP|GROUP)>/gi, '＜$1＞');
 }
-function rawMemoryMessages(passages) {
+export function memoryMessages(passages) {
     return [...passages].sort((a, b) => a.message - b.message || a.chunk - b.chunk).map(d => ({
         index: d.message, name: literal(d.speaker), is_user: d.role === 'user', is_system: false,
         mes: `[Past conversation excerpt: ${d.role} ${JSON.stringify(literal(d.speaker))}, message ${d.message + 1}, passage ${d.chunk + 1}${conversationTimeLabel(d)}]\n${literal(d.text)}`,
     }));
-}
-function withSentGuidance(messages, passages) {
-    if (!messages.length || !passages.some(doc => conversationTimeLabel(doc))) return messages;
-    const [first, ...rest] = messages, end = first.mes.indexOf('\n') + 1;
-    // Count and dispatch the explanation as part of the same memory text. Do not
-    // add it per chunk or leak state between separate renders/generations.
-    return [{ ...first, mes: first.mes.slice(0, end) + SENT_GUIDANCE + '\n' + first.mes.slice(end) }, ...rest];
-}
-export function memoryMessages(passages) {
-    return withSentGuidance(rawMemoryMessages(passages), passages);
 }
 export async function selectMemory(hits, expected, budget, countTokens) {
     return selectRankedMemory(hits, expected, budget, countTokens, false);
@@ -159,7 +149,7 @@ function repeatedEntries(passages) {
         group.push(doc); groups.set(key, group);
     }
     return [...groups.values()].map(group => {
-        const last = group.at(-1), message = rawMemoryMessages([last])[0];
+        const last = group.at(-1), message = memoryMessages([last])[0];
         if (group.length > 1) {
             message.mes = `[Past conversation excerpt: ${last.role} ${JSON.stringify(literal(last.speaker))}, identical text at message:passage ${group.map(doc => `${doc.message + 1}:${doc.chunk + 1}`).join(', ')}${conversationTimeLabel(last)}]\n${literal(last.text)}`;
         }
@@ -212,7 +202,7 @@ export function packedMemoryMessages(passages) {
         return [{ index: last.message, name: literal(last.speaker), is_user: last.role === 'user', is_system: false,
             mes: `[Past conversation excerpt: ${last.role} ${JSON.stringify(literal(last.speaker))}, message ${last.message + 1}, passages ${passageNumbers(docs)}${conversationTimeLabel(last)}]\n${body}` }];
     });
-    return withSentGuidance(messages, passages);
+    return messages;
 }
 
 export async function selectPackedMemory(hits, expected, budget, countTokens) {

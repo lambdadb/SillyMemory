@@ -50,7 +50,7 @@ const plan = { version: 2, generationInput: 'recent-five-and-memory',
     { ...base, id: 'no-hits-pressure', recentRepeats: 80, noHits: true, blocked: true },
     { ...base, id: 'no-hits-small', noHits: true },
     { ...base, id: 'history-pressure', recentRepeats: 80, blocked: true },
-    { ...base, id: 'nothing-fits', budget: 200 },
+    { ...base, id: 'nothing-fits', budget: 250 },
     { ...base, id: 'guidance-does-not-fit', budget: 64, blocked: true, preparationFailure: true },
     { ...base, id: 'disabled', enabled: false, recentRepeats: 80 },
 ] };
@@ -432,7 +432,7 @@ try {
     ] }, 'normal')[0];
     await page.evaluate(async chat => {
         const c = SillyTavern.getContext(), { oai_settings } = await import('/scripts/openai.js');
-        Object.assign(oai_settings, { openai_max_context: 2304, openai_max_tokens: 256, stream_openai: false });
+        Object.assign(oai_settings, { openai_max_context: 2656, openai_max_tokens: 256, stream_openai: false });
         c.chat.splice(0, c.chat.length, ...chat); await c.saveChat(); await c.reloadCurrentChat();
     }, packingChat);
     packing = true;
@@ -457,7 +457,7 @@ try {
     assert(excerpts.some(m => m.content.includes('identical text at message:passage 3:1, 11:1, 19:1, 27:1, 35:1, 43:1, 51:1]')));
     assert(excerpts.some(m => m.content.includes('identical text at message:passage 4:1, 12:1, 20:1, 28:1, 36:1, 44:1, 52:1]')));
     assert.deepEqual(packed.chat.slice(0, 60), packingChat.map(m => m.mes), 'Packing never changes stored history');
-    report.packing = { evidence: 'Actual host generation with recorded query ranks and a local completion fixture', case: packingFixture.item.id, configuredBudget: 600, effectiveBudget: 512, delivery: packed.delivery, request: packingRequest, storedHistoryUnchanged: true };
+    report.packing = { evidence: 'Actual host generation with recorded query ranks and a local completion fixture', case: packingFixture.item.id, configuredBudget: 600, effectiveBudget: 600, delivery: packed.delivery, request: packingRequest, storedHistoryUnchanged: true };
     packing = false;
     console.log('VERIFY same-message-assembly');
     await field('enabled').uncheck();
@@ -485,6 +485,8 @@ try {
     assert(joined && joined.role === 'user' && joined.content.endsWith(assemblyChat[0].mes), 'All assembled source text reached the completion endpoint');
     assert.equal(joined.content.split(', sent:').length - 1, 1);
     assert.equal(assemblyRequest.messages.map(m => m.content).join('\n').split(SENT_GUIDANCE).length - 1, 1);
+    assert(assemblyRequest.messages.some(m => m.role === 'system' && m.content.includes(SENT_GUIDANCE)), 'Date interpretation is delivered as system guidance');
+    assert(!joined.content.includes(SENT_GUIDANCE), 'Quoted source does not carry instructions');
     assert.equal(assembled.source, assemblyChat[0].mes, 'Assembly does not alter stored history');
     assert.match(assembled.delivery, /^Final host prompt:/); assert(!assembled.delivery.includes('missing or changed'));
     report.assembly = { evidence: 'Actual host assembled prompt dispatched to a local completion fixture; LambdaDB emulated',

@@ -245,7 +245,7 @@ try {
         const { runGenerationInterceptors } = await import('/scripts/extensions.js');
         aborted = await runGenerationInterceptors(chat, 4096, 'normal');
         const rendered = chat.filter(m => m.mes.startsWith('[Past conversation excerpt:')).map(m => m.mes).join('\n');
-        const result = { before, after: JSON.stringify(c.chat), chat, aborted, rendered, preparation: document.querySelector('[data-sm="status"]').textContent, renderedTokens: await c.getTokenCountAsync(rendered), macroValue: c.chatMetadata.variables?.sillymemory_test, injection: rendered, inspection: document.querySelector('[data-sm="inspection"]').textContent };
+        const result = { before, after: JSON.stringify(c.chat), chat, aborted, rendered, guidance: c.extensionPrompts.sillymemory?.value || '', preparation: document.querySelector('[data-sm="status"]').textContent, renderedTokens: await c.getTokenCountAsync(rendered), macroValue: c.chatMetadata.variables?.sillymemory_test, injection: rendered, inspection: document.querySelector('[data-sm="inspection"]').textContent };
         // This suite calls only the interceptor dispatcher. Emulate its completion
         // boundary to release prompt ownership; full packing/dispatch is tested
         // by prompt-delivery-smoke.mjs, not by this synthetic final event.
@@ -466,7 +466,7 @@ try {
     });
     await field('enabled').check(); await waitStatus('synchronized');
     const timed = await prompt();
-    check('host timestamp reaches interceptor with explicit non-event attribution', timed.chat.some(m => m.mes.includes('sent: 2024-02-29T12:34:56.123Z') && m.mes.includes('not necessarily event time')));
+    check('host timestamp reaches interceptor with explicit non-event attribution', timed.chat.some(m => m.mes.includes('sent: 2024-02-29T12:34:56.123Z')) && timed.guidance.includes('not necessarily event time') && !timed.chat.some(m => m.mes.includes('not necessarily event time')));
     const beforeTimestampEdit = calls.filter(call => call.path.endsWith('/upsert')).length;
     await page.evaluate(async () => { const c = SillyTavern.getContext(); c.chat[0].send_date = '2024-03-01T00:00:00.000Z'; await c.saveChat(); });
     const changedTime = await prompt();
