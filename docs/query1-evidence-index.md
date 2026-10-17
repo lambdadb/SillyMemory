@@ -44,6 +44,11 @@ The full follow-up 500 quality bundle uses the pre-UTC/local-date-fix source at
 `utc-local-date-guidance-v2` bundle preserves before/after source and unit/host
 delivery checks, with no new paid answer-quality score.
 
+The later `followup-guidance-adoption-v1` bundle records adoption of the exact
+evaluated deletion from base `026204a`: 500 model-free budget checks and 18
+actual-host/local-emulator delivery cases. It preserves changed selections and
+producer snapshots without replacing the fixed-memory 470/472 answer results.
+
 ## Immutable run archives
 
 | Local archive filename | SHA 256 |
@@ -99,3 +104,4 @@ delivery checks, with no new paid answer-quality score.
 | `followup-guidance-ablation-v1.tar.gz` | `a02fd108e2f4b4118710d14eba35f6ba7ca69424f92d7262051dbe6de43165a5` |
 | `followup-guidance-full500-v1.tar.gz` | `a03a0ee5ae1ac9e7064fd6360c8d4175a7fdd662ea6b8560e314cb94b77c5397` |
 | `utc-local-date-guidance-v2.tar.gz` | `6914edb4bb7592c5b693c315eae9e6d32c6ce0b2eeb3528050ccde127730d7a6` |
+| `followup-guidance-adoption-v1.tar.gz` | `314bce6afa55faa9c0b2f6a686903c723bbe173f05b7e60cdccd395238ae14ed` |

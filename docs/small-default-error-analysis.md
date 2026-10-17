@@ -38,7 +38,7 @@ forcing a matching label or adding a case-specific prompt rule.
 | --- | --- | --- |
 | Chronological→best-ranked message groups | 29→28/32 | Retain chronological; conditional 74 not run |
 | Current→three-sentence minimal guidance | 81→83/104 | Lost role qualification/personalization and wrong arithmetic; conditional 396 not run |
-| Current→remove only follow-up obligations | 79→82/104; full 470→472/500 | All 396 remaining pairs completed after explicit authorization; defer automatic runtime promotion |
+| Current→remove only follow-up obligations | 79→82/104; full 470→472/500 | All 396 remaining pairs completed; adopt the exact evaluated deletion as the product baseline by explicit user decision |
 
 The last trial retains personalization/event-role instructions. Preference scores
 26→29/30, abstention 28→28/30, historical 29 No 9→9/29. Completing the remaining
@@ -46,8 +46,10 @@ The last trial retains personalization/event-role instructions. Preference score
 improvement. Many transitions retain the same facts/caveats or have uncertain
 source chronology. The known season/series qualification loss remains disclosed;
 it does not automatically veto the explicitly authorized full comparison.
-The clarification policy stays unchanged pending actual-budget adoption checks. Full source
-reviews, original labels and resource costs are retained; see [the full comparison](query1-retrieval-quality.md#follow-up-obligation-only-bounded-comparison-2026-10-17).
+The evaluated follow-up-obligation deletion is now the adopted product baseline;
+no further role/scope instruction is applied. The score remains the fixed-memory
+comparison, separate from model-free adoption checks. Full source reviews,
+original labels and resource costs are retained; see [the full comparison](query1-retrieval-quality.md#follow-up-obligation-only-bounded-comparison-2026-10-17).
 The later UTC/local-date instruction fix is validated separately with unit/host
 delivery checks; these recorded answer scores are not rerun for that wording.
 

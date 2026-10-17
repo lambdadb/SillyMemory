@@ -332,10 +332,10 @@ try {
             assert.equal(sent[0].messages.filter(m => m.content.startsWith('[Past conversation excerpt:')).length, 0);
         }
         if (spec.id === 'recovered-context') {
-            assert.match(observation.delivery, /5\/5 memory excerpts and 5\/5 input messages verified/);
+            assert.match(observation.delivery, /6\/6 memory excerpts and 5\/5 input messages verified/);
             const recoveredExcerpts = sent[0].messages.filter(m => m.content.startsWith('[Past conversation excerpt:'));
-            assert.equal(recoveredExcerpts.length, 5);
-            for (let index = 0; index < 5; index++) assert(recoveredExcerpts.some(m => m.content.includes(`OLD_${index}:`)), 'Five ranked older sources reach the recovered prompt');
+            assert.equal(recoveredExcerpts.length, 6);
+            for (let index = 0; index < 6; index++) assert(recoveredExcerpts.some(m => m.content.includes(`OLD_${index}:`)), 'Six ranked older sources fit after removing follow-up obligations');
         }
         if (spec.earlierAnchor) {
             assert(sent[0].messages.some(m => m.role === 'user' && m.content === chat[8].mes), 'User anchor is retained despite following assistant turns');

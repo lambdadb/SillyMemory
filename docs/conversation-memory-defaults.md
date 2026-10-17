@@ -45,10 +45,15 @@ Native replies and streaming are preserved, including user-selected response
 formats. There is no reply schema, request-status classification, pending-span
 accumulation, stream hiding or decoding/recovery adapter. Natural system guidance
 answers supported parts first, builds recommendations on relevant experiences
-and preferences, and distinguishes uncertain event/role matches. It asks for
-clarification when intent/referents are ambiguous and explains missing
-or conflicting evidence without inventing facts. It shares the excerpt budget and
-Chat Completion delivery checks. This instruction is not a factual correctness
+and preferences, and distinguishes uncertain event/role matches. It explains
+missing or conflicting evidence without inventing facts. Explicit obligations to
+ask a clarification question or request additional context are removed; natural
+follow-up questions remain allowed. This is the adopted guidance baseline after
+the full fixed-memory comparison scored 470/500 versus 472/500, not a claim that
+all remaining source-use or ambiguity problems are resolved; see
+[the decision](query1-retrieval-quality.md#follow-up-obligation-only-bounded-comparison-2026-10-17).
+The guidance shares the excerpt budget and Chat Completion delivery checks.
+This instruction is not a factual correctness
 or model-compliance guarantee. A clarification dialogue longer than the recent
 window relies on retrieval. Memory-on preparation failures abort explicitly;
 disabling memory restores native history. Group/tool chats remain unsupported.

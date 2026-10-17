@@ -11,7 +11,7 @@ phase is added; native response formats and streaming remain intact.
 
 The adopted work-branch profile originally scored **471/500 (94.2%)** with Sol low
 and the original task-specific GPT-4o-2024-08-06 judge. The latest full follow-up
-comparison scores **470/500 (94.0%) current versus 472/500 (94.4%) candidate**;
+comparison scores **470/500 (94.0%) prior guidance versus 472/500 (94.4%) deletion**;
 these are separate executions, not replacement historical labels. This consumed
 English development cohort is not held-out confirmation or a deterministic accuracy guarantee. It
 is not a claim about the currently installed `main` branch. Merge, release and
@@ -21,10 +21,10 @@ These quality scores precede the subsequent UTC/local-date instruction fix.
 That fix has separate unit and host-delivery validation below; no new 500-question
 answer score is claimed for its final wording.
 
-Retain Small, Jev, Sol low, chronological presentation and current guidance.
-Defer 8192 and external providers; reject preceding-message retrievalText. The
-latest follow-up-only deletion has completed all 500 comparisons; runtime promotion
-is deferred pending actual-budget product admission checks. Source retrieval, prompt
+Retain Small, Jev, Sol low and chronological presentation. Adopt the evaluated
+follow-up-obligation deletion as the product guidance baseline, by Steven's explicit
+decision after the full comparison. Defer 8192 and external providers; reject
+preceding-message retrievalText. Source retrieval, prompt
 delivery, generated answers and judge labels remain separate evaluation stages;
 see [evaluation criteria](memory-evaluation.md) and [error analysis](small-default-error-analysis.md).
 
@@ -98,10 +98,12 @@ in `generation-guidance-paired500-v1`; no references or labels are rewritten.
 
 ## Follow-up obligation only: bounded comparison (2026-10-17)
 
-**Full comparison complete; defer automatic product promotion.** Removing explicit
-follow-up obligations remains a viable UX simplification with localized helpfulness
-and personalization gains, but does not establish broad accuracy superiority.
-Runtime clarification policy stays unchanged; no further prompt sweep or regrading.
+**Adopt the evaluated deletion as the product baseline.** Steven explicitly chose
+this policy after the full comparison to settle the clarification UX before
+discussing further improvements. Localized helpfulness/personalization gains and
+a simpler instruction support that choice; broad accuracy superiority is not
+established. Natural clarification remains allowed. No new scope-guidance
+candidate, prompt sweep or regrading is adopted.
 
 Delete only the ambiguous-request clarification sentence and additional-context
 request clause. Preserve personalization, event/role matching, non-invention and
@@ -114,7 +116,7 @@ Preserve the earlier decision/archive and reuse those 104 answers/labels unchang
 generate and judge both arms freshly for all remaining questions. This is a
 consumed, two-phase development comparison, not held-out confirmation.
 
-| Original-judge accepted | Current | Candidate |
+| Original-judge accepted | Prior guidance | Adopted deletion |
 | --- | ---: | ---: |
 | Original focused 104 | 79/104 | 82/104 |
 | Newly completed remaining 396 | 391/396 | 390/396 |
@@ -140,8 +142,23 @@ Retain the original 104 review; newly inspect all 9 remaining questions with eit
 No and 10 prespecified accepted controls. All 18 label transitions are covered,
 with 37 retained source-bound case records. This is coding-agent review, not an
 independent all-500 fact audit or certification of incidental external claims.
-A simpler UX policy could be chosen, but actual 4096 product admission under the
-shorter instruction must be checked before promotion; this replay does not refill.
+The score above is the fixed-memory comparison, without refill. Product adoption
+uses the exact evaluated candidate in `src/context.js`; ordinary selection can
+use the saved space under the unchanged 4096 budget. The separate model-free
+admission and host-delivery checks below establish operational behavior, not a
+new generated-answer score. Role/scope over-inference, incomplete personalization
+and ambiguous chronology/reference targets remain open; no additional instruction
+is adopted to address them in this change.
+
+Adoption checks use zero new paid calls. Model-free reselection of the same final
+50 candidates changes 353/500 contexts; every allocation stays within 4096. Complete
+indexed annotated bodies increase 878→882/894 with no coverage regression, using
+the historical benchmark date instruction in both arms. This is structural body
+coverage, not necessary-fact recall or a new answer score. The actual pinned host
+with local database/completion emulators passes 18 delivery cases plus packing
+and assembly; a fixed budget-boundary case now admits six excerpts instead of
+five. Local unit tests remain 376/376. The adoption bundle and immutable quality
+bundle have separate evidence-index entries.
 
 The additional run makes **1,584 actual attempts**, zero errors/retries, in
 **402.260 seconds**; both phases together contain 1,000 answers and 1,000 judgments.
