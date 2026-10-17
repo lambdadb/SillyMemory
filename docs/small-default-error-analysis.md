@@ -23,6 +23,12 @@ keeps the selected sources fixed: chronological 29/32 versus relevance-group 28/
 with no gains and a lost venue candidate. It retains chronological presentation
 and does not change the original 500 score or the classification below.
 
+The [minimal-guidance ablation](query1-retrieval-quality.md#minimal-memory-guidance-ablation-2026-10-17)
+then scores 81/104 versus 83/104 on a focused set including all 29 No; those 29 score 11/29
+in both fresh arms. Fewer follow-ups coexist with lost role qualification and an
+accepted arithmetic error. Retain current guidance; this composite ablation does
+not isolate the clarification sentence or replace the original 500 score.
+
 ### Primary dispositions
 
 Each question has exactly one primary category. Secondary risks overlap; these
