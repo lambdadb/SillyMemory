@@ -237,8 +237,9 @@ historical 470 does not override the later matched 465 result.
 
 ## Supplemental evaluator reproducibility (2026-10-17)
 
-**Defer replacing the comparison judge.** A repeated GPT-4o audit of four original
-No answers containing the reference value found two with mixed labels across three
+**Initial diagnostic disposition: defer a deterministic sole judge.** A repeated
+GPT-4o audit of four original No answers containing the reference value found two
+with mixed labels across three
 identical requests. Answer-only positive controls were 12/12 Yes and deliberately
 wrong controls 12/12 No. This establishes local judgment sensitivity, not that every
 original No is wrong; original labels remain unchanged.
@@ -278,7 +279,17 @@ No new generation, LambdaDB, embedding or reranking calls were made. Raw request
 responses, frozen rules and disagreement review are preserved in the local-only
 `jev-judge-reference-v1` bundle; the preceding four-case audit is separately
 preserved as `judge-exact-answer-audit-v1`. Discuss evaluator uncertainty before
-further generation tuning. No evaluator default or product runtime changes.
+further generation tuning. That frozen run made no evaluator-default or product
+runtime changes.
+
+**Subsequent user decision:** adopt pinned Jev 1.13.0, Noul >=0.50 as the primary
+judge for future internal evaluations, accepting the observed limited label
+variation rather than requiring perfect determinism. Preserve the initial diagnostic
+and every original GPT-4o label. Report scores explicitly as Jev-graded LongMemEval,
+compare all arms under the same judge, and keep evidence/delivery diagnostics
+separate. The [evaluator policy](memory-evaluation.md#answer-evaluator-policy)
+records the preserved rules, input-format adaptation and comparison boundaries.
+This is prospective policy adoption, not a fresh score or runtime/harness change.
 
 ## Cost boundaries
 

@@ -208,3 +208,35 @@ semantically agreed source/time policy across arms. See the
 [same-policy budget comparison](query1-retrieval-quality.md#same-policy-capacity-comparison-4096-versus-8192)
 for a completed example; its message-coverage counts are not a completed
 necessary-span audit.
+
+## Answer evaluator policy
+
+By Steven's decision on 2026-10-17, use **Jev `jev-1.13.0`, Noul >=0.50 for Yes**
+as the primary answer judge for new internal English LongMemEval evaluations.
+Pin the version rather than an alias. Preserve dataset questions/references and
+original task-specific rule wording, including preference and abstention rules.
+The adapter moves question/reference/response values into JSON state, preserves
+the exact rule prefix and final grading proposition, and removes only the literal
+`Answer yes or no only.` output-format instruction. This is an evaluator adaptation,
+not a byte-identical request or an upstream-supported Jev integration.
+
+The [upstream evaluator](https://github.com/xiaowu0162/LongMemEval/blob/main/src/evaluation/evaluate_qa.py)
+already selects among GPT-4o, GPT-4o-mini and Llama 3.1 70B. Its judge choice is
+part of the scoring protocol. Our Jev results remain meaningful measurements on
+LongMemEval, labelled **LongMemEval-S, Jev 1.13.0, threshold 0.50**, alongside the
+reader, retrieval/budget settings, dataset identity and any input adaptation.
+Do not present them as reproduced GPT-4o scores or directly comparable rankings
+against results with another judge. For a controlled system comparison, use the
+same judge, threshold, rules and dataset for every arm. Rejudge saved baseline
+answers under that protocol when needed; do not regenerate them solely to change
+the judge. Preserve all historical GPT-4o labels and results in separate records.
+
+The completed repeat study found stable binary labels for 498/500 inputs across
+five Jev calls, not deterministic inference or independently verified judge accuracy.
+Record raw probabilities as well as labels and treat small answer-score changes
+in light of observed evaluator variation and evidence/delivery diagnostics. Do
+not exclude low-probability questions or replace labels with favorable reruns.
+The user-requested post-hoc 0.55/0.60 calculations do not change the adopted 0.50
+threshold. This adoption is a prospective evaluation-policy decision; historical
+runners and frozen receipts retain their producing protocol. It changes neither
+product generation nor retrieval/reranking defaults and adds no paid run.
