@@ -1,8 +1,10 @@
 # Small-default error analysis
 
-## Current guidance: all 29 original No cases (2026-10-17)
+## Historical guidance: all 29 original No cases (2026-10-17)
 
-Retain the adopted work-branch profile and its original **471/500 (94.2%)** record.
+Preserve the prior work-branch profile's **471/500 (94.2%)** record. The newly adopted
+follow-up-obligation deletion scored **472/500 (94.4%)**, leaving 28 No; the historical
+29-case classification below is not a classification of those 28 outcomes.
 The complete offline audit uses original source, returned final 50, dispatched 4096
 context, generated answer and unchanged original task-specific GPT-4o labels. It
 adds zero API calls and no adjusted score. The cohort is distinct from the older
