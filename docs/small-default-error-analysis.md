@@ -78,6 +78,37 @@ repetition/compression is untested. The local-only `context-interference-two-v1`
 bundle retains 40 actual calls, zero errors/retries, about 24.6 seconds and a
 frozen-rate $0.071275712 estimate. No new full500 score or product/default change.
 
+### Standalone fixed-memory evaluation (2026-10-17)
+
+Fresh paired Sol-low/Jev >=0.50 answers across all 500 questions score
+**480/500 (96.0%) for replayed host input versus 474/500 (94.8%) standalone**.
+The latter replaces the host system/persona/start prefix with a neutral instruction
+and removes native recent dialogue. Selected excerpts, roles/order, question/date,
+shared memory guidance and model settings stay fixed. Both recurring leadership
+and poster errors remain No/No; this does not establish the host instruction as
+their cause. Preserve earlier scores and product defaults.
+
+All 12 changed-label pairs are source-reviewed: three gains, nine losses. Two
+losses remove recent-only evidence (132-point game score and Valentine's Day);
+six changes have substantially similar qualified/personalized answers, and four
+change state, role or event emphasis. Do not turn the six-label net decline into
+six proven factual regressions. This bundled input change is not a single-sentence
+ablation, independent confirmation or a newly refilled current-product score.
+
+Separately, complete annotated bodies are **888/896 returned**, **878/896 in fixed
+selected memory**, and **880/896 including native recent dialogue**. These are
+structural coverage metrics, not necessary-fact recall. A host-free execution of
+product chunking, archive boundaries and query construction matches all 500 inputs
+and 483,385 document contents/coordinates/roles. No new remote indexing/search runs.
+The local-only `standalone-memory500-v1` bundle preserves all 2,000 real calls,
+zero errors/retries, 464.6 seconds and a frozen-rate $9.796706248 estimate.
+
+Keep standalone and host protocols separate. A future standalone ingestion/search
+reference must index all completed source messages if no recent-history channel
+exists; simply deleting the native suffix creates a different evidence boundary.
+See the [evaluation protocol](memory-evaluation.md#separate-standalone-memory-and-host-evaluation)
+and [retained evidence](query1-evidence-index.md).
+
 ## Historical guidance: all 29 original No cases (2026-10-17)
 
 Preserve the prior work-branch profile's **471/500 (94.2%)** record. The newly adopted

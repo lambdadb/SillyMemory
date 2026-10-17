@@ -84,8 +84,16 @@ bundles declared in `source-bindings.json`. Its offline `verify.py` checks exact
 whole-message deletion, competing witnesses and all 20 answers/40 real receipts.
 All 151 archive members pass hash readback and configured-secret scanning.
 
+The `standalone-memory500-v1` bundle restores producer
+`e28aeeb8c8b1dd593cf6f01bdc645f6f2ec59b2c` and the parent bundles/dataset listed in
+its README and source bindings. Its offline verifier checks 1,000 fixed inputs,
+2,000 provider receipts, source-coordinate coverage and all 12 label transitions.
+All 6,037 archive members pass full hash readback and configured-secret scanning.
+The host-free core audit covers 500 cases; no new remote indexing/search is claimed.
+
 | Local archive filename | SHA 256 |
 | --- | --- |
+| `standalone-memory500-v1.tar.gz` | `07b5c51abcd046d5977442ce6c9186a7b7164e52f37431bf7b7d2830f8291b88` |
 | `retrieval-stage-audit-v1.tar.gz` | `8852bc3095bcbb074ff55b60b0ba0a43aa3170b8dedd44031a4e5b15ef90898c` |
 | `retrieval-stage-score-variation-v1.tar.gz` | `f9f9a78ebdab49f05484461ef912da0932d500264962e9df4b8043a050f59b7c` |
 | `contextual-retrieval-pilot-v1.tar.gz` | `2ee7e4650f75c784fea728cfa4f5caf5e237736e5b2653afdfdfcf6eb08f776c` |

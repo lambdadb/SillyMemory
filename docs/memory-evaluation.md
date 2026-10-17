@@ -30,6 +30,31 @@ memory coverage. Preserve source-time dependencies: a relative-date fact can nee
 both its original words and the known conversation clock. A sent date is not
 automatically an event date.
 
+## Separate standalone memory and host evaluation
+
+Keep two named protocols. A **fixed-memory standalone replay** calls the generator
+and judge directly with frozen selected excerpts, question/date, shared memory
+guidance and model settings. A contemporaneous control replays the original host
+messages. Removing host system/persona/start messages and native recent dialogue
+is a bundled input change, not proof about one instruction or a new retrieval run.
+Preserve excerpt bytes, source roles/order and all original labels; do not refill
+freed space or silently include reference answers in model-visible inputs.
+
+Audit removed recent dialogue against original sources. The product's recent-five
+partition is outside its indexed memory; deleting that dialogue can remove the
+only available fact. Report that separately, without excluding affected questions
+from the frozen score. A **standalone ingestion/search benchmark** must explicitly
+choose and freeze its history boundary: index all completed source messages if no
+recent-history channel exists. That is a different retrieval experiment, not the
+same cached replay. Do not attribute its eventual gains to host prompt removal.
+
+Use product chunking/query/selection functions directly where applicable, keeping
+benchmark session clocks explicit. Report source-span coverage and ranked coverage
+before generated-answer labels. Exact source bindings make these structural metrics
+model-independent, but do not turn message annotations into necessary-fact labels.
+Keep host/browser installation, streaming and synchronization validation separate;
+a standalone answer score neither validates nor replaces those user-facing checks.
+
 ## Account for full operating cost
 
 Every subsequent paid quality comparison must include a cost ledger alongside
