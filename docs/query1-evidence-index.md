@@ -78,6 +78,12 @@ diagnostic gate and zero confirmation calls; it does not send new requests.
 All 2085 archive members pass hash readback and configured-secret scanning.
 Detailed reviews/runners remain local-only, not maintained code or CI dependencies.
 
+The `context-interference-two-v1` diagnosis restores clean producer
+`447e1900a2ac82cc255a1b2cce08f3202997999f` and the requested-relationship/Jev/error-audit
+bundles declared in `source-bindings.json`. Its offline `verify.py` checks exact
+whole-message deletion, competing witnesses and all 20 answers/40 real receipts.
+All 151 archive members pass hash readback and configured-secret scanning.
+
 | Local archive filename | SHA 256 |
 | --- | --- |
 | `retrieval-stage-audit-v1.tar.gz` | `8852bc3095bcbb074ff55b60b0ba0a43aa3170b8dedd44031a4e5b15ef90898c` |
@@ -137,3 +143,4 @@ Detailed reviews/runners remain local-only, not maintained code or CI dependenci
 | `native-guidance-review-v1.tar.gz` | `f642f53bbb195d552343b2c9c363633201d40640c0c1e033d584f6c94731ac83` |
 | `jev-errors24-v1.tar.gz` | `8fe1dd6481b937fe72df59eb85165f9847274a92e31a101fd03e2ff3e5a50d4b` |
 | `requested-relation-guidance-v1.tar.gz` | `0db323f832e03dd168047384fce62fe0d880efb9a6e2a315ec0ef273e0456ffb` |
+| `context-interference-two-v1.tar.gz` | `6a5fda275c811202bd86ed966f5007c625c6160cea3cc83a9839558bb8e6bf30` |

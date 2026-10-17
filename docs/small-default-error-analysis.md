@@ -63,6 +63,21 @@ cache hits prevent an intrinsic cost claim. This is not a new retrieval/host tes
 The verified local-only `requested-relation-guidance-v1` archive retains the frozen
 gate, all inputs/receipts, source review and rejection; see the evidence index.
 
+### Unrelated-context deletion: retain current behavior (2026-10-17)
+
+Freeze both focus cases and generate five fresh replies per arm with the same
+Sol-low/Jev >=0.50 settings. Delete only clearly unrelated whole recalled/recent
+messages; preserve topical competitors, source bytes, order and guidance. Leadership
+scores **0/5→1/5**, poster **0/5→0/5**. All 20 answers are reviewed: the single success
+separates two explicit lead roles from a conditionally led completed project, but
+the other four filtered replies still over-infer roles. Poster substitution persists.
+This deletion is insufficient for stable repair; do not promote a product filter.
+It does not prove that context interference has no effect or correct reasoning is
+impossible. Length, positions and recalled/recent content change together; topical
+repetition/compression is untested. The local-only `context-interference-two-v1`
+bundle retains 40 actual calls, zero errors/retries, about 24.6 seconds and a
+frozen-rate $0.071275712 estimate. No new full500 score or product/default change.
+
 ## Historical guidance: all 29 original No cases (2026-10-17)
 
 Preserve the prior work-branch profile's **471/500 (94.2%)** record. The newly adopted
