@@ -18,6 +18,11 @@ Generation is Sol low; judging is the unchanged original task-specific
 GPT-4o-2024-08-06 formatter. Eleven model inputs in the final500 were reused only
 because they were byte-identical before judging; `a2f3aa27` is the one reused No.
 
+The subsequent [presentation-order diagnosis](query1-retrieval-quality.md#memory-presentation-order-bounded-diagnosis-2026-10-17)
+keeps the selected sources fixed: chronological 29/32 versus relevance-group 28/32,
+with no gains and a lost venue candidate. It retains chronological presentation
+and does not change the original 500 score or the classification below.
+
 ### Primary dispositions
 
 Each question has exactly one primary category. Secondary risks overlap; these

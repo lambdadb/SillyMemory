@@ -17,6 +17,12 @@ No labels. No new necessary-fact search or delivery-only gap was established in
 that subset. Keep the original 471/500 and defer another depth/budget/model sweep;
 this offline audit makes no runtime change or new API call.
 
+The [presentation-order diagnosis](#memory-presentation-order-bounded-diagnosis-2026-10-17)
+compares identical selected memory with chronological versus best-returned-rank
+message groups: **29/32 versus 28/32**, zero gains and one venue-candidate omission.
+Keep chronological presentation and stop this candidate; the frozen conditional
+confirmation set is not dispatched. No product setting or 500 score changes.
+
 Adopt retrieval-order admission using the final rendered memory size and compact
 `sent` headers with one budgeted explanation. Keep Query1, original per-message
 chunks, managed embeddings, Bayesian English, Jev 1.13.0, final50,
@@ -89,6 +95,125 @@ local archives below. This is one bounded parent quality decision on a consumed
 English development/regression cohort, not independent held-out confirmation or a
 new PR milestone for each diagnostic. The base remains Query1 PR 83's squash commit
 `df95a03d6a38a9837be64c62995fcf9cd9238092`.
+
+## Memory presentation order: bounded diagnosis (2026-10-17)
+
+**Decision: retain chronological presentation. Do not adopt best-returned-rank
+message-group ordering or expand this trial.** The frozen 32-question diagnosis
+shows no source-backed recovery of the demonstrated failures, zero original-judge
+gains and one loss. Its conditional confirmation gate fails, so the already-frozen
+74-question disjoint confirmation set receives **zero calls**. No full 500 answer
+rerun, product change or new PR milestone follows from this negative diagnosis.
+The current original-protocol product-cohort score remains **471/500**, not 28/32
+extrapolated to 500.
+
+### Single intervention and fixed cohorts
+
+Reuse the adopted guidance, managed Small / English Bayesian / k200 / native Jev
+candidate200 / final50 response and actual 4096 selection per question. Current
+presentation is original conversation order. The candidate groups already-rendered
+blocks by original message and orders those groups by their best returned chunk
+rank. All blocks within each group retain their original order. Repeated-text
+blocks stay opaque and use all their cited selected coordinates to determine
+priority. No new grouping spans different rendered message indices or user/assistant pairs.
+
+Only existing memory blocks move: exact body/header strings, selected chunk IDs,
+overlap assembly, source citations, roles, dates, guidance, system/character prefix,
+native recent-five/pair suffix and question remain identical. The one `sent`
+explanation moves with its original block rather than adding or rewriting text.
+Model and original task-specific judge options remain Sol low and
+GPT-4o-2024-08-06. Fresh answers/judgments in both arms are interleaved, with a
+balanced arm-first schedule; historical answers are not a paired control.
+
+Before calls, freeze four diagnosis targets from the latest No audit: venue,
+undergraduate poster, airport estimate and power-bank personalization. Add 28
+previously accepted controls, four per nonoverlapping stratum: six original tasks
+excluding abstention IDs, plus abstention. Sort eligible IDs by the frozen SHA256
+seed `presentation-order-v1-controls:`; select the first four per stratum, without
+looking at candidate answers. Freeze a disjoint conditional set at the same time:
+the other 25 No cases plus the next seven accepted controls per stratum. These are
+consumed development/regression cases, **not independent held-out confirmation**.
+
+All500 source permutations pass the offline preflight with no clipping/reselection:
+19 allocations decrease by one token, 466 are identical, and 15 increase by one.
+Every allocation stays within 4096. Both paid arms report exactly **158,027 generation
+input tokens** over their 32 questions. Annotated source membership and delivered
+body union cannot improve in this experiment because they are deliberately fixed.
+
+### Completed 32-question diagnosis
+
+| Measure | Chronological baseline | Best-returned-rank groups |
+| --- | ---: | ---: |
+| Original-judge accepted /32 | **29** | **28** |
+| Four diagnosis targets accepted | 1/4 | 0/4 |
+| Correct-answer controls accepted | 28/28 | 28/28 |
+| Generation input tokens | 158,027 | 158,027 |
+| Generation output tokens, including reasoning | 2,552 | 2,610 |
+| Generation request median / p95, ms | 2573.5 / 6772 | 2614.5 / 7081 |
+| Frozen-rate generation estimate, USD | 0.4177875 | 0.4183675 |
+| Frozen-rate judging estimate, USD | 0.0185675 | 0.0186275 |
+
+There are **zero gains / one loss**, entirely within diagnosis targets. Three
+answer pairs are byte-identical and keep the same labels. All 32 paired texts were
+read; the 28 accepted-control labels are not a certification that every incidental
+claim in every answer is semantically correct.
+
+The four source-bound observations are:
+
+- **Art-event venue (`gpt4_59149c78`):** Metropolitan user281 is rank3 and its block
+  moves **10th→3rd** in the memory portion; farm user334 moves 14th→5th. The fresh
+  baseline asks whether the user means the farm retreat or Metropolitan exhibit;
+  the candidate only offers the farm retreat. Original labels are Yes→No. The
+  source remains fully delivered in both arms. The question's approximate
+  two-week reference remains ambiguous, so this is loss of a supported venue
+  candidate, not proof that a single unique event is established by gold.
+- **Undergraduate poster (`a96c20ee_abs`):** both get No. The baseline says Harvard
+  is suggested by the first-conference link; the candidate opens “Harvard
+  University” before noting thesis versus undergraduate wording. The unsupported
+  project qualifier remains, with greater candidate assertiveness rather than a
+  source-backed repair.
+- **Airport savings (`09ba9854_abs`):** both get No and qualify prior assistant
+  fare estimates. Candidate calculations use different earlier quote/estimate
+  combinations. Neither establishes a confirmed actual bus fare; useful conditional
+  estimates are not automatically product errors, and no clear repair is shown.
+- **Battery (`09d032c9`):** both get No, acknowledge the owned power bank and focus
+  on diagnosing drain. Reordering does not recover the rubric's desired advice
+  about optimizing power-bank use. General diagnostic advice remains useful.
+
+This is one fresh sample per arm. It does not prove that relevance ordering is
+universally worse, or that chronology causes better reasoning. It supplies no
+adoption evidence for this candidate under the declared scope, and the venue
+omission plus unchanged other targets do not justify another paid expansion.
+Do not retry until the baseline fails or try another ordering/prompt to obtain a
+favorable result. No extra model phase or API-format restriction is introduced.
+
+### Validation, cost and retention
+
+The diagnosis completes **64 fresh answers + 64 original judgments**, 128 attempts,
+zero errors/retries, peak concurrency 6, in **42.635 seconds**. Normal successful
+calls have no artificial delay; the existing rate-header admission gate and
+transient-only Retry-After/backoff remain unchanged. Both arms' final-answer
+request timings above are provider-call measurements, not full product E2E latency
+or a reliable latency advantage from this small trial.
+
+Total receipt-token estimate including judging is **$0.8733500**, using the frozen
+2026-10-16 rate card and reported ordinary/cache-write/cache-read/output categories.
+This is not an invoice or current-price verification. No new LambdaDB queries,
+upserts, embeddings, reranking charges or remote resources occur in this replay;
+normal product database costs remain unchanged, not free.
+
+`artifacts/memory-presentation-order-v1/` retains the plan and seeds, all 500
+permutation/source locks, token audit, 32 paired answers, all raw receipts, original
+judge snapshot, four source-bound reviews, unexecuted confirmation inputs and the
+retain/stop decision. The independent verifier checks all 500 source permutations
+and every dispatched request/response, original judge formatting, exact selected
+source union/native suffix, model options, actual budgets and unchanged runtime.
+Configured-secret scanning includes expanded gzip contents. The archive and member
+hashes are in the evidence table below. It is **local-only**, unavailable in a fresh
+clone, and requires the parent guidance/retrieval archives and canonical dataset
+locked in its plan. No source/answer/label from the earlier runs is overwritten.
+There is no new browser, live database or installed-user validation for this
+experiment-only candidate.
 
 ## Product adoption of depth200 (2026-10-17)
 
@@ -2588,3 +2713,4 @@ verified retained copy. Older original archives remain immutable.
 | `judge-minimal-clarification500-v1.tar.gz` | `8e37411b62645340d83594c4deacd5a848be1a632bbbd391f41fc5e00ada346c` |
 | `generation-guidance-paired500-v1.tar.gz` | `d58ee5cbd4400e62727ca0ad99f4ccb90cb22a3a779013d8956d0942ba6fbe7a` |
 | `guidance-default-errors29-v1.tar.gz` | `16dfd2db8af2e33ce52088b80e44ccd4576013758198cfa01717f1c95057cc6e` |
+| `memory-presentation-order-v1.tar.gz` | `5b9a509f137574b11467e02e537dcb4df959c289349c1090fbbb9371ed1b14a3` |
