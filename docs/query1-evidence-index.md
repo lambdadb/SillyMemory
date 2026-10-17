@@ -70,6 +70,14 @@ source witnesses are local-only, not maintained fixtures or fresh-clone inputs.
 
 ## Immutable run archives
 
+The `requested-relation-guidance-v1` negative trial restores clean producer
+`f42149c3b5472fb986269a65cb7d999990168df1`, the original follow-up/Jev/error-audit
+bundles above and source paths/checksums in its `source-bindings.json`. Its offline
+`verify.py` checks 1000 frozen inputs, 420 real provider receipts, the failed
+diagnostic gate and zero confirmation calls; it does not send new requests.
+All 2085 archive members pass hash readback and configured-secret scanning.
+Detailed reviews/runners remain local-only, not maintained code or CI dependencies.
+
 | Local archive filename | SHA 256 |
 | --- | --- |
 | `retrieval-stage-audit-v1.tar.gz` | `8852bc3095bcbb074ff55b60b0ba0a43aa3170b8dedd44031a4e5b15ef90898c` |
@@ -128,3 +136,4 @@ source witnesses are local-only, not maintained fixtures or fresh-clone inputs.
 | `jev-judge-reference-v1.tar.gz` | `ba0dcf42d71c6b43eedf31eabe8e00ee3a732ae9331a8e4e1aaaa450a4314afc` |
 | `native-guidance-review-v1.tar.gz` | `f642f53bbb195d552343b2c9c363633201d40640c0c1e033d584f6c94731ac83` |
 | `jev-errors24-v1.tar.gz` | `8fe1dd6481b937fe72df59eb85165f9847274a92e31a101fd03e2ff3e5a50d4b` |
+| `requested-relation-guidance-v1.tar.gz` | `0db323f832e03dd168047384fce62fe0d880efb9a6e2a315ec0ef273e0456ffb` |

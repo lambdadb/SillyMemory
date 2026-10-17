@@ -37,6 +37,32 @@ probabilities, source witnesses and interpretations. Offline verification checks
 2500 saved probability observations, 120 source-file hashes and actual dispatched
 excerpt bindings. Zero new API calls or product changes; no adjusted score.
 
+### Requested-relationship guidance: reject candidate (2026-10-17)
+
+A single replacement of the event/role sentence asks the model to match the
+requested relationship and qualifiers, rather than infer a role from participation
+or link related events. Before calls, freeze the earlier 104 diagnostic IDs plus
+the missing leadership case and the disjoint remaining 395, conditional on a
+successful diagnostic. Fresh Sol-low / Jev >=0.50 paired answers score
+**90→82/105**: one gain,
+nine losses, and **neither focus error repaired**. Both still count a completed
+project as led; the poster candidate drops the thesis-versus-undergrad caveat and
+answers Harvard outright. The relevant sources are already in the actual prompts.
+
+The review covers all ten transitions, 30 abstention pairs and 30 preference pairs.
+Several label losses retain the same facts/qualifications; the net eight-label decline is
+not proof of eight new factual errors or deterministic prompt causality. The frozen
+gate fails: reject this candidate, retain current guidance, and deliberately make
+no calls for the remaining 395. Do not start another generic prompt sweep from this
+result. No product/default change or adjusted historical score.
+
+The fixed-memory replay preserves sources, references, existing date wording and
+all other request settings without refill. Its 420 real provider calls have zero
+errors/retries, about 166 seconds and a frozen-rate $1.442441248 estimate; unequal
+cache hits prevent an intrinsic cost claim. This is not a new retrieval/host test.
+The verified local-only `requested-relation-guidance-v1` archive retains the frozen
+gate, all inputs/receipts, source review and rejection; see the evidence index.
+
 ## Historical guidance: all 29 original No cases (2026-10-17)
 
 Preserve the prior work-branch profile's **471/500 (94.2%)** record. The newly adopted
