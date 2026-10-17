@@ -32,21 +32,25 @@ automatically an event date.
 
 ## Separate standalone memory and host evaluation
 
-Keep two named protocols. A **fixed-memory standalone replay** calls the generator
-and judge directly with frozen selected excerpts, question/date, shared memory
-guidance and model settings. A contemporaneous control replays the original host
-messages. Removing host system/persona/start messages and native recent dialogue
-is a bundled input change, not proof about one instruction or a new retrieval run.
-Preserve excerpt bytes, source roles/order and all original labels; do not refill
-freed space or silently include reference answers in model-visible inputs.
+The default **same-history standalone replay** calls the generator and judge
+directly with frozen selected excerpts, the complete retained recent dialogue,
+question/date, shared memory guidance and model settings. A contemporaneous control
+replays the original host messages. Replace only the host system/persona/start
+prefix; preserve every subsequent message's bytes, role and order. This isolates
+the prefix as a bundle, not an individual sentence or a new retrieval run.
+Do not refill freed space or include reference answers in model-visible inputs.
 
-Audit removed recent dialogue against original sources. The product's recent-five
-partition is outside its indexed memory; deleting that dialogue can remove the
-only available fact. Report that separately, without excluding affected questions
-from the frozen score. A **standalone ingestion/search benchmark** must explicitly
-choose and freeze its history boundary: index all completed source messages if no
-recent-history channel exists. That is a different retrieval experiment, not the
-same cached replay. Do not attribute its eventual gains to host prompt removal.
+SillyTavern-independent execution does not imply removing recent dialogue. Pass
+that dialogue explicitly from the dataset, with the same partition as the host
+control. The earlier prefix-plus-recent-deletion experiment changes available
+evidence and is a distinct diagnostic, superseded as the intended comparison;
+preserve its original results without treating it as a prefix-only ablation.
+
+For a **standalone ingestion/search benchmark**, freeze the same history boundary
+and retained channel first. Indexing all completed messages with no recent channel
+is a separate corpus-policy experiment, not a prerequisite for host-free execution.
+If tested, audit that boundary and report it separately rather than selectively
+restoring known missing facts or attributing retrieval gains to host removal.
 
 Use product chunking/query/selection functions directly where applicable, keeping
 benchmark session clocks explicit. Report source-span coverage and ranked coverage

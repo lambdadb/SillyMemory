@@ -91,8 +91,17 @@ its README and source bindings. Its offline verifier checks 1,000 fixed inputs,
 All 6,037 archive members pass full hash readback and configured-secret scanning.
 The host-free core audit covers 500 cases; no new remote indexing/search is claimed.
 
+The corrected `standalone-same-history500-v1` comparison restores producer
+`4418d993b8d2084703fe63c36998cab6cd7489c8`, the earlier standalone bundle and its
+source dependencies. It preserves identical recent dialogue in both arms and changes
+only the host prefix. Its offline verifier checks 1,000 inputs, 2,000 real receipts,
+all 15 changed-label pairs and unchanged parent source/core-audit bindings.
+All 6,034 members pass full hash readback and configured-secret scanning. The earlier
+recent-deletion result remains a distinct preserved experiment, not its control.
+
 | Local archive filename | SHA 256 |
 | --- | --- |
+| `standalone-same-history500-v1.tar.gz` | `2d4085b70b70a49f109915fc5d6593fd7f730833642ff8586ba591cd28997365` |
 | `standalone-memory500-v1.tar.gz` | `07b5c51abcd046d5977442ce6c9186a7b7164e52f37431bf7b7d2830f8291b88` |
 | `retrieval-stage-audit-v1.tar.gz` | `8852bc3095bcbb074ff55b60b0ba0a43aa3170b8dedd44031a4e5b15ef90898c` |
 | `retrieval-stage-score-variation-v1.tar.gz` | `f9f9a78ebdab49f05484461ef912da0932d500264962e9df4b8043a050f59b7c` |

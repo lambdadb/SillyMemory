@@ -78,35 +78,39 @@ repetition/compression is untested. The local-only `context-interference-two-v1`
 bundle retains 40 actual calls, zero errors/retries, about 24.6 seconds and a
 frozen-rate $0.071275712 estimate. No new full500 score or product/default change.
 
-### Standalone fixed-memory evaluation (2026-10-17)
+### Standalone evaluation with identical recent dialogue (2026-10-17)
 
-Fresh paired Sol-low/Jev >=0.50 answers across all 500 questions score
-**480/500 (96.0%) for replayed host input versus 474/500 (94.8%) standalone**.
-The latter replaces the host system/persona/start prefix with a neutral instruction
-and removes native recent dialogue. Selected excerpts, roles/order, question/date,
-shared memory guidance and model settings stay fixed. Both recurring leadership
-and poster errors remain No/No; this does not establish the host instruction as
-their cause. Preserve earlier scores and product defaults.
+The corrected fresh paired Sol-low/Jev >=0.50 comparison scores **474/500 (94.8%)
+with the original host prefix versus 479/500 (95.8%) with a neutral prefix**.
+Only the first three system/persona/start messages change. Every subsequent message
+is byte-for-byte identical in role/order, including selected memory, recent dialogue,
+question/date and shared guidance. Both arms call providers without SillyTavern.
+Recent history is four messages in 491 cases and five in nine pair-aligned cases.
 
-All 12 changed-label pairs are source-reviewed: three gains, nine losses. Two
-losses remove recent-only evidence (132-point game score and Valentine's Day);
-six changes have substantially similar qualified/personalized answers, and four
-change state, role or event emphasis. Do not turn the six-label net decline into
-six proven factual regressions. This bundled input change is not a single-sentence
-ablation, independent confirmation or a newly refilled current-product score.
+All 15 changed-label pairs are source-reviewed: ten gains and five losses. The
+supported graduation count and clearer abstention improve in individual pairs;
+other changes involve personalization, uncertain state/date/count interpretations
+or label boundaries. Both property answers retain an internal counting inconsistency
+despite different labels. A net five-label gain is not five proven factual repairs
+or reproducible prefix superiority. Leadership and poster errors remain No/No.
 
-Separately, complete annotated bodies are **888/896 returned**, **878/896 in fixed
-selected memory**, and **880/896 including native recent dialogue**. These are
-structural coverage metrics, not necessary-fact recall. A host-free execution of
-product chunking, archive boundaries and query construction matches all 500 inputs
-and 483,385 document contents/coordinates/roles. No new remote indexing/search runs.
-The local-only `standalone-memory500-v1` bundle preserves all 2,000 real calls,
-zero errors/retries, 464.6 seconds and a frozen-rate $9.796706248 estimate.
+The earlier **480/474** result removed recent dialogue as well as the host prefix
+and remains a distinct, superseded design in `standalone-memory500-v1`. Its two
+recent-only facts (132-point game score and February 14 fundraiser) are now delivered
+and answered correctly in both arms. Do not reuse that separately generated 480
+baseline as the corrected experiment's control. Preserve all historical labels.
 
-Keep standalone and host protocols separate. A future standalone ingestion/search
-reference must index all completed source messages if no recent-history channel
-exists; simply deleting the native suffix creates a different evidence boundary.
-See the [evaluation protocol](memory-evaluation.md#separate-standalone-memory-and-host-evaluation)
+Unchanged structural coverage is **888/896 complete annotated bodies returned**,
+**878/896 in selected memory**, and **880/896 including recent dialogue in both arms**;
+these are not necessary-fact recall. The parent host-free core audit covers 500 cases
+and 483,385 documents, with unchanged source/runtime bindings. No new remote
+indexing/search or newly refilled current-product benchmark is claimed.
+
+The local-only `standalone-same-history500-v1` bundle retains 2,000 real calls,
+zero errors/retries, 499.8 seconds and a frozen-rate $10.652128806 provider estimate.
+Retain product defaults and the same-history standalone protocol. Reindexing all
+history is unnecessary merely to remove host instructions when the recent channel
+is preserved. See the [evaluation protocol](memory-evaluation.md#separate-standalone-memory-and-host-evaluation)
 and [retained evidence](query1-evidence-index.md).
 
 ## Historical guidance: all 29 original No cases (2026-10-17)
