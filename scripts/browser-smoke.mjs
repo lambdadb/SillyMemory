@@ -260,7 +260,7 @@ try {
     const archive = [...collections.values()][0].branches.get(await page.evaluate(() => `chat_${SillyTavern.getContext().chatMetadata.sillymemory.id}`));
     check('ordinary native synchronization archives one complete pair outside the retained recent exchanges',
         JSON.stringify([...archive.values()].map(doc => doc.message).sort((a, b) => a - b)) === '[0,1]');
-    check('real host dispatcher injects bounded memory', Boolean(result.injection) && /\d+ \/ 250 tokens/.test(result.inspection));
+    check('a tight allocation succeeds without partially injecting a dated source', !result.aborted && !result.injection && /Prepared 0 source passages/.test(result.preparation) && /\d+ \/ 250 tokens/.test(result.inspection));
     check('small memory stays inside its budget with sent guidance', result.renderedTokens <= 250);
     // The longer macro-bearing source can be skipped at 250 once the shared
     // time explanation is counted. Test literal delivery when that whole source
@@ -268,7 +268,7 @@ try {
     await field('budget').fill('400'); await field('budget').dispatchEvent('change');
     const macroResult = await prompt();
     check('native recalled excerpts keep macros literal within budget', macroResult.rendered.includes('｛｛char｝｝') && macroResult.rendered.includes('＜USER＞') && macroResult.macroValue === undefined && macroResult.renderedTokens <= 400);
-    await field('budget').fill('250'); await field('budget').dispatchEvent('change');
+    await field('budget').fill('400'); await field('budget').dispatchEvent('change');
     check('a completed reply retains six messages without splitting a pair and leaves persisted source unchanged', JSON.stringify(result.chat.filter(m => !m.mes.startsWith('[Past conversation excerpt:')).map(m => m.index)) === '[2,3,4,5,6,7]' && result.chat.at(-1).mes.includes('passage 7') && result.before === result.after);
     // Ineligible active inputs still preserve recent dialogue. The actual native
     // hook is exercised with attachment/media/tool metadata, without uploading files.
@@ -321,7 +321,8 @@ try {
     await page.evaluate(async original => {
         const c = SillyTavern.getContext(); c.chat[0].mes = original; await c.eventSource.emit(c.eventTypes.MESSAGE_UPDATED, 0);
     }, assemblySource.original);
-    await field('budget').fill('250'); await field('budget').dispatchEvent('change');
+    // Keep a complete dated source available for the cancellation/race assertions.
+    await field('budget').fill('400'); await field('budget').dispatchEvent('change');
     await waitStatus('synchronized');
     delayedQuery = 400;
     const olderGeneration = prompt();

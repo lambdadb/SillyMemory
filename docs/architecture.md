@@ -81,8 +81,9 @@ Successful preparation supplies a system instruction even with no matching memor
 use available conversation evidence, build recommendations on supported experiences
 and preferences, and answer supported parts before asking for missing details.
 Do not merge different events or roles from similar wording; distinguish the
-requested event or role from what the context establishes. Ask one brief clarification when the referent
-or user intent is unclear, explain missing or conflicting evidence, and do not treat absent retrieval as proof of absence.
+requested event or role from what the context establishes. Explain what missing
+or conflicting evidence does and does not establish without inventing facts;
+follow-up questions remain optional. Do not treat absent retrieval as proof of absence.
 Final delivery validates this instruction alongside excerpts and every verifiable
 retained recent turn. Long raw turns can exceed host context even when the
 memory allocation fits; the default loss guard stops that generation.

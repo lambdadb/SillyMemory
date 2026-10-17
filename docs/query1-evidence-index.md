@@ -56,6 +56,12 @@ source-binding verifiers. Both preserve generated answers and original 472/500
 labels; no product changes accompany these judge-only runs. Full archive readback
 verifies 90 and 6074 members respectively, with configured-secret scanning.
 
+The `native-guidance-review-v1` bundle records the PR review corrections to
+smoke assertions and architecture prose. Restore base `31961ba` plus its recorded
+patch: 103 actual-host/Chromium checks with local providers, zero remaining emulated
+collections and no runtime change. Preserve the initial tight-budget failure too.
+All 14 archive members pass hash readback and configured-secret scanning.
+
 ## Immutable run archives
 
 | Local archive filename | SHA 256 |
@@ -114,3 +120,4 @@ verifies 90 and 6074 members respectively, with configured-secret scanning.
 | `followup-guidance-adoption-v1.tar.gz` | `314bce6afa55faa9c0b2f6a686903c723bbe173f05b7e60cdccd395238ae14ed` |
 | `judge-exact-answer-audit-v1.tar.gz` | `b2bd885e1c6a595cd241a48680b03e7010ba2f6646fe87cf368f7f0162decbdc` |
 | `jev-judge-reference-v1.tar.gz` | `ba0dcf42d71c6b43eedf31eabe8e00ee3a732ae9331a8e4e1aaaa450a4314afc` |
+| `native-guidance-review-v1.tar.gz` | `f642f53bbb195d552343b2c9c363633201d40640c0c1e033d584f6c94731ac83` |

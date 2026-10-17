@@ -302,6 +302,14 @@ the corresponding run bundles.
 - Retained host checks: pinned SillyTavern 1.19.0/Chromium 153 with local database/model
   emulators; source assembly, native history/streaming, edits/swipes/deletion/races,
   recovery and 18 allocation/delivery cases. Emulator success is not provider E2E.
+- Full browser follow-through after guidance adoption: 103 checks pass on the same
+  pinned host/Chromium with local providers, including nine native chat generations,
+  one text completion and visible streaming; zero remaining emulated collections.
+  Update stale chat/text assertions and architecture prose to the adopted optional
+  follow-up policy. At 250 tokens no complete dated source fits; validate that safe
+  zero-source result and use 400 for positive-delivery/race fixtures. These are
+  explicit test allocations, not product default changes or answer-quality evidence.
+  Initial failure and successful source-bound receipts remain archived.
 - Separate real direct-CORS/product-client acceptance: 201 synthetic docs, native 200
   scored/50 returned, strong reads/isolation, no deleted-source resurrection,
   auth 401 without retry, no forwarded cookies/CSRF; both owned collections return 404 after cleanup.
