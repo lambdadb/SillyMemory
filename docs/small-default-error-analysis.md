@@ -1,5 +1,42 @@
 # Small-default error analysis
 
+## Latest Jev-No audit (2026-10-17)
+
+At the adopted Jev 1.13.0 / Noul >=0.50 policy, five evaluations of the same saved
+answers score **477/478/477/477/476 out of 500**. There are **22 always-No cases and
+two variable-label cases**, with 476 always Yes. Review all 24 inputs with any No;
+do not reinterpret that union as 24 errors per run or apply majority relabeling.
+Original GPT-4o outcomes and the older 29-case classification remain separate.
+
+| Primary reviewed boundary | Cases |
+| --- | ---: |
+| Available-evidence answer improvement | 4 |
+| Time or updated-state uncertainty | 8 |
+| Target, provenance or counting-unit uncertainty | 10 |
+| Variable judge boundary | 2 |
+
+The four immediate candidates are: claiming a completed project was explicitly
+led; suggesting a thesis-poster university for an unestablished undergraduate-course
+presentation; acknowledging an owned power bank without practical personalization;
+and saying seven baking occasions before listing/correcting to six. These do not
+require a newly recovered source. The baking reference total and event/date identity
+remain separately uncertain. Existing guidance already addresses event/role linking;
+diagnose its application before adding more instructions or a case-specific rule.
+
+No new concrete necessary-fact retrieval gap or delivery-only loss is identified
+in the reviewed witnesses. Of 53 annotated message bodies, 52 are complete in both
+returned and delivered context; the missing annotation in the wake-time case is
+on a thank-you message. The actual 6:30, later 7:30 and Friday 6:00 operands are all
+returned and delivered. This is annotation coverage, not perfect-recall proof.
+The 18 uncertainty cases remain No outcomes, not automatically correct answers or
+proven bad references. Prioritize a bounded source-use/generation diagnosis before
+another depth/embedding/budget sweep. No prompt candidate is promoted by this audit.
+
+The local-only `jev-errors24-v1` archive preserves all exact questions, answers,
+probabilities, source witnesses and interpretations. Offline verification checks
+2500 saved probability observations, 120 source-file hashes and actual dispatched
+excerpt bindings. Zero new API calls or product changes; no adjusted score.
+
 ## Historical guidance: all 29 original No cases (2026-10-17)
 
 Preserve the prior work-branch profile's **471/500 (94.2%)** record. The newly adopted

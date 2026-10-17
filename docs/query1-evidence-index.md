@@ -62,6 +62,12 @@ patch: 103 actual-host/Chromium checks with local providers, zero remaining emul
 collections and no runtime change. Preserve the initial tight-budget failure too.
 All 14 archive members pass hash readback and configured-secret scanning.
 
+The `jev-errors24-v1` audit restores producer `3f3b66b` and the declared original
+Jev/full500/generation/retrieval bundles plus canonical dataset. It reviews all 22
+always-No and two variable-label cases without a new paid call or changed label.
+All 14 members pass archive hash readback and configured-secret scanning; detailed
+source witnesses are local-only, not maintained fixtures or fresh-clone inputs.
+
 ## Immutable run archives
 
 | Local archive filename | SHA 256 |
@@ -121,3 +127,4 @@ All 14 archive members pass hash readback and configured-secret scanning.
 | `judge-exact-answer-audit-v1.tar.gz` | `b2bd885e1c6a595cd241a48680b03e7010ba2f6646fe87cf368f7f0162decbdc` |
 | `jev-judge-reference-v1.tar.gz` | `ba0dcf42d71c6b43eedf31eabe8e00ee3a732ae9331a8e4e1aaaa450a4314afc` |
 | `native-guidance-review-v1.tar.gz` | `f642f53bbb195d552343b2c9c363633201d40640c0c1e033d584f6c94731ac83` |
+| `jev-errors24-v1.tar.gz` | `8fe1dd6481b937fe72df59eb85165f9847274a92e31a101fd03e2ff3e5a50d4b` |
