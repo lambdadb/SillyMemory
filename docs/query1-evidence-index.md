@@ -49,6 +49,13 @@ evaluated deletion from base `026204a`: 500 model-free budget checks and 18
 actual-host/local-emulator delivery cases. It preserves changed selections and
 producer snapshots without replacing the fixed-memory 470/472 answer results.
 
+The later `judge-exact-answer-audit-v1` and `jev-judge-reference-v1` bundles use
+producer `e27ebc43170b26167ab2eeeeedbf8131970b5f87` and depend on the original
+`followup-guidance-full500-v1` bundle. Restore the clean producer checkout for their
+source-binding verifiers. Both preserve generated answers and original 472/500
+labels; no product changes accompany these judge-only runs. Full archive readback
+verifies 90 and 6074 members respectively, with configured-secret scanning.
+
 ## Immutable run archives
 
 | Local archive filename | SHA 256 |
@@ -105,3 +112,5 @@ producer snapshots without replacing the fixed-memory 470/472 answer results.
 | `followup-guidance-full500-v1.tar.gz` | `a03a0ee5ae1ac9e7064fd6360c8d4175a7fdd662ea6b8560e314cb94b77c5397` |
 | `utc-local-date-guidance-v2.tar.gz` | `6914edb4bb7592c5b693c315eae9e6d32c6ce0b2eeb3528050ccde127730d7a6` |
 | `followup-guidance-adoption-v1.tar.gz` | `314bce6afa55faa9c0b2f6a686903c723bbe173f05b7e60cdccd395238ae14ed` |
+| `judge-exact-answer-audit-v1.tar.gz` | `b2bd885e1c6a595cd241a48680b03e7010ba2f6646fe87cf368f7f0162decbdc` |
+| `jev-judge-reference-v1.tar.gz` | `ba0dcf42d71c6b43eedf31eabe8e00ee3a732ae9331a8e4e1aaaa450a4314afc` |

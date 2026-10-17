@@ -133,8 +133,10 @@ Personalized recommendations use supported context more helpfully; a music-event
 reply also separates a gala whose musical nature is unknown from known concerts.
 Many other transitions preserve the same named answer, amount, conditional range
 or uncertainty. Undated/repeated museum visits and conflicting mortgage/workshop
-chronology remain unresolved. The earlier season-versus-series-start qualification
-loss remains a risk, not an automatic execution veto or a proven causal effect.
+chronology remain unresolved. The historical season-versus-series
+qualification diagnosis is not an optimization target: the question does not
+require a season-one start date, and both answers were accepted. Preserve that
+source review as history without treating the case as a demonstrated error.
 Question-mark outputs fall 57→36/500, but punctuation is not a quality classifier.
 No new retrieval or prompt-delivery improvement is claimed: sources are identical.
 
@@ -232,6 +234,51 @@ The latest matched Small/Large run improves complete returned bodies 879→885/8
 and delivered 876→883/894. That source advantage is real but does not establish a
 compelling aggregate answer benefit for the higher embedding cost. Earlier
 historical 470 does not override the later matched 465 result.
+
+## Supplemental evaluator reproducibility (2026-10-17)
+
+**Defer replacing the comparison judge.** A repeated GPT-4o audit of four original
+No answers containing the reference value found two with mixed labels across three
+identical requests. Answer-only positive controls were 12/12 Yes and deliberately
+wrong controls 12/12 No. This establishes local judgment sensitivity, not that every
+original No is wrong; original labels remain unchanged.
+
+Pin Jev `jev-1.13.0`, preserve the same saved answers, references and ten original
+task-specific rule variants, and fix Noul probability >=0.5 as Yes before calls.
+The adapter moves question/reference/response fields into JSON state and removes
+only the literal yes/no output-format instruction. This is a different evaluator
+and input representation, not an identical GPT request. A 26-input pilot repeated
+20 times passes its frozen binary-stability and synthetic-control gate. Then all
+500 saved adopted-guidance answers are evaluated five times:
+
+| Repeat | Jev accepted /500 |
+| --- | ---: |
+| 1 | 477 |
+| 2 | 478 |
+| 3 | 477 |
+| 4 | 477 |
+| 5 | 476 |
+
+**498/500 inputs keep the same binary label; two flip.** Cashback `9aaed6a3` ranges
+0.48–0.54 (Yes 4/5); Instagram followers `a2f3aa27` ranges 0.46–0.52 (Yes 1/5).
+The four earlier exact-answer No cases are Yes in all 25 Jev calls per case.
+Agreement with original GPT-4o labels is 2455/2500, not independently verified
+accuracy. Prior-Yes disagreements are evaluator controls, not newly established
+product errors. There is no matched 500-by-five GPT-4o repeat run to establish
+comparative stability. Even the tested decision model does not meet the strict
+same-input/same-label requirement; a stable pilot alone was insufficient.
+
+Retain this as supplemental evidence, without threshold tuning, exclusions or
+majority relabeling. The original **472/500 (94.4%)** stays intact; 95.2–95.6% is
+Jev acceptance of unchanged answers, not improved product answer quality.
+All 3020 live Jev requests succeeded without retries: 1,452,565 reported input
+tokens, estimated $0.06100773 at the frozen 2026-10-17 published input rate.
+Full500 direct request latency median/p95 is 172/227 ms, not product turn latency.
+No new generation, LambdaDB, embedding or reranking calls were made. Raw requests,
+responses, frozen rules and disagreement review are preserved in the local-only
+`jev-judge-reference-v1` bundle; the preceding four-case audit is separately
+preserved as `judge-exact-answer-audit-v1`. Discuss evaluator uncertainty before
+further generation tuning. No evaluator default or product runtime changes.
 
 ## Cost boundaries
 

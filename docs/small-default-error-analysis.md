@@ -46,8 +46,10 @@ The last trial retains personalization/event-role instructions. Preference score
 26→29/30, abstention 28→28/30, historical 29 No 9→9/29. Completing the remaining
 396 gives 391→390: the full net two accepted labels do not establish broad factual
 improvement. Many transitions retain the same facts/caveats or have uncertain
-source chronology. The known season/series qualification loss remains disclosed;
-it does not automatically veto the explicitly authorized full comparison.
+source chronology. The historical season/series qualification concern is not a
+demonstrated error or an optimization target: both answers pass, and the question
+does not require a season-one start date. Keep the original source review as
+historical evidence.
 The evaluated follow-up-obligation deletion is now the adopted product baseline;
 no further role/scope instruction is applied. The score remains the fixed-memory
 comparison, separate from model-free adoption checks. Full source reviews,

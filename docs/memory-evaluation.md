@@ -190,6 +190,16 @@ separate factors, and disclose consumed development cohorts and repeated-run
 variation. Stable source-coordinate checks are less model-dependent than answer
 judging, but annotation limitations still apply.
 
+For evaluator reproducibility checks, freeze saved answers, references, task rules,
+model version and any decision threshold before calls. Report both raw-score
+variation and per-input binary flips across repeated identical requests, alongside
+aggregate score variation. Stable labels do not establish accurate judgments;
+finite repeats do not prove determinism. Keep historical Yes cases as evaluator
+controls, rather than inventing new product errors from a replacement judge's No.
+Preserve original labels; do not tune thresholds, exclude questions or selectively
+rejudge favorable cases after seeing results. Separate evaluator uncertainty from
+generation changes before treating small score differences as product gains.
+
 Choose adoption, deferral or rejection using the measured mechanism, actual gains
 and regressions, resource tradeoff and evaluation uncertainty. Do not dismiss a
 demonstrated evidence-recall improvement solely because the final answer score
