@@ -20,8 +20,10 @@ option, query, embedding or generation call is required. Native timestamps retai
 their UTC precision. The benchmark uses its provided session clock for each
 message, with the same `sent` label and no invented timezone or seconds.
 
-These dates anchor expressions such as today/yesterday. They do not establish
-when an undated past event happened. Missing dates remain unknown. The stored
+Resolve expressions such as today/yesterday only when the local conversation
+date is known; UTC alone is insufficient. Otherwise preserve date ambiguity.
+Conversation timestamps do not establish when an undated past event happened.
+Missing dates remain unknown. The stored
 source distinguishes native message time from a shared benchmark session time;
 the prompt does not need separate field names or a date-reference dictionary.
 
