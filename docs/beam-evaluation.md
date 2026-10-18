@@ -349,3 +349,89 @@ scipy 1.18.1 / json_repair, run `python artifacts/beam-sol-judge-v1/analyze.py` 
 are paid and unnecessary for inspection. The bundle is unavailable in a fresh
 clone. All 379 unit tests, runtime/release/SDK checks and script/test syntax checks
 pass; this evaluator-only change does not rerun browser integration.
+
+## Fixed-answer Luna-medium judge comparison (2026-10-18)
+
+**Close the judge-model comparison without replacing the BEAM reference judge.**
+The final candidate, `gpt-6-luna` with `reasoning_effort: medium`, judges the same
+400 saved answers and repeats the same 45-case cohort twice. All 1,305 rubric and
+control requests match Sol's requests except the model. Alignment uses the same
+prompts and greedy matching procedure; visited pairs can differ with judge labels.
+No retrieval, generation, reference, rubric or product setting changes occur.
+
+| Judge, first pass | Upstream mixed mean /100 | Uniform rubric mean /100 | Estimated full-pass judge cost |
+| --- | ---: | ---: | ---: |
+| GPT-4.1-mini, historical reference | 71.92 | 76.66 | $0.692 |
+| GPT-6.1 Sol, medium | 70.08 | 71.92 | $4.079 |
+| GPT-6 Luna, medium | 70.86 | 72.33 | $0.251 |
+
+These are partial-credit scores, not pass rates. Luna's rubric averages are higher
+than Sol in 51 cases, lower in 38, unchanged in 311. Its event-ordering tau mean is
+46.06/100. Score changes on identical answers measure evaluator sensitivity, not
+memory improvements or judge accuracy.
+
+All 18 control calls pass. The five previously inspected target criteria receive
+the same defensible labels in all three passes: zero for 1,417 instead of 15;
+full credit for the explicit date range, meeting time and prior submission claim;
+partial credit for only one of two requested preparation steps. However, broader
+repeat stability is worse than Sol on the identical preselected subset:
+
+| Three evaluations of the same 40 cases | Sol medium | Luna medium |
+| --- | ---: | ---: |
+| Varying criterion labels /108 | 4 | 14 |
+| Varying rubric question averages /40 | 4 | 10 |
+| Varying event-ordering scores /4 | 1 | 1 |
+
+Across the full 45-case cohort, Luna has 15 varying labels and 11 varying rubric
+averages, versus Sol's five and five. In `chat13--multi_session_reasoning--0`, the
+answer gives six series against a requirement of four: Luna scores the criterion
+**0, 1, 0.5**, alternating exact-count and at-least-count interpretations. A similar
+six-versus-three application-types criterion scores **0, 1, 0**. These are genuine
+same-input label changes, not retrieval or answer changes. Earlier Sol runs are
+not contemporaneous; GPT-4.1-mini has no matched repeats. This subset does not
+establish population-level differences or the reference judge's superiority.
+
+Luna also gives partial credit for naming the two-aces probability topic without
+calculating it, although the original question only asks for topics. As with Sol,
+the unchanged rubric template omits that question. The cause and remedy are not
+established by this model-only run. Reuse the earlier 20-case assistant inspection
+without relabeling its expectations; its already recorded ambiguities preclude
+using agreement counts as independently calibrated judge accuracy.
+
+**Decision:** retain GPT-4.1-mini as the BEAM reference for continuity, with its
+known errors disclosed. Luna is an inexpensive diagnostic alternative, but its
+repeat variability does not justify promoting it to primary. Keep Sol/Luna labels
+as separate second opinions and end this model grid. A future evaluator change
+would require a defined task-context protocol and independent calibration, not
+another search for a judge producing a preferred score. Product defaults and the
+LongMemEval Jev policy remain unchanged.
+
+### Cost, verification and retention
+
+The first pass uses 1,862 calls (1,051 rubric and 811 visited alignment pairs),
+1,308,247 input tokens and 202,612 output tokens, including 130,362 reasoning
+tokens. Estimated cost is **$0.25067**, about 94% below Sol's full-pass estimate.
+Controls and repeats bring the total to **2,281 calls and $0.28716**, with no HTTP
+errors or retries. One response contains invalid JSON escaping; the unchanged
+parser repairs that saved response without a new model call or label selection.
+Costs use provider usage and [Standard Luna rates](https://developers.openai.com/api/docs/models/gpt-6-luna),
+including reported cache reads, not an invoice. Full-pass successful-request
+median/p95 is **1.829/4.205 seconds**, excluding queue waits; these are API-call
+latencies, not per-answer end-to-end latencies.
+
+Offline verification passes for 422 source bindings, all 2,281 request/response
+bindings, the pinned upstream event metric and 1,305 model-only request comparisons.
+No remote collections are created. All 379 unit tests, runtime/release/SDK checks
+and script/test syntax checks pass; no browser integration is rerun for this
+judge-only documentation update.
+
+Frozen inputs, full receipts, repeat variations, interpretations and scripts are
+preserved in local-only `artifacts/archive/beam-luna-judge-v1.tar.gz`
+(10,813,348 bytes, 5,169 members; SHA-256
+`6f638f7f136072583f54d967ccb0318974accde5cae9393ad341d5bf4d459562`).
+Full member readback and configured-secret scanning pass. Restore this and the
+baseline, Jev and Sol bundles above; use Python 3.14 / scipy 1.18.1 / json_repair
+and, from the worktree root, run `python artifacts/beam-luna-judge-v1/analyze.py`,
+`python artifacts/beam-luna-judge-v1/audit.py`, then
+`python artifacts/beam-luna-judge-v1/compare.py`. These offline scripts make no
+paid requests. The archive is unavailable in a fresh clone.

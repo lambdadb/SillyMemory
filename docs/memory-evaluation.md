@@ -286,3 +286,11 @@ zero abstention flip. Use its saved labels as diagnostic second opinions, not
 replacement primary scores. Original criteria and the template's omitted question
 remain unchanged; any future question-complete evaluator must be a separately
 reported protocol rather than a silent repair of these results.
+
+The final [Luna-medium comparison](beam-evaluation.md#fixed-answer-luna-medium-judge-comparison-2026-10-18)
+closes this model grid without replacing the BEAM reference. Luna corrects the
+same five inspected criteria and costs about $0.251 per saved 400-answer pass,
+but 10/40 preselected rubric averages vary across three evaluations, versus Sol's
+4/40. It is an inexpensive diagnostic option, not an adopted primary judge.
+Neither comparison independently calibrates overall judge accuracy; retain the
+original labels and disclose evaluator sensitivity separately from memory quality.
