@@ -204,7 +204,7 @@ not new vendor runs. Their generators, judges, budgets and ingestion differ.
 | --- | --- | --- | --- |
 | Our direct assembly/refill | 95.0%, 475/500 | 4,277 mean final-answer input; 4,275 median | Exact source reconstruction plus explicit LambdaDB scenarios above; no generative extraction/summary calls |
 | Exabase M-1 | 96.4% top-50, reported | No run-bound absolute final-answer token total established in that review | Proprietary; no comparable construction bill established |
-| Mem0 | Documentation 94.4%/94.8%; inspected JSONs 93.4%/90.4% | Documentation mean 6,787 tokens/query; not bound to the mismatching saved score files | LLM-extracted memory; managed implementation and complete construction usage not disclosed there |
+| Mem0 | Documentation 94.4%/94.8%; inspected JSONs 93.4%/90.4% | Documentation mean 6,787 tokens/query; not bound to the mismatching saved score files | LLM-extracted memory; complete construction usage not disclosed there. Hosted subscription scenarios below |
 | Hindsight inspected S artifact | 94.6%, 473/500 | About 43.6K mean **retrieved context**, not measured full generation input | Structured memory processing; construction bill not established from the reviewed artifact |
 | Supermemory | Reported 97% with GPT-4o; 84.6% GPT-5; 85.2% Gemini 3 Pro | Top-20 aggregation; no bound input-total artifact established | Derived atomic memories/source relations; comparable ingestion bill not established |
 
@@ -214,6 +214,68 @@ distillation; past.dev describes typed source-backed temporal memory without
 disclosing its hosted extraction call budget. Their BEAM results have the cohort
 and answer-assistance qualifications in the reference document. Neither supports
 a numerical claim that our construction is a particular multiple cheaper.
+
+### Mem0 Platform subscription scenarios
+
+Checked **2026-10-19**. The hosted product's [public pricing](https://mem0.ai/pricing)
+meters add and retrieval requests separately, with unlimited end users:
+
+| Plan | Monthly subscription | Included adds/month | Included retrievals/month |
+| --- | ---: | ---: | ---: |
+| Hobby | Free | 10,000 | 1,000 |
+| Starter | $19 | 50,000 | 5,000 |
+| Pro | $249 | 500,000 | 50,000 |
+
+The pinned [LongMemEval runner](https://github.com/mem0ai/memory-benchmarks/blob/4b61c5d31b9c668a12b4f5e78064248a02c82d2b/benchmarks/longmemeval/run.py#L283)
+uses a separate user ID for each question, slices each session into consecutive
+two-message groups, skips groups containing empty content, and calls `add` once
+for every remaining group. Applied offline to the same cleaned dataset SHA-256
+recorded below, its **23,867 sessions and 246,750 messages** yield **124,333 add
+calls**, excluding 12 skipped groups. One search per question adds **500 retrievals**.
+These are planned logical calls, not observed Mem0 billing or a reproduced score;
+retries, event polling and other account usage are not measured.
+
+| One 500-question run in one billing month | Planned add calls | Subscription scenario, answer generation excluded |
+| --- | ---: | --- |
+| Pinned runner's two-message ingestion | 124,333 | **$249 Pro** fits entirely within published included allowances |
+| Hypothetical ten-message ingestion batches | About 39,500 | **$19 Starter** may fit the basic request allowances |
+| Hypothetical whole-session ingestion | About 23,900 | **$19 Starter** may fit the basic request allowances |
+
+The larger batches are sizing illustrations, not validated integrations: request
+size limits, extraction behavior and resulting accuracy remain untested. The
+pricing page places Graph Memory and Dream on Pro; a request count that fits
+Starter does not establish access to the benchmark's full feature configuration.
+The hosted service manages its own extraction LLM, embeddings and stores
+([Platform/OSS distinction](https://docs.mem0.ai/platform/platform-vs-oss)). Do not
+add a guessed self-hosted extraction-model bill to the subscription. Application
+answer generation and evaluation judging remain separate. The published 6,787
+tokens/query figure is not a run-bound final-answer usage receipt and cannot
+establish an exact answer-generation bill for these scenarios.
+
+**Overage pricing remains unresolved.** [Terms section 4.1](https://mem0.ai/terms)
+allows usage-based overages at rates published on the Platform or agreed in an
+Order Form. The public pricing page offers usage-based pricing through the sales
+team, but no numerical overage rate was found in the inspected public pricing,
+terms or [official FAQ](https://github.com/mem0ai/mem0/blob/main/docs/platform/faqs.mdx).
+The app redirects unauthenticated access to login, so account-level billing rates
+were not inspected. Neither automatic overage access nor a universal hard stop is
+established here. **Pro is an included-allowance budget, not a proven minimum bill.**
+
+If Starter permits the workload, its 74,333 excess adds and 500 included retrievals
+would cost `19 + 74,333 * r`, where `r` is the unknown USD/add overage rate.
+Hypothetical rates of $1 or $3 per 1,000 extra adds yield **$93.33 or $242.00**;
+the break-even against $249 is about **$3.09/1,000**. These are arithmetic examples,
+not Mem0's prices, and feature differences can still require Pro.
+
+The $249 is a monthly account charge, not the marginal cost of this one run.
+The planned adds consume 24.9% of Pro's add allowance; allocating the subscription
+by that fraction gives **$61.92**, not a quoted per-run or overage price. An existing
+Pro account with sufficient remaining allowances may incur no additional
+subscription payment. Conversely, new ingestion, retries or other workloads can
+exhaust those allowances. The LambdaDB estimate is usage-based list pricing;
+comparing it with an entire subscription or an arbitrary quota allocation does
+not establish an intrinsic cost ratio between the products. No Mem0 API calls,
+subscription purchase or plan changes were made for this analysis.
 
 ## Supported implication and retained evidence
 
