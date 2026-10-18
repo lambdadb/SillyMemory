@@ -48,7 +48,82 @@ Four source-inspected examples demonstrate different mechanisms; they are not an
 
 Source-ID annotations cover 355 questions; 40 abstention questions and five other probes provide no IDs. Across 1,094 unique referenced-message occurrences, 385 are complete in returned and injected text, 102 partial in both, 506 absent in both, and two retained natively. A further 38 complete and 51 partial returned bodies are absent after selection; 10 complete bodies become partial. These are **structural message-span diagnostics, not necessary-fact recall**. Annotation omissions and broad assistant bodies limit their meaning; the summary witnesses above were found in original source without feeding them to runtime.
 
-The next useful investigation is to trace a small, declared set of concrete missing dependencies through candidate 200, final 50 and delivery. Include standing instructions and broad-summary milestones, and preserve current-policy controls. Do not introduce a new prompt, larger budget or model merely to fit a rubric. Larger BEAM buckets and a full error taxonomy remain unperformed.
+These examples motivate the bounded stage audit below. Larger BEAM buckets and a full error taxonomy remain unperformed.
+
+## Follow-up: source-stage audit (2026-10-18)
+
+Retain current defaults. A frozen four-question diagnostic traces the two chat 1
+ordering probes, chat 5's standing diagram request, and chat 20's milestone summary.
+This is a mechanism audit, not a representative quality comparison or a new score.
+No generation or judging is repeated.
+
+Reimport the exact three corpora (2,443 documents). For each question, collect the
+unchanged product final 50, all 200 native rerank results, unreranked Bayesian 200,
+vector 200 and lexical 200. Preserve query/filter, k 200, managed Small, Jev criteria,
+strong reads and product selection. References and inspected witnesses never enter
+requests. All 20 queries pass, with no transient retries and all owned data deleted.
+
+The fresh Bayesian and reranked candidate sets match **200/200** for all four queries.
+Original versus fresh final-50 overlap is 45, 46, 49 and 46; independently requested
+final 50 versus the first 50 of reranked 200 overlaps 47, 48, 49 and 48. Recreated
+indexes and repeated inference are not an exact replay. The following new ranks
+locate mechanisms in this diagnostic run, not prove original candidate membership.
+
+| Identified source | Original final 50 → injection | Fresh Bayesian rank → Jev rank |
+| --- | --- | --- |
+| Summary: July 10-tests/96% milestone, source 128 | 24 → omitted | 141 → 23 |
+| Summary: approved $12,000/PCT budget, source 196 | absent → absent | 64 → 164 |
+| Summary: September 98% target, source 208 | absent → absent | 185 → 139 |
+| Five-event order: project setup, source 6 | 38 → omitted | 151 → 31 |
+| Five-event order: transaction implementation, source 62 | 45 → omitted | 78 → 36 |
+| Five-event order: deployment/tests, source 118 | 23 → delivered | 9 → 16 |
+| Five-event order: accepting improvements, source 120 | absent → absent | absent from both component top-200 sets and fused 200 |
+| Standing tree-diagram request, source 132 | absent → absent | absent from both component top-200 sets and fused 200 |
+
+These are source-bound prose spans; source numbers are BEAM message IDs, not chunks.
+Do not turn source-reference absence into a claim that no alternative evidence exists:
+
+- **Summary:** assistant source 209 already supplies the September 27–30 / 98% target
+  in the final prompt, yet the answer omits it. The missing July achievement and
+  $12,000/PCT decision have no such support in that prompt. About 92.1% of rendered
+  source-message tokens are assistant-origin (3,568/3,876, excluding shared guidance
+  and the archive heading), dominated by recurring plans. A user also endorses one schedule;
+  speaker role alone does not distinguish accomplishments from plans.
+- **Standing preference:** diagram examples and a heading are delivered, but the
+  user's explicit always-request is not. No diagram/visual-aid phrase from any of
+  the ten relevant user messages reaches original final 50. This is a personal
+  preference retrieval gap, not complete absence of mathematical examples.
+- **Three-event order:** source 60's transaction-error-handling request is delivered
+  but omitted from the answer. Native recent history separately discusses security.
+  The broad question does not identify the three intended reference events.
+- **Five-event order:** the answer combines testing/deployment into one line and
+  chooses different aspects elsewhere. Upstream binary alignment matches 2/5 lines
+  (tau 0.26), while rubric judging gives full credit. Preserve both results; this
+  mixes target granularity and evaluator alignment with memory loss.
+
+Candidate expansion does not directly address facts already in 200 but ranked 139/164;
+more injection budget cannot recover sources outside final 50/200 or ensure use of
+supplied evidence. Before another quality run, define one change that distinguishes
+useful personal-history evidence from recurring topical plans, with fixed controls.
+Provenance-aware reranking and selection that accounts for redundant content are
+possible directions, **not validated improvements**. Persistent preferences are a
+separate retrieval requirement; do not disguise them as a universal rank cutoff.
+Do not change the benchmark's aligner to improve its score.
+
+An initial attempt stopped on HTTP 400: unreranked Bayesian `size: 200` requires an
+explicit top-level `candidateSize: 200`. Only that diagnostic request was corrected;
+product requests remain unchanged. Preserve its two successful queries, failed
+request, read-only validation probe and verified cleanup. Across both attempts,
+3,258 documents were submitted and 22 query calls succeeded; no generation/judge
+calls or new product code. The corrected run records 108 LambdaDB operations.
+
+Source reviews, exact requests, original-selection replay checks and failed/successful
+receipts are local-only in `artifacts/archive/beam-stage-audit-v2.tar.gz` (1,005,844 bytes,
+43 files; SHA-256 `17fb345023e9659ba0de4da7e21e8e197695b435f60fd9cc0027a4a3ce003b7f`).
+Full member readback and configured-secret scanning pass. Restore both audit siblings
+and the parent baseline archive below, sources matching `plan.json` hashes, Node
+24.15.0 and tiktoken 1.0.22 before running the offline `analyze.mjs`. The live runner
+makes paid calls and must not be rerun merely to inspect the result.
 
 ## Latency, cost and operational verification
 
