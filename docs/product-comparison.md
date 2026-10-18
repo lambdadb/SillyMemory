@@ -11,6 +11,10 @@ The benefit demonstrated here is smaller final-answer input with high English
 memory accuracy. This consumed benchmark does not establish held-out roleplay
 quality, total billed savings or superiority over sufficiently large full context.
 
+For external context, see the [LongMemEval and BEAM reference](memory-benchmark-reference.md).
+It separates vendor-reported scores from inspected artifacts and explains why
+different prompts, judges, cohorts and cache conditions prevent a direct ranking.
+
 All 2,050 planned answers were generated and judged. Exact stage-set validation
 found no missing, duplicate or extra answers. Every recorded operational failure
 was recovered, and all experiment-owned remote resources and temporary profiles
