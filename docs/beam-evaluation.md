@@ -6,7 +6,7 @@ Close LongMemEval-S after the [117-case product regression check](small-default-
 
 Use all **20 conversations / 400 questions** in `chats/100K`, called **128K** in the [upstream README](https://github.com/mohammadtavakoli78/BEAM/tree/b2da22eac88bb0874c64665f13457eb99835774a). The MIT-licensed source is pinned to that commit. Follow the official loader's preference for `chat_trunecated.json` when present. Actual source text measures 92,928–121,849 cl100k tokens per conversation, 2,294,811 total. The published size label uses a different measurement; it is not our generator's input length.
 
-This is an independent memory pipeline importing product code at `3dd2a8584f78d9af797a5319dfc408023a6f430b`, not a new SillyTavern browser test. Flatten source turns chronologically, preserve roles/content and source IDs, and apply the existing product literalization only when rendering recalled text. Do not reinterpret BEAM's event `time_anchor` as a message's sent timestamp. No dates are invented. Each probe starts from the same history; evaluation questions and generated answers never become later probes' memory. Rubrics, references and source annotations are used only after generation.
+This is an independent memory pipeline importing product code at `3dd2a8584f78d9af797a5319dfc408023a6f430b`, not a new SillyTavern browser test. Flatten source turns chronologically, preserve roles/content and source IDs, and apply the existing product literalization only when rendering recalled text. Do not reinterpret BEAM's batch-reference `time_anchor` as a message's sent timestamp. No dates are invented. Each probe starts from the same history; evaluation questions and generated answers never become later probes' memory. Rubrics, references and source annotations are used only after generation.
 
 ## Frozen policy and scoring
 
@@ -556,9 +556,12 @@ and script/test syntax checks pass.
 
 ## Speaker role in native reranking (2026-10-18)
 
-**Retain text-only reranking.** Adding `role` produces some useful detail recovery,
-but this bounded screen does not establish a reliable overall quality gain. Do
-not promote the candidate or expand it to all 400 questions on this evidence.
+**Keep the product default unchanged pending confirmation.** Adding `role`
+improves both aggregate mixed and rubric scores in this screen and recovers some
+useful details. It remains a promising candidate, despite unresolved tradeoffs.
+The initial blanket recommendation against a full 400-question comparison was
+too strong; the following date-context screen examines the next user-requested
+variable before deciding on that broader comparison.
 
 Compare `fields: ['text']` with `fields: ['role', 'text']`, using native default
 criteria in both arms. All other settings remain fixed: managed Small, Bayesian
@@ -653,3 +656,120 @@ tokenizer/Python dependencies, run `node artifacts/beam-role-rerank-v2/verify-re
 `python artifacts/beam-role-rerank-v2/analyze.py` from the worktree root. These are
 offline checks; live runners are unnecessary for inspection. The bundle is not
 available in a fresh clone.
+
+## Batch-reference dates in reranking and generation (2026-10-19)
+
+**Retain the date-aware candidate; do not promote it yet.** Both aggregate scores
+and a source-supported year-format improvement justify further evaluation.
+Reranking-only gains are small, and displaying dates also displaces useful text.
+This completes the bounded screen, not a full BEAM comparison or product adoption.
+
+The source provides a **batch reference date**, not a timestamp on every message.
+Across the original 20 corpora, 82 messages carry anchors for 82 batches. The
+[source generation prompt](https://github.com/mohammadtavakoli78/BEAM/blob/b2da22eac88bb0874c64665f13457eb99835774a/src/prompts.py)
+uses a chronological batch anchor. Map it by original batch membership to each
+chunk as `batch_time_anchor: YYYY-MM-DD`; never label it `sent` or assign that date
+to all events described in the batch. Explicit event dates remain authoritative.
+This corrects the earlier overly broad suggestion that the anchor was unusable.
+
+Reuse the same five diagnostics and 40 fixed comparison questions. The latter
+are already inspected, not unseen confirmation. Import 17,259 unchanged-text
+chunks from 19 corpora / 77 batches into a common schema declaring `role`,
+`batch_time_anchor` and `batch_time_context`. Compare three arms:
+
+1. **Role:** native `fields: ['role', 'text']`, original generation rendering.
+2. **Anchor:** `fields: ['role', 'batch_time_context', 'text']`, original rendering.
+   The added field reads `Conversation batch reference date: YYYY-MM-DD. This is
+   not a message send time or an event date.` No custom rerank criteria.
+3. **Display:** reuse the exact Anchor query response, append
+   `batch_time_anchor: YYYY-MM-DD` to recalled-message labels and explain its
+   meaning once. Repack under the same 4096-token budget. Include the date in
+   grouping identity so different batch dates cannot collapse into one label.
+
+Managed Small still embeds **only original text**. Bayesian Query1, k/candidate
+200, final 50, strong reads, chunking, recent four plus probe, Sol-low and original
+GPT-4.1-mini rubric/event scoring remain unchanged. Recent dialogue is not
+anchor-enriched. Display is a packing-plus-presentation comparison, not identical
+passages with an extra instruction. No runtime/default changes or additional
+preprocessing model calls are introduced.
+
+| Fixed comparison cohort, 40 questions | Role | Anchor | Display |
+| --- | ---: | ---: | ---: |
+| Upstream-style mixed mean /100 | 71.27 | 71.52 | 73.59 |
+| Uniform rubric mean /100 | 74.79 | 75.83 | 78.46 |
+| Event-ordering tau mean /100 | 29.38 | 34.75 | 32.98 |
+| Completely injected annotated messages /95 | 40 | 41 | 40 |
+| Partially injected annotated messages /95 | 2 | 4 | 2 |
+| Annotated messages absent from injection /95 | 53 | 50 | 53 |
+
+Role → Anchor rubric changes: 4 higher, 4 lower, 32 equal. Anchor → Display:
+7 higher, 5 lower, 28 equal. The five selected diagnostics have uniform means
+34, 24 and 20 respectively; do not hide those losses. Scores are partial-credit
+subset measures, not pass rates or full-400 results. There is no fresh text-only
+arm here, so historical baseline differences are not treatment effects.
+
+### What actually changed
+
+- **Useful temporal context:** all arms deliver the same date-format instruction
+  and July/November scheduling facts. Only Display uses the July 10 / November 20,
+  2024 batch references to provide `07/12/2024–07/16/2024` and `11/18/2024`, instead
+  of saying the year is unavailable. This is a reasonable context-supported year
+  inference, not an explicit year in the message body or a verified send time.
+- **Some reranking gains:** Anchor restores concrete Excel tracking advice and
+  September drafting/review details. However, Carla-related social planning drops
+  out of the prompt. Delivered contradictory geometry statements are ignored by
+  Anchor/Display although Role acknowledges the denial.
+- **Real packing cost:** Display changes packing in all 45 questions, dropping
+  95 and adding 14 selected chunk occurrences relative to Anchor. The prototype
+  98%-by-September target disappears from both prompt and answer. Annotation
+  coverage returns to Role's totals; that is structural coverage, not fact recall.
+- **Judge effects remain substantial:** all arms give the correct 15- and 21-day
+  date ranges, but Anchor receives lower credit for equivalent wording. Display
+  receives `Three` credit while answering two user roles. Near-equivalent sneaker
+  timelines get different event alignments. These labels remain unchanged; they
+  cannot establish corresponding quality gains or losses.
+
+The retained review covers all 17 questions with changed rubric/event scores
+(27 comparison pairs), with relevant source/prompt checks. It is agent inspection,
+not independent human calibration or an exhaustive audit of unchanged answers.
+A full fixed-400 comparison against the current text-only baseline is the next
+adoption test; no such additional run or default promotion is claimed here.
+
+### Operations and evidence
+
+All 90 successful native queries, 135 generation, 345 rubric and 299 alignment
+calls complete. Display reuses 45 Anchor responses rather than issuing extra
+queries. One upsert 429 and one native-rerank 408 recover on retry; completion
+calls need no retries. All 19 owned collections have verified 404 cleanup.
+Successful query median/p95 is 1.403/1.639 seconds for Role and 1.569/1.798 for
+Anchor, excluding queue/import time and the failed attempt. Generation costs
+approximately $2.36119; judging/alignment $0.22115 from recorded usage and frozen
+rates. Write/managed embedding estimate is $0.06671 before free allowances.
+Native rerank billing tokens, metadata overhead, retry inference fees and physical
+storage remain unmeasured; token-volume proxies are not invoices.
+
+Original-input replay, source dates on all documents, unchanged original fields
+and embedding text, all 135 prepared inputs, exact query reuse, source-valid
+packing, the 4096 limit and pinned upstream scoring pass offline verification.
+All 379 unit tests, runtime/release/SDK and script/test syntax checks pass. No
+browser test is rerun for this experiment/documentation-only change.
+
+Producer `e9dd960ef43b371af008f1f65eca5afbbd6e5aab`; local-only bundle
+`artifacts/archive/beam-anchor-v1.tar.gz` (15,605,133 bytes, 2,194 members;
+SHA-256 `72f9bafb07c7aa4081f5a41643c9364e4bf35fe5cc5df9bc2411840b931b62b4`).
+Full member hash readback and configured-secret scanning pass. Preserve the
+original receipts, locks, mappings, review and one-off runners there, not in CI.
+Restore `beam-anchor-v1` under `artifacts/`, plus `beam128k-current-v1` and the
+`quoted-memory-product117-v1` rate card, at the producer revision. With the locked
+runtime/tokenizer and Python `scipy`/`json_repair`, run these offline commands
+from the worktree root:
+
+```sh
+node artifacts/beam-anchor-v1/check-anchor.mjs
+node artifacts/beam-anchor-v1/verify-retrieval.mjs
+node artifacts/beam-anchor-v1/diagnostics.mjs
+python artifacts/beam-anchor-v1/analyze.py
+```
+
+Live runners are unnecessary for inspection. The bundle is unavailable in a
+fresh clone.
