@@ -124,8 +124,9 @@ harness therefore separates a long-history control from actual system-instructio
 pressure. The latter uses 160 instruction repetitions to exercise host truncation,
 Stop on missing context, streaming, swipe/regenerate and manual context recovery.
 Previously captured cases retain their original settings in local archives.
-Small-context packing now prepares one excerpt, with six after context recovery;
-the repeated-citation source-integrity fixture keeps four required excerpts
+Current packing prepares one quoted archive block. After context recovery it
+contains six source excerpts; the repeated-citation source-integrity fixture keeps
+four required source excerpts in one block
 under context 2,656/configured and effective budget 600. The no-fitting-source
 fixture uses budget 250, while budget 64 tests a guidance-only
 preparation failure. These are emulator contract observations, not
