@@ -2,10 +2,11 @@
 
 ## Decision and scope (2026-10-19)
 
-The full baseline and bounded follow-ups are complete. Keep product defaults and
-GPT-4.1-mini BEAM judging unchanged. Speaker/date-aware reranking remains a
-promising candidate for a full fixed-400 comparison, not an adopted improvement.
-Close the judge-model grid. This report retains decisions and comparable totals;
+The baseline and full paired 400-question speaker/date comparison are complete.
+Keep product defaults and GPT-4.1-mini BEAM judging unchanged. Defer the bundled
+reranking/date-display candidate: its small gain does not establish reliable net
+benefit, and source-delivery losses remain. Close this trial and the judge-model
+grid. This report retains decisions and comparable totals;
 case reviews, request/retry histories and producers live in the evidence bundles.
 
 After [LongMemEval-S closure](small-default-error-analysis.md#quoted-memory-full-cohort-structural-adoption-2026-10-18),
@@ -123,46 +124,72 @@ No default promotion; the user-requested date screen below follows this trial.
 
 ## Batch-reference dates in reranking and generation (2026-10-19)
 
-**Keep the candidate for full-cohort confirmation.** BEAM supplies a batch
+**Defer product promotion after full-cohort comparison.** BEAM supplies a batch
 reference date, not each message's send time or every event's date. Map original
 batch membership to chunk metadata; explicit event dates remain authoritative.
 The [generation prompt](https://github.com/mohammadtavakoli78/BEAM/blob/b2da22eac88bb0874c64665f13457eb99835774a/src/prompts.py)
 and source inspection support this distinction. Do not label the anchor `sent`.
 
-The same 5 diagnostics + 40 already inspected comparison cases use three arms:
+The earlier 45-question screen compared role, role+date and date display. Its fixed
+40 mixed means were 71.27/71.52/73.59, with five diagnostic rubric means 34/24/20.
+That screen justified the completed full comparison below, not default adoption.
 
-- **Role:** rerank `['role','text']`; original generation rendering.
-- **Anchor:** rerank `['role','batch_time_context','text']`; original rendering.
-  Metadata says `Conversation batch reference date: YYYY-MM-DD. This is not a
-  message send time or an event date.` Original embedding text stays unchanged.
-- **Display:** reuse Anchor's exact query response; add `batch_time_anchor` labels
-  and an interpretation instruction, then repack under 4096. Include date in
-  grouping identity. This changes selected passages as well as presentation.
+All 400 questions now have fresh paired retrieval, generation and judging:
 
-| Fixed comparison 40 | Role | Anchor | Display |
-| --- | ---: | ---: | ---: |
-| Mixed mean /100 | 71.27 | 71.52 | 73.59 |
-| Uniform rubric /100 | 74.79 | 75.83 | 78.46 |
-| Event tau /100 | 29.38 | 34.75 | 32.98 |
-| Complete/partial/absent injected annotations /95 | 40/2/53 | 41/4/50 | 40/2/53 |
+- **Default:** rerank `['text']`; original generation rendering.
+- **Candidate:** rerank `['role','batch_time_context','text']`; metadata says
+  `Conversation batch reference date: YYYY-MM-DD. This is not a message send time
+  or an event date.` Display `batch_time_anchor` with interpretation guidance,
+  include date in grouping identity and repack under the same 4096 budget.
 
-The 5 diagnostics score 34/24/20 rubric: losses remain. Dates support a real
-contextual year-format improvement, while added labels also displace useful facts.
-Some aggregate movement is judge error, not changed answer quality. Preserve raw
-labels and source reviews; no fresh text-only arm or full 400 result is claimed.
-Recent dialogue is unchanged and receives no added anchors. Product defaults stay
-unchanged; a full fixed 400 comparison against text-only is the next adoption test.
+Both arms share an enriched schema/collection and unchanged embedding text, query,
+models, criteria and recent dialogue; recent messages receive no added anchors.
+This tests the combined reranking/display policy, not isolated date effects or
+identical selected passages. The complete 200-candidate ID sets are not exposed.
 
-Query median/p95: Role 1.403/1.639s, Anchor 1.569/1.798s. Generation/evaluation estimate:
-$2.58234; write/managed embedding: $0.06671. Native rerank metadata overhead and
-physical storage remain unmeasured. All 135 answers complete; display makes no
-extra queries. Two transient retrieval/import failures recover; all 19 collections
-are deleted/404. The screen introduces no preprocessing model or product code.
+| Full paired 400 | Default | Candidate |
+| --- | ---: | ---: |
+| Mixed mean /100 | 71.55 | 72.17 |
+| Uniform rubric /100 | 76.64 | 77.41 |
+| Event tau /100 | 22.36 | 21.91 |
+| Complete returned annotations /1,094 | 435 | 455 |
+| Complete/partial/absent delivered annotations /1,094 | 377/115/600 | 395/116/581 |
+| Native-recent annotations /1,094 | 2 | 2 |
+| Mean selected chunks | 27.10 | 25.46 |
+
+Rubric labels improve in 56 questions, decline in 50 and tie in 294. The prior 45
+screen questions score 71.30→73.67 uniform rubric; the remaining 355 score
+77.32→77.88. Neither group is unseen: historical baseline answers existed for all.
+The mixed gain is +0.62 points; a 10,000-replicate paired conversation bootstrap
+gives a descriptive 95% interval of -1.43 to +2.56. It measures corpus sampling,
+not judge validity or inference-repeat uncertainty. Annotation coverage is not
+necessary-fact recall; preserve raw labels without a corrected score.
+
+Source inspection finds a real date-format gain: a scheduling-format preference
+enters the candidate prompt, with batch context supporting the event year. But a
+98%-accuracy target is returned in both arms and lost during candidate packing.
+Some already-delivered facts are used better; several large label changes are
+judge errors, including identical answers receiving different credit and 19 movies
+being accepted for a 13-movie target. Thirty selected answer pairs and all 25
+changed event-alignment mappings were inspected; this is not an exhaustive fact
+audit or independent calibration. BEAM batch anchors also do not validate a host
+message-send-time deployment. Retain current product behavior; no further grid
+or automatic promotion follows this bounded trial.
+
+Mean generation input: 6,023.32→6,024.09 tokens. Query median/p95: 1.338/1.652s →
+1.477/1.734s; generation: 5.378/19.633s → 5.278/19.735s. These exclude queueing,
+packing and judging. Generation costs about $7.029 per arm; total generation and
+evaluation $15.450, initial shared write/managed embedding $0.0704. These are
+frozen-rate estimates, not invoices; native rerank tokens and physical storage
+remain unknown. The enriched shared schema is not a bare-product cost baseline.
+All 800 queries, 800 answers, 2,102 rubric and 2,348 alignment calls complete.
+One upsert 429 recovers; no completion retries. All 20 collections deleted/404.
 
 ## Validation and evidence retention
 
-Each quality screen uses 5 diagnostics + 40 fixed comparisons, preserving English,
-source validation, isolation and budget checks. Repeatedly inspected cohorts are
+Initial quality screens use 5 diagnostics + 40 fixed comparisons; the final date
+comparison uses all 400. Preserve English, source validation, isolation and budget
+checks. Repeatedly inspected cohorts are
 not unseen confirmation. Only within-run paired scores estimate treatment effects;
 fresh baselines vary with retrieval, generation and judging. Judge comparisons
 instead reuse fixed answers. Unit/emulator checks do not establish live quality.
@@ -189,6 +216,14 @@ producer revisions, dependency paths and offline restoration commands.
 | `beam-role-rerank-v2` | `f9edd7b5d335cfa19c6a3f9de8664ceaf6d37556a8066e7a966c419404fd01ad` |
 | `beam-anchor-v1` | `72f9bafb07c7aa4081f5a41643c9364e4bf35fe5cc5df9bc2411840b931b62b4` |
 | `beam-evaluation-detail-v1` | `f7f74d64059f78190145a4b844770a8daa422c7f775ca0945d27293ad77c3003` |
+| `beam-anchor-full-v1` | `217c769b5a1fa18f0081fa37bb8eba6cfd94f61e2c58d31f02603e160f0600a4` |
+
+The full paired bundle contains 13,871 verified members (68,797,556 bytes), produced
+at `ea46b6566a46c82ebe670851c2b1a7a8e05a92e7`. Restore it under `artifacts/` and read
+`beam-anchor-full-v1/RESTORE.md`: offline replay also needs the original baseline,
+anchor-screen and recorded rate-card dependencies. Its `RESULTS.md`, phase locks,
+raw receipts and selective review notes preserve the decision and its limits.
+The prior 199-line report is retained byte-for-byte in that bundle.
 
 The detail archive is 20,275 bytes with 2 members, copied from commit
 `78054bb36524f7db8e853e953bcbf8f5a0821e0a` before removing tracked detail. Full
