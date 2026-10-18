@@ -240,6 +240,44 @@ Search cost is unchanged, not zero in production. The local-only
 `beam-budget4096-8192-v1` bundle retains the plan, raw responses, source review,
 costs, verification and restoration instructions; product defaults are unchanged.
 
+## Message-diverse selection: offline gate (2026-10-19)
+
+**Keep ranked selection; do not adopt unconditional message rounds.** Reuse the
+same saved top 50 and 4096 budget for all 400 questions. Change only admission
+order: each original message contributes its highest-ranked chunk, then its next
+chunk in subsequent rounds. Preserve source validation, assembly, chronological
+rendering, framing and recent dialogue. All 400 baseline outputs reproduce exactly.
+This is message diversity, not semantic deduplication.
+
+| Offline delivery metric | Ranked | Message rounds |
+| --- | ---: | ---: |
+| Mean distinct messages | 18.26 | 24.38 |
+| Mean selected chunks | 25.46 | 25.14 |
+| Complete / partial / absent annotations | 395 / 116 / 581 | 402 / 152 / 538 |
+| Mean memory tokens | 4067.18 | 4066.44 |
+
+Two further annotations remain in native recent dialogue, for 1094 total.
+Annotated non-whitespace source coverage gains only in 21 questions, loses only
+in 29, changes both ways in 14 and is unchanged in 336. These are not answer
+wins/losses or necessary-fact recall. Selection changes in 383 questions.
+
+Nine cases were inspected: the three largest net span gains/losses and three
+previous budget-loss discoveries. Date-format preference, the September 98%
+target and May 15 filing date enter the candidate memory. But source rank 4's
+capped-backoff instruction and rank 3's compliance-checklist instruction disappear
+in other questions. Separate messages still repeat generic advice. Conversely,
+large span loss in the mentor-call case leaves most requested facts in a retained
+user message; character coverage alone overstates that loss. The book-choice
+reasons remain missing. This selective source audit does not establish an answer
+score or a new legal/technical advice assessment.
+
+One message can contain several necessary facts; different messages can repeat
+the same content. The unconditional rule therefore fails the offline promotion
+gate. Stop without paid generation/judging; no answer-level effect is measured.
+No product changes, new remote calls or collections. Budget/chronology/source
+hash checks pass. The local-only `beam-message-diversity-v1` bundle preserves
+all 400 selections, changed spans, reviewed excerpts and reproduction instructions.
+
 ## Validation and evidence retention
 
 Initial quality screens use 5 diagnostics + 40 fixed comparisons; the final date
@@ -273,6 +311,7 @@ producer revisions, dependency paths and offline restoration commands.
 | `beam-evaluation-detail-v1` | `f7f74d64059f78190145a4b844770a8daa422c7f775ca0945d27293ad77c3003` |
 | `beam-anchor-full-v1` | `217c769b5a1fa18f0081fa37bb8eba6cfd94f61e2c58d31f02603e160f0600a4` |
 | `beam-budget4096-8192-v1` | `06980646a852a074128479ed030e72db4648f697e14336c763e960cc0b352993` |
+| `beam-message-diversity-v1` | `8ec2e9210e89a574d63880d8c931a5a1400677ac1254ddea144876ac88ef304f` |
 
 The full paired bundle contains 13,871 verified members (68,797,556 bytes), produced
 at `ea46b6566a46c82ebe670851c2b1a7a8e05a92e7`. Restore it under `artifacts/` and read
