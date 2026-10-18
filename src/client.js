@@ -20,6 +20,7 @@ export const schema = Object.freeze({
     text: { type: 'text', analyzers: ['english'] },
     embedding: { type: 'vector', managedEmbedding: true, embedding: { provider: 'openai', model: 'text-embedding-3-small', sourceField: 'text' } },
     conversationTimestamp: { type: 'datetime' }, timestampSource: { type: 'keyword' },
+    role: { type: 'keyword' }, conversationTimeContext: { type: 'keyword' },
     message: { type: 'long' },
     owner: { type: 'keyword' }, scope: { type: 'keyword' }, revision: { type: 'keyword' },
 });
@@ -203,7 +204,7 @@ export class LambdaClient {
         return this.query(collection, { bayesian: [
             { knn: { field: 'embedding', queryText: text, k: 200, filter } },
             { bool: [{ ...filter, occur: 'filter' }, { queryString: { query: text, defaultField: 'text', skipSyntax: true }, occur: 'must' }] },
-        ] }, { signal, branch, size: 50, rerank: { provider: 'typesafe', model: 'jev-1.13.0', queryText: text, fields: ['text'], candidateSize: 200, onFailure: 'error' } });
+        ] }, { signal, branch, size: 50, rerank: { provider: 'typesafe', model: 'jev-1.13.0', queryText: text, fields: ['role', 'conversationTimeContext', 'text'], candidateSize: 200, onFailure: 'error' } });
     }
 }
 

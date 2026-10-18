@@ -5,6 +5,18 @@ import { LambdaClient, connectionConfig, scopeFilter } from '../src/client.js';
 import { runTransportGate } from '../src/gate.js';
 const config = { endpoint: 'https://region.example.test', project: 'synthetic' };
 const owner = 'a'.repeat(32), scope = 'b'.repeat(64);
+test('collection indexes expose source context to reranking without changing embedding input', async () => {
+    const client = new LambdaClient(config, 'synthetic', { fetcher: async (_url, init) => {
+        const { indexConfigs } = JSON.parse(init.body);
+        assert.deepEqual(indexConfigs.role, { type: 'keyword' });
+        assert.deepEqual(indexConfigs.conversationTimeContext, { type: 'keyword' });
+        assert.deepEqual(indexConfigs.conversationTimestamp, { type: 'datetime' });
+        assert.equal(indexConfigs.embedding.embedding.sourceField, 'text');
+        assert.deepEqual(indexConfigs.text, { type: 'text', analyzers: ['english'] });
+        return Response.json({ collection: collectionResponse() }, { status: 201 });
+    } });
+    await client.create('synthetic_context', owner, scope);
+});
 test('direct CORS preserves auth/body and query scope without host credentials', async () => {
     const calls = [];
     const client = new LambdaClient(config, 'secret-test-only', { headers: () => ({ 'X-CSRF-Token': 'csrf' }), fetcher: async (url, init) => {
@@ -24,7 +36,7 @@ test('direct CORS preserves auth/body and query scope without host credentials',
     assert.equal(body.query.bayesian[0].knn.queryText, 'compass'); assert.deepEqual(body.query.bayesian[0].knn.filter, scopeFilter(owner, scope));
     assert.deepEqual(body.query.bayesian[1].bool[0], { ...scopeFilter(owner, scope), occur: 'filter' });
     assert.deepEqual(body.query.bayesian[1].bool[1], { queryString: { query: 'compass', defaultField: 'text', skipSyntax: true }, occur: 'must' });
-    assert.deepEqual(body.rerank, { provider: 'typesafe', model: 'jev-1.13.0', queryText: 'compass', fields: ['text'], candidateSize: 200, onFailure: 'error' });
+    assert.deepEqual(body.rerank, { provider: 'typesafe', model: 'jev-1.13.0', queryText: 'compass', fields: ['role', 'conversationTimeContext', 'text'], candidateSize: 200, onFailure: 'error' });
     assert.equal(body.consistentRead, true); assert.deepEqual(body.ref, { kind: 'branch', name: 'main' });
     assert.ok(!JSON.stringify(client).includes('secret-test-only'));
     client.forget(); await assert.rejects(client.get('test'), /Enter your project API key/);

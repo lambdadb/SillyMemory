@@ -3,10 +3,13 @@
 ## Decision and scope (2026-10-19)
 
 The baseline and full paired 400-question speaker/date comparison are complete.
-Keep product defaults and GPT-4.1-mini BEAM judging unchanged. Defer the bundled
-reranking/date-display candidate: its small gain does not establish reliable net
-benefit, and source-delivery losses remain. Close this trial and the judge-model
-grid. This report retains decisions and comparable totals;
+Keep GPT-4.1-mini BEAM judging unchanged. The bundled reranking/date-display
+candidate's small gain does not establish reliable net benefit, and source-delivery
+losses remain. Subsequently, adopt role and verified host-time context in product
+reranking for their source meaning, with existing prompt labels unchanged. This is
+a user-approved semantic decision, not a promotion justified by these scores or
+an assertion that BEAM batch dates are host timestamps. Close this trial and the
+judge-model grid. This report retains decisions and comparable totals;
 case reviews, request/retry histories and producers live in the evidence bundles.
 
 After [LongMemEval-S closure](small-default-error-analysis.md#quoted-memory-full-cohort-structural-adoption-2026-10-18),
@@ -124,7 +127,7 @@ No default promotion; the user-requested date screen below follows this trial.
 
 ## Batch-reference dates in reranking and generation (2026-10-19)
 
-**Defer product promotion after full-cohort comparison.** BEAM supplies a batch
+**Full-cohort evidence; subsequent semantic adoption is separate.** BEAM supplies a batch
 reference date, not each message's send time or every event's date. Map original
 batch membership to chunk metadata; explicit event dates remain authoritative.
 The [generation prompt](https://github.com/mohammadtavakoli78/BEAM/blob/b2da22eac88bb0874c64665f13457eb99835774a/src/prompts.py)
@@ -173,8 +176,10 @@ judge errors, including identical answers receiving different credit and 19 movi
 being accepted for a 13-movie target. Thirty selected answer pairs and all 25
 changed event-alignment mappings were inspected; this is not an exhaustive fact
 audit or independent calibration. BEAM batch anchors also do not validate a host
-message-send-time deployment. Retain current product behavior; no further grid
-or automatic promotion follows this bounded trial.
+message-send-time deployment. The trial recommendation was to defer promotion
+on score alone. The subsequent [product decision](conversation-time.md) exposes
+source role and verified host-time meaning to Jev without changing existing
+generation labels. No further grid or claim of reliable quality uplift follows.
 
 Mean generation input: 6,023.32→6,024.09 tokens. Query median/p95: 1.338/1.652s →
 1.477/1.734s; generation: 5.378/19.633s → 5.278/19.735s. These exclude queueing,

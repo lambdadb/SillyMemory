@@ -125,7 +125,7 @@ async function selectRankedMemory(hits, expected, budget, countTokens, pack) {
     for (const hit of hits) {
         const doc = valid.get(hit?.id);
         // The remote response is only a ranking signal. Inject current local source text.
-        if (!doc || seen.has(doc.id) || hit.scope !== doc.scope || hit.owner !== doc.owner || hit.revision !== doc.revision || hit.text !== doc.text || hit.conversationTimestamp !== doc.conversationTimestamp || hit.timestampSource !== doc.timestampSource) continue;
+        if (!doc || seen.has(doc.id) || hit.scope !== doc.scope || hit.owner !== doc.owner || hit.revision !== doc.revision || hit.text !== doc.text || hit.conversationTimestamp !== doc.conversationTimestamp || hit.timestampSource !== doc.timestampSource || hit.conversationTimeContext !== doc.conversationTimeContext) continue;
         seen.add(doc.id);
         // Decide in retrieval order using the layout that would actually be
         // injected. Do not reserve space for lower-ranked unassembled hits.

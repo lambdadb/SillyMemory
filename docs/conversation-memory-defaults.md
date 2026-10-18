@@ -3,7 +3,13 @@
 Current development defaults use stored, fully budgeted conversation-time
 provenance, Bayesian English fusion and managed Jev: vector k=200, up to 200 rerank
 candidates, final size=50, and a 4,096-token initial memory budget. Keep per-message
-boundary chunks with an 800-code-point ceiling. The 4,096-token maximum and host
+source role and optional host-time explanation in Jev's fields:
+`['role', 'conversationTimeContext', 'text']`. Embeddings and lexical search still
+use only verbatim `text`; generation already includes source-role and `sent`
+labels. This semantic adoption adds no inference stage and is not a demonstrated
+BEAM accuracy improvement. See [time provenance](conversation-time.md).
+Keep per-message boundary chunks with an 800-code-point ceiling. The 4,096-token
+maximum and host
 one-quarter-context cap remain; explicit saved budgets are respected. These are
 development defaults, not a release or a universal optimum. The browser bundle
 pins SDK `0.8.1-dev.38730896042001` because stable 0.8.1 still caps rerank
@@ -36,8 +42,9 @@ embedding text. Present the time as `sent` in each recalled excerpt header and
 count one shared explanation in the system memory guidance, including no-hit
 requests. No new metadata extraction, user option, query, embedding or generation
 call is required. Native timestamps retain
-their UTC precision. The benchmark uses its provided session clock for each
-message, with the same `sent` label and no invented timezone or seconds.
+their UTC precision. LongMemEval uses its provided session clock for each
+message, with the same `sent` label and no invented timezone or seconds. BEAM's
+batch reference dates are different metadata and must not be labelled `sent`.
 
 Resolve expressions such as today/yesterday only when the local conversation
 date is known; UTC alone is insufficient. Otherwise preserve date ambiguity.

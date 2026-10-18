@@ -33,12 +33,15 @@ test('every chunk inherits source time separately from text and timestamp edits 
     const dated = original.docs.filter(d => d.message === 0);
     assert(dated.length > 1);
     assert(dated.every(d => d.conversationTimestamp === stamp && d.timestampSource === 'host_message'));
+    assert(dated.every(d => d.conversationTimeContext === "Message sent at 2024-02-29T12:34:56.123Z (UTC), supplied by the host; not an event date. UTC alone does not establish the speaker's local date."));
     assert.equal(dated.map(d => d.text).join(''), source[0].mes);
     assert(!('conversationTimestamp' in original.docs.find(d => d.message === 1)));
+    assert(!('conversationTimeContext' in original.docs.find(d => d.message === 1)));
     source[0].send_date = '2024-03-01T00:00:00Z';
     const second = capture(context(source)), changed = await documents(second, 'owner', { ...config, chunkChars: 200 });
     assert.notEqual(fingerprint(first), fingerprint(second));
     assert(changed.docs.filter(d => d.message === 0).every(d => !dated.some(old => old.id === d.id)));
+    assert(changed.docs.filter(d => d.message === 0).every(d => d.conversationTimeContext.includes('2024-03-01T00:00:00.000Z') && !d.conversationTimeContext.includes(stamp)));
     assert.deepEqual(capture(context(JSON.parse(JSON.stringify(source)))), second);
 });
 
@@ -77,6 +80,8 @@ test('selection budgets full dated excerpts and rejects forged, missing and stal
     assert.equal((await selectPackedMemory([dated], docs, count(full) - 1, count)).text, '');
     assert.equal((await selectPackedMemory([dated], docs, count(plain), count)).text, '');
     for (const bad of [{ ...dated, conversationTimestamp: undefined }, { ...dated, timestampSource: 'session' },
+        { ...dated, conversationTimeContext: undefined },
+        { ...dated, conversationTimeContext: 'Event occurred on 2099-01-01.' },
         { ...dated, conversationTimestamp: '2099-01-01T00:00:00.000Z' }]) {
         assert.equal((await selectPackedMemory([bad], docs, 2000, count)).text, '');
         assert.equal((await selectPackedMemory([bad, dated], docs, 2000, count)).text, full);

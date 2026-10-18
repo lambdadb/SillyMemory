@@ -19,7 +19,12 @@ export function hostTimestamp(value) {
 // source time stays unknown; capture supplies only the selected host message.
 export function conversationTime(message) {
     const timestamp = hostTimestamp(message.recordedAt);
-    return timestamp ? { conversationTimestamp: timestamp, timestampSource: 'host_message' } : {};
+    return timestamp ? {
+        conversationTimestamp: timestamp,
+        timestampSource: 'host_message',
+        // Native reranking accepts text/keyword fields, not datetime indexes.
+        conversationTimeContext: `Message sent at ${timestamp} (UTC), supplied by the host; not an event date. UTC alone does not establish the speaker's local date.`,
+    } : {};
 }
 
 export const SENT_GUIDANCE = "[Sent dates mark conversation time, not necessarily event time. Resolve today/yesterday only if the local conversation date is known; UTC alone is insufficient. Otherwise keep date ambiguity; do not infer an undated event's date. Z means UTC; no offset means unknown timezone. Session timestamps may be shared; absent dates are unknown.]";

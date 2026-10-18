@@ -50,11 +50,16 @@ try {
         assert.equal(target.origin, new URL(credentials.endpoint).origin);
         if (req.method() === 'POST' && target.pathname.endsWith('/collections')) {
             const body = req.postDataJSON();
+            assert.equal(body.indexConfigs.role.type, 'keyword');
+            assert.equal(body.indexConfigs.conversationTimeContext.type, 'keyword');
             assert(pending.length < (large ? 2 : 4), 'Bounded collection count');
             pending.push({ collection: body.collectionName, owner: body.tags.owner, scope: body.tags.chat });
             await writeFile(pendingPath, JSON.stringify(pending, null, 2));
         }
         if (req.method() === 'POST' && target.pathname.endsWith('/docs/upsert')) report.upserts.push({ stage, branch: req.postDataJSON().branch, documents: req.postDataJSON().docs.length });
+        if (req.method() === 'POST' && target.pathname.endsWith('/query') && req.postDataJSON().rerank) {
+            assert.deepEqual(req.postDataJSON().rerank.fields, ['role', 'conversationTimeContext', 'text']);
+        }
         if (req.method() === 'POST' && target.pathname.endsWith('/docs/fetch')) {
             const body = req.postDataJSON(); report.fetches.push({ stage, ids: body.ids.length, consistentRead: body.consistentRead });
         }
@@ -162,13 +167,17 @@ try {
     } else {
     // Ten alternating messages leave four archived and six pair-aligned recent messages.
     await page.evaluate(async () => {
-        const c = SillyTavern.getContext(); c.chat.splice(0, c.chat.length, ...Array.from({ length: 10 }, (_, i) => ({ mes: i === 0 ? 'The blue compass is beneath the cedar tree.' : `Synthetic turn ${i}: tell me about the blue compass.`, name: i % 2 ? 'Mira' : 'User', is_user: !(i % 2), is_system: false, send_date: 0, extra: {} })));
+        const c = SillyTavern.getContext(); c.chat.splice(0, c.chat.length, ...Array.from({ length: 10 }, (_, i) => ({ mes: i === 0 ? 'The blue compass is beneath the cedar tree.' : `Synthetic turn ${i}: tell me about the blue compass.`, name: i % 2 ? 'Mira' : 'User', is_user: !(i % 2), is_system: false, send_date: i === 0 ? '2024-02-29T12:34:56.123Z' : 0, extra: {} })));
         await c.saveChat();
     });
     check('story branches are the only storage mode; no opt-in control', await field('versioned').count() === 0);
     stage = 'parent'; await field('enabled').check(); await status('synchronized');
     const parent = await identity(), parentRows = await inspect(parent);
     check('parent managed collection contains four current documents', parentRows.length === 4);
+    check('managed documents retain role and optional host-time context outside embedding text',
+        parentRows.every(d => d.role === (d.message % 2 ? 'assistant' : 'user') && !d.text.includes('Message sent at'))
+        && parentRows.find(d => d.message === 0)?.conversationTimeContext === "Message sent at 2024-02-29T12:34:56.123Z (UTC), supplied by the host; not an event date. UTC alone does not establish the speaker's local date."
+        && parentRows.filter(d => d.message !== 0).every(d => d.conversationTimeContext === undefined));
     const writes = () => report.responses.filter(r => r.stage === 'unchanged').length;
     stage = 'unchanged'; await field('sync').click(); await status('synchronized');
     check('unchanged sync retains exact document IDs', JSON.stringify((await inspect(parent)).map(d => d.id).sort()) === JSON.stringify(parentRows.map(d => d.id).sort()));
@@ -199,6 +208,8 @@ try {
         return { aborted, archives: recalled.length, last: chat.at(-1).mes, text: recalled.map(m => m.mes).join('\n') };
     });
     check('managed queryText through UI interceptor retrieves synthetic source', !recall.aborted && recall.archives === 1 && recall.text.includes('stone tower') && recall.last.includes('turn 9'));
+    check('live recalled archive preserves role and sent label without duplicating rerank context',
+        recall.text.includes('user "User"') && recall.text.includes('sent: 2024-02-29T12:34:56.123Z') && !recall.text.includes('Message sent at'));
     stage = 'single deletion'; await panel(); await field('delete-chat').click(); await status('no longer accessible');
     check('individual deletion confirmed absent before fallback cleanup', await absent(copy));
     check('deleting current copy preserves parent and branch', (await inspect(parent)).length === 4 && (await inspect(branch)).length === 4);
