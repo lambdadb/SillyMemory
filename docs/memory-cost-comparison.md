@@ -219,9 +219,12 @@ a numerical claim that our construction is a particular multiple cheaper.
 
 The strongest supported statement is **high accuracy on a consumed S cohort with
 far smaller final-answer input and no generative memory-maintenance stage**.
-The modeled backend bill is small relative to answer generation at the observed
-cache state, even after explicit reranking/storage sensitivity. Total-cost
-superiority over each external vendor, speed superiority and SOTA remain unproven.
+Modeled construction and 500-query serving before storage are $1.85–$2.61 versus
+$5.67 for answer generation at the observed cache state. With all 500 corpora
+retained for one month, backend charges instead span $3.00–$7.18 (central $4.39):
+storage can make backend cost comparable to or greater than generation. Retention
+duration is therefore part of the comparison. Total-cost superiority over each
+external vendor, speed superiority and SOTA remain unproven.
 
 Detailed calculations, pricing snapshots, reconstructed-corpus hashes and one-off
 producers are ignored local evidence at `artifacts/cost-comparison-2026-10-19/`.
