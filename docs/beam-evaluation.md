@@ -435,3 +435,121 @@ and, from the worktree root, run `python artifacts/beam-luna-judge-v1/analyze.py
 `python artifacts/beam-luna-judge-v1/audit.py`, then
 `python artifacts/beam-luna-judge-v1/compare.py`. These offline scripts make no
 paid requests. The archive is unavailable in a fresh clone.
+
+## Evidence-oriented reranking criteria (2026-10-18)
+
+**Retain the default criteria; do not promote this candidate globally.** The
+bounded comparison completes 45 paired questions: five earlier source-inspected
+diagnostics and a separate 40-case confirmation cohort (four per ability, selected
+by ID hash before candidate calls). Existing baseline results were available, so
+this is not an unseen benchmark. No full-400 expansion or criterion retuning occurs.
+
+The only request change is `rerank.criteria`. Keep managed Small, Bayesian Query1,
+vector k 200, Jev candidate 200, returned 50, `fields: ['text']`, strong reads,
+4096-token product packing, native recent four plus probe, Sol-low generation and
+original GPT-4.1-mini rubric/event scoring unchanged. Freshly run both arms on the
+same imported corpus; balance arm order by question-ID hash. Applied native
+responses confirm default/custom criteria and 200 scored candidates. The final-50
+responses do not expose the full candidate IDs, so count equality is verified,
+not identical full candidate pools. No annotation enters runtime.
+
+The five ascending custom levels distinguish:
+
+1. Unrelated content or no usable evidence.
+2. Shared topic but generic advice/planning without question-specific evidence.
+3. Relevant background or partial evidence missing the requested detail.
+4. Direct support for a requested fact, preference, instruction, decision, update,
+   event or plan, with entity/time scope; conflicting statements can be relevant.
+5. Precise evidence that substantiates the answer or distinguishes the requested
+   scope. Include plans when asked about plans; do not infer completed actions or
+   favor a speaker role by itself.
+
+Exact strings are frozen in the retained plan. No speaker field, extra retrieval
+request, new generation instruction or model call is added to the product path.
+
+| Confirmation cohort, 40 questions | Default criteria | Evidence-oriented criteria |
+| --- | ---: | ---: |
+| Upstream-style mixed mean /100 | 79.85 | 72.72 |
+| Uniform rubric mean /100 | 84.79 | 75.63 |
+| Event-ordering tau mean /100 | 30.59 | 32.64 |
+| Completely injected annotated messages /95 | 38 | 45 |
+| Partially injected annotated messages /95 | 3 | 4 |
+| Annotated messages absent from injection /95 | 54 | 46 |
+
+These are subset partial-credit scores, not full-400 results or pass rates.
+Rubric question means rise in four cases, fall in ten and stay equal in 26.
+Message-span coverage is structural, not verified necessary-fact recall.
+The diagnostic five improve from 23 to 48 in uniform rubric mean, but that
+selected sample and its inflated judging below do not establish general benefit.
+
+### What improves and what does not
+
+- **Actual evidence gains:** the July prototype milestone moves from rank 24 to 7,
+  enters the prompt and appears in the answer. The candidate also delivers useful
+  user statements about executor duties/the $5,000 guardianship fund, early resume
+  collaboration with Joshua/Caribbean-community experience, and account lockout
+  after five failures. Those details appear in the corresponding answers.
+- **Actual personalization loss:** the expenses answer stops recommending Excel or
+  a spreadsheet. Excel-specific selected passages disappear, while generic
+  spreadsheet suggestions remain. This is a selection-and-use problem, not proof
+  that every supporting source vanished.
+- **Unresolved conflict use:** both median/altitude statements are delivered in
+  both arms, yet neither answer acknowledges their contradiction.
+- **Incomplete preference recovery:** the explicit split-screen instruction enters
+  final 50 at rank 46 but still misses injection. Additional assistant explanation
+  is delivered and the answer mentions split-screen; some relevant assistant text
+  was already present in the default. The tree-diagram instruction remains absent.
+
+All 17 changed rubric pairs, including diagnostics, receive answer inspection and
+relevant source/prompt checks without relabeling. Several score changes are not
+substantive quality changes: the candidate's correct ASA proof gets zero; answers
+with the same dates/duration get different credit; the default receives full date-
+format credit without the required format. In the opposite direction, the patent
+summary receives full credit for a $12,000/PCT decision it never states. Its
+recovered prototype milestone is real, but its zero-to-one score exaggerates the
+recovery. The Zotero answer gains source-supported EndNote use but omits an earlier
+conflicting claim: that is a tradeoff, not a uniformly worse answer.
+
+Consequently, neither the raw score decline nor the diagnostic gains alone justify
+a broad quality claim. This candidate improves some personal-history evidence but
+does not establish robust general benefit. Keep default criteria. Task-specific
+criteria or separate persistent-preference retrieval would be distinct hypotheses;
+neither is implemented or validated here. Do not retune the judge to rescue this
+candidate or turn inconsistent labels into product requirements.
+
+### Validation, cost and retention
+
+All 45 original selections and exact generation bodies reconstruct before live
+calls. Offline checks verify all 90 paired native requests, source-bound returned
+text, product packing within 4096, generation bodies, original judging and the
+pinned upstream event metric. Single generations per arm leave inference variation
+uncontrolled; there is no independent human-calibrated score.
+
+Nineteen corpora contain 17,259 documents. All owned collections are deleted with
+404 confirmation. There are 705 logical LambdaDB operations, including two
+recovered upsert 429 retries; all 90 generation, 230 rubric and 184 alignment calls
+finish without retries or JSON repair. Generation costs approximately $1.58548,
+judging/alignment $0.14820 from provider usage and the frozen Standard rate card.
+Write/managed embedding estimates total $0.06413 before free allowances. Native
+rerank billing tokens, custom-criteria overhead and physical storage costs remain
+unmeasured; do not claim the same bill merely because candidate counts match.
+
+Query API median/p95 is 1.345/1.795 seconds for default and 1.461/1.819 seconds for
+the candidate; generation median is 4.896 versus 4.875 seconds. These are individual
+successful API calls, excluding import/queue time, not browser end-to-end latency.
+This independent evaluation changes no runtime defaults and reruns no browser test.
+
+The exact plan/criteria, fixed cohorts, 17 changed-pair reviews, requests, outputs,
+producer scripts and decision are retained in local-only
+`artifacts/archive/beam-evidence-criteria-v1.tar.gz` (6,676,480 bytes, 1,432 members;
+SHA-256 `f67cf6f3108b818974f319fa9ac322dca57a10b7b4946076e97c9b5bf470e9a3`).
+Full member hash readback and configured-secret scanning pass. Restore this,
+`beam128k-current-v1`, and the `quoted-memory-product117-v1` rate-card dependency at
+producer revision `39074c878ea5764a0784388f0cd37cf40303b0fa`; install its locked
+dependencies and the recorded tokenizer/Python dependencies. From the worktree
+root, run `node artifacts/beam-evidence-criteria-v1/verify-retrieval.mjs`,
+`node artifacts/beam-evidence-criteria-v1/diagnostics.mjs`, then
+`python artifacts/beam-evidence-criteria-v1/analyze.py`. These are offline checks;
+the live runners make paid calls and are unnecessary for inspection. The bundles
+are unavailable in a fresh clone. All 379 unit tests, runtime/release/SDK checks
+and script/test syntax checks pass.
