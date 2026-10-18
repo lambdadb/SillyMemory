@@ -277,3 +277,12 @@ judge replacement: partial-credit controls fail and inspected disagreements incl
 explicit-statement false negatives. Retain GPT-4.1-mini as the BEAM reference and
 label the Jev results separately; neither judge is independently validated ground
 truth. Product defaults and the LongMemEval policy remain unchanged.
+
+The subsequent [Sol-medium comparison](beam-evaluation.md#fixed-answer-sol-medium-judge-comparison-2026-10-18)
+also retains the BEAM reference judge. Sol corrects several inspected errors but
+does not establish superior overall accuracy or repeat stability: four of 40
+preselected rubric averages change across three evaluations, including a full-to-
+zero abstention flip. Use its saved labels as diagnostic second opinions, not
+replacement primary scores. Original criteria and the template's omitted question
+remain unchanged; any future question-complete evaluator must be a separately
+reported protocol rather than a silent repair of these results.

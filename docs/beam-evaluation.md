@@ -255,3 +255,97 @@ Full archive readback and configured-secret scanning pass. Restore it and the
 baseline archive above, use Node 24.15.0 and Python 3.14 / scipy 1.18.1, and run
 `python artifacts/beam-jev-judge-v1/analyze.py` from the worktree root for offline
 verification. Live runners make paid requests and are unnecessary for inspection.
+
+## Fixed-answer Sol-medium judge comparison (2026-10-18)
+
+**Keep Sol as a diagnostic second opinion; defer primary judge replacement.**
+`gpt-6.1-sol` with `reasoning_effort: medium` evaluates the same 400 saved answers,
+1,051 rubric items and 40 event-ordering cases. No retrieval, generation, product
+setting or reference changes occur. Exact original prompts, message roles,
+partial-credit scale and upstream aggregation remain; omit the baseline's
+temperature parameter for this reasoning model. Do not add a response schema or
+the question missing from the original rubric template.
+
+| Judge, first pass | Upstream mixed mean /100 | Uniform rubric mean /100 |
+| --- | ---: | ---: |
+| GPT-4.1-mini, historical | 71.92 | 76.66 |
+| Jev 1.13.0, comparison above | 64.41 | 66.54 |
+| GPT-6.1 Sol, medium | 70.08 | 71.92 |
+
+These are partial-credit scores, not pass rates or a memory-quality regression.
+Versus GPT-4.1-mini, Sol's rubric question means are higher in 57 cases, lower in
+105, unchanged in 238. Abstention falls from 97.50 to 56.25, while event-ordering
+tau rises from 24.25 to 42.26. This offsetting movement is evaluator sensitivity;
+do not choose a judge by which gives the highest aggregate score.
+
+### Corrected examples and remaining limitations
+
+All six simple controls pass all three repetitions, including the compound
+requirement with only one of two required elements present. In all three Sol
+evaluations, five previously inspected examples receive defensible labels under
+the fixed criteria: 15 versus 1,417 gets zero; the explicit May 5–May 11 range,
+4:30 PM meeting and prior cover-letter submission claim get full credit; preparing
+writing questions without researching academic background gets partial credit.
+These local corrections do not establish overall judge accuracy.
+
+Two cases show why primary replacement remains premature:
+
+- `chat5--event_ordering--1`: the answer explicitly lists combinations for drawing
+  two aces, but Sol gives partial credit because it does not perform the numerical
+  calculation. The original question asks for topics in order, not a calculation;
+  the bare criterion and answer alone omit that task context. The missing question
+  is a known limitation, but this model-only comparison does not prove it causes
+  the judgment or that adding it would fix the problem. The uniform rubric mean
+  includes this item; the upstream mixed metric instead uses event alignment/tau.
+- `chat2--abstention--0`: identical inputs score **1, 0, 0**. Explanations disagree
+  about whether distinguishing explicit ESLint overrides from inherited Airbnb
+  rules sufficiently acknowledges the missing specific Airbnb configuration.
+
+A separate 20-case inspection (two per type selected by ID hash before opening
+their Sol judgments) records expectations for 56 rubric items. This is assistant
+inspection, not independent human calibration. Some initially single-label
+expectations also prove debatable, including whether “which statement is correct?”
+requires a clarification question or permits selecting the supported statement.
+Preserve the original expectations and follow-up interpretation separately; do not
+silently relabel them or present agreement counts as judge-accuracy measurements.
+
+### Repeatability, cost and verification
+
+Before observing Sol results, select four cases per type by ID hash, plus six
+previously inspected disagreements: 45 unique cases. Repeat those twice, keeping
+the first full pass primary and never voting or selecting favorable repeats.
+Among the stratified 40, **4/108 criterion labels**, **4/40 question averages**, and
+**1/4 event-ordering scores** vary across three calls. Across all 45, five criterion
+labels and five question averages vary. The same 40 IDs in the earlier Jev runs
+have three varying rubric averages and two varying event scores; those runs are
+not contemporaneous. GPT-4.1-mini has no matched repeats. Neither a deterministic
+judge nor superior repeat stability is demonstrated.
+
+There are 2,330 successful calls from 2,331 attempts. One OpenAI HTTP 500 after
+120.6 seconds is retried successfully; no successful judgment is regenerated for
+recovery and no JSON repair is needed. The first full pass uses 1,921 calls
+(1,051 rubric and 870 visited alignment pairs), 1,313,975 input tokens and 108,017
+output tokens, including 19,206 reasoning tokens: approximately **$4.079**.
+Controls and repeats bring the total to **$4.594**, accounting for reported cached
+tokens at the [published Standard rates](https://developers.openai.com/api/docs/models/gpt-6.1-sol).
+This is not an invoice; failed-response billing is unavailable. First-pass
+successful-attempt API median/p95 is 2.599/5.229 seconds, excluding queue waits,
+backoff and the failed attempt; it is not per-answer end-to-end latency.
+
+Offline verification checks 407 original source bindings, all 2,330 exact request/
+response bindings and the pinned upstream event metric. No remote collections are
+created. Product defaults, historical GPT-4.1-mini results and the LongMemEval Jev
+policy stay unchanged. Do not turn these evaluator differences into retrieval
+errors or launch further model comparisons without a specific evaluation question.
+
+Raw receipts, frozen cohort/plan, assistant inspection, repeat flips, scripts and
+the decision are preserved in local-only `artifacts/archive/beam-sol-judge-v1.tar.gz`
+(10,805,013 bytes, 5,261 members; SHA-256
+`0c2fb8121adf8baf05154c58e8ac96e20cb3c0369d518cb65b61d1034e2ab1b8`).
+Full member readback and configured-secret scanning pass. Restore this, the BEAM
+baseline and Jev comparison bundles above; with Node 24.15.0 and Python 3.14 /
+scipy 1.18.1 / json_repair, run `python artifacts/beam-sol-judge-v1/analyze.py` then
+`python artifacts/beam-sol-judge-v1/audit.py` from the worktree root. Live runners
+are paid and unnecessary for inspection. The bundle is unavailable in a fresh
+clone. All 379 unit tests, runtime/release/SDK checks and script/test syntax checks
+pass; this evaluator-only change does not rerun browser integration.
