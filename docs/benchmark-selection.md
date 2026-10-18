@@ -6,6 +6,11 @@ superiority. This opening review did not deliver an adapter or paid run; later
 execution is linked in the current sequence below.
 It complements the [evaluation follow-ups](evaluation-and-device-followups.md).
 
+The later [LongMemEval and BEAM reference](memory-benchmark-reference.md) reviews
+published results and evaluation conditions as of October 18, including answer
+assistance, scoring differences and implications after our completed S comparison.
+Its next-suite recommendation is a follow-up decision, not a frozen paid protocol.
+
 ## Current sequence (2026-10-18)
 
 The historical selection review below is preserved. The current user decision is
