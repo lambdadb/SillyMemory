@@ -152,3 +152,106 @@ Full data snapshots, exact requests/responses, source mappings, frozen plans/loc
 Restore the recorded product source overlay, dependencies and artifact paths before running its offline `analyze.py` verifier; verification does not resend model calls. Restore the `quoted-memory-product117-v1/` dependency for the frozen Sol rate card and S-closure decision lock. The original BEAM data and upstream scoring sources are included in the archive; no `/tmp` clone is needed for offline inspection.
 
 Archive: `artifacts/archive/beam128k-current-v1.tar.gz` (local-only, 38,340,626 bytes, 6,953 members). SHA-256: `4475551abc48c906aad589e3f75d63fa4b26491188694b74a7d509e4c6e95587`. All members pass full hash readback and configured-secret scanning.
+
+## Fixed-answer Jev judge comparison (2026-10-18)
+
+**Defer replacing the primary BEAM judge.** All 400 saved answers were evaluated
+three times with pinned `jev-1.13.0`. No retrieval, generation, source/reference
+change, question exclusion or product change occurred. Keep this comparison
+separate from the GPT-4.1-mini baseline and the adopted LongMemEval Jev policy.
+
+| Judge/pass | Upstream mixed mean /100 | Uniform rubric mean /100 |
+| --- | ---: | ---: |
+| GPT-4.1-mini, historical baseline | 71.92 | 76.66 |
+| Jev, first pass (primary) | 64.41 | 66.54 |
+| Jev, repeat 2 | 64.18 | 66.22 |
+| Jev, repeat 3 | 64.39 | 66.45 |
+
+These are partial-credit scores, not pass rates. The lower Jev score is a change
+of evaluator, not reduced memory quality. Do not select the best repeat, vote
+across repeats, or treat agreement with GPT-4.1-mini as independently verified truth.
+
+### Adapter and controls
+
+Each original rubric item uses Choice with `1.0`, `0.5`, and `0.0` options, retaining
+the upstream scale descriptions and evaluation rules. The answer moves to shared
+state; each independent question includes only its own criterion. Only the
+explanation/JSON-output demands and response placeholder are adapted. As in the
+baseline, the upstream prompt's responsiveness rule refers to a question that is
+not separately supplied. This limitation was not silently repaired.
+
+Event alignment uses Noul >=0.50. All 1,349 independent snippet pairs are scored
+per repeat, then the original ordered first-unmatched loop chooses which results
+enter the unchanged upstream Kendall calculation. Preserve original newline
+splitting, blank lines and unmatched items. Unvisited pair results do not affect
+the score; batching is an API transport change, not a new matching algorithm.
+
+The predeclared promotion gate failed: a control requiring both Paris and Berlin,
+answered with Paris alone, received zero rather than partial credit in all three
+Choice repeats. The five other controls passed each time. A separate three-call
+Score diagnostic also favored zero for that partial answer. Before full-case
+calls, an explicit recorded amendment allowed the authorized comparison to
+continue **for diagnosis only**, keeping all frozen Choice requests and the failed
+adoption gate. No criterion, expected control label or threshold was tuned.
+
+### Interpretation and repeatability
+
+First-pass rubric question means are lower in 118 cases, higher in 36, unchanged
+in 246. The largest category change is abstention, from 97.50 to 37.50; a low Jev
+label can reflect how it handles qualified positive claims alongside an explicit
+statement that the requested detail is unknown.
+
+Inspection finds errors and interpretation differences in both directions:
+
+- `chat5--multi_session_reasoning--0`: the criterion asks for 15; the answer totals
+  1,417. Jev's zero is more consistent with this explicit criterion than the
+  baseline's full credit. This does not validate the reference against all source text.
+- `chat14--temporal_reasoning--1`: the answer explicitly supplies May 5, May 11 and
+  six days. Jev gives full credit where the baseline gives zero for the date range.
+- `chat9--knowledge_update--0`: the answer explicitly states a **4:30 PM meeting**
+  and recommends joining at 4:25. Jev incorrectly gives zero to the criterion
+  requiring the 4:30 PM statement; the baseline gives full credit.
+- `chat8--contradiction_resolution--1`: Jev gives zero despite the answer explicitly
+  mentioning the earlier cover-letter submission claim, alongside the later denial.
+  The criterion asks to mention that claim, not endorse it as the resolved truth.
+- `chat7--information_extraction--1`: the answer supplies one component of a
+  compound requirement but omits researching academic background. The source
+  compound-statement rule supports partial credit; the judges instead choose
+  opposite extremes (baseline 1, Jev 0).
+
+Across three identical-input passes, **26/1,051 rubric labels**, **25/400 rubric
+question averages**, and **13/40 event-ordering scores** change; 17/1,349 Noul
+pair labels flip. Similar aggregate scores can conceal individual changes.
+The baseline judge was not repeated in this run, so this is not a controlled
+comparison of the judges' repeat stability. Neither stable labels nor a higher
+score establishes correctness. The evidence does not justify replacing the BEAM
+primary judge with this adapter; validate partial-credit and qualified-statement
+handling before reconsidering it. Do not turn evaluator disagreements directly
+into product retrieval errors.
+
+### Cost, verification and retention
+
+The first complete Jev pass uses 440 calls and 1,402,784 input tokens: approximately
+**$0.05892**, versus the historical baseline's approximately $0.692 for rubric and
+alignment judging. Three full passes cost approximately $0.17675; all controls
+and Score probes bring this experiment to **$0.17751**. Estimates use provider
+token receipts and the [published $0.042/M input rate](https://docs.typesafe.ai/models),
+not an invoice. Full-run API request median/p95 is 193/251 ms; requests batch
+criteria/pairs, so this is not per-criterion or browser end-to-end latency.
+
+All 1,341 live calls complete without HTTP errors or retries. A local validator
+stopped at rounded probabilities summing to 0.99; accepting at most 0.005 rounding
+error per entry resumed from the saved response without rejudging or changing its
+label. Preserve this parser recovery separately from the failed control gate.
+No remote collections were created. Offline validation checks all 400 source
+bindings, 1,338 frozen request/response bindings, three repeats, probability
+validation and the exact pinned upstream metric.
+
+Detailed results, six inspected disagreements, raw probabilities, producer scripts,
+original/amended locks, failed controls and parser recovery are retained in
+`artifacts/archive/beam-jev-judge-v1.tar.gz` (local-only, 7,648,405 bytes, 4,063 members;
+SHA-256 `cc9aa1738f1a56a1dd315dba677d406a41f50d67d964c2c7573f064247330f0b`).
+Full archive readback and configured-secret scanning pass. Restore it and the
+baseline archive above, use Node 24.15.0 and Python 3.14 / scipy 1.18.1, and run
+`python artifacts/beam-jev-judge-v1/analyze.py` from the worktree root for offline
+verification. Live runners make paid requests and are unnecessary for inspection.

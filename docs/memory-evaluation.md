@@ -269,3 +269,11 @@ The user-requested post-hoc 0.55/0.60 calculations do not change the adopted 0.5
 threshold. This adoption is a prospective evaluation-policy decision; historical
 runners and frozen receipts retain their producing protocol. It changes neither
 product generation nor retrieval/reranking defaults and adds no paid run.
+
+This policy applies to LongMemEval, not automatically to BEAM's partial-credit
+rubrics and event-ordering metric. The [fixed-answer BEAM comparison](beam-evaluation.md#fixed-answer-jev-judge-comparison-2026-10-18)
+evaluates all 400 saved answers three times with Jev Choice/Noul and defers primary
+judge replacement: partial-credit controls fail and inspected disagreements include
+explicit-statement false negatives. Retain GPT-4.1-mini as the BEAM reference and
+label the Jev results separately; neither judge is independently validated ground
+truth. Product defaults and the LongMemEval policy remain unchanged.
