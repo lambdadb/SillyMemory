@@ -35,10 +35,18 @@ the fixed-input answer score is not a new current-product live-provider score.
 An offline re-selection using current product date guidance changes 117/500 source
 sets because the heading consumes budget: 117 chunks are omitted, none from an
 annotated source message. All 500 fit 4096. Annotation coverage does not establish
-complete necessary-fact preservation, and these reselected contexts receive no
-new answer score. This boundary is separate from the fixed-source 474/475 trial.
-The original pilot and full continuation remain separate immutable local bundles
-in [the evidence index](query1-evidence-index.md).
+complete necessary-fact preservation. A subsequent paired evaluation of all 117
+changed-selection cases uses current product guidance and actual 4096-token
+selection in both arms: **115/117 versus 115/117**, with 115 Yes/Yes, two No/No and
+no label transitions. It completes 234 answers and 234 judgments in 119.5 seconds
+without errors/retries or new retrieval. Mean answer input is 5102.50 -> 4969.13;
+generation estimates are $1.549 -> $1.511 at frozen rates. No observed regression
+in this cohort supports retaining the structural change; it is not an equivalence
+proof or a new full-500 score. The two shared No concern competing weekday wake-up
+times and an ACL review deadline versus personal submission date; labels remain
+unchanged. S evaluation closes at this policy, with BEAM next and no LongMemEval-M
+run. Original pilot, continuation and product117 remain separate immutable local
+bundles in [the evidence index](query1-evidence-index.md).
 
 ## Quoted-memory pilot and rejected follow-ups
 

@@ -34,6 +34,11 @@ for structural separation from recent native dialogue, with budgeted framing and
 complete-block delivery checks. Sources and recent history stay intact. See the
 [full-cohort decision](small-default-error-analysis.md#quoted-memory-full-cohort-structural-adoption-2026-10-18)
 for the four raw label regressions, source review and separate host validation.
+The final current-product budget check scores 115/117 in both arms, with no label
+transitions, across every case whose selected chunks changed. This closes the S
+regression boundary; it does not replace the fixed-source 500-question score.
+The subsequent [BEAM baseline](beam-evaluation.md) keeps this policy fixed and
+reports distinct search, selection, source-use and scoring limitations.
 
 ## Selection defect and implementation
 

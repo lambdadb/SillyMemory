@@ -70,6 +70,20 @@ source witnesses are local-only, not maintained fixtures or fresh-clone inputs.
 
 ## Immutable run archives
 
+The `quoted-memory-product117-v2.tar.gz` archive retains the separate current-product
+117-pair closure under source `3dd2a8584f78d9af797a5319dfc408023a6f430b`: 468 new
+receipts, exact current-guidance/selection inputs, 115/117 in each arm and no label
+transitions. Restore `quoted-memory-product117-v1/`, its declared parent bindings
+and matching source; `analyze.py all` verifies dispatched input and original judge
+labels. All 1,433 archive members pass hash readback and configured-secret scanning.
+The v2 archive corrects only an explanatory wake-up-time typo (earlier 6:30 AM,
+not 7 AM); raw calls and scores are unchanged, and the original v1 archive remains
+preserved with its hash in `report-correction.json`.
+
+| Archive | SHA-256 |
+| --- | --- |
+| `quoted-memory-product117-v2.tar.gz` | `c7280f3f27be9ad39a3b68160bf7d1e7a625c55b2f61d73bae90476e1b4b253b` |
+
 The `quoted-memory500-complete-v1` bundle records the separately authorized
 structural continuation, preserving the original pilot below. Restore base
 `92b09573cf1f05aa741328bd90f1506ba2f12478`, the parent paths in its frozen locks,
