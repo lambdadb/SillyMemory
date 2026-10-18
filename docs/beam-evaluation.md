@@ -553,3 +553,103 @@ root, run `node artifacts/beam-evidence-criteria-v1/verify-retrieval.mjs`,
 the live runners make paid calls and are unnecessary for inspection. The bundles
 are unavailable in a fresh clone. All 379 unit tests, runtime/release/SDK checks
 and script/test syntax checks pass.
+
+## Speaker role in native reranking (2026-10-18)
+
+**Retain text-only reranking.** Adding `role` produces some useful detail recovery,
+but this bounded screen does not establish a reliable overall quality gain. Do
+not promote the candidate or expand it to all 400 questions on this evidence.
+
+Compare `fields: ['text']` with `fields: ['role', 'text']`, using native default
+criteria in both arms. All other settings remain fixed: managed Small, Bayesian
+Query1, vector k 200, Jev candidate 200, returned 50, strong reads, 4096-token
+packing, recent four plus probe, Sol-low generation, and original GPT-4.1-mini
+rubric/event scoring. Freshly run both arms, balancing order by question-ID hash.
+Reuse the preceding five diagnostic and 40 fixed comparison questions; this is
+now an inspected regression cohort, not an unseen confirmation sample.
+
+The initial attempt reveals a schema prerequisite: documents contain `role`, but
+the product does not explicitly declare its type. Native reranking rejects that
+field with HTTP 400. After cleaning all four initial collections, declare
+`role: { type: 'keyword' }` in **both test arms**. Stored documents, embedding
+source and retrieval query stay unchanged. The corrected comparison succeeds.
+Local server source renders selected fields as named JSON properties; live
+receipts verify the accepted field requests, default criteria and 200 scored
+candidates. They do not expose or establish identical full candidate ID sets.
+Generation memory already includes speaker provenance; only reranker input is
+under comparison. The product schema and runtime remain unchanged.
+
+| Fixed comparison cohort, 40 questions | Text only | Role + text |
+| --- | ---: | ---: |
+| Upstream-style mixed mean /100 | 74.01 | 75.02 |
+| Uniform rubric mean /100 | 78.38 | 80.42 |
+| Event-ordering tau mean /100 | 27.19 | 19.80 |
+| Completely injected annotated messages /95 | 37 | 39 |
+| Partially injected annotated messages /95 | 5 | 3 |
+| Annotated messages absent from injection /95 | 53 | 53 |
+
+Rubric means rise in six questions, fall in six and stay equal in 28. These are
+subset partial-credit scores, not pass rates or the full BEAM result. Annotation
+coverage measures source-message spans, not verified necessary-fact recall.
+The five selected diagnostics have uniform means of 22 versus 24. Do not compare
+these fresh baseline scores directly with the preceding trial as a treatment
+effect: retrieval, generation and judging are rerun and can vary.
+
+### Interpreting the change
+
+- **Some actual recovery:** the user's burnout/mindfulness history moves from
+  rank 23, omitted, to rank 20, injected and used. A date-format instruction moves
+  from rank 27, omitted, to rank 18, injected; the answer improves from month names
+  to `MM/DD`, while appropriately leaving unknown years unspecified.
+- **Tradeoffs remain:** initial app setup enters the prompt, but integration-test
+  evidence leaves it. An assistant restatement of the July prototype milestone
+  enters and appears in the answer, while the user's September drafting/45-page
+  review detail drops out. The original July user statement remains omitted.
+- **Personalization is not consistently preserved:** the expenses answer loses
+  its Excel/spreadsheet recommendation. Specific prior-use passages disappear,
+  although generic Excel/spreadsheet advice remains injected. The EndNote trial
+  decision also drops out while assistant usage instructions remain; a trial
+  decision should not itself be treated as proof of completed use.
+- **Judge movement overstates gains and losses:** the date-format answer receives
+  full `MM/DD/YYYY` credit without a year. Equivalent advice to use verified
+  numbers receives different labels, as do answers with the same 15-day date
+  range. Near-equivalent movie-planning lists receive different event-alignment
+  scores. Original labels are preserved, not corrected to favor either arm.
+
+All 16 changed rubric/event pairs receive answer inspection and relevant
+source/prompt checks. This is not independent human calibration or an exhaustive
+audit of unchanged answers. Delivered contradictions remain ignored, and the
+split-screen/tree instructions are still absent. Speaker metadata is useful
+provenance, but this trial does not show that exposing it to the default reranker
+alone reliably distinguishes personal facts, plans and assistant suggestions.
+
+### Operations and retained evidence
+
+The successful run imports 17,259 documents across 19 corpora. Including the
+failed schema preflight, all 23 owned collections have verified 404 cleanup.
+Three upsert 429 retries recover. All 90 generation, 230 rubric and 211 alignment
+calls finish without retries. Generation costs approximately $1.46869 and
+judging/alignment $0.14873 from usage and the frozen rate card. Write/managed
+embedding estimates, including the initial imports, total $0.07736 before free
+allowances. Native rerank billing tokens, added role-rendering overhead and
+physical storage costs remain unmeasured. Query median/p95 is 1.366/1.676 seconds
+for text and 1.377/1.693 seconds for role + text, excluding import and queue time.
+
+Original-input replay, all paired request/body bindings, source-valid packing,
+the 4096-token limit and pinned upstream scoring pass offline verification.
+All 379 unit tests and runtime/release/SDK/script syntax checks pass. This is an
+independent memory evaluation; browser behavior is not rerun or changed.
+
+Both the failed preflight and completed run, exact field/schema settings,
+source-bound reviews and raw receipts are preserved in local-only
+`artifacts/archive/beam-role-rerank-v2.tar.gz` (7,097,523 bytes, 1,520 members;
+SHA-256 `f9edd7b5d335cfa19c6a3f9de8664ceaf6d37556a8066e7a966c419404fd01ad`).
+Full member hash readback and configured-secret scanning pass. Restore both run
+directories under `artifacts/`, plus `beam128k-current-v1` and the
+`quoted-memory-product117-v1` rate-card dependency, at producer revision
+`2f2e9b82b5f9f36b3e6b0c991a05bb5b4cea17a1`. With its locked runtime and recorded
+tokenizer/Python dependencies, run `node artifacts/beam-role-rerank-v2/verify-retrieval.mjs`,
+`node artifacts/beam-role-rerank-v2/diagnostics.mjs`, and
+`python artifacts/beam-role-rerank-v2/analyze.py` from the worktree root. These are
+offline checks; live runners are unnecessary for inspection. The bundle is not
+available in a fresh clone.
