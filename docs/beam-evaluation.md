@@ -11,6 +11,9 @@ a user-approved semantic decision, not a promotion justified by these scores or
 an assertion that BEAM batch dates are host timestamps. Close this trial and the
 judge-model grid. This report retains decisions and comparable totals;
 case reviews, request/retry histories and producers live in the evidence bundles.
+The subsequent fixed-retrieval budget comparison also closes with **4096 retained**:
+8192 restores some useful sources but does not demonstrate aggregate answer benefit
+at its higher generation cost.
 
 After [LongMemEval-S closure](small-default-error-analysis.md#quoted-memory-full-cohort-structural-adoption-2026-10-18),
 use all **20 conversations / 400 questions** in `chats/100K`, called **128K** by the
@@ -190,6 +193,53 @@ remain unknown. The enriched shared schema is not a bare-product cost baseline.
 All 800 queries, 800 answers, 2,102 rubric and 2,348 alignment calls complete.
 One upsert 429 recovers; no completion retries. All 20 collections deleted/404.
 
+## Fixed retrieval, 4096 versus 8192 memory tokens (2026-10-19)
+
+**Retain the 4096-token default.** Reuse the preceding role/date candidate's exact
+top 50 results for all 400 questions, changing only the memory budget. Both arms
+generate and judge fresh answers; the 4096 inputs reproduce the parent exactly.
+Ranking, source metadata, recent dialogue, models, guidance and output cap stay
+fixed. No new LambdaDB calls occur. This is independent memory evaluation, not a
+SillyTavern run or a change to the product's budget limit.
+
+| Full paired 400 | 4096 | 8192 |
+| --- | ---: | ---: |
+| Mixed mean /100 | 72.67 | 72.20 |
+| Uniform rubric /100 | 78.34 | 77.38 |
+| Event tau /100 | 22.35 | 23.85 |
+| Complete delivered annotations /1,094 | 395 | 451 |
+| Mean selected chunks | 25.46 | 47.83 |
+| Mean generation input tokens | 6,024 | 9,537 |
+| Generation median / p95 seconds | 4.61 / 17.17 | 4.78 / 18.78 |
+| 400-generation estimated USD | 7.01 | 10.58 |
+
+Labels improve in 50 questions, decline in 62 and tie in 288. The mixed difference
+is -0.47 points, with a descriptive conversation-bootstrap 95% interval of
+-2.43 to +1.52. Neither score is a pass rate. Additional source-span coverage in
+66 questions establishes delivery gains, not necessary-fact recall or answer
+improvement. At 8192, 251 questions fit all 50 chunks; one other question loses a
+short previously selected chunk, without losing any annotated-message coverage.
+
+Inspection confirms useful recoveries: the September 98% target, a date-format
+preference and reasons for a book choice enter the larger prompt and answer.
+But changed event interpretation and substantial judge inconsistencies remain:
+equivalent dates receive different credit, 19 movies is credited for 13, and one
+score contradicts its own rationale. Eleven prespecified rubric pairs and three
+largest event-metric movements were inspected without relabeling. The previous
+identical 4096 input run scored 77.41 rubric; the fresh reference scores 78.34.
+Thus this does not establish that more context harms answers. It establishes
+additional delivery without demonstrated aggregate answer benefit, at about 51%
+higher generation cost. Do not promote 8192 or reopen the judge-model grid on
+these results alone.
+
+All 800 answers, 2,102 rubric calls and 2,375 event-equivalence calls complete
+without errors or retries. Request/source bindings and upstream metrics verify;
+380 unit tests and runtime/release checks pass. Costs use recorded usage and the
+frozen rate card, not invoices; latency excludes queueing, packing and search.
+Search cost is unchanged, not zero in production. The local-only
+`beam-budget4096-8192-v1` bundle retains the plan, raw responses, source review,
+costs, verification and restoration instructions; product defaults are unchanged.
+
 ## Validation and evidence retention
 
 Initial quality screens use 5 diagnostics + 40 fixed comparisons; the final date
@@ -222,6 +272,7 @@ producer revisions, dependency paths and offline restoration commands.
 | `beam-anchor-v1` | `72f9bafb07c7aa4081f5a41643c9364e4bf35fe5cc5df9bc2411840b931b62b4` |
 | `beam-evaluation-detail-v1` | `f7f74d64059f78190145a4b844770a8daa422c7f775ca0945d27293ad77c3003` |
 | `beam-anchor-full-v1` | `217c769b5a1fa18f0081fa37bb8eba6cfd94f61e2c58d31f02603e160f0600a4` |
+| `beam-budget4096-8192-v1` | `06980646a852a074128479ed030e72db4648f697e14336c763e960cc0b352993` |
 
 The full paired bundle contains 13,871 verified members (68,797,556 bytes), produced
 at `ea46b6566a46c82ebe670851c2b1a7a8e05a92e7`. Restore it under `artifacts/` and read
