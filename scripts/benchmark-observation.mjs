@@ -2,6 +2,7 @@
 import assert from 'node:assert/strict';
 import { sha } from './benchmark-audit.mjs';
 import { sourceView, promptCoverage } from './benchmark-host-input.mjs';
+import { quoteMemoryMessages } from '../src/context.js';
 
 export function retrievalDiagnostics(trace, request) {
     assert(trace?.prepared && trace.result && Array.isArray(trace.queries), 'Missing retrieval observation');
@@ -16,14 +17,16 @@ export function retrievalDiagnostics(trace, request) {
     const selected = new Set(trace.result.passages.map(d => d.id));
     assert.equal(selected.size, trace.result.passages.length, 'Duplicate selected passage');
     for (const d of trace.result.passages) assert(valid(d) && eligible.has(d.id), 'Selected source was not a valid candidate');
-    const messages = trace.result.messages || [];
+    const sourceExcerpts = trace.result.messages || [];
+    const messages = quoteMemoryMessages(sourceExcerpts);
     const delivered = messages.filter(m => request.messages.some(p => p.role === (m.is_user ? 'user' : 'assistant') && p.content.includes(m.mes)));
     assert(Number.isFinite(trace.result.tokens) && trace.result.tokens >= 0 && trace.result.tokens <= trace.budget, 'Memory token limit');
     return { queries: trace.queries.map(q => ({ querySha256: sha(q.query), returned: q.hits.length,
         valid: q.hits.filter(valid).map(d => coordinate(expected.get(d.id))), invalid: q.hits.filter(d => !valid(d)).length })),
     uniqueValidCandidates: eligible.size, selected: trace.result.passages.map(coordinate),
     unselectedValidCandidates: [...eligible].filter(id => !selected.has(id)).map(id => coordinate(expected.get(id))),
-    preparedMessages: messages.length, deliveredMessages: delivered.length, memoryTokens: trace.result.tokens, memoryBudget: trace.budget,
+    preparedMessages: messages.length, deliveredMessages: delivered.length, sourceExcerpts: sourceExcerpts.length,
+    memoryTokens: trace.result.tokens, memoryBudget: trace.budget,
     interpretation: 'Valid but unselected includes whole-passage budget/packing policy; not a measured ANN miss or semantic recall score.' };
 }
 export function validateObservation(item, context, mode, saved, maxOutputTokens, { requirePreparedMemory = true } = {}) {

@@ -318,23 +318,23 @@ try {
         }
         if (spec.type === 'normal') assert.deepEqual(observation.chat.slice(0, 12), chat.map(m => m.mes), 'Original chat text preserved');
         if (!spec.blocked && (spec.noHits || spec.id === 'nothing-fits')) {
-            assert.equal(sent[0].messages.filter(m => m.content.startsWith('[Past conversation excerpt:')).length, 0, 'Empty selection sends no excerpts and does not restore full history');
+            assert.equal(sent[0].messages.filter(m => m.content.startsWith('[Recalled conversation excerpts]')).length, 0, 'Empty selection sends no excerpts and does not restore full history');
             assert.match(observation.delivery, /0\/0 memory excerpts and 5\/5 input messages verified/);
             const guidanceTokens = await page.evaluate(text => SillyTavern.getContext().getTokenCountAsync(text), MEMORY_GUIDANCE);
             assert.equal(Number(observation.preparedInspection.split(' / ')[0]), guidanceTokens, 'Empty-selection inspection includes the guidance token cost');
         }
         if (spec.id === 'included') {
             assert.match(observation.delivery, /1\/1 memory excerpts and 5\/5 input messages verified/);
-            assert.equal(sent[0].messages.filter(m => m.content.startsWith('[Past conversation excerpt:')).length, 1);
+            assert.equal(sent[0].messages.filter(m => m.content.startsWith('[Recalled conversation excerpts]')).length, 1);
         }
         if (spec.id === 'pressure-warning') {
             assert.match(observation.delivery, /1 memory excerpts and \d+ input messages are missing/);
-            assert.equal(sent[0].messages.filter(m => m.content.startsWith('[Past conversation excerpt:')).length, 0);
+            assert.equal(sent[0].messages.filter(m => m.content.startsWith('[Recalled conversation excerpts]')).length, 0);
         }
         if (spec.id === 'recovered-context') {
-            assert.match(observation.delivery, /6\/6 memory excerpts and 5\/5 input messages verified/);
-            const recoveredExcerpts = sent[0].messages.filter(m => m.content.startsWith('[Past conversation excerpt:'));
-            assert.equal(recoveredExcerpts.length, 6);
+            assert.match(observation.delivery, /1\/1 memory excerpts and 5\/5 input messages verified/);
+            const recoveredExcerpts = sent[0].messages.filter(m => m.content.startsWith('[Recalled conversation excerpts]'));
+            assert.equal(recoveredExcerpts.length, 1);
             for (let index = 0; index < 6; index++) assert(recoveredExcerpts.some(m => m.content.includes(`OLD_${index}:`)), 'Six ranked older sources fit after removing follow-up obligations');
         }
         if (spec.earlierAnchor) {
@@ -367,8 +367,8 @@ try {
             assert.equal(generations.length, recoveryStart + 1);
             assert.deepEqual(recovered.after.slice(0, -1), recovered.before);
             assert.equal(recovered.after.at(-1), 'LOCAL_FIXTURE_OK');
-            assert.match(recovered.delivery, /5\/5 memory excerpts and 5\/5 input messages verified/);
-            assert.equal(generations.at(-1).messages.filter(m => m.content.startsWith('[Past conversation excerpt:')).length, 5);
+            assert.match(recovered.delivery, /1\/1 memory excerpts and 5\/5 input messages verified/);
+            assert.equal(generations.at(-1).messages.filter(m => m.content.startsWith('[Recalled conversation excerpts]')).length, 1);
             rows.at(-1).manualRecovery = { ...recovered, request: generations.at(-1) };
         }
     }
@@ -445,14 +445,14 @@ try {
         return { chat: c.chat.map(m => m.mes), delivery: document.querySelector('[data-sm="delivery"]').textContent };
     }, packingFixture.item.question);
     assert.equal(generations.length, packingStart + 1);
-    const packingRequest = generations.at(-1), excerpts = packingRequest.messages.filter(m => m.content.startsWith('[Past conversation excerpt:'));
+    const packingRequest = generations.at(-1), excerpts = packingRequest.messages.filter(m => m.content.startsWith('[Recalled conversation excerpts]'));
     // Retrieval-order admission now keeps the higher-ranked repeated sources,
     // not the lower-ranked fifth excerpt reserved by the old source floor.
-    assert.equal(excerpts.length, 4);
-    assert.match(packed.delivery, /4\/4 memory excerpts and 5\/5 input messages verified/);
+    assert.equal(excerpts.length, 1);
+    assert.match(packed.delivery, /1\/1 memory excerpts and 5\/5 input messages verified/);
     for (const index of [0, 1, 2, 3]) {
         const original = packingFixture.item.messages[index];
-        assert(excerpts.some(m => m.role === original.role && m.content.endsWith(`\n${original.text}`)), 'Full source and native role reached the completion endpoint');
+        assert(excerpts.some(m => m.role === 'user' && m.content.includes(`excerpt: ${original.role} `) && `\n${m.content}\n`.includes(`\n${original.text}\n`)), 'Full quoted source and original speaker label reached the completion endpoint');
     }
     assert(excerpts.some(m => m.content.includes('identical text at message:passage 3:1, 11:1, 19:1, 27:1, 35:1, 43:1, 51:1]')));
     assert(excerpts.some(m => m.content.includes('identical text at message:passage 4:1, 12:1, 20:1, 28:1, 36:1, 44:1, 52:1]')));
@@ -482,8 +482,8 @@ try {
     });
     assert.equal(generations.length, assemblyStart + 1);
     const assemblyRequest = generations.at(-1), joined = assemblyRequest.messages.find(m => m.content.includes('message 1, passages 1-'));
-    assert(joined && joined.role === 'user' && joined.content.endsWith(assemblyChat[0].mes), 'All assembled source text reached the completion endpoint');
-    assert.equal(joined.content.split(', sent:').length - 1, 1);
+    assert(joined && joined.role === 'user' && joined.content.includes(assemblyChat[0].mes), 'All assembled source text reached the completion endpoint');
+    assert.equal(joined.content.split('message 1, passages 1-').length - 1, 1);
     assert.equal(assemblyRequest.messages.map(m => m.content).join('\n').split(SENT_GUIDANCE).length - 1, 1);
     assert(assemblyRequest.messages.some(m => m.role === 'system' && m.content.includes(SENT_GUIDANCE)), 'Date interpretation is delivered as system guidance');
     assert(!joined.content.includes(SENT_GUIDANCE), 'Quoted source does not carry instructions');

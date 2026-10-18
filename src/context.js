@@ -1,5 +1,17 @@
 import { SENT_GUIDANCE } from './time.js';
 
+export function quoteMemoryText(text) {
+    return text ? `[Recalled conversation excerpts]\n${text}` : '';
+}
+
+// Keep source labels and excerpt order inside the archive. Its host index is
+// only the insertion point; individual provenance remains in the source map.
+export function quoteMemoryMessages(messages, user) {
+    if (!messages.length) return [];
+    return [{ index: messages.at(-1).index, name: user, is_user: true, is_system: false,
+        mes: quoteMemoryText(messages.map(message => message.mes).join('\n')) }];
+}
+
 // A retained answer must not steer its own replacement. Continue and
 // impersonate anchor on the latest eligible message instead of a user question.
 export function queryAnchor(messages, type = 'normal') {

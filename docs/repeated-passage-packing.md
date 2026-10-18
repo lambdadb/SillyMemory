@@ -29,7 +29,7 @@ tokenizer; they are not provider billing totals.
 3. Place repeated groups at their latest selected occurrence. Intervening conflicting
    statements remain earlier; labels expose earlier occurrences too. Final presentation
    stays chronological, without guaranteeing the model's interpretation of chronology.
-4. Count both assembled and separate layouts, including shared system guidance through
+4. Count both assembled and separate layouts, including the archive heading and shared system guidance through
    the caller's counter. Admit the hit only if the cheaper complete layout fits.
    Later hits may use remaining space; selected bodies are never truncated. This can
    select different sources from the retired whole-passage-floor/refill policy.
@@ -38,9 +38,9 @@ If grouping costs more than it saves, use the separate layout. Remote candidates
 must match current IDs, owner, scope, revision, text and time/source metadata;
 remote role/speaker values never override the local source.
 
-The inspection panel shows the grouped label and body. Preparation counts source
-passages; final delivery verification counts rendered excerpts (five selected
-sources can produce four excerpts). The source chat, synchronization, managed
+The inspection panel shows the complete quoted archive with grouped labels and bodies.
+Preparation counts source passages; final delivery verifies one complete archive
+block regardless of the number of source excerpts it contains. The source chat, synchronization, managed
 embedding contract, recent-message retention and budget limits are unchanged.
 
 ## Historical verification

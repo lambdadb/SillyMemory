@@ -244,7 +244,7 @@ try {
         // Exercise the actual host interceptor dispatcher, including manifest order.
         const { runGenerationInterceptors } = await import('/scripts/extensions.js');
         aborted = await runGenerationInterceptors(chat, 4096, 'normal');
-        const rendered = chat.filter(m => m.mes.startsWith('[Past conversation excerpt:')).map(m => m.mes).join('\n');
+        const rendered = chat.filter(m => m.mes.startsWith('[Recalled conversation excerpts]')).map(m => m.mes).join('\n');
         const result = { before, after: JSON.stringify(c.chat), chat, aborted, rendered, guidance: c.extensionPrompts.sillymemory?.value || '', preparation: document.querySelector('[data-sm="status"]').textContent, renderedTokens: await c.getTokenCountAsync(rendered), macroValue: c.chatMetadata.variables?.sillymemory_test, injection: rendered, inspection: document.querySelector('[data-sm="inspection"]').textContent };
         // This suite calls only the interceptor dispatcher. Emulate its completion
         // boundary to release prompt ownership; full packing/dispatch is tested
@@ -269,7 +269,7 @@ try {
     const macroResult = await prompt();
     check('native recalled excerpts keep macros literal within budget', macroResult.rendered.includes('｛｛char｝｝') && macroResult.rendered.includes('＜USER＞') && macroResult.macroValue === undefined && macroResult.renderedTokens <= 400);
     await field('budget').fill('400'); await field('budget').dispatchEvent('change');
-    check('a completed reply retains six messages without splitting a pair and leaves persisted source unchanged', JSON.stringify(result.chat.filter(m => !m.mes.startsWith('[Past conversation excerpt:')).map(m => m.index)) === '[2,3,4,5,6,7]' && result.chat.at(-1).mes.includes('passage 7') && result.before === result.after);
+    check('a completed reply retains six messages without splitting a pair and leaves persisted source unchanged', JSON.stringify(result.chat.filter(m => !m.mes.startsWith('[Recalled conversation excerpts]')).map(m => m.index)) === '[2,3,4,5,6,7]' && result.chat.at(-1).mes.includes('passage 7') && result.before === result.after);
     // Ineligible active inputs still preserve recent dialogue. The actual native
     // hook is exercised with attachment/media/tool metadata, without uploading files.
     const originalSource = await page.evaluate(() => structuredClone(SillyTavern.getContext().chat));
@@ -298,7 +298,7 @@ try {
         }, { originalSource, extra });
         const special = await prompt();
         check('an ineligible active input preserves recent source without splitting an eligible pair', !special.aborted
-            && JSON.stringify(special.chat.filter(m => !m.mes.startsWith('[Past conversation excerpt:')).map(m => m.index)) === '[2,3,4,5,6,7,8]'
+            && JSON.stringify(special.chat.filter(m => !m.mes.startsWith('[Recalled conversation excerpts]')).map(m => m.index)) === '[2,3,4,5,6,7,8]'
             && special.before === special.after);
     }
     await page.evaluate(async originalSource => {
@@ -314,9 +314,9 @@ try {
     });
     const assembled = await prompt();
     const preparedCounts = /Prepared (\d+) source passages in (\d+) memory excerpts/.exec(assembled.preparation);
-    const assembledMessage = assembled.chat.find(m => m.mes.startsWith('[Past conversation excerpt:') && m.index === 0);
+    const assembledMessage = assembled.chat.find(m => m.mes.startsWith('[Recalled conversation excerpts]') && m.mes.includes('message 1, passages 1-'));
     check('real host dispatcher assembles same-message chunks with their source and one shared header',
-        !assembled.aborted && preparedCounts && Number(preparedCounts[1]) > Number(preparedCounts[2]) && assembledMessage?.mes.includes('passages 1-') && assembledMessage.mes.endsWith(assemblySource.text)
+        !assembled.aborted && preparedCounts && Number(preparedCounts[1]) > Number(preparedCounts[2]) && assembledMessage?.mes.includes('passages 1-') && assembledMessage.mes.includes(assemblySource.text)
         && assembled.renderedTokens <= 1024 && assembled.before === assembled.after);
     await page.evaluate(async original => {
         const c = SillyTavern.getContext(); c.chat[0].mes = original; await c.eventSource.emit(c.eventTypes.MESSAGE_UPDATED, 0);

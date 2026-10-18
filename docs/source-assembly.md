@@ -9,6 +9,11 @@ The surrounding engine still synchronizes the current chat and validates returne
 IDs, ownership, scope, revision, exact text and time metadata against current
 source documents. Remote role/speaker/offset fields never override those documents.
 
+The host adapter quotes the selected rendered excerpts in one user-context archive,
+preserving their internal source labels and chronology. Its heading participates in
+the caller's budget counter; source assembly still returns individual provenance
+records. Final delivery verifies the whole block. See [current defaults](conversation-memory-defaults.md#quoted-archive-and-recent-dialogue).
+
 - Visit valid hits once in retrieval order. Before accepting each hit, assemble
   it with the already accepted sources and count the complete final text. Select
   the cheaper of separate and assembled layouts for that same source set.

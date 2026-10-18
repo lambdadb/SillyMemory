@@ -70,6 +70,76 @@ source witnesses are local-only, not maintained fixtures or fresh-clone inputs.
 
 ## Immutable run archives
 
+The `quoted-memory500-complete-v1` bundle records the separately authorized
+structural continuation, preserving the original pilot below. Restore base
+`92b09573cf1f05aa741328bd90f1506ba2f12478`, the parent paths in its frozen locks,
+and its `product-source/` overlay for current-product verification. `verify.py`
+checks 2,857 pre-call hashes, 1,000 unchanged prepared inputs, all 2,000 receipts,
+32 byte-identical reused pilot pairs, nine source-reviewed transitions and separate
+product/host checks. It retains 500 offline product selections, 18 real-host
+delivery cases and 103 browser checks with local providers. All 6,056 members pass
+full archive readback and configured-secret scanning. `RESULTS.md` distinguishes
+the fixed-source answer score from the reselected product contexts; neither
+historical labels nor the pilot's failed gate are rewritten. Local-only, not a
+fresh-clone/CI dependency or a new live-provider host score.
+
+| Archive | SHA-256 |
+| --- | --- |
+| `quoted-memory500-complete-v1.tar.gz` | `d7f27c0beba524e517b0483a5ec4093205ac7c5170f0d63eed538a112b667605` |
+
+The `quoted-memory500-v1` bundle restores producer
+`92b09573cf1f05aa741328bd90f1506ba2f12478` and the budget/role-aware/standalone
+parent bundles declared in its frozen locks. `verify.py` checks 1,521 hashes,
+500 baseline reproductions, 1,000 prepared inputs, 128 actual pilot receipts,
+unchanged source/recent/guidance boundaries, the failed gate and zero confirmation
+calls. All 1,354 archive members pass full hash readback and configured-secret
+scanning. `RESULTS.md` is final; the pre-call README/plan and unused 468 paired
+inputs are preserved unchanged. This is a 32-case pilot, not a full-500 score,
+product change or fresh-clone/CI dependency.
+
+| Archive | SHA-256 |
+| --- | --- |
+| `quoted-memory500-v1.tar.gz` | `b340189ade7adc2e9dbea39c34a4100ef87c0c8d438ae81984dfefa454a06e9e` |
+
+The `budget4096-8192-jev500-v1` bundle restores producer
+`92b09573cf1f05aa741328bd90f1506ba2f12478`, the role-aware/personal-criteria/standalone
+parent bundles and canonical dataset according to its frozen locks. Its offline
+`verify-final.py` verifies 4,559 hashes, 500 exact baseline inputs, 2,000 actual
+answer/judge receipts, identical retrieved results/recent context, per-arm budgets
+and all 11 changed-pair reviews. All 7,048 members pass full archive hash readback
+and configured-secret scanning. `RESULTS.md` is the final report; `README.md` remains
+the pre-call snapshot. `resource-audit.json` supplies the bucket-aware cost estimate.
+A preserved archive-attempt note records a safe no-overwrite assertion and corrected
+destination; existing source-label evidence is unchanged. No new remote resources,
+product changes or fresh-clone/CI dependency are introduced.
+
+| Archive | SHA-256 |
+| --- | --- |
+| `budget4096-8192-jev500-v1.tar.gz` | `65adbedda47a128f87dc7073a69203d5a6180b6ca2a15fb9121cf36cdecc8574` |
+
+The `role-criteria-interaction17-v1` bundle restores the same `92b09573` producer,
+role-aware/personal-criteria parents and canonical dataset. Its offline verifier
+checks the pre-run lock, 51 native receipts/prepared inputs, unchanged recent
+context, the failed gate, zero answer calls and 17 owned deletions confirmed by
+404. All 253 archive members pass hash readback and configured-secret scanning.
+
+| Archive | SHA-256 |
+| --- | --- |
+| `role-criteria-interaction17-v1.tar.gz` | `876f12893654041af23fc0da93178afa841774716dd3c06bcf8a025a73c5bff3` |
+
+The `compact-label500-v1` and `source-label500-v1` bundles restore producer
+`92b09573cf1f05aa741328bd90f1506ba2f12478`, the role-aware parent bundle and
+canonical dataset. Their offline verifiers check 500 exact baseline reproductions
+and frozen selections/rendering; the latter also verifies 2,000 live provider receipts.
+All 2,028 and 7,046 respective archive members pass hash readback; configured-secret
+scans pass. Compact-label stops at its frozen offline gate; source-label completes
+its paired 500 and rejects adoption. Detailed runs are local-only, not CI dependencies.
+
+| Archive | SHA-256 |
+| --- | --- |
+| `compact-label500-v1.tar.gz` | `ceeab5d9892fe26c0361609565f264b297ffa8f730fadd1fe8526b26de8b51fb` |
+| `source-label500-v1.tar.gz` | `e6b7152ec6312f02160a43bf9bb31e9fa3d31526219c20393eacce847f43f124` |
+
 The `requested-relation-guidance-v1` negative trial restores clean producer
 `f42149c3b5472fb986269a65cb7d999990168df1`, the original follow-up/Jev/error-audit
 bundles above and source paths/checksums in its `source-bindings.json`. Its offline
@@ -106,8 +176,68 @@ against local providers, retaining failed fixture attempts. Both suites clean al
 emulated collections. The 21-member archive passes hash readback and secret scanning.
 This later product fix does not alter the frozen same-history benchmark inputs/scores.
 
+The `standalone-errors21-v1` offline audit uses producer
+`92b09573cf1f05aa741328bd90f1506ba2f12478` and the frozen same-history candidate.
+Restore its declared parent bundles/dataset from `bindings.json`; `audit.py` verifies
+all 21 No-case input identities, source spans, returned/selected coordinates and
+unchanged labels. The 10-member archive passes full hash readback and secret scanning.
+Interpretations are agent source review, not independent adjudication or relabeling.
+No new model/search calls or product changes are included.
+
+The `personal-rerank-criteria-v1` native pilot uses the same producer plus its
+retained local source snapshots and canonical dataset. Its frozen 16-case criteria
+comparison includes 32 native searches, 40 fresh answers and 40 judgments under
+unchanged rules.
+All 16 owned collections are verified absent. Restore its declared source-bound
+parent bundles for `preflight.mjs` and `verify.py`; both checks are offline. Full
+archive readback verifies 403 members, with configured-secret scanning. The exact
+criteria, request bounds, selected sources, answers, interpretation and partial
+cost estimates remain local-only. Product defaults and historical labels are unchanged.
+
+The `personal-rerank-criteria500-v1` full comparison uses producer
+`92b09573cf1f05aa741328bd90f1506ba2f12478`, its retained source snapshots and the
+unchanged pilot criteria. Restore the canonical dataset, pilot plan and parent
+paths/hashes in `source-bindings.json` before running its offline `verify.py`.
+All 500 questions receive fresh paired native retrieval and generation/judgment;
+no pilot answers are reused. The verifier checks 4,039 locked hashes, 1,000 native
+requests, 2,000 model receipts, source fields, budgets, recent context and all 18
+changed-label reviews. All 500 owned collections are verified absent. Full archive
+readback verifies 9,566 members with configured-secret scanning. Original labels,
+source assessments, frozen rates, partial costs and the keep-default decision are
+retained locally; historical pilot gate and evidence remain unchanged. This is not
+current-product/browser evidence or a downloadable public benchmark bundle.
+
+The `role-aware-rerank500-v1` comparison uses producer
+`92b09573cf1f05aa741328bd90f1506ba2f12478`, its frozen source snapshots and the
+canonical dataset. Restore parent paths/hashes in `source-bindings.json`, own inputs
+and snapshot bindings before its offline `verify.py`. It verifies 2,557 bound hashes,
+500 paired questions, 1,000 native requests, 2,000 answer/judge receipts, unchanged
+recent context and guidance, source fields, budgets and all 16 changed-label reviews.
+The shared role-keyword schema and fields-only request difference are preserved;
+all 500 owned collections are absent with 404 verification. All 10,076 archive members
+pass hash readback and configured-secret scanning. Raw probabilities, source-review
+limits, partial cost estimates and the retain-default decision remain local-only.
+This is a standalone consumed-development comparison, not current-product/host proof.
+
+The `message-diversity500-v1` bundle uses producer
+`92b09573cf1f05aa741328bd90f1506ba2f12478` and the saved text-only results in the
+parent `role-aware-rerank500-v1` bundle. Restore those source/input paths and the
+canonical dataset declared in `execution-lock.json` and `preflight.json`.
+Its offline `verify.py` checks 2,526 frozen hashes, 500 exact baseline prompt
+reproductions, 1,000 prepared inputs, unchanged recent context/guidance, rank-and-source
+identity admission, budgets and zero dispatched provider calls. All 34 structural
+losses receive source-excerpt review; three full-input necessary-operand losses fail
+the predeclared paid gate. This is a rejected selection replay with no candidate
+answer score or host claim. All 2,031 local-only archive members pass full hash
+readback and configured-secret scanning; the original parent evidence is unchanged.
+
 | Local archive filename | SHA 256 |
 | --- | --- |
+| `message-diversity500-v1.tar.gz` | `836eec05880f97388e797193049d350ab613b73f32d571db4a5a1406d61e27ea` |
+| `role-aware-rerank500-v1.tar.gz` | `400d2b52ebbd175e435976e845e31685fa235e0e42155168f17fbaf3e2670929` |
+| `personal-rerank-criteria500-v1.tar.gz` | `9558c61f8f76a8732f52de900ec58a077be5aa30858073d94abe4ff8a0d0c1f9` |
+| `personal-rerank-criteria-v1.tar.gz` | `18374032788533cd604c043ebe8eb2dc46406468acd9ca4dcae590f2d575f90d` |
+| `standalone-errors21-v1.tar.gz` | `b2ef49bb81b26dea088a382bf0d7cfa5de769b2b207edbf60a67575fc8bea44c` |
 | `sent-system-review-v1.tar.gz` | `e6da2707984cb3a367c3cecea87d6becd021e1f3682d4fe56ad43121ef7a9cec` |
 | `standalone-same-history500-v1.tar.gz` | `2d4085b70b70a49f109915fc5d6593fd7f730833642ff8586ba591cd28997365` |
 | `standalone-memory500-v1.tar.gz` | `07b5c51abcd046d5977442ce6c9186a7b7164e52f37431bf7b7d2830f8291b88` |

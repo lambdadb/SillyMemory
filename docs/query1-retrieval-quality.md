@@ -28,6 +28,13 @@ preceding-message retrievalText. Source retrieval, prompt
 delivery, generated answers and judge labels remain separate evaluation stages;
 see [evaluation criteria](memory-evaluation.md) and [error analysis](small-default-error-analysis.md).
 
+The later quoted-archive comparison scores **474/500 versus 475/500** under Jev,
+without a demonstrated accuracy gain. Adopt one labelled user-context archive
+for structural separation from recent native dialogue, with budgeted framing and
+complete-block delivery checks. Sources and recent history stay intact. See the
+[full-cohort decision](small-default-error-analysis.md#quoted-memory-full-cohort-structural-adoption-2026-10-18)
+for the four raw label regressions, source review and separate host validation.
+
 ## Selection defect and implementation
 
 The old whole-passage floor/refill could admit lower-ranked filler before allowing
@@ -194,6 +201,11 @@ No budget refill, clipping, extra source or product change. Full evidence is in
 `memory-presentation-order-v1`.
 
 ## Same-policy capacity comparison: 4096 versus 8192
+
+The later k200/candidate200/default-Jev, Sol-low/Jev-judge standalone replay
+scores **477->472/500**, with complete delivered annotations **878->890/896** and
+input **+54.52%**. Retain 4096; see the [current-policy result](small-default-error-analysis.md#current-policy-budget-4096-versus-8192-retain-4096-2026-10-18).
+Keep the earlier, different-protocol comparison below separate.
 
 **Retain 4096.** Fresh paired 500 at the same sent/k100/c100/final 50 policy score
 **465→469**. Complete delivered annotated bodies improve **876→878/896**, while

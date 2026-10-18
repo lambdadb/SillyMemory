@@ -11,6 +11,24 @@ candidates at 100. Git URL users use the shipped bundle without installing npm
 packages. Replace this prerelease with a stable SDK once the same contract is
 supported and validated. See [the depth200 decision and checks](query1-retrieval-quality.md#product-adoption-of-depth200-2026-10-17).
 
+### Quoted archive and recent dialogue
+
+Render selected older excerpts as one user-context block headed
+`[Recalled conversation excerpts]`. Preserve every selected source label, original
+speaker, date, verbatim body and chronological order inside it. Insert the block
+at the latest selected source's position; keep special messages and recent dialogue
+in their native order and roles. The block is an ephemeral prompt copy, not a
+new stored chat message or a system instruction.
+
+Count its heading during selection within the existing 4,096-token allocation
+and host context cap. The inspector shows the complete block; the final delivery
+check verifies its whole content and carrier role, separately from recent input
+and system guidance. Partial loss follows the existing stop/warn policy. A
+verified memory count of `1/1` now describes one archive block, not one retrieved
+chunk; source-passage counts and citations remain available. No response schema,
+additional model call or new retrieval is introduced. See the
+[structural adoption evidence](small-default-error-analysis.md#quoted-memory-full-cohort-structural-adoption-2026-10-18).
+
 ### Conversation time
 
 Store available source time and provenance on every chunk, separately from its

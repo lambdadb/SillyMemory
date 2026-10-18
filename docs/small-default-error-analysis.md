@@ -1,6 +1,351 @@
 # Small-default error analysis
 
-## Latest Jev-No audit (2026-10-17)
+## Quoted-memory full cohort: structural adoption (2026-10-18)
+
+Steven separately authorized completing the unchanged candidate for structural
+adoption after the improvement pilot stopped. Preserve that original failed gate
+and reuse all 32 pilot pairs unchanged; run the remaining 468 paired answers and
+judgments once. Full scores are **474/500 (94.8%) native versus 475/500 (95.0%)
+quoted**, with **5 gains and 4 losses**, using Sol low and original-rule Jev 1.13.0
+Noul >=0.50. This is consumed-data standalone replay, not a held-out or new-search
+benchmark. The one-case difference does not establish superiority or equivalence.
+
+All nine transitions receive source/prompt review without relabeling. The four
+losses concern the chandelier/jewelry premise, optional Netflix recommendations,
+three acquisitions versus four jewelry pieces, and explicit versus implicit
+football abstention. Both arms retain the same facts; no new factual source error
+is demonstrated. Gains likewise mainly change qualification, preference scope or
+time-window interpretation. The shorter football answer is less explicit about
+missing information; no deterministic no-regression claim is made.
+
+Adopt the format for an explicit boundary between recalled records and live
+dialogue, not for a claimed accuracy gain or security guarantee. Mean generation
+input falls **4,978.74 -> 4,885.76 tokens (-1.87%)**; generation estimates are
+**$6.502 -> $6.382 per 500**, with about $0.010 judging per arm at frozen rates,
+not invoice totals. API median is **2,274 -> 2,284 ms**, not an end-to-end speedup.
+The continuation makes 1,872 calls with no errors/retries; including the retained
+pilot, the comparison has 2,000 receipts and no new retrieval/remote resources.
+
+Product integration budgets the heading and preserves local source validity,
+citations, recent roles, source storage and final delivery checks. Real pinned
+SillyTavern/Chromium checks pass 18 delivery scenarios and 103 browser assertions
+with local LambdaDB/completion emulators, including context pressure and native
+streaming. These host checks are separate from the real standalone model calls;
+the fixed-input answer score is not a new current-product live-provider score.
+An offline re-selection using current product date guidance changes 117/500 source
+sets because the heading consumes budget: 117 chunks are omitted, none from an
+annotated source message. All 500 fit 4096. Annotation coverage does not establish
+complete necessary-fact preservation, and these reselected contexts receive no
+new answer score. This boundary is separate from the fixed-source 474/475 trial.
+The original pilot and full continuation remain separate immutable local bundles
+in [the evidence index](query1-evidence-index.md).
+
+## Quoted-memory packaging pilot: keep native recalled messages (2026-10-18)
+
+Changing only recalled-memory packaging produces **29/32 versus 29/32**, with no
+label transitions: discovery **1/4 versus 1/4**, prior-Yes controls **28/28 versus
+28/28**. The candidate consolidates the selected excerpts into one user-context
+message; all original source labels, text, clocks and order remain unchanged.
+Recent dialogue, question/date, system/guidance messages and models stay fixed.
+No extra model step, source refill or system-role elevation is introduced.
+
+The train answer is $50 in both fresh arms, so its earlier historical No does not
+establish a candidate gain. Both still infer a leadership relationship for a
+completed project. The candidate qualifies thesis versus undergraduate research
+but still supplies Harvard and remains No. Baking remains No without centering
+lemon-poppyseed experience. All four discovery cases receive source/prompt review;
+no labels are changed. The frozen source-backed discovery/net-gain gate fails:
+**the pilot stopped without dispatching the remaining 468 or adopting the product**.
+The separately authorized structural continuation above preserves this decision
+and all original receipts rather than retroactively declaring the pilot passed.
+This consumed pilot does not prove equivalence or absence of benefit elsewhere.
+
+All 500 baseline bodies and 1,000 prepared inputs pass integrity/budget checks;
+only 64 inputs receive fresh answers and judgments (128 calls, no errors/retries).
+The heading adds six memory tokens, still below 4,096; fewer native message frames
+reduce mean total input 4,992.53->4,902.72 (-1.80%). Estimated evaluation spend is
+$0.841 at frozen bucket-aware rates, not an invoice; API medians 2,353/2,442 ms
+are observational. No new retrieval/resources, host validation or runtime change.
+The completed decision and preserved inputs/receipts are in the local-only
+`quoted-memory500-v1` bundle in [the evidence index](query1-evidence-index.md).
+
+## Current-policy budget 4096 versus 8192: retain 4096 (2026-10-18)
+
+Only the memory budget changes on the same saved native final 50: managed Small,
+Query1 / English Bayesian k200 / default Jev candidate 200, source rendering,
+recent dialogue and guidance stay fixed. All 500 questions receive fresh Sol-low
+answers and original-rule Jev 1.13.0 / Noul >=0.50 judgments in both arms.
+This is standalone benchmark replay, not a product UI or host-context-limit change.
+
+| Metric | 4096 | 8192 |
+| --- | ---: | ---: |
+| Accepted answers /500 | **477 (95.4%)** | **472 (94.4%)** |
+| Complete annotated bodies delivered including recent /896 | 878 | 890 |
+| Mean memory tokens | 4,047 | 6,737 |
+| Mean total generation input tokens | 4,979 | 7,693 |
+| Questions selecting all 50 returned chunks | 0 | 497 |
+| Successful answer API median / p95 ms | 2,312 / 7,245 | 2,330 / 7,482 |
+| Estimated generation cost per 500 answers, USD | 6.499 | 9.899 |
+
+Three labels improve and eight regress. No previously selected chunk disappears.
+The cake candidate uses the newly delivered direct user experience; the other two
+gains mostly change counting/qualification or preference framing. Losses preserve
+reference-bearing sources but change inference, time anchoring, recommendation scope
+or qualification. All 11 transitions are source/prompt reviewed without relabeling.
+Twelve complete annotation-body gains are not twelve new necessary facts.
+
+**Retain 4096:** input increases 54.52% and estimated generation cost 52.33%, without
+an overall answer-label gain. This single consumed-data run does not establish
+universal harm or causally prove context interference (paired exact McNemar p=0.227).
+For 497 questions, a still larger budget cannot add any more of these same 50 chunks.
+Do not mix this comparison with the historical k100/GPT-4o 465->469 result.
+
+Costs use reported ordinary/cache-read/cache-write buckets and the retained rate
+card, not invoice validation. The bundle's `resource-audit.json` supersedes its
+frozen legacy `summary.json` cost formula, which omits the cache-write premium.
+Judge estimates are about $0.010 per arm; native retrieval/rerank/storage costs are
+unchanged and not remeasured. Latency is successful generation API time, not user-turn
+latency. All 2,000 calls finish without errors/retries; no new remote collections.
+Input/source/budget checks reproduce 500 baseline bodies, and the final verifier
+checks 4,559 hashes and all receipts. No product or installed-host change is tested.
+Original evidence, all probabilities and the decision are preserved in
+[the local-only evidence index](query1-evidence-index.md).
+
+## Frozen criteria with role provenance: reject interaction (2026-10-18)
+
+The final bounded check uses the same 17 prior mechanism/regression controls and
+three fresh native arms: text/default criteria, text/unchanged personal criteria,
+and role + text/the same personal criteria. It tests an interaction, not new rubric
+wording. Cake experience is already delivered by custom text (rank 6); adding role
+moves it to rank 10 without new recovery. The explicit sculpting-tool purchase is
+rank 2/delivered by default and absent from both custom final-50 results and full
+prepared generation inputs. Assistant-recall witnesses remain intact.
+
+Complete annotated delivery is 30->31->31/32, but the necessary purchase fact is
+lost. This fails the frozen source gate: **no conditional answer calls or full-500
+expansion, and no candidate answer score**. Retain current criteria/fields. All 51
+queries finish; one transient retry recovers and all 17 collections are deleted with
+404 verification. Native rerank-stage medians are 1,021/1,385/1,409 ms; they are not
+end-to-end user latency. Shared setup estimates $0.0367 embeddings plus $0.0175
+writes at frozen rates; actual rerank/storage billing remains unmetered. No product
+change or new diagnostic PR. The source/input/request checks and local-only archive
+are retained in [the evidence index](query1-evidence-index.md).
+
+## Shorter source labels: no answer-quality adoption (2026-10-18)
+
+Two oracle-free label-compression checks preserve ranked admission, source bodies,
+roles, speakers, sent times, recent dialogue and 4096. The first retains compact
+message/chunk coordinates: complete annotated delivery rises 878->880/896, but
+neither declared discovery gap is recovered; its frozen gate stops paid evaluation.
+The second omits internal coordinates from ordinary model-visible labels while
+retaining an internal source map. It recovers the bungalow source and increases
+complete annotated delivery 878->884 with no structural loss, permitting full 500.
+
+Fresh paired answers score **478/500 (95.6%) default versus 477/500 (95.4%) compact**,
+with 5 gains and 6 losses. Keep default labels. All 11 transitions are source/prompt
+reviewed, without rejudging or relabeling. Most involve available-evidence scope,
+chronology or qualification. The bungalow candidate passes the judge but says six,
+lists five, then concludes five properties: recovered evidence is not automatically
+correct use. Cake experience remains undelivered. This is another reason to report
+structural coverage, factual source review and judge labels separately.
+
+All 1,000 fresh answers and 1,000 judgments finish without retries; frozen-rate
+answer/judge estimate $10.606. Retrieval is replayed, so no new search/indexing
+cost is charged by this run; normal serving is not free. Both trials reproduce all 500
+baseline inputs exactly. Rendering/source/budget checks and archived hash readback
+pass. No runtime, inspector or current-product date-policy change is made; removing
+visible coordinates would require separate inspector provenance support if adopted.
+Full inputs, probabilities and rejection decisions remain in the local-only bundles
+listed in [the evidence index](query1-evidence-index.md).
+
+## Message-diverse admission: reject after offline 500 check (2026-10-18)
+
+Visiting the best chunk of each source message before remaining chunks is executable
+without references or annotations. It is tested on the same saved text-only native
+final 50 results, preserving 4096, sources, clocks, recent dialogue and guidance. All 500
+baseline prompts reproduce exactly; no new retrieval or model call occurs.
+
+Both discovery sources regain delivery: bungalow message 440 at rank 30 and cake experience message 404
+at rank 28. However, complete annotated-body delivery including recent drops
+**878->853/896** (9 gains, 34 complete-to-partial changes). All 34 changes are inspected;
+31 retain requested answer-bearing text, so this is not 34 factual regressions.
+Three concrete losses remain in the full prompt including recent history:
+
+- The second company, Southwest Airlines, is lost when rank 2 is deferred because
+  rank 1 belongs to the same source message.
+- The fourth Lake Charles refining process, hydrotreating, is in an excluded
+  continuation chunk.
+- The value of list item 27, Sound effects, is excluded while the preceding `27.`
+  remains delivered.
+
+These source-backed losses fail the gate frozen before selection. **Retain rank
+admission; do not dispatch the conditional paid comparison or tune exceptions.**
+There is no new candidate answer score. Previous baseline Yes answers are historical
+controls, not newly generated candidate outcomes. The policy favors breadth without
+knowing whether a message's next chunk is necessary; grouping alone cannot distinguish
+redundant elaboration from an essential continuation. Existing overlap assembly stays.
+
+All 500 offline comparisons and source/budget/input checks pass; provider calls and new
+remote resources are zero. Mean memory tokens stay about 4046. This is consumed-data
+selection replay and agent source review, not host validation or independent factual
+adjudication. The plan, oracle-free policy, 43 coverage-change dossiers, three full-input
+counterexamples and failed gate are retained in [the evidence index](query1-evidence-index.md).
+
+## Role-aware native rerank input: retain text-only default (2026-10-17)
+
+The fresh full 500 standalone comparison scores **477/500 (95.4%) text versus
+473/500 (94.6%) role + text**, with **6 gains and 10 losses**. Keep the existing
+fields and default criteria; no product code or setting changes. The historical
+479/500 and previous criteria comparison are separate controls, not this baseline.
+
+Only `rerank.fields` changes from `['text']` to `['role', 'text']`. Both arms share
+one fresh index per question with `role` declared as a keyword. Document text,
+managed Small embeddings, Query1 / English Bayesian / k200 / Jev candidate 200 /
+final 50, historical 4096 reservation, recent dialogue, Sol-low and Jev 1.13.0
+Noul >=0.50 stay fixed. No custom criteria or extra generation call. Source inspection
+and live metadata establish native application; exact hidden 200 membership and
+backend revision remain unobserved. This is consumed English development data,
+not a held-out or actual-host score.
+
+| Metric | Text | Role + text |
+| --- | ---: | ---: |
+| Accepted answers /500 | 477 | 473 |
+| Complete annotated bodies returned /896 | 888 | 887 |
+| Complete annotated bodies delivered including recent /896 | 878 | 884 |
+| Native rerank-stage median ms | 936 | 936.5 |
+
+Nine annotated bodies gain complete delivery and three lose it; added text sometimes
+contains no new necessary fact. Cake experience moves 28/excluded->25/delivered and
+the candidate uses it. But the train-fare answer drops the user's conditional 50-dollar
+saving despite stronger source delivery: the 10-dollar fare and 60-dollar taxi operands
+already exist in both prompts, alongside conflicting assistant estimates.
+
+All 16 changed-label pairs receive targeted source/prompt review. Most other changes
+involve available-evidence interpretation or judge-sensitive phrasing. One loss has
+**identical generation input** in both arms; a museum-order gain omits an earlier
+original mention. Keep all original labels. Neither net score nor structural coverage
+alone proves causal factual improvement; this is agent review, not independent human
+adjudication. The first 17 mechanism controls improve 14->15, while the remaining 483
+fall 463->458. There is insufficient overall evidence to promote this candidate.
+
+All 1,000 native queries and 2,000 answer/judge calls complete. 59 transient LambdaDB
+failures recover; 500 owned collections are deleted with 404 verification. Frozen-rate
+generation/judging estimate is $10.392, shared reindex estimates $1.086 embeddings plus
+$0.520 document-array writes; actual native LIU/storage costs are unmetered. Generation
+input averages about 4,979 tokens in both arms. Timing measures successful API attempts,
+not user-turn latency. Settings, receipts, raw probabilities, source review and offline
+verification are preserved through [the evidence index](query1-evidence-index.md).
+
+## Personal-memory rerank criteria: full 500 keeps default (2026-10-17)
+
+The fresh paired standalone comparison finishes **478/500 (95.6%) default versus
+474/500 (94.8%) custom**, with **7 gains and 11 losses**. The pilot's observed lack
+of label regressions does not hold across all 500. Keep the native default criteria;
+this experiment changes no product setting and creates no separate diagnostic PR.
+The historical 479/500 score below is not the fresh control.
+
+Only `rerank.criteria` differs between native requests. The unchanged pilot criteria
+are compared on one shared fresh index per question, with managed Small, Query1 /
+English Bayesian / k200 / Jev candidate 200 / final 50, historical 4096 reservation,
+recent dialogue and standalone Sol-low / Jev 1.13.0 Noul >=0.50 fixed. The custom
+ordinal score mapping also differs from default; hidden full 200 membership is
+unexposed. This is one paired run on consumed English development data, not a
+held-out or current-product/browser score. All original labels are preserved.
+
+| Metric | Default | Custom |
+| --- | ---: | ---: |
+| Accepted answers /500 | 478 | 474 |
+| Complete annotated bodies returned /896 | 888 | 887 |
+| Complete annotated bodies delivered, including recent /896 | 881 | 886 |
+| All annotations delivered /479 annotated questions | 464 | 469 |
+| Native rerank-stage median ms | 1014 | 1388 |
+
+All 18 changed-label pairs and 15 both-No pairs receive source/prompt review. The
+clearest gain is slow-cooker personalization: the successful beef-stew statement
+moves rank 29/excluded -> rank 7/delivered. The clearest regression is the March 4
+sculpting-tool purchase: rank 4/delivered -> absent from candidate final 50, followed
+by an answer about materials instead of purchased tools. Exact hidden-candidate
+stage attribution remains unavailable.
+
+Other changes concern use of already-delivered preferences, counting units,
+source/update/time interpretation and judge-sensitive phrasing. The two original
+unsupported-role/undergraduate-qualifier controls remain No. Seven message bodies
+gain complete delivery; six corresponding questions stay Yes/Yes. Of two structural
+losses, the other is irrelevant GPA-message text: both GPA operands survive and
+both answers pass. Structural coverage is not necessary-fact recall. Neither a
+net score nor a label flip alone proves causal factual improvement; this source
+review is agent interpretation, not independent human adjudication.
+
+All 1,000 native searches and 2,000 answer/judge calls complete; 17 transient LambdaDB
+failures recover, and all 500 owned collections are deleted with 404 verification.
+Approximate frozen-rate generation/judging cost is $10.585 across both arms;
+shared reindex estimates are $1.086 managed embeddings and $0.520 document-array
+writes. Actual native rerank/query-embedding LIU and physical storage are unmetered,
+so these are partial estimates, not total costs. Mean generation input remains
+about 4,978 tokens per arm. Full receipts, all transitions, separate latency boundaries
+and offline integrity checks are preserved in [the evidence index](query1-evidence-index.md).
+
+### Preserved pilot and expansion decision
+
+The 16-question pilot gave 16/20 versus 18/20 repeated answer samples, with no observed
+label losses: cake 3/3->3/3, documentary 1/3->3/3, overreach 0/2->0/2, controls 12/12->12/12.
+Its original cake-only gate recommended no expansion. Steven explicitly authorized
+the full 500 comparison after reviewing the broader pilot result; this supersedes
+that narrow gate without rewriting the archived pilot. All 16 pilot questions were
+rerun fresh in full 500 (12->13), as were the other 484 (466->461). The documentary
+pilot gain did not reproduce: similar nature recommendations score 0.54/0.47.
+The completed 500 decision above replaces the provisional pilot-only conclusion.
+
+## Historical standalone No-case audit (2026-10-17)
+
+Use the frozen same-history standalone result **479/500 (95.8%)**, Sol low and
+Jev 1.13.0 / Noul Yes >=0.50. Inspect only its 21 No cases; preserve all labels,
+recent dialogue, source inputs and the later product role-placement fix separately.
+This is offline source-bound analysis, not another paid run or an adjusted score.
+
+| Primary review disposition | Cases |
+| --- | ---: |
+| Unsupported answer certainty/relationship | 2 |
+| Direct personal-source delivery weakened | 1 |
+| Personalization/judge boundary | 1 |
+| Source/reference or interpretation uncertainty | 17 |
+
+The two answer controls remain `6d550036` (calling a merely completed project
+explicitly led) and `a96c20ee_abs` (suggesting Harvard despite the unsupported
+undergraduate-course qualifier). Do not repeat the rejected relationship-instruction
+or unrelated-context-deletion trials below as if they were new hypotheses.
+
+The concrete memory candidate is baking recommendation `d24813b1`: the user's
+prior lemon-poppyseed experience is returned at rank 27 and their explicit success
+statement at rank 42, but neither is selected. Of 24 selected chunks, 22 are
+assistant content and two are user content, with substantial generic recipe text.
+The assistant's acknowledgment of the successful cake remains delivered; this is
+weakened direct provenance, not total absence of the fact or proof of a causal fix.
+Documentary recommendation `b0479f84` already follows the delivered nature/wildlife
+preference; its No is a qualitative personalization boundary, not an assured gain.
+
+Across the 21 cases, **44/45 annotated message bodies are complete in returned
+results and 43/45 in delivered context**. The absent returned annotation is a
+thank-you in the wake-time case; the actual 6:30, later 7:30 and Friday 6:00 operands
+are delivered. The extra delivery omission is the baking user statement. These
+are structural coverage counts, not necessary-fact recall or perfect-recall proof.
+
+The 17 uncertainty cases are not relabeled correct. Examples include 81 days
+(January 19 to April 10, or 11 weeks and four days) versus a 15-week reference;
+a repeated Zara exchange versus three distinct clothing items; and a charity total
+that includes an additional user-reported $5,000 benefit absent from annotations.
+Other cases involve conflicting relative dates, event identity, target attachment,
+current estimates or qualified answers. Forcing reference strings may worsen
+source fidelity; preserve all 21 No outcomes and the 95.8% score.
+
+This audit motivated the criteria comparison above. The completed full 500 comparison
+keeps the default after reviewing its actual gains and regressions; it does not
+relabel these 21 historical No cases or justify a depth, model or budget sweep.
+The local-only `standalone-errors21-v1` bundle retains all 21 exact question/reference/
+answer records, targeted original witnesses, rankings, coverage and frozen bindings.
+Zero new API calls; see [the evidence index](query1-evidence-index.md).
+
+## Historical saved-answer Jev-No audit (2026-10-17)
 
 At the adopted Jev 1.13.0 / Noul >=0.50 policy, five evaluations of the same saved
 answers score **477/478/477/477/476 out of 500**. There are **22 always-No cases and
