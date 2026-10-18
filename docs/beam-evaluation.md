@@ -14,6 +14,10 @@ case reviews, request/retry histories and producers live in the evidence bundles
 The subsequent fixed-retrieval budget comparison also closes with **4096 retained**:
 8192 restores some useful sources but does not demonstrate aggregate answer benefit
 at its higher generation cost.
+The subsequent full **35-conversation / 700-question 1M baseline** is also complete:
+mixed 68.13 and rubric 71.91, with the same current policy. Keep defaults unchanged;
+the [1M results](#full-1m-baseline-2026-10-19) separate operational scaling from
+remaining retrieval, delivery and evaluator limitations.
 
 After [LongMemEval-S closure](small-default-error-analysis.md#quoted-memory-full-cohort-structural-adoption-2026-10-18),
 use all **20 conversations / 400 questions** in `chats/100K`, called **128K** by the
@@ -21,7 +25,8 @@ use all **20 conversations / 400 questions** in `chats/100K`, called **128K** by
 Pin that source revision and prefer `chat_trunecated.json` as its loader does.
 Source conversations measure 92,928–121,849 cl100k tokens; that is not generation
 input length. This is an independent memory evaluation, not a SillyTavern browser
-run. Larger BEAM buckets and an exhaustive fact-level error census are untested.
+run. The 1M bucket is reported separately below; larger buckets and an exhaustive
+fact-level error census remain untested.
 
 ## Frozen policy and scoring
 
@@ -278,6 +283,88 @@ No product changes, new remote calls or collections. Budget/chronology/source
 hash checks pass. The local-only `beam-message-diversity-v1` bundle preserves
 all 400 selections, changed spans, reviewed excerpts and reproduction instructions.
 
+## Full 1M baseline (2026-10-19)
+
+Run all **35 conversations / 700 probes** in pinned `chats/1M`, without tuning or
+variants. Keep Small managed embeddings, English Bayesian Query1, k 200, native
+Jev 1.13.0 candidate 200/final 50, strong reads, ranked 4096-token assembly and
+four recent original messages plus the probe. Use the latest 128K role/batch-date
+rerank and display adapter, Sol low generation, and original GPT-4.1-mini rubric
+and event alignment. This is an independent memory run, not a browser test.
+
+Histories contain 795,979–1,016,246 cl100k tokens (median 981,578), totaling
+33,261,995 tokens and 255,192 indexed chunks. Chats 5 and 26 reuse 190 original
+message IDs. Preserve every message and index/date-map by position; report the
+26 ambiguous annotation references separately rather than choose an occurrence.
+The preflight correction preceded all paid calls; source bytes/rubrics are intact.
+
+**Mixed mean 68.13/100; uniform rubric mean 71.91/100; event tau 26.08/100.**
+There are 346 full-credit, 277 partial and 77 zero-credit rubric results. These
+are partial-credit metrics, not pass rates. The latest 128K/4096 arm scored
+72.67 mixed and 78.34 rubric. The cohorts have different conversations/questions:
+the lower 1M aggregates do not isolate history length or establish a paired
+regression. Instruction following and summarization are descriptively higher.
+
+| Ability | Questions | Rubric mean /100 |
+| --- | ---: | ---: |
+| Abstention | 70 | 88.57 |
+| Preference following | 70 | 86.79 |
+| Instruction following | 70 | 83.33 |
+| Information extraction | 70 | 80.65 |
+| Knowledge update | 70 | 72.86 |
+| Contradiction resolution | 70 | 67.14 |
+| Multi-session reasoning | 70 | 65.35 |
+| Event ordering | 70 | 63.95 |
+| Summarization | 70 | 56.92 |
+| Temporal reasoning | 70 | 53.57 |
+
+Of 5,357 per-question source annotations, returned coverage is 801 complete,
+321 partial and 4,205 absent; delivered coverage is 622 complete, 201 partial and
+4,504 absent. Four remain in native recent dialogue and 26 are ambiguous. These
+are message-body spans, **not necessary-fact recall**. Mean selected memory is
+25.10 chunks / 19.36 messages and 4,066.91 tokens, with a 4,096 maximum.
+
+Inspect one lowest-rubric case per ability, breaking ties by numeric chat/ID.
+This selective review explains failures; it neither estimates their prevalence
+nor changes labels:
+
+- Retrieval misses: the game-component timeline's annotated sources and the
+  explicit middleware-version instruction do not appear in the final 50.
+- Delivery losses: the updated Lambda allocation of 384 MB is rank 33 and omitted,
+  while older 512 MB is delivered. The first vector field is rank 39 and omitted;
+  the eight-book example is rank 22 and omitted.
+- Available evidence unused: numerical variance examples and requests for examples
+  reach the prompt, but the answer asks for the problem and gives only formulas.
+- Reference/judge disagreements: the Kong abstention rubric denies configuration
+  information present in delivered source. The timeline rubric requires 45 days
+  from original dates, while delivered, explicitly accepted revisions support
+  the answer's 51 days. Some rubric judgments deny facts explicitly in answers.
+  Preserve these separately from genuine memory losses, without a corrected score.
+
+Query median/p95 is **1.530/1.852 s**; generation is **5.448/30.384 s**. Per-case
+query-plus-answer sum is 7.118/32.093 s, excluding import, packing, queueing and
+judging; it is not browser latency or TTFT. Mean generation input is 6,330 tokens
+(p95 7,444), including recent dialogue and instructions beyond the memory budget.
+Frozen-rate estimates: generation **$13.410 for 700 answers**; judging/alignment
+$1.905; initial LambdaDB write/managed embedding $1.011. Query embedding and
+minimum query reads add $0.00734; verification fetches add a $0.02566 minimum.
+Native rerank text-volume proxies are $0.823 document-only or $0.967 with repeated
+query text, not billing bounds: actual candidate tokens, metadata/protocol overhead
+and physical storage GB-hours are unavailable. These are gross estimates before
+free allowances, not invoices or a precise total price.
+
+All 700 answers, 2,415 rubric calls and 5,651 event comparisons complete without
+generation/judge errors, retries or truncations. One initial upsert 429 recovers;
+all 35 owned collections are deleted with 404 verification. All request/source,
+packing/final-input bindings, phase hashes and upstream score reconstruction pass.
+`npm test` passes 380 tests; runtime syntax, release metadata and locked SDK checks
+pass. No new browser validation is claimed for this experiment-only addition.
+**Close this scale baseline and keep current defaults.** Future candidates must
+target verified retrieval/delivery failures separately from evaluator ambiguity;
+this run does not justify another model grid or blanket budget increase. The
+local-only `beam1m-current-v1` bundle retains exact sources, receipts, runtime,
+rate card, ten-case review and restoration instructions.
+
 ## Validation and evidence retention
 
 Initial quality screens use 5 diagnostics + 40 fixed comparisons; the final date
@@ -312,6 +399,13 @@ producer revisions, dependency paths and offline restoration commands.
 | `beam-anchor-full-v1` | `217c769b5a1fa18f0081fa37bb8eba6cfd94f61e2c58d31f02603e160f0600a4` |
 | `beam-budget4096-8192-v1` | `06980646a852a074128479ed030e72db4648f697e14336c763e960cc0b352993` |
 | `beam-message-diversity-v1` | `8ec2e9210e89a574d63880d8c931a5a1400677ac1254ddea144876ac88ef304f` |
+| `beam1m-current-v1` | `0c72b49c2afd353f471d45892b7282561755755dd4a6270e346c68b8c6cbaa3f` |
+
+The 1M bundle has 20,602 verified members (182,827,887 bytes), produced at
+`ba19e1a45a03c20d5c568e96578d8c51a67dfa42`. Configured-secret scanning and full
+member readback pass. Restore under `artifacts/` and follow
+`beam1m-current-v1/RESTORE.md`; its original raw source bytes, phase locks and
+runtime snapshot support offline verification without new provider calls.
 
 The full paired bundle contains 13,871 verified members (68,797,556 bytes), produced
 at `ea46b6566a46c82ebe670851c2b1a7a8e05a92e7`. Restore it under `artifacts/` and read
