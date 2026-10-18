@@ -37,7 +37,7 @@ export async function runRecoveryScenarios({ page, field, waitStatus, prompt, ch
         await waitStatus('synchronized');
         check(`cycle ${i}: edit/swipe remote state matches source`, await remoteMatches());
         const before = await prompt();
-        const native = before.chat.filter(m => !m.mes.startsWith('[Past conversation excerpt:'));
+        const native = before.chat.filter(m => !m.mes.startsWith('[Recalled conversation excerpts]'));
         // Each parent/branch drops its first message and appends a user message
         // after its cycle. Freeze the resulting pair-aligned window sizes; later
         // cycles consist mostly of consecutive user inputs, not completed pairs.

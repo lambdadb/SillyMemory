@@ -324,7 +324,7 @@ the corresponding run bundles.
 
 ## Validation boundaries
 
-- Current local: `npm test` **376 passed/0 failed** on Node 24.15.0; `npm run check`,
+- Current local: `npm test` **379 passed/0 failed** on Node 24.15.0; `npm run check`,
   `npm run check:release`, `npm run check:sdk` and `git diff --check` pass. CI also
   executes Node 20.12.0/24. Release metadata remains 0.4.0 dated 2026-10-13.
 - Retained host checks: pinned SillyTavern 1.19.0/Chromium 153 with local database/model
@@ -338,6 +338,20 @@ the corresponding run bundles.
   zero-source result and use 400 for positive-delivery/race fixtures. These are
   explicit test allocations, not product default changes or answer-quality evidence.
   Initial failure and successful source-bound receipts remain archived.
+- Quoted-archive review follow-through: update current lifecycle/recovery harnesses
+  to recognize the single archive carrier. The lifecycle fixture now has ten
+  alternating messages: four archived and six pair-aligned recent messages.
+  `npm run test:recovery` passes 215 checks, including 24 cycles and two host kills,
+  against the pinned host/local providers. `npm run test:live` passes 20 checks
+  against real managed LambdaDB/direct browser CORS, including recall, branch/copy
+  isolation, reload, and verified owned cleanup. No page errors; no generation
+  calls. The initial stale six-message-fixture failure is preserved separately.
+  Optional large-history/checkpoint-manager live modes were not rerun; the corrected
+  994-document large-history expectation is source-derived, not a fresh measurement.
+  Local-only source patch, receipts and logs: `artifacts/archive/quoted-memory-review-host-v1.tar.gz`
+  (34,819 bytes; SHA-256 `c7f029a7f5acfbbed73dce8670ee7bf10c49a785db7641f466bdd1614de28e61`).
+  Full member readback and configured-secret scan pass; restore at producer
+  `7618422f13447f475c63b0225a22516e17c413ce` plus the included harness patch.
 - Separate real direct-CORS/product-client acceptance: 201 synthetic docs, native 200
   scored/50 returned, strong reads/isolation, no deleted-source resurrection,
   auth 401 without retry, no forwarded cookies/CSRF; both owned collections return 404 after cleanup.
