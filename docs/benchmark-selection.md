@@ -5,6 +5,11 @@ record, not a completed benchmark, frozen run protocol, or claim of SillyMemory
 superiority. No external benchmark adapter or new paid run is delivered here.
 It complements the [evaluation follow-ups](evaluation-and-device-followups.md).
 
+The later [LongMemEval and BEAM reference](memory-benchmark-reference.md) reviews
+published results and evaluation conditions as of October 18, including answer
+assistance, scoring differences and implications after our completed S comparison.
+Its next-suite recommendation is a follow-up decision, not a frozen paid protocol.
+
 ## Questions the next evaluation should answer
 
 The existing 1,536-token synthetic comparisons establish narrow regression
