@@ -50,11 +50,16 @@ try {
         assert.equal(target.origin, new URL(credentials.endpoint).origin);
         if (req.method() === 'POST' && target.pathname.endsWith('/collections')) {
             const body = req.postDataJSON();
+            assert.equal(body.indexConfigs.role.type, 'keyword');
+            assert.equal(body.indexConfigs.conversationTimeContext.type, 'keyword');
             assert(pending.length < (large ? 2 : 4), 'Bounded collection count');
             pending.push({ collection: body.collectionName, owner: body.tags.owner, scope: body.tags.chat });
             await writeFile(pendingPath, JSON.stringify(pending, null, 2));
         }
         if (req.method() === 'POST' && target.pathname.endsWith('/docs/upsert')) report.upserts.push({ stage, branch: req.postDataJSON().branch, documents: req.postDataJSON().docs.length });
+        if (req.method() === 'POST' && target.pathname.endsWith('/query') && req.postDataJSON().rerank) {
+            assert.deepEqual(req.postDataJSON().rerank.fields, ['role', 'conversationTimeContext', 'text']);
+        }
         if (req.method() === 'POST' && target.pathname.endsWith('/docs/fetch')) {
             const body = req.postDataJSON(); report.fetches.push({ stage, ids: body.ids.length, consistentRead: body.consistentRead });
         }
@@ -137,7 +142,7 @@ try {
             await field('enabled').check(); await status('synchronized'); await field('enabled').uncheck();
         });
         const parent = await identity();
-        check('large history initially submits 998 older messages exactly once', report.upserts.filter(x => x.stage === 'large initial sync').reduce((n, x) => n + x.documents, 0) === 998);
+        check('large history initially submits 994 older messages exactly once', report.upserts.filter(x => x.stage === 'large initial sync').reduce((n, x) => n + x.documents, 0) === 994);
         for (let i = 1; i <= 3; i++) await measure(`large checkpoint ${i}`, async () => {
             await field('checkpoint-name').fill(`Large snapshot ${i}`);
             await field('checkpoint-save').click(); await status('Checkpoint saved:'); await idle();
@@ -160,14 +165,19 @@ try {
         check('large resumed path shares story but has a separate writable branch', parent.collection === resumed.collection && parent.branch !== resumed.branch);
         check('large direct lifecycle uses no host proxy or automation errors', report.proxyRequests === 0 && report.pageErrors.length === 0);
     } else {
+    // Ten alternating messages leave four archived and six pair-aligned recent messages.
     await page.evaluate(async () => {
-        const c = SillyTavern.getContext(); c.chat.splice(0, c.chat.length, ...Array.from({ length: 6 }, (_, i) => ({ mes: i === 0 ? 'The blue compass is beneath the cedar tree.' : `Synthetic turn ${i}: tell me about the blue compass.`, name: i % 2 ? 'Mira' : 'User', is_user: !(i % 2), is_system: false, send_date: 0, extra: {} })));
+        const c = SillyTavern.getContext(); c.chat.splice(0, c.chat.length, ...Array.from({ length: 10 }, (_, i) => ({ mes: i === 0 ? 'The blue compass is beneath the cedar tree.' : `Synthetic turn ${i}: tell me about the blue compass.`, name: i % 2 ? 'Mira' : 'User', is_user: !(i % 2), is_system: false, send_date: i === 0 ? '2024-02-29T12:34:56.123Z' : 0, extra: {} })));
         await c.saveChat();
     });
     check('story branches are the only storage mode; no opt-in control', await field('versioned').count() === 0);
     stage = 'parent'; await field('enabled').check(); await status('synchronized');
     const parent = await identity(), parentRows = await inspect(parent);
     check('parent managed collection contains four current documents', parentRows.length === 4);
+    check('managed documents retain role and optional host-time context outside embedding text',
+        parentRows.every(d => d.role === (d.message % 2 ? 'assistant' : 'user') && !d.text.includes('Message sent at'))
+        && parentRows.find(d => d.message === 0)?.conversationTimeContext === "Message sent at 2024-02-29T12:34:56.123Z (UTC), supplied by the host; not an event date. UTC alone does not establish the speaker's local date."
+        && parentRows.filter(d => d.message !== 0).every(d => d.conversationTimeContext === undefined));
     const writes = () => report.responses.filter(r => r.stage === 'unchanged').length;
     stage = 'unchanged'; await field('sync').click(); await status('synchronized');
     check('unchanged sync retains exact document IDs', JSON.stringify((await inspect(parent)).map(d => d.id).sort()) === JSON.stringify(parentRows.map(d => d.id).sort()));
@@ -193,11 +203,13 @@ try {
     const recall = await page.evaluate(async () => {
         const c = SillyTavern.getContext(), chat = c.chat.map((m, index) => ({ ...m, index })); let aborted = false;
         await globalThis.sillymemory_intercept(chat, 4096, () => { aborted = true; }, 'normal');
-        const recalled = chat.filter(m => m.mes.startsWith('[Past conversation excerpt:'));
+        const recalled = chat.filter(m => m.mes.startsWith('[Recalled conversation excerpts]'));
         if (!aborted) await c.eventSource.emit(c.eventTypes.GENERATE_AFTER_DATA, { prompt: chat.map(m => ({ role: m.is_user ? 'user' : 'assistant', content: m.mes })) }, false);
-        return { aborted, passages: recalled.length, last: chat.at(-1).mes, text: recalled.map(m => m.mes).join('\n') };
+        return { aborted, archives: recalled.length, last: chat.at(-1).mes, text: recalled.map(m => m.mes).join('\n') };
     });
-    check('managed queryText through UI interceptor retrieves synthetic source', !recall.aborted && recall.passages > 0 && recall.text.includes('stone tower') && recall.last.includes('turn 5'));
+    check('managed queryText through UI interceptor retrieves synthetic source', !recall.aborted && recall.archives === 1 && recall.text.includes('stone tower') && recall.last.includes('turn 9'));
+    check('live recalled archive preserves role and sent label without duplicating rerank context',
+        recall.text.includes('user "User"') && recall.text.includes('sent: 2024-02-29T12:34:56.123Z') && !recall.text.includes('Message sent at'));
     stage = 'single deletion'; await panel(); await field('delete-chat').click(); await status('no longer accessible');
     check('individual deletion confirmed absent before fallback cleanup', await absent(copy));
     check('deleting current copy preserves parent and branch', (await inspect(parent)).length === 4 && (await inspect(branch)).length === 4);
@@ -211,7 +223,7 @@ try {
     check('reload performs zero unchanged document upserts', !report.upserts.some(r => r.stage === 'reload'));
     {
         stage = 'earlier branch';
-        await page.evaluate(async () => { const c = SillyTavern.getContext(), { createBranch } = await import('/scripts/bookmarks.js'); const file = await createBranch(3); await c.openCharacterChat(file); });
+        await page.evaluate(async () => { const c = SillyTavern.getContext(), { createBranch } = await import('/scripts/bookmarks.js'); const file = await createBranch(7); await c.openCharacterChat(file); });
         await status('synchronized'); const earlier = await identity(), rows = await inspect(earlier);
         check('earlier native fork removes future and protected-recent remote chunks', earlier.collection === parent.collection && rows.length === 2 && rows.every(d => d.message < 2));
         check('earlier native fork submits no unchanged inherited documents', !report.upserts.some(r => r.stage === 'earlier branch'));

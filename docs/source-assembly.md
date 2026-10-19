@@ -9,8 +9,16 @@ The surrounding engine still synchronizes the current chat and validates returne
 IDs, ownership, scope, revision, exact text and time metadata against current
 source documents. Remote role/speaker/offset fields never override those documents.
 
-- Establish the existing repeated-passage selection, including its refilled
-  passages, as the source floor. Assembly cannot remove those sources.
+The host adapter quotes the selected rendered excerpts in one user-context archive,
+preserving their internal source labels and chronology. Its heading participates in
+the caller's budget counter; source assembly still returns individual provenance
+records. Final delivery verifies the whole block. See [current defaults](conversation-memory-defaults.md#quoted-archive-and-recent-dialogue).
+
+- Visit valid hits once in retrieval order. Before accepting each hit, assemble
+  it with the already accepted sources and count the complete final text. Select
+  the cheaper of separate and assembled layouts for that same source set.
+  Skip a hit that exceeds the budget and continue with later hits; do not reserve
+  space for lower-ranked sources selected by an earlier unassembled pass.
 - Keep identical-text groups opaque, with every source coordinate at their latest
   occurrence. Do not join across these groups, other messages/revisions, roles,
   speakers, owners/scopes or conversation timestamps.
@@ -21,29 +29,43 @@ source documents. Remote role/speaker/offset fields never override those documen
 - Invalid coordinates, inconsistent chunk order or conflicting overlap retain
   the original separate excerpts. Literalize macros after joining; recall cannot
   execute a macro split across chunk boundaries.
-- Try additional distinct hits in the original search order, counting the complete
-  assembled candidate. This also checks a rejected adjacent chunk when the floor
-  contains only one chunk: sharing its header can make the pair affordable.
-  Retain the exact source-floor representation when no cheaper rendering or
-  additional source fits. Never evict or truncate an existing passage.
+- Count all provenance, time labels, gap markers and host guidance through the
+  supplied token counter. An adjacent chunk can fit by sharing a header; no
+  accepted body is shortened. Failed token counting stops selection.
+- Keep a source timestamp inline as `sent` in its excerpt header. Explain the
+  meaning once in system memory guidance, including no-hit requests, within the
+  same allocation. Native UTC precision is unchanged; unknown dates stay absent.
+  Message time does not establish the date of an undated story/event. Historical
+  LongMemEval adapters used the same label for supplied session clocks without
+  inventing UTC or seconds; restore their recorded producers for replay.
+  Resolve relative days only against a known local conversation date: a UTC
+  instant alone does not establish the speaker's calendar day. If that date is
+  unknown, preserve the ambiguity rather than assuming a timezone.
+- Render the selected sources in original conversation/chunk order. This
+  presentation order does not change their retrieval-order admission priority.
 
 This is the same source-union mechanism evaluated in
 [PR #70's fixed-search benchmark](https://github.com/lambdadb/SillyMemory/blob/00298741f853bd6c8034cb6dbff2dfc354e435a7/docs/jev-depth-100.md#completed-fresh-source-assembly-answer-regression),
 implemented without its full-source dependency or benchmark-specific session-date
 renderer. Its 93.8%→95.0% consumed-cohort score is **not a new runtime/default score**.
-Product repeat-packing selection remains a floor as well; this PR does not claim
-identical admission or answer results between the benchmark and runtime.
+The original runtime preserved an unassembled/repeated selection floor. The
+[ranked-assembly follow-up](query1-retrieval-quality.md) removes that floor after
+demonstrating that it can admit lower-ranked filler ahead of higher-ranked
+evidence that fits the final layout. Historical scores below do not establish
+the answer quality of the revised selector.
 
-Current defaults are active-input-only generation plus recalled memory, memory budget4096 (maximum4096), chunk ceiling800
-codepoints, vector k100/rerank candidate100/final size50, Bayesian English fusion with managed Jev and one
+Current defaults retain five recent eligible native messages (six after an
+adjacent reply), plus recalled memory, memory budget4096 (maximum4096), chunk ceiling800
+codepoints, vector k200/rerank candidate200/final size50, Bayesian English fusion with managed Jev and one
 current-question query with independent completed-history indexing; see
 [current policy](conversation-memory-defaults.md). The host's existing one-quarter-context budget cap,
-current-chat validation, cancellation, session-only key and prompt-delivery checks
-are unchanged. No new mode, stored format, provider option or SDK change. See the
+current-chat validation, cancellation, credential handling and prompt-delivery
+checks are unchanged by the selector change. The subsequent depth200 adoption
+pins a supported dev SDK; it adds no stored format, provider option or mode. See the
 [later numeric-default adoption](profile-50-host-validation.md#product-default-adoption);
 the assembly verification below retains its originally measured settings.
 
-## Verification
+## Historical assembly verification
 
 At the develop baseline `ec0834e8641ff4b35f9b348981d89117725ce886`:
 

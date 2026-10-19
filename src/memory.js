@@ -95,27 +95,46 @@ export function literal(text) {
 export function memoryMessages(passages) {
     return [...passages].sort((a, b) => a.message - b.message || a.chunk - b.chunk).map(d => ({
         index: d.message, name: literal(d.speaker), is_user: d.role === 'user', is_system: false,
-        mes: `[Past conversation excerpt: ${d.role} ${JSON.stringify(literal(d.speaker))}, message ${d.message + 1}, passage ${d.chunk + 1}]\n${conversationTimeLabel(d)}${literal(d.text)}`,
+        mes: `[Past conversation excerpt: ${d.role} ${JSON.stringify(literal(d.speaker))}, message ${d.message + 1}, passage ${d.chunk + 1}${conversationTimeLabel(d)}]\n${literal(d.text)}`,
     }));
 }
-const wrap = passages => memoryMessages(passages).map(m => m.mes).join('\n');
 export async function selectMemory(hits, expected, budget, countTokens) {
+    return selectRankedMemory(hits, expected, budget, countTokens, false);
+}
+
+async function selectRankedMemory(hits, expected, budget, countTokens, pack) {
+    const count = async text => {
+        const tokens = await countTokens(text);
+        if (!Number.isFinite(tokens) || tokens < 0) throw new Error('Token counting unavailable.');
+        return tokens;
+    };
+    const render = async passages => {
+        const messages = memoryMessages(passages), text = messages.map(m => m.mes).join('\n');
+        const result = { messages, text, tokens: await count(text) };
+        if (!pack) return result;
+        const packed = packedMemoryMessages(passages), packedText = packed.map(m => m.mes).join('\n');
+        if (packedText === text) return result;
+        const tokens = await count(packedText);
+        // Both layouts preserve the same complete sources. Short grouped labels
+        // can cost more than separate excerpts; budget the cheaper final layout.
+        return tokens < result.tokens ? { messages: packed, text: packedText, tokens } : result;
+    };
     const valid = new Map(expected.map(x => [x.id, x]));
-    const selected = []; const seen = new Set();
+    const selected = [], seen = new Set();
+    let result = { text: '', tokens: 0, messages: [] };
     for (const hit of hits) {
         const doc = valid.get(hit?.id);
         // The remote response is only a ranking signal. Inject current local source text.
-        if (!doc || seen.has(doc.id) || hit.scope !== doc.scope || hit.owner !== doc.owner || hit.revision !== doc.revision || hit.text !== doc.text || hit.conversationTimestamp !== doc.conversationTimestamp || hit.timestampSource !== doc.timestampSource) continue;
+        if (!doc || seen.has(doc.id) || hit.scope !== doc.scope || hit.owner !== doc.owner || hit.revision !== doc.revision || hit.text !== doc.text || hit.conversationTimestamp !== doc.conversationTimestamp || hit.timestampSource !== doc.timestampSource || hit.conversationTimeContext !== doc.conversationTimeContext) continue;
         seen.add(doc.id);
-        const candidate = wrap([...selected, doc]);
-        const tokens = await countTokens(candidate);
-        if (!Number.isFinite(tokens) || tokens < 0) throw new Error('Token counting unavailable.');
-        if (tokens <= budget) selected.push(doc);
+        // Decide in retrieval order using the layout that would actually be
+        // injected. Do not reserve space for lower-ranked unassembled hits.
+        const candidate = await render([...selected, doc]);
+        if (candidate.tokens <= budget) { selected.push(doc); result = candidate; }
     }
-    const text = wrap(selected);
-    const tokens = text ? await countTokens(text) : 0;
-    if (!Number.isFinite(tokens) || tokens > budget) throw new Error('Memory budget exceeded.');
-    return { text, tokens, passages: selected, messages: memoryMessages(selected) };
+    const tokens = result.text ? await count(result.text) : 0;
+    if (tokens > budget) throw new Error('Memory budget exceeded.');
+    return { ...result, tokens, passages: selected };
 }
 
 const repeatedKey = doc => JSON.stringify([doc.owner, doc.scope, doc.role, doc.speaker, doc.text, doc.conversationTimestamp, doc.timestampSource]);
@@ -132,13 +151,12 @@ function repeatedEntries(passages) {
     return [...groups.values()].map(group => {
         const last = group.at(-1), message = memoryMessages([last])[0];
         if (group.length > 1) {
-            message.mes = `[Past conversation excerpt: ${last.role} ${JSON.stringify(literal(last.speaker))}, identical text at message:passage ${group.map(doc => `${doc.message + 1}:${doc.chunk + 1}`).join(', ')}]\n${conversationTimeLabel(last)}${literal(last.text)}`;
+            message.mes = `[Past conversation excerpt: ${last.role} ${JSON.stringify(literal(last.speaker))}, identical text at message:passage ${group.map(doc => `${doc.message + 1}:${doc.chunk + 1}`).join(', ')}${conversationTimeLabel(last)}]\n${literal(last.text)}`;
         }
         return { docs: group, last, message };
     }).sort((a, b) => a.last.message - b.last.message || a.last.chunk - b.last.chunk);
 }
 
-const repeatedMessages = passages => repeatedEntries(passages).map(entry => entry.message);
 const messageIdentity = doc => JSON.stringify([doc.owner, doc.scope, doc.revision, doc.message, doc.role, doc.speaker, doc.conversationTimestamp, doc.timestampSource]);
 const passageNumbers = docs => {
     const ranges = [];
@@ -177,62 +195,18 @@ export function packedMemoryMessages(passages) {
             && messageIdentity(previous[0].last) === messageIdentity(entry.last)) previous.push(entry);
         else runs.push([entry]);
     }
-    return runs.flatMap(run => {
+    const messages = runs.flatMap(run => {
         if (run.length === 1) return [run[0].message];
         const docs = run.map(entry => entry.last), body = joinedText(docs), last = docs.at(-1);
         if (body === null) return run.map(entry => entry.message);
         return [{ index: last.message, name: literal(last.speaker), is_user: last.role === 'user', is_system: false,
-            mes: `[Past conversation excerpt: ${last.role} ${JSON.stringify(literal(last.speaker))}, message ${last.message + 1}, passages ${passageNumbers(docs)}]\n${conversationTimeLabel(last)}${body}` }];
+            mes: `[Past conversation excerpt: ${last.role} ${JSON.stringify(literal(last.speaker))}, message ${last.message + 1}, passages ${passageNumbers(docs)}${conversationTimeLabel(last)}]\n${body}` }];
     });
-}
-
-async function selectRepeatedMemory(hits, expected, budget, countTokens) {
-    // Establish the shipped whole-passage selection first. Packing may add
-    // sources but can never evict any passage that the baseline already kept.
-    const baseline = await selectMemory(hits, expected, budget, countTokens);
-    if (!baseline.passages.length) return baseline;
-    const selected = [...baseline.passages], content = new Set(selected.map(repeatedKey));
-    if (content.size === selected.length) return baseline;
-    return refillMemory(hits, expected, baseline, budget, countTokens, repeatedMessages);
-}
-
-async function refillMemory(hits, expected, baseline, budget, countTokens, renderMessages, tryCandidateAssembly = false) {
-    const selected = [...baseline.passages], content = new Set(selected.map(repeatedKey));
-    const render = docs => {
-        const messages = renderMessages(docs);
-        return { messages, text: messages.map(message => message.mes).join('\n') };
-    };
-    const count = async text => {
-        const tokens = await countTokens(text);
-        if (!Number.isFinite(tokens) || tokens < 0) throw new Error('Token counting unavailable.');
-        return tokens;
-    };
-    let result = render(selected);
-    let tokens = result.text === baseline.text ? baseline.tokens : await count(result.text);
-    if (result.text === baseline.text || tokens >= baseline.tokens) {
-        if (!tryCandidateAssembly) return baseline; // Short repetitions may cost more to label.
-        // Adding a rejected adjacent chunk can save its header even when the
-        // selected chunks alone do not assemble. Keep the exact floor meanwhile.
-        result = { text: baseline.text, messages: baseline.messages }; tokens = baseline.tokens;
-    }
-    const valid = new Map(expected.map(doc => [doc.id, doc])), seen = new Set(selected.map(doc => doc.id));
-    for (const hit of hits) {
-        const doc = valid.get(hit?.id);
-        if (!doc || seen.has(doc.id) || ['scope', 'owner', 'revision', 'text', 'conversationTimestamp', 'timestampSource'].some(key => hit[key] !== doc[key])) continue;
-        seen.add(doc.id);
-        // Spend the saved space on distinct content, not more repeat citations.
-        if (content.has(repeatedKey(doc))) continue;
-        const candidate = render([...selected, doc]), trial = await count(candidate.text);
-        if (trial <= budget) { selected.push(doc); content.add(repeatedKey(doc)); result = candidate; tokens = trial; }
-    }
-    return { ...result, tokens, passages: selected };
+    return messages;
 }
 
 export async function selectPackedMemory(hits, expected, budget, countTokens) {
-    // Preserve the current repeated-passage selection, including its refilled sources.
-    const baseline = await selectRepeatedMemory(hits, expected, budget, countTokens);
-    if (!baseline.passages.length) return baseline;
-    return refillMemory(hits, expected, baseline, budget, countTokens, packedMemoryMessages, true);
+    return selectRankedMemory(hits, expected, budget, countTokens, true);
 }
 
 export class Journal {

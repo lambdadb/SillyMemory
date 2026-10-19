@@ -67,6 +67,16 @@ Read [CONTRIBUTING.md](CONTRIBUTING.md) before changing this repository.
 
 ## Current evaluation priority
 
+- Follow [the memory evaluation criteria](docs/memory-evaluation.md): separate
+  retrieved evidence, final prompt delivery, generated answers and judge labels.
+  Map chunks to source-message spans; distinguish missing/partial/complete
+  annotation coverage from verified necessary-fact recall. Report resource costs
+  alongside quality, and keep evaluation annotations out of the runtime pipeline.
+- Use pinned `jev-1.13.0` Noul with Yes at probability >=0.50 for new internal
+  LongMemEval answer evaluations, preserving the original task-specific rules and
+  references. Follow [the evaluator policy](docs/memory-evaluation.md#answer-evaluator-policy).
+  Label the judge/threshold explicitly; compare arms under the same protocol,
+  retain raw probabilities and preserve historical GPT-4o results separately.
 - Prioritize English for near-term answer-quality evaluation and optimization.
   Defer new Korean/other-language live experiments and targeted optimization.
 - Preserve historical multilingual results and existing inexpensive unit tests.
