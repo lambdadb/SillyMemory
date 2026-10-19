@@ -51,3 +51,26 @@ test('tokenizer binding detects same-version implementation changes and rejects 
         await assert.rejects(loadSummaryTokenizer(require), /Unsupported tokenizer version/);
     } finally { await rm(root, { recursive: true, force: true }); }
 });
+
+test('400-character storage counts code points including spaces and preserves raw prefix', async () => {
+    const { boundSummary } = await import('../scripts/segment-summary.mjs');
+    const exact = '가 😀'.repeat(100) + 'x'.repeat(100);
+    assert.equal(Array.from(exact).length, 400);
+    assert.deepEqual(boundSummary(exact), { text: exact, originalCharacters: 400, storedCharacters: 400, truncated: false });
+    assert.deepEqual(boundSummary(exact + ' omitted'), { text: exact, originalCharacters: 408, storedCharacters: 400, truncated: true });
+});
+test('Noul adapter preserves official rules and reference labels and accepts threshold ties', async () => {
+    const { jevJudgeRequest, jevDecision } = await import('../scripts/segment-summary.mjs');
+    for (const field of ['Correct Answer', 'Rubric', 'Explanation']) {
+        const template = `Original rules.\n\nQuestion: __FROZEN_QUESTION__\n\n${field}: __FROZEN_REFERENCE__\n\nModel Response: __FROZEN_ANSWER__\n\nOriginal proposition? Answer yes or no only.`;
+        const body = jevJudgeRequest(template, { question: 'Q', answer: 'R' }, 'A');
+        assert.deepEqual(body.state, { Question: 'Q', [field]: 'R', 'Model Response': 'A' });
+        assert.deepEqual(body.questions.correct, { type: 'noul', instructions: 'Original rules.\n\nOriginal proposition?' });
+    }
+    assert.throws(() => jevJudgeRequest('changed upstream format', {}, ''), /Unrecognized/);
+    const response = p => ({ model: 'jev-1.13.0', answers: { correct: { type: 'noul', noul: p } }, usage: { input_tokens: 1 } });
+    assert.deepEqual(jevDecision(response(0.5)), { probability: 0.5, correct: true });
+    assert.equal(jevDecision(response(0.49)).correct, false);
+    for (const p of [NaN, -0.1, 1.1, '0.9']) assert.throws(() => jevDecision(response(p)));
+    assert.throws(() => jevDecision({ ...response(0.9), model: 'jev-latest' }), /version/);
+});
