@@ -2,7 +2,7 @@
 
 ## Decision and scope (2026-10-19)
 
-This PR closes the 128K, 1M and 10M baselines and bounded follow-up comparisons.
+PR #84 closed the 128K, 1M and 10M baselines and bounded follow-up comparisons.
 Keep original-text managed OpenAI Small retrieval, default native Jev criteria,
 k200/candidate200/final50, ranked 4096-token memory and the original BEAM judge.
 The full 10M retrievalText comparison does **not establish reliable general answer
@@ -13,8 +13,9 @@ Keep the 8192-budget and message-diversity candidates unadopted; close the judge
 Role and verified host-time context in product reranking are a separate,
 user-approved semantic decision, not a promotion justified by these scores.
 BEAM batch dates remain distinct from host timestamps. Historical controls and
-labels below are unchanged. Small→Large on original text is an **unexecuted,
-separate follow-up outside this PR**, not a remaining merge requirement.
+labels below are unchanged. Small→Large was unexecuted at PR #84 closure. The
+[subsequent 40-question screen](beam-large-embedding-evaluation.md) now closes that
+separate decision with adoption deferred; it does not replace these prior scores.
 
 After [LongMemEval-S closure](small-default-error-analysis.md#quoted-memory-full-cohort-structural-adoption-2026-10-18),
 use all **20 conversations / 400 questions** in `chats/100K`, called **128K** by the
@@ -487,11 +488,14 @@ cannot establish fact coverage. A November 7 statement remains delivered despite
 the candidate answer choosing competing dates; its assistant-plan provenance
 still does not establish an actual completed event.
 
-The selected future hypothesis is managed Small→Large on original text, targeting
-candidate-200 concrete-incident recall. It remains unexecuted and outside this PR;
-the earlier LongMemEval 463→465 result did not justify its higher cost. The local
+The future hypothesis selected at PR #84 closure was managed Small→Large on
+original text, targeting candidate-200 concrete-incident recall. It was unexecuted
+in that PR; the earlier LongMemEval 463→465 result did not justify its higher cost.
+The local
 follow-up bundle preserves the proposed 40/160 cohorts and fact gates for a later
-bounded decision. No new provider, browser or quality result is claimed here.
+bounded decision. The [subsequent screen](beam-large-embedding-evaluation.md)
+reports that later run separately; this historical analysis adds no provider,
+browser or quality result.
 
 Separately, the approved PR review fix generalizes product guidance from
 `today/yesterday` to `relative dates`, covering tomorrow too. Stored benchmark
