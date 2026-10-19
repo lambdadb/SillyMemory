@@ -14,8 +14,10 @@ Its next-suite recommendation was a selection decision, not the later frozen pai
 ## Evaluation sequence (updated 2026-10-19)
 
 The [completed BEAM report](beam-evaluation.md) now covers 128K/1M/10M baselines
-and bounded follow-ups. This PR closes those decisions; Small→Large remains an
-unexecuted future comparison outside its merge scope.
+and bounded follow-ups closed by PR #84. The subsequent
+[Small/Large 10M screen](beam-large-embedding-evaluation.md) completed all 40
+development questions and deferred adoption because concrete gains coexist with
+losses and higher cost. The conditional remaining 160 and fresh answers were not run.
 
 The historical selection review below is preserved. The October 18 decision was
 to close LongMemEval-S and move to **BEAM**, excluding LongMemEval-M. The initial
