@@ -11,7 +11,7 @@ Measured rows combine quality, final-answer input and cost for the same 500 rele
 question IDs. The explicitly marked Summarize row projects usage and cost from
 the frozen 50-question subset; its accuracy is observed on those 50 only.
 Answer costs use each run's recorded cache categories plus output;
-memory costs are separately reconstructed or explicitly unresolved. Totals exclude
+memory costs use audited receipts, source reconstruction or the marked projection. Totals exclude
 host infrastructure, extra synchronization, retries and evaluation judging.
 Host and direct-provider paths are different experiments, and
 the 95% result is a consumed-cohort regression, not a held-out or actual-host result.
@@ -19,7 +19,7 @@ the 95% result is a consumed-cohort regression, not a held-out or actual-host re
 | Condition, 500 answers or marked projection | Accuracy (observed cohort) | Total final-answer input | Answer generation USD | Memory construction/maintenance + retrieval USD, before storage | Combined USD, before storage |
 | --- | ---: | ---: | ---: | --- | --- |
 | Plain SillyTavern, 32K | 32.8% | 14,028,181 | $30.41 | None | $30.41 |
-| Native Vector Storage, 32K | 34.4% | 14,028,603 | $14.12 | Embedding/indexing not reconstructed | Unresolved; $14.12 answer component only |
+| Native Vector Storage, 32K | 34.4% | 14,028,603 | $14.12 | **$1.04 receipt-priced embeddings** | **$15.16** |
 | Native Summarize, **500-question projection (50 × 10)** | **32% on 50; 500 unmeasured** | **14,049,900 projected** | **$35.46 projected** | **$1,584.74 projected summary maintenance** | **$1,620.21 projected** |
 | Plain SillyTavern, 128K, complete history | 93.0% | 52,591,554 | $131.83 | None | $131.83 |
 | **SillyMemory direct, assembly/refill** | **95.0%** | **2,138,377** | **$5.67** | **$1.85–$2.61 modeled** | **$7.52–$8.28 modeled** |
@@ -126,6 +126,48 @@ input. It shows why the receipt-priced $131.83 must not be advertised as every
 user's full-context bill. Contract, processing-tier, regional and gateway fees,
 unknown failed-request usage and historical invoice rates remain unverified.
 
+## Native Vector Storage: construction and query embeddings
+
+The original archive retains **112,613 successful logical embedding receipts**
+covering all **500 completed vector stages**. They are split between `calls`
+(61,916 receipts, 275 stages) and `calls-empty-input` (50,697 receipts, 225 stages).
+The latter directory is preserved history, not an instruction to count failed
+empty-input requests. The two sets cover distinct completed stages. Each receipt's
+identity, request-body SHA-256 binding, successful status, 1,536 dimensions and
+usage were checked; usage also matches an entry in its worker's provider log.
+Request ordinals are contiguous within every stage. Exactly one final single-input
+request per stage contains that question and identifies its query embedding.
+
+The actual model is `text-embedding-3-small`, through the native vLLM-compatible
+route to the runner's OpenAI bridge. At the current
+[OpenAI Standard rate](https://developers.openai.com/api/docs/models/text-embedding-3-small)
+of **$0.02/M input tokens**, retained usage gives:
+
+| Phase, 500 questions | Successful logical calls | Embedding input tokens | Estimated USD |
+| --- | ---: | ---: | ---: |
+| Construction | 112,113 | 51,927,905 | $1.0385581 |
+| Query embeddings | 500 | 176,560 | $0.0035312 |
+| **Combined memory inference** | **112,613** | **52,104,465** | **$1.0420893** |
+
+Adding unrounded answer generation **$14.1193255** gives **$15.1614148**, or **$15.16**.
+These are provider-reported token counts priced today, not a tokenization proxy or
+invoice reconciliation. One retained successful receipt per logical identity is
+counted; extra recovery/rebuild work and unknown failed-request usage are excluded.
+Repeated provider-log entries are not added again. The 901,641 embedding inputs
+are separate from final-answer input and include 500 query inputs.
+
+The [pinned native backend](https://github.com/SillyTavern/SillyTavern/blob/06bde939fb1e9c4c8d8641d810f0a916b5bce127/src/endpoints/vectors.js#L289)
+uses a local Vectra index for storage and similarity search, so this configuration
+has no separate managed vector-database read/storage charge or Jev charge.
+Local CPU, disk, hosting and retention still consume resources and remain outside
+the service-cost totals for every arm. The 400-character source chunks and
+recent-two-message queries differ from the SillyMemory direct path; the same
+embedding model does not imply identical usage.
+
+The same frozen 50 IDs account for **5,214,430 embedding tokens**, or **$0.1042886**;
+adding their answer usage yields **$1.4871812**, rounded to **$1.49**. No new
+inference, database or host run was required for this audit.
+
 ## LambdaDB: reconstructing cold setup and serving
 
 The archived native producer and dataset were restored offline. All **500 corpus
@@ -198,8 +240,8 @@ For the 95% method, **500 answers + one cold build + 500 queries** cost about
 central illustration is $7.78. Keeping all corpora for a month brings those
 scenarios to **$8.67 / $10.06 / $12.85**. These combine measured answer usage with
 modeled memory costs; they are not the actual incremental bill for the replay.
-Native Vector Storage's direct embedding usage was not reconstructed
-here; its $14.12 is not a complete operational total.
+Native Vector Storage's audited embedding component is $1.04; its $15.16 combined
+estimate has the same exclusions for local host resources and failed requests.
 
 The native Summarize comparison used only a preselected stratified 50-question
 subset. Filtering the retained 95% answers to those exact IDs gives **47/50 (94%)**.
@@ -209,7 +251,7 @@ prompt pipelines contemporaneous or equivalent.
 | Same 50 question IDs | Accuracy | Generative input, answer + maintenance | Answer-generation USD | Construction/maintenance and retrieval USD |
 | --- | ---: | ---: | ---: | --- |
 | Plain 32K, host | 16/50 (32%) | 1,400,832 | $2.86 | None |
-| Native vectors, host | 16/50 (32%) | 1,400,668 | $1.38 | Direct embedding/indexing cost not reconstructed |
+| Native vectors, host | 16/50 (32%) | 1,400,668 | $1.38 | **$0.1043** receipt-priced embeddings; combined **$1.49** |
 | Native Summarize, host | 16/50 (32%) | **62,464,386** | $3.55 | **$158.47** summary maintenance; combined $162.02 |
 | Plain complete history, host | 44/50 (88%) | 5,262,912 | $13.19 | None |
 | **SillyMemory direct, assembly/refill** | **47/50 (94%)** | **213,787** | **$0.57** | **$0.160** modeled cold build + **$0.025–$0.100** queries; combined about **$0.75–$0.83**, before storage |
@@ -361,3 +403,15 @@ All 114 member files were checked against retained bytes. The adjacent
 `memory-cost-comparison-2026-10-19.tar.receipt.json` records size and verification;
 `artifacts/cost-comparison-2026-10-19/manifest.json` indexes file checksums.
 This archive is local-only, not a promise of publicly hosted raw evidence.
+
+The additional native-vector audit is retained at
+`artifacts/native-vector-cost-2026-10-19/native-vector-cost.json`, with per-request
+hashes/usage, a one-off analyzer, pinned native source and the same-date pricing
+snapshot. Its source archive is the unchanged, local-only
+`/Users/steven/Dev/sillymemory-longmemeval-product-comparison/artifacts/archive/product-comparison-final-v4.tar`,
+verified SHA-256 `cf90037b2a5e0b06202b0c4645af47469eb3dc31b850dbff1d4a9287e75ad44a`.
+The audit archive is `artifacts/archive/native-vector-cost-2026-10-19.tar.gz`,
+SHA-256 `957c3c1f022615b1ad8d19251823e3e5b224a35a05762b83c3a747c25aadf2ba`.
+All 13 members were read back and checked; the adjacent `.tar.gz.receipt.json`
+records verification. These details are local-only evidence, not fresh-clone or
+CI dependencies. The earlier cost archive and original source archives are unchanged.
