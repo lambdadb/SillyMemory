@@ -5,6 +5,47 @@ Analysis date: **2026-10-19**. This extends the
 offline reconstruction. No new model or database calls were made. All USD figures
 are current Standard/list-rate estimates, not invoices or controlled cost trials.
 
+## Consolidated LongMemEval-S comparison
+
+This table combines quality, final-answer input and cost for the same 500 released
+question IDs. Answer costs use each run's recorded cache categories plus output;
+memory costs are separately reconstructed or explicitly unresolved. Totals exclude
+host infrastructure, extra synchronization, retries and evaluation judging.
+Host and direct-provider paths are different experiments, and
+the 95% result is a consumed-cohort regression, not a held-out or actual-host result.
+
+| Condition, 500 answers | Accuracy | Total final-answer input | Answer generation USD | Memory construction + 500 queries USD, before storage | Combined USD, before storage |
+| --- | ---: | ---: | ---: | --- | --- |
+| Plain SillyTavern, 32K | 32.8% | 14,028,181 | $30.41 | None | $30.41 |
+| Native Vector Storage, 32K | 34.4% | 14,028,603 | $14.12 | Embedding/indexing not reconstructed | Unresolved; $14.12 answer component only |
+| Plain SillyTavern, 128K, complete history | 93.0% | 52,591,554 | $131.83 | None | $131.83 |
+| SillyMemory Query2, actual host | 82.8% | 2,526,647 | $6.59 | Host-path memory costs not reconstructed | Unresolved; $6.59 answer component only |
+| SillyMemory Query1, actual host | 93.8% | 2,524,361 | $6.58 | Host-path memory costs not reconstructed | Unresolved; $6.58 answer component only |
+| Direct provider, existing packing | 93.8% | 2,158,498 | $5.70 | Not allocated to this control row | Unresolved; $5.70 answer component only |
+| **SillyMemory direct, assembly/refill** | **95.0%** | **2,138,377** | **$5.67** | **$1.85–$2.61 modeled** | **$7.52–$8.28 modeled** |
+
+The direct setup indexes complete histories, searches with the original question,
+and uses native depth100/final50 retrieval with a 4,096-token memory budget and
+source assembly/refill. Answers use `gpt-6.1-sol` with low reasoning; judgments use
+`gpt-4o-2024-08-06` with the frozen upstream prompt. It has no separate generative
+memory extraction, summary or query-rewrite stage; embeddings and Jev inference
+are paid memory work. All host/direct rows share these generator/judge identities,
+but differ in prompts and source partitions as detailed below.
+
+For the 95% row, cold construction is **$1.60**, serving 500 questions is
+**$0.26–$1.02**, and keeping all 500 histories for one month adds **$1.14–$4.57**.
+The resulting **$8.67–$12.85** includes answer generation, construction, queries and
+that month's storage, but excludes extra synchronization, failed attempts and
+judging. These are sensitivity scenarios, not guaranteed billing bounds. The
+historical direct replay reused retrievals; modeled deployment costs are included
+here so that reuse does not appear to make memory free.
+
+The supported input comparison is **95.93% less final-answer input** than the
+complete-history arm, with scores of 95.0% versus 93.0% across the different paths.
+The receipt-priced dollar gap also reflects cache state; it is not a controlled
+warm-cache saving or a speed claim. Native Summarize has only a frozen 50-question
+comparison below and must not be promoted to a 500-question result.
+
 ## Which 95% result is being compared?
 
 The [source-assembly regression](jev-depth-100.md#completed-fresh-source-assembly-answer-regression)
@@ -200,11 +241,11 @@ that these single-question-per-history experiments measure steady-state costs.
 These observations come from the dated [public-source review](memory-benchmark-reference.md),
 not new vendor runs. Their generators, judges, budgets and ingestion differ.
 
-| System | Published/inspected S result | Input-volume evidence | Memory-construction comparison |
+| System | Published/inspected S result | Input-volume evidence | Memory processing and cost evidence |
 | --- | --- | --- | --- |
-| Our direct assembly/refill | 95.0%, 475/500 | 4,277 mean final-answer input; 4,275 median | Exact source reconstruction plus explicit LambdaDB scenarios above; no generative extraction/summary calls |
+| Our direct assembly/refill | 95.0%, 475/500 | 4,277 mean final-answer input; 4,275 median | Modeled construction + 500 queries $1.85–$2.61 before storage; $7.52–$8.28 including answer generation. No generative extraction/summary calls |
 | Exabase M-1 | 96.4% top-50, reported | No run-bound absolute final-answer token total established in that review | Proprietary; no comparable construction bill established |
-| Mem0 | Documentation 94.4%/94.8%; inspected JSONs 93.4%/90.4% | Documentation mean 6,787 tokens/query; not bound to the mismatching saved score files | LLM-extracted memory; complete construction usage not disclosed there. Hosted subscription scenarios below |
+| Mem0 | Documentation 94.4%/94.8%; inspected JSONs 93.4%/90.4% | Documentation mean 6,787 tokens/query; not bound to the mismatching saved score files | Hosted Pro $249/month accommodates the planned 124,333 adds + 500 searches; excludes application answer generation. Starter + overages unresolved; scenarios below are not observed run costs |
 | Hindsight inspected S artifact | 94.6%, 473/500 | About 43.6K mean **retrieved context**, not measured full generation input | Structured memory processing; construction bill not established from the reviewed artifact |
 | Supermemory | Reported 97% with GPT-4o; 84.6% GPT-5; 85.2% Gemini 3 Pro | Top-20 aggregation; no bound input-total artifact established | Derived atomic memories/source relations; comparable ingestion bill not established |
 
