@@ -22,6 +22,9 @@ The [native Insert# sensitivity follow-up](native-tuning-results.md) tests
 whether increasing the built-in retrieval count closes that quality gap.
 The [built-in Summarize comparison](summarize-results.md) measures rolling
 summary fidelity, answer quality and summary-generation overhead separately.
+The [segment-summary comparison](segment-summary-evaluation.md) evaluates independent
+summaries with recent-three plus LLM-selected-two memory against captured Query1
+retrieval on the same 50 LongMemEval-S questions, with fresh paired answers.
 
 The [external benchmark data audit](benchmark-data-audit.md) records pinned
 LongMemEval-S and ConvoMem schemas, local token estimates, question selection and

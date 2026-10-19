@@ -1,0 +1,224 @@
+{
+  "complete": true,
+  "accuracy": {
+    "summary": {
+      "n": 50,
+      "correct": 44,
+      "operationalFailures": [
+        {
+          "id": "bc8a6e93",
+          "reason": "Selected ID is not an older memory"
+        }
+      ],
+      "byType": {
+        "single-session-user": {
+          "n": 7,
+          "correct": 6
+        },
+        "multi-session": {
+          "n": 13,
+          "correct": 11
+        },
+        "single-session-preference": {
+          "n": 3,
+          "correct": 2
+        },
+        "temporal-reasoning": {
+          "n": 13,
+          "correct": 13
+        },
+        "knowledge-update": {
+          "n": 8,
+          "correct": 7
+        },
+        "single-session-assistant": {
+          "n": 6,
+          "correct": 5
+        }
+      },
+      "medianAnswerInput": 3784
+    },
+    "control": {
+      "n": 50,
+      "correct": 47,
+      "operationalFailures": [],
+      "byType": {
+        "single-session-user": {
+          "n": 7,
+          "correct": 7
+        },
+        "multi-session": {
+          "n": 13,
+          "correct": 12
+        },
+        "single-session-preference": {
+          "n": 3,
+          "correct": 1
+        },
+        "temporal-reasoning": {
+          "n": 13,
+          "correct": 13
+        },
+        "knowledge-update": {
+          "n": 8,
+          "correct": 8
+        },
+        "single-session-assistant": {
+          "n": 6,
+          "correct": 6
+        }
+      },
+      "medianAnswerInput": 5056.5
+    }
+  },
+  "paired": {
+    "bothCorrect": [
+      "c5e8278d",
+      "ad7109d1",
+      "dccbc061",
+      "37d43f65",
+      "d52b4f67",
+      "gpt4_59c863d7",
+      "4fd1909e",
+      "gpt4_5501fe77",
+      "195a1a1b",
+      "f35224e0",
+      "681a1674",
+      "91b15a6e",
+      "6c49646a",
+      "bb7c3b45",
+      "078150f1",
+      "a346bb18",
+      "2311e44b_abs",
+      "b46e15ed",
+      "0bc8ad92",
+      "gpt4_61e13b3c",
+      "9a707b81",
+      "gpt4_45189cb4",
+      "eac54adc",
+      "b46e15ee",
+      "9a707b82",
+      "f0853d11",
+      "e4e14d04",
+      "gpt4_2c50253f",
+      "993da5e2",
+      "gpt4_4cd9eba1",
+      "6aeb4375",
+      "184da446",
+      "0e4e4c46",
+      "affe2881",
+      "50635ada",
+      "0ddfec37",
+      "a2f3aa27",
+      "4c36ccef",
+      "58470ed2",
+      "3249768e",
+      "e3fc4d6e",
+      "fca762bc"
+    ],
+    "summaryOnly": [
+      "75f70248",
+      "51c32626"
+    ],
+    "controlOnly": [
+      "bc8a6e93",
+      "gpt4_a56e767c",
+      "d851d5ba",
+      "07741c45",
+      "1903aded"
+    ],
+    "bothWrong": [
+      "09d032c9"
+    ]
+  },
+  "stages": {
+    "summary": {
+      "attempts": 637,
+      "successful": 637,
+      "input": 6027933,
+      "cached": 0,
+      "cacheWrite": 6023565,
+      "output": 347458,
+      "finishReasons": {
+        "stop": 637
+      },
+      "medianHttpMs": 12276,
+      "sumHttpMs": 7818795,
+      "estimatedUsd": 18.5422285
+    },
+    "selection": {
+      "attempts": 50,
+      "successful": 50,
+      "input": 408211,
+      "cached": 0,
+      "cacheWrite": 408061,
+      "output": 3159,
+      "finishReasons": {
+        "stop": 50
+      },
+      "medianHttpMs": 2831,
+      "sumHttpMs": 167714,
+      "estimatedUsd": 1.0520425
+    },
+    "summaryAnswer": {
+      "attempts": 49,
+      "successful": 49,
+      "input": 187369,
+      "cached": 0,
+      "cacheWrite": 181587,
+      "output": 2886,
+      "finishReasons": {
+        "stop": 49
+      },
+      "medianHttpMs": 2248,
+      "sumHttpMs": 131252,
+      "estimatedUsd": 0.4943915
+    },
+    "controlAnswer": {
+      "attempts": 50,
+      "successful": 50,
+      "input": 252119,
+      "cached": 0,
+      "cacheWrite": 246219,
+      "output": 2863,
+      "finishReasons": {
+        "stop": 50
+      },
+      "medianHttpMs": 2140.5,
+      "sumHttpMs": 132783,
+      "estimatedUsd": 0.6559775
+    },
+    "judge": {
+      "attempts": 99,
+      "successful": 99,
+      "input": 19910,
+      "cached": 0,
+      "cacheWrite": 0,
+      "output": 159,
+      "finishReasons": {
+        "stop": 99
+      },
+      "medianHttpMs": 715,
+      "sumHttpMs": 72360,
+      "estimatedUsd": 0.051365
+    }
+  },
+  "pending": [],
+  "undispatched": [
+    "provider/gpt4_59c863d7/summary/judge",
+    "provider/4fd1909e/selection",
+    "provider/gpt4_a56e767c/summary/memory-3"
+  ],
+  "summaries": {
+    "count": 637,
+    "over400Words": 0,
+    "maxWords": 393,
+    "medianMemoryTokens": 2832,
+    "maxMemoryTokens": 2949
+  },
+  "reservation": {
+    "calls": 888,
+    "reservedUsd": 49.70242000000007
+  },
+  "pricing": "Frozen October 19 list-rate estimate; not billed cost; no storage/retrieval deployment costs included."
+}
