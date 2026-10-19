@@ -365,6 +365,103 @@ this run does not justify another model grid or blanket budget increase. The
 local-only `beam1m-current-v1` bundle retains exact sources, receipts, runtime,
 rate card, ten-case review and restoration instructions.
 
+## Full 10M baseline (2026-10-19)
+
+Run all **10 conversations / 200 probes** in pinned `chats/10M`, keeping the same
+Small/Query1/k200/Jev200/final50/ranked4096 policy, recent dialogue, Sol low and
+original GPT-4.1-mini rubric/event alignment as the latest 128K and 1M runs.
+**500K is explicitly excluded**; this is not the complete 2,000-question BEAM.
+No new candidate, tuning, product change or browser test is introduced.
+
+Source histories span 9,540,904–9,769,964 cl100k tokens (median 9,600,227), totaling
+96,139,143 tokens and 702,393 indexed chunks. Flatten the 10M plan/batch/turn/message
+layout in upstream order; retain original bytes, roles, source IDs and probe rules.
+Source IDs are unique. One 244-message batch has no anchor: omit its date fields,
+without borrowing adjacent/event dates. One event probe contains a `--` source-ID
+placeholder; preserve it and exclude the non-ID from structural coverage only.
+Batch reference dates still do not establish message-send or event dates.
+
+| Frozen current-policy cohort | Questions | Mixed /100 | Rubric /100 | Event tau /100 |
+| --- | ---: | ---: | ---: | ---: |
+| Latest 128K, 4096 arm | 400 | 72.67 | 78.34 | 22.35 |
+| 1M | 700 | 68.13 | 71.91 | 26.08 |
+| 10M | 200 | **59.54** | **61.93** | **25.97** |
+
+These are partial-credit metrics, not pass rates. Conversations/questions differ
+between buckets: the descriptive decline does not isolate a causal length effect.
+Do not pool them into an official full-BEAM score. In 10M, 88 answers receive full,
+69 partial and 43 zero rubric credit. Knowledge update is higher than in 1M,
+while multi-session and temporal reasoning are particularly weak.
+
+| Ability | Questions | Rubric mean /100 |
+| --- | ---: | ---: |
+| Knowledge update | 20 | 88.75 |
+| Abstention | 20 | 80.00 |
+| Instruction following | 20 | 78.75 |
+| Information extraction | 20 | 75.00 |
+| Contradiction resolution | 20 | 63.75 |
+| Preference following | 20 | 60.00 |
+| Summarization | 20 | 50.26 |
+| Event ordering | 20 | 49.88 |
+| Temporal reasoning | 20 | 37.50 |
+| Multi-session reasoning | 20 | 35.42 |
+
+Of 1,325 distinct per-question integer source references across 176 probes,
+returned message-body coverage is 194 complete, 36 partial and 1,095 absent;
+delivered coverage is 159 complete, 28 partial and 1,138 absent. None are in
+retained recent dialogue or ambiguous IDs. This is **not necessary-fact recall**:
+annotations may be incomplete or inconsistent. Mean selected memory is 25.31
+chunks / 21.53 messages and 4,066.91 tokens, never exceeding 4,096.
+
+Inspect one lowest-rubric case per ability, numeric chat/ID tie break. Preserve
+all original labels; this ten-case explanation is not a prevalence estimate:
+
+- Retrieval losses: the debugging timeline's 26 annotated sources are all absent
+  from final 50. The optimization summary retrieves only one of nine. The explicit
+  exact-success-rate instruction and the updated Jira 85% target are absent.
+- Delivery loss: AWS $0.11/hour for 500 instances is rank 25 and omitted; neither
+  value reaches selected memory. A one-million Elasticsearch source is rank 28
+  and omitted, while a later 1.8M source is selected. The answer's 2.6M combined
+  count follows that later count plus Solr 800K; the reference expects 1.8M total.
+- Competing evidence: Milvus 2.3.1 reaches the prompt at rank 14, but older 2.2.0
+  records match the question's wording closely and the answer chooses them.
+  This is not simply a missing-reference failure.
+- Interpretation/reference limits: a roadmap deadline is treated as an actual
+  completion date. The heat-equation reference says a target of five problems,
+  not five completed as required by the rubric. The FastAPI abstention reference
+  denies criteria although delivered source discusses performance/alternatives;
+  those considerations still do not prove a final selection. Do not convert these
+  disagreements into manually corrected scores or claim an exhaustive source audit.
+
+Query median/p95 is **1.659/1.979 s**; generation is **6.531/22.998 s**. Their
+per-case sum is 8.155/24.478 s, excluding import, packing, queueing and judging;
+not browser latency or TTFT. Mean generation input is 6,339 tokens (p95 6,838).
+Import, full source verification, queries, packing and remote cleanup together
+finish in 44.14 minutes; that is a corpus-processing phase, not answer latency.
+
+Frozen-rate estimates: generation **$3.718 for 200 answers**, rubric/alignment
+$0.496, initial LambdaDB write/managed embedding $2.894. Query embedding/minimum
+reads add $0.00211; source-verification fetches add a $0.07029 read minimum.
+Native rerank text-volume proxies are $0.248 document-only or $0.295 including
+repeated query text. They are not billing bounds: actual candidate tokens,
+metadata/protocol overhead and physical storage GB-hours remain unavailable.
+These are gross estimates before free allowances, not an invoice or exact total.
+
+All 200 answers, 621 rubric calls and 2,466 event comparisons finish with no
+generation/judge errors, retries or truncations. One initial upsert 429 recovers;
+all 10 owned collections are deleted and absence verified by 404. Exact query,
+source, packing/final-body, phase-lock and upstream score reconstruction checks
+pass. `npm test` passes 380 tests; `npm run check`, `npm run check:release` and
+`npm run check:sdk` pass. Runtime behavior and existing tests are unchanged.
+
+**Close this scale baseline with current defaults unchanged.** Before another
+quality trial, distinguish missing target facts from competing versions and
+reference ambiguity. Broad multi-event retrieval and specific preference/instruction
+delivery provide concrete failure mechanisms; this run alone does not establish
+that increasing budget/candidates or adding a model will fix them. Preserve the
+local-only `beam10m-current-v1` bundle with exact sources, requests, replies,
+locks, runtime, cost assumptions, ten-case review and restoration instructions.
+
 ## Validation and evidence retention
 
 Initial quality screens use 5 diagnostics + 40 fixed comparisons; the final date
@@ -400,6 +497,13 @@ producer revisions, dependency paths and offline restoration commands.
 | `beam-budget4096-8192-v1` | `06980646a852a074128479ed030e72db4648f697e14336c763e960cc0b352993` |
 | `beam-message-diversity-v1` | `8ec2e9210e89a574d63880d8c931a5a1400677ac1254ddea144876ac88ef304f` |
 | `beam1m-current-v1` | `0c72b49c2afd353f471d45892b7282561755755dd4a6270e346c68b8c6cbaa3f` |
+| `beam10m-current-v1` | `1c16bb89318225721e6ee0a7f0bb906877866a0f3265ab0e0b2eed50fb38334c` |
+
+The 10M bundle has 7,523 verified members (313,271,263 bytes), produced at
+`7aa1831356fc26911ba061a8aecd203a4931d106`. Configured-secret scanning and full
+member readback pass. Restore under `artifacts/` and follow
+`beam10m-current-v1/RESTORE.md`; sources, phase locks, runtime and all first-success
+receipts are preserved for offline review. No original evidence was deleted.
 
 The 1M bundle has 20,602 verified members (182,827,887 bytes), produced at
 `ba19e1a45a03c20d5c568e96578d8c51a67dfa42`. Configured-secret scanning and full
