@@ -25,6 +25,12 @@ export function successfulQueryReceipts(receipts, collection) {
         && item.request.pathname.endsWith('/query'));
 }
 
+export async function receiptBody(response) {
+    // Logging must not turn a retryable HTTP status into a JSON parse failure.
+    try { return await response.clone().json(); }
+    catch { return { nonJsonResponse: true }; }
+}
+
 export function recallQuery(owner, scope, text, asOfMicros) {
     assert(Number.isSafeInteger(asOfMicros) && asOfMicros > 0);
     assert(Buffer.byteLength(text) <= 8192, 'Question exceeds the product query limit');
@@ -160,7 +166,7 @@ async function main() {
                 body: options.body ? JSON.parse(options.body) : null };
             const response = await fetch(url, options);
             await writeFile(path.join(root, `http-${String(number).padStart(5, '0')}.json`), JSON.stringify({
-                request, status: response.status, elapsedMs: Date.now() - started, response: await response.clone().json(),
+                request, status: response.status, elapsedMs: Date.now() - started, response: await receiptBody(response),
             }));
             return response;
         } });

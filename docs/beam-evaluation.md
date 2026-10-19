@@ -112,7 +112,7 @@ provider routing, memory representation, or a controlled vendor win.
 | **Overall** | **400** | **92.08** | **89.00** |
 
 The largest category gaps are contradiction resolution (−10.31 points), knowledge
-update (−6.25) and information extraction (−6.09). Event ordering scores 100 in
+update (−6.25) and information extraction (−6.09), using unrounded scores. Event ordering scores 100 in
 both runs. Evaluation annotations explicitly supply its topics and supply strong
 hints in several other categories; these results do not establish annotation-blind
 memory quality or perfect independent chronology reconstruction. No hints-off
@@ -207,7 +207,9 @@ the later maintained runner has the same source hash. PR review additionally
 corrects offline repacking to select successful query receipts after a transient
 retry, retaining failed attempts in the ledger. Its regression and replay of all
 400 saved successful receipts pass; this run had no retries. The final JavaScript
-suite passes 389 tests, with four Python policy regressions also passing.
+suite passes 390 tests, with four Python policy regressions also passing. Receipt
+logging also preserves non-JSON memory-service errors without changing their HTTP
+retry classification; its synthetic test confirms the original body remains readable.
 
 ## Decision and scope (2026-10-19)
 

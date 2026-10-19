@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { sourceDocuments, recallQuery, packContext, serializeContext, evidenceTokens, successfulQueryReceipts } from '../scripts/beam-past-memory.mjs';
+import { sourceDocuments, recallQuery, packContext, serializeContext, evidenceTokens, successfulQueryReceipts, receiptBody } from '../scripts/beam-past-memory.mjs';
 
 const conversation = { id: 'synthetic', userIdentity: 'synthetic-user', userTraits: {}, messages: [{
     sourceId: 'source-1', ordinal: 0, content: 'The older account limit is 15.',
@@ -22,6 +22,16 @@ test('BEAM repacking selects successful attempts without counting retries as que
     const all = [failed, first, other, secondFailed, second];
     assert.deepEqual(successfulQueryReceipts(all, 'owned'), [first, second]);
     assert.equal(all.length, 5); // Failed attempts remain in the original ledger.
+});
+
+test('BEAM receipt logging preserves non-JSON HTTP errors and the original response body', async () => {
+    const busy = new Response('<html>busy</html>', { status: 503 });
+    assert.deepEqual(await receiptBody(busy), { nonJsonResponse: true });
+    assert.equal(busy.status, 503);
+    assert.equal(await busy.text(), '<html>busy</html>');
+    const success = Response.json({ docs: [] });
+    assert.deepEqual(await receiptBody(success), { docs: [] });
+    assert.deepEqual(await success.json(), { docs: [] });
 });
 
 test('BEAM recall applies the exact microsecond cutoff to both components', () => {
