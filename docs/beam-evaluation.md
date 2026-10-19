@@ -197,6 +197,14 @@ all original receipts remain available without new provider calls. The producing
 public base is `cbd27ab470e67af105b2bd56fd3f642c6702cf17` plus the archived
 experiment source snapshots; original historical bundles remain unchanged.
 
+Post-run self-review hardens two maintained-runner failure paths: classify HTTP
+account/transient failures before parsing a possibly non-JSON response, and reject
+an existing protocol before rewriting inputs. Four standard-library Python
+regressions run in CI. This changes no successful benchmark request or label and
+makes no new provider calls. The archive retains the exact executed producer;
+use its restoration instructions for historical verification rather than assume
+the later maintained runner has the same source hash.
+
 ## Decision and scope (2026-10-19)
 
 PR #84 closed the 128K, 1M and 10M baselines and bounded follow-up comparisons.

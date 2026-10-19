@@ -52,7 +52,25 @@ def micros(moment):
     return (delta.days * 86400 + delta.seconds) * 1_000_000 + delta.microseconds
 
 
+def model_reply(response, error_type):
+    # Account refusals must stop the run even when a gateway returns HTML.
+    # Preserve upstream status classification before attempting JSON decoding.
+    if response.is_error:
+        raise error_type(f"OpenAI returned HTTP {response.status_code}",
+                         retryable=response.status_code == 429 or response.status_code >= 500,
+                         status=response.status_code)
+    data = response.json()
+    if not isinstance(data, dict):
+        raise error_type("OpenAI returned a non-object response", retryable=True)
+    if data.get("error"):
+        raise error_type("OpenAI returned an error object", retryable=False)
+    if not isinstance(data.get("choices"), list) or not data["choices"]:
+        raise error_type("OpenAI returned no choices", retryable=False)
+    return data
+
+
 def prepare(root, dataset, upstream_files):
+    assert not (root / "protocol-lock.json").exists(), "Do not overwrite an existing frozen run"
     import pyarrow.parquet as parquet
     assert sha((root / "100k.parquet").read_bytes()) == PARQUET_SHA256
     rows = parquet.read_table(root / "100k.parquet").to_pylist()
@@ -96,7 +114,6 @@ def prepare(root, dataset, upstream_files):
             "differences": ["SillyMemory source chunks, storage, retrieval and context serialization",
                             "OpenAI direct transport instead of OpenRouter; equivalent native request parameters",
                             "Batch dates retain their source precision; no synthetic send-time labels"]}
-    assert not (root / "protocol-lock.json").exists(), "Do not overwrite an existing frozen run"
     save(root / "protocol-lock.json", lock)
     import verify
     problems = verify.verify_run(root / "upstream/past/beam/results/100k")
@@ -173,19 +190,9 @@ async def score(root, dataset, env, lock):
         call_started = time.monotonic()
         try:
             response = await http.post("/chat/completions", json=native)
-            entry.update(status=response.status_code, response=response.json(), elapsedMs=(time.monotonic() - call_started) * 1000)
-            save(calls / f"{number:05d}.json", entry)
-            if response.is_error:
-                raise llm.ModelError(f"OpenAI returned HTTP {response.status_code}",
-                                     retryable=response.status_code == 429 or response.status_code >= 500,
-                                     status=response.status_code)
-            data = entry["response"]
-            if not isinstance(data, dict):
-                raise llm.ModelError("OpenAI returned a non-object response", retryable=True)
-            if data.get("error"):
-                raise llm.ModelError("OpenAI returned an error object", retryable=False)
-            if not isinstance(data.get("choices"), list) or not data["choices"]:
-                raise llm.ModelError("OpenAI returned no choices", retryable=False)
+            entry.update(status=response.status_code, elapsedMs=(time.monotonic() - call_started) * 1000)
+            data = model_reply(response, llm.ModelError)
+            entry["response"] = data
             usage = data["usage"]
             # Gross upper-rate estimate, separate from actual cached-token billing.
             estimate = (usage["prompt_tokens"] * 0.5 + usage["completion_tokens"] * 1.8) / 1e6
