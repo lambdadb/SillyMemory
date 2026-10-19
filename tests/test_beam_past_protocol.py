@@ -1,7 +1,10 @@
 import importlib.util
+import json
+from copy import deepcopy
 from pathlib import Path
 import unittest
 from tempfile import TemporaryDirectory
+from unittest.mock import patch
 
 spec = importlib.util.spec_from_file_location(
     "beam_past_protocol", Path(__file__).resolve().parents[1] / "scripts/beam-past-protocol.py")
@@ -29,6 +32,28 @@ class Response:
 
 
 class TransportPolicy(unittest.TestCase):
+    def test_lock_rejects_metadata_that_disagrees_with_executed_policy(self):
+        files, upstream = {"required-runtime.js": "digest"}, {"loader.py": "digest"}
+        original = {**protocol.protocol_settings(), "files": files, "upstreamFiles": upstream}
+        with TemporaryDirectory() as directory, patch.object(protocol, "source_file_hashes", return_value=files):
+            root = Path(directory)
+            (root / "protocol-lock.json").write_text(json.dumps(original))
+            self.assertEqual(protocol.check_lock(root, upstream)["recall"]["maxTokens"], 8000)
+            changed = deepcopy(original)
+            changed["recall"]["maxTokens"] = 4000
+            (root / "protocol-lock.json").write_text(json.dumps(changed))
+            with self.assertRaises(AssertionError):
+                protocol.check_lock(root, upstream)
+
+    def test_lock_cannot_drop_a_required_file_from_its_manifest(self):
+        files, upstream = {"required-runtime.js": "digest"}, {"loader.py": "digest"}
+        changed = {**protocol.protocol_settings(), "files": {}, "upstreamFiles": upstream}
+        with TemporaryDirectory() as directory, patch.object(protocol, "source_file_hashes", return_value=files):
+            root = Path(directory)
+            (root / "protocol-lock.json").write_text(json.dumps(changed))
+            with self.assertRaises(AssertionError):
+                protocol.check_lock(root, upstream)
+
     def test_existing_protocol_is_rejected_before_inputs_are_rewritten(self):
         with TemporaryDirectory() as directory:
             root = Path(directory)

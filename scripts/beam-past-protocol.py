@@ -69,6 +69,36 @@ def model_reply(response, error_type):
     return data
 
 
+def protocol_settings():
+    return {"pastRevision": PAST_REVISION, "datasetRevision": DATA_REVISION,
+            "parquetSha256": PARQUET_SHA256,
+            "scope": "20 conversations / 400 questions; one answer per question, no tuning or repeats",
+            "model": MODEL, "reasoningEffort": "none", "transport": "direct OpenAI Chat Completions",
+            "recall": {"limit": 100, "maxTokens": 8000,
+                       "evidenceAccounting": "sum ceil((content code points + source-excerpt code points)/4) per result; metadata excluded",
+                       "serializedTokenDiagnostic": "cl100k_base / tiktoken JS 1.0.22"},
+            "bounds": {"wallHours": 8, "modelAttempts": 10000, "modeledModelUSD": 25,
+                       "memoryOperations": 10000},
+            "question": "How does SillyMemory score under Past's annotation-assisted public evaluation protocol?",
+            "decision": "Report the frozen full-cohort comparison; no runtime/default promotion or optimization in this run.",
+            "differences": ["SillyMemory source chunks, storage, retrieval and context serialization",
+                            "OpenAI direct transport instead of OpenRouter; equivalent native request parameters",
+                            "Batch dates retain their source precision; no synthetic send-time labels"]}
+
+
+def source_file_hashes(root):
+    files = {str(path.relative_to(REPO)): sha(path.read_bytes()) for path in [
+        Path(__file__), REPO / "scripts/beam-past-memory.mjs", REPO / "src/client.js",
+        REPO / "src/chunking.js", REPO / "vendor/lambdadb.js", root / "memory-input.json",
+        root / "100k.parquet", root / "dataset-cache/100k.json", root / "dataset-cache/100k.revision",
+    ]}
+    tokenizer = root / "tokenizer/node_modules/tiktoken"
+    for name in ["package.json", "tiktoken.cjs", "tiktoken_bg.cjs", "tiktoken_bg.wasm"]:
+        path = tokenizer / name
+        files[str(path.relative_to(REPO))] = sha(path.read_bytes())
+    return files
+
+
 def prepare(root, dataset, upstream_files):
     assert not (root / "protocol-lock.json").exists(), "Do not overwrite an existing frozen run"
     import pyarrow.parquet as parquet
@@ -92,28 +122,7 @@ def prepare(root, dataset, upstream_files):
     } for c in conversations]}
     input_path = root / "memory-input.json"
     save(input_path, memory_input)
-    files = {str(path.relative_to(REPO)): sha(path.read_bytes()) for path in [
-        Path(__file__), REPO / "scripts/beam-past-memory.mjs", REPO / "src/client.js",
-        REPO / "src/chunking.js", REPO / "vendor/lambdadb.js", input_path,
-    ]}
-    tokenizer = root / "tokenizer/node_modules/tiktoken"
-    for name in ["package.json", "tiktoken.cjs", "tiktoken_bg.cjs", "tiktoken_bg.wasm"]:
-        path = tokenizer / name
-        files[str(path.relative_to(REPO))] = sha(path.read_bytes())
-    lock = {"pastRevision": PAST_REVISION, "datasetRevision": DATA_REVISION,
-            "parquetSha256": PARQUET_SHA256, "upstreamFiles": upstream_files, "files": files,
-            "scope": "20 conversations / 400 questions; one answer per question, no tuning or repeats",
-            "model": MODEL, "reasoningEffort": "none", "transport": "direct OpenAI Chat Completions",
-            "recall": {"limit": 100, "maxTokens": 8000,
-                       "evidenceAccounting": "sum ceil((content code points + source-excerpt code points)/4) per result; metadata excluded",
-                       "serializedTokenDiagnostic": "cl100k_base / tiktoken JS 1.0.22"},
-            "bounds": {"wallHours": 8, "modelAttempts": 10000, "modeledModelUSD": 25,
-                       "memoryOperations": 10000},
-            "question": "How does SillyMemory score under Past's annotation-assisted public evaluation protocol?",
-            "decision": "Report the frozen full-cohort comparison; no runtime/default promotion or optimization in this run.",
-            "differences": ["SillyMemory source chunks, storage, retrieval and context serialization",
-                            "OpenAI direct transport instead of OpenRouter; equivalent native request parameters",
-                            "Batch dates retain their source precision; no synthetic send-time labels"]}
+    lock = {**protocol_settings(), "upstreamFiles": upstream_files, "files": source_file_hashes(root)}
     save(root / "protocol-lock.json", lock)
     import verify
     problems = verify.verify_run(root / "upstream/past/beam/results/100k")
@@ -132,9 +141,8 @@ def environment(path):
 
 def check_lock(root, upstream_files):
     lock = json.loads((root / "protocol-lock.json").read_text())
-    assert lock["upstreamFiles"] == upstream_files
-    for name, digest in lock["files"].items():
-        assert sha((REPO / name).read_bytes()) == digest, f"Frozen file changed: {name}"
+    expected = {**protocol_settings(), "upstreamFiles": upstream_files, "files": source_file_hashes(root)}
+    assert lock == expected, "Frozen protocol settings or required source files changed"
     return lock
 
 

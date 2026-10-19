@@ -210,6 +210,10 @@ retry, retaining failed attempts in the ledger. Its regression and replay of all
 suite passes 390 tests, with four Python policy regressions also passing. Receipt
 logging also preserves non-JSON memory-service errors without changing their HTTP
 retry classification; its synthetic test confirms the original body remains readable.
+The final runner reconstructs the complete canonical protocol and required file
+manifest before accepting a lock, preventing edited settings or omitted hashes
+from misreporting execution. Two corruption regressions bring the Python suite to
+six tests. These post-run guard changes do not rerun or relabel the benchmark.
 
 ## Decision and scope (2026-10-19)
 
