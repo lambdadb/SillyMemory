@@ -1,0 +1,112 @@
+{
+  "version": "segment-summary-400chars-v1",
+  "historicalSha256": "b79acac6ea2d7372089e82d34d4fa1032c84eb1eae77e0d7fee98d722d7a51ae",
+  "datasetSha256": "d6f21ea9d60a0d56f34a05b609c79c88a451d2ae03597821ea3d5a9678c3a442",
+  "baselineSha256": "0d22be5e49e13ae453e9f3effdc7857583bbbc2a0032db63d0d32b7d71a181be",
+  "judgeSha256": "ecce9c4c79dc89d99534ac17b383a5cbb5b9f0c69ee98adaf0684742e3d95251",
+  "tokenizer": {
+    "name": "tiktoken",
+    "version": "1.0.22",
+    "encoding": "o200k_base",
+    "files": [
+      {
+        "name": "package.json",
+        "sha256": "aa9ac5822add55718d3f6cff328c2b06e9226db770947575fd4e10868caad02d"
+      },
+      {
+        "name": "tiktoken.cjs",
+        "sha256": "0cd4b1d0482281f0afea13558f440af06b8cf329fdd83e3950c504c7684b5e31"
+      },
+      {
+        "name": "tiktoken_bg.cjs",
+        "sha256": "85b2bfcc1cab757b81b3ebfd200a188175c20ce9c9f7ccd340dfa479813d1205"
+      },
+      {
+        "name": "tiktoken_bg.wasm",
+        "sha256": "dedd9a7b5d8d98b44448bedb371ade1c5327f7bb5dd9effe159da816473a415f"
+      }
+    ]
+  },
+  "codeSha256": "ff0d0820696575f2dec7a05deed2b94493740a678cf25315bb51af52e8c7a4d4",
+  "ids": [
+    "07741c45",
+    "078150f1",
+    "09d032c9",
+    "0bc8ad92",
+    "0ddfec37",
+    "0e4e4c46",
+    "184da446",
+    "1903aded",
+    "195a1a1b",
+    "2311e44b_abs",
+    "3249768e",
+    "37d43f65",
+    "4c36ccef",
+    "4fd1909e",
+    "50635ada",
+    "51c32626",
+    "58470ed2",
+    "681a1674",
+    "6aeb4375",
+    "6c49646a",
+    "75f70248",
+    "91b15a6e",
+    "993da5e2",
+    "9a707b81",
+    "9a707b82",
+    "a2f3aa27",
+    "a346bb18",
+    "ad7109d1",
+    "affe2881",
+    "b46e15ed",
+    "b46e15ee",
+    "bb7c3b45",
+    "bc8a6e93",
+    "c5e8278d",
+    "d52b4f67",
+    "d851d5ba",
+    "dccbc061",
+    "e3fc4d6e",
+    "e4e14d04",
+    "eac54adc",
+    "f0853d11",
+    "f35224e0",
+    "fca762bc",
+    "gpt4_2c50253f",
+    "gpt4_45189cb4",
+    "gpt4_4cd9eba1",
+    "gpt4_5501fe77",
+    "gpt4_59c863d7",
+    "gpt4_61e13b3c",
+    "gpt4_a56e767c"
+  ],
+  "summaryCalls": 637,
+  "selectionCalls": 50,
+  "answerCalls": 50,
+  "judgeCalls": 149,
+  "segmentMessages": 40,
+  "summaryMaxCharacters": 400,
+  "characterUnit": "Unicode code points including whitespace and punctuation; deterministic prefix cap, raw output retained",
+  "recentMessages": 4,
+  "recentSummaries": 3,
+  "olderSelections": 2,
+  "memoryTokens": 4096,
+  "generator": "gpt-6.1-sol",
+  "reasoning": "low",
+  "judge": "jev-1.13.0",
+  "judgeType": "noul",
+  "judgeThreshold": 0.5,
+  "concurrency": 4,
+  "limits": {
+    "calls": 886,
+    "reservedUsd": 60
+  },
+  "durationMs": 7200000,
+  "pricingReservation": {
+    "generatorInputPerMillion": 2.5,
+    "generatorOutputPerMillion": 10,
+    "judgeInputPerMillion": 0.042,
+    "judgeOutputPerMillion": 0
+  },
+  "notes": "Only 400-character summaries/selection/answers are newly generated. Saved 400-word and historical Query1 answers are rejudged, never regenerated. Final incomplete segment is flushed at the evaluation checkpoint. Invalid selections/budget overflow count as failed cases without retry. Not a production replica or host latency measurement."
+}
