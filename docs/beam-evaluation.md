@@ -203,7 +203,11 @@ an existing protocol before rewriting inputs. Four standard-library Python
 regressions run in CI. This changes no successful benchmark request or label and
 makes no new provider calls. The archive retains the exact executed producer;
 use its restoration instructions for historical verification rather than assume
-the later maintained runner has the same source hash.
+the later maintained runner has the same source hash. PR review additionally
+corrects offline repacking to select successful query receipts after a transient
+retry, retaining failed attempts in the ledger. Its regression and replay of all
+400 saved successful receipts pass; this run had no retries. The final JavaScript
+suite passes 389 tests, with four Python policy regressions also passing.
 
 ## Decision and scope (2026-10-19)
 

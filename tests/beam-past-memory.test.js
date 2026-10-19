@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { sourceDocuments, recallQuery, packContext, serializeContext, evidenceTokens } from '../scripts/beam-past-memory.mjs';
+import { sourceDocuments, recallQuery, packContext, serializeContext, evidenceTokens, successfulQueryReceipts } from '../scripts/beam-past-memory.mjs';
 
 const conversation = { id: 'synthetic', userIdentity: 'synthetic-user', userTraits: {}, messages: [{
     sourceId: 'source-1', ordinal: 0, content: 'The older account limit is 15.',
@@ -11,6 +11,18 @@ const conversation = { id: 'synthetic', userIdentity: 'synthetic-user', userTrai
     author: { role: 'user', name: 'User' }, timestamp: '2024-01-01T12:00:00.000002Z',
     timeMicros: 1704110400000002, turnId: 'original-2',
 }] };
+
+test('BEAM repacking selects successful attempts without counting retries as questions', () => {
+    const receipt = (collection, status, question) => ({ status, request: {
+        pathname: `/projects/project/collections/${collection}/query`, body: { question },
+    } });
+    const failed = receipt('owned', 429, 'first'), first = receipt('owned', 200, 'first');
+    const secondFailed = receipt('owned', 503, 'second'), second = receipt('owned', 200, 'second');
+    const other = receipt('other', 200, 'first');
+    const all = [failed, first, other, secondFailed, second];
+    assert.deepEqual(successfulQueryReceipts(all, 'owned'), [first, second]);
+    assert.equal(all.length, 5); // Failed attempts remain in the original ledger.
+});
 
 test('BEAM recall applies the exact microsecond cutoff to both components', () => {
     const { query, options } = recallQuery('aa', 'bb', 'account limit', 1704110400000001);

@@ -19,6 +19,12 @@ export const evidenceTokens = results => results.reduce((sum, result) => sum + M
         + (source.excerpts || []).reduce((m, excerpt) => m + Array.from(excerpt).length, 0), 0)
 ) / 4), 0);
 
+export function successfulQueryReceipts(receipts, collection) {
+    return receipts.filter(item => item.status === 200
+        && item.request.pathname.includes(`/collections/${collection}/`)
+        && item.request.pathname.endsWith('/query'));
+}
+
 export function recallQuery(owner, scope, text, asOfMicros) {
     assert(Number.isSafeInteger(asOfMicros) && asOfMicros > 0);
     assert(Buffer.byteLength(text) <= 8192, 'Question exceeds the product query limit');
@@ -115,7 +121,7 @@ async function main() {
         for (const conversation of input.conversations) {
             const owned = state.owned.find(item => item.conversationId === conversation.id);
             const docs = sourceDocuments(conversation, owned.owner, owned.scope);
-            const queries = receipts.filter(item => item.request.pathname.includes(`/collections/${owned.collection}/`) && item.request.pathname.endsWith('/query'));
+            const queries = successfulQueryReceipts(receipts, owned.collection);
             assert.equal(queries.length, conversation.questions.length);
             const recalls = conversation.questions.map((question, i) => {
                 const receipt = queries[i], expected = recallQuery(owned.owner, owned.scope, question.text, question.asOfMicros);
