@@ -150,7 +150,7 @@ test('a timestamp change during asynchronous selection cannot deliver the old pr
     snap.messages[0].recordedAt = '2024-01-01T00:00:00.000Z';
     const annotating = new Promise(resolve => { started = resolve; });
     const pending = s.engine.retrieve(snap, { ...config, budget: 2000 }, async text => {
-        if (!release && text.includes('[Conversation timestamp:')) { started(); await new Promise(resolve => { release = resolve; }); }
+        if (!release && text.includes(', sent:')) { started(); await new Promise(resolve => { release = resolve; }); }
         return text.length;
     }, () => current);
     await annotating; current = false; release();

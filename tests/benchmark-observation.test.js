@@ -5,14 +5,17 @@ const doc = (id, message) => ({ id, message, chunk: 0, scope: 'scope', owner: 'o
 test('diagnostics separate invalid hits, duplicates, unselected sources and final delivery', () => {
     const a = doc('a', 1), b = doc('b', 2), c = doc('c', 3);
     const trace = { budget: 800, prepared: { docs: [a, b, c] }, queries: [{ query: 'q1', hits: [{ ...a, message: 999 }, { ...b, revision: 'stale' }] }, { query: 'q2', hits: [a, b, c] }],
-        result: { passages: [a, b], tokens: 700, messages: [{ mes: 'packed excerpts', is_user: true }] } };
-    const request = { messages: [{ role: 'user', content: 'packed excerpts' }] };
+        result: { passages: [a, b], tokens: 700, messages: [{ mes: 'user excerpt', is_user: true }, { mes: 'assistant excerpt', is_user: false }] } };
+    const archive = '[Recalled conversation excerpts]\nuser excerpt\nassistant excerpt';
+    const request = { messages: [{ role: 'user', content: archive }] };
     const result = retrievalDiagnostics(trace, request);
     assert.deepEqual(result.queries[0].valid, [{ message: 1, chunk: 0 }]);
     assert.equal(result.uniqueValidCandidates, 3); assert.equal(result.queries[0].invalid, 1);
     assert.deepEqual(result.unselectedValidCandidates, [{ message: 3, chunk: 0 }]);
     assert.equal(result.preparedMessages, 1); assert.equal(result.deliveredMessages, 1);
-    assert.equal(retrievalDiagnostics(trace, { messages: [{ role: 'assistant', content: 'packed excerpts' }] }).deliveredMessages, 0);
+    assert.equal(result.sourceExcerpts, 2);
+    assert.equal(retrievalDiagnostics(trace, { messages: [{ role: 'assistant', content: archive }] }).deliveredMessages, 0);
+    assert.equal(retrievalDiagnostics(trace, { messages: [{ role: 'user', content: '[Recalled conversation excerpts]\nuser excerpt' }] }).deliveredMessages, 0);
     assert.throws(() => retrievalDiagnostics({ ...trace, result: { ...trace.result, tokens: 801 } }, request), /limit/);
     assert.throws(() => retrievalDiagnostics({ ...trace, result: { ...trace.result, passages: [{ ...a, text: 'stale' }] } }, request), /valid candidate/);
 });

@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { hostTimestamp } from '../src/time.js';
+import { MEMORY_GUIDANCE } from '../src/context.js';
+import { hostTimestamp, SENT_GUIDANCE } from '../src/time.js';
 import { capture, fingerprint, documents, selectPackedMemory, memoryMessages, packedMemoryMessages } from '../src/memory.js';
 
 const stamp = '2024-02-29T12:34:56.123Z';
@@ -32,26 +33,55 @@ test('every chunk inherits source time separately from text and timestamp edits 
     const dated = original.docs.filter(d => d.message === 0);
     assert(dated.length > 1);
     assert(dated.every(d => d.conversationTimestamp === stamp && d.timestampSource === 'host_message'));
+    assert(dated.every(d => d.conversationTimeContext === "Message sent at 2024-02-29T12:34:56.123Z (UTC), supplied by the host; not an event date. UTC alone does not establish the speaker's local date."));
     assert.equal(dated.map(d => d.text).join(''), source[0].mes);
     assert(!('conversationTimestamp' in original.docs.find(d => d.message === 1)));
+    assert(!('conversationTimeContext' in original.docs.find(d => d.message === 1)));
     source[0].send_date = '2024-03-01T00:00:00Z';
     const second = capture(context(source)), changed = await documents(second, 'owner', { ...config, chunkChars: 200 });
     assert.notEqual(fingerprint(first), fingerprint(second));
     assert(changed.docs.filter(d => d.message === 0).every(d => !dated.some(old => old.id === d.id)));
+    assert(changed.docs.filter(d => d.message === 0).every(d => d.conversationTimeContext.includes('2024-03-01T00:00:00.000Z') && !d.conversationTimeContext.includes(stamp)));
     assert.deepEqual(capture(context(JSON.parse(JSON.stringify(source)))), second);
+});
+
+test('UTC sent time preserves local-day ambiguity across the date line', async () => {
+    const sent = '2024-02-29T23:30:00.000Z';
+    const localDate = timeZone => {
+        const parts = new Intl.DateTimeFormat('en', { timeZone, year: 'numeric', month: '2-digit', day: '2-digit' })
+            .formatToParts(new Date(sent));
+        return ['year', 'month', 'day'].map(type => parts.find(part => part.type === type).value).join('-');
+    };
+    assert.equal(localDate('Pacific/Honolulu'), '2024-02-29');
+    assert.equal(localDate('Pacific/Kiritimati'), '2024-03-01');
+    const source = chat();
+    source[0] = { ...source[0], send_date: sent, mes: 'Yesterday I visited the garden.' };
+    const { docs } = await documents(capture(context(source)), 'owner', config);
+    assert.equal(docs[0].conversationTimestamp, sent);
+    for (const render of [memoryMessages, packedMemoryMessages]) {
+        const recalled = render([docs[0]])[0].mes;
+        assert(recalled.includes(`, sent: ${sent}]`));
+        assert(recalled.endsWith(source[0].mes));
+        assert(MEMORY_GUIDANCE.includes('only if the local conversation date is known; UTC alone is insufficient'));
+        assert(MEMORY_GUIDANCE.includes('Otherwise keep date ambiguity'));
+        assert(!recalled.includes(SENT_GUIDANCE));
+    }
 });
 
 test('selection budgets full dated excerpts and rejects forged, missing and stale remote times', async () => {
     const { docs } = await documents(capture(context(chat())), 'owner', config);
     const dated = docs[0], plain = memoryMessages([{ ...dated, conversationTimestamp: undefined }])[0].mes;
     const full = memoryMessages([dated])[0].mes;
-    assert(full.startsWith('[Past conversation excerpt: user "User", message 1, passage 1]\n'));
-    assert(full.includes('source=host_message; UTC, not story/event date; original local timezone unknown'));
+    assert(full.startsWith('[Past conversation excerpt: user "User", message 1, passage 1, sent: 2024-02-29T12:34:56.123Z]\n'));
+    assert(!full.includes(SENT_GUIDANCE));
+    assert(!full.includes('source=host_message'));
     assert(full.endsWith('The treaty was signed in Frostmonth, year 812.'));
     assert.equal((await selectPackedMemory([dated], docs, count(full), count)).text, full);
     assert.equal((await selectPackedMemory([dated], docs, count(full) - 1, count)).text, '');
     assert.equal((await selectPackedMemory([dated], docs, count(plain), count)).text, '');
     for (const bad of [{ ...dated, conversationTimestamp: undefined }, { ...dated, timestampSource: 'session' },
+        { ...dated, conversationTimeContext: undefined },
+        { ...dated, conversationTimeContext: 'Event occurred on 2099-01-01.' },
         { ...dated, conversationTimestamp: '2099-01-01T00:00:00.000Z' }]) {
         assert.equal((await selectPackedMemory([bad], docs, 2000, count)).text, '');
         assert.equal((await selectPackedMemory([bad, dated], docs, 2000, count)).text, full);
@@ -72,4 +102,31 @@ test('identical bodies with distinct known or unknown times are not collapsed', 
     const packed = packedMemoryMessages([docs[0], same]);
     assert.equal(packed.length, 1); assert(packed[0].mes.includes('1:1, 2:1'));
     assert.equal(packed[0].mes.split(stamp).length, 2);
+});
+
+test('sent headers preserve source clocks while interpretation stays in system guidance', async () => {
+    const source = chat(); source[1].send_date = '2024-03-01T00:00:00Z';
+    const { docs } = await documents(capture(context(source)), 'owner', config);
+    const before = structuredClone(docs);
+    for (const render of [memoryMessages, packedMemoryMessages]) {
+        const result = render(docs), text = result.map(m => m.mes).join('\n');
+        assert.equal(text.split(SENT_GUIDANCE).length - 1, 0);
+        assert.equal(MEMORY_GUIDANCE.split(SENT_GUIDANCE).length - 1, 1);
+        assert.equal(text.split(', sent:').length - 1, 2);
+        assert(result[0].mes.startsWith('[Past conversation excerpt: user "User", message 1, passage 1, sent: 2024-02-29T12:34:56.123Z]\n'));
+        assert(result[1].mes.startsWith('[Past conversation excerpt: assistant "Mira", message 2, passage 1, sent: 2024-03-01T00:00:00.000Z]\n'));
+        assert(result.every(m => m.mes.endsWith(docs.find(d => d.message === m.index).text)));
+        assert(!result[2].mes.includes(', sent:'));
+        assert(!render([docs[1]])[0].mes.includes(SENT_GUIDANCE));
+        assert(!render([docs[2]])[0].mes.includes(SENT_GUIDANCE));
+        assert.deepEqual(render([]), []);
+    }
+    assert.deepEqual(docs, before);
+    const text = packedMemoryMessages(docs).map(m => m.mes).join('\n');
+    const countWithGuidance = text => count(MEMORY_GUIDANCE + '\n' + text);
+    const budget = countWithGuidance(text);
+    const selected = await selectPackedMemory(docs, docs, budget, countWithGuidance);
+    assert.equal(selected.tokens, budget); assert.equal(selected.text, text);
+    const short = await selectPackedMemory(docs, docs, budget - 1, countWithGuidance);
+    assert(short.tokens <= budget - 1); assert(short.passages.length < docs.length);
 });

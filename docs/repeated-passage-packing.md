@@ -5,42 +5,45 @@
 > Reproduction commands below require their recorded producer; see
 > [evidence retention](evidence-retention.md) for archives and recovery.
 
-The runtime now renders identical selected excerpts once, retaining all selected
-source coordinates, and uses the saved memory budget for additional distinct
-retrieved passages. No setting or collection migration is required.
+The runtime renders identical selected excerpts once, retaining their selected
+source coordinates. Admission now follows retrieval order using the cheaper final
+assembled or separate layout; there is no preliminary whole-passage source floor
+or distinct-content refill pass. See [source assembly](source-assembly.md) for the
+current admission contract. No setting or collection migration is required.
 
-The motivating Korean quotation failure had both the quoted promise and its
-signature in the search results. At the effective 320-token budget, two copies of
-the same filler displaced the signature. Packing keeps the original four source
-passages and adds the signature: 295 tokens without attribution becomes 266 tokens
+At the original packing adoption, the motivating Korean quotation failure had both
+the quoted promise and its signature in the search results. At the effective 320-token budget, two copies of
+the same filler displaced the signature. That historical policy kept four source
+passages and added the signature: 295 tokens without attribution became 266 tokens
 with attribution. These counts include the rendered labels, using the pinned host
 tokenizer; they are not provider billing totals.
 
 ## Selection and source preservation
 
-1. Run the existing rank-ordered whole-passage selection with the same budget.
-2. Group selected passages only when owner, scope, native role, speaker and exact
-   body match. Render the complete escaped body once and list every selected
-   one-based `message:passage` coordinate.
-3. Place a repeated group at its latest selected occurrence. An intervening
-   conflicting statement stays before that group, and the label exposes the
-   earlier occurrence too. This preserves source evidence, but is not a guarantee
-   that a model interprets repetition or conversation chronology correctly.
-4. Adopt the grouped rendering only if its complete token count is smaller.
-   Scan the same validated hits in ranking order to add distinct content that
-   fits. Never evict a baseline-selected source or truncate its body.
+1. Validate hits against current local source, then visit valid unique hits in
+   retrieval order. An invalid remote copy cannot suppress a later valid copy.
+2. Tentatively add each hit and render the complete proposed set. Assemble
+   compatible same-message chunks; group identical text only across matching owner,
+   scope, native role, speaker and time/source metadata. Preserve complete bodies
+   and every selected one-based `message:passage` coordinate.
+3. Place repeated groups at their latest selected occurrence. Intervening conflicting
+   statements remain earlier; labels expose earlier occurrences too. Final presentation
+   stays chronological, without guaranteeing the model's interpretation of chronology.
+4. Count both assembled and separate layouts, including the archive heading and shared system guidance through
+   the caller's counter. Admit the hit only if the cheaper complete layout fits.
+   Later hits may use remaining space; selected bodies are never truncated. This can
+   select different sources from the retired whole-passage-floor/refill policy.
 
-No-repeat inputs take the original path. Labels that cost more than they save
-also retain the original rendering. Candidates still require current local IDs,
-owner, scope, revision and text. An invalid remote copy cannot suppress a later
-valid copy. Remote role/speaker values never override the local source.
+If grouping costs more than it saves, use the separate layout. Remote candidates
+must match current IDs, owner, scope, revision, text and time/source metadata;
+remote role/speaker values never override the local source.
 
-The inspection panel shows the grouped label and body. Preparation counts source
-passages; final delivery verification counts rendered excerpts (five selected
-sources can produce four excerpts). The source chat, synchronization, managed
+The inspection panel shows the complete quoted archive with grouped labels and bodies.
+Preparation counts source passages; final delivery verifies one complete archive
+block regardless of the number of source excerpts it contains. The source chat, synchronization, managed
 embedding contract, recent-message retention and budget limits are unchanged.
 
-## Verification
+## Historical verification
 
 - [Offline replay](https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/repeated-packing-v1.json): 362 existing corpus/budget
   conditions, zero evicted baseline sources, zero losses of complete evidence.
@@ -67,17 +70,17 @@ embedding contract, recent-message retention and budget limits are unchanged.
   both dedicated test collections are confirmed absent. This small smoke does
   not evaluate the quotation corpus or call a live generation model.
 
-The unit suite also covers source retention at multiple budgets, distinct
-role/speaker/scope/owner boundaries, exact-text matching, intervening conflicting
+Current unit coverage checks retrieval-order assembled admission at multiple budgets,
+distinct role/speaker/scope/owner boundaries, exact-text matching, intervening conflicting
 states, chunk ordering, invalid hits and token-counter failure.
 
-This fixes a concrete context-selection failure in the product. It does not
+The historical adoption fixed a concrete context-selection failure. It did not
 establish general answer-quality improvement, solve actor-attribution reasoning,
 recover evidence missing from search results, or change stable-release readiness.
-The next quality check can evaluate live answers with this implementation; the
-runtime is no longer just an experimental selection policy.
+For current adoption evidence, use the [Query1 decision](query1-retrieval-quality.md);
+do not apply the historical no-eviction guarantee to the new admission policy.
 
-## Reproduce
+## Reproduce historical evidence
 
 Point a separate pinned host checkout at this extension, as described in the
 [README](../README.md). Preserve each attempt under a new artifact filename/tag.

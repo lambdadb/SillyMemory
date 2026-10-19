@@ -77,6 +77,12 @@ this repository. Do not change LambdaDB or add a server plugin as part of the MV
 
 ## Experiment lifecycle and retention
 
+Use the [memory evaluation criteria](docs/memory-evaluation.md) for quality
+comparisons. Report returned evidence, final prompt delivery, answer correctness,
+judge outcomes and resource use separately. Message-level evidence annotations
+require source-bound chunk mapping and explicit partial-coverage treatment;
+do not present structural message coverage as verified necessary-fact recall.
+
 Before adding a benchmark or extending its harness, state the product question,
 which observation will support a decision, the authorized input/cost/time bounds,
 and the stopping condition. Prefer existing runners. Add infrastructure only when

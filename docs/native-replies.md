@@ -10,19 +10,22 @@ This supersedes the pending-span policy in the historical
 [clarification evaluation](clarification-context-evaluation.md), without changing
 its frozen results or deleting their evidence.
 
-Keep Query 2, the recent-five/pair-aligned-six window, displaced-pair writes,
-per-message chunks, source validation, branch isolation, checkpoints and the
+Keep Query 1 (the current eligible message only), the recent-five/pair-aligned-six
+window, displaced-pair writes, per-message chunks, source validation, branch isolation, checkpoints and the
 existing managed-embedding/Bayesian/Jev search and budget defaults. Search and
 render only the current request's recalled memory; no prior retrieval is accumulated.
 No host core or server plugin is added.
 
 ## Behavior and tradeoff
 
-The budgeted system instruction asks one brief clarifying question when the user's
-intent or referent is ambiguous. If available context is missing, insufficient or
-conflicting, explain what is established, request the necessary additional context
-and avoid invention. Missing retrieved evidence does not prove an event never
-occurred. Keep the character's voice and follow topic changes or cancellations.
+The budgeted system instruction answers the parts supported by the current input,
+recent dialogue and recalled excerpts, building recommendations on supported personal
+experiences/preferences. It distinguishes different events and roles, and explains
+what can and cannot be established without invention. Follow-up questions are optional
+when details are missing, not a mandatory clarification or additional-context request.
+Missing retrieved evidence does not prove an event never occurred. Keep the character's
+voice and follow topic changes or cancellations. Date interpretation is shared system
+guidance; recalled excerpts remain quoted source, not instructions.
 The instruction is in [the runtime source](../src/context.js); it does not guarantee
 model compliance, factual accuracy or detection of every ambiguity.
 
@@ -32,9 +35,9 @@ Reload, edits, swipes and branches use native chat source without an extension
 request-status record. There is no special Continue restriction for clarification.
 
 A clarification dialogue longer than the retained window can lose its earlier
-request unless retrieval supplies it. Query 2 can also include an irrelevant prior
-reply after a topic change. These are explicit tradeoffs for simpler native UX,
-not evidence that the removed policy had no quality benefit.
+request unless retrieval supplies it. Query 1 can miss an antecedent that appears
+only in prior dialogue; retained messages still reach the generator. These are
+explicit tradeoffs for simpler native UX, not evidence that the removed policy had no quality benefit.
 
 Memory preparation errors stop generation explicitly, clear stale injection and
 preserve local source. Retry after recovery, or disable memory to use native full
@@ -48,7 +51,12 @@ unavailable; Stop on missing context cannot detect their truncation. No blanket
 provider, model, streaming or tool-support certification is claimed. Group/tool
 chats remain unsupported.
 
-## Validation boundary
+## Historical validation boundary
+
+The receipts below tested the original Query 2 and mandatory-follow-up instruction.
+They remain historical evidence; current Query 1, optional follow-ups and system-role
+date guidance are recorded in [the current defaults](conversation-memory-defaults.md)
+and [evidence index](query1-evidence-index.md).
 
 Validation uses SillyTavern 1.19.0 at
 `06bde939fb1e9c4c8d8641d810f0a916b5bce127`, isolated disposable profiles and Chromium.

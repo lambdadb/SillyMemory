@@ -15,6 +15,7 @@ import { fileURLToPath } from 'node:url';
 import { capacityPlan, capacityChat, capacityInstructions } from './prompt-capacity-cases.mjs';
 import { hostSource, loadLong } from './semantic-long.mjs';
 import { MEMORY_GUIDANCE } from '../src/context.js';
+import { SENT_GUIDANCE } from '../src/time.js';
 import { retrievalQueries, interleaveHits } from '../src/memory.js';
 
 const packingRanks = JSON.parse(await readFile(new URL('../tests/fixtures/packing-ranks.json', import.meta.url)));
@@ -28,26 +29,28 @@ const packingOrder = [...new Map(interleaveHits([primaryRanks.hits, ...packingRa
     .map(hit => [`${hit.message}:${hit.chunk}`, hit])).values()].slice(0, 30);
 let packingQuery, onlyFirst = false;
 
-const base = { enabled: true, context: 1536, output: 256, instructions: 1, recentRepeats: 1, stopOnLoss: true, type: 'normal' };
+// Leave room for one excerpt after current memory guidance; separately sized
+// instruction pressure still tests host eviction and the delivery stop guard.
+const base = { enabled: true, context: 1792, output: 256, instructions: 1, recentRepeats: 1, stopOnLoss: true, type: 'normal' };
 const plan = { version: 2, generationInput: 'recent-five-and-memory',
     host: capacityPlan.host, model: capacityPlan.model, budget: capacityPlan.budget,
     question: capacityPlan.question, character: capacityPlan.character, cases: [
     { ...base, id: 'included' },
     { ...base, id: 'speaker-prefix', names: 2 },
     { ...base, id: 'substring-collision', context: 4096, noHits: true, collision: true, blocked: true },
-    { ...base, id: 'pressure-stopped', instructions: 110, blocked: true },
-    { ...base, id: 'pressure-warning', instructions: 110, stopOnLoss: false },
-    { ...base, id: 'pressure-streaming', instructions: 110, streaming: true, blocked: true },
-    { ...base, id: 'pressure-swipe', instructions: 110, type: 'swipe', blocked: true },
-    { ...base, id: 'pressure-regenerate', instructions: 110, type: 'regenerate', blocked: true },
-    { ...base, id: 'recovered-context', instructions: 110, context: 4096 },
+    { ...base, id: 'pressure-stopped', instructions: 160, blocked: true },
+    { ...base, id: 'pressure-warning', instructions: 160, stopOnLoss: false, guidanceLost: true },
+    { ...base, id: 'pressure-streaming', instructions: 160, streaming: true, blocked: true },
+    { ...base, id: 'pressure-swipe', instructions: 160, type: 'swipe', blocked: true },
+    { ...base, id: 'pressure-regenerate', instructions: 160, type: 'regenerate', blocked: true },
+    { ...base, id: 'recovered-context', instructions: 160, context: 4096, budget: 864 },
     { ...base, id: 'continue', type: 'continue' },
     { ...base, id: 'impersonate', type: 'impersonate' },
     { ...base, id: 'replacement-with-assistant-suffix', type: 'regenerate', context: 4096, earlierAnchor: true },
     { ...base, id: 'no-hits-pressure', recentRepeats: 80, noHits: true, blocked: true },
     { ...base, id: 'no-hits-small', noHits: true },
     { ...base, id: 'history-pressure', recentRepeats: 80, blocked: true },
-    { ...base, id: 'nothing-fits', budget: 150 },
+    { ...base, id: 'nothing-fits', budget: 250 },
     { ...base, id: 'guidance-does-not-fit', budget: 64, blocked: true, preparationFailure: true },
     { ...base, id: 'disabled', enabled: false, recentRepeats: 80 },
 ] };
@@ -291,7 +294,12 @@ try {
             assert.ok((spec.type === 'impersonate' ? observation.draft : observation.answer).endsWith('LOCAL_FIXTURE_OK'));
             if (spec.enabled) {
                 assert.match(observation.delivery, spec.stopOnLoss ? /^Final host prompt:/ : /^Warning:/);
-                assert(sent[0].messages.some(m => m.role === 'system' && m.content.includes(MEMORY_GUIDANCE)), 'Natural memory guidance reaches the completion request, including no hits');
+                const hasGuidance = sent[0].messages.some(m => m.role === 'system' && m.content.includes(MEMORY_GUIDANCE));
+                if (spec.guidanceLost) {
+                    assert.equal(spec.stopOnLoss, false, 'Only explicit warning mode may dispatch without guidance');
+                    assert.equal(hasGuidance, false, 'Pressure fixture evicts the guidance');
+                    assert.match(observation.delivery, /Memory guidance is missing or changed/, 'Missing guidance is disclosed');
+                } else assert(hasGuidance, 'Natural memory guidance reaches the completion request, including no hits');
             }
         }
         if (spec.enabled && sent.length) {
@@ -310,24 +318,24 @@ try {
         }
         if (spec.type === 'normal') assert.deepEqual(observation.chat.slice(0, 12), chat.map(m => m.mes), 'Original chat text preserved');
         if (!spec.blocked && (spec.noHits || spec.id === 'nothing-fits')) {
-            assert.equal(sent[0].messages.filter(m => m.content.startsWith('[Past conversation excerpt:')).length, 0, 'Empty selection sends no excerpts and does not restore full history');
+            assert.equal(sent[0].messages.filter(m => m.content.startsWith('[Recalled conversation excerpts]')).length, 0, 'Empty selection sends no excerpts and does not restore full history');
             assert.match(observation.delivery, /0\/0 memory excerpts and 5\/5 input messages verified/);
             const guidanceTokens = await page.evaluate(text => SillyTavern.getContext().getTokenCountAsync(text), MEMORY_GUIDANCE);
             assert.equal(Number(observation.preparedInspection.split(' / ')[0]), guidanceTokens, 'Empty-selection inspection includes the guidance token cost');
         }
         if (spec.id === 'included') {
             assert.match(observation.delivery, /1\/1 memory excerpts and 5\/5 input messages verified/);
-            assert.equal(sent[0].messages.filter(m => m.content.startsWith('[Past conversation excerpt:')).length, 1);
+            assert.equal(sent[0].messages.filter(m => m.content.startsWith('[Recalled conversation excerpts]')).length, 1);
         }
         if (spec.id === 'pressure-warning') {
             assert.match(observation.delivery, /1 memory excerpts and \d+ input messages are missing/);
-            assert.equal(sent[0].messages.filter(m => m.content.startsWith('[Past conversation excerpt:')).length, 0);
+            assert.equal(sent[0].messages.filter(m => m.content.startsWith('[Recalled conversation excerpts]')).length, 0);
         }
         if (spec.id === 'recovered-context') {
-            assert.match(observation.delivery, /5\/5 memory excerpts and 5\/5 input messages verified/);
-            const recoveredExcerpts = sent[0].messages.filter(m => m.content.startsWith('[Past conversation excerpt:'));
-            assert.equal(recoveredExcerpts.length, 5);
-            for (let index = 0; index < 5; index++) assert(recoveredExcerpts.some(m => m.content.includes(`OLD_${index}:`)), 'Five ranked older sources reach the recovered prompt');
+            assert.match(observation.delivery, /1\/1 memory excerpts and 5\/5 input messages verified/);
+            const recoveredExcerpts = sent[0].messages.filter(m => m.content.startsWith('[Recalled conversation excerpts]'));
+            assert.equal(recoveredExcerpts.length, 1);
+            for (let index = 0; index < 6; index++) assert(recoveredExcerpts.some(m => m.content.includes(`OLD_${index}:`)), 'Six ranked older sources fit after removing follow-up obligations');
         }
         if (spec.earlierAnchor) {
             assert(sent[0].messages.some(m => m.role === 'user' && m.content === chat[8].mes), 'User anchor is retained despite following assistant turns');
@@ -359,8 +367,8 @@ try {
             assert.equal(generations.length, recoveryStart + 1);
             assert.deepEqual(recovered.after.slice(0, -1), recovered.before);
             assert.equal(recovered.after.at(-1), 'LOCAL_FIXTURE_OK');
-            assert.match(recovered.delivery, /5\/5 memory excerpts and 5\/5 input messages verified/);
-            assert.equal(generations.at(-1).messages.filter(m => m.content.startsWith('[Past conversation excerpt:')).length, 5);
+            assert.match(recovered.delivery, /1\/1 memory excerpts and 5\/5 input messages verified/);
+            assert.equal(generations.at(-1).messages.filter(m => m.content.startsWith('[Recalled conversation excerpts]')).length, 1);
             rows.at(-1).manualRecovery = { ...recovered, request: generations.at(-1) };
         }
     }
@@ -413,8 +421,8 @@ try {
     console.log('VERIFY repeated-passage-packing');
     await field('enabled').uncheck();
     // Reserve guidance headroom so this source-integrity fixture still exercises
-    // repeated citations; the small-context cases above retain their old limits.
-    for (const [name, value] of [['budget', 500]]) {
+    // repeated citations; the small-context cases above independently test eviction.
+    for (const [name, value] of [['budget', 600]]) {
         await field(name).fill(String(value)); await field(name).dispatchEvent('change');
     }
     const packingChat = hostSource(packingFixture.item);
@@ -424,7 +432,7 @@ try {
     ] }, 'normal')[0];
     await page.evaluate(async chat => {
         const c = SillyTavern.getContext(), { oai_settings } = await import('/scripts/openai.js');
-        Object.assign(oai_settings, { openai_max_context: 2048, openai_max_tokens: 256, stream_openai: false });
+        Object.assign(oai_settings, { openai_max_context: 2656, openai_max_tokens: 256, stream_openai: false });
         c.chat.splice(0, c.chat.length, ...chat); await c.saveChat(); await c.reloadCurrentChat();
     }, packingChat);
     packing = true;
@@ -437,16 +445,19 @@ try {
         return { chat: c.chat.map(m => m.mes), delivery: document.querySelector('[data-sm="delivery"]').textContent };
     }, packingFixture.item.question);
     assert.equal(generations.length, packingStart + 1);
-    const packingRequest = generations.at(-1), excerpts = packingRequest.messages.filter(m => m.content.startsWith('[Past conversation excerpt:'));
-    assert.equal(excerpts.length, 5);
-    assert.match(packed.delivery, /5\/5 memory excerpts and 5\/5 input messages verified/);
-    for (const index of [0, 1, 2, 27]) {
+    const packingRequest = generations.at(-1), excerpts = packingRequest.messages.filter(m => m.content.startsWith('[Recalled conversation excerpts]'));
+    // Retrieval-order admission now keeps the higher-ranked repeated sources,
+    // not the lower-ranked fifth excerpt reserved by the old source floor.
+    assert.equal(excerpts.length, 1);
+    assert.match(packed.delivery, /1\/1 memory excerpts and 5\/5 input messages verified/);
+    for (const index of [0, 1, 2, 3]) {
         const original = packingFixture.item.messages[index];
-        assert(excerpts.some(m => m.role === original.role && m.content.endsWith(`\n${original.text}`)), 'Full source and native role reached the completion endpoint');
+        assert(excerpts.some(m => m.role === 'user' && m.content.includes(`excerpt: ${original.role} `) && `\n${m.content}\n`.includes(`\n${original.text}\n`)), 'Full quoted source and original speaker label reached the completion endpoint');
     }
-    assert(excerpts.some(m => m.content.includes('identical text at message:passage 3:1, 43:1]')));
+    assert(excerpts.some(m => m.content.includes('identical text at message:passage 3:1, 11:1, 19:1, 27:1, 35:1, 43:1, 51:1]')));
+    assert(excerpts.some(m => m.content.includes('identical text at message:passage 4:1, 12:1, 20:1, 28:1, 36:1, 44:1, 52:1]')));
     assert.deepEqual(packed.chat.slice(0, 60), packingChat.map(m => m.mes), 'Packing never changes stored history');
-    report.packing = { evidence: 'Actual host generation with recorded query ranks and a local completion fixture', case: packingFixture.item.id, configuredBudget: 500, effectiveBudget: 448, delivery: packed.delivery, request: packingRequest, storedHistoryUnchanged: true };
+    report.packing = { evidence: 'Actual host generation with recorded query ranks and a local completion fixture', case: packingFixture.item.id, configuredBudget: 600, effectiveBudget: 600, delivery: packed.delivery, request: packingRequest, storedHistoryUnchanged: true };
     packing = false;
     console.log('VERIFY same-message-assembly');
     await field('enabled').uncheck();
@@ -471,8 +482,11 @@ try {
     });
     assert.equal(generations.length, assemblyStart + 1);
     const assemblyRequest = generations.at(-1), joined = assemblyRequest.messages.find(m => m.content.includes('message 1, passages 1-'));
-    assert(joined && joined.role === 'user' && joined.content.endsWith(assemblyChat[0].mes), 'All assembled source text reached the completion endpoint');
-    assert.equal(joined.content.split('[Conversation timestamp:').length - 1, 1);
+    assert(joined && joined.role === 'user' && joined.content.includes(assemblyChat[0].mes), 'All assembled source text reached the completion endpoint');
+    assert.equal(joined.content.split('message 1, passages 1-').length - 1, 1);
+    assert.equal(assemblyRequest.messages.map(m => m.content).join('\n').split(SENT_GUIDANCE).length - 1, 1);
+    assert(assemblyRequest.messages.some(m => m.role === 'system' && m.content.includes(SENT_GUIDANCE)), 'Date interpretation is delivered as system guidance');
+    assert(!joined.content.includes(SENT_GUIDANCE), 'Quoted source does not carry instructions');
     assert.equal(assembled.source, assemblyChat[0].mes, 'Assembly does not alter stored history');
     assert.match(assembled.delivery, /^Final host prompt:/); assert(!assembled.delivery.includes('missing or changed'));
     report.assembly = { evidence: 'Actual host assembled prompt dispatched to a local completion fixture; LambdaDB emulated',
