@@ -19,9 +19,6 @@ the 95% result is a consumed-cohort regression, not a held-out or actual-host re
 | Plain SillyTavern, 32K | 32.8% | 14,028,181 | $30.41 | None | $30.41 |
 | Native Vector Storage, 32K | 34.4% | 14,028,603 | $14.12 | Embedding/indexing not reconstructed | Unresolved; $14.12 answer component only |
 | Plain SillyTavern, 128K, complete history | 93.0% | 52,591,554 | $131.83 | None | $131.83 |
-| SillyMemory Query2, actual host | 82.8% | 2,526,647 | $6.59 | Host-path memory costs not reconstructed | Unresolved; $6.59 answer component only |
-| SillyMemory Query1, actual host | 93.8% | 2,524,361 | $6.58 | Host-path memory costs not reconstructed | Unresolved; $6.58 answer component only |
-| Direct provider, existing packing | 93.8% | 2,158,498 | $5.70 | Not allocated to this control row | Unresolved; $5.70 answer component only |
 | **SillyMemory direct, assembly/refill** | **95.0%** | **2,138,377** | **$5.67** | **$1.85–$2.61 modeled** | **$7.52–$8.28 modeled** |
 
 The direct setup indexes complete histories, searches with the original question,
@@ -56,7 +53,7 @@ control scored 469/500 (93.8%); 11 questions improved and five worsened.
 
 This is consumed-cohort regression, not held-out confirmation. It is a direct
 provider experiment with complete-history indexing and an evidence-oriented
-prompt, not the actual-host Query1 run, which separately scored 469/500. The
+prompt, separate from the [historical actual-host runs](product-comparison.md). The
 95% run made **zero new LambdaDB calls** because it reused retrievals. A deployment
 of that method still needs ingestion and retrieval; those costs are modeled below.
 Do not label historical reservations near $50 or $100 as actual charges.
@@ -72,14 +69,11 @@ There is no new equal-prompt end-to-end comparison or speed claim here.
 | Plain SillyTavern, 32K | 164 | 32.8% | 14,028,181 | 28,056 / 28,080 | Host reply median 4.08 s |
 | Native Vector Storage, 32K | 172 | 34.4% | 14,028,603 | 28,057 / 28,078 | Host reply median 4.24 s |
 | Plain SillyTavern, 128K, complete history | 465 | 93.0% | 52,591,554 | 105,183 / 105,319.5 | Host reply median 5.61 s |
-| SillyMemory Query2, actual host | 414 | 82.8% | 2,526,647 | 5,053 / 4,988.5 | Host reply median 5.62 s |
-| SillyMemory Query1, actual host | 469 | 93.8% | 2,524,361 | 5,049 / 4,970.5 | Later host run, median 4.47 s |
-| Direct provider, existing packing | 469 | 93.8% | 2,158,498 | 4,317 / 4,316 | Answer HTTP only, about 2.06 s |
-| **Direct provider, assembly/refill** | **475** | **95.0%** | **2,138,377** | **4,277 / 4,275** | Answer HTTP only, about 2.03 s |
+| **SillyMemory direct, assembly/refill** | **475** | **95.0%** | **2,138,377** | **4,277 / 4,275** | Answer HTTP only, about 2.03 s |
 
-The first four host timing medians use the existing report's common 481-question
-timing subset. HTTP-only medians exclude retrieval, packing, host overhead and
-history setup. The original direct-run report uses its recorded percentile
+The host timing medians above use the existing report's common 481-question
+timing subset. The direct HTTP-only median excludes retrieval, packing, host
+overhead and history setup. The original direct-run report uses its recorded percentile
 convention; the new usage extract uses the midpoint median. Neither supports a
 cross-path speedup claim. [Host conditions and limitations](product-comparison.md)
 
@@ -107,10 +101,7 @@ generation USD = ((input - cached - cache_write) * 2
 | Plain 32K | $30.41 | $28.37 |
 | Native Vector Storage | $14.12 | $28.38 |
 | Plain 128K complete history | $131.83 | $105.53 |
-| SillyMemory Query2, host | $6.59 | $5.35 |
-| SillyMemory Query1, host | $6.58 | $5.35 |
-| Direct existing packing | $5.70 | $4.65 |
-| **Direct assembly/refill, 95%** | **$5.67** | **$4.61** |
+| **SillyMemory direct, assembly/refill, 95%** | **$5.67** | **$4.61** |
 
 This table includes final-answer generation only: no indexing, embeddings,
 reranking, storage, summary maintenance or evaluation judge. The 95% row includes
@@ -203,8 +194,7 @@ For the 95% method, **500 answers + one cold build + 500 queries** cost about
 central illustration is $7.78. Keeping all corpora for a month brings those
 scenarios to **$8.67 / $10.06 / $12.85**. These combine measured answer usage with
 modeled memory costs; they are not the actual incremental bill for the replay.
-The other host rows above still exclude their own memory/indexing costs. In
-particular, Native Vector Storage's direct embedding usage was not reconstructed
+Native Vector Storage's direct embedding usage was not reconstructed
 here; its $14.12 is not a complete operational total.
 
 The native Summarize comparison used only a preselected stratified 50-question
@@ -217,9 +207,8 @@ prompt pipelines contemporaneous or equivalent.
 | Plain 32K, host | 16/50 (32%) | 1,400,832 | $2.86 | None |
 | Native vectors, host | 16/50 (32%) | 1,400,668 | $1.38 | Direct embedding/indexing cost not reconstructed |
 | Native Summarize, host | 16/50 (32%) | **62,464,386** | $3.55 | **$158.47** summary maintenance; combined $162.02 |
-| SillyMemory Query2, host | 38/50 (76%) | 252,070 | $0.66 | LambdaDB cost not reconstructed for this host path |
 | Plain complete history, host | 44/50 (88%) | 5,262,912 | $13.19 | None |
-| **Direct assembly/refill** | **47/50 (94%)** | **213,787** | **$0.57** | **$0.160** modeled cold build + **$0.025–$0.100** queries; combined about **$0.75–$0.83**, before storage |
+| **SillyMemory direct, assembly/refill** | **47/50 (94%)** | **213,787** | **$0.57** | **$0.160** modeled cold build + **$0.025–$0.100** queries; combined about **$0.75–$0.83**, before storage |
 
 Summarize required 2,475 successful maintenance calls, besides 50 answers. Its
 combined estimate includes 719,812 output tokens and recorded cache categories.
