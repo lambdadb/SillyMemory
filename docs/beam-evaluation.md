@@ -16,6 +16,8 @@ BEAM batch dates remain distinct from host timestamps. Historical controls and
 labels below are unchanged. Small→Large was unexecuted at PR #84 closure. The
 [subsequent 40-question screen](beam-large-embedding-evaluation.md) now closes that
 separate decision with adoption deferred; it does not replace these prior scores.
+The [remaining-failure summary](#remaining-failure-types-summary-updated-2026-10-20)
+keeps the unresolved problems and their model/evidence scope in one place.
 
 After [LongMemEval-S closure](small-default-error-analysis.md#quoted-memory-full-cohort-structural-adoption-2026-10-18),
 use all **20 conversations / 400 questions** in `chats/100K`, called **128K** by the
@@ -25,6 +27,35 @@ Source conversations measure 92,928–121,849 cl100k tokens; that is not generat
 input length. This is an independent memory evaluation, not a SillyTavern browser
 run. The 1M and 10M buckets are reported separately below; 500K and an exhaustive
 fact-level error census remain untested.
+
+## Remaining failure types (summary updated 2026-10-20)
+
+**Model scope: Small.** This summary draws on the completed 200-question BEAM 10M
+comparison of original-text retrieval and role/date `retrievalText`, both using
+managed OpenAI Small. It organizes existing evidence into five failure types;
+it is not a new run or an exhaustive classification of every wrong answer.
+
+| Failure type | Observed problem | What remains unresolved |
+| --- | --- | --- |
+| **1. Retrieval omission** | A needed fact never enters candidate 200. The original arm misses the specific MQTT and Redis incidents. | Recover concrete incidents and relationships without losing existing facts. Reranking or a larger prompt cannot recover facts absent from the candidates. |
+| **2. Reranking loss** | A retrieved source reaches candidate 200 but falls outside final 50. | Keep question-relevant facts through final selection; higher message coverage alone does not prove that the required clause survives. |
+| **3. Prompt-packing loss** | A source reaches final 50 but is omitted from the 4096-token memory. AWS pricing/instance count and the Udemy choice demonstrate this mechanism. | Deliver necessary facts within the budget. Blanket budget expansion has not established a general remedy. |
+| **4. Answer use or interpretation error** | Delivered facts are ignored, competing dates are selected, or assistant examples/plans are treated as user experience or completed events. | Use the available facts with correct attribution, chronology and uncertainty. More retrieved sources alone do not resolve these errors. |
+| **5. Reference or judging ambiguity** | Equivalent 2.6M-document answers receive different labels; a source year can conflict with the rubric year. | Separate actual answer failures from inconsistent grading or ambiguous targets. Preserve original labels and report ambiguity rather than count every low score as a confirmed model error. |
+
+The original Small arm has **1,142 absent annotated source messages**: 1,023 are
+already absent at candidate 200, 75 disappear at final 50 and 44 at packing.
+These count **source annotations, not wrong answers or missing necessary facts**.
+An alternative message may still supply the fact. Of the selected 69 answer pairs
+reviewed, 27 show changed answer use/provenance/sequence and 41 have judge/reference
+ambiguity; these overlapping labels are not all-200 error rates. See the
+[detailed failure-stage analysis](#offline-10m-failure-stage-attribution-2026-10-19).
+
+**Current status:** retain Small. The later [Small/Large 40-question screen](beam-large-embedding-evaluation.md)
+found concrete gains and losses and deferred Large adoption. It generated no new
+answers or judgments, so it adds retrieval/delivery evidence, **not a Large-answer
+error classification**. No fix covering all five failure types has been validated;
+these remain unresolved quality categories.
 
 ## Frozen policy and scoring
 
@@ -491,9 +522,8 @@ still does not establish an actual completed event.
 The future hypothesis selected at PR #84 closure was managed Small→Large on
 original text, targeting candidate-200 concrete-incident recall. It was unexecuted
 in that PR; the earlier LongMemEval 463→465 result did not justify its higher cost.
-The local
-follow-up bundle preserves the proposed 40/160 cohorts and fact gates for a later
-bounded decision. The [subsequent screen](beam-large-embedding-evaluation.md)
+The local follow-up bundle preserves the proposed 40/160 cohorts and fact gates
+for a later bounded decision. The [subsequent screen](beam-large-embedding-evaluation.md)
 reports that later run separately; this historical analysis adds no provider,
 browser or quality result.
 
