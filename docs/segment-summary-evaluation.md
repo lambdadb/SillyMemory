@@ -169,7 +169,7 @@ post-start execution-policy amendment, not a second independent experiment.
 `segment-summary.mjs` contains the memory algorithm. `segment-summary-eval.mjs`
 reuses the existing dataset adapter and durable checkpoint mechanism. It requires
 the public checksum-locked dataset and pinned official evaluator, an installed
-`tiktoken` from the host environment, and the retained 50 captured Query1 request
+`tiktoken` 1.0.22 from the host environment, and the retained 50 captured Query1 request
 bodies. Historical captures are local-only; a fresh clone cannot reproduce this
 exact control without the original archive listed in `product-comparison.md`.
 Supply credentials through `SM_ENV_FILE` outside this worktree. They are neither
@@ -183,6 +183,9 @@ SM_ENV_FILE=/outside/worktree/.env.local \
 
 Preparation verifies dataset bytes, the native recent-message partition and source
 context sizes, then freezes IDs, input/code hashes, model settings and limits.
+The final runner also binds tokenizer version, encoding and SHA-256 hashes of its
+package metadata, Node entry, JS bridge and WASM implementation/data. A changed
+tokenizer cannot reuse the same plan, even if its package version is unchanged.
 The runner refuses a changed plan or changed replay request. Full prompts, replies,
 intermediate summaries and checkpoints stay under ignored `artifacts/`.
 
@@ -209,7 +212,7 @@ priced here; its answer cost alone must not be presented as its total service co
 
 ## Verification and retained producer
 
-- `npm test`: 372 passed, including three new focused memory-contract tests.
+- `npm test`: 373 passed, including four new focused memory/tokenizer-contract tests.
 - `npm run check`, `npm run check:release`, `npm run check:sdk`: passed.
 - `node --check` for every maintained script and test: passed.
 - Fresh `prepare` with the final runner: all 50 cases verified, 637 summaries,
@@ -228,6 +231,11 @@ three extra ledger slots; its summary/selection/answer semantics are unchanged.
 It also includes adapter sources in the code binding and corrects the informational
 `finalFlush` flag for a 39-message final segment (`0e4e4c46` in the historical run).
 That flag does not affect requests, source coverage or scoring.
+The tokenizer binding was added during PR review. The completed historical plan
+did not bind tokenizer bytes; its preserved producer used the same local 1.0.22
+installation. The final offline preparation reproduced the original 6,052,139
+reserved summary-input tokens. No retrospective tokenizer lock or new paid run
+is claimed for the historical results.
 Use the archived producer when resuming or verifying this historical ledger, not
 the cleaned runner's different code binding. The final runner passed offline
 preparation and local checks; no second paid cohort was run after that cleanup.

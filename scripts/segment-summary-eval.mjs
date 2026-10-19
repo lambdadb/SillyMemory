@@ -9,6 +9,7 @@ import { adaptLongMemEval, sha } from './benchmark-audit.mjs';
 import { literalBenchmarkText } from './benchmark-development-input.mjs';
 import { openCheckpoint } from './benchmark-checkpoint.mjs';
 import { segmentHistory, summaryRequest, selectionRequest, selectMemories, replaceMemory } from './segment-summary.mjs';
+import { loadSummaryTokenizer } from './segment-summary-tokenizer.mjs';
 const [mode, directory, datasetFile, baselineFile, judgeFile, tokenizerRoot] = process.argv.slice(2);
 assert(['prepare', 'run'].includes(mode) && tokenizerRoot, 'Usage: segment-summary-eval.mjs prepare|run OUT DATA BASELINES JUDGE TOKENIZER_ROOT');
 const out = path.resolve(directory);
@@ -19,8 +20,7 @@ assert.equal(sha(bytes), sourceLock.files.find(f => f.dataset === 'longmemeval')
 const baselines = JSON.parse(baselinesBytes), allData = JSON.parse(bytes);
 const ids = Object.keys(baselines).sort(); assert.equal(ids.length, 50);
 const require = createRequire(path.join(path.resolve(tokenizerRoot), 'package.json'));
-const encoder = require('tiktoken').get_encoding('o200k_base');
-const count = value => encoder.encode(value, [], []).length;
+const tokenizer = await loadSummaryTokenizer(require), count = tokenizer.count;
 const tokens = messages => 16 + messages.reduce((n, m) => n + count(m.content) + 16, 0);
 const cases = allData.filter(r => ids.includes(r.question_id)).map(row => {
     const input = adaptLongMemEval(row);
@@ -44,7 +44,8 @@ const cases = allData.filter(r => ids.includes(r.question_id)).map(row => {
 const summaryCalls = cases.reduce((n, c) => n + c.segments.length, 0);
 assert.equal(cases.length, 50, 'All frozen IDs must exist in the dataset');
 const config = { version: 'segment-summary-v2', datasetSha256: sha(bytes), baselineSha256: sha(baselinesBytes), judgeSha256: sha(judgeBytes),
-    codeSha256: sha(Buffer.concat(await Promise.all(['segment-summary.mjs', 'segment-summary-eval.mjs', 'benchmark-checkpoint.mjs',
+    tokenizer: tokenizer.identity,
+    codeSha256: sha(Buffer.concat(await Promise.all(['segment-summary.mjs', 'segment-summary-eval.mjs', 'segment-summary-tokenizer.mjs', 'benchmark-checkpoint.mjs',
         'benchmark-audit.mjs', 'benchmark-development-input.mjs', 'benchmark-host-input.mjs'].map(f => readFile(new URL(f, import.meta.url)))))),
     ids, summaryCalls, selectionCalls: cases.filter(c => c.segments.length > 5).length, answerCalls: 100, judgeCalls: 100,
     segmentMessages: 40, summaryTargetWords: 400, recentMessages: 4, recentSummaries: 3, olderSelections: 2, memoryTokens: 4096,
@@ -57,7 +58,7 @@ if (mode === 'prepare') {
     await writeFile(planFile, JSON.stringify(config, null, 2) + '\n', { flag: 'wx' });
     console.log(JSON.stringify({ status: 'prepared', cases: cases.length, summaryCalls, maximumCalls: config.limits.calls,
         summaryInputTokens: cases.reduce((n,c) => n+c.segments.reduce((v,s) => v+tokens(summaryRequest(s)),0),0), limits: config.limits }));
-    encoder.free(); process.exit(0);
+    tokenizer.free(); process.exit(0);
 }
 assert.deepEqual(JSON.parse(await readFile(planFile)), config, 'Frozen plan changed');
 const env = parseEnv(await readFile(process.env.SM_ENV_FILE, 'utf8'));
@@ -149,4 +150,4 @@ try {
     await writeFile(path.join(out, 'results.json.tmp'), JSON.stringify({ config, rows, used: journal.state.used }, null, 2));
     await rename(path.join(out, 'results.json.tmp'), path.join(out, 'results.json'));
     console.log(JSON.stringify({ status: 'complete', rows: rows.length, used: journal.state.used }));
-} finally { await journal.close(); encoder.free(); }
+} finally { await journal.close(); tokenizer.free(); }

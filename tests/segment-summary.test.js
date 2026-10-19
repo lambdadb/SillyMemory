@@ -26,3 +26,28 @@ test('replacement preserves native shell and recent context and fails instead of
     assert(!result.body.messages.some(m => m.content === 'message 3'));
     assert.throws(() => replaceMemory({ messages }, [], () => 4096), /exceed/);
 });
+
+test('tokenizer binding detects same-version implementation changes and rejects unpinned packages', async () => {
+    const { mkdtemp, mkdir, writeFile, rm } = await import('node:fs/promises');
+    const { tmpdir } = await import('node:os');
+    const path = await import('node:path');
+    const { createRequire } = await import('node:module');
+    const { loadSummaryTokenizer } = await import('../scripts/segment-summary-tokenizer.mjs');
+    const root = await mkdtemp(path.join(tmpdir(), 'summary-tokenizer-'));
+    try {
+        const dir = path.join(root, 'node_modules/tiktoken'); await mkdir(dir, { recursive: true });
+        const pkg = version => JSON.stringify({ name: 'tiktoken', version, main: 'tiktoken.cjs' });
+        await writeFile(path.join(dir, 'package.json'), pkg('1.0.22'));
+        await writeFile(path.join(dir, 'tiktoken.cjs'), 'exports.get_encoding = () => ({ encode: s => [...s], free() {} });');
+        await writeFile(path.join(dir, 'tiktoken_bg.cjs'), '// synthetic bridge');
+        await writeFile(path.join(dir, 'tiktoken_bg.wasm'), 'synthetic vocabulary A');
+        const require = createRequire(path.join(root, 'package.json'));
+        const first = await loadSummaryTokenizer(require);
+        assert.equal(first.count('abc'), 3); first.free();
+        assert.deepEqual((await loadSummaryTokenizer(require)).identity, first.identity);
+        await writeFile(path.join(dir, 'tiktoken_bg.wasm'), 'synthetic vocabulary B');
+        assert.notDeepEqual((await loadSummaryTokenizer(require)).identity, first.identity);
+        await writeFile(path.join(dir, 'package.json'), pkg('2.0.0'));
+        await assert.rejects(loadSummaryTokenizer(require), /Unsupported tokenizer version/);
+    } finally { await rm(root, { recursive: true, force: true }); }
+});
