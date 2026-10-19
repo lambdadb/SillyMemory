@@ -5,6 +5,10 @@ writing and comparison design, not an independently reproduced leaderboard or a
 new experiment. Vendor claims, inspected artifacts, code observations and project
 decisions are distinguished below. Refresh sources before publishing a comparison.
 
+The [October 19 cost comparison](memory-cost-comparison.md) adds the retained 95%
+direct-provider experiment, same-question Summarize subset, cache-aware generation
+costs and a source-reconstructed LambdaDB cost model with explicit uncertainty.
+
 ## Reading the numbers
 
 - LongMemEval answer accuracy, evidence recall and BEAM mean rubric scores are
