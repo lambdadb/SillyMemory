@@ -197,26 +197,20 @@ all original receipts remain available without new provider calls. The producing
 public base is `cbd27ab470e67af105b2bd56fd3f642c6702cf17` plus the archived
 experiment source snapshots; original historical bundles remain unchanged.
 
-Post-run self-review hardens two maintained-runner failure paths: classify HTTP
-account/transient failures before parsing a possibly non-JSON response, and reject
-an existing protocol before rewriting inputs. Four standard-library Python
-regressions run in CI. This changes no successful benchmark request or label and
-makes no new provider calls. The archive retains the exact executed producer;
-use its restoration instructions for historical verification rather than assume
-the later maintained runner has the same source hash. PR review additionally
-corrects offline repacking to select successful query receipts after a transient
-retry, retaining failed attempts in the ledger. Its regression and replay of all
-400 saved successful receipts pass; this run had no retries. The final JavaScript
-suite passes 390 tests, with four Python policy regressions also passing. Receipt
-logging also preserves non-JSON memory-service errors without changing their HTTP
-retry classification; its synthetic test confirms the original body remains readable.
-The final runner reconstructs the complete canonical protocol and required file
-manifest before accepting a lock, preventing edited settings or omitted hashes
-from misreporting execution. Two corruption regressions bring the Python suite to
-six tests. The recall manifest must also contain exactly the 20 expected paths
-derived from the pinned dataset before any model call; an omitted/corrupted-file
-regression brings the final Python suite to seven tests. These post-run guard
-changes do not rerun or relabel the benchmark.
+Post-run review hardens the maintained runner's failure and input guards. HTTP
+status classification survives non-JSON model/memory-service errors; receipt
+logging leaves the SDK response readable. Repacking selects successful query
+attempts while retaining failures in the ledger. An existing protocol is rejected
+before input rewrites, and every phase checks canonical settings plus the complete
+required source/input manifest. Scoring requires exactly the 20 expected recall
+paths derived from the pinned dataset, then verifies every digest before model
+calls. The final suites pass **390 JavaScript and seven Python tests**.
+
+These guards make no new paid calls or label changes. The original measured
+protocol matches the canonical settings, and its complete 20-file recall manifest
+passes the new check. The archive retains the exact executed producer; use its
+restoration instructions for historical verification rather than assume the later
+maintained runner has the same source hash.
 
 ## Decision and scope (2026-10-19)
 
