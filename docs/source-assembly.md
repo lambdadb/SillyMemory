@@ -33,10 +33,11 @@ records. Final delivery verifies the whole block. See [current defaults](convers
   supplied token counter. An adjacent chunk can fit by sharing a header; no
   accepted body is shortened. Failed token counting stops selection.
 - Keep a source timestamp inline as `sent` in its excerpt header. Explain the
-  meaning once per selected memory, inside the same counted text. Native UTC
-  precision is unchanged; unknown dates stay absent. Message time does not
-  establish the date of an undated story/event. Benchmark session clocks use
-  the same label through an explicit adapter, without inventing UTC or seconds.
+  meaning once in system memory guidance, including no-hit requests, within the
+  same allocation. Native UTC precision is unchanged; unknown dates stay absent.
+  Message time does not establish the date of an undated story/event. Historical
+  LongMemEval adapters used the same label for supplied session clocks without
+  inventing UTC or seconds; restore their recorded producers for replay.
   Resolve relative days only against a known local conversation date: a UTC
   instant alone does not establish the speaker's calendar day. If that date is
   unknown, preserve the ambiguity rather than assuming a timezone.

@@ -32,11 +32,11 @@ SillyTavern/Chromium checks pass 18 delivery scenarios and 103 browser assertion
 with local LambdaDB/completion emulators, including context pressure and native
 streaming. These host checks are separate from the real standalone model calls;
 the fixed-input answer score is not a new current-product live-provider score.
-An offline re-selection using current product date guidance changes 117/500 source
+An offline re-selection using the then-current product date guidance changes 117/500 source
 sets because the heading consumes budget: 117 chunks are omitted, none from an
 annotated source message. All 500 fit 4096. Annotation coverage does not establish
 complete necessary-fact preservation. A subsequent paired evaluation of all 117
-changed-selection cases uses current product guidance and actual 4096-token
+changed-selection cases uses the then-current product guidance and actual 4096-token
 selection in both arms: **115/117 versus 115/117**, with 115 Yes/Yes, two No/No and
 no label transitions. It completes 234 answers and 234 judgments in 119.5 seconds
 without errors/retries or new retrieval. Mean answer input is 5102.50 -> 4969.13;
@@ -44,8 +44,8 @@ generation estimates are $1.549 -> $1.511 at frozen rates. No observed regressio
 in this cohort supports retaining the structural change; it is not an equivalence
 proof or a new full-500 score. The two shared No concern competing weekday wake-up
 times and an ACL review deadline versus personal submission date; labels remain
-unchanged. S evaluation closes at this policy, with BEAM next and no LongMemEval-M
-run. Original pilot, continuation and product117 remain separate immutable local
+unchanged. S evaluation closed at this policy; the subsequent [BEAM evaluation](beam-evaluation.md)
+is also complete. No LongMemEval-M run was made. Original pilot, continuation and product117 remain separate immutable local
 bundles in [the evidence index](query1-evidence-index.md).
 
 ## Quoted-memory pilot and rejected follow-ups
@@ -65,11 +65,15 @@ annotation completeness is not necessary-fact recall or proof of factual accurac
 | Candidate | Observed result | Decision and reason |
 | --- | --- | --- |
 | Custom personal-memory rerank criteria | 478 -> 474/500; 7 gains, 11 losses | Keep default. Slow-cooker experience recovers, but an explicit sculpting-tool purchase disappears from final 50. Better aggregate annotation delivery does not outweigh that loss. |
-| Role + text rerank fields | 477 -> 473/500; 6 gains, 10 losses | Keep text only. Cake provenance improves, but train-fare use regresses despite available operands. |
+| Role + text rerank fields | 477 -> 473/500; 6 gains, 10 losses | No quality-based adoption from this trial. Cake provenance improves, but train-fare use regresses despite available operands. |
 | Frozen custom criteria + role fields | 17 cases, 51 native queries; no answer calls | Reject after source gate. Cake already delivered by criteria alone; the sculpting purchase remains absent. |
 | Best chunk of each message before continuations | Offline 500; no answer calls | Reject. Three necessary continuation facts disappear: Southwest Airlines, hydrotreating and Sound effects. Broad message coverage can evict essential details. |
 | Compact coordinate labels | Offline 500; no answer calls | Stop at the frozen gate: neither discovery gap is recovered. |
 | Labels without coordinates | 478 -> 477/500; 5 gains, 6 losses | Keep source labels. Additional complete annotations do not produce an overall answer gain. |
+
+Later product role/host-time reranking was adopted separately for source semantics;
+see [conversation time](conversation-time.md). That decision does not change these
+historical scores or establish a quality uplift.
 
 Native criteria/field experiments delete all owned test collections with 404
 verification. Retry counts, full costs, per-case source/prompt reviews and original

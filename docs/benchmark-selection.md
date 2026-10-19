@@ -9,17 +9,20 @@ It complements the [evaluation follow-ups](evaluation-and-device-followups.md).
 The later [LongMemEval and BEAM reference](memory-benchmark-reference.md) reviews
 published results and evaluation conditions as of October 18, including answer
 assistance, scoring differences and implications after our completed S comparison.
-Its next-suite recommendation is a follow-up decision, not a frozen paid protocol.
+Its next-suite recommendation was a selection decision, not the later frozen paid protocol.
 
-## Current sequence (2026-10-18)
+## Evaluation sequence (updated 2026-10-19)
 
-The historical selection review below is preserved. The current user decision is
-to close LongMemEval-S and move to **BEAM**, excluding LongMemEval-M. Freeze the
-current product policy before BEAM results; do not rerun earlier model/retrieval
-candidate grids. Start with all 20 conversations and 400 probes in the official
+The [completed BEAM report](beam-evaluation.md) now covers 128K/1M/10M baselines
+and bounded follow-ups. This PR closes those decisions; Small→Large remains an
+unexecuted future comparison outside its merge scope.
+
+The historical selection review below is preserved. The October 18 decision was
+to close LongMemEval-S and move to **BEAM**, excluding LongMemEval-M. The initial
+protocol froze the product policy before BEAM results and excluded earlier
+model/retrieval grids. It started with all 20 conversations and 400 probes in the official
 `chats/100K` directory (called 128K in its README), pinned to upstream commit
-`b2da22eac88bb0874c64665f13457eb99835774a`. Evaluate new question types and data
-before deciding whether larger BEAM buckets add useful evidence. BEAM's synthetic
+`b2da22eac88bb0874c64665f13457eb99835774a`, before expanding to larger buckets. BEAM's synthetic
 conversations do not replace real character-chat UX validation.
 
 Preserve its per-item 0/0.5/1 rubric and default GPT-4.1-mini judge for the first

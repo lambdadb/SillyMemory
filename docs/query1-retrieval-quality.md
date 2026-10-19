@@ -37,8 +37,11 @@ for the four raw label regressions, source review and separate host validation.
 The final current-product budget check scores 115/117 in both arms, with no label
 transitions, across every case whose selected chunks changed. This closes the S
 regression boundary; it does not replace the fixed-source 500-question score.
-The subsequent [BEAM baseline](beam-evaluation.md) keeps this policy fixed and
-reports distinct search, selection, source-use and scoring limitations.
+The subsequent [BEAM evaluation](beam-evaluation.md) closes the 128K/1M/10M
+baselines and bounded comparisons. Product reranking additionally uses source role
+and verified host-time context by a separate semantic decision; embedding text
+stays unchanged. The 10M retrievalText candidate is deferred. Search, selection,
+source use and scoring limitations remain distinct.
 
 ## Selection defect and implementation
 
@@ -324,22 +327,27 @@ the corresponding run bundles.
 
 ## Validation boundaries
 
-- Current local: `npm test` **379 passed/0 failed** on Node 24.15.0; `npm run check`,
+- Final cleanup validation: `npm test` **377 passed/0 failed** on Node 24.15.0; `npm run check`,
   `npm run check:release`, `npm run check:sdk` and `git diff --check` pass. CI also
   executes Node 20.12.0/24. Release metadata remains 0.4.0 dated 2026-10-13.
+  Three tests were removed with two unused historical session-clock helper exports;
+  retained run receipts still correctly record their original 380-test suite.
+  Fresh final-audit host validation passes all 18 delivery cases plus packing and
+  assembly on pinned SillyTavern/Chromium with local providers. It verifies the final
+  relative-date guidance at dispatch, not answer quality.
 - Retained host checks: pinned SillyTavern 1.19.0/Chromium 153 with local database/model
   emulators; source assembly, native history/streaming, edits/swipes/deletion/races,
   recovery and 18 allocation/delivery cases. Emulator success is not provider E2E.
 - Full browser follow-through after guidance adoption: 103 checks pass on the same
   pinned host/Chromium with local providers, including nine native chat generations,
   one text completion and visible streaming; zero remaining emulated collections.
-  Update stale chat/text assertions and architecture prose to the adopted optional
-  follow-up policy. At 250 tokens no complete dated source fits; validate that safe
-  zero-source result and use 400 for positive-delivery/race fixtures. These are
+  Chat/text assertions and architecture prose now reflect the adopted optional
+  follow-up policy. At 250 tokens no complete dated source fits; checks verify that
+  safe zero-source result and use 400 for positive-delivery/race fixtures. These are
   explicit test allocations, not product default changes or answer-quality evidence.
   Initial failure and successful source-bound receipts remain archived.
-- Quoted-archive review follow-through: update current lifecycle/recovery harnesses
-  to recognize the single archive carrier. The lifecycle fixture now has ten
+- Quoted-archive review follow-through: lifecycle/recovery harnesses now
+  recognize the single archive carrier. The lifecycle fixture now has ten
   alternating messages: four archived and six pair-aligned recent messages.
   `npm run test:recovery` passes 215 checks, including 24 cycles and two host kills,
   against the pinned host/local providers. `npm run test:live` passes 20 checks

@@ -2,22 +2,19 @@
 
 ## Decision and scope (2026-10-19)
 
-The baseline and full paired 400-question speaker/date comparison are complete.
-Keep GPT-4.1-mini BEAM judging unchanged. The bundled reranking/date-display
-candidate's small gain does not establish reliable net benefit, and source-delivery
-losses remain. Subsequently, adopt role and verified host-time context in product
-reranking for their source meaning, with existing prompt labels unchanged. This is
-a user-approved semantic decision, not a promotion justified by these scores or
-an assertion that BEAM batch dates are host timestamps. Close this trial and the
-judge-model grid. This report retains decisions and comparable totals;
-case reviews, request/retry histories and producers live in the evidence bundles.
-The subsequent fixed-retrieval budget comparison also closes with **4096 retained**:
-8192 restores some useful sources but does not demonstrate aggregate answer benefit
-at its higher generation cost.
-The subsequent full **35-conversation / 700-question 1M baseline** is also complete:
-mixed 68.13 and rubric 71.91, with the same current policy. Keep defaults unchanged;
-the [1M results](#full-1m-baseline-2026-10-19) separate operational scaling from
-remaining retrieval, delivery and evaluator limitations.
+This PR closes the 128K, 1M and 10M baselines and bounded follow-up comparisons.
+Keep original-text managed OpenAI Small retrieval, default native Jev criteria,
+k200/candidate200/final50, ranked 4096-token memory and the original BEAM judge.
+The full 10M retrievalText comparison does **not establish reliable general answer
+benefit**: other-198 rubric 63.05→64.09, mixed 60.10→60.18, with 22.8% more embedding
+input and 41 newly missing source references. **Defer retrievalText adoption.**
+Keep the 8192-budget and message-diversity candidates unadopted; close the judge grid.
+
+Role and verified host-time context in product reranking are a separate,
+user-approved semantic decision, not a promotion justified by these scores.
+BEAM batch dates remain distinct from host timestamps. Historical controls and
+labels below are unchanged. Small→Large on original text is an **unexecuted,
+separate follow-up outside this PR**, not a remaining merge requirement.
 
 After [LongMemEval-S closure](small-default-error-analysis.md#quoted-memory-full-cohort-structural-adoption-2026-10-18),
 use all **20 conversations / 400 questions** in `chats/100K`, called **128K** by the
@@ -29,6 +26,10 @@ run. The 1M and 10M buckets are reported separately below; 500K and an exhaustiv
 fact-level error census remain untested.
 
 ## Frozen policy and scoring
+
+These are the initial 128K baseline controls. Later sections explicitly identify
+role/batch-date reranking and display changes; the 1M and 10M runs inherit that
+benchmark adapter. They do not retroactively change the initial text-only control.
 
 - Managed OpenAI Small embeds original text; English Bayesian Query1, vector k 200,
   native Jev 1.13.0/default criteria/text field, candidate 200/final 50, strong reads.
@@ -486,15 +487,11 @@ cannot establish fact coverage. A November 7 statement remains delivered despite
 the candidate answer choosing competing dates; its assistant-plan provenance
 still does not establish an actual completed event.
 
-Prioritize concrete-incident recall at candidate 200. The one selected next
-hypothesis is managed **Small to Large on original text**, retaining all other
-controls. This is unexecuted, not an adoption: the earlier matched LongMemEval
-463→465 result did not justify its higher cost. Freeze all 40 questions from the
-two diagnosed conversations as a development screen and the other 160 for candidate
-confirmation; baseline data are already inspected. Complete histories remain
-necessary, so fewer queries alone do not avoid reindexing. The local follow-up
-bundle records exact cohorts, fact gates and limitations; paid bounds must be
-fixed before any future run. No new provider, browser or quality result is claimed.
+The selected future hypothesis is managed Small→Large on original text, targeting
+candidate-200 concrete-incident recall. It remains unexecuted and outside this PR;
+the earlier LongMemEval 463→465 result did not justify its higher cost. The local
+follow-up bundle preserves the proposed 40/160 cohorts and fact gates for a later
+bounded decision. No new provider, browser or quality result is claimed here.
 
 Separately, the approved PR review fix generalizes product guidance from
 `today/yesterday` to `relative dates`, covering tomorrow too. Stored benchmark
@@ -512,7 +509,7 @@ instead reuse fixed answers. Unit/emulator checks do not establish live quality.
 
 All owned collections from these runs are deleted with 404 checks. Original-input
 replay, request/source bindings, 4096 packing and upstream score reconstruction
-pass. `npm test`: 380, `npm run check`, `npm run check:release`, `npm run check:sdk`
+pass. At those recorded run revisions, `npm test`: 380, `npm run check`, `npm run check:release`, `npm run check:sdk`
 and script/test syntax pass; no browser rerun for these experiment-only changes.
 
 All bundles below are **local-only**, unavailable in a fresh clone. Paths are

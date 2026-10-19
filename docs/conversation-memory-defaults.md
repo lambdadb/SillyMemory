@@ -101,8 +101,9 @@ not reruns of this policy or a promise of unchanged long-span quality.
 
 ### Validation of the preceding current-input baseline
 
-The checks below predate production clarification continuity. Their original integration receipts remain linked; current validation is in
-[native reply behavior](native-replies.md).
+The checks below describe the earlier current-input baseline, before subsequent
+continuity experiments and the final native-reply policy. Original receipts remain
+linked; current validation is in [Query1 retrieval quality](query1-retrieval-quality.md#validation-boundaries).
 
 - `npm test`: 340/340; runtime, maintained script/test syntax, release metadata
   and locked SDK 0.8.0 checks passed.

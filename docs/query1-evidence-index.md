@@ -5,6 +5,22 @@ decisions and aggregate outcomes are in [the concise report](query1-retrieval-qu
 Detailed per-case, token, latency, cost and transition records remain in ignored
 artifacts; do not append another experiment diary to tracked documentation.
 
+## Final pre-merge audit (2026-10-19)
+
+Local-only `artifacts/archive/pr84-final-audit-v1.tar.gz` preserves the pre-cleanup
+files/PR body at `6441134d9bcbae753cc1a22c1e1986587ea4600d`, removed historical
+session-clock helpers/tests, final-audit report and fresh unit/host-delivery receipts.
+SHA-256: `8a9c9223f42de971a134c852f3dcc6de3f9144782e0839192255ae0c11fb4d58`;
+611,187 bytes / 60 files. Configured-secret scanning and complete byte readback pass.
+Restore under `artifacts/` and read `pr84-final-audit-v1/RESTORE.md`.
+
+The audit verifies 90 retained archive-table hashes and 96 local document links,
+377 unit tests, and 18 pinned-host/local-provider delivery cases plus packing and
+assembly. No new paid benchmark or product-default change. Historical 380-test
+receipts remain unchanged. The original reports and all prior archives are intact;
+latest-head CI and automatic-review follow-through are recorded separately on
+[PR #84](https://github.com/lambdadb/SillyMemory/pull/84).
+
 ## Full reports preserved before condensation
 
 The original reports are preserved byte-for-byte in local-only

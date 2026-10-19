@@ -106,7 +106,7 @@ costs $0.00005, before inference and plan allowances. These are arithmetic
 examples, not measured server bills or a universal per-turn cost.
 
 Reranker comparisons must preserve the same complete pre-rerank candidate inputs.
-Final50 receipts do not reveal all100 inputs or token usage; scored document count
+Final-50 receipts alone do not reveal every pre-rerank input or token usage; scored document count
 is not a token meter. When unavailable, leave native rerank cost unknown, or label
 and justify a tokenizer/prompt-overhead estimate. Use actual external-provider
 usage for its separate charge. Keep shared index construction/storage common;
