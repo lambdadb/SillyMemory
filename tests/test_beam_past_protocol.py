@@ -32,6 +32,24 @@ class Response:
 
 
 class TransportPolicy(unittest.TestCase):
+    def test_recall_manifest_cannot_omit_a_corrupted_conversation_file(self):
+        identities = [str(i) for i in range(1, 21)]
+        with TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "recall").mkdir()
+            files = {}
+            for identity in identities:
+                name = f"recall/recall-{identity}.json"
+                (root / name).write_bytes(b"[]")
+                files[name] = protocol.sha(b"[]")
+            protocol.check_recall_files(root, files, identities)
+            (root / "recall/recall-20.json").write_text("corrupted")
+            with self.assertRaises(AssertionError):
+                protocol.check_recall_files(root, files, identities)
+            del files["recall/recall-20.json"]
+            with self.assertRaises(AssertionError):
+                protocol.check_recall_files(root, files, identities)
+
     def test_lock_rejects_metadata_that_disagrees_with_executed_policy(self):
         files, upstream = {"required-runtime.js": "digest"}, {"loader.py": "digest"}
         original = {**protocol.protocol_settings(), "files": files, "upstreamFiles": upstream}

@@ -146,12 +146,21 @@ def check_lock(root, upstream_files):
     return lock
 
 
+def check_recall_files(root, files, conversation_ids):
+    expected = {f"recall/recall-{identity}.json" for identity in conversation_ids}
+    assert set(files) == expected, "Recall manifest must cover exactly the pinned conversations"
+    for name in expected:
+        assert sha((root / name).read_bytes()) == files[name], f"Recall file changed: {name}"
+
+
 async def score(root, dataset, env, lock):
     import httpx
     import llm
     import run
     import scoring
     import verify
+    rows, revision = dataset.load_rows("100k")
+    conversations = [dataset.build_conversation(row) for row in rows]
     memory_state = json.loads((root / "memory/memory-state.json").read_text())
     assert memory_state["status"] == "completed" and len(memory_state["completed"]) == 20
     assert memory_state["inputSha256"] == sha((root / "memory-input.json").read_bytes())
@@ -160,14 +169,11 @@ async def score(root, dataset, env, lock):
     assert recall_lock["inputSha256"] == memory_state["inputSha256"]
     assert recall_lock["memoryStateSha256"] == sha((root / "memory/memory-state.json").read_bytes())
     assert recall_lock["packingSourceSha256"] == sha((REPO / "scripts/beam-past-memory.mjs").read_bytes())
-    for name, digest in recall_lock["files"].items():
-        assert sha((root / name).read_bytes()) == digest, f"Recall file changed: {name}"
+    check_recall_files(root, recall_lock["files"], [c.id for c in conversations])
     output = root / "scored"
     output.mkdir()  # Never silently replay successful answers or partial scoring.
     calls = output / "calls"
     calls.mkdir()
-    rows, revision = dataset.load_rows("100k")
-    conversations = [dataset.build_conversation(row) for row in rows]
     recalls = {r["questionId"]: r for c in conversations
                for r in json.loads((root / f"recall/recall-{c.id}.json").read_text())}
     question_id = contextvars.ContextVar("questionId")

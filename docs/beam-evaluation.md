@@ -213,7 +213,10 @@ retry classification; its synthetic test confirms the original body remains read
 The final runner reconstructs the complete canonical protocol and required file
 manifest before accepting a lock, preventing edited settings or omitted hashes
 from misreporting execution. Two corruption regressions bring the Python suite to
-six tests. These post-run guard changes do not rerun or relabel the benchmark.
+six tests. The recall manifest must also contain exactly the 20 expected paths
+derived from the pinned dataset before any model call; an omitted/corrupted-file
+regression brings the final Python suite to seven tests. These post-run guard
+changes do not rerun or relabel the benchmark.
 
 ## Decision and scope (2026-10-19)
 
