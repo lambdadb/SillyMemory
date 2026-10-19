@@ -7,17 +7,20 @@ are current Standard/list-rate estimates, not invoices or controlled cost trials
 
 ## Consolidated LongMemEval-S comparison
 
-This table combines quality, final-answer input and cost for the same 500 released
-question IDs. Answer costs use each run's recorded cache categories plus output;
+Measured rows combine quality, final-answer input and cost for the same 500 released
+question IDs. The explicitly marked Summarize row projects usage and cost from
+the frozen 50-question subset; its accuracy is observed on those 50 only.
+Answer costs use each run's recorded cache categories plus output;
 memory costs are separately reconstructed or explicitly unresolved. Totals exclude
 host infrastructure, extra synchronization, retries and evaluation judging.
 Host and direct-provider paths are different experiments, and
 the 95% result is a consumed-cohort regression, not a held-out or actual-host result.
 
-| Condition, 500 answers | Accuracy | Total final-answer input | Answer generation USD | Memory construction + 500 queries USD, before storage | Combined USD, before storage |
+| Condition, 500 answers or marked projection | Accuracy (observed cohort) | Total final-answer input | Answer generation USD | Memory construction/maintenance + retrieval USD, before storage | Combined USD, before storage |
 | --- | ---: | ---: | ---: | --- | --- |
 | Plain SillyTavern, 32K | 32.8% | 14,028,181 | $30.41 | None | $30.41 |
 | Native Vector Storage, 32K | 34.4% | 14,028,603 | $14.12 | Embedding/indexing not reconstructed | Unresolved; $14.12 answer component only |
+| Native Summarize, **500-question projection (50 × 10)** | **32% on 50; 500 unmeasured** | **14,049,900 projected** | **$35.46 projected** | **$1,584.74 projected summary maintenance** | **$1,620.21 projected** |
 | Plain SillyTavern, 128K, complete history | 93.0% | 52,591,554 | $131.83 | None | $131.83 |
 | **SillyMemory direct, assembly/refill** | **95.0%** | **2,138,377** | **$5.67** | **$1.85–$2.61 modeled** | **$7.52–$8.28 modeled** |
 
@@ -40,8 +43,9 @@ here so that reuse does not appear to make memory free.
 The supported input comparison is **95.93% less final-answer input** than the
 complete-history arm, with scores of 95.0% versus 93.0% across the different paths.
 The receipt-priced dollar gap also reflects cache state; it is not a controlled
-warm-cache saving or a speed claim. Native Summarize has only a frozen 50-question
-comparison below and must not be promoted to a 500-question result.
+warm-cache saving or a speed claim. The Summarize projection assumes the observed
+50-question workload and cache mix scale linearly; it is not a completed
+500-question run. The measured subset and projection arithmetic are retained below.
 
 ## Which 95% result is being compared?
 
@@ -217,6 +221,28 @@ call, but does use paid embedding and structured Jev inference. The wide cost ga
 describes these declared configurations and full-history replay, not every possible
 summary architecture. The native summary continues to coexist with roughly 28K
 answer input rather than enforcing a 4K replacement policy.
+
+### Summarize: projecting the measured 50-question workload to 500
+
+The consolidated table uses a **10× linear projection**, calculated from unrounded
+50-question receipt estimates at the same rates and observed cache mix:
+
+```text
+500-question answer generation = 10 * $3.54625 = $35.4625
+500-question summary maintenance = 10 * $158.4743122 = $1,584.743122
+combined projection = $1,620.205622, rounded to $1,620.21
+```
+
+Projected final-answer input is **14,049,900 tokens**; summary-maintenance input is
+**610,593,960**, making **624,643,860 total generative input tokens**. The same
+scaling gives 24,750 summary calls plus 500 answer calls. The remaining 450
+questions were not run: **32% is the observed 16/50 accuracy**, not a measured
+500-question score or a forecast with a confidence interval. History lengths,
+summary frequency, output lengths and caching can change the actual 500-question
+cost. This is a workload projection for the declared native Summarize setting,
+not the cost of every summary architecture or of 500 later turns reusing one
+already-built summary. Storage, host infrastructure, retries and judging are
+excluded, consistently with the consolidated cost table.
 
 Both indexes and summaries can be reused across later questions. For Q questions
 on an unchanged history, separate **construction / Q + per-query work + generation**,
