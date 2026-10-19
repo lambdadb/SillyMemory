@@ -462,6 +462,45 @@ and confirmed 404. The abort rejected whitespace-only text before retrieval; the
 final run preserves every chunk. Existing evidence remains intact. The bounded
 trial is closed with defaults unchanged; no extra model or phrase search follows.
 
+## Offline 10M failure-stage attribution (2026-10-19)
+
+Reanalyze the saved paired run without provider calls or new answers. Of the
+original arm's 1,142 absent annotated source messages, 1,023 are already absent
+at candidate 200, 75 disappear at final 50 and 44 at 4096 packing. The candidate
+counts are 1,014/67/48. Of 41 newly lost delivered references, 27 disappear before
+candidate 200, two at final 50 and 12 at packing. These are message annotations,
+not counts of missing necessary facts or actual answer errors.
+
+The 79 source reviews and 69 answer reviews distinguish concrete facts from
+source IDs. Explicit overlapping codes find availability gains in 26 reviewed
+pairs, losses in 16, changed answer use/provenance/sequence in 27, and judge or
+reference ambiguity in 41. Sixteen have only the ambiguity label. This selected
+sample is not an all-200 error-rate estimate; labels and scores remain unchanged.
+
+Thirteen source-bound factual witnesses from 12 questions pass independent
+original-span checks. AWS pricing and Udemy preference already reached original
+candidate200/final50 but were unpacked; their gain is improved delivery. MQTT and
+Redis enter candidate200 anew. The Corolla clause disappears while another chunk
+of the same assistant message remains, demonstrating why message presence alone
+cannot establish fact coverage. A November 7 statement remains delivered despite
+the candidate answer choosing competing dates; its assistant-plan provenance
+still does not establish an actual completed event.
+
+Prioritize concrete-incident recall at candidate 200. The one selected next
+hypothesis is managed **Small to Large on original text**, retaining all other
+controls. This is unexecuted, not an adoption: the earlier matched LongMemEval
+463→465 result did not justify its higher cost. Freeze all 40 questions from the
+two diagnosed conversations as a development screen and the other 160 for candidate
+confirmation; baseline data are already inspected. Complete histories remain
+necessary, so fewer queries alone do not avoid reindexing. The local follow-up
+bundle records exact cohorts, fact gates and limitations; paid bounds must be
+fixed before any future run. No new provider, browser or quality result is claimed.
+
+Separately, the approved PR review fix generalizes product guidance from
+`today/yesterday` to `relative dates`, covering tomorrow too. Stored benchmark
+prompts keep the original wording; existing 10M results do not validate this new
+wording's model behavior. Retrieval defaults and all resource limits stay unchanged.
+
 ## Validation and evidence retention
 
 Initial quality screens use 5 diagnostics + 40 fixed comparisons; the final date
@@ -500,6 +539,14 @@ producer revisions, dependency paths and offline restoration commands.
 | `beam10m-current-v1` | `1c16bb89318225721e6ee0a7f0bb906877866a0f3265ab0e0b2eed50fb38334c` |
 | `beam10m-index-context-full-v1` (aborted before search) | `1c2ff5e07c3e65ff7895669fd9e54268207b9daad3f0555d31f2e4e641bbab7c` |
 | `beam10m-index-context-full-v2` | `c3047e6176f91f9ec0ab74d4765a93db63a1ad142aca52a5bcd0a24542513154` |
+| `beam10m-failure-stage-v1` | `8d328e76be57a62df7b061e0d80adb10c3b07f3268f930231d499ed493726ecc` |
+
+The offline failure-stage bundle has 21 verified members (53,815 bytes), produced
+at `524dd735bc5dfca44f12cfeab71da6f606d12a10` plus its recorded product patch.
+Configured-secret scan and full member readback pass. Its `RESTORE.md` requires
+the unchanged full-v2 and baseline bundles; no provider calls are needed. It
+preserves the explicit review coding, original-span checks and unexecuted next
+hypothesis, separately from the completed full-cohort live comparison.
 
 The full 10M comparison bundle has 14,999 verified members (77,453,845 bytes),
 produced at `c0b9153779e7a1f66ac5f669741702ef3d19067a`. Configured-secret scan and
