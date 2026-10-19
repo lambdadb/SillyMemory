@@ -1,5 +1,202 @@
 # BEAM evaluation decisions
 
+## Past public-protocol comparison: frozen scope (2026-10-20)
+
+The user approved one full **100K / 128K, 20-conversation / 400-question** run,
+replacing the memory backend in Past's public experiment with SillyMemory.
+The question is performance under that published evaluation protocol, not an
+annotation-blind product-quality improvement claim. This explicitly separate
+track does not change the original baselines or product defaults.
+
+- Past harness: [`1faac1e70fa50d92d966904358be98bb1beca0c8`](https://github.com/pastdotdev/benchmarks/tree/1faac1e70fa50d92d966904358be98bb1beca0c8/beam).
+  Reuse its loader, answer and judge prompts, strict judge schemas, rounding,
+  event alignment/Kendall tau-b, and question-weighted aggregation unchanged.
+- Dataset: Hugging Face `Mohammadta/BEAM`, revision
+  `3205395e897e7318c7b094ef4e6047b9b82dbb03`, complete `100K` split. Parquet SHA-256:
+  `c0519be25907005ba873c927c50877471d550873039d96c041554d0075a78ace`.
+  This follows Past's loader, rather than assuming the earlier GitHub source is
+  byte-identical. Past's saved 92.082142857 score and full question coverage
+  reconstruct offline; the three prompt bodies verify against ExaBase's file.
+- Answer and judge: `gpt-5.6-luna`, reasoning `none`, one user prompt, no added
+  temperature or output cap. **Direct OpenAI Chat Completions is user-approved**
+  instead of Past's OpenRouter route. Translate only routing-specific request
+  fields; retain strict JSON schema for rubric and equivalence judging.
+- Evaluation annotations enter answer generation exactly as Past's prompt uses
+  them. They never enter ingestion or retrieval. No recent dialogue, extra
+  product system prompt, or independent query rewrite enters generation.
+- Same source messages, speaker identities and supplied user-profile traits.
+  Same question as-of instants, including knowledge-update cutoffs at microsecond
+  precision. Session dates remain batch references, not actual message send times.
+- SillyMemory backend: original-text 800-character product chunks, managed OpenAI
+  Small embeddings, Bayesian Query1/k200, native Jev 1.13.0/default criteria,
+  role/batch-context/text reranking and strong reads. One query returns up to
+  **100 chunks**, with ranked source-validated evidence admitted within **8,000
+  estimated evidence tokens**, excluding JSON metadata. The observed rule is
+  `sum(ceil((content code points + source-excerpt code points) / 4))` per result;
+  it reproduces `usedEvidenceTokens` in all 400 published records. This is an
+  empirical accounting match, not verification of Past's private implementation.
+  Count full serialized JSON separately with cl100k. Context rendering and chunk
+  units belong to the backend; matching budgets does not make evidence identical.
+- Bounds: 400 first answers, no quality tuning or favorable repeats, four
+  transport attempts per model call as upstream, 10,000 model attempts / a $25
+  conservative model-cost reservation ceiling, 10,000 memory operations, and
+  eight-hour wall limits per live phase. Account refusal stops the run; exhausted
+  upstream answer/judge failures retain its zero-credit policy. Resource-limit
+  interruption is an incomplete run, never a full-cohort score.
+- Record all model request/response usage by phase, retrieval receipts and exact
+  sources under ignored `artifacts/beam-past-100k-v1/`. Verify collection ownership
+  before mutation and deletion, then confirm all temporary collections return 404.
+  Preserve raw evidence with checksums and a local-only restoration record.
+
+Before any answer generation, an offline audit found that the initial packing
+counted full JSON against 8,000 cl100k tokens. Past's published recall JSON instead
+averages 10,982 cl100k tokens, while its reported evidence estimate averages 7,987.
+Retain those unscored initial contexts, then repack the same saved top-100 queries
+using the matched accounting rule. This makes no new provider calls and does not
+select answers or tune to scores. Separate retrieval and generation source locks
+retain this pre-generation correction.
+
+Entry points are `scripts/beam-past-protocol.py` and
+`scripts/beam-past-memory.mjs`. The former imports the pinned upstream source from
+the ignored bundle, preserving its original MIT/BEAM/ExaBase notices rather than
+vendoring third-party prompts. Its `prepare`, `recall`, `score`, and `verify`
+phases, plus an offline `repack` phase, keep source freezing separate from paid
+calls. The final decision is a complete comparison or a documented concrete
+blocker; no second prompt track,
+larger history bucket, or product promotion is included.
+
+For a new authorized replication, create the ignored bundle using the pinned
+sources above. This run used Python 3.14 with `httpx==0.28.1`, `scipy==1.18.1`,
+and `pyarrow==26.0.0`; the bundle retains the complete dependency lock.
+Install `tiktoken@1.0.22` separately under the bundle's `tokenizer/` directory,
+not as a production dependency. The minimal setup and execution are:
+
+```sh
+beam_run=artifacts/beam-past-100k-v1
+mkdir -p "$beam_run/upstream"
+git clone https://github.com/pastdotdev/benchmarks.git "$beam_run/upstream/past"
+git -C "$beam_run/upstream/past" checkout --detach 1faac1e70fa50d92d966904358be98bb1beca0c8
+curl --fail --location https://huggingface.co/datasets/Mohammadta/BEAM/resolve/3205395e897e7318c7b094ef4e6047b9b82dbb03/data/100K-00000-of-00001.parquet -o "$beam_run/100k.parquet"
+python3 -m venv "$beam_run/venv"
+"$beam_run/venv/bin/pip" install httpx==0.28.1 scipy==1.18.1 pyarrow==26.0.0
+npm install --prefix "$beam_run/tokenizer" --no-audit --no-fund tiktoken@1.0.22
+"$beam_run/venv/bin/python" scripts/beam-past-protocol.py prepare
+# Paid phases: use an existing credential file; never copy it into the bundle.
+"$beam_run/venv/bin/python" scripts/beam-past-protocol.py recall --env-file /path/to/evaluation.env
+"$beam_run/venv/bin/python" scripts/beam-past-protocol.py score --env-file /path/to/evaluation.env
+"$beam_run/venv/bin/python" scripts/beam-past-protocol.py verify
+```
+
+## Past public-protocol result (2026-10-20)
+
+**SillyMemory scores 89.00/100 over all 400 questions, versus Past's published
+92.08/100: a descriptive gap of −3.08 points.** This is the question-weighted
+partial-credit score, with normalized event-ordering Kendall tau-b. It is not a
+binary answer-accuracy rate. Past's row is its saved September 29 run, not a fresh
+service rerun; this run uses the user-approved direct OpenAI route. It therefore
+matches the public evaluation protocol without claiming identical execution dates,
+provider routing, memory representation, or a controlled vendor win.
+
+| Ability | Questions | Past published /100 | SillyMemory /100 |
+| --- | ---: | ---: | ---: |
+| Abstention | 40 | 98.75 | 97.50 |
+| Contradiction resolution | 40 | 78.13 | 67.81 |
+| Event ordering | 40 | 100.00 | 100.00 |
+| Information extraction | 40 | 95.00 | 88.91 |
+| Instruction following | 40 | 96.25 | 95.63 |
+| Knowledge update | 40 | 89.38 | 83.13 |
+| Multi session reasoning | 40 | 68.95 | 66.55 |
+| Preference following | 40 | 100.00 | 99.38 |
+| Summarization | 40 | 99.38 | 96.72 |
+| Temporal reasoning | 40 | 95.00 | 94.38 |
+| **Overall** | **400** | **92.08** | **89.00** |
+
+The largest category gaps are contradiction resolution (−10.31 points), knowledge
+update (−6.25) and information extraction (−6.09). Event ordering scores 100 in
+both runs. Evaluation annotations explicitly supply its topics and supply strong
+hints in several other categories; these results do not establish annotation-blind
+memory quality or perfect independent chronology reconstruction. No hints-off
+comparison, quality tuning, favorable answer repeats, or other bucket ran.
+
+Three post-result, source-bound diagnostics inspect the largest score deficit in
+those three categories (ties by question ID), without changing any labels:
+
+- `13_information_extraction_1`: the original $120 print-book budget reaches
+  top100 at rank 68 but is omitted by packing. The answer describes a later $60
+  print/audio plan. Returning another fragment of the original assistant message
+  does not establish delivery of the required budget-allocation details.
+- `15_knowledge_update_0`: the eligible user's 4 PM update is delivered alongside
+  repeated older 3 PM assistant plans. The answer still says 3 PM. This is an
+  evidence-use failure, not absence of the updated statement from the prompt.
+- `19_contradiction_resolution_0`: both planned-meeting and never-met statements
+  are delivered. The answer identifies a contradiction, but substitutes prior
+  consultation for the planned meeting and omits the clarification request.
+  Preserve the original rubric labels and their interpretation limits.
+
+This selected review does not estimate failure prevalence. The older GitHub-based
+SillyMemory runs use different source adaptation, generation and judging; the
+score increase over those records does not isolate a memory-system improvement.
+The cohort is known, not an unseen confirmation set. Keep product defaults and
+close this bounded protocol comparison without a new optimization grid.
+
+### Tokens, costs and completion
+
+All 400 answers, 838 rubric judgments and 212 event-equivalence judgments complete:
+**1,450 successful benchmark model calls, no HTTP failures, transport retries,
+empty answers, failed verdicts, or output truncations**. Two separate synthetic
+transport checks add 79 input / 22 output tokens and approximately $0.000042;
+they are not benchmark answers. The generated and judged model identifier is
+`gpt-5.6-luna`, with reasoning disabled throughout.
+
+| Benchmark model phase | Calls | Total input tokens | Output tokens | Estimated USD |
+| --- | ---: | ---: | ---: | ---: |
+| Answer generation | 400 | 5,098,292 | 100,717 | $1.395373 |
+| Rubric judging | 838 | 545,486 | 40,222 | $0.170918 |
+| Event alignment | 212 | 18,350 | 2,544 | $0.006723 |
+| **Total** | **1,450** | **5,662,128** | **143,483** | **$1.573015** |
+
+Answer input averages **12,745.73 tokens**, median **12,597.5**. The evidence budget
+is an estimate over source text; the full API input also includes JSON metadata,
+question/category guidance and evaluation hints. Token totals above are recorded
+provider usage, not median-times-question-count projections.
+
+No cached input reads are reported. Answer generation reports 5,097,092 cache-write
+tokens; rubric judging reports 271,095. They are subsets of prompt input, not extra
+input tokens. Costs use the frozen [OpenAI Luna rate card](https://developers.openai.com/api/docs/models/gpt-5.6-luna):
+$0.20/M ordinary input, $0.02/M cached reads, $0.25/M cache writes and $1.20/M output.
+The formula is `(input − reads − writes)×ordinary + reads×cached + writes×write +
+output×output-rate`, with rates per million. These are usage-based estimates,
+not invoices or a controlled cross-provider cache comparison.
+
+The backend indexes **21,119 source/profile chunks**. Independent cl100k counting
+estimates **2,597,266 initial embedding input tokens**; this is not a managed
+provider usage receipt. There is no generative extraction/summarization during
+memory construction. Managed query embeddings, native reranking, writes/reads and
+physical storage are separate costs; the model table is not total system cost.
+Recorded HTTP timings do not establish SillyTavern reply latency, TTFT or a
+matched speed comparison with Past.
+
+All 400 retrievals and all stored source fields verify against the normalized
+input. Exact microsecond filters, top100 rankings, original and corrected packing,
+answer prompt bodies, native model settings and saved score arithmetic reconstruct
+offline. All 20 owned collections are deleted with 404 evidence. `npm test` passes
+388 tests; `npm run check`, `npm run check:release`, `npm run check:sdk`, Node
+syntax and Python compilation pass. This is a live API benchmark, not a browser
+integration run, deployment, or calibrated judge-accuracy study.
+
+The complete local-only bundle is
+`artifacts/archive/beam-past-100k-v1.tar.gz`: **86,082,977 bytes**, SHA-256
+`ad9d7a629b71c12c8037efdb1aca2684706ff53e2aad6a314f73c6acc9db1f15`.
+All **2,748 members** were read back and checked; the configured-secret scan
+found zero matches. Identical archive copies exist in the primary `sillymemory`
+and `sillymemory-beam-past-protocol` worktrees on the same machine. They are not
+independent remote backups and are unavailable in a fresh clone. Restore into a
+new directory and follow the bundle's `RESTORE.md`; the frozen retrieval and
+generation producers, protocol/recall locks, dependency locks, source review and
+all original receipts remain available without new provider calls. The producing
+public base is `cbd27ab470e67af105b2bd56fd3f642c6702cf17` plus the archived
+experiment source snapshots; original historical bundles remain unchanged.
+
 ## Decision and scope (2026-10-19)
 
 PR #84 closed the 128K, 1M and 10M baselines and bounded follow-up comparisons.
