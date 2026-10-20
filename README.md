@@ -10,6 +10,8 @@ plugin, or build step is needed.
 [**0.4.0 — experimental pre-release**](https://github.com/lambdadb/SillyMemory/releases/tag/v0.4.0)
 is available on `main`. Start with a test chat; broader model/browser compatibility
 and answer quality are still being evaluated.
+The [0.5.0 candidate](docs/releases/0.5.0.md) is being prepared on development
+branches; it is not yet the public installation baseline.
 
 ## Before you start
 
