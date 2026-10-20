@@ -1755,3 +1755,31 @@ changes or remote collections; all disposable profiles and temporary host remove
   promotion checks requiring a dated release were deliberately not run; 0.4.0
   remains Unreleased. This preparation establishes neither publication nor
   data migration, arbitrary model/API support or improved answer quality.
+
+## 0.5.0 release acceptance
+
+The [acceptance record](releases/0.5.0-validation.md) closes release preparation
+independently of PR #89. Public main installation passes 14 checks; the candidate
+install and native same-branch 0.4.0 → 0.5.0 Update pass 22. Current host/browser
+acceptance passes 103 checks, recovery 215 checks (24 cycles, two host kills),
+and final delivery 18 cases plus overlap, packing and assembly. Unit regressions
+pass 383. Provider/completion services are local emulators; no new paid quality
+run, storage migration, main promotion, tag or Release publication is claimed.
+
+- Local-only archive: `artifacts/archive/release-050-v1/evidence.tar.gz`,
+  2,656,052 bytes; SHA-256
+  `433a7ba3e663cb311cc70c4099ef2c6527b538af53d5db8204bc778b939a18d3`.
+- Manifest: `artifacts/archive/release-050-v1/manifest.json`, SHA-256
+  `d98cbd03df298f2234ef4c1e6de8242e20c1122e4c7fdbac3642a34a002ce5d6`. All 387 archive members read back and verified.
+- Identical copies are retained under the primary `sillymemory` worktree and
+  `sillymemory-release-050` worktree. Same-machine copies are not remote backups;
+  this archive is unavailable in a fresh clone.
+- Producer: `561beb7eda82cdffff5b59b769f11d60e98514cc`; all 187 locked
+  product/harness/input files remain unchanged after acceptance. The archive
+  includes the complete measured producer, selected pinned host sources, frozen
+  plan/hashes, original reports/screenshots/logs, completed results and `RESTORE.md`.
+  The measured producer's documentation predates the completed acceptance record.
+- The disposable pinned host and test profiles/processes were cleaned; all local
+  emulator collections were removed. No real remote collections were created.
+  Credentials, personal profiles and dependencies are excluded. Historical evidence
+  is preserved unchanged. No runtime or harness modifications were needed.
