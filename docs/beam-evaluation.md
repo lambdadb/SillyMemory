@@ -342,88 +342,163 @@ requests, responses, usage and results. Preserved source precedes removal of the
 unadopted active-tree prototype. Producing checkout: `f9e495bc0297f7c6ab10293c1806551a33567498`
 plus the archived candidate source. Neither archive was overwritten.
 
-## Exact repeated-evidence refill screen (2026-10-20)
+## Exact repeated-evidence grouping and refill (2026-10-20)
 
-**Defer this candidate; no paid answer-quality evaluation ran.** A user-authorized
-follow-up tests whether exact repeated passages can free the same 8,000 estimated
-evidence budget for previously omitted sources. All 400 contexts preserve their
-baseline text and source occurrences. Additional source coverage exists, but final
-serialized context input increases **0.37%**, failing the predeclared non-increase
-gate. This is a bounded offline screen, not evidence of better or worse answers.
-No runtime/default change, model call, memory-service call or collection creation.
+**Defer adoption: the paired comparison does not establish a quality gain.**
+One user-authorized exact-repeat/refill candidate preserves all baseline sources
+and adds relevant evidence, but fresh answers on 392 paired questions score
+**89.99 → 89.54/100 (−0.44 points)**. The 95% conversation-cluster interval is
+**−1.59 to +0.52 points**; the predeclared positive-lower-bound quality gate fails.
+Actual answer input rises **0.36%**. This does not establish harm either; keep
+product defaults and close the single candidate without a wider sweep.
 
-The plan was frozen before the screen (SHA-256
+### Offline source preservation and delivery
+
+The offline plan was frozen before the screen (SHA-256
 `bf18ed48011d45ffd650e51f62416a52f2947b260d6f51fc931a4528081e8fbd`).
-One candidate groups **byte-identical whole passages** only within the same
-conversation, role, author, source kind and batch-date/time meaning. It preserves
-every original source/turn ID, ordinal, passage, offset and verbatim body through
-an explicit identical-occurrence list. The first retrieval occurrence remains the
-display location. No paraphrase matching, whitespace normalization, summary,
-message quota, retrieval expansion or reranking. Every baseline selected chunk is
-reserved first; refund only repeated text, then admit previously unselected saved
-top100 hits in retrieval order, within 8,000 estimated content tokens and at most
-100 source chunks. The evidence estimate still counts each rendered unique body
-as `ceil(code points / 4)`; all occurrence metadata remains outside that estimate.
+Group byte-identical whole passages only within the same conversation, role,
+author, source kind and batch-date/time meaning. An explicit identical-occurrence
+list preserves every source/turn ID, ordinal, passage, offset and verbatim body;
+the first retrieval occurrence remains the display location. No paraphrase
+matching, whitespace normalization, summary, message quota, retrieval expansion or
+reranking. Reserve every baseline selected chunk first, refund only repeated text,
+then admit previously unselected saved top100 hits in retrieval order. Keep the
+same 8,000 source-only estimate and at most 100 source chunks. Count each rendered
+unique body as `ceil(code points / 4)`; provenance remains outside that estimate.
 
-| Offline observation across 400 question contexts | Result |
-| --- | ---: |
-| Repeated baseline passage occurrences / affected questions | 266 / 124 |
-| Refunded source-only token estimate, summed across questions | 43,953 |
-| Additional source-chunk occurrences / affected questions | 429 / 155 |
-| Baseline serialized cl100k context tokens | 5,060,535 |
-| Candidate serialized cl100k context tokens | 5,079,094 |
-| Change | +18,559 (+0.37%) |
-| Contexts with increased / equal / decreased input | 145 / 245 / 10 |
-| Baseline source or annotated-coverage losses | 0 |
+Across all 400 contexts: 266 repeated occurrences in 124 questions refund 43,953
+estimated source tokens, permitting 429 additional source-chunk occurrences in
+155 questions. These are not 429 unique facts; some add another occurrence of an
+already delivered body. All baseline text and provenance reconstruct exactly.
+Serialized cl100k context input changes **5,060,535 → 5,079,094 (+0.37%)**:
+145 contexts increase, 245 are equal and ten decrease. These are offline
+context-only diagnostics, not provider usage or measured full-prompt cost.
 
-The 429 added occurrences are not 429 unique facts: some repeat an already
-available body at another source location. Over all 1,094 annotated message
-references, four formerly absent references become complete and two become
-partial; three existing partial references gain more text. These nine extensions
-occur in seven questions, only three with imperfect historical answers; correct
-controls do not establish efficacy. Aggregate message states change from
-478 complete / 145 partial / 471 absent to 482 / 147 / 465. These are structural
-coverage diagnostics, not necessary-fact recall or causal failure counts.
+Over 1,094 annotated message references, four formerly absent references become
+complete and two partial; three existing partial references gain more text.
+These nine extensions occur in seven questions, only three with imperfect
+historical answers. Message coverage changes from 478 complete / 145 partial /
+471 absent to 482 / 147 / 465, without losses. Structural coverage and correct
+controls do not establish necessary-fact recall or answer-quality improvement.
 
-One source-bound review verifies a relevant gain: `12_summarization_0` newly
-receives the paragraph in `12_s000_t0059` linking declining a meeting with Stephen
-to the startup offer, an opening event omitted from the historical summary. Its
-text, source offsets and as-of eligibility verify; no baseline delivered body
-mentions the startup offer. The $120 print-book discovery fact in
-`13_information_extraction_1` remains absent. No new answer or judge score is
-available, and neither example establishes answer-quality improvement.
+Source review verifies one relevant gain: `12_summarization_0` newly receives the
+paragraph in `12_s000_t0059` linking declining a meeting with Stephen to the
+startup offer, an opening event omitted from the historical answer. No baseline
+body mentions the startup offer. Its exact source span and eligibility verify.
+The $120 discovery fact in `13_information_extraction_1` remains absent.
 
-Before final serialization, a pre-generation diagnostic accidentally exposed an
-extra retrieval-position field absent from the baseline. Preliminary input rose
-3.02%. Those bytes are preserved under `preparation-history/rank-diagnostics/`.
-The final representation removes only that added diagnostic from the model input;
-positions remain in saved selected IDs and raw query receipts. All selected IDs,
-grouping/refill decisions, source provenance, budget and plan remain identical.
-No model answer was observed or used for the correction. Final token figures are
-**cl100k context-only diagnostics**, not provider usage or measured full-prompt
-cost. Extra occurrence/source labels and replacement content can outweigh the
-saved repeated bodies; matching source-only budgets does not fix API input size.
+A preliminary diagnostic accidentally exposed a retrieval-position field absent
+from the baseline, increasing input 3.02%. Preserve those bytes under the screen's
+`preparation-history/rank-diagnostics/`. Before any candidate answer, remove only
+that added diagnostic; positions remain in selected IDs and raw receipts. Every
+selected ID, grouping/refill decision, source field and budget stays unchanged.
+Candidate context files were copied byte-for-byte into confirmation and remained
+unchanged throughout the quality comparison.
 
-A small synthetic archived check covers exact reconstruction, changed values,
-role/author/date/time isolation, budget refill and foreign-source rejection. An
-independent verifier reconstructs all 400 baseline occurrences and source spans,
-checks eligibility/budget and the relevant newly delivered fact. The offline
-candidate and one-off tools remain in ignored evidence rather than maintained
-runtime or CI. Stop at the frozen input gate; do not expand into semantic merging,
-a new encoding sweep or a paid run merely to seek a positive result.
+### Quality scope correction and frozen confirmation
 
-Retained evidence: `artifacts/archive/beam-repeated-evidence-v1.tar.gz`,
-**17,158,271 bytes**, SHA-256
-`0c6b661944f43dd5792da9caf3214cd7a57459ab0d64360d573de8e44cca8753`.
-All **71 members** were read back and checked; configured-secret matches: zero.
-Identical same-machine copies exist in the primary and protocol worktrees. The
-bundle is local-only, unavailable in a fresh clone. Restore it beside the original
-`beam-past-100k-v1/` and `beam-context-layout-v1/` bundles recorded above; its
-`RESTORE.md` documents dependencies and provider-free verification. It retains the
-frozen plan, exact producer and source hashes, initial/final outputs, source audit,
-independent verifier and synthetic check. Producing checkout:
-`2c5b1e3380133cf390d798ef50bee4b7620a6389`, with the archived one-off producer.
-No original archive or run output was overwritten.
+The original offline plan included an assistant-added non-increasing-input gate
+and initially deferred paid evaluation when it failed. **Before any candidate
+answer**, that extra cost prefilter was removed to follow the authorized
+relevant-fact and no-source-loss conditions and the repository's quality-first
+policy. Both source conditions passed; the small input increase became a reported
+resource outcome. The original plan, decision and archive remain unchanged. This is a disclosed
+pre-quality scope revision, with no candidate/prompt/model change or observed
+candidate quality used to choose it.
+
+The corrected plan SHA-256 is
+`16e487f8e54b4721ea615a80bf97c0b22d53230abd1965637d1f37cf107130e1`.
+The **392-question** confirmation was frozen, excluding all eight previously source-reviewed cases:
+the original three diagnostics, the prior layout's two examples and this screen's
+three imperfect source-gain questions. All have historical scores; this is
+**not an unseen holdout**. Both arms were freshly called with hash-based launch order,
+unchanged Past/ExaBase prompts/annotations, strict schemas and score arithmetic,
+`gpt-5.6-luna`/reasoning `none`, direct OpenAI and identical as-of cutoffs. Four
+conversations run concurrently with up to 20 question pairs each. Bounds: 784
+answers, 12,000 model attempts, $25 conservative reservation ceiling, eight hours,
+zero new memory calls. One answer per arm; no favorable repeats or candidate sweep.
+
+| Ability | Pairs | Fresh baseline /100 | Candidate /100 |
+| --- | ---: | ---: | ---: |
+| Abstention | 40 | 97.50 | 97.50 |
+| Contradiction resolution | 38 | 69.74 | 69.74 |
+| Event ordering | 40 | 100.00 | 100.00 |
+| Information extraction | 39 | 90.92 | 91.13 |
+| Instruction following | 39 | 95.51 | 94.87 |
+| Knowledge update | 38 | 83.55 | 78.29 |
+| Multi session reasoning | 39 | 71.08 | 71.27 |
+| Preference following | 40 | 99.38 | 100.00 |
+| Summarization | 39 | 98.27 | 97.24 |
+| Temporal reasoning | 40 | 92.50 | 93.75 |
+| **Overall** | **392** | **89.99** | **89.54** |
+
+Sixteen pairs improve, 17 regress and 359 are unchanged. The interval uses 20,000
+conversation-cluster resamples, seed 20261020. Do not compare this candidate with
+the historical full-400 89.00 as a paired effect. Category scores are descriptive:
+knowledge update falls 83.55 → 78.29; no independent category win is established.
+
+Exact serialized inputs are unchanged in **242 pairs**: these controls score
+89.14 → 88.84, with seven improvements, nine regressions and 226 unchanged scores.
+Their differences reflect generation/judge variability, not the candidate layout.
+The **150 changed-input pairs** score 91.35 → 90.69, with nine improvements,
+eight regressions and 133 unchanged scores. These source-defined partitions are
+descriptive; the full 392-pair result stays primary. The four confirmation
+questions gaining annotated source coverage were historically correct controls;
+the three imperfect source-gain questions were excluded as discovery cases.
+
+A post-result illustrative regression, `14_knowledge_update_0`, retains the user's
+$75 snack-budget update (`14_s001_t0046`) in both arms. The fresh baseline answers
+$75; the candidate answers older $45/$65 values (1 → 0). Source preservation does
+not establish correct update use. This case and the control variation do not
+isolate layout causality or estimate failure prevalence.
+
+### Recorded API usage and retention
+
+| Usage, 392 answers per arm | Fresh baseline | Candidate |
+| --- | ---: | ---: |
+| Answer input tokens | 4,995,732 | 5,013,544 |
+| Answer output tokens | 101,183 | 101,443 |
+| Answer cached-read tokens | 1,584,538 | 1,532,551 |
+| Answer cache-write tokens | 3,410,018 | 3,479,817 |
+| Mean / median answer input | 12,744.21 / 12,603 | 12,789.65 / 12,665.5 |
+| Answer model estimated USD | $1.005850 | $1.022572 |
+| Rubric input tokens, 820 calls | 541,366 | 544,508 |
+| Equivalence input tokens, 212 calls | 18,350 | 18,350 |
+| All model phases estimated USD | $1.182128 | $1.199182 |
+
+All **2,848 model calls** complete with HTTP 200: 784 answers, 1,640 rubric and
+424 equivalence judgments, without retries, empty answers, failed verdicts or
+truncation. Combined modeled model cost is **$2.381310**, using the frozen rate
+card above, not an invoice. Both arms have substantial cached reads; rubric reads
+are 0 / 1,357 and writes 283,013 / 283,365. Cache writes are subsets of input.
+Interleaving, identical controls and reuse across experiments mean these are
+observed-cache costs, **not cold-cache independent system costs** or a controlled
+cache-effectiveness comparison. No new embedding, retrieval, storage or collection
+calls occurred. No host-latency, browser integration or deployment claim.
+
+Exact frozen contexts/cohort, native parameters, answer/judge prompts and strict
+schemas, saved score arithmetic, source-defined partitions and usage verify
+offline. The archived synthetic check covers exact reconstruction, different
+values, role/author/date/time isolation, budget refill and foreign-source rejection;
+an independent source verifier checks all 400 contexts and the relevant fact gain.
+Final maintained checks pass 390 JavaScript and eight Python tests, runtime/release
+and SDK checks. Keep one-off producers and full output ignored and archived;
+there is no new maintained candidate mode or product/runtime change.
+
+The offline screen remains at `artifacts/archive/beam-repeated-evidence-v1.tar.gz`,
+17,158,271 bytes, SHA-256
+`0c6b661944f43dd5792da9caf3214cd7a57459ab0d64360d573de8e44cca8753`
+(71 members checked). The paired confirmation is
+`artifacts/archive/beam-repeated-evidence-confirm-v1.tar.gz`, **23,100,258 bytes**,
+SHA-256 `e4034408608c99ea5970372daf2e610412122e410bcf26ca8cd1c8a6037211aa`
+(**2,871 members** checked). Both have zero configured-secret matches and identical
+same-machine copies in the primary and protocol worktrees. They are local-only,
+unavailable in a fresh clone; no archive was overwritten. Follow each bundle's
+`RESTORE.md` with the original baseline archive above. Exact producers, plan/input
+hashes, source audits, raw model requests/responses, usage and complete results
+remain available without provider calls. The confirmation producer is checkout
+`d5cb63f067ddf56737b18cbb7df0dbeef055b5f5` plus its archived one-off scorer; the
+unchanged candidate was produced at `2c5b1e3380133cf390d798ef50bee4b7620a6389`.
 
 ## Decision and scope (2026-10-19)
 
