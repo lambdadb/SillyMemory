@@ -133,12 +133,12 @@ opened and source-reviewed; original scores/rubrics remain unchanged:
 | `1_abstention_1` | 0 | Rank-1 user message explicitly reports **90% satisfaction** for the queried feature and reaches generation. The no-information rubric rejects that supported answer; Past's public answer also reports 90% and scores 0. |
 | `2_contradiction_resolution_1` | .375 | Both annotated user statements say **92% Cypress pass rate** and are delivered. The answer omits 92% and substitutes a generic-example contradiction; the annotated witnesses do not contain the rubric's never-created assertion. Clarification wording is also ambiguous. |
 | `15_event_ordering_0` | .7556 | All ten topics match but their order differs. Only 4/36 annotated messages are returned and 1 is fully delivered; rank-69 August exercise evidence is packed out. Provided topic hints and sparse delivery prevent a single causal attribution. |
-| `7_information_extraction_0` | 0 | Explicit **k=0.035** reaches generation at rank 50 alongside repeated older 0.03 values; the answer chooses 0.03. This is demonstrated evidence-use failure. Past's answer also chooses 0.03 and scores 0. |
-| `4_instruction_following_1` | 0 | The instruction to always specify container versions is returned at **rank 94** and packed out. The answer gives unversioned/latest images. This verifies instruction-delivery loss, not the existence of all requested version numbers. |
+| `7_information_extraction_0` | 0 | Explicit **k=0.035** reaches generation at rank 50 alongside repeated older 0.03 values; the answer chooses 0.03. The target is delivered, but public extraction guidance favoring original mentions adds interpretation ambiguity. Past's answer also chooses 0.03 and scores 0. |
+| `4_instruction_following_1` | 0 | The original version-reporting instruction is returned at **rank 94** and packed out, but annotation guidance repeats it in the actual generation prompt. The answer gives unversioned/latest images. This does **not** establish causal instruction-delivery loss; availability of all requested version numbers remains unverified. |
 | `5_knowledge_update_0` | 0 | Both the eligible later **12-hour** request (rank 6) and older daily setup (rank 5) reach generation; answer says daily. Goal-versus-current-configuration interpretation also matters. Past answers 12 hours. |
 | `6_multi_session_reasoning_1` | 0 | Target counts **8 + 10** are delivered, but the answer sums other reports to 39. One target message also says both completed eight and never solved any; cumulative/repeated-count interpretation is required. |
 | `27_preference_following_0` | .6667 | Evening/Riverside preference is respected; a wording-sensitive item penalizes explicitly mentioning cooler conditions. This is not factual preference retrieval failure. |
-| `29_summarization_0` | .875 | Original user shoulder-pain report and annotated physiotherapy discussion are absent from top100. Summary covers wrist injury instead: verified loss of those source witnesses. |
+| `29_summarization_0` | .875 | Original user shoulder-pain report and annotated physiotherapy discussion are absent from top100. Summary covers wrist injury instead. The full shoulder criterion is independently supplied in generation guidance: source-witness loss is verified, but its causal role in the omission is unresolved. |
 | `24_temporal_reasoning_0` | .5 | Delivered sources say March 15/April 27 and the answer correctly computes **43 days**. Rubric also demands April 17 (33 days), conflicting with its 43-day item. Past's public answer receives the same .5. |
 
 The result supports continuing the fixed-budget backend at 1M as an evaluated
@@ -149,6 +149,119 @@ reference inconsistencies coexist. A next quality hypothesis should target one
 of those demonstrated mechanisms and freeze separate confirmation cases before
 paid optimization. Neither previous packing candidate nor a new product default
 is promoted by this length run.
+
+### Expanded offline 1M error classification (2026-10-20)
+
+The product question is which observed losses justify a retrieval, packing or
+answer-use hypothesis. The bounded offline scope is a census of all **700**
+recorded answers, structural triage of all **224 imperfect answers**, and source
+review of **49** fixed cases: all **35 zeros**, the original ten diagnostics,
+and the five lowest nonzero imperfect cases in each of contradiction resolution
+and multi-session reasoning. Ties use numeric conversation ID and question ID;
+the union is fixed before opening the additional packets. No provider call,
+regrading, candidate generation, runtime/default change or paid follow-up occurs.
+Original answers and the **86.624971655/100** score remain unchanged.
+
+There are **476 full-credit, 189 partial-credit and 35 zero-credit answers**.
+The following four abilities account for **82.44% of total lost score mass**;
+counts of imperfect answers alone overemphasize small event-ordering penalties.
+
+| Ability | Full / partial / zero | Mean /100 | Lost score mass |
+| --- | ---: | ---: | ---: |
+| Multi-session reasoning | 20 / 46 / 4 | 67.34 | 22.86369 |
+| Contradiction resolution | 1 / 69 / 0 | 67.86 | 22.50000 |
+| Knowledge update | 52 / 2 / 16 | 75.71 | 17.00000 |
+| Information extraction | 40 / 23 / 7 | 78.83 | 14.81786 |
+
+Lost score mass sums `1 - original question score`; divide by seven to obtain
+its contribution to the 700-question overall score loss in percentage points.
+This is score accounting, not a binary error rate.
+
+All-224 structural triage finds **170** with some eligible annotated message
+delivered and **62** with every eligible annotated message completely delivered;
+**122** have an annotation absent from top100 and **59** have a returned
+annotation entirely excluded by packing. **16** lack eligible uniquely mapped
+annotations. These overlapping message-span flags are not necessary-fact recall
+or causal failure counts. For example, `31_information_extraction_1` has missing
+annotated parade messages, yet equivalent user evidence of choosing Sanja Matsuri
+over Tokyo Tower reaches generation at rank 3. The answer selects another day's
+sushi class; annotation absence alone would misclassify the mechanism.
+
+The 49 source-reviewed cases have these **overlapping observations**, not an
+estimate of their prevalence in all 224 imperfect answers:
+
+| Observation | Selected cases | Interpretation |
+| --- | ---: | --- |
+| Delivered target omitted or another value selected | 25 | A target fact/qualifier is already available; an ambiguous target can still accompany the mismatch. |
+| Provenance or modality concern | 13 | Assistant examples/proposals, hypothetical changes or other people's facts mix with claims about actual user state; certainty can remain ambiguous. |
+| Aggregation or scope mismatch | 10 | Cumulative progress, transaction identity, taxonomy or accounting scope differs from the reference. |
+| Reviewed relevant source witness absent from top100 | 7 | Source-specific absence; equivalent facts elsewhere are not ruled out. |
+| Reviewed witness returned but target phrase packed out | 4 | Physical memory-selection loss; complete-prompt hints can defeat a causal attribution. |
+| Question, source, reference or judge ambiguity | 32 | Competing interpretations, not an adjudication that 32 original labels are invalid. |
+
+Concrete answer-use failures include selecting an assistant sample **80%**
+shooting result over the delivered user **60%** update
+(`27_knowledge_update_0`), and summing assistant **proposed** budgets of
+**$12,000 + $6,000** instead of delivered user-confirmed **$10,000 + $5,000**
+(`26_multi_session_reasoning_1`). The arithmetic is correct for the wrong factual
+status. The **4,550 TRY** rent update, **180-ball** practice update and **April 1**
+appointment also reach generation but lose to older values. A separate packing
+candidate is the **h=0.25** user update, returned but excluded in
+`7_knowledge_update_0`; no counterfactual quality benefit is established.
+
+Full-prompt inspection corrects the earlier attribution for
+`4_instruction_following_1`: its packed-out instruction is independently repeated
+in annotation-derived generation guidance. The shoulder criterion is likewise
+supplied as a summary hint in `29_summarization_0`. Keep source-witness loss,
+information availability in the entire generation prompt and actual answer use
+separate. These task hints are part of this public comparison protocol, not a
+validated annotation-blind product behavior.
+
+Four expected knowledge updates were not located explicitly in eligible dialogue:
+**17 minutes**, **30 LinkedIn connections**, **50 contest participants**, and
+**April 4** in `6_knowledge_update_1`, `11_knowledge_update_0`,
+`23_knowledge_update_0` and `24_knowledge_update_1`. Probe metadata describes the
+updates, but reviewed source annotations are mismatched or empty. Searches cover
+both source roles and the question's eligible time prefix; literal/near-literal
+searches do not rule out every semantic paraphrase. Retain these as unresolved
+source/reference support, not confirmed retrieval failures. Past's archived
+public answers also score **zero on all four**, so they do not explain the
+product-to-product score gap.
+
+All **70** contradiction answers receive full credit for identifying a
+contradiction. The fourth criterion receives **55 zeros / 12 halves / 3 full
+scores**, accounting for **15.25 of 22.50** lost score units in this ability
+(**67.78%**), or **2.17857 points** of the original overall loss. Some judgment
+reasons demand determining which claim is true despite generation guidance
+requesting no definitive conclusion; similar indeterminate answers sometimes
+receive full credit. Missing an explicit clarification request can still be a
+rubric mismatch. This is diagnostic accounting, **not recovered points or a
+rescored benchmark**; actual target-detail omissions remain.
+
+The next justified hypothesis concerns answer grounding: distinguish user
+reports from assistant examples/proposals, bind updates to their subject and
+status, and separate cumulative counts from independent items. Retrieval and
+packing have specific witnesses to investigate, but widening retrieval alone
+does not address delivered-but-misused facts. Any paid optimization still needs a
+separately frozen confirmation cohort and quality gate. No previous packing
+candidate or new default is adopted by this offline diagnosis.
+
+The analysis starts from repository revision
+`525574b93408079d81a8b2b10d2820ad95e1ea39`; its one-off uncommitted producers
+are retained in the derived bundle and read immutable original-run evidence.
+The derived local-only archive is
+`/Users/steven/Dev/sillymemory/artifacts/archive/beam-past-1m-error-analysis-v1.tar.gz`:
+**2,436,913 bytes**, SHA-256
+`04022a9184c642b62e77717911450bc9035cd78ba9767b86a13a3925dba8f242`.
+All **64 members** are read back; their file manifest verifies. The bundle retains
+the fixed selection, 700-outcome census, 49 case findings and source packets,
+exact native answer prompts, local review HTML, and one-off producers/verifier.
+All 49 prompts/answers bind to original native receipts; source phrases,
+eligibility and selected witness ranks verify against the original archive.
+The original 1M bundle remains unchanged and is required for full-corpus
+reproduction via `RESTORE.json`. Neither archive is available in a fresh clone
+or independently backed up remotely. Mechanical verification does not calibrate
+the judge or prove the semantic/causal classification.
 
 ### 1M validation and retention
 
