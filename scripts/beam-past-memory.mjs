@@ -1,7 +1,7 @@
 // Benchmark-only storage/recall adapter. No evaluation annotations enter this process.
 import assert from 'node:assert/strict';
 import { createHash, randomBytes } from 'node:crypto';
-import { readFile, writeFile, mkdir, rename } from 'node:fs/promises';
+import { readFile, writeFile, mkdir, rename, lstat, mkdtemp, rm } from 'node:fs/promises';
 import { parseEnv } from 'node:util';
 import { pathToFileURL } from 'node:url';
 import { createRequire } from 'node:module';
@@ -29,6 +29,24 @@ export async function receiptBody(response) {
     // Logging must not turn a retryable HTTP status into a JSON parse failure.
     try { return await response.clone().json(); }
     catch { return { nonJsonResponse: true }; }
+}
+
+export async function publishRepackedRecall(parent, build) {
+    const target = path.join(parent, 'recall');
+    const existing = await lstat(target).catch(error => {
+        if (error.code !== 'ENOENT') throw error;
+        return null;
+    });
+    assert(!existing, 'Repacked recall already exists');
+    const staging = await mkdtemp(path.join(parent, '.recall-'));
+    try {
+        await build(staging);
+        // Publish validated files and their lock together. A failed build leaves
+        // neither partial recall nor a lock that could authorize partial data.
+        await rename(staging, target);
+    } finally {
+        await rm(staging, { recursive: true, force: true });
+    }
 }
 
 export function recallQuery(owner, scope, text, asOfMicros) {
@@ -121,26 +139,27 @@ async function main() {
         const { readdir } = await import('node:fs/promises');
         const receipts = await Promise.all((await readdir(memoryRoot)).filter(name => /^http-\d+\.json$/.test(name)).sort()
             .map(async name => JSON.parse(await readFile(path.join(memoryRoot, name)))));
-        const target = path.join(parent, 'recall'); await mkdir(target);
         const lock = { inputSha256: sha(inputBytes), memoryStateSha256: sha(stateBytes),
             packingSourceSha256: sha(await readFile(new URL(import.meta.url))), files: {} };
-        for (const conversation of input.conversations) {
-            const owned = state.owned.find(item => item.conversationId === conversation.id);
-            const docs = sourceDocuments(conversation, owned.owner, owned.scope);
-            const queries = successfulQueryReceipts(receipts, owned.collection);
-            assert.equal(queries.length, conversation.questions.length);
-            const recalls = conversation.questions.map((question, i) => {
-                const receipt = queries[i], expected = recallQuery(owned.owner, owned.scope, question.text, question.asOfMicros);
-                assert.equal(receipt.status, 200); assert.deepEqual(receipt.request.body.query, expected.query);
-                assert.deepEqual(receipt.request.body.rerank, expected.options.rerank); assert.equal(receipt.request.body.size, 100);
-                const hits = receipt.response.docs.map(hit => hit.doc);
-                return { questionId: question.id, queryMs: receipt.elapsedMs, hitIds: hits.map(doc => doc.id),
-                    ...packContext(hits, docs, question.asOf, question.asOfMicros, countTokens) };
-            });
-            const name = `recall/recall-${conversation.id}.json`, bytes = JSON.stringify(recalls);
-            await writeFile(path.join(parent, name), bytes); lock.files[name] = sha(bytes);
-        }
-        await writeFile(path.join(parent, 'recall-lock.json'), JSON.stringify(lock, null, 2));
+        await publishRepackedRecall(parent, async staging => {
+            for (const conversation of input.conversations) {
+                const owned = state.owned.find(item => item.conversationId === conversation.id);
+                const docs = sourceDocuments(conversation, owned.owner, owned.scope);
+                const queries = successfulQueryReceipts(receipts, owned.collection);
+                assert.equal(queries.length, conversation.questions.length);
+                const recalls = conversation.questions.map((question, i) => {
+                    const receipt = queries[i], expected = recallQuery(owned.owner, owned.scope, question.text, question.asOfMicros);
+                    assert.equal(receipt.status, 200); assert.deepEqual(receipt.request.body.query, expected.query);
+                    assert.deepEqual(receipt.request.body.rerank, expected.options.rerank); assert.equal(receipt.request.body.size, 100);
+                    const hits = receipt.response.docs.map(hit => hit.doc);
+                    return { questionId: question.id, queryMs: receipt.elapsedMs, hitIds: hits.map(doc => doc.id),
+                        ...packContext(hits, docs, question.asOf, question.asOfMicros, countTokens) };
+                });
+                const name = `recall-${conversation.id}.json`, bytes = JSON.stringify(recalls);
+                await writeFile(path.join(staging, name), bytes); lock.files[`recall/${name}`] = sha(bytes);
+            }
+            await writeFile(path.join(staging, 'lock.json'), JSON.stringify(lock, null, 2));
+        });
         console.log('REPACKED: all 400 saved queries, matched evidence accounting; no provider calls');
         encoder.free(); return;
     }

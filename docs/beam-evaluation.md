@@ -481,7 +481,7 @@ schemas, saved score arithmetic, source-defined partitions and usage verify
 offline. The archived synthetic check covers exact reconstruction, different
 values, role/author/date/time isolation, budget refill and foreign-source rejection;
 an independent source verifier checks all 400 contexts and the relevant fact gain.
-Final maintained checks pass 390 JavaScript and eight Python tests, runtime/release
+Final maintained checks pass 391 JavaScript and eight Python tests, runtime/release
 and SDK checks. Keep one-off producers and full output ignored and archived;
 there is no new maintained candidate mode or product/runtime change.
 
@@ -499,6 +499,20 @@ hashes, source audits, raw model requests/responses, usage and complete results
 remain available without provider calls. The confirmation producer is checkout
 `d5cb63f067ddf56737b18cbb7df0dbeef055b5f5` plus its archived one-off scorer; the
 unchanged candidate was produced at `2c5b1e3380133cf390d798ef50bee4b7620a6389`.
+
+Post-result review makes offline repacking publish all files and their lock
+together. New runs build in a temporary directory, then rename it to `recall/`
+after every conversation validates; the current scorer reads `recall/lock.json`.
+Failed validation removes only its own staging directory, leaving original
+receipts intact and permitting a retry. An added synthetic lifecycle regression
+covers failure, retry, complete publication and refusal to overwrite published
+data. An offline CLI replay injects a source mismatch in conversation 20, verifies
+cleanup, repairs the copied receipt and successfully republishes all 400 contexts;
+all 20 output files are byte-identical to the original canonical recalls, their
+complete manifest passes the Python check, and another publication is rejected.
+This makes no provider calls or measured-score changes. Historical top-level
+`recall-lock.json` files remain with their archived producers; no archive is
+rewritten to match the new output layout.
 
 ## Decision and scope (2026-10-19)
 

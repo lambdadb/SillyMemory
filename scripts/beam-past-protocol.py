@@ -165,7 +165,7 @@ async def score(root, dataset, env, lock):
     assert memory_state["status"] == "completed" and len(memory_state["completed"]) == 20
     assert memory_state["inputSha256"] == sha((root / "memory-input.json").read_bytes())
     assert all(item.get("absent404") for item in memory_state["owned"])
-    recall_lock = json.loads((root / "recall-lock.json").read_text())
+    recall_lock = json.loads((root / "recall/lock.json").read_text())
     assert recall_lock["inputSha256"] == memory_state["inputSha256"]
     assert recall_lock["memoryStateSha256"] == sha((root / "memory/memory-state.json").read_bytes())
     assert recall_lock["packingSourceSha256"] == sha((REPO / "scripts/beam-past-memory.mjs").read_bytes())

@@ -1,6 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { sourceDocuments, recallQuery, packContext, serializeContext, evidenceTokens, successfulQueryReceipts, receiptBody } from '../scripts/beam-past-memory.mjs';
+import { mkdtemp, readFile, writeFile, readdir, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
+import { sourceDocuments, recallQuery, packContext, serializeContext, evidenceTokens, successfulQueryReceipts, receiptBody, publishRepackedRecall } from '../scripts/beam-past-memory.mjs';
 
 const conversation = { id: 'synthetic', userIdentity: 'synthetic-user', userTraits: {}, messages: [{
     sourceId: 'source-1', ordinal: 0, content: 'The older account limit is 15.',
@@ -11,6 +14,31 @@ const conversation = { id: 'synthetic', userIdentity: 'synthetic-user', userTrai
     author: { role: 'user', name: 'User' }, timestamp: '2024-01-01T12:00:00.000002Z',
     timeMicros: 1704110400000002, turnId: 'original-2',
 }] };
+
+test('BEAM repack failure leaves original evidence intact and can retry before atomic publication', async () => {
+    const parent = await mkdtemp(path.join(tmpdir(), 'sillymemory-repack-'));
+    try {
+        await writeFile(path.join(parent, 'raw-receipt.json'), 'original receipt');
+        await assert.rejects(publishRepackedRecall(parent, async staging => {
+            await writeFile(path.join(staging, 'recall-1.json'), 'derived first conversation');
+            assert(!(await readdir(parent)).includes('recall'));
+            throw new Error('Later conversation source mismatch');
+        }), /Later conversation source mismatch/);
+        assert.deepEqual(await readdir(parent), ['raw-receipt.json']);
+        assert.equal(await readFile(path.join(parent, 'raw-receipt.json'), 'utf8'), 'original receipt');
+        await publishRepackedRecall(parent, async staging => {
+            await writeFile(path.join(staging, 'recall-1.json'), 'complete data');
+            await writeFile(path.join(staging, 'lock.json'), 'complete lock');
+            assert(!(await readdir(parent)).includes('recall'));
+        });
+        assert.equal(await readFile(path.join(parent, 'recall/recall-1.json'), 'utf8'), 'complete data');
+        assert.equal(await readFile(path.join(parent, 'recall/lock.json'), 'utf8'), 'complete lock');
+        await assert.rejects(publishRepackedRecall(parent, () => assert.fail('Must not rebuild published evidence')), /already exists/);
+        assert.deepEqual((await readdir(parent)).sort(), ['raw-receipt.json', 'recall']);
+    } finally {
+        await rm(parent, { recursive: true, force: true });
+    }
+});
 
 test('BEAM repacking selects successful attempts without counting retries as questions', () => {
     const receipt = (collection, status, question) => ({ status, request: {
