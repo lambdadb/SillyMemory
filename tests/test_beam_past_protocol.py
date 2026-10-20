@@ -1,5 +1,6 @@
 import importlib.util
 import json
+import shutil
 from copy import deepcopy
 from pathlib import Path
 import unittest
@@ -32,6 +33,36 @@ class Response:
 
 
 class TransportPolicy(unittest.TestCase):
+    def test_external_run_manifest_survives_relocation_and_checks_input_changes(self):
+        with TemporaryDirectory() as directory:
+            temporary = Path(directory)
+            root = temporary / "external"
+            contents = {
+                "memory-input.json": b"input", "100k.parquet": b"parquet",
+                "dataset-cache/100k.json": b"questions", "dataset-cache/100k.revision": b"revision",
+                "tokenizer/node_modules/tiktoken/package.json": b"package",
+                "tokenizer/node_modules/tiktoken/tiktoken.cjs": b"entry",
+                "tokenizer/node_modules/tiktoken/tiktoken_bg.cjs": b"bindings",
+                "tokenizer/node_modules/tiktoken/tiktoken_bg.wasm": b"wasm",
+            }
+            for name, data in contents.items():
+                target = root / name
+                target.parent.mkdir(parents=True, exist_ok=True)
+                target.write_bytes(data)
+            files = protocol.source_file_hashes(root)
+            self.assertEqual({k: v for k, v in files.items() if k.startswith("run/")},
+                             {f"run/{k}": protocol.sha(v) for k, v in contents.items()})
+            lock = {**protocol.protocol_settings(), "files": files, "upstreamFiles": {}}
+            (root / "protocol-lock.json").write_text(json.dumps(lock))
+            moved = temporary / "restored"
+            shutil.copytree(root, moved)
+            link = temporary / "linked"
+            link.symlink_to(moved, target_is_directory=True)
+            self.assertEqual(protocol.check_lock(link.resolve(), {}), lock)
+            (moved / "memory-input.json").write_text("changed input")
+            with self.assertRaises(AssertionError):
+                protocol.check_lock(moved, {})
+
     def test_recall_manifest_cannot_omit_a_corrupted_conversation_file(self):
         identities = [str(i) for i in range(1, 21)]
         with TemporaryDirectory() as directory:

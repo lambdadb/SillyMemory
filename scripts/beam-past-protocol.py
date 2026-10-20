@@ -89,13 +89,13 @@ def protocol_settings():
 def source_file_hashes(root):
     files = {str(path.relative_to(REPO)): sha(path.read_bytes()) for path in [
         Path(__file__), REPO / "scripts/beam-past-memory.mjs", REPO / "src/client.js",
-        REPO / "src/chunking.js", REPO / "vendor/lambdadb.js", root / "memory-input.json",
-        root / "100k.parquet", root / "dataset-cache/100k.json", root / "dataset-cache/100k.revision",
+        REPO / "src/chunking.js", REPO / "vendor/lambdadb.js",
     ]}
-    tokenizer = root / "tokenizer/node_modules/tiktoken"
-    for name in ["package.json", "tiktoken.cjs", "tiktoken_bg.cjs", "tiktoken_bg.wasm"]:
-        path = tokenizer / name
-        files[str(path.relative_to(REPO))] = sha(path.read_bytes())
+    # Run-local identities must survive an external --root or bundle relocation.
+    run_files = ["memory-input.json", "100k.parquet", "dataset-cache/100k.json", "dataset-cache/100k.revision"]
+    run_files += [f"tokenizer/node_modules/tiktoken/{name}" for name in
+                  ["package.json", "tiktoken.cjs", "tiktoken_bg.cjs", "tiktoken_bg.wasm"]]
+    files.update({f"run/{name}": sha((root / name).read_bytes()) for name in run_files})
     return files
 
 

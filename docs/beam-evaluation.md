@@ -320,6 +320,11 @@ Python tests, runtime/release and SDK checks pass. Retain the unadopted prototyp
 and regression in the evidence bundle rather than add an unused maintained mode.
 After removing that prototype, the final maintained suite passes 390 tests and
 the archived producer still verifies offline.
+Subsequent review fixes an external `--root` failure: run-local manifest keys now
+use a stable `run/` namespace instead of requiring paths beneath the checkout.
+An eighth Python regression verifies an external root, relocated/symlinked bundle
+and rejection of a changed input. Historical manifests remain with their exact
+producers; this guard change makes no new paid calls or score changes.
 No runtime/default change, new ingestion/retrieval, collection creation, browser
 integration or deployment occurred.
 
