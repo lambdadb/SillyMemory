@@ -212,6 +212,131 @@ passes the new check. The archive retains the exact executed producer; use its
 restoration instructions for historical verification rather than assume the later
 maintained runner has the same source hash.
 
+## Lossless context layout follow-up (2026-10-20)
+
+**Defer adoption and the quality-improvement claim.** A user-authorized follow-up
+compares one lossless presentation candidate with a fresh baseline on 397 paired
+questions: **88.92 → 89.77/100 (+0.85 points)**. The 95% conversation-cluster
+bootstrap interval is **−0.32 to +2.06 points**, crossing zero and failing the
+predeclared positive-lower-bound quality gate. Answer input falls **11.87%**.
+Text preservation establishes an input-saving opportunity, not equivalent answer
+quality or an established quality improvement. Keep the ranked baseline and
+product defaults; close this candidate without a wider optimization grid.
+
+### Frozen method and source audit
+
+The original 400-question run and receipts remain unchanged. Before candidate
+answers, the 397 questions other than the three previously source-reviewed
+discovery cases were frozen.
+Historical scores and aggregates were already known: this is
+**not an unseen holdout**. Both arms were freshly generated and judged, preserving the
+pinned Past/ExaBase prompts, annotations, strict schemas, score arithmetic,
+`gpt-5.6-luna`/reasoning `none`, direct OpenAI route and as-of cutoffs. Per-question
+SHA-256 parity determines which arm launches first; retain four concurrent
+conversations and up to 20 question pairs per conversation. One answer per arm,
+no favorable repeats. Bounds: 794 answers, 12,000 model attempts, $25 conservative
+reservation ceiling, eight hours, zero new memory-service calls. The frozen plan
+SHA-256 is `ff037a057de8eef9f78d94fdc012a6e5b97d107e0d091b94a6a84ce23fc6f5c1`.
+
+The candidate keeps exactly the original selected chunks and 8,000 estimated
+source-text budget. Group passages by source message, sort messages by ordinal
+and passages by source offset, and dictionary-encode repeated time-meaning labels.
+Preserve all source text, roles, authors, source/turn IDs, ordinals, passage IDs,
+offsets, batch reference dates, time meanings and original selected retrieval
+positions. No deduplication, summarization, source addition, reranking or answer
+instruction change. This tests a presentation bundle; it does not isolate the
+contributions of ordering and metadata compaction. It cannot recover the $120
+budget excluded from the original selected evidence.
+
+Offline reconstruction verifies all text, metadata, source eligibility and budget
+on all 400 saved contexts, with zero loss or selected-chunk changes. Serialized
+cl100k context tokens fall 5,060,535 → 4,454,643 (11.97%), with no increases in any
+question. These are context-only diagnostics; actual API answer input is below.
+
+The historical 400-question baseline has 103 imperfect answers. Their 284 annotated
+message references include 151 complete deliveries, 41 partial deliveries, 29 found in top100
+but unselected, and 63 absent from top100. These are **message-coverage statuses,
+not causal failure counts or verified necessary-fact recall**; equivalent facts
+can occur elsewhere and partial messages require manual review. All 40 baseline
+contradiction answers are imperfect. Their fourth rubric item, asking which
+statement is correct, receives zero in 36 cases and half-credit in four. The
+answer guidance asks for both claims without a definitive answer, while some
+judge reasons read this item as determining the correct claim. Keep the existing
+labels and prompts; do not attribute this whole category gap to retrieval.
+
+### Paired scores and resource use
+
+| Ability | Paired questions | Fresh baseline /100 | Candidate /100 |
+| --- | ---: | ---: | ---: |
+| Abstention | 40 | 92.50 | 92.50 |
+| Contradiction resolution | 39 | 70.83 | 70.19 |
+| Event ordering | 40 | 100.00 | 100.00 |
+| Information extraction | 39 | 89.16 | 91.99 |
+| Instruction following | 40 | 94.38 | 93.13 |
+| Knowledge update | 39 | 80.13 | 89.10 |
+| Multi session reasoning | 40 | 68.37 | 68.24 |
+| Preference following | 40 | 100.00 | 99.38 |
+| Summarization | 40 | 97.54 | 97.69 |
+| Temporal reasoning | 40 | 95.63 | 95.00 |
+| **Overall** | **397** | **88.92** | **89.77** |
+
+Across pairs, 33 improve, 27 regress and 337 are unchanged. The interval uses
+20,000 conversation-cluster resamples, seed 20261020. Knowledge update improves
+80.13 → 89.10, while instruction following falls 94.38 → 93.13 and several other
+categories also decline; category means are descriptive, not separate established
+wins. The historical baseline on these same 397 questions was 89.55; do not
+compare the candidate with the original 400-question 89.00 as a paired effect.
+
+A post-result source review illustrates both outcomes: `13_knowledge_update_1`
+changes the answer from an older $35 budget to the updated $50 budget (0 → 1),
+with both values present in the same selected evidence. In
+`17_instruction_following_0`, the MM/DD/YYYY instruction is present in both arms,
+but only the baseline follows it (1 → 0). These selected examples do not estimate
+failure prevalence.
+
+| Recorded usage | Fresh baseline | Candidate |
+| --- | ---: | ---: |
+| Answer input tokens, 397 calls | 5,060,310 | 4,459,748 |
+| Mean / median answer input | 12,746.37 / 12,599 | 11,233.62 / 11,097 |
+| Answer output tokens | 101,590 | 108,891 |
+| Answer model estimated USD | $1.386926 | $1.245547 |
+| Rubric judge input tokens, 831 calls | 542,881 | 576,644 |
+| Equivalence judge input tokens, 212 calls | 18,350 | 18,350 |
+| All model phases estimated USD | $1.564188 | $1.430674 |
+
+All **2,880 model calls** finish with HTTP 200, without retries, empty answers,
+failed verdicts or truncation: 794 answers, 1,662 rubric and 424 equivalence
+judgments. Total estimated model cost is **$2.994862**, using the frozen rate card
+above; these are usage estimates, not invoices. Both arms report zero cached
+reads. Answer cache writes are 5,059,119 / 4,458,557 and rubric writes are
+279,483 / 303,450; writes are subsets of input. Candidate answer output increases,
+so do not equate input savings with total-cost savings. This interleaved replay
+does not isolate cache effectiveness or establish host-latency improvements.
+
+All saved score arithmetic, native model parameters, exact answer and judge
+prompts, source reconstruction and usage totals verify offline. The candidate's
+small synthetic regression and the full 391-test JavaScript suite pass; seven
+Python tests, runtime/release and SDK checks pass. Retain the unadopted prototype
+and regression in the evidence bundle rather than add an unused maintained mode.
+After removing that prototype, the final maintained suite passes 390 tests and
+the archived producer still verifies offline.
+No runtime/default change, new ingestion/retrieval, collection creation, browser
+integration or deployment occurred.
+
+Retained evidence: `artifacts/archive/beam-context-layout-v1.tar.gz`,
+**23,285,832 bytes**, SHA-256
+`41448cdb1332666a9a1fe0516f0919e5af1a7e3da65bf6f47778e85dcd96f338`.
+All **2,909 members** were read back and checked; configured-secret matches: zero.
+Identical copies exist in the primary and protocol worktrees on the same machine.
+This bundle is local-only and unavailable in a fresh clone. Restore it beside
+`beam-past-100k-v1/` from the original archive recorded above, then follow its
+`RESTORE.md` for offline verification. The original archive provides the pinned
+upstream source/data and dependency locks; the follow-up retains its exact
+producer, frozen plan/cohort/context hashes, source audits and complete fresh
+requests, responses, usage and results. Preserved source precedes removal of the
+unadopted active-tree prototype. Producing checkout: `f9e495bc0297f7c6ab10293c1806551a33567498`
+plus the archived candidate source. Neither archive was overwritten.
+
 ## Decision and scope (2026-10-19)
 
 PR #84 closed the 128K, 1M and 10M baselines and bounded follow-up comparisons.
