@@ -12,6 +12,7 @@ const context = () => SillyTavern.getContext();
 const uuid = () => crypto.randomUUID().replaceAll('-', '');
 let client, engine, root, state, stateKey, owner, timer, busy = false, gatePassed = false;
 let sessionReady = false;
+let connectionVerified = false, shownConnection, retrySync = false;
 let savedKey, connectingClient;
 let promptSequence = 0;
 let retrievalSequence = 0, retrievalOperation;
@@ -22,7 +23,34 @@ const engines = new Map();
 const entryKey = entry => `${entry.collection}:${entry.branch}`;
 const delivery = new PromptDelivery();
 const element = name => root.querySelector(`[data-sm="${name}"]`);
-const status = text => statusView.show(text);
+const status = text => { retrySync = false; statusView.show(text); };
+function renderSettings() {
+    if (!root || !state) return;
+    const connected = Boolean(sessionReady && connectionVerified && client);
+    const connection = element('connection');
+    if (shownConnection !== connected) {
+        if (connected && connection.contains(document.activeElement)) connection.querySelector('summary').focus();
+        connection.open = !connected;
+        shownConnection = connected;
+    }
+    element('connection-state').textContent = connected ? `Connected · ${state.project}` : 'Not connected';
+    const cleanup = Boolean(connected && state.testCollection);
+    element('prepare-controls').hidden = !connected || state.ready || cleanup;
+    element('enable-control').hidden = !connected || !state.ready;
+    element('usage-help').hidden = !connected || !state.ready || state.enabled;
+    element('next-step').textContent = !connected ? 'Connect your project above to get started.'
+        : cleanup ? 'A connection test needs cleanup. Remove its temporary data before trying again.'
+        : !state.ready ? 'Check your connection once before turning memory on.'
+        : state.enabled ? 'Memory is on for supported character chats.'
+        : 'Ready. Open a saved character chat, then turn memory on.';
+    element('mode-help').textContent = state.enabled
+        ? 'Turn memory off to return to SillyTavern’s usual chat history. Your chat and saved remote memory are kept.'
+        : 'Memory is off. SillyTavern uses its usual chat history. Saved remote memory is kept.';
+    element('recover-cleanup').hidden = !cleanup;
+    element('retry-sync').hidden = !retrySync || !connected || !state.enabled || cleanup;
+    element('recovery-actions').hidden = element('recover-cleanup').hidden && element('retry-sync').hidden;
+    root.querySelectorAll('button, input').forEach(x => { x.disabled = busy || !sessionReady; });
+}
 function clearInjection() {
     context().setExtensionPrompt('sillymemory', '', 1, 0, false, 0);
 }
@@ -70,6 +98,7 @@ function validSnapshot(snapshot, instance) {
 }
 async function sync() {
     if (!sessionReady || !state.enabled || !state.ready || !client || busy) return;
+    retrySync = false; renderSettings();
     const sequence = promptSequence;
     const current = () => sequence === promptSequence && sessionReady && state.enabled;
     const operation = statusView.start(current);
@@ -85,16 +114,18 @@ function schedule() {
     if (!sessionReady) return; // Preserve the lock-conflict explanation.
     invalidate(); clearTimeout(timer);
     if (!client) { status('Enter your project API key and click Save and connect.'); return; }
-    if (!state.enabled) { status('Memory disabled. Remote data is retained until deleted.'); return; }
+    if (!state.enabled) { status('Memory disabled. SillyTavern uses its usual chat history. Remote data is retained until deleted.'); return; }
     if (!state.ready || !capture(context())) { status('Select a supported character chat and connect to a memory collection.'); return; }
     status('Waiting to synchronize current chat…');
     timer = setTimeout(sync, 400);
 }
 function fail(error, operation, generation = false) {
+    retrySync = Boolean(operation && !generation);
     // Native generation-ended sync can replace operation progress immediately.
     // Keep the failed generation visible independently of background progress.
     if (root && generation) element('delivery').textContent = `Generation stopped: memory preparation failed. ${failureText(error, { generation: true })}`;
     if (error.status === 401 && client) {
+        connectionVerified = false;
         state.enabled = false; element('enabled').checked = false;
         client.forget(); invalidate();
         try { savedKey.forget(); persist(); }
@@ -108,9 +139,9 @@ function fail(error, operation, generation = false) {
 }
 async function action(job) {
     if (busy) return;
-    busy = true; root.querySelectorAll('button, input').forEach(x => { x.disabled = true; });
+    busy = true; renderSettings();
     try { await job(); } catch (e) { fail(e); }
-    finally { busy = false; root.querySelectorAll('button, input').forEach(x => { x.disabled = false; }); }
+    finally { busy = false; renderSettings(); }
 }
 
 // Called with SillyTavern's ephemeral coreChat array. Never mutate source messages.
@@ -237,6 +268,7 @@ async function initialize() {
     root = document.querySelector('#sillymemory');
     statusView = new OperationStatus((text, progress) => {
         element('status').textContent = text;
+        renderSettings();
         const bar = element('progress');
         bar.hidden = !progress;
         if (progress?.total > 0) { bar.max = progress.total; bar.value = progress.completed; }
@@ -247,7 +279,7 @@ async function initialize() {
     element('stopOnLoss').onchange = () => { state.stopOnLoss = element('stopOnLoss').checked; persist(); };
     const restoreEnabled = state.enabled;
     element('enabled').checked = false; state.enabled = false;
-    root.querySelectorAll('button,input').forEach(x => { x.disabled = true; });
+    renderSettings();
     if (!navigator.locks) { status('This browser needs Web Locks support (localhost or HTTPS) to use SillyMemory safely.'); return; }
     // One live instance per account/browser, preventing cross-tab write/delete races.
     navigator.locks.request(`sillymemory-session:${owner}`, { ifAvailable: true }, async lock => {
@@ -269,6 +301,7 @@ async function initialize() {
         if ((state.testCollection || state.chatCollections.length) && (candidate.endpoint !== state.endpoint || candidate.project !== state.project)) throw new ConnectionError('Clean up owned collections before changing the connection.');
         const changed = candidate.endpoint !== state.endpoint || candidate.project !== state.project;
         const candidateClient = new LambdaClient(candidate, key);
+        connectionVerified = false;
         state.enabled = false; element('enabled').checked = false;
         invalidate(); status('Connecting: waiting for earlier writes to finish…');
         connectingClient = candidateClient;
@@ -283,11 +316,12 @@ async function initialize() {
             if (restoring) persist(nextState);
             else savedKey.commit(candidate, key, nextState);
             state = nextState;
-            client = candidateClient; makeCollections(); gatePassed = false;
+            client = candidateClient; connectionVerified = true; makeCollections(); gatePassed = false;
             element('enabled').checked = state.enabled;
             if (state.enabled) schedule();
             else status(state.ready ? 'Connected. Memory remains disabled.' : 'Connected. Click Prepare chat memory, then enable memory in a saved character chat.');
         } catch (error) {
+            connectionVerified = false;
             candidateClient.forget(); state.enabled = false; element('enabled').checked = false;
             if (error.status === 401) {
                 if (restoring) savedKey.forgetMatching(candidate, key);
@@ -304,6 +338,7 @@ async function initialize() {
         await connect(candidate, key, enabled, !typed);
     });
     element('forget').onclick = () => action(async () => {
+        connectionVerified = false;
         state.enabled = false; element('enabled').checked = false; invalidate();
         element('key').value = ''; client?.forget(); connectingClient?.forget();
         savedKey.forget();
@@ -316,7 +351,7 @@ async function initialize() {
     });
     async function testConnection() {
         if (!client) throw new ConnectionError('Enter your API key first.');
-        if (state.testCollection) throw new ConnectionError('Open Advanced and use Clean up test collection before trying again.');
+        if (state.testCollection) throw new ConnectionError('Use Clean up test data before trying again.');
         gatePassed = false;
         state.testCollection = `smtest_${uuid()}`; persist();
         gatePassed = await runTransportGate(client, owner, state.testCollection, status);
@@ -328,6 +363,8 @@ async function initialize() {
         if (state.testCollection) await client.deleteOwnedCollection(state.testCollection, owner);
         delete state.testCollection; persist(); status('No pending owned test collection remains.');
     });
+    element('recover-cleanup').onclick = () => element('cleanup').click();
+    element('retry-sync').onclick = () => element('sync').click();
     element('provision').onclick = () => action(async () => {
         if (!client) throw new ConnectionError('Save and connect before preparing chat memory.');
         if (!gatePassed) await testConnection();
@@ -459,7 +496,7 @@ async function initialize() {
             state.enabled = true; element('enabled').checked = true; persist(); schedule();
             status('Memory enabled. Current character chat will synchronize.');
         } else {
-            status('Memory disabled. Remote data is retained until deleted.');
+            status('Memory disabled. SillyTavern uses its usual chat history. Remote data is retained until deleted.');
             element('delivery').textContent = 'Memory disabled. No pending prompt verification.';
             element('inspection').textContent = 'No memory prepared.';
         }

@@ -20,3 +20,8 @@
 #sillymemory .sm-section > summary { font-weight: bold; }
 #sillymemory .sm-section > summary span { display: block; font-weight: normal; font-size: 0.85em; margin-top: 0.2rem; }
 #sillymemory .sm-footer { display: block; margin-top: 0.8rem; }
+
+#sillymemory [hidden] { display: none !important; }
+#sillymemory .sm-connection { border-top: 0; }
+#sillymemory [data-sm="prepare-controls"] > small { display: block; margin-top: 0.4rem; }
+#sillymemory [data-sm="connection-state"] { overflow-wrap: anywhere; }

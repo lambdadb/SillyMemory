@@ -72,9 +72,9 @@ try {
     report.initialVersion = JSON.parse(await readFile(path.join(installed, 'manifest.json'), 'utf8')).version;
     const field = name => page.locator(`#sillymemory [data-sm="${name}"]`);
     async function settings() {
-        if (!await field('endpoint').isVisible()) {
+        if (!await page.locator('#sillymemory .inline-drawer-content').isVisible()) {
             if (!await page.locator('#sillymemory .inline-drawer-toggle').isVisible()) await page.locator('#extensions-settings-button .drawer-toggle').click();
-            if (!await field('endpoint').isVisible()) await page.locator('#sillymemory .inline-drawer-toggle').click();
+            if (!await page.locator('#sillymemory .inline-drawer-content').isVisible()) await page.locator('#sillymemory .inline-drawer-toggle').click();
         }
     }
     await settings();

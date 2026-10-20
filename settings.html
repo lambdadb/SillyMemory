@@ -2,25 +2,32 @@
   <div class="inline-drawer-toggle inline-drawer-header"><b>SillyMemory</b><div class="inline-drawer-icon fa-solid fa-circle-chevron-down down"></div></div>
   <div class="inline-drawer-content">
     <p>Recall older conversations while you chat.<br><strong>Powered by LambdaDB</strong></p>
-    <section aria-labelledby="sm-connection-heading">
-      <h4 id="sm-connection-heading">1. Connect your LambdaDB project</h4>
+    <details data-sm="connection" class="sm-section sm-connection" open>
+      <summary>Connection <span data-sm="connection-state">Not connected</span></summary>
       <label>Regional HTTPS endpoint <input data-sm="endpoint" class="text_pole" type="url" placeholder="Regional base URL from your project"></label>
       <label>Project name <input data-sm="project" class="text_pole" autocomplete="off"></label>
       <label>Project API key <input data-sm="key" class="text_pole" type="password" autocomplete="off" spellcheck="false"></label>
       <div class="sm-actions"><button data-sm="connect" class="menu_button">Save and connect</button><button data-sm="forget" class="menu_button">Forget key</button></div>
       <small>Your validated key is saved in this browser for reconnection. Other extensions on this page can access browser storage. Forget key removes it and disables memory.</small>
-    </section>
+    </details>
     <section aria-labelledby="sm-memory-heading">
-      <h4 id="sm-memory-heading">2. Set up memory</h4>
-      <button data-sm="provision" class="menu_button">Prepare chat memory</button>
-      <small>Tests with temporary data, then deletes it. Uses inference allowance; no chat upload.</small>
-      <label class="sm-toggle"><input data-sm="enabled" type="checkbox"> Enable memory</label>
-      <p>Open a saved character chat, enable memory, and wait for synchronization. Memory sends older excerpts, host timestamps and queries to LambdaDB, with text and queries processed by managed embedding and reranking providers. Usage charges apply.</p>
-      <small>Disable pauses memory use; it keeps remote data. Turn off other chat vectorization extensions. Use one active SillyMemory tab per browser profile.</small>
+      <h4 id="sm-memory-heading">Memory</h4>
+      <p data-sm="next-step">Connect your project above to get started.</p>
+      <div data-sm="prepare-controls" hidden>
+        <button data-sm="provision" class="menu_button">Prepare chat memory</button>
+        <small>Tests with temporary data, then deletes it. Uses inference allowance; no chat upload.</small>
+      </div>
+      <label data-sm="enable-control" class="sm-toggle" hidden><input data-sm="enabled" type="checkbox"> Enable memory</label>
+      <p data-sm="mode-help">When off, SillyTavern uses its usual chat history. Saved remote memory is kept.</p>
+      <small data-sm="usage-help" hidden>Memory sends older excerpts, host timestamps and queries to LambdaDB, with text and queries processed by managed embedding and reranking providers. Usage charges apply. Turn off other chat vectorization extensions. Use one active SillyMemory tab per browser profile.</small>
     </section>
     <div class="sm-status">
       <p data-sm="status" role="status">Enter your project API key to begin.</p>
       <progress data-sm="progress" aria-label="Memory operation progress" hidden></progress>
+      <div class="sm-actions" data-sm="recovery-actions" hidden>
+        <button data-sm="recover-cleanup" class="menu_button" hidden>Clean up test data</button>
+        <button data-sm="retry-sync" class="menu_button" hidden>Retry synchronization</button>
+      </div>
       <p data-sm="delivery" role="status">No prompt checked in this chat.</p>
     </div>
     <details data-sm="checkpoints" class="sm-section">

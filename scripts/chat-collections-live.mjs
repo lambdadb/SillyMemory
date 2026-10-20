@@ -94,7 +94,7 @@ try {
     panel = async () => {
         await page.locator('#sillymemory').waitFor({ state: 'attached', timeout: 45000 });
         if (!await page.locator('#sillymemory .inline-drawer-toggle').isVisible()) await page.locator('#extensions-settings-button .drawer-toggle').click();
-        if (!await field('endpoint').isVisible()) await page.locator('#sillymemory .inline-drawer-toggle').click();
+        if (!await page.locator('#sillymemory .inline-drawer-content').isVisible()) await page.locator('#sillymemory .inline-drawer-toggle').click();
         await expandMemorySettings(page);
     };
     connect = async () => { await panel(); await field('endpoint').fill(credentials.endpoint); await field('project').fill(credentials.project); await field('key').fill(credentials.key); await field('connect').click(); };

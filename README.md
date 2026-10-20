@@ -51,19 +51,23 @@ of the normal installation.
 
 4. Click **Save and connect**. This verifies the key and saves it in this browser
    for automatic reconnection. Other extensions on the same page can access
-   browser storage; it is not an isolated secret vault.
+   browser storage; it is not an isolated secret vault. After verification,
+   **Connection** collapses to show the connected project. Reopen it to edit
+   connection details or use **Forget key**.
 5. Click **Prepare chat memory**. It runs the required connection test with
    temporary data and verifies cleanup, using your LambdaDB allowance. Your chat
-   is not uploaded by this step. If a test collection needs cleanup, open
-   **Advanced → Diagnostics → Clean up test collection** before retrying.
+   is not uploaded by this step. If a test collection needs cleanup, use the
+   **Clean up test data** button beside the status before retrying.
 6. Open a saved character chat and check **Enable memory**. Wait for synchronization
    before sending a message. Turn off built-in Vector Storage chat vectorization
    and other extensions that rewrite chat history.
 
-The basic panel keeps connection, preparation, the memory switch and operation
-status visible. **Checkpoints** holds optional story save/resume controls.
-**Advanced** holds memory limits, diagnostic tools, prompt inspection and remote
-cleanup. Both sections start collapsed; existing saved settings are preserved.
+The basic panel shows the next setup action: connect, prepare, then enable.
+Once ready, the memory switch and status remain visible; connection details stay
+collapsed after successful verification, including reconnection after reload.
+**Checkpoints** holds optional story save/resume controls. **Advanced** holds
+memory limits, diagnostic tools, prompt inspection and remote cleanup. Both
+optional sections start collapsed; existing saved settings are preserved.
 
 No npm commands, proxy setting, or SillyTavern server restart are needed.
 
@@ -82,9 +86,12 @@ Your original chat file stays intact.
   at one quarter of the host context. Recent messages and character instructions also need room;
   SillyTavern can still trim the final prompt to its context limit.
 - Uncheck **Enable memory** to return to ordinary SillyTavern history handling.
-  This stops memory use but keeps remote data.
+  Continue the same chat: the original transcript is preserved, and the next
+  generation uses the host’s existing context limits and settings without
+  SillyMemory retrieval. Saved remote memory is kept; other extensions’ settings
+  are not changed.
 - Reload reconnects using the saved key and restores the previous enabled state
-  after verification. **Forget key** removes the saved key and disables memory.
+  after verification. **Connection → Forget key** removes the saved key and disables memory.
 - Native story branches keep separate memory paths. Open **Checkpoints** to save,
   browse and resume a story state. See the [checkpoint guide](docs/checkpoints.md).
 
@@ -93,8 +100,8 @@ Your original chat file stays intact.
 | What you see | What to do |
 | --- | --- |
 | Connection or authentication failure | Check the regional endpoint/project/key, then use **Save and connect**. For network errors, check browser connectivity to LambdaDB. |
-| Failed connection test | Open **Advanced**, use **Clean up test collection**, then retry **Prepare chat memory**. Keep pending cleanup records until it succeeds. |
-| Synchronization failure | Follow the status message; wait before retrying a temporary service error, then use **Advanced → Sync this chat**. |
+| Failed connection test | Use **Clean up test data** beside the status, then retry **Prepare chat memory**. The diagnostic cleanup control also remains under **Advanced**. Keep pending cleanup records until it succeeds. |
+| Synchronization failure | Follow the status message; wait before retrying a temporary service error, then use **Retry synchronization** beside the status. **Advanced → Sync this chat** remains available for manual synchronization. |
 | Generation stopped during memory preparation | Read the last-prompt status, resolve the error, then use **Regenerate** for the pending input. Sync alone does not resume a stopped generation. Disable memory if you want to continue with native history. |
 | Query exceeds 8 KiB | Shorten the latest messages, or disable memory for that generation. Queries are not silently truncated. |
 

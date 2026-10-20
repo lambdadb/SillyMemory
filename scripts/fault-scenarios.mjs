@@ -82,9 +82,9 @@ export async function runFaultScenarios({ page, field, waitStatus, prompt, check
             await page.locator('.character_select').filter({ hasText: 'SillyMemory Synthetic' }).click();
         }
         await page.evaluate(async chatId => { await SillyTavern.getContext().openCharacterChat(chatId); }, chatId);
-        if (!await field('endpoint').isVisible()) {
+        if (!await page.locator('#sillymemory .inline-drawer-content').isVisible()) {
             if (!await page.locator('#sillymemory .inline-drawer-toggle').isVisible()) await page.locator('#extensions-settings-button .drawer-toggle').click();
-            if (!await field('endpoint').isVisible()) await page.locator('#sillymemory .inline-drawer-toggle').click();
+            if (!await page.locator('#sillymemory .inline-drawer-content').isVisible()) await page.locator('#sillymemory .inline-drawer-toggle').click();
         }
         await expandMemorySettings(page);
         await field('enabled').check(); await waitStatus('synchronized');

@@ -225,9 +225,9 @@ let events = [], evaluation;
 const field = name => page.locator(`#sillymemory [data-sm="${name}"]`);
 const waitStatus = text => page.waitForFunction(text => document.querySelector('[data-sm="status"]')?.textContent.includes(text), text, { timeout: 90000 });
 async function openSettings() {
-    if (!await field('endpoint').isVisible()) {
+    if (!await page.locator('#sillymemory .inline-drawer-content').isVisible()) {
         if (!await page.locator('#sillymemory .inline-drawer-toggle').isVisible()) await page.locator('#extensions-settings-button .drawer-toggle').click();
-        if (!await field('endpoint').isVisible()) await page.locator('#sillymemory .inline-drawer-toggle').click();
+        if (!await page.locator('#sillymemory .inline-drawer-content').isVisible()) await page.locator('#sillymemory .inline-drawer-toggle').click();
     }
     await expandMemorySettings(page);
 }

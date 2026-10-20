@@ -500,7 +500,7 @@ try {
     assert.equal(await field('key').inputValue(), '', 'Reload restores the key without exposing it in the input');
     assert.equal(await field('delivery').innerText(), 'No prompt checked in this chat.', 'No stale final prompt after reload');
     await page.locator('#extensions-settings-button .drawer-toggle').click();
-    if (!await field('endpoint').isVisible()) await page.locator('#sillymemory .inline-drawer-toggle').click();
+    if (!await page.locator('#sillymemory .inline-drawer-content').isVisible()) await page.locator('#sillymemory .inline-drawer-toggle').click();
     await expandMemorySettings(page);
     await field('key').fill('synthetic-session-key'); await field('connect').click();
     page.once('dialog', dialog => dialog.accept()); await field('delete').click(); await waitStatus('no longer accessible');
