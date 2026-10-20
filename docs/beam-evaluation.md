@@ -238,13 +238,22 @@ receive full credit. Missing an explicit clarification request can still be a
 rubric mismatch. This is diagnostic accounting, **not recovered points or a
 rescored benchmark**; actual target-detail omissions remain.
 
-The next justified hypothesis concerns answer grounding: distinguish user
-reports from assistant examples/proposals, bind updates to their subject and
-status, and separate cumulative counts from independent items. Retrieval and
-packing have specific witnesses to investigate, but widening retrieval alone
-does not address delivered-but-misused facts. Any paid optimization still needs a
-separately frozen confirmation cohort and quality gate. No previous packing
-candidate or new default is adopted by this offline diagnosis.
+**Decision: defer a grounding modification and retain the fixed ranked 8K
+reference.** The diagnosis identifies useful targets—user reports versus
+assistant examples/proposals, subject/status-bound updates and cumulative
+counts—but does not establish an effective intervention. Source roles are already
+labelled, and public multi-session guidance already restricts counting to explicit
+user mentions; repeating those requirements is not evidence of a working fix.
+The 49 cases are selected discovery evidence, with overlapping mechanisms and
+reference ambiguities, not a frozen comparison establishing a candidate's quality
+effect. There is no measured gain to justify adopting a new default, and the two
+completed 100K packing candidates remain deferred after their failed quality
+gates. This closes the requested offline attribution with a retain/defer decision,
+rather than treating a nominated hypothesis as completed quality improvement.
+Retrieval and packing retain concrete witnesses to revisit, but widening retrieval
+alone does not address delivered-but-misused facts. A future authorized grounding
+comparison needs a specific intervention, a frozen confirmation cohort and a
+quality gate before paid calls; none is implemented or run in this diagnosis.
 
 The analysis starts from repository revision
 `525574b93408079d81a8b2b10d2820ad95e1ea39`; its one-off uncommitted producers
