@@ -4,7 +4,7 @@ import { mkdtemp, readFile, writeFile, readdir, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { createHash } from 'node:crypto';
-import { sourceDocuments, recallQuery, packContext, serializeContext, evidenceTokens, successfulQueryReceipts, receiptBody, publishRepackedRecall, verifyRepackedRecall } from '../scripts/beam-past-memory.mjs';
+import { cohortSettings, sourceDocuments, recallQuery, packContext, serializeContext, evidenceTokens, successfulQueryReceipts, receiptBody, publishRepackedRecall, verifyRepackedRecall } from '../scripts/beam-past-memory.mjs';
 
 const conversation = { id: 'synthetic', userIdentity: 'synthetic-user', userTraits: {}, messages: [{
     sourceId: 'source-1', ordinal: 0, content: 'The older account limit is 15.',
@@ -137,4 +137,19 @@ test('BEAM includes the same supplied profile without inventing a dated turn', (
     const malicious = structuredClone(conversation);
     malicious.messages[0].rubric = 'expected answer';
     assert.throws(() => sourceDocuments(malicious, 'aa', 'bb'));
+});
+
+
+test('BEAM length selection requires the complete unique frozen cohort before provider calls', () => {
+    const input = { split: '1m', conversations: Array.from({ length: 35 }, (_, c) => ({
+        id: String(c), questions: Array.from({ length: 20 }, (_, q) => ({ id: `${c}_${q}` })),
+    })) };
+    assert.deepEqual(cohortSettings(input), { conversations: 35, questions: 700, memoryOperations: 20000 });
+    assert.throws(() => cohortSettings({ ...input, split: '100k' }));
+    assert.throws(() => cohortSettings({ ...input, split: '10m' }));
+    const duplicate = structuredClone(input);
+    duplicate.conversations[34].questions[19].id = '0_0';
+    assert.throws(() => cohortSettings(duplicate));
+    const smaller = { conversations: input.conversations.slice(0, 20) };
+    assert.deepEqual(cohortSettings(smaller), { conversations: 20, questions: 400, memoryOperations: 10000 });
 });

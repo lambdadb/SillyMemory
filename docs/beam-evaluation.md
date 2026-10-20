@@ -1,5 +1,184 @@
 # BEAM evaluation decisions
 
+## Past public-protocol 1M extension: frozen scope (2026-10-20)
+
+The user authorized one full **1M, 35-conversation / 700-question** run after the
+100K packing candidates failed their quality gates. Keep the original ranked
+layout, Small managed embeddings, 800-character chunks, Query1/k200, native Jev
+candidate 200/final 100, strong reads and **8,000 estimated evidence tokens**.
+Neither deferred packing candidate is adopted. Use the same pinned Past loader,
+annotation-assisted answer/judge prompts, `gpt-5.6-luna`/reasoning `none` and
+approved direct OpenAI route as the 100K public-protocol result below.
+
+The product question is fixed-budget quality at larger history sizes. Complete
+all 700 first answers, report ability scores, source-return versus final-delivery
+losses and source-reviewed interpretation failures, and retain exact receipts.
+There is no tuning, second prompt track, favorable rerun, or default promotion.
+The 100K and 1M cohorts differ, so aggregate changes do not isolate history length.
+An offline comparison finds **zero identical question texts** across their 400
+and 700 questions. All 400 100K question IDs reappear in 1M but identify different
+texts; ID overlap is not a paired comparison or permission to reuse old answers.
+Past's 1M **90.650340136/100** is a historical public report, not a new matched
+vendor execution. Both prior SillyMemory length results and 100K scores are known;
+this is not an unseen holdout or an annotation-blind product evaluation.
+
+The dataset revision is unchanged. The complete `1M` Parquet has SHA-256
+`41b5acbbb55a586b1305514ef9d9fb03365d9b3331b598a1c2dd7603d93ef533`, matching
+[Hugging Face's pinned object](https://huggingface.co/datasets/Mohammadta/BEAM/blob/3205395e897e7318c7b094ef4e6047b9b82dbb03/data/1M-00000-of-00001.parquet).
+Offline preflight verifies 35 conversations, 700 unique questions, the published
+score arithmetic, **278,332 chunks / 35,944,747 independently counted embedding
+input tokens**, and approximately **9,259** normal memory API calls. The frozen
+historical $0.02/M embedding rate gives **$0.719**, excluding managed-service,
+DB, search, reranking and storage charges. This is not a provider usage receipt.
+
+Bounds are **700 first answers**, 10,000 total model attempts, a **$25 conservative
+model-cost reservation ceiling**, **20,000 memory operations** including retries,
+and eight hours per live phase. Stop on account refusal or bounds; an interrupted
+run is incomplete. Verify each random owned collection and delete it with a 404
+check. Detailed inputs, `plan.json`, protocol/source/dependency locks, original
+receipts and results belong to ignored `artifacts/beam-past-1m-v1/`; never overwrite
+an existing run. The plan hash is
+`6e84d1567415e2d5544ada78a52ea544dbef4ca81b763062cb8070acc3450cf8`.
+Use the same maintained phases with `--split 1m --root artifacts/beam-past-1m-v1`;
+`prepare`/`verify` are offline and `recall`/`score` are paid. Retain the producing
+source separately so later harness hardening cannot rewrite this run's policy.
+
+### Complete 1M result
+
+**SillyMemory: 86.624971655/100**, versus Past's historical public
+**90.650340136/100** (a descriptive **−4.02537-point** gap). All **700 first
+answers** complete, with **zero failed questions/verdicts**, no transport retries,
+empty answers or output truncation. This is a partial-credit mean, not binary
+accuracy. The earlier public-protocol 100K result is **88.999107143/100**;
+its **−2.37414-point** descriptive difference from 1M is across distinct cohorts,
+with zero identical question texts, so it is not a paired length-effect estimate.
+
+| Ability | SillyMemory 100K /400 | SillyMemory 1M /700 | Published Past 1M /700 |
+| --- | ---: | ---: | ---: |
+| Abstention | 97.50 | 88.57 | 97.14 |
+| Contradiction resolution | 67.81 | 67.86 | 75.36 |
+| Event ordering | 100.00 | 99.37 | 99.81 |
+| Information extraction | 88.91 | 78.83 | 83.98 |
+| Instruction following | 95.62 | 95.30 | 96.43 |
+| Knowledge update | 83.12 | 75.71 | 85.71 |
+| Multi session reasoning | 66.55 | 67.34 | 72.82 |
+| Preference following | 99.38 | 98.63 | 98.87 |
+| Summarization | 96.72 | 98.57 | 99.60 |
+| Temporal reasoning | 94.38 | 96.07 | 96.79 |
+| **Overall** | **89.00** | **86.62** | **90.65** |
+
+Each 1M ability has 70 questions (100K: 40). Against Past's same 1M cohort,
+knowledge update (−10.00 points), abstention (−8.57), contradiction resolution
+(−7.50), multi-session reasoning (−5.48) and extraction (−5.15) account for most
+of the gap. Category means are descriptive; source/reference ambiguity affects
+some low scores and is not corrected after observing results.
+
+### 1M tokens, cost and cleanup
+
+All usage below is summed from **3,127 successful HTTP-200 model receipts**:
+700 answers, 1,817 rubric judgments and 610 ordering-equivalence judgments.
+Native requests retain the exact pinned prompts, strict schemas and approved
+model parameters. There are no additional generative ingestion calls.
+
+| Phase | Calls | Input tokens | Output tokens | Cache reads | Cache writes | Frozen-rate USD |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Answer | 700 | 9,096,396 | 221,530 | 0 | 9,094,296 | $2.539830 |
+| Rubric | 1,817 | 1,537,619 | 93,320 | 0 | 949,364 | $0.466976 |
+| Equivalence | 610 | 53,505 | 7,320 | 0 | 0 | $0.019485 |
+| **Total** | **3,127** | **10,687,520** | **322,170** | **0** | **10,043,660** | **$3.026291** |
+
+Answer input averages **12,994.85 tokens**, median **12,619**. The 100K run
+averaged 12,745.73, median 12,597.5. A fixed evidence budget keeps generation
+input similar despite the larger corpus; these distinct cohorts do not establish
+an isolated scaling law. Full answer input is larger than the 8,000 source-only
+estimate because the prompt and JSON provenance also consume tokens.
+
+Use the same frozen comparison rates as 100K: ordinary input $0.20/M, cache
+read $0.02/M, cache write $0.25/M and output $1.20/M. Writes are subsets of input,
+not added tokens. Zero observed cache reads does not establish an independently
+controlled cold-cache experiment; the service and prior runs share infrastructure.
+These usage-based estimates are **not invoices or a controlled cache study**.
+
+Construction indexes **278,332 chunks** without generative extraction or
+summarization. Independently counted cl100k embedding input is **35,944,747**
+construction tokens and **14,949** literal-query tokens. At the frozen $0.02/M
+rate, the proxies are **$0.718895 + $0.000299**. The combined model/embedding-rate
+proxy is **$3.745485**, excluding managed-service margins, DB writes/reads,
+reranking and storage; do not describe it as the complete billed system cost.
+
+The memory ledger contains **9,259 HTTP operations**: 35 creates, 5,583 upserts,
+2,801 strong fetches, 700 queries, 105 ownership/absence reads and 35 deletes.
+There are no retries/errors. All **35 owned temporary collections** have verified
+404 absence. Model-call durations are retained, but no SillyTavern host response
+speed, browser integration or deployment claim follows from this independent run.
+
+### 1M source audit and interpretation
+
+The structural audit covers **5,357 per-question annotation references**:
+**198 ambiguous** repeated turn-ID references stay separate; 5,159 map uniquely
+to eligible source messages. Returned coverage is **1,129 complete / 397 partial /
+3,633 absent**; final delivery is **897 complete / 292 partial / 3,970 absent**.
+Of 224 imperfect answers, their 1,473 uniquely mapped references have final
+coverage **365 complete / 88 partial / 1,020 absent**, with another 61 ambiguous
+references. **98** mapped messages on imperfect answers are found but entirely
+excluded by packing (337 over all questions). These are message-span statistics,
+**not necessary-fact recall, missing-fact counts or causal failure prevalence**.
+
+Before answers, diagnostic selection was fixed to one lowest-scoring case per
+ability, ties by numeric conversation ID and question ID. All ten packets were
+opened and source-reviewed; original scores/rubrics remain unchanged:
+
+| Diagnostic | Score | Source-bound observation |
+| --- | ---: | --- |
+| `1_abstention_1` | 0 | Rank-1 user message explicitly reports **90% satisfaction** for the queried feature and reaches generation. The no-information rubric rejects that supported answer; Past's public answer also reports 90% and scores 0. |
+| `2_contradiction_resolution_1` | .375 | Both annotated user statements say **92% Cypress pass rate** and are delivered. The answer omits 92% and substitutes a generic-example contradiction; the annotated witnesses do not contain the rubric's never-created assertion. Clarification wording is also ambiguous. |
+| `15_event_ordering_0` | .7556 | All ten topics match but their order differs. Only 4/36 annotated messages are returned and 1 is fully delivered; rank-69 August exercise evidence is packed out. Provided topic hints and sparse delivery prevent a single causal attribution. |
+| `7_information_extraction_0` | 0 | Explicit **k=0.035** reaches generation at rank 50 alongside repeated older 0.03 values; the answer chooses 0.03. This is demonstrated evidence-use failure. Past's answer also chooses 0.03 and scores 0. |
+| `4_instruction_following_1` | 0 | The instruction to always specify container versions is returned at **rank 94** and packed out. The answer gives unversioned/latest images. This verifies instruction-delivery loss, not the existence of all requested version numbers. |
+| `5_knowledge_update_0` | 0 | Both the eligible later **12-hour** request (rank 6) and older daily setup (rank 5) reach generation; answer says daily. Goal-versus-current-configuration interpretation also matters. Past answers 12 hours. |
+| `6_multi_session_reasoning_1` | 0 | Target counts **8 + 10** are delivered, but the answer sums other reports to 39. One target message also says both completed eight and never solved any; cumulative/repeated-count interpretation is required. |
+| `27_preference_following_0` | .6667 | Evening/Riverside preference is respected; a wording-sensitive item penalizes explicitly mentioning cooler conditions. This is not factual preference retrieval failure. |
+| `29_summarization_0` | .875 | Original user shoulder-pain report and annotated physiotherapy discussion are absent from top100. Summary covers wrist injury instead: verified loss of those source witnesses. |
+| `24_temporal_reasoning_0` | .5 | Delivered sources say March 15/April 27 and the answer correctly computes **43 days**. Rubric also demands April 17 (33 days), conflicting with its 43-day item. Past's public answer receives the same .5. |
+
+The result supports continuing the fixed-budget backend at 1M as an evaluated
+configuration, with explicit quality gaps. It does **not** support a SOTA or
+quality-parity claim. Do not attribute every lower label to retrieval: verified
+packing loss, missing source witnesses, delivered-but-misused values and shared
+reference inconsistencies coexist. A next quality hypothesis should target one
+of those demonstrated mechanisms and freeze separate confirmation cases before
+paid optimization. Neither previous packing candidate nor a new product default
+is promoted by this length run.
+
+### 1M validation and retention
+
+`npm test` passes **393 tests**; the Python policy suite passes **11**.
+Runtime/release syntax and SDK checks pass. The documented offline `verify` phase
+reconstructs all **700** contexts from retained source and raw retrieval receipts,
+checks their linked answer contexts and recomputes score arithmetic. Independent
+analysis binds native answer/judge prompts and schemas to recorded calls and
+recomputes phase usage. This is source/context consistency and arithmetic, not
+provider-receipt authentication or independent judge calibration.
+
+The one-off analysis, structural audit and diagnostic verifiers remain ignored
+with original records and producer snapshots. An initial offline analysis
+assumption about where `additionalProperties` is added was corrected; its source
+and failure note are retained. No paid call, prompt, answer or label changed.
+Previous completed working copies were removed only after byte-for-byte archive
+verification; all prior archives remain. Transparent filesystem compression
+preserves input read bytes and frozen hashes. No source evidence was discarded.
+
+Retained evidence: `artifacts/archive/beam-past-1m-v1.tar.gz`, **343,356,154 bytes**,
+SHA-256 `bc8cbb9f6b8572f98b8b3279dc5608a300fb6fbf5eac6ce946318d737b42d0b9`. All **12,572** archive members were read
+back and verified, with zero configured-secret matches. The canonical archive is
+at `/Users/steven/Dev/sillymemory/artifacts/archive/`; it is **local-only**,
+unavailable in a fresh clone, with no independent remote backup. The bundle
+retains exact producer source, pinned upstream/data/dependency locks, raw memory
+and model receipts, all 700 answers, audit/diagnostic packets and restoration
+instructions. Read its `RESTORE.md`; recreating the 1M verification does not
+require rerunning paid calls. The separate 100K archive preserves its comparison
+source, even after archived working copies were removed to free local space.
+
 ## Past public-protocol comparison: frozen scope (2026-10-20)
 
 The user approved one full **100K / 128K, 20-conversation / 400-question** run,

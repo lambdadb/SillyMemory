@@ -1,4 +1,4 @@
-"""Bounded 100K comparison using Past's pinned loader, prompts and scoring.
+"""Bounded BEAM length comparison using Past's pinned loader, prompts and scoring.
 
 Third-party code stays in the ignored source bundle, with its original notices.
 Only the memory backend and the explicitly approved direct OpenAI transport differ.
@@ -18,6 +18,11 @@ from datetime import datetime, timezone
 PAST_REVISION = "1faac1e70fa50d92d966904358be98bb1beca0c8"
 DATA_REVISION = "3205395e897e7318c7b094ef4e6047b9b82dbb03"
 PARQUET_SHA256 = "c0519be25907005ba873c927c50877471d550873039d96c041554d0075a78ace"
+SPLITS = {
+    "100k": {"parquetSha256": PARQUET_SHA256, "conversations": 20, "questions": 400, "memoryOperations": 10000},
+    "1m": {"parquetSha256": "41b5acbbb55a586b1305514ef9d9fb03365d9b3331b598a1c2dd7603d93ef533",
+           "conversations": 35, "questions": 700, "memoryOperations": 20000},
+}
 MODEL = "gpt-5.6-luna"
 REPO = Path(__file__).resolve().parents[1]
 
@@ -69,50 +74,52 @@ def model_reply(response, error_type):
     return data
 
 
-def protocol_settings():
+def protocol_settings(split="100k"):
+    cohort = SPLITS[split]
     return {"pastRevision": PAST_REVISION, "datasetRevision": DATA_REVISION,
-            "parquetSha256": PARQUET_SHA256,
-            "scope": "20 conversations / 400 questions; one answer per question, no tuning or repeats",
+            "split": split, "parquetSha256": cohort["parquetSha256"],
+            "scope": f"{cohort['conversations']} conversations / {cohort['questions']} questions; one answer per question, no tuning or repeats",
             "model": MODEL, "reasoningEffort": "none", "transport": "direct OpenAI Chat Completions",
             "recall": {"limit": 100, "maxTokens": 8000,
                        "evidenceAccounting": "sum ceil((content code points + source-excerpt code points)/4) per result; metadata excluded",
                        "serializedTokenDiagnostic": "cl100k_base / tiktoken JS 1.0.22"},
             "bounds": {"wallHours": 8, "modelAttempts": 10000, "modeledModelUSD": 25,
-                       "memoryOperations": 10000},
-            "question": "How does SillyMemory score under Past's annotation-assisted public evaluation protocol?",
+                       "memoryOperations": cohort["memoryOperations"]},
+            "question": "How does SillyMemory score as history length grows under Past's annotation-assisted public evaluation protocol?",
             "decision": "Report the frozen full-cohort comparison; no runtime/default promotion or optimization in this run.",
             "differences": ["SillyMemory source chunks, storage, retrieval and context serialization",
                             "OpenAI direct transport instead of OpenRouter; equivalent native request parameters",
                             "Batch dates retain their source precision; no synthetic send-time labels"]}
 
 
-def source_file_hashes(root):
+def source_file_hashes(root, split="100k"):
     files = {str(path.relative_to(REPO)): sha(path.read_bytes()) for path in [
         Path(__file__), REPO / "scripts/beam-past-memory.mjs", REPO / "src/client.js",
         REPO / "src/chunking.js", REPO / "vendor/lambdadb.js",
     ]}
     # Run-local identities must survive an external --root or bundle relocation.
-    run_files = ["memory-input.json", "100k.parquet", "dataset-cache/100k.json", "dataset-cache/100k.revision"]
+    run_files = ["memory-input.json", f"{split}.parquet", f"dataset-cache/{split}.json", f"dataset-cache/{split}.revision"]
     run_files += [f"tokenizer/node_modules/tiktoken/{name}" for name in
                   ["package.json", "tiktoken.cjs", "tiktoken_bg.cjs", "tiktoken_bg.wasm"]]
     files.update({f"run/{name}": sha((root / name).read_bytes()) for name in run_files})
     return files
 
 
-def prepare(root, dataset, upstream_files):
+def prepare(root, dataset, upstream_files, split="100k"):
     assert not (root / "protocol-lock.json").exists(), "Do not overwrite an existing frozen run"
     import pyarrow.parquet as parquet
-    assert sha((root / "100k.parquet").read_bytes()) == PARQUET_SHA256
-    rows = parquet.read_table(root / "100k.parquet").to_pylist()
+    cohort = SPLITS[split]
+    assert sha((root / f"{split}.parquet").read_bytes()) == cohort["parquetSha256"]
+    rows = parquet.read_table(root / f"{split}.parquet").to_pylist()
     conversations = [dataset.build_conversation(row) for row in rows]
-    assert len(conversations) == 20 and sum(len(c.questions) for c in conversations) == 400
+    assert len(conversations) == cohort["conversations"] and sum(len(c.questions) for c in conversations) == cohort["questions"]
     cache = root / "dataset-cache"
     cache.mkdir(exist_ok=True)
-    save(cache / "100k.json", rows)
-    (cache / "100k.revision").write_text(DATA_REVISION)
+    save(cache / f"{split}.json", rows)
+    (cache / f"{split}.revision").write_text(DATA_REVISION)
     # The backend gets source input and literal questions, never categories,
     # rubrics, reference answers, or evaluation source annotations.
-    memory_input = {"conversations": [{
+    memory_input = {"split": split, "conversations": [{
         "id": c.id, "title": c.title, "userIdentity": c.user_identity, "userTraits": c.user_traits,
         "messages": [{"sourceId": m.message_id, "ordinal": m.ordinal, "content": m.content,
                       "author": {"role": m.role, "name": m.author}, "timestamp": dataset.utc_iso(m.timestamp),
@@ -122,14 +129,17 @@ def prepare(root, dataset, upstream_files):
     } for c in conversations]}
     input_path = root / "memory-input.json"
     save(input_path, memory_input)
-    lock = {**protocol_settings(), "upstreamFiles": upstream_files, "files": source_file_hashes(root)}
+    lock = {**protocol_settings(split), "upstreamFiles": upstream_files, "files": source_file_hashes(root, split)}
     save(root / "protocol-lock.json", lock)
     import verify
-    problems = verify.verify_run(root / "upstream/past/beam/results/100k")
+    problems = verify.verify_run(root / f"upstream/past/beam/results/{split}")
     assert not problems, problems
-    save(root / "preflight.json", {"passed": True, "publishedScoreRecomputed": 0.9208214285714286,
-                                   "conversations": len(conversations), "questions": 400})
-    print("PREPARED: pinned full 100K cohort, public score arithmetic verified")
+    published = json.loads((root / f"upstream/past/beam/results/{split}/summary.json").read_text())
+    assert published["datasetRevision"] == DATA_REVISION
+    assert published["conversations"] == cohort["conversations"] and published["questions"] == cohort["questions"]
+    save(root / "preflight.json", {"passed": True, "publishedScoreRecomputed": published["microAverage"],
+                                   "split": split, "conversations": len(conversations), "questions": cohort["questions"]})
+    print(f"PREPARED: pinned full {split.upper()} cohort, public score arithmetic verified")
 
 
 def environment(path):
@@ -139,9 +149,9 @@ def environment(path):
     return {**values, **os.environ}
 
 
-def check_lock(root, upstream_files):
+def check_lock(root, upstream_files, split="100k"):
     lock = json.loads((root / "protocol-lock.json").read_text())
-    expected = {**protocol_settings(), "upstreamFiles": upstream_files, "files": source_file_hashes(root)}
+    expected = {**protocol_settings(split), "upstreamFiles": upstream_files, "files": source_file_hashes(root, split)}
     assert lock == expected, "Frozen protocol settings or required source files changed"
     return lock
 
@@ -164,7 +174,7 @@ def load_verified_recalls(root, files):
 
 def validated_recalls(root, conversation_ids):
     memory_state = json.loads((root / "memory/memory-state.json").read_text())
-    assert memory_state["status"] == "completed" and len(memory_state["completed"]) == 20
+    assert memory_state["status"] == "completed" and set(memory_state["completed"]) == set(conversation_ids) and len(memory_state["completed"]) == len(conversation_ids)
     assert memory_state["inputSha256"] == sha((root / "memory-input.json").read_bytes())
     assert all(item.get("absent404") for item in memory_state["owned"])
     recall_lock = json.loads((root / "recall/lock.json").read_text())
@@ -183,8 +193,8 @@ def validated_recalls(root, conversation_ids):
     return load_verified_recalls(root, canonical["files"])
 
 
-def verify_saved_run(root, dataset):
-    rows, _ = dataset.load_rows("100k")
+def verify_saved_run(root, dataset, split="100k"):
+    rows, _ = dataset.load_rows(split)
     recalls = validated_recalls(root, [dataset.build_conversation(row).id for row in rows])
     import verify
     problems = verify.verify_run(root / "scored")
@@ -200,7 +210,7 @@ async def score(root, dataset, env, lock):
     import run
     import scoring
     import verify
-    rows, revision = dataset.load_rows("100k")
+    rows, revision = dataset.load_rows(lock["split"])
     conversations = [dataset.build_conversation(row) for row in rows]
     recalls = validated_recalls(root, [c.id for c in conversations])
     output = root / "scored"
@@ -276,7 +286,7 @@ async def score(root, dataset, env, lock):
         scored = [row for group in await asyncio.gather(*(conversation_job(c) for c in conversations)) for row in group]
     finally:
         await http.aclose()
-    summary = {"dataset": "BEAM", "split": "100k", "datasetRevision": revision, "conversations": 20,
+    summary = {"dataset": "BEAM", "split": lock["split"], "datasetRevision": revision, "conversations": len(conversations),
                **scoring.summarize(scored), "answerModel": MODEL, "judgeModel": MODEL,
                "reasoningEffort": "none", "transport": "direct OpenAI", "recall": lock["recall"],
                "protocolLockSha256": sha((root / "protocol-lock.json").read_bytes()),
@@ -292,16 +302,17 @@ def main():
     parser.add_argument("phase", choices=["prepare", "recall", "repack", "score", "verify"])
     parser.add_argument("--root", type=Path, default=REPO / "artifacts/beam-past-100k-v1")
     parser.add_argument("--env-file", type=Path)
+    parser.add_argument("--split", choices=SPLITS, default="100k")
     args = parser.parse_args()
     root = args.root.resolve()
     dataset, upstream_files = load_upstream(root)
     if args.phase == "prepare":
-        prepare(root, dataset, upstream_files)
+        prepare(root, dataset, upstream_files, args.split)
         return
-    lock = check_lock(root, upstream_files)
+    lock = check_lock(root, upstream_files, args.split)
     if args.phase == "verify":
-        verify_saved_run(root, dataset)
-        print("VERIFIED: all 400 source-derived recalls, linked answer contexts and saved score arithmetic")
+        verify_saved_run(root, dataset, args.split)
+        print(f"VERIFIED: all {SPLITS[args.split]['questions']} source-derived recalls, linked answer contexts and saved score arithmetic")
         return
     if args.phase == "repack":
         subprocess.run(["node", str(REPO / "scripts/beam-past-memory.mjs"), str(root / "memory-input.json"),

@@ -34,6 +34,19 @@ class Response:
 
 
 class TransportPolicy(unittest.TestCase):
+    def test_length_extension_keeps_quality_policy_and_rejects_cross_split_locks(self):
+        small, large = protocol.protocol_settings(), protocol.protocol_settings("1m")
+        for key in ["pastRevision", "datasetRevision", "model", "reasoningEffort", "transport", "recall", "differences"]:
+            self.assertEqual(small[key], large[key])
+        self.assertEqual(large["parquetSha256"], "41b5acbbb55a586b1305514ef9d9fb03365d9b3331b598a1c2dd7603d93ef533")
+        self.assertEqual(large["bounds"]["memoryOperations"], 20000)
+        with TemporaryDirectory() as directory, patch.object(protocol, "source_file_hashes", return_value={}):
+            root = Path(directory)
+            (root / "protocol-lock.json").write_text(json.dumps({**large, "files": {}, "upstreamFiles": {}}))
+            protocol.check_lock(root, {}, "1m")
+            with self.assertRaises(AssertionError):
+                protocol.check_lock(root, {}, "100k")
+
     def test_verify_phase_does_not_report_success_with_corrupted_retained_source(self):
         dataset = SimpleNamespace(load_rows=lambda split: ([{}], 'revision'),
                                   build_conversation=lambda row: SimpleNamespace(id='1'))

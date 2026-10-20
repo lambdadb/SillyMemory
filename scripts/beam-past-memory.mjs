@@ -139,12 +139,22 @@ export function packContext(hits, documents, asOf, asOfMicros, countTokens) {
     return { context, tokens, serializedTokens: countTokens(serializeContext(context)), selectedIds: selected.map(doc => doc.id) };
 }
 
+export function cohortSettings(input) {
+    const split = input.split || '100k';
+    assert(['100k', '1m'].includes(split), 'Unsupported frozen split');
+    const conversations = split === '1m' ? 35 : 20, questions = conversations * 20;
+    assert.equal(input.conversations.length, conversations);
+    assert.equal(new Set(input.conversations.map(c => c.id)).size, conversations);
+    assert(input.conversations.every(c => c.questions.length === 20));
+    assert.equal(new Set(input.conversations.flatMap(c => c.questions.map(q => q.id))).size, questions);
+    return { conversations, questions, memoryOperations: split === '1m' ? 20000 : 10000 };
+}
+
 async function main() {
     const [inputFile, outputDirectory, envFile, tokenizerPackage, flag] = process.argv.slice(2);
     assert(inputFile && outputDirectory && envFile && tokenizerPackage, 'Usage: node scripts/beam-past-memory.mjs input.json output-directory env-file tokenizer-package.json');
     const inputBytes = await readFile(inputFile), input = JSON.parse(inputBytes);
-    assert.equal(input.conversations.length, 20);
-    assert.equal(input.conversations.reduce((n, c) => n + c.questions.length, 0), 400);
+    const cohort = cohortSettings(input);
     const require = createRequire(path.resolve(tokenizerPackage)), encoder = require('tiktoken').get_encoding('cl100k_base');
     assert.equal(JSON.parse(await readFile(path.join(path.dirname(require.resolve('tiktoken')), 'package.json'))).version, '1.0.22');
     const countTokens = text => encoder.encode(text, [], []).length;
@@ -163,7 +173,7 @@ async function main() {
     if (flag === '--repack' || flag === '--verify-recall') {
         const memoryRoot = path.resolve(outputDirectory), parent = path.dirname(memoryRoot);
         const stateBytes = await readFile(path.join(memoryRoot, 'memory-state.json')), state = JSON.parse(stateBytes);
-        assert.equal(state.status, 'completed'); assert.equal(state.completed.length, 20);
+        assert.equal(state.status, 'completed'); assert.deepEqual([...state.completed].sort(), input.conversations.map(c => c.id).sort());
         assert(state.owned.every(item => item.absent404)); assert.equal(state.inputSha256, sha(inputBytes));
         const { readdir } = await import('node:fs/promises');
         const receipts = await Promise.all((await readdir(memoryRoot)).filter(name => /^http-\d+\.json$/.test(name)).sort()
@@ -183,7 +193,7 @@ async function main() {
             }
             await writeFile(path.join(staging, 'lock.json'), JSON.stringify(lock, null, 2));
         });
-        console.log('REPACKED: all 400 saved queries, matched evidence accounting; no provider calls');
+        console.log(`REPACKED: all ${cohort.questions} saved queries, matched evidence accounting; no provider calls`);
         encoder.free(); return;
     }
     const env = { ...parseEnv(await readFile(envFile, 'utf8')), ...process.env };
@@ -202,7 +212,7 @@ async function main() {
     for (const signal of ['SIGINT', 'SIGTERM']) process.on(signal, () => { stopped = true; });
     const client = new LambdaClient({ endpoint: env.LAMBDADB_BASE_URL, project: env.LAMBDADB_PROJECT_NAME }, env.LAMBDADB_PROJECT_API_KEY,
         { timeoutMs: 180000, fetcher: async (url, options) => {
-            assert(state.operations++ < 10000, 'Memory operation bound exceeded');
+            assert(state.operations++ < cohort.memoryOperations, 'Memory operation bound exceeded');
             const number = receiptNumber++, started = Date.now();
             const request = { number, pathname: new URL(url).pathname, method: options.method,
                 body: options.body ? JSON.parse(options.body) : null };
