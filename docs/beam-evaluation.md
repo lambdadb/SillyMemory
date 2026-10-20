@@ -259,14 +259,20 @@ The analysis starts from repository revision
 `525574b93408079d81a8b2b10d2820ad95e1ea39`; its one-off uncommitted producers
 are retained in the derived bundle and read immutable original-run evidence.
 The derived local-only archive is
-`/Users/steven/Dev/sillymemory/artifacts/archive/beam-past-1m-error-analysis-v1.tar.gz`:
-**2,436,913 bytes**, SHA-256
-`04022a9184c642b62e77717911450bc9035cd78ba9767b86a13a3925dba8f242`.
+`/Users/steven/Dev/sillymemory/artifacts/archive/beam-past-1m-error-analysis-v2.tar.gz`:
+**2,438,204 bytes**, SHA-256
+`43b26f49b1256d451f9cee53a82d11775006159a1a16df3819c8ee6529284a4f`.
 All **64 members** are read back; their file manifest verifies. The bundle retains
 the fixed selection, 700-outcome census, 49 case findings and source packets,
 exact native answer prompts, local review HTML, and one-off producers/verifier.
-All 49 prompts/answers bind to original native receipts; source phrases,
-eligibility and selected witness ranks verify against the original archive.
+All **98 selected query/answer receipts** bind directly to the original archive;
+source phrases, eligibility and selected witness ranks verify. Extracting this
+bundle into a fresh empty directory and running its four recorded producers
+recreates every manifest file byte-for-byte using only the original archive and
+Python's standard library, with no separately restored inputs or provider calls.
+The earlier derived v1 archive remains unchanged; v2 completes its producer and
+restoration recipe and records the explicit defer decision without changing the
+selected cases, classifications or benchmark labels.
 The original 1M bundle remains unchanged and is required for full-corpus
 reproduction via `RESTORE.json`. Neither archive is available in a fresh clone
 or independently backed up remotely. Mechanical verification does not calibrate
