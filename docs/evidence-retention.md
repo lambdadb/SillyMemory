@@ -1843,3 +1843,9 @@ This is conservative committed readiness, not first semantic-query latency.
   SHA-256 `45123e7791778acc03a26bf5f9773704983fedd20f36df65278dd902a7922ecc`.
   All eight members verified; exact maintained runner/helper/test source, diff
   from the v2 producer and local verification. No new live matrix or timings.
+- Final pre-execution native input cap and concurrent/failing-call regression:
+  `/Users/steven/Dev/sillymemory/artifacts/branch-checkpoint-v2/BUDGET-ADDENDUM.md`,
+  SHA-256 `b35ba99ba253b8ab8d2a72526061146ce416f23004387b7ed41bbe8efcda365d`.
+  Records the patch over the hardening sidecar, five passing safety regressions,
+  389 passing full-suite tests and pinned instrumentation syntax validation.
+  Local fixture evidence only; original live observations/archives unchanged.

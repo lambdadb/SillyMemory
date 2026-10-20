@@ -2,11 +2,12 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
 import { EventEmitter } from 'node:events';
-import { spawn } from 'node:child_process';
-import { mkdtemp, writeFile, rm } from 'node:fs/promises';
+import { spawn, execFile } from 'node:child_process';
+import { promisify } from 'node:util';
+import { mkdtemp, writeFile, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { assertPortAvailable, waitForOwnedHost, cleanupOwnedCollections } from '../scripts/branch-checkpoint-cost-support.mjs';
+import { assertPortAvailable, waitForOwnedHost, cleanupOwnedCollections, instrumentEmbedding } from '../scripts/branch-checkpoint-cost-support.mjs';
 
 async function localServer(t) {
     let requests = 0;
@@ -57,4 +58,30 @@ test('benchmark cleanup attempts every owned collection and retains only failed 
     assert.deepEqual(result.remaining, [entries[0], entries[2]]);
     assert.deepEqual(result.failures.map(x => x.collection), ['owned-1', 'owned-3']);
     assert.equal(entries.length, 3, 'Original ownership evidence remains intact');
+});
+
+test('benchmark reserves embedding budget before concurrent and failed pipeline calls', async t => {
+    const metrics = await logFile(t, '');
+    const original = `export const calls = [];
+const pipe = async text => {
+    calls.push(text);
+    await new Promise(resolve => setTimeout(resolve, 10));
+    if (text === 'fail') throw new Error('Synthetic pipeline failure');
+    return text;
+};
+export async function embed(text) {
+    const result = await pipe(text, { pooling: 'mean', normalize: true });
+    return result;
+}`;
+    const moduleUrl = 'data:text/javascript;base64,' + Buffer.from(instrumentEmbedding(original, 2)).toString('base64');
+    const { stdout } = await promisify(execFile)(process.execPath, ['--input-type=module', '-e', `
+        const module = await import(process.argv[1]);
+        const results = await Promise.allSettled([module.embed('ok'), module.embed('fail'), module.embed('over')]);
+        console.log(JSON.stringify({ calls: module.calls, status: results.map(r => r.status), errors: results.map(r => r.reason?.message ?? null) }));
+    `, moduleUrl], { env: { ...process.env, SM_EMBED_METRICS: metrics } });
+    assert.deepEqual(JSON.parse(stdout), { calls: ['ok', 'fail'], status: ['fulfilled', 'rejected', 'rejected'],
+        errors: [null, 'Synthetic pipeline failure', 'Benchmark local embedding input limit exceeded'] });
+    const completed = (await readFile(metrics, 'utf8')).trim().split('\n').map(line => JSON.parse(line));
+    assert.equal(completed.length, 1, 'Only the successful pipeline call produces completion metrics');
+    assert.equal(completed[0].characters, 2);
 });

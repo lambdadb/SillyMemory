@@ -8,7 +8,7 @@ import { readFile, writeFile, mkdir, mkdtemp, rm, realpath } from 'node:fs/promi
 import { spawn, execFileSync } from 'node:child_process';
 import { tmpdir, cpus, platform, arch } from 'node:os';
 import path from 'node:path';
-import { assertPortAvailable, waitForOwnedHost, cleanupOwnedCollections } from './branch-checkpoint-cost-support.mjs';
+import { assertPortAvailable, waitForOwnedHost, cleanupOwnedCollections, instrumentEmbedding } from './branch-checkpoint-cost-support.mjs';
 
 const root = path.resolve(new URL('..', import.meta.url).pathname);
 const source = process.env.ST_SOURCE;
@@ -50,10 +50,7 @@ const save = async () => {
 const check = (name, ok) => { assert(ok, name); report.checks.push(name); };
 const embeddingPath = path.join(source, 'src/vectors/embedding.js');
 const originalEmbedding = await readFile(embeddingPath, 'utf8');
-assert.equal(originalEmbedding.split("const result = await pipe(text, { pooling: 'mean', normalize: true });").length, 2);
-const instrumented = "import { appendFileSync } from 'node:fs';\n" + originalEmbedding.replace(
-    "const result = await pipe(text, { pooling: 'mean', normalize: true });",
-    "const started = performance.now(), cpu = process.cpuUsage();\n    const result = await pipe(text, { pooling: 'mean', normalize: true });\n    appendFileSync(process.env.SM_EMBED_METRICS, JSON.stringify({ milliseconds: performance.now() - started, cpu: process.cpuUsage(cpu), characters: text.length }) + '\\n');");
+const instrumented = instrumentEmbedding(originalEmbedding, plan.limits.nativeEmbeddingInputs);
 await writeFile(path.join(artifacts, 'host-embedding-original.js'), originalEmbedding);
 await writeFile(path.join(artifacts, 'host-embedding-instrumented.js'), instrumented);
 await writeFile(embeddingPath, instrumented);

@@ -49,3 +49,15 @@ export async function cleanupOwnedCollections(client, entries) {
     }
     return { remaining, failures };
 }
+
+export function instrumentEmbedding(original, inputLimit) {
+    assert(Number.isSafeInteger(inputLimit) && inputLimit > 0, 'Invalid local embedding limit');
+    const target = "const result = await pipe(text, { pooling: 'mean', normalize: true });";
+    assert.equal(original.split(target).length, 2, 'Expected one pinned embedding call');
+    return "import { appendFileSync } from 'node:fs';\nlet benchmarkEmbeddingInputs = 0;\n" + original.replace(target,
+        `if (benchmarkEmbeddingInputs >= ${inputLimit}) throw new Error('Benchmark local embedding input limit exceeded');
+    benchmarkEmbeddingInputs++;
+    const started = performance.now(), cpu = process.cpuUsage();
+    ${target}
+    appendFileSync(process.env.SM_EMBED_METRICS, JSON.stringify({ milliseconds: performance.now() - started, cpu: process.cpuUsage(cpu), characters: text.length }) + '\\n');`);
+}

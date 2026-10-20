@@ -116,6 +116,15 @@ changes did not rerun the live matrix. Exact source and local verification are i
 `45123e7791778acc03a26bf5f9773704983fedd20f36df65278dd902a7922ecc`;
 all eight members were read back and verified. Original archives remain unchanged.
 
+The final maintenance change enforces the native input cap before each model
+invocation, including failed attempts and warmup. A child-process fixture with a
+cap of two and three concurrent inputs (one failing) confirmed only two pipeline
+calls and rejection of the third before execution. All five safety regressions
+and 389 full-suite tests pass. The pinned instrumentation passes syntax checking;
+no new live matrix was run. `BUDGET-ADDENDUM.md` in the same retained directory
+records the exact patch and verification, SHA-256
+`b35ba99ba253b8ab8d2a72526061146ce416f23004387b7ed41bbe8efcda365d`.
+
 ## Historical v1 UI synchronization results
 
 The completed paired comparisons contain three repetitions at 50 messages and two
