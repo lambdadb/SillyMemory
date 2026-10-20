@@ -9,7 +9,8 @@ export function retrievalDiagnostics(trace, request) {
     const expected = new Map(trace.prepared.docs.map(d => [d.id, d]));
     const valid = hit => {
         const doc = expected.get(hit?.id);
-        return doc && ['scope', 'owner', 'revision', 'text'].every(key => hit[key] === doc[key]);
+        return doc && ['scope', 'owner', 'revision', 'text', 'conversationTimestamp', 'timestampSource', 'conversationTimeContext']
+            .every(key => hit[key] === doc[key]);
     };
     const coordinate = d => ({ message: d.message, chunk: d.chunk });
     const candidates = trace.queries.flatMap(q => q.hits);

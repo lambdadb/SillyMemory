@@ -19,6 +19,36 @@ test('diagnostics separate invalid hits, duplicates, unselected sources and fina
     assert.throws(() => retrievalDiagnostics({ ...trace, result: { ...trace.result, tokens: 801 } }, request), /limit/);
     assert.throws(() => retrievalDiagnostics({ ...trace, result: { ...trace.result, passages: [{ ...a, text: 'stale' }] } }, request), /valid candidate/);
 });
+test('diagnostics reject mismatched time provenance before attributing omissions to selection', () => {
+    const dated = { ...doc('dated', 1), conversationTimestamp: '2025-01-13T00:00:00.000Z',
+        timestampSource: 'host_message', conversationTimeContext: 'Host-supplied UTC clock; not an event date.' };
+    const undated = doc('undated', 2);
+    const provenance = ['conversationTimestamp', 'timestampSource', 'conversationTimeContext'];
+    const invalid = provenance.flatMap(key => {
+        const missing = { ...dated }; delete missing[key];
+        return [missing, { ...dated, [key]: 'altered' }, { ...undated, [key]: dated[key] }];
+    });
+    const trace = { budget: 800, prepared: { docs: [dated, undated] },
+        queries: [{ query: 'q', hits: invalid }], result: { passages: [], messages: [], tokens: 0 } };
+    const result = retrievalDiagnostics(trace, { messages: [] });
+    assert.equal(result.queries[0].invalid, 9);
+    assert.deepEqual(result.queries[0].valid, []);
+    assert.equal(result.uniqueValidCandidates, 0);
+    assert.deepEqual(result.unselectedValidCandidates, []);
+    // Even an intact local passage cannot be selected through a rejected remote hit.
+    assert.throws(() => retrievalDiagnostics({ ...trace,
+        result: { ...trace.result, passages: [dated] } }, { messages: [] }), /valid candidate/);
+
+    const control = { ...trace, queries: [{ query: 'q', hits: [dated, undated] }] };
+    const accepted = retrievalDiagnostics(control, { messages: [] });
+    assert.equal(accepted.queries[0].invalid, 0);
+    assert.equal(accepted.uniqueValidCandidates, 2);
+    assert.deepEqual(accepted.unselectedValidCandidates, [{ message: 1, chunk: 0 }, { message: 2, chunk: 0 }]);
+    for (const passage of invalid) {
+        assert.throws(() => retrievalDiagnostics({ ...control,
+            result: { ...control.result, passages: [passage] } }, { messages: [] }), /valid candidate/);
+    }
+});
 test('an empty native insertion is recorded without inventing a failed model answer', () => {
     const item = { chat: [{ mes: 'old', name: 'User', is_user: true }], question: 'question' };
     const request = { max_tokens: 1024, messages: [{ role: 'user', content: 'question' }] };
