@@ -13,7 +13,7 @@ const root = path.resolve(new URL('..', import.meta.url).pathname);
 const source = process.env.ST_SOURCE;
 const output = process.argv[2];
 assert(source && output && process.argv.length === 3, 'ST_SOURCE=<disposable host> SM_ENV_FILE=<env> node scripts/branch-checkpoint-cost.mjs <new artifact directory>');
-const planBytes = await readFile(path.join(root, 'docs/benchmarks/branch-checkpoint-v1.json'));
+const planBytes = await readFile(path.join(root, 'docs/benchmarks/branch-checkpoint-v2.json'));
 const plan = JSON.parse(planBytes);
 assert.equal(execFileSync('git', ['-C', source, 'rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(), plan.hostRevision);
 assert.equal(await realpath(path.join(source, 'public/scripts/extensions/third-party/sillymemory')), root);
@@ -87,7 +87,10 @@ async function indexNative() {
     return stats.expected.length;
 }
 async function indexMemory() {
+    const start = performance.now();
     await panel(); await field('enabled').check(); await status('synchronized'); await memoryOff();
+    const uiSynchronizationMilliseconds = performance.now() - start;
+    return { uiSynchronizationMilliseconds, ...await verifyMemory() };
 }
 async function verifyMemory(full = false) {
     return page.evaluate(async ({ credentials, full }) => {
@@ -99,10 +102,24 @@ async function verifyMemory(full = false) {
         const entry = await chatCollection(snapshot, owner), client = new LambdaClient(credentials, credentials.key);
         try {
             const expected = (await documents(snapshot, owner, { ...options({}), ...(!full ? { archiveBefore: archiveBoundary(snapshot) } : {}) })).docs;
-            const found = [];
-            for (let i = 0; i < expected.length; i += 100) found.push(...await client.fetchDocs(entry.collection, expected.slice(i, i + 100).map(d => d.id), entry.branch));
-            if (found.length !== expected.length || expected.some(d => !found.some(x => JSON.stringify(x) && Object.keys(d).every(k => d[k] === x[k])))) throw new Error('Inherited source mismatch');
-            return { ...entry, indexedDocuments: expected.length, transcriptMessages: snapshot.messages.length };
+            const expectedIds = new Set(expected.map(d => d.id));
+            const start = performance.now(); let polls = 0, first;
+            // List every committed document, including unwanted inherited suffixes.
+            // Fetching only expected IDs cannot prove deletion or exact isolation.
+            while (true) {
+                const found = await client.listDocs(entry.collection, entry.branch);
+                const byId = new Map(found.map(d => [d.id, d]));
+                const unexpected = found.filter(d => !expectedIds.has(d.id)).length;
+                const mismatch = expected.filter(d => !byId.has(d.id) || !Object.keys(d).every(k => d[k] === byId.get(d.id)[k])).length;
+                polls++;
+                first ??= { documents: found.length, unexpected, missingOrChanged: mismatch };
+                if (found.length === expected.length && byId.size === found.length && !unexpected && !mismatch) {
+                    return { indexedDocuments: expected.length, transcriptMessages: snapshot.messages.length,
+                        committedVerification: { milliseconds: performance.now() - start, polls, first, exact: true } };
+                }
+                if (performance.now() - start >= 180000) throw new Error('Exact committed memory set did not become ready within 180 seconds');
+                await new Promise(resolve => setTimeout(resolve, 1000));
+            }
         } finally { client.forget(); }
     }, { credentials, full });
 }
@@ -154,16 +171,15 @@ async function runArm(arm, count, rep) {
     const sync = arm === 'native' ? indexNative : indexMemory;
     await nativeEnabled(arm === 'native');
     await measure(arm, count, rep, 'initial', sync);
-    if (arm !== 'native') await verifyMemory();
     for (const [operation, index] of [['branch-end', count - 1], ['branch-middle', Math.floor(count / 2) - 1]]) {
         await nativeEnabled(false); await open(parent);
         await measure(arm, count, rep, operation, async () => {
             const start = performance.now(); await branch(index);
             const chatMilliseconds = performance.now() - start;
-            await nativeEnabled(arm === 'native'); await sync();
-            return { chatMilliseconds };
+            await nativeEnabled(arm === 'native');
+            const synchronization = await sync();
+            return { chatMilliseconds, ...(arm === 'sillymemory' ? synchronization : {}) };
         });
-        if (arm !== 'native') await verifyMemory();
         check(`${arm}/${count}/${rep}/${operation} preserves source prefix`, await page.evaluate(rows => JSON.stringify(SillyTavern.getContext().chat.map(m => m.mes)) === JSON.stringify(rows.map(m => m.mes)), rows.slice(0, index + 1)));
     }
     await nativeEnabled(false); await open(parent);
@@ -188,8 +204,8 @@ async function runArm(arm, count, rep) {
     await measure(arm, count, rep, 'checkpoint-open', async () => {
         await open(checkpoint);
         if (arm === 'native') { await nativeEnabled(true); await sync(); }
+        else return verifyMemory(true);
     });
-    if (arm !== 'native') await verifyMemory(true);
     for (let resume = 1; resume <= 2; resume++) {
         await nativeEnabled(false); await open(checkpoint);
         await measure(arm, count, rep, `resume-${resume}`, async () => {
@@ -197,10 +213,10 @@ async function runArm(arm, count, rep) {
             if (arm === 'native') await branch(count - 1);
             else { await panel(); await field('checkpoint-resume').click(); await status('Checkpoint resumed as'); await idle(); }
             const chatMilliseconds = performance.now() - start;
-            await nativeEnabled(arm === 'native'); await sync();
-            return { chatMilliseconds };
+            await nativeEnabled(arm === 'native');
+            const synchronization = await sync();
+            return { chatMilliseconds, ...(arm === 'sillymemory' ? synchronization : {}) };
         });
-        if (arm !== 'native') await verifyMemory();
         check(`${arm}/${count}/${rep}/resume-${resume} preserves transcript`, await page.evaluate(rows => JSON.stringify(SillyTavern.getContext().chat.map(m => m.mes)) === JSON.stringify(rows.map(m => m.mes)), rows));
     }
     await nativeEnabled(false); await memoryOff();

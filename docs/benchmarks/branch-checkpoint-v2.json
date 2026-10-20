@@ -1,0 +1,35 @@
+{
+  "version": 2,
+  "decision": "Confirm branch and checkpoint costs after requiring an exact committed document set inside each synchronization timer. Preserve v1 UI-synchronization evidence separately; no product or model changes.",
+  "hostRevision": "06bde939fb1e9c4c8d8641d810f0a916b5bce127",
+  "messages": [
+    50,
+    500
+  ],
+  "repetitions": 1,
+  "dataset": "Deterministic English expedition messages generated in the runner; no personal chat or benchmark answer labels.",
+  "arms": {
+    "native": "Unmodified host Vector Storage settings with chat vectorization enabled, real default local Transformers embedding, and Vectorize All to finish the current chat index.",
+    "sillymemory": "Current product defaults, managed OpenAI text-embedding-3-small, real LambdaDB branches and checkpoint verification."
+  },
+  "operations": [
+    "initial",
+    "branch-end",
+    "branch-middle",
+    "checkpoint-save",
+    "checkpoint-open",
+    "resume-1",
+    "resume-2"
+  ],
+  "timing": "Include complete committed document enumeration and field equality, with no extra inherited documents, inside synchronization timing. Record UI synchronization and subsequent committed-validation wait separately. Checkpoint open includes the same full-set validation. Exclude setup, return navigation and cleanup. Initial synchronization now pays its own commit wait.",
+  "fairness": "Same source messages. Native indexes the complete transcript; SillyMemory normal operation retains the recent-five window outside its index and checkpoints synchronize the full completed transcript. Report those document counts. Different embedding models and deployment locations prevent a backend-only speed claim.",
+  "limits": {
+    "collections": 3,
+    "managedUpsertDocuments": 600,
+    "managedUpsertCharacters": 125000,
+    "nativeEmbeddingInputs": 4000,
+    "wallMinutes": 35,
+    "generationCalls": 0
+  },
+  "completion": "Complete all 28 operations (two sizes, two arms, one repetition), with exact committed index sets and owned cleanup, or preserve a concrete blocker. This is a corrective single observation per case, not a replacement median or service latency guarantee."
+}

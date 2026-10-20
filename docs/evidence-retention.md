@@ -1798,6 +1798,10 @@ cap stopped the third 500-message native branch: 71/84 operations completed,
 with three complete 50-message pairs and two complete 500-message pairs.
 Unmatched/interrupted work remains in the raw records and is excluded from the
 paired medians. This is not a completed full matrix, quality score or invoice.
+The v1 managed check fetched expected IDs only after timing; it did not establish
+absence of an inherited suffix. Its fast midpoint/resume timings describe UI
+synchronization, not verified committed readiness. See the result document for
+the separate v2 correction; the original archive remains unchanged.
 
 - Local-only archive:
   `/Users/steven/Dev/sillymemory/artifacts/branch-checkpoint-v1/evidence.tar.gz`.
@@ -1810,3 +1814,20 @@ paired medians. This is not a completed full matrix, quality score or invoice.
 - All six generated owned collections were independently rechecked as HTTP 404;
   native temporary data was removed and host instrumentation restored.
   This archive is unavailable in a fresh clone and is not a CI dependency.
+
+The corrective v2 run completed all 28/28 operations once per size/arm, requiring
+an exact committed document set inside synchronization timing. It confirmed stale
+suffixes on the first midpoint/resume list and waited for their disappearance.
+This is conservative committed readiness, not first semantic-query latency.
+
+- Local-only corrective archive:
+  `/Users/steven/Dev/sillymemory/artifacts/branch-checkpoint-v2/evidence.tar.gz`.
+  SHA-256 `ba68a99a04ffd69d44ca17e58f3ef5eb93c69be94adf6d95d8f3997d3799d0a9`;
+  all 18 members were read back and matched byte-for-byte.
+- Product files match v1. The exact v2 runner, frozen inputs, raw report/counters,
+  model hashes, offline analysis/verification and `RESTORE.md` are retained.
+  All three generated collections independently returned HTTP 404 after cleanup;
+  disposable native data was removed and host instrumentation restored.
+- v1 and v2 timings have different completion boundaries. Do not replace the v1
+  raw report, pool their repetitions or label the v1 1–2 second values as fully
+  committed isolation. Neither run measures generated answers or provider bills.

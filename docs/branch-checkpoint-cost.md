@@ -12,7 +12,93 @@ This comparison concerns operating cost and readiness, not retrieval accuracy or
 generated-answer quality. It does not add a new user-facing workflow or change
 product defaults. Native branching and native checkpoints already exist.
 
-## Observed results
+## Readiness correction
+
+Review identified that the original managed verification fetched only expected
+IDs after the timer stopped. It could not detect an inherited suffix whose
+deletions were acknowledged but not yet committed. The original 1–2 second
+midpoint/resume results therefore establish UI synchronization time only, **not
+exact committed branch readiness**. They remain historical observations below.
+
+The corrective [v2 plan](benchmarks/branch-checkpoint-v2.json) repeats both sizes
+and both arms once, with full committed document enumeration inside the timer.
+It requires exactly the expected ID set and matching document fields; missing,
+changed, duplicate and unexpected documents prevent completion. It records the
+first enumeration and subsequent wait, so a delayed suffix deletion is visible.
+Checkpoint open uses the same full-set check. Product code is unchanged.
+
+This conservative boundary is distinct from the product's `consistentRead: true`
+search/fetch path. It does not establish how long a first successful semantic
+query or generated answer takes. Initial synchronization now includes its commit
+wait instead of leaving that wait to the first branch. Combined initial+branch
+and checkpoint save+open remain the useful comparisons.
+
+## Corrective v2 result
+
+All **28/28 operations completed**, with one observation per size and arm.
+The input hashes, product files, host and local model match v1. Native ran first
+for each size. These are single observations, not replacement v1 medians or a
+service latency guarantee. Values below are seconds through exact committed-set
+verification, including its polling requests.
+
+| Messages | Operation | Native local Vector Storage | SillyMemory managed |
+| --- | --- | ---: | ---: |
+| 50 | Initial synchronization + first end branch | 25.463 | 77.708 |
+| 50 | End branch after committed initial index | 12.720 | 1.176 |
+| 50 | Subsequent midpoint branch | 6.381 | 56.678 |
+| 50 | Checkpoint save + open/index | 12.973 | 57.554 |
+| 50 | First resume + synchronization | 12.829 | 67.377 |
+| 50 | Second resume + synchronization | 12.884 | 48.481 |
+| 500 | Initial synchronization + first end branch | 284.050 | 68.239 |
+| 500 | End branch after committed initial index | 142.350 | 1.998 |
+| 500 | Subsequent midpoint branch | 67.703 | 63.567 |
+| 500 | Checkpoint save + open/index | 142.888 | 50.050 |
+| 500 | First resume + synchronization | 142.930 | 56.366 |
+| 500 | Second resume + synchronization | 142.768 | 63.657 |
+
+The first midpoint enumeration still contained **24 / 250 unwanted documents**
+at 50 / 500 messages; each resumed path still contained six retained-recent
+documents awaiting deletion. Every timed full-set check eventually matched the
+expected set. This directly confirms why v1 could not establish committed
+isolation from expected-ID fetches alone.
+
+SillyMemory checkpoint save alone took 57.387 / 49.635 seconds; open plus the
+full-set check took 0.167 / 0.416 seconds. Native save took 0.142 / 0.148 seconds;
+open/index took 12.831 / 142.740 seconds. Saving a chat file and preparing a
+complete memory index are different completion boundaries.
+
+**Decision:** inherited memory avoids repeated submissions even against a local
+embedding baseline. A previously committed end branch is fast in these cases.
+At 500 messages, combined initial+branch, checkpoint save+open and repeated resume
+were faster at the verified committed boundary; midpoint branching was close
+(63.567 versus 67.703 seconds), so do not claim a robust win there. At 50 messages,
+commit waits outweighed the avoided local work for midpoint branches, checkpoints
+and resumes. Do not claim that all branches are ready in 1–2 seconds or that
+reduced submissions imply a particular monetary saving. Keep product defaults
+unchanged and defer broad latency/quality claims and duplicate UX controls.
+
+V2 recorded 3,026 local embedding inputs, 551 managed document submissions and
+110,119 submitted text characters, including setup. Inherited branch/resume
+upserts remained zero; each checkpoint submitted the six recent messages.
+Verification polling inflates the benchmark request count; it is not the normal
+product request count or a provider invoice. No generation/judge calls were made.
+
+The live run passed 12 timed managed full-set checks, 12 native exact hash-set
+checks and 16 transcript-prefix/resume assertions. All three owned collections
+were independently rechecked as HTTP 404 after cleanup. Temporary native data
+was removed, host instrumentation restored and no listener remained on port
+18188. Unit/syntax/SDK/release checks passed; the live producer hashes match
+the maintained runner and unchanged product files.
+
+The separate local-only archive is
+`/Users/steven/Dev/sillymemory/artifacts/branch-checkpoint-v2/evidence.tar.gz`,
+SHA-256 `ba68a99a04ffd69d44ca17e58f3ef5eb93c69be94adf6d95d8f3997d3799d0a9`.
+All 18 members were read back and matched byte-for-byte. It contains the exact
+producer, frozen plan, raw report/counters, model hashes, offline analysis and
+verification, cleanup receipt and restoration instructions. It is unavailable
+in a fresh clone and is not a CI dependency. The v1 archive is unchanged.
+
+## Historical v1 UI synchronization results
 
 The completed paired comparisons contain three repetitions at 50 messages and two
 at 500. The table uses only those complete pairs. Values are median seconds,
@@ -24,7 +110,8 @@ The run reached its predeclared **45-minute limit** during the third native
 exit code 1 with `timedOut: true`; the full frozen matrix did **not** pass.
 The unmatched third native initial-index result and interrupted work remain in
 the raw evidence and are excluded from paired summaries. No replacement cases
-or expanded paid trial were run.
+were added to this historical summary. A separate corrective run uses the v2
+boundary above.
 
 | Messages | Operation | Native local Vector Storage | SillyMemory managed |
 | --- | --- | ---: | ---: |
@@ -66,15 +153,12 @@ used median process CPU times of 7.052 seconds at 50 messages and 70.340 seconds
 cost even without a per-request provider fee; this is not an electricity or
 hardware-cost estimate.
 
-Decision: inherited-memory reuse demonstrably avoids repeated client submissions
-and was faster for the measured 500-message branches/resumes, even against real
-local embedding. It does **not** justify an unconditional speed or monetary-savings
-claim. At 50 messages, initial commit waits and checkpoint preparation outweighed
-the avoided local work. Retain this distinction when describing the feature;
-do not add duplicate user-facing controls merely to advertise backend branching.
-Leave product defaults unchanged and defer broader latency/quality claims.
+The submission reduction is established independently of readiness timing.
+The historical timings do not establish that the midpoint/resumed branch has
+already committed every required deletion. Do not use their 1–2 second values as
+a complete isolation or readiness claim.
 
-## Frozen method
+## Historical v1 method
 
 The [input and operation plan](benchmarks/branch-checkpoint-v1.json) uses 50 and
 500 deterministic English messages, each approximately 200 characters, with three
@@ -95,7 +179,9 @@ messages, edits, conflicting writers or recovery from provider failures.
 The native arm runs the pinned host's real Vector Storage and default local
 Transformers model, using **Vectorize All** to finish indexing. This measures an
 explicit complete-index operation, not the default background worker's catch-up
-schedule. Native checkpoint save does not itself prepare a vector index; its
+schedule. The pinned handler processes local Transformers inputs one at a time;
+this is the native default, not an optimized batch-embedding baseline. Native
+checkpoint save does not itself prepare a vector index; its
 later open/index cost is reported separately. A native resumed path is a normal
 branch from the saved checkpoint.
 
@@ -107,8 +193,9 @@ checkpoint creation synchronizes the full completed transcript. The remaining
 recent messages stay available in the native chat. Counts disclose this difference.
 
 Both arms use the same original transcript. Native vectors are checked against
-the complete expected hash set. SillyMemory's expected inherited documents are
-fetched and checked field by field. Branches and resumed chats are checked against
+the complete expected hash set. SillyMemory's expected inherited documents were
+fetched and checked field by field; this did not detect extra remote documents.
+Branches and resumed chats are checked against
 their expected source text. These checks do not measure semantic retrieval or
 claim that a model will answer correctly.
 
@@ -156,7 +243,9 @@ The run exercised a real pinned host and Chromium, real local model execution,
 and live managed LambdaDB; neither backend was emulated. Forty named transcript
 checks passed alongside native index-hash and inherited-document assertions.
 There were no uncaught page errors, and the producing source hashes stayed
-unchanged during execution. The only recorded run failure was the wall-time cap.
+unchanged during execution. The recorded run failure was the wall-time cap; the
+later review also found the
+managed full-set verification gap described above.
 
 Including setup and interrupted work, the run recorded 7,271 local embedding
 inputs and 1,151 managed document submissions containing 230,132 characters.
@@ -166,10 +255,11 @@ the host instrumentation was restored.
 
 Original evidence includes the exact uncommitted producer, input lock, raw report,
 local embedding counters, model file hashes, ownership/deletion records and the
-summary calculation. Post-run maintained-runner changes remove unused code,
-retain collection identities in future reports, and make Node cleanup independent
-of browser shutdown errors. They do not change measured operations; the live
-timings belong to the archived producer, not a subsequent rerun of these changes.
+summary calculation. The archived producer remains the authority for v1 timings.
+Initial maintenance
+removed unused code, retained collection identities and made Node cleanup
+independent of browser shutdown errors. The current runner additionally implements
+the v2 verification boundary; do not attribute v1 timings to that later runner.
 
 Local unit validation passed all 384 tests. Runtime syntax, SDK bundle, release
 metadata and every script/test syntax check passed. The final measured product
@@ -197,7 +287,9 @@ ST_TEST_PORT=18188 \
 node scripts/branch-checkpoint-cost.mjs artifacts/branch-checkpoint-unique
 ```
 
-The output directory must not contain a prior plan. Credentials are read directly
+The current runner uses the v2 plan; reproduce v1 only from its archived producer
+and frozen plan. The output directory must not contain a prior plan. Credentials
+are read directly
 from the specified file and are not copied into the worktree or reports. Keep
 `pending.json` if cleanup fails; it records only the generated owned collections
 that the runner may delete. Preserve complete reports, instrumentation and logs
