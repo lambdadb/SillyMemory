@@ -49,6 +49,35 @@ export async function publishRepackedRecall(parent, build) {
     }
 }
 
+export async function verifyRepackedRecall(directory, records, provenance) {
+    const expected = { ...provenance, files: {} };
+    for (const { name, bytes } of records) {
+        assert(await readFile(path.join(directory, name), 'utf8') === bytes,
+            'Published recall differs from saved query receipts');
+        expected.files[`recall/${name}`] = sha(bytes);
+    }
+    assert.deepEqual(JSON.parse(await readFile(path.join(directory, 'lock.json'), 'utf8')), expected);
+    return expected;
+}
+
+function* repackedRecallRecords(input, state, receipts, countTokens) {
+    for (const conversation of input.conversations) {
+        const owned = state.owned.find(item => item.conversationId === conversation.id);
+        const docs = sourceDocuments(conversation, owned.owner, owned.scope);
+        const queries = successfulQueryReceipts(receipts, owned.collection);
+        assert.equal(queries.length, conversation.questions.length);
+        const recalls = conversation.questions.map((question, i) => {
+            const receipt = queries[i], expected = recallQuery(owned.owner, owned.scope, question.text, question.asOfMicros);
+            assert.equal(receipt.status, 200); assert.deepEqual(receipt.request.body.query, expected.query);
+            assert.deepEqual(receipt.request.body.rerank, expected.options.rerank); assert.equal(receipt.request.body.size, 100);
+            const hits = receipt.response.docs.map(hit => hit.doc);
+            return { questionId: question.id, queryMs: receipt.elapsedMs, hitIds: hits.map(doc => doc.id),
+                ...packContext(hits, docs, question.asOf, question.asOfMicros, countTokens) };
+        });
+        yield { name: `recall-${conversation.id}.json`, bytes: JSON.stringify(recalls) };
+    }
+}
+
 export function recallQuery(owner, scope, text, asOfMicros) {
     assert(Number.isSafeInteger(asOfMicros) && asOfMicros > 0);
     assert(Buffer.byteLength(text) <= 8192, 'Question exceeds the product query limit');
@@ -119,7 +148,7 @@ async function main() {
     const require = createRequire(path.resolve(tokenizerPackage)), encoder = require('tiktoken').get_encoding('cl100k_base');
     assert.equal(JSON.parse(await readFile(path.join(path.dirname(require.resolve('tiktoken')), 'package.json'))).version, '1.0.22');
     const countTokens = text => encoder.encode(text, [], []).length;
-    assert(!flag || ['--preflight', '--repack'].includes(flag), 'Unexpected argument');
+    assert(!flag || ['--preflight', '--repack', '--verify-recall'].includes(flag), 'Unexpected argument');
     const preflight = [];
     for (const conversation of input.conversations) {
         const owner = sha('preflight'), scope = sha(conversation.id), docs = sourceDocuments(conversation, owner, scope);
@@ -131,7 +160,7 @@ async function main() {
         preflight.push({ id: conversation.id, chunks: docs.length, embeddingTokens: docs.reduce((n, doc) => n + countTokens(doc.text), 0) });
     }
     if (flag === '--preflight') { console.log(JSON.stringify({ inputSha256: sha(inputBytes), conversations: preflight }, null, 2)); encoder.free(); return; }
-    if (flag === '--repack') {
+    if (flag === '--repack' || flag === '--verify-recall') {
         const memoryRoot = path.resolve(outputDirectory), parent = path.dirname(memoryRoot);
         const stateBytes = await readFile(path.join(memoryRoot, 'memory-state.json')), state = JSON.parse(stateBytes);
         assert.equal(state.status, 'completed'); assert.equal(state.completed.length, 20);
@@ -139,23 +168,17 @@ async function main() {
         const { readdir } = await import('node:fs/promises');
         const receipts = await Promise.all((await readdir(memoryRoot)).filter(name => /^http-\d+\.json$/.test(name)).sort()
             .map(async name => JSON.parse(await readFile(path.join(memoryRoot, name)))));
-        const lock = { inputSha256: sha(inputBytes), memoryStateSha256: sha(stateBytes),
-            packingSourceSha256: sha(await readFile(new URL(import.meta.url))), files: {} };
+        const provenance = { inputSha256: sha(inputBytes), memoryStateSha256: sha(stateBytes),
+            packingSourceSha256: sha(await readFile(new URL(import.meta.url))) };
+        const records = repackedRecallRecords(input, state, receipts, countTokens);
+        if (flag === '--verify-recall') {
+            const verified = await verifyRepackedRecall(path.join(parent, 'recall'), records, provenance);
+            console.log(JSON.stringify(verified));
+            encoder.free(); return;
+        }
+        const lock = { ...provenance, files: {} };
         await publishRepackedRecall(parent, async staging => {
-            for (const conversation of input.conversations) {
-                const owned = state.owned.find(item => item.conversationId === conversation.id);
-                const docs = sourceDocuments(conversation, owned.owner, owned.scope);
-                const queries = successfulQueryReceipts(receipts, owned.collection);
-                assert.equal(queries.length, conversation.questions.length);
-                const recalls = conversation.questions.map((question, i) => {
-                    const receipt = queries[i], expected = recallQuery(owned.owner, owned.scope, question.text, question.asOfMicros);
-                    assert.equal(receipt.status, 200); assert.deepEqual(receipt.request.body.query, expected.query);
-                    assert.deepEqual(receipt.request.body.rerank, expected.options.rerank); assert.equal(receipt.request.body.size, 100);
-                    const hits = receipt.response.docs.map(hit => hit.doc);
-                    return { questionId: question.id, queryMs: receipt.elapsedMs, hitIds: hits.map(doc => doc.id),
-                        ...packContext(hits, docs, question.asOf, question.asOfMicros, countTokens) };
-                });
-                const name = `recall-${conversation.id}.json`, bytes = JSON.stringify(recalls);
+            for (const { name, bytes } of records) {
                 await writeFile(path.join(staging, name), bytes); lock.files[`recall/${name}`] = sha(bytes);
             }
             await writeFile(path.join(staging, 'lock.json'), JSON.stringify(lock, null, 2));

@@ -3,7 +3,8 @@ import assert from 'node:assert/strict';
 import { mkdtemp, readFile, writeFile, readdir, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { sourceDocuments, recallQuery, packContext, serializeContext, evidenceTokens, successfulQueryReceipts, receiptBody, publishRepackedRecall } from '../scripts/beam-past-memory.mjs';
+import { createHash } from 'node:crypto';
+import { sourceDocuments, recallQuery, packContext, serializeContext, evidenceTokens, successfulQueryReceipts, receiptBody, publishRepackedRecall, verifyRepackedRecall } from '../scripts/beam-past-memory.mjs';
 
 const conversation = { id: 'synthetic', userIdentity: 'synthetic-user', userTraits: {}, messages: [{
     sourceId: 'source-1', ordinal: 0, content: 'The older account limit is 15.',
@@ -37,6 +38,27 @@ test('BEAM repack failure leaves original evidence intact and can retry before a
         assert.deepEqual((await readdir(parent)).sort(), ['raw-receipt.json', 'recall']);
     } finally {
         await rm(parent, { recursive: true, force: true });
+    }
+});
+
+test('BEAM recall verification rejects coordinated file and digest edits against reconstructed source', async () => {
+    const directory = await mkdtemp(path.join(tmpdir(), 'sillymemory-recall-check-'));
+    try {
+        const bytes = '{"content":"The limit is 15."}', name = 'recall-1.json';
+        const records = [{ name, bytes }], provenance = { inputSha256: 'input', packingSourceSha256: 'producer' };
+        const digest = text => createHash('sha256').update(text).digest('hex');
+        const lock = { ...provenance, files: { 'recall/recall-1.json': digest(bytes) } };
+        await writeFile(path.join(directory, name), bytes);
+        await writeFile(path.join(directory, 'lock.json'), JSON.stringify(lock));
+        await verifyRepackedRecall(directory, records, provenance);
+        const changed = '{"content":"The limit is 999."}';
+        await writeFile(path.join(directory, name), changed);
+        lock.files['recall/recall-1.json'] = digest(changed);
+        await writeFile(path.join(directory, 'lock.json'), JSON.stringify(lock));
+        await assert.rejects(verifyRepackedRecall(directory, records, provenance), /differs from saved query receipts/);
+        assert.equal(await readFile(path.join(directory, name), 'utf8'), changed);
+    } finally {
+        await rm(directory, { recursive: true, force: true });
     }
 });
 

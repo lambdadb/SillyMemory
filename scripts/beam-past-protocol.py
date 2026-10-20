@@ -153,6 +153,15 @@ def check_recall_files(root, files, conversation_ids):
         assert sha((root / name).read_bytes()) == files[name], f"Recall file changed: {name}"
 
 
+def load_verified_recalls(root, files):
+    recalls = {}
+    for name, expected in files.items():
+        data = (root / name).read_bytes()
+        assert sha(data) == expected, f"Recall differs from reconstructed source: {name}"
+        recalls.update({row["questionId"]: row for row in json.loads(data)})
+    return recalls
+
+
 async def score(root, dataset, env, lock):
     import httpx
     import llm
@@ -170,12 +179,19 @@ async def score(root, dataset, env, lock):
     assert recall_lock["memoryStateSha256"] == sha((root / "memory/memory-state.json").read_bytes())
     assert recall_lock["packingSourceSha256"] == sha((REPO / "scripts/beam-past-memory.mjs").read_bytes())
     check_recall_files(root, recall_lock["files"], [c.id for c in conversations])
+    # A mutable recall file and its digest must not authorize changed evidence.
+    # Rebuild from saved retrieval receipts and source before any model side effect.
+    verified = subprocess.run(["node", str(REPO / "scripts/beam-past-memory.mjs"), str(root / "memory-input.json"),
+                               str(root / "memory"), "unused", str(root / "tokenizer/package.json"),
+                               "--verify-recall"], check=True, capture_output=True, text=True)
+    canonical = json.loads(verified.stdout)
+    assert canonical == recall_lock, "Recall manifest differs from reconstructed source"
+    # Hash and parse the same bytes against the independently reconstructed map.
+    recalls = load_verified_recalls(root, canonical["files"])
     output = root / "scored"
     output.mkdir()  # Never silently replay successful answers or partial scoring.
     calls = output / "calls"
     calls.mkdir()
-    recalls = {r["questionId"]: r for c in conversations
-               for r in json.loads((root / f"recall/recall-{c.id}.json").read_text())}
     question_id = contextvars.ContextVar("questionId")
     attempts = 0
     reserved_usd = 0.0

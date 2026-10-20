@@ -33,6 +33,21 @@ class Response:
 
 
 class TransportPolicy(unittest.TestCase):
+    def test_consumed_recall_bytes_must_match_the_source_derived_digest(self):
+        with TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "recall").mkdir()
+            name = "recall/recall-1.json"
+            original = b'[{"questionId":"q1","context":{"content":"The limit is 15."}}]'
+            files = {name: protocol.sha(original)}
+            (root / name).write_bytes(original)
+            self.assertEqual(protocol.load_verified_recalls(root, files)["q1"]["context"]["content"], "The limit is 15.")
+            changed = original.replace(b"15", b"999")
+            (root / name).write_bytes(changed)
+            (root / "recall/lock.json").write_text(json.dumps({"files": {name: protocol.sha(changed)}}))
+            with self.assertRaises(AssertionError):
+                protocol.load_verified_recalls(root, files)
+
     def test_external_run_manifest_survives_relocation_and_checks_input_changes(self):
         with TemporaryDirectory() as directory:
             temporary = Path(directory)

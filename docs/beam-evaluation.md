@@ -481,7 +481,7 @@ schemas, saved score arithmetic, source-defined partitions and usage verify
 offline. The archived synthetic check covers exact reconstruction, different
 values, role/author/date/time isolation, budget refill and foreign-source rejection;
 an independent source verifier checks all 400 contexts and the relevant fact gain.
-Final maintained checks pass 391 JavaScript and eight Python tests, runtime/release
+Final maintained checks pass 392 JavaScript and nine Python tests, runtime/release
 and SDK checks. Keep one-off producers and full output ignored and archived;
 there is no new maintained candidate mode or product/runtime change.
 
@@ -513,6 +513,18 @@ complete manifest passes the Python check, and another publication is rejected.
 This makes no provider calls or measured-score changes. Historical top-level
 `recall-lock.json` files remain with their archived producers; no archive is
 rewritten to match the new output layout.
+
+Before paid scoring, the maintained runner also reconstructs all recall bytes
+from saved query receipts and the normalized source through an internal
+`--verify-recall` check. Its independently derived manifest must match the
+published lock; the scorer hashes and parses the same input bytes against that
+derived map. Editing a recall file and its mutable digest together therefore
+does not authorize altered evidence. Small JavaScript/Python regressions and the
+full provider-free replay cover this coordinated-edit case, reject it against
+reconstructed source, and accept the restored originals. They also confirm all
+400 consumed records match the source-derived values. Existing source/query,
+cutoff, packing and file-count checks remain in place; no paid rerun or score
+change accompanies these post-result integrity guards.
 
 ## Decision and scope (2026-10-19)
 
