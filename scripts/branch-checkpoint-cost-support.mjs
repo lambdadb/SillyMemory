@@ -1,8 +1,15 @@
 // Safety helpers for the disposable branch/checkpoint benchmark, not product code.
 import assert from 'node:assert/strict';
 import { createServer } from 'node:net';
+import { execFileSync } from 'node:child_process';
 import { readFile } from 'node:fs/promises';
 import { stripVTControlCharacters } from 'node:util';
+
+export function assertPinnedHost(source, revision) {
+    assert.equal(execFileSync('git', ['-C', source, 'rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(), revision);
+    // Compare the working tree with HEAD, including both staged and unstaged edits.
+    execFileSync('git', ['-C', source, 'diff', '--quiet', 'HEAD', '--']);
+}
 
 export async function assertPortAvailable(port) {
     assert(Number.isSafeInteger(port) && port > 0 && port <= 65535, 'Invalid benchmark port');

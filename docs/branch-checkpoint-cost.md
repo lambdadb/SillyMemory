@@ -125,6 +125,12 @@ no new live matrix was run. `BUDGET-ADDENDUM.md` in the same retained directory
 records the exact patch and verification, SHA-256
 `b35ba99ba253b8ab8d2a72526061146ce416f23004387b7ed41bbe8efcda365d`.
 
+The maintained entry point also rejects staged or unstaged tracked changes in the
+pinned host before any native mutation. A temporary Git fixture and all 390 tests
+pass. `HOST-PIN-ADDENDUM.md` records this preflight-only patch and local evidence,
+SHA-256 `aa6c106d8b3612cc8a56da1c1429b2637672132e65d29d543301417a730cf3b3`.
+No historical live measurements or archives changed.
+
 ## Historical v1 UI synchronization results
 
 The completed paired comparisons contain three repetitions at 50 messages and two

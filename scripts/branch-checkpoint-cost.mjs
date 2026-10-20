@@ -8,7 +8,7 @@ import { readFile, writeFile, mkdir, mkdtemp, rm, realpath } from 'node:fs/promi
 import { spawn, execFileSync } from 'node:child_process';
 import { tmpdir, cpus, platform, arch } from 'node:os';
 import path from 'node:path';
-import { assertPortAvailable, waitForOwnedHost, cleanupOwnedCollections, instrumentEmbedding } from './branch-checkpoint-cost-support.mjs';
+import { assertPinnedHost, assertPortAvailable, waitForOwnedHost, cleanupOwnedCollections, instrumentEmbedding } from './branch-checkpoint-cost-support.mjs';
 
 const root = path.resolve(new URL('..', import.meta.url).pathname);
 const source = process.env.ST_SOURCE;
@@ -16,7 +16,7 @@ const output = process.argv[2];
 assert(source && output && process.argv.length === 3, 'ST_SOURCE=<disposable host> SM_ENV_FILE=<env> node scripts/branch-checkpoint-cost.mjs <new artifact directory>');
 const planBytes = await readFile(path.join(root, 'docs/benchmarks/branch-checkpoint-v2.json'));
 const plan = JSON.parse(planBytes);
-assert.equal(execFileSync('git', ['-C', source, 'rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(), plan.hostRevision);
+assertPinnedHost(source, plan.hostRevision);
 assert.equal(await realpath(path.join(source, 'public/scripts/extensions/third-party/sillymemory')), root);
 const env = parseEnv(await readFile(process.env.SM_ENV_FILE || path.join(root, '.env.local'), 'utf8'));
 const credentials = { endpoint: env.LAMBDADB_BASE_URL, project: env.LAMBDADB_PROJECT_NAME, key: env.LAMBDADB_PROJECT_API_KEY };

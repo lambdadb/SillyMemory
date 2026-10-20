@@ -1849,3 +1849,8 @@ This is conservative committed readiness, not first semantic-query latency.
   Records the patch over the hardening sidecar, five passing safety regressions,
   389 passing full-suite tests and pinned instrumentation syntax validation.
   Local fixture evidence only; original live observations/archives unchanged.
+- Clean tracked-host precondition, including staged and unstaged changes:
+  `/Users/steven/Dev/sillymemory/artifacts/branch-checkpoint-v2/HOST-PIN-ADDENDUM.md`,
+  SHA-256 `aa6c106d8b3612cc8a56da1c1429b2637672132e65d29d543301417a730cf3b3`.
+  Local temporary-Git fixture; six safety regressions and 390 full-suite tests
+  pass. No new live measurements or changes to the original archives.

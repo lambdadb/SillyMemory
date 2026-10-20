@@ -2,12 +2,12 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
 import { EventEmitter } from 'node:events';
-import { spawn, execFile } from 'node:child_process';
+import { spawn, execFile, execFileSync } from 'node:child_process';
 import { promisify } from 'node:util';
 import { mkdtemp, writeFile, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { assertPortAvailable, waitForOwnedHost, cleanupOwnedCollections, instrumentEmbedding } from '../scripts/branch-checkpoint-cost-support.mjs';
+import { assertPinnedHost, assertPortAvailable, waitForOwnedHost, cleanupOwnedCollections, instrumentEmbedding } from '../scripts/branch-checkpoint-cost-support.mjs';
 
 async function localServer(t) {
     let requests = 0;
@@ -84,4 +84,22 @@ export async function embed(text) {
     const completed = (await readFile(metrics, 'utf8')).trim().split('\n').map(line => JSON.parse(line));
     assert.equal(completed.length, 1, 'Only the successful pipeline call produces completion metrics');
     assert.equal(completed[0].characters, 2);
+});
+
+test('benchmark host pin rejects unstaged and staged tracked edits', async t => {
+    const directory = await mkdtemp(path.join(tmpdir(), 'sm-host-pin-test-'));
+    t.after(() => rm(directory, { recursive: true, force: true }));
+    const git = (...args) => execFileSync('git', ['-c', 'core.hooksPath=/dev/null', '-c', 'commit.gpgsign=false', ...args], { cwd: directory, encoding: 'utf8', stdio: 'pipe' }).trim();
+    git('init');
+    const source = path.join(directory, 'host.js');
+    await writeFile(source, 'original host behavior\n');
+    git('add', 'host.js');
+    git('-c', 'user.name=Synthetic Test', '-c', 'user.email=synthetic@example.invalid', 'commit', '-m', 'Pin synthetic host');
+    const revision = git('rev-parse', 'HEAD');
+    assertPinnedHost(directory, revision);
+    await writeFile(source, 'modified host behavior\n');
+    assert.throws(() => assertPinnedHost(directory, revision));
+    git('add', 'host.js');
+    assert.throws(() => assertPinnedHost(directory, revision));
+    assert.equal(git('rev-parse', 'HEAD'), revision, 'A matching commit alone does not establish clean source');
 });
