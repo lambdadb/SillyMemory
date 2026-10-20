@@ -84,7 +84,7 @@ def protocol_settings(split="100k"):
                        "evidenceAccounting": "sum ceil((content code points + source-excerpt code points)/4) per result; metadata excluded",
                        "serializedTokenDiagnostic": "cl100k_base / tiktoken JS 1.0.22"},
             "bounds": {"wallHours": 8, "modelAttempts": 10000, "modeledModelUSD": 25,
-                       "memoryOperations": cohort["memoryOperations"]},
+                       "memoryOperations": cohort["memoryOperations"], "memoryCleanupReserve": 51},
             "question": "How does SillyMemory score as history length grows under Past's annotation-assisted public evaluation protocol?",
             "decision": "Report the frozen full-cohort comparison; no runtime/default promotion or optimization in this run.",
             "differences": ["SillyMemory source chunks, storage, retrieval and context serialization",

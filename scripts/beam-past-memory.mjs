@@ -139,6 +139,23 @@ export function packContext(hits, documents, asOf, asOfMicros, countTokens) {
     return { context, tokens, serializedTokens: countTokens(serializeContext(context)), selectedIds: selected.map(doc => doc.id) };
 }
 
+// One collection is active at a time. Owned deletion makes at most 17 requests
+// (ownership, delete, 15 absence polls), with at most three operation attempts.
+export function memoryOperationBudget(state, limit) {
+    let cleanup = false;
+    return {
+        consume() {
+            assert(state.operations < limit - (cleanup ? 0 : 51), 'Memory operation bound exceeded');
+            state.operations++;
+        },
+        async run(job, isCleanup = false) {
+            cleanup = isCleanup;
+            try { return await job(); }
+            finally { cleanup = false; }
+        },
+    };
+}
+
 export function cohortSettings(input) {
     const split = input.split || '100k';
     assert(['100k', '1m'].includes(split), 'Unsupported frozen split');
@@ -209,10 +226,11 @@ async function main() {
     const save = async () => { await writeFile(statePath + '.tmp', JSON.stringify(state, null, 2)); await rename(statePath + '.tmp', statePath); };
     const deadline = Date.now() + 8 * 3600000;
     let receiptNumber = 0, stopped = false;
+    const budget = memoryOperationBudget(state, cohort.memoryOperations);
     for (const signal of ['SIGINT', 'SIGTERM']) process.on(signal, () => { stopped = true; });
     const client = new LambdaClient({ endpoint: env.LAMBDADB_BASE_URL, project: env.LAMBDADB_PROJECT_NAME }, env.LAMBDADB_PROJECT_API_KEY,
         { timeoutMs: 180000, fetcher: async (url, options) => {
-            assert(state.operations++ < cohort.memoryOperations, 'Memory operation bound exceeded');
+            budget.consume();
             const number = receiptNumber++, started = Date.now();
             const request = { number, pathname: new URL(url).pathname, method: options.method,
                 body: options.body ? JSON.parse(options.body) : null };
@@ -225,7 +243,7 @@ async function main() {
     const operation = async (job, cleanup = false) => {
         for (let attempt = 0; ; attempt++) {
             if (!cleanup) assert(!stopped && Date.now() < deadline, 'Memory run stopped or exceeded eight hours');
-            try { return await job(); }
+            try { return await budget.run(job, cleanup); }
             catch (error) {
                 if (attempt >= 2 || ![429, 500, 502, 503, 504].includes(error.status)) throw error;
                 state.retries.push({ status: error.status, attempt }); await save();

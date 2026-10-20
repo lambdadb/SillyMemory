@@ -40,6 +40,7 @@ class TransportPolicy(unittest.TestCase):
             self.assertEqual(small[key], large[key])
         self.assertEqual(large["parquetSha256"], "41b5acbbb55a586b1305514ef9d9fb03365d9b3331b598a1c2dd7603d93ef533")
         self.assertEqual(large["bounds"]["memoryOperations"], 20000)
+        self.assertEqual(large["bounds"]["memoryCleanupReserve"], 51)
         with TemporaryDirectory() as directory, patch.object(protocol, "source_file_hashes", return_value={}):
             root = Path(directory)
             (root / "protocol-lock.json").write_text(json.dumps({**large, "files": {}, "upstreamFiles": {}}))

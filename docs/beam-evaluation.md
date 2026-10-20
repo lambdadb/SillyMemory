@@ -153,15 +153,30 @@ is promoted by this length run.
 ### 1M validation and retention
 
 The producing tree passes **393** `npm test` cases; after integrating the latest
-`develop` (including PR #93), the combined suite passes **394**. The Python policy
-suite passes **11**. Runtime/release syntax and SDK checks pass at the latest
-head. All frozen producer/input/tokenizer hashes remain identical after that
-integration; no paid re-evaluation was performed. The offline `verify` phase
+`develop` (including PR #93) and the cleanup regression below, the combined suite
+passes **395**. The Python policy suite passes **11**. Runtime/release syntax and
+SDK checks pass. The offline `verify` phase
 reconstructs all **700** contexts from retained source and raw retrieval receipts,
 checks their linked answer contexts and recomputes score arithmetic. Independent
 analysis binds native answer/judge prompts and schemas to recorded calls and
 recomputes phase usage. This is source/context consistency and arithmetic, not
 provider-receipt authentication or independent judge calibration.
+
+Post-run automatic review found that exhausting the original operation counter
+could also block owned cleanup. Future runs now reserve **51 of the existing
+10,000/20,000 total requests**: ownership + deletion + up to 15 absence polls,
+across at most three cleanup attempts. Ordinary work cannot spend that reserve,
+rejected requests do not increment the counter, cleanup mode resets after each
+operation, and the hard aggregate ceiling still applies. A synthetic real-SDK
+transport regression exhausts ordinary work, verifies GET/DELETE/404 cleanup,
+checks mode reset and exhausts the bounded cleanup allowance. This is a failure
+safety fix, not a new paid quality run. The completed 1M run used only 9,259 calls
+and already verified all deletions; its original producer/locks/archive remain
+unchanged. Source, query, packing and evidence-accounting function bodies are
+identical to that producer. Historical verification uses the retained
+`producer/scripts/beam-past-protocol.py` from the restored 1M bundle; its full
+700-context offline verification passes after the fix. New producer hashes and
+the declared cleanup reserve intentionally require a new lock for future runs.
 
 The one-off analysis, structural audit and diagnostic verifiers remain ignored
 with original records and producer snapshots. An initial offline analysis
