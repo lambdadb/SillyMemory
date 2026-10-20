@@ -1,5 +1,171 @@
 # BEAM evaluation decisions
 
+## Verbatim source-frame follow-up (2026-10-21)
+
+**Defer adoption and retain ranked 8K.** Fresh answers on **651 paired questions**
+score **91.14 → 90.18/100 (−0.96 points)**. The 95% conversation-cluster interval
+is **−2.34 to +0.31 points**, failing the predeclared positive-lower-bound quality
+gate. This does not establish statistically significant harm either. Generation
+input falls only **1.38%**. No runtime/default or generation/judge instruction
+change is adopted; close this single candidate without a wider sweep.
+
+### Frozen method
+
+The user authorized a memory-side comparison with the generation prompt fixed.
+Continue the existing BEAM decision branch/PR rather than open another
+intermediate experiment PR. Test one source-frame candidate on the saved 1M
+top100 retrievals: attach the source message's verbatim opening paragraph and
+active ATX heading path before each passage. Ignore headings in fenced code;
+retain original source IDs and UTF-16 spans. Do not infer actual/example labels,
+filter roles, change retrieval order, summarize or add answer instructions.
+Charge every attached source character under the same 8,000 estimated evidence
+token rule and keep ranked greedy admission and at most 100 passages.
+
+The concrete discovery witness is `27_knowledge_update_0`: a delivered numerical
+sample loses its original **Example Metrics to Track** heading. The candidate
+restores that heading and retains the user's **60%** report. This establishes
+source-context restoration, not a causal answer-quality gain. The candidate
+combines opening and heading context; it will not isolate their contributions.
+Across all 700 offline contexts, baseline reconstruction matches exactly and
+source/budget readback passes for both arms. The candidate attaches **18,622**
+frames containing **4,999,329** source characters. Selected passage occurrences
+fall **39,074 → 30,682**: **8,645** baseline occurrences leave and **253** enter.
+This tradeoff must remain in the quality result; framing is not lossless packing.
+
+Freeze the **651 questions** outside the 49 source-reviewed discovery cases
+before constructing or generating the candidate. Historical scores are known;
+this is a separate confirmation cohort, not an unseen benchmark. Freshly answer
+and judge both arms with unchanged pinned Past/ExaBase prompts, annotations,
+strict judge schemas, `gpt-5.6-luna`/reasoning `none` and direct OpenAI route.
+Verify all 700 reconstructed baseline prompts against original native requests
+before calls. Use per-question SHA-256 parity for consecutive arm launch order
+and four concurrent conversations. Bounds: **1,302 first answers**, **12,000
+model attempts**, **$25 conservative model reservation ceiling**, eight hours
+and **zero memory-service calls**. One candidate, no favorable answer reruns or
+post-score tuning. Stop on account refusal or resource bounds.
+
+Adopt only with an improved overall paired score whose **95% conversation-cluster
+bootstrap lower bound is positive** (20,000 resamples, seed 20261021), plus source
+review without an unresolved material failure. Otherwise defer/reject. Report
+the complete cohort, ability results, source losses/additions, actual model usage
+and costs, and gain/regression examples. No product/default promotion occurs
+without that evidence. Full source retrieval for frames is replayed from the
+archive; live parent-source fetch costs and host integration are not measured.
+
+The frozen plan SHA-256 is
+`3638d2e057485990a5a6b482d6a73478d788c2b78e10478bb536fac33bacb977`.
+Detailed candidate inputs, source locks, one-off producers and receipts belong
+to ignored `artifacts/beam-source-frame-v1/`. The original 1M archive and scores
+remain unchanged. The historical ranked 8K configuration remains the reference
+at completion.
+
+### Complete paired result and source review
+
+All **1,302 first answers** and their judgments complete; **39** pairs improve,
+**55** regress and **557** tie. None has identical contexts across arms. The
+**476 historically full-credit controls** score **98.42 → 97.07** in the fresh
+comparison. They are a predefined regression partition, not discovery evidence.
+This selected 651-question mean is **not a new full-700 BEAM score** and cannot
+replace the original **86.62497/100**. All 49 source-reviewed discovery questions
+were excluded. The 35-conversation percentile cluster bootstrap uses 20,000
+resamples with seed 20261021 and retains each sampled conversation's question
+count. Historical outcomes are known, so this is not an unseen holdout.
+
+| Ability | Questions | Ranked baseline /100 | Source frame /100 | Difference |
+| --- | ---: | ---: | ---: | ---: |
+| Abstention | 63 | 96.83 | 95.63 | −1.19 |
+| Contradiction resolution | 65 | 69.23 | 69.23 | 0.00 |
+| Event ordering | 69 | 99.90 | 99.71 | −0.19 |
+| Information extraction | 63 | 86.22 | 83.76 | −2.47 |
+| Instruction following | 69 | 95.59 | 94.63 | −0.97 |
+| Knowledge update | 54 | 94.44 | 90.74 | −3.70 |
+| Multi-session reasoning | 61 | 71.59 | 72.46 | +0.87 |
+| Preference following | 69 | 98.61 | 96.62 | −1.99 |
+| Summarization | 69 | 99.13 | 98.65 | −0.48 |
+| Temporal reasoning | 69 | 97.10 | 97.10 | 0.00 |
+| **Overall** | **651** | **91.14** | **90.18** | **−0.96** |
+
+Ability differences are descriptive. Source framing both adds context and
+displaces other passages. Within confirmation, passage occurrences fall
+**36,298 → 28,490**, with **8,044** baseline occurrences excluded and **236**
+other saved hits admitted. Added frames contain **4,653,500** source characters.
+These are source-text counts, not unique facts or causal error prevalence.
+
+The largest gain and regression per ability, ties by question ID, select **19**
+answer/judgment/source packets for inspection. These outcome-selected examples
+are not a prevalence sample:
+
+- **Concrete dependency loss:** `32_instruction_following_1` loses the user
+  exchange-rate witness **23,400 VND/USD** at baseline position 61. The $900 laptop
+  price remains, but the candidate declines conversion and scores 1 → 0.
+- **Target still available:** `15_knowledge_update_0` delivers the user's
+  **3-liter** update in both arms at position 17; candidate answers older
+  **2.5 liters**. Literal old-value occurrences increase **9 → 17** through repeated
+  opening paragraphs. This identifies a salience risk, not an isolated causal
+  estimate. The **$200** unexpected-expense witness likewise survives both arms
+  in `35_information_extraction_0`, while the candidate chooses $50.
+- **Nominal gain without new recall:** `14_knowledge_update_1` uses a DeFi
+  security module already present in both arms. `5_instruction_following_0`
+  gains version-format credit while generating versions such as `express@4.18.2`
+  and `helmet@7.1.0` absent from its entire input; that is not validated grounding.
+- **Whole-prompt availability matters:** `6_summarization_0` physically loses
+  the Clairaut source and omits the theorem, but the full requirement remains
+  in the generation hint. `23_summarization_1` gains dough-elasticity coverage
+  supplied in hints despite no checked source-body occurrence. Neither supports
+  a simple causal source-recall interpretation.
+- **Judge/reference variability:** `10_event_ordering_0` and `15_abstention_1`
+  have byte-identical answers across arms but different scores. In
+  `18_temporal_reasoning_1`, independent date subtraction gives **47 days**;
+  candidate's reference-matching **46** receives full credit. Preserve original
+  labels; do not count these examples as recovered factual quality.
+
+### Usage, validation and retention
+
+| Phase | Baseline calls | Baseline input | Candidate calls | Candidate input |
+| --- | ---: | ---: | ---: | ---: |
+| Answer | 651 | 8,448,835 | 651 | 8,332,295 |
+| Rubric | 1,715 | 1,505,639 | 1,715 | 1,498,663 |
+| Equivalence | 588 | 51,785 | 589 | 52,061 |
+| **Total successful** | **2,954** | **10,006,259** | **2,955** | **9,883,019** |
+
+Answer output is **216,740 → 214,669** tokens; median input **12,579 → 12,452**.
+At the same frozen historical comparison rates, answer costs are
+**$2.372199 → $2.340579** and all successful model phases
+**$2.846482 → $2.812941**, combined **$5.659423**. These are usage-based proxies,
+not invoices. Three attempts end after about 90 seconds without a recorded HTTP
+response and succeed through the unchanged transport retry policy with identical
+requests. There are **5,912 total attempts / 5,909 HTTP-200 receipts**, no failed
+questions/verdicts, empty answers or output truncation. Usage excludes unknown
+provider treatment of the three response-less attempts. No new memory resources
+are created and no generative ingestion or memory-service calls occur.
+
+Answer cache reads are zero in both arms; writes are subsets of input.
+Candidate rubric calls report 1,471 cached input tokens. No controlled cache or
+host-speed claim follows. Live parent-source fetch cost is unmeasured.
+
+All 700 baseline contexts and native answer prompts match the original archive.
+Both arms' source spans, roles, as-of eligibility and 8K budgets verify. All 651
+paired scores, native answer/judge instructions, schemas/settings and receipt
+usage recompute. A fresh-directory offline replay recreates the frozen plan,
+contexts, source lock and passage accounting byte-for-byte. Local validation:
+**395** unit tests, **11** Python policy tests, runtime/release syntax and SDK
+checks pass. No browser/host integration, deployment or independent judge
+calibration is performed. Original evidence is unchanged.
+
+The complete local-only bundle is
+`/Users/steven/Dev/sillymemory/artifacts/archive/beam-source-frame-v1.tar.gz`:
+**97,259,161 bytes**, SHA-256
+`946055de09e90804a396337ce28a3e4cd1a206e9ecaf7165a503ea6852105e67`.
+All **5,981 members** are read back byte-for-byte; configured-secret matches are
+zero. Original source-frame inputs, prompts/responses, all paired results,
+19 review packets, frozen locks, producers, dependency versions and restoration
+instructions are retained. The active report is
+`/Users/steven/Dev/sillymemory/artifacts/beam-source-frame-v1/report.html`.
+The immutable original 1M archive is required for full source replay. This bundle
+is unavailable in a fresh clone and has no independent remote backup; archive
+checks establish byte consistency, not provider-receipt authentication or judge
+calibration. No owned remote resources require cleanup.
+
 ## Past public-protocol 1M extension: frozen scope (2026-10-20)
 
 The user authorized one full **1M, 35-conversation / 700-question** run after the
