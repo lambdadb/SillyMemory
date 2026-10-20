@@ -6,9 +6,9 @@ Release or highest version tag. Keep `main` at reviewed release boundaries.
 `develop` integrates ongoing work. Merge `develop` into `main` with a merge
 commit to preserve long-lived branch ancestry.
 
-The next candidate is **0.5.0 (experimental), Unreleased**. Public `main` and
-published **v0.4.0** remain the installation baseline until an authorized promotion.
-See the [candidate notes](docs/releases/0.5.0.md),
+The prepared release boundary is **0.5.0 (experimental)**, dated **2026-10-20**.
+A dated preparation entry is not main promotion or publication.
+See the [release notes](docs/releases/0.5.0.md),
 [acceptance record](docs/releases/0.5.0-validation.md) and
 [GitHub Releases](https://github.com/lambdadb/SillyMemory/releases).
 Preparation does not authorize a main merge, tag or Release publication.
