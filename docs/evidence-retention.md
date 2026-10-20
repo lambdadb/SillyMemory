@@ -1789,3 +1789,24 @@ run, storage migration, main promotion, tag or Release publication is claimed.
   the artifact tag. The archive's generic setup/settings images are from the later
   recovery run; both uniquely named JSON/log receipts remain. The original archive
   is unchanged; use the addendum and current acceptance commands for reproduction.
+
+## Branch/checkpoint operating-cost screen
+
+The [bounded comparison](branch-checkpoint-cost.md) uses the actual pinned host,
+default local Vector Storage embeddings and live managed LambdaDB. The 45-minute
+cap stopped the third 500-message native branch: 71/84 operations completed,
+with three complete 50-message pairs and two complete 500-message pairs.
+Unmatched/interrupted work remains in the raw records and is excluded from the
+paired medians. This is not a completed full matrix, quality score or invoice.
+
+- Local-only archive:
+  `/Users/steven/Dev/sillymemory/artifacts/branch-checkpoint-v1/evidence.tar.gz`.
+  SHA-256 `c2e0c24520415112e00f0565f6bab6d8fc398ca53818e90ca4f45f8e2dea4708`;
+  all 17 members were read back and matched byte-for-byte.
+- Product producer: `c659750508cc20b90e3dcca682ab2bb169b4bedb` with the exact
+  uncommitted runner preserved as `attempt-1/producer.mjs`. The frozen plan,
+  raw report, model hashes, counters, analysis, runner maintenance diff and
+  `RESTORE.md` are retained. No credentials, personal chats or model weights.
+- All six generated owned collections were independently rechecked as HTTP 404;
+  native temporary data was removed and host instrumentation restored.
+  This archive is unavailable in a fresh clone and is not a CI dependency.
