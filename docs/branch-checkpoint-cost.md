@@ -87,8 +87,8 @@ The live run passed 12 timed managed full-set checks, 12 native exact hash-set
 checks and 16 transcript-prefix/resume assertions. All three owned collections
 were independently rechecked as HTTP 404 after cleanup. Temporary native data
 was removed, host instrumentation restored and no listener remained on port
-18188. Unit/syntax/SDK/release checks passed; the live producer hashes match
-the maintained runner and unchanged product files.
+18188. Unit/syntax/SDK/release checks passed. The executed producer and unchanged
+product files are preserved with their verified hashes.
 
 The separate local-only archive is
 `/Users/steven/Dev/sillymemory/artifacts/branch-checkpoint-v2/evidence.tar.gz`,
@@ -97,6 +97,15 @@ All 18 members were read back and matched byte-for-byte. It contains the exact
 producer, frozen plan, raw report/counters, model hashes, offline analysis and
 verification, cleanup receipt and restoration instructions. It is unavailable
 in a fresh clone and is not a CI dependency. The v1 archive is unchanged.
+
+Post-run review also hardened the maintained runner's cleanup constructor path.
+A synthetic invalid-endpoint run (no remote requests) confirmed expected failure
+exit 1, a saved recovery report, server termination, byte-exact host restoration
+and temporary-directory removal. This cleanup-only change did not rerun or change
+the live measurements. The separate `cleanup-evidence.tar.gz` sidecar under the
+same retained directory contains the exact producer patch, failure report and
+verification; SHA-256 `30c766f1d15add6b565ce6f7ac6254a10b7ce17fa57961a24a3f308860dbb8ed`.
+All 12 members were read back and verified; the original v2 archive is unchanged.
 
 ## Historical v1 UI synchronization results
 

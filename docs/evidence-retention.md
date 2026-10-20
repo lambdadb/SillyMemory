@@ -1831,3 +1831,9 @@ This is conservative committed readiness, not first semantic-query latency.
 - v1 and v2 timings have different completion boundaries. Do not replace the v1
   raw report, pool their repetitions or label the v1 1–2 second values as fully
   committed isolation. Neither run measures generated answers or provider bills.
+- Post-run cleanup-constructor correction and synthetic invalid-endpoint check:
+  `/Users/steven/Dev/sillymemory/artifacts/branch-checkpoint-v2/cleanup-evidence.tar.gz`,
+  SHA-256 `30c766f1d15add6b565ce6f7ac6254a10b7ce17fa57961a24a3f308860dbb8ed`.
+  All 12 members verified; contains the producer patch, addendum and actual-host
+  failure/teardown receipts. No remote API calls or new latency measurements.
+  Original v1/v2 archives are unchanged.

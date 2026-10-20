@@ -300,13 +300,14 @@ try {
         if (page && !page.isClosed()) { await memoryOff(); await nativeEnabled(false); }
     } catch (error) { report.browserShutdownFailure = error.name; }
     await browser?.close().catch(error => { report.browserShutdownFailure = error.name; });
-    const { LambdaClient } = await import('../src/client.js');
-    const client = new LambdaClient(credentials, credentials.key);
+    let client;
     try {
+        const { LambdaClient } = await import('../src/client.js');
+        client = new LambdaClient(credentials, credentials.key);
         for (const entry of pending) await client.deleteOwnedCollection(entry.collection, entry.owner, entry.scope);
         report.cleanup = true; await writeFile(pendingPath, '[]');
     } catch (error) { report.cleanupFailure = { type: error.name, message: String(error.message).replaceAll(credentials.key, '[redacted]').slice(0, 300) }; }
-    finally { client.forget(); }
+    finally { client?.forget(); }
     if (server && server.exitCode === null && server.signalCode === null) { server.kill('SIGTERM'); await new Promise(r => server.once('exit', r)); }
     await writeFile(embeddingPath, originalEmbedding);
     report.sourceUnchanged = true;
