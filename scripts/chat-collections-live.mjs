@@ -1,3 +1,4 @@
+import { expandMemorySettings } from './settings-panel.mjs';
 // Bounded real UI + direct browser CORS + managed LambdaDB lifecycle acceptance.
 // No generation calls; at most four small collections, or two with --large-history (1,100 submitted documents).
 import assert from 'node:assert/strict';
@@ -94,6 +95,7 @@ try {
         await page.locator('#sillymemory').waitFor({ state: 'attached', timeout: 45000 });
         if (!await page.locator('#sillymemory .inline-drawer-toggle').isVisible()) await page.locator('#extensions-settings-button .drawer-toggle').click();
         if (!await field('endpoint').isVisible()) await page.locator('#sillymemory .inline-drawer-toggle').click();
+        await expandMemorySettings(page);
     };
     connect = async () => { await panel(); await field('endpoint').fill(credentials.endpoint); await field('project').fill(credentials.project); await field('key').fill(credentials.key); await field('connect').click(); };
     const identity = () => page.evaluate(async () => {

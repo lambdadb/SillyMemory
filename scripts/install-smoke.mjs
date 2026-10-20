@@ -1,3 +1,4 @@
+import { expandMemorySettings } from './settings-panel.mjs';
 // GitHub installation and optional same-branch update through the pinned host UI.
 // No provider calls; only a disposable installation is rewound for update testing.
 import assert from 'node:assert/strict';
@@ -77,6 +78,7 @@ try {
         }
     }
     await settings();
+    await expandMemorySettings(page);
     check('installed extension shows product branding', (await page.locator('#sillymemory').innerText()).includes('Powered by LambdaDB'));
     await field('endpoint').fill('https://release-test.invalid'); await field('project').fill('release-test');
     await field('key').fill('synthetic-release-unsaved-key');
@@ -90,6 +92,7 @@ try {
     check('reload clears unsaved key input and leaves memory disabled', await field('key').inputValue() === '' && !await field('enabled').isChecked());
     check('configured token bounds and warning-only preference survive reload', await field('budget').inputValue() === '600' && !await field('stopOnLoss').isChecked());
     check('settings link to the canonical source and license', await page.locator('#sillymemory a', { hasText: 'Source' }).getAttribute('href') === repository && await page.locator('#sillymemory a', { hasText: 'AGPL-3.0-only' }).getAttribute('href') === `${repository}/blob/main/LICENSE`);
+    await expandMemorySettings(page);
     check('panel explains direct CORS without a proxy setup', (await page.locator('#sillymemory').innerText()).includes('No SillyTavern proxy setting or restart is needed.'));
     const candidate = JSON.parse(await readFile(path.join(installed, 'manifest.json'), 'utf8'));
     check('candidate manifest version agrees with package version', candidate.version === JSON.parse(await readFile(path.join(installed, 'package.json'), 'utf8')).version);

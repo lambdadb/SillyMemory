@@ -286,7 +286,7 @@ async function initialize() {
             client = candidateClient; makeCollections(); gatePassed = false;
             element('enabled').checked = state.enabled;
             if (state.enabled) schedule();
-            else status(state.ready ? 'Connected. Memory remains disabled.' : 'Connected. Run the synthetic transport test, then prepare chat memory.');
+            else status(state.ready ? 'Connected. Memory remains disabled.' : 'Connected. Click Prepare chat memory, then enable memory in a saved character chat.');
         } catch (error) {
             candidateClient.forget(); state.enabled = false; element('enabled').checked = false;
             if (error.status === 401) {
@@ -314,20 +314,23 @@ async function initialize() {
         element('inspection').textContent = 'No memory prepared.';
         element('key').value = ''; gatePassed = false; status('Saved key removed. Memory disabled. Enter your key to reconnect.');
     });
-    element('gate').onclick = () => action(async () => {
+    async function testConnection() {
         if (!client) throw new ConnectionError('Enter your API key first.');
-        if (state.testCollection) throw new ConnectionError('Clean up the previous test collection before testing again.');
+        if (state.testCollection) throw new ConnectionError('Open Advanced and use Clean up test collection before trying again.');
+        gatePassed = false;
         state.testCollection = `smtest_${uuid()}`; persist();
         gatePassed = await runTransportGate(client, owner, state.testCollection, status);
         delete state.testCollection; persist();
-    });
+    }
+    element('gate').onclick = () => action(testConnection);
     element('cleanup').onclick = () => action(async () => {
         if (!client) throw new ConnectionError('Enter your API key first.');
         if (state.testCollection) await client.deleteOwnedCollection(state.testCollection, owner);
         delete state.testCollection; persist(); status('No pending owned test collection remains.');
     });
     element('provision').onclick = () => action(async () => {
-        if (!client || !gatePassed) throw new ConnectionError('Pass the synthetic transport test in this session first.');
+        if (!client) throw new ConnectionError('Save and connect before preparing chat memory.');
+        if (!gatePassed) await testConnection();
         state.ready = true; persist();
         status('Chat memory is ready. Enable memory to synchronize. Native branches share unchanged committed history.');
     });

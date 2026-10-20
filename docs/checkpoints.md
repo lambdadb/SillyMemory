@@ -267,7 +267,8 @@ checkpoint/versioning evidence was not modified or deleted.
 
 ## Checkpoint manager
 
-Give a checkpoint an optional name (up to 120 characters) before saving. Use
+Open **Checkpoints** in the SillyMemory settings. Give a checkpoint an optional
+name (up to 120 characters) before saving. Use
 **Refresh story checkpoints** to list checkpoints belonging to the selected
 character and versioned story. Each row shows the name, creation time and verified
 status. Names live in the checkpoint's presentation metadata, so renaming does not

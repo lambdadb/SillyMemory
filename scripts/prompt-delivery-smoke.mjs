@@ -1,3 +1,4 @@
+import { expandMemorySettings } from './settings-panel.mjs';
 import { collectionResponse, branchResponse, documentResponse, rerankedResponse } from '../tests/helpers/lambdadb-responses.js';
 import { emulatorCors } from './emulator-cors.mjs';
 // Real pinned host/Chromium/direct CORS, local LambdaDB and completion emulators only.
@@ -217,6 +218,7 @@ try {
     const waitStatus = text => page.waitForFunction(text => document.querySelector('[data-sm="status"]')?.textContent.includes(text), text);
     await page.locator('#extensions-settings-button .drawer-toggle').click();
     await page.locator('#sillymemory .inline-drawer-toggle').click();
+    await expandMemorySettings(page);
     await field('endpoint').fill(endpoint); await field('project').fill('synthetic'); await field('key').fill('synthetic-session-key');
     await field('connect').click(); await field('gate').click(); await waitStatus('Transport gate passed');
     assert.equal(collections.size, 0);
@@ -499,6 +501,7 @@ try {
     assert.equal(await field('delivery').innerText(), 'No prompt checked in this chat.', 'No stale final prompt after reload');
     await page.locator('#extensions-settings-button .drawer-toggle').click();
     if (!await field('endpoint').isVisible()) await page.locator('#sillymemory .inline-drawer-toggle').click();
+    await expandMemorySettings(page);
     await field('key').fill('synthetic-session-key'); await field('connect').click();
     page.once('dialog', dialog => dialog.accept()); await field('delete').click(); await waitStatus('no longer accessible');
     assert.equal(collections.size, 0);

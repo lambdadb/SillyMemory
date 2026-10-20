@@ -1,3 +1,4 @@
+import { expandMemorySettings } from './settings-panel.mjs';
 // Full SillyTavern Generate/UI path + live LambdaDB. Model is deterministic by
 // default; --live-model requires explicitly supplied compatible-model settings.
 import { runHybrid, hybridFiles } from './hybrid-eval.mjs';
@@ -228,6 +229,7 @@ async function openSettings() {
         if (!await page.locator('#sillymemory .inline-drawer-toggle').isVisible()) await page.locator('#extensions-settings-button .drawer-toggle').click();
         if (!await field('endpoint').isVisible()) await page.locator('#sillymemory .inline-drawer-toggle').click();
     }
+    await expandMemorySettings(page);
 }
 async function seed(location = 'beneath the cedar tree') {
     await page.evaluate(async location => {

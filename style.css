@@ -10,3 +10,13 @@
 
 #sillymemory .sm-checkpoint { border-top: 1px solid var(--SmartThemeBorderColor); padding: 0.6rem 0; overflow-wrap: anywhere; }
 #sillymemory .sm-checkpoint p { margin: 0.3rem 0; }
+
+#sillymemory h4 { margin: 0.8rem 0 0.4rem; font-size: 1em; }
+#sillymemory section > small { display: block; }
+#sillymemory .sm-status { margin: 0.8rem 0; overflow-wrap: anywhere; }
+#sillymemory .sm-section { border-top: 1px solid var(--SmartThemeBorderColor); padding: 0.7rem 0; }
+#sillymemory summary { cursor: pointer; }
+#sillymemory summary:focus-visible { outline: 2px solid var(--SmartThemeQuoteColor, #8ab4f8); outline-offset: 2px; }
+#sillymemory .sm-section > summary { font-weight: bold; }
+#sillymemory .sm-section > summary span { display: block; font-weight: normal; font-size: 0.85em; margin-top: 0.2rem; }
+#sillymemory .sm-footer { display: block; margin-top: 0.8rem; }

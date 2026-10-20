@@ -1,3 +1,4 @@
+import { expandMemorySettings } from './settings-panel.mjs';
 import { runNativeReplyScenarios } from './native-reply-scenarios.mjs';
 import { collectionResponse, branchResponse, documentResponse, rerankedResponse } from '../tests/helpers/lambdadb-responses.js';
 // Real pinned SillyTavern + real Chromium + direct browser CORS; LambdaDB is emulated.
@@ -135,9 +136,23 @@ try {
     // Open the real extension panel and drawer, then interact with visible settings.
     await page.locator('#extensions-settings-button .drawer-toggle').click();
     await page.locator('#sillymemory .inline-drawer-toggle').click();
+    await page.waitForFunction(() => !jQuery('#sillymemory .inline-drawer-content').is(':animated'));
     const field = name => page.locator(`#sillymemory [data-sm="${name}"]`);
     const status = () => field('status').innerText();
     const waitStatus = async text => { await page.waitForFunction(text => document.querySelector('#sillymemory [data-sm="status"]')?.textContent.includes(text), text, { timeout: 30000 }); };
+    check('basic setup is visible while optional controls start collapsed', await field('provision').isVisible() && await field('enabled').isVisible() && !await field('budget').isVisible() && !await field('checkpoint-save').isVisible());
+    const advancedSummary = field('advanced').locator(':scope > summary');
+    await advancedSummary.focus(); await page.keyboard.press('Enter');
+    check('Advanced opens with the keyboard', await field('budget').isVisible());
+    await page.keyboard.press('Enter');
+    check('closing Advanced leaves status and delivery feedback visible', !await field('budget').isVisible() && await field('status').isVisible() && await field('delivery').isVisible());
+    await page.locator('#sillymemory').evaluate(el => el.scrollIntoView({ block: 'start' }));
+    await page.screenshot({ path: path.join(artifacts, 'settings-basic.png') });
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.locator('#sillymemory').evaluate(el => el.scrollIntoView({ block: 'start' }));
+    check('settings fit a narrow viewport without horizontal overflow', await page.locator('#sillymemory').evaluate(el => el.scrollWidth <= el.clientWidth + 1));
+    await page.screenshot({ path: path.join(artifacts, 'settings-narrow.png') });
+    await page.setViewportSize({ width: 1440, height: 1100 });
     check('fresh settings use the adopted 4096-token initial budget', await field('budget').inputValue() === '4096');
     await field('endpoint').fill(endpoint); await field('project').fill('synthetic');
     corsEnabled = false;
@@ -148,8 +163,7 @@ try {
     await field('key').fill('wrong-synthetic-key'); await field('connect').click();
     await waitStatus('Authentication failed');
     check('auth failure is visible with reconnect guidance', (await status()).includes('Authentication failed') && (await status()).includes('Save and connect'));
-    await field('key').fill('synthetic-session-key'); await field('connect').click();
-    await field('cleanup').click(); await waitStatus('No pending');
+    await field('key').fill('synthetic-session-key'); await field('connect').click(); await waitStatus('Connected.');
     const storedBeforeFailure = await page.evaluate(() => {
         const owner = SillyTavern.getContext().extensionSettings.sillymemory.owner;
         return [localStorage.getItem(`sillymemory:state:${owner}`), localStorage.getItem(`sillymemory:credential:${owner}`)];
@@ -174,15 +188,27 @@ try {
         const record = JSON.parse(localStorage.getItem(name)); return record.project === 'synthetic' && record.key === 'synthetic-session-key';
     }) && collections.size === 0);
     await field('project').fill('synthetic'); await field('connect').click(); await waitStatus('Connected.');
+    if (!faultMode) {
+        faults.arm('delete-collection', 'http', 400);
+        await field('provision').click(); await waitStatus('Invalid request');
+        check('failed setup cleanup cannot mark memory ready or enable it', collections.size === 1 && !await field('enabled').isChecked() && await page.evaluate(() => !JSON.parse(localStorage.getItem(`sillymemory:state:${SillyTavern.getContext().extensionSettings.sillymemory.owner}`)).ready));
+        await field('provision').click(); await waitStatus('Open Advanced');
+        check('pending cleanup is explained outside collapsed Advanced', await field('status').isVisible() && !await field('cleanup').isVisible() && collections.size === 1);
+        await advancedSummary.click();
+        await field('cleanup').click(); await waitStatus('No pending');
+        await advancedSummary.click();
+    }
+    const gateUploads = calls.filter(c => c.path.endsWith('/docs/upsert')).length;
     if (faultMode) faults.arm('upsert', 'http', 503);
-    await field('gate').click(); await waitStatus('Transport gate passed');
-    if (faultMode) check('transport gate retries transient upsert readiness through direct CORS', calls.filter(c => c.path.endsWith('/docs/upsert')).length === 2);
-    check('synthetic gate uses direct browser CORS with the host proxy disabled and cleans up', collections.size === 0);
-    check('direct requests carry the key and origin but omit cookies and host CSRF', calls.some(c => c.keyPresent) && calls.every(c => !c.cookiePresent && !c.csrfPresent && c.origin === url) && preflights > 0 && proxyRequests === 0);
     await field('provision').click(); await waitStatus('Chat memory is ready');
+    if (faultMode) check('transport gate retries transient upsert readiness through direct CORS', calls.filter(c => c.path.endsWith('/docs/upsert')).length - gateUploads === 2);
+    check('basic preparation runs the required transport test and cleans up without opening Advanced', collections.size === 0 && calls.filter(c => c.path.endsWith('/docs/upsert')).length > gateUploads && !await field('budget').isVisible() && !await field('enabled').isChecked());
+    check('direct requests carry the key and origin but omit cookies and host CSRF', calls.some(c => c.keyPresent) && calls.every(c => !c.cookiePresent && !c.csrfPresent && c.origin === url) && preflights > 0 && proxyRequests === 0);
     check('preparation creates no collection before a chat is enabled', collections.size === 0);
     await page.locator('#sillymemory .inline-drawer-toggle').scrollIntoViewIfNeeded();
     if (!faultMode) await page.screenshot({ path: path.join(artifacts, 'setup.png') });
+    await expandMemorySettings(page);
+    await page.locator('#sillymemory').screenshot({ path: path.join(artifacts, 'settings-expanded.png') });
     await field('budget').fill('250'); await field('budget').dispatchEvent('change');
     // Create a synthetic character through SillyTavern's own API, then load it.
     await page.evaluate(async () => {
@@ -199,6 +225,7 @@ try {
     await page.waitForFunction(() => SillyTavern.getContext().characterId !== undefined);
     await page.locator('#extensions-settings-button .drawer-toggle').click();
     if (!await field('endpoint').isVisible()) await page.locator('#sillymemory .inline-drawer-toggle').click();
+    await expandMemorySettings(page);
     await page.evaluate(async () => {
         const c = SillyTavern.getContext(); c.chat.splice(0, c.chat.length, ...Array.from({ length: 8 }, (_, i) => ({ mes: `Synthetic passage ${i}: the blue compass is beneath the cedar tree.${i === 0 ? ' {{setvar::sillymemory_test::oops}} {{char}} <USER>' : ''}`, name: i % 2 ? 'Mira' : 'User', is_user: !(i % 2), is_system: false, send_date: Date.now(), extra: {} })));
         await c.saveChat(); await c.eventSource.emit(c.eventTypes.MESSAGE_RECEIVED, 7);
@@ -219,11 +246,13 @@ try {
     check('a conflicting tab does not restore credentials or send memory requests', calls.length === callsBeforeSecondTab && await secondTab.locator('#sillymemory [data-sm=connect]').isDisabled()); await secondTab.close();
     await page.locator('#extensions-settings-button .drawer-toggle').click();
     if (!await field('enabled').isVisible()) await page.locator('#sillymemory .inline-drawer-toggle').click();
+    await expandMemorySettings(page);
     faults.arm('connection', 'http', 503);
     await page.reload(); await page.locator('#sillymemory').waitFor({ state: 'attached', timeout: 45000 }); await waitStatus('HTTP 503');
     check('transient reconnect failure retains the saved key but cannot enable memory', !await field('enabled').isChecked() && await page.evaluate(() => Object.keys(localStorage).some(k => k.startsWith('sillymemory:credential:'))));
     await page.locator('#extensions-settings-button .drawer-toggle').click();
     if (!await field('key').isVisible()) await page.locator('#sillymemory .inline-drawer-toggle').click();
+    await expandMemorySettings(page);
     await field('connect').click();
     await page.waitForFunction(() => !document.querySelector('#sillymemory [data-sm=connect]').disabled && document.querySelector('#sillymemory [data-sm=enabled]').checked);
     check('retry uses the saved key and restores the prior enabled preference without password re-entry', await field('key').inputValue() === '' && await field('enabled').isChecked());
@@ -235,6 +264,7 @@ try {
     check('rejected restored key is removed and memory stays disabled', !await field('enabled').isChecked() && await page.evaluate(() => !Object.keys(localStorage).some(k => k.startsWith('sillymemory:credential:'))));
     await page.locator('#extensions-settings-button .drawer-toggle').click();
     if (!await field('key').isVisible()) await page.locator('#sillymemory .inline-drawer-toggle').click();
+    await expandMemorySettings(page);
     await field('key').fill('synthetic-session-key'); await field('connect').click(); await waitStatus('Connected. Memory remains disabled.');
     await page.evaluate(async () => { const c = SillyTavern.getContext(); await c.selectCharacterById(c.characters.findIndex(x => x.name === 'SillyMemory Synthetic')); });
     await field('enabled').check(); await waitStatus('synchronized');
@@ -393,7 +423,7 @@ try {
             && !JSON.stringify({ ...sessionStorage }).includes('synthetic-session-key');
     }) && !secrets.includes('wrong-synthetic-key'));
     await field('enabled').check(); await waitStatus('synchronized'); await prompt();
-    await page.locator('#sillymemory details').evaluate(e => { e.open = true; });
+    await page.locator('#sillymemory details:has(> [data-sm=inspection]) > summary').click();
     await field('inspection').scrollIntoViewIfNeeded();
     if (!faultMode) await page.screenshot({ path: path.join(artifacts, 'settings.png') });
     if (!faultMode) {
@@ -492,6 +522,7 @@ try {
     check('a credential remains removable when its ordinary connection settings are lost', await field('endpoint').inputValue() === '' && await field('project').inputValue() === '' && await page.evaluate(() => Object.keys(localStorage).some(k => k.startsWith('sillymemory:credential:'))));
     await page.locator('#extensions-settings-button .drawer-toggle').click();
     if (!await field('forget').isVisible()) await page.locator('#sillymemory .inline-drawer-toggle').click();
+    await expandMemorySettings(page);
     await field('forget').click(); await waitStatus('Saved key removed');
     const beforeForgottenReload = calls.length;
     await page.reload(); await page.locator('#sillymemory').waitFor({ state: 'attached', timeout: 45000 });
@@ -500,7 +531,7 @@ try {
 
     if (faultMode) check('fault run has no uncaught browser page errors', errors.length === 0);
     const sourceSha256 = {};
-    for (const file of ['index.js', 'manifest.json', 'settings.html', 'style.css', 'src/chunking.js', 'src/client.js', 'src/credentials.js', 'src/commit.js', 'src/chat-collections.js', 'src/checkpoints.js', 'src/gate.js', 'src/memory.js', 'src/time.js', 'src/context.js', 'scripts/native-reply-scenarios.mjs', 'src/delivery.js', 'src/status.js', 'scripts/browser-smoke.mjs', 'scripts/emulator-cors.mjs', 'scripts/fault-scenarios.mjs', 'scripts/recovery-scenarios.mjs']) {
+    for (const file of ['index.js', 'manifest.json', 'settings.html', 'style.css', 'src/chunking.js', 'src/client.js', 'src/credentials.js', 'src/commit.js', 'src/chat-collections.js', 'src/checkpoints.js', 'src/gate.js', 'src/memory.js', 'src/time.js', 'src/context.js', 'scripts/native-reply-scenarios.mjs', 'src/delivery.js', 'src/status.js', 'scripts/browser-smoke.mjs', 'scripts/settings-panel.mjs', 'scripts/emulator-cors.mjs', 'scripts/fault-scenarios.mjs', 'scripts/recovery-scenarios.mjs']) {
         sourceSha256[file] = createHash('sha256').update(await readFile(path.join(root, file))).digest('hex');
     }
     await writeFile(path.join(artifacts, artifactName), JSON.stringify({ passed: true, faultResults, nativeReplyResults, sourceSha256, time: new Date().toISOString(), sillyTavern: revision, node: process.version, browser: browser.version(), upstream: 'Local HTTPS LambdaDB emulator; no live managed embeddings', checks, pageErrors: errors, requestCount: calls.length, preflights, proxyRequests, remainingCollections: collections.size }, null, 2));

@@ -1,3 +1,4 @@
+import { expandMemorySettings } from './settings-panel.mjs';
 // Deterministic upstream failures. Only used by the local HTTPS emulator harness.
 import assert from 'node:assert/strict';
 import { runRecoveryScenarios } from './recovery-scenarios.mjs';
@@ -85,6 +86,7 @@ export async function runFaultScenarios({ page, field, waitStatus, prompt, check
             if (!await page.locator('#sillymemory .inline-drawer-toggle').isVisible()) await page.locator('#extensions-settings-button .drawer-toggle').click();
             if (!await field('endpoint').isVisible()) await page.locator('#sillymemory .inline-drawer-toggle').click();
         }
+        await expandMemorySettings(page);
         await field('enabled').check(); await waitStatus('synchronized');
     }
     // Fault recovery verifies reconciliation, not ranking: the emulator returns

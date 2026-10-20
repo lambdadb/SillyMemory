@@ -1,3 +1,4 @@
+import { expandMemorySettings } from './settings-panel.mjs';
 import { emulatorCors } from './emulator-cors.mjs';
 // Real pinned host and Chromium; local completion/LambdaDB fixtures and vector API
 // emulation only. Never reads .env.local. Raw source/prompt text stays in ignored private checkpoints.
@@ -189,6 +190,7 @@ try {
     const status = text => page.waitForFunction(text => document.querySelector('[data-sm="status"]')?.textContent.includes(text), text, { timeout: 120000 });
     await page.locator('#extensions-settings-button .drawer-toggle').click();
     await page.locator('#sillymemory .inline-drawer-toggle').click();
+    await expandMemorySettings(page);
     await field('endpoint').fill(endpoint); await field('project').fill('synthetic'); await field('key').fill('synthetic-session-key');
     await field('connect').click(); await field('gate').click(); await status('Transport gate passed');
     assert.equal(collections.size, 0); await field('provision').click(); await status('Chat memory is ready');
