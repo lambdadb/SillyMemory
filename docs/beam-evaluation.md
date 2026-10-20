@@ -481,7 +481,7 @@ schemas, saved score arithmetic, source-defined partitions and usage verify
 offline. The archived synthetic check covers exact reconstruction, different
 values, role/author/date/time isolation, budget refill and foreign-source rejection;
 an independent source verifier checks all 400 contexts and the relevant fact gain.
-Final maintained checks pass 392 JavaScript and nine Python tests, runtime/release
+Final maintained checks pass 392 JavaScript and ten Python tests, runtime/release
 and SDK checks. Keep one-off producers and full output ignored and archived;
 there is no new maintained candidate mode or product/runtime change.
 
@@ -525,6 +525,14 @@ reconstructed source, and accept the restored originals. They also confirm all
 400 consumed records match the source-derived values. Existing source/query,
 cutoff, packing and file-count checks remain in place; no paid rerun or score
 change accompanies these post-result integrity guards.
+The final `verify` phase shares the same retained-state/lock/source validation,
+then links each successful saved answer's context to the reconstructed recall
+before reporting score-arithmetic success. A CLI-entry regression rejects corrupt
+retained source even when the arithmetic verifier would succeed. The full offline
+replay also confirms that post-score receipt corruption and altered saved answer
+contexts fail `verify`, and that restoring the originals passes. This command
+reports source/context consistency and score arithmetic, without claiming a new
+provider call or independent model-receipt authentication.
 
 ## Decision and scope (2026-10-19)
 

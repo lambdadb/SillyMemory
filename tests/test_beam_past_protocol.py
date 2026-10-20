@@ -5,6 +5,7 @@ from copy import deepcopy
 from pathlib import Path
 import unittest
 from tempfile import TemporaryDirectory
+from types import SimpleNamespace
 from unittest.mock import patch
 
 spec = importlib.util.spec_from_file_location(
@@ -33,6 +34,20 @@ class Response:
 
 
 class TransportPolicy(unittest.TestCase):
+    def test_verify_phase_does_not_report_success_with_corrupted_retained_source(self):
+        dataset = SimpleNamespace(load_rows=lambda split: ([{}], 'revision'),
+                                  build_conversation=lambda row: SimpleNamespace(id='1'))
+        with TemporaryDirectory() as directory:
+            root = Path(directory).resolve()
+            with patch.object(protocol.sys, 'argv', ['benchmark', 'verify', '--root', directory]), \
+                    patch.object(protocol, 'load_upstream', return_value=(dataset, {})), \
+                    patch.object(protocol, 'check_lock', return_value={}), \
+                    patch.dict(protocol.sys.modules, {'verify': SimpleNamespace(verify_run=lambda path: [])}), \
+                    patch.object(protocol, 'validated_recalls', side_effect=AssertionError('Retained source is corrupted')) as checked:
+                with self.assertRaisesRegex(AssertionError, 'Retained source is corrupted'):
+                    protocol.main()
+                checked.assert_called_once_with(root, ['1'])
+
     def test_consumed_recall_bytes_must_match_the_source_derived_digest(self):
         with TemporaryDirectory() as directory:
             root = Path(directory)

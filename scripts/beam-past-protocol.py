@@ -162,14 +162,7 @@ def load_verified_recalls(root, files):
     return recalls
 
 
-async def score(root, dataset, env, lock):
-    import httpx
-    import llm
-    import run
-    import scoring
-    import verify
-    rows, revision = dataset.load_rows("100k")
-    conversations = [dataset.build_conversation(row) for row in rows]
+def validated_recalls(root, conversation_ids):
     memory_state = json.loads((root / "memory/memory-state.json").read_text())
     assert memory_state["status"] == "completed" and len(memory_state["completed"]) == 20
     assert memory_state["inputSha256"] == sha((root / "memory-input.json").read_bytes())
@@ -178,7 +171,7 @@ async def score(root, dataset, env, lock):
     assert recall_lock["inputSha256"] == memory_state["inputSha256"]
     assert recall_lock["memoryStateSha256"] == sha((root / "memory/memory-state.json").read_bytes())
     assert recall_lock["packingSourceSha256"] == sha((REPO / "scripts/beam-past-memory.mjs").read_bytes())
-    check_recall_files(root, recall_lock["files"], [c.id for c in conversations])
+    check_recall_files(root, recall_lock["files"], conversation_ids)
     # A mutable recall file and its digest must not authorize changed evidence.
     # Rebuild from saved retrieval receipts and source before any model side effect.
     verified = subprocess.run(["node", str(REPO / "scripts/beam-past-memory.mjs"), str(root / "memory-input.json"),
@@ -187,7 +180,29 @@ async def score(root, dataset, env, lock):
     canonical = json.loads(verified.stdout)
     assert canonical == recall_lock, "Recall manifest differs from reconstructed source"
     # Hash and parse the same bytes against the independently reconstructed map.
-    recalls = load_verified_recalls(root, canonical["files"])
+    return load_verified_recalls(root, canonical["files"])
+
+
+def verify_saved_run(root, dataset):
+    rows, _ = dataset.load_rows("100k")
+    recalls = validated_recalls(root, [dataset.build_conversation(row).id for row in rows])
+    import verify
+    problems = verify.verify_run(root / "scored")
+    assert not problems, problems
+    for row in (json.loads(line) for line in (root / "scored/results.jsonl").read_text().splitlines() if line.strip()):
+        if not row.get("error"):
+            assert row["recall"] == recalls[row["questionId"]]["context"], "Scored context differs from reconstructed source"
+
+
+async def score(root, dataset, env, lock):
+    import httpx
+    import llm
+    import run
+    import scoring
+    import verify
+    rows, revision = dataset.load_rows("100k")
+    conversations = [dataset.build_conversation(row) for row in rows]
+    recalls = validated_recalls(root, [c.id for c in conversations])
     output = root / "scored"
     output.mkdir()  # Never silently replay successful answers or partial scoring.
     calls = output / "calls"
@@ -285,10 +300,8 @@ def main():
         return
     lock = check_lock(root, upstream_files)
     if args.phase == "verify":
-        import verify
-        problems = verify.verify_run(root / "scored")
-        assert not problems, problems
-        print("VERIFIED: all 400 questions and saved score arithmetic")
+        verify_saved_run(root, dataset)
+        print("VERIFIED: all 400 source-derived recalls, linked answer contexts and saved score arithmetic")
         return
     if args.phase == "repack":
         subprocess.run(["node", str(REPO / "scripts/beam-past-memory.mjs"), str(root / "memory-input.json"),
