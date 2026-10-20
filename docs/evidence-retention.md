@@ -1783,3 +1783,9 @@ run, storage migration, main promotion, tag or Release publication is claimed.
   emulator collections were removed. No real remote collections were created.
   Credentials, personal profiles and dependencies are excluded. Historical evidence
   is preserved unchanged. No runtime or harness modifications were needed.
+- Reviewed restoration correction: `artifacts/archive/release-050-v1/RESTORE-ADDENDUM.md`,
+  SHA-256 `454f7067e1effc9619d237070ab1a2e561b03390b000237377ef2bb54d0a4076`. Separate fresh producer/host worktrees
+  are required for browser and recovery reruns because generic screenshots ignore
+  the artifact tag. The archive's generic setup/settings images are from the later
+  recovery run; both uniquely named JSON/log receipts remain. The original archive
+  is unchanged; use the addendum and current acceptance commands for reproduction.
