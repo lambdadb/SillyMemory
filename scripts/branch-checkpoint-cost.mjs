@@ -8,6 +8,7 @@ import { readFile, writeFile, mkdir, mkdtemp, rm, realpath } from 'node:fs/promi
 import { spawn, execFileSync } from 'node:child_process';
 import { tmpdir, cpus, platform, arch } from 'node:os';
 import path from 'node:path';
+import { assertPortAvailable, waitForOwnedHost, cleanupOwnedCollections } from './branch-checkpoint-cost-support.mjs';
 
 const root = path.resolve(new URL('..', import.meta.url).pathname);
 const source = process.env.ST_SOURCE;
@@ -20,6 +21,8 @@ assert.equal(await realpath(path.join(source, 'public/scripts/extensions/third-p
 const env = parseEnv(await readFile(process.env.SM_ENV_FILE || path.join(root, '.env.local'), 'utf8'));
 const credentials = { endpoint: env.LAMBDADB_BASE_URL, project: env.LAMBDADB_PROJECT_NAME, key: env.LAMBDADB_PROJECT_API_KEY };
 assert(Object.values(credentials).every(Boolean), 'Missing LambdaDB credentials');
+const port = Number(process.env.ST_TEST_PORT || 18188);
+await assertPortAvailable(port); // Fail before instrumenting a host or creating native data.
 const artifacts = path.resolve(output);
 await mkdir(artifacts, { recursive: true });
 await writeFile(path.join(artifacts, 'plan.json'), planBytes, { flag: 'wx' });
@@ -36,7 +39,7 @@ const report = {
     rows: [], traffic: [], checks: [], pageErrors: [], sourceSha256: {}, inputs: [],
     managedDocuments: 0, managedCharacters: 0, ownedCollections: pending, passed: false, cleanup: false,
 };
-for (const file of ['index.js', 'settings.html', 'src/client.js', 'src/memory.js', 'src/chunking.js', 'src/chat-collections.js', 'src/checkpoints.js', 'src/commit.js', 'src/gate.js', 'vendor/lambdadb.js', 'scripts/branch-checkpoint-cost.mjs']) {
+for (const file of ['index.js', 'settings.html', 'src/client.js', 'src/memory.js', 'src/chunking.js', 'src/chat-collections.js', 'src/checkpoints.js', 'src/commit.js', 'src/gate.js', 'vendor/lambdadb.js', 'scripts/branch-checkpoint-cost.mjs', 'scripts/branch-checkpoint-cost-support.mjs']) {
     report.sourceSha256[file] = hash(await readFile(path.join(root, file)));
 }
 const save = async () => {
@@ -55,7 +58,7 @@ await writeFile(path.join(artifacts, 'host-embedding-original.js'), originalEmbe
 await writeFile(path.join(artifacts, 'host-embedding-instrumented.js'), instrumented);
 await writeFile(embeddingPath, instrumented);
 report.hostInstrumentation = 'Time/CPU counters around actual local model execution, one NDJSON append per input. Model loading excluded from this counter and timed separately. No model outputs or input text logged.';
-const url = `http://127.0.0.1:${Number(process.env.ST_TEST_PORT || 18188)}`;
+const url = `http://127.0.0.1:${port}`;
 let server, browser, page, stage = 'setup', timeout, timedOut = false;
 const metrics = async () => (await readFile(metricPath, 'utf8')).trim().split('\n').filter(Boolean).map(line => JSON.parse(line));
 const field = name => page.locator(`#sillymemory [data-sm="${name}"]`);
@@ -228,10 +231,11 @@ try {
     report.hostConfigSha256 = hash(configBytes);
     report.localModel = configBytes.toString().match(/^\s+embedding:\s*(.+)$/m)?.[1];
     const log = await import('node:fs').then(fs => fs.openSync(path.join(artifacts, 'host.log'), 'wx'));
-    server = spawn(process.execPath, ['server.js', '--configPath', config, '--dataRoot', path.join(work, 'data'), '--port', new URL(url).port, '--listen', 'false', '--browserLaunchEnabled', 'false', '--corsProxy', 'false'],
+    server = spawn(process.execPath, ['server.js', '--configPath', config, '--dataRoot', path.join(work, 'data'), '--port', String(port), '--listen', 'false', '--browserLaunchEnabled', 'false', '--corsProxy', 'false'],
         { cwd: source, env: { ...process.env, SM_EMBED_METRICS: metricPath }, stdio: ['ignore', log, log] });
+    const ready = waitForOwnedHost(server, path.join(artifacts, 'host.log'), url);
     await import('node:fs').then(fs => fs.closeSync(log));
-    for (let i = 0; i < 90; i++) { try { if ((await fetch(url)).ok) break; } catch {} await new Promise(r => setTimeout(r, 500)); }
+    await ready;
     browser = await chromium.launch(); page = await browser.newPage(); page.setDefaultTimeout(20000);
     timeout = setTimeout(() => { timedOut = true; void page.close(); }, plan.limits.wallMinutes * 60000);
     page.on('pageerror', e => report.pageErrors.push(e.name));
@@ -304,11 +308,13 @@ try {
     try {
         const { LambdaClient } = await import('../src/client.js');
         client = new LambdaClient(credentials, credentials.key);
-        for (const entry of pending) await client.deleteOwnedCollection(entry.collection, entry.owner, entry.scope);
-        report.cleanup = true; await writeFile(pendingPath, '[]');
+        const result = await cleanupOwnedCollections(client, pending);
+        report.cleanup = result.remaining.length === 0;
+        report.cleanupFailures = result.failures.map(({ collection, error }) => ({ collection, type: error.name, message: String(error.message).replaceAll(credentials.key, '[redacted]').slice(0, 300) }));
+        await writeFile(pendingPath, JSON.stringify(result.remaining, null, 2));
     } catch (error) { report.cleanupFailure = { type: error.name, message: String(error.message).replaceAll(credentials.key, '[redacted]').slice(0, 300) }; }
     finally { client?.forget(); }
-    if (server && server.exitCode === null && server.signalCode === null) { server.kill('SIGTERM'); await new Promise(r => server.once('exit', r)); }
+    if (server?.pid && server.exitCode === null && server.signalCode === null) { server.kill('SIGTERM'); await new Promise(r => server.once('exit', r)); }
     await writeFile(embeddingPath, originalEmbedding);
     report.sourceUnchanged = true;
     for (const [file, digest] of Object.entries(report.sourceSha256)) if (hash(await readFile(path.join(root, file))) !== digest) report.sourceUnchanged = false;

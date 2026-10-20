@@ -1837,3 +1837,9 @@ This is conservative committed readiness, not first semantic-query latency.
   All 12 members verified; contains the producer patch, addendum and actual-host
   failure/teardown receipts. No remote API calls or new latency measurements.
   Original v1/v2 archives are unchanged.
+- Subsequent host-ownership/per-collection cleanup guards and four local
+  regressions (388 full-suite tests passed):
+  `/Users/steven/Dev/sillymemory/artifacts/branch-checkpoint-v2/hardening-evidence.tar.gz`,
+  SHA-256 `45123e7791778acc03a26bf5f9773704983fedd20f36df65278dd902a7922ecc`.
+  All eight members verified; exact maintained runner/helper/test source, diff
+  from the v2 producer and local verification. No new live matrix or timings.

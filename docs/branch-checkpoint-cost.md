@@ -107,6 +107,15 @@ same retained directory contains the exact producer patch, failure report and
 verification; SHA-256 `30c766f1d15add6b565ce6f7ac6254a10b7ce17fa57961a24a3f308860dbb8ed`.
 All 12 members were read back and verified; the original v2 archive is unchanged.
 
+The maintained runner subsequently gained occupied-port rejection, a bind-message
+check tied to its own child process, and per-collection cleanup that continues
+past individual failures while retaining unsuccessful entries. Four isolated
+local regressions and the full 388-test suite passed. These startup/teardown
+changes did not rerun the live matrix. Exact source and local verification are in
+`hardening-evidence.tar.gz` under the same directory, SHA-256
+`45123e7791778acc03a26bf5f9773704983fedd20f36df65278dd902a7922ecc`;
+all eight members were read back and verified. Original archives remain unchanged.
+
 ## Historical v1 UI synchronization results
 
 The completed paired comparisons contain three repetitions at 50 messages and two
