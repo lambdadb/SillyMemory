@@ -4,6 +4,40 @@ Versions describe the extension, independently of the SillyTavern host version.
 An `Unreleased` entry is a development candidate. A dated entry records a release
 boundary; publication is confirmed by the corresponding Git tag and GitHub Release.
 
+## [0.5.0] - 2026-10-20
+
+### Changed
+
+- Search only the current eligible generation anchor in one role-labelled request
+  (Query1). Keep recent dialogue in generation, with the existing recent-five/pair
+  retention and aged-out archival policy.
+- Increase vector k and native Jev 1.13.0 rerank candidates from 100 to 200; keep
+  final 50, managed OpenAI Small, English Bayesian fusion and the 4,096-token
+  maximum with the host one-quarter-context cap. Pin the tested LambdaDB SDK
+  `0.8.1-dev.38730896042001` and its browser bundle for candidate-200 support.
+- Admit valid memory in retrieval order using its final separate/assembled size,
+  then present selected sources chronologically. Deliver older excerpts as one
+  labelled, quoted user-context archive, retaining source coordinates and native
+  recent-message roles. Budget archive framing and time guidance as well as text.
+- Give native reranking source role and verified host-time context alongside the
+  original text. Embedding and English full-text inputs remain the original text.
+  New role/time keyword indexes require fresh owned collections or an explicit
+  rebuild of older experimental collections; there is no automatic migration.
+- Refine guidance for supported personalized answers and event/role matches.
+  Clarification remains possible without a blanket follow-up obligation. Host
+  timestamps are not event dates, and UTC alone does not establish local dates.
+
+### Scope and limitations
+
+- Remain experimental on pinned SillyTavern 1.19.0 and Chromium. Native response
+  formats/streaming, direct CORS, credential scope and explicit failure handling
+  remain unchanged. Automatic updates remain disabled.
+- Large embeddings, retrievalText enrichment, larger memory budgets and generated
+  summaries are not promoted. Historical benchmark results are bounded development
+  evidence, not a new release score or a guarantee of answer correctness.
+- See [release notes](docs/releases/0.5.0.md) for storage compatibility and the
+  separate [acceptance record](docs/releases/0.5.0-validation.md).
+
 ## [0.4.0] - 2026-10-13
 
 ### Added
