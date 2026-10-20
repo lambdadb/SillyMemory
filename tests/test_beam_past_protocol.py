@@ -5,8 +5,8 @@ from copy import deepcopy
 from pathlib import Path
 import unittest
 from tempfile import TemporaryDirectory
-from types import SimpleNamespace
-from unittest.mock import patch
+from types import ModuleType, SimpleNamespace
+from unittest.mock import Mock, patch
 
 spec = importlib.util.spec_from_file_location(
     "beam_past_protocol", Path(__file__).resolve().parents[1] / "scripts/beam-past-protocol.py")
@@ -34,6 +34,39 @@ class Response:
 
 
 class TransportPolicy(unittest.TestCase):
+    def test_new_lengths_keep_generation_policy_and_pin_distinct_dataset_and_shards(self):
+        reference = protocol.protocol_settings()
+        for split, conversations, questions, operations in [("500k", 35, 700, 20000), ("10m", 10, 200, 50000)]:
+            settings = protocol.protocol_settings(split)
+            for key in ["pastRevision", "model", "reasoningEffort", "transport", "recall", "differences"]:
+                self.assertEqual(settings[key], reference[key])
+            self.assertEqual(protocol.SPLITS[split]["conversations"], conversations)
+            self.assertEqual(protocol.SPLITS[split]["questions"], questions)
+            self.assertEqual(settings["bounds"]["memoryOperations"], operations)
+        self.assertEqual(protocol.protocol_settings("500k")["datasetRevision"], protocol.DATA_REVISION)
+        self.assertEqual(protocol.protocol_settings("10m")["datasetRevision"], "9b2096193fe74e2837e4713e483351e19817773c")
+        self.assertEqual(set(protocol.parquet_files("10m")), {"10m-00000-of-00002.parquet", "10m-00001-of-00002.parquet"})
+        self.assertNotIn("parquetSha256", protocol.protocol_settings("10m"))
+
+    def test_all_shards_are_verified_before_parsing_and_pinned_order_is_preserved(self):
+        with TemporaryDirectory() as directory:
+            root = Path(directory)
+            shards = {"first.parquet": b"first bytes", "second.parquet": b"second bytes"}
+            for name, data in shards.items():
+                (root / name).write_bytes(data)
+            fake = ModuleType("pyarrow")
+            fake.parquet = ModuleType("pyarrow.parquet")
+            fake.parquet.read_table = Mock(side_effect=lambda path: SimpleNamespace(to_pylist=lambda: [path.name]))
+            cohort = {"parquetShards": {name: protocol.sha(data) for name, data in shards.items()}}
+            with patch.dict(protocol.SPLITS, {"10m": cohort}), \
+                    patch.dict(protocol.sys.modules, {"pyarrow": fake, "pyarrow.parquet": fake.parquet}):
+                self.assertEqual(protocol.read_parquet_rows(root, "10m"), ["first.parquet", "second.parquet"])
+                fake.parquet.read_table.reset_mock()
+                (root / "second.parquet").write_bytes(b"corrupted")
+                with self.assertRaisesRegex(AssertionError, "second.parquet"):
+                    protocol.read_parquet_rows(root, "10m")
+                fake.parquet.read_table.assert_not_called()
+
     def test_length_extension_keeps_quality_policy_and_rejects_cross_split_locks(self):
         small, large = protocol.protocol_settings(), protocol.protocol_settings("1m")
         for key in ["pastRevision", "datasetRevision", "model", "reasoningEffort", "transport", "recall", "differences"]:

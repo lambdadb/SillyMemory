@@ -158,13 +158,14 @@ export function memoryOperationBudget(state, limit) {
 
 export function cohortSettings(input) {
     const split = input.split || '100k';
-    assert(['100k', '1m'].includes(split), 'Unsupported frozen split');
-    const conversations = split === '1m' ? 35 : 20, questions = conversations * 20;
+    const cohorts = { '100k': [20, 10000], '500k': [35, 20000], '1m': [35, 20000], '10m': [10, 50000] };
+    assert(Object.hasOwn(cohorts, split), 'Unsupported frozen split');
+    const [conversations, memoryOperations] = cohorts[split], questions = conversations * 20;
     assert.equal(input.conversations.length, conversations);
     assert.equal(new Set(input.conversations.map(c => c.id)).size, conversations);
     assert(input.conversations.every(c => c.questions.length === 20));
     assert.equal(new Set(input.conversations.flatMap(c => c.questions.map(q => q.id))).size, questions);
-    return { conversations, questions, memoryOperations: split === '1m' ? 20000 : 10000 };
+    return { conversations, questions, memoryOperations };
 }
 
 async function main() {

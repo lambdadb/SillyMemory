@@ -147,6 +147,7 @@ test('BEAM length selection requires the complete unique frozen cohort before pr
         id: String(c), questions: Array.from({ length: 20 }, (_, q) => ({ id: `${c}_${q}` })),
     })) };
     assert.deepEqual(cohortSettings(input), { conversations: 35, questions: 700, memoryOperations: 20000 });
+    assert.deepEqual(cohortSettings({ ...input, split: '500k' }), { conversations: 35, questions: 700, memoryOperations: 20000 });
     assert.throws(() => cohortSettings({ ...input, split: '100k' }));
     assert.throws(() => cohortSettings({ ...input, split: '10m' }));
     const duplicate = structuredClone(input);
@@ -154,6 +155,9 @@ test('BEAM length selection requires the complete unique frozen cohort before pr
     assert.throws(() => cohortSettings(duplicate));
     const smaller = { conversations: input.conversations.slice(0, 20) };
     assert.deepEqual(cohortSettings(smaller), { conversations: 20, questions: 400, memoryOperations: 10000 });
+    assert.deepEqual(cohortSettings({ split: '10m', conversations: input.conversations.slice(0, 10) }),
+        { conversations: 10, questions: 200, memoryOperations: 50000 });
+    assert.throws(() => cohortSettings({ ...input, split: '__proto__' }), /Unsupported/);
 });
 
 

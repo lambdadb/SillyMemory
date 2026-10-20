@@ -20,8 +20,15 @@ DATA_REVISION = "3205395e897e7318c7b094ef4e6047b9b82dbb03"
 PARQUET_SHA256 = "c0519be25907005ba873c927c50877471d550873039d96c041554d0075a78ace"
 SPLITS = {
     "100k": {"parquetSha256": PARQUET_SHA256, "conversations": 20, "questions": 400, "memoryOperations": 10000},
+    "500k": {"parquetSha256": "af05921c979355038e1761b7cde3d2dd713200dd3071b278de0200f6c7f30122",
+             "conversations": 35, "questions": 700, "memoryOperations": 20000},
     "1m": {"parquetSha256": "41b5acbbb55a586b1305514ef9d9fb03365d9b3331b598a1c2dd7603d93ef533",
            "conversations": 35, "questions": 700, "memoryOperations": 20000},
+    "10m": {"datasetRevision": "9b2096193fe74e2837e4713e483351e19817773c",
+            "parquetShards": {
+                "10m-00000-of-00002.parquet": "31d96fd47ec56221d202e68792f26c00e49467dd4b36ee105c36ebd19ef78ad5",
+                "10m-00001-of-00002.parquet": "a4f13fe25af51d57405ae41008689c31d1421377f3efde56a024b441deb2ee65",
+            }, "conversations": 10, "questions": 200, "memoryOperations": 50000},
 }
 MODEL = "gpt-5.6-luna"
 REPO = Path(__file__).resolve().parents[1]
@@ -31,9 +38,10 @@ def sha(data):
     return hashlib.sha256(data).hexdigest()
 
 
-def save(path, value):
+def save(path, value, *, compact=False):
     temporary = path.with_suffix(path.suffix + ".tmp")
-    temporary.write_text(json.dumps(value, ensure_ascii=False, indent=2) + "\n")
+    temporary.write_text(json.dumps(value, ensure_ascii=False, indent=None if compact else 2,
+                                    separators=(",", ":") if compact else None) + "\n")
     temporary.replace(path)
 
 
@@ -76,8 +84,10 @@ def model_reply(response, error_type):
 
 def protocol_settings(split="100k"):
     cohort = SPLITS[split]
-    return {"pastRevision": PAST_REVISION, "datasetRevision": DATA_REVISION,
-            "split": split, "parquetSha256": cohort["parquetSha256"],
+    parquet_lock = ({"parquetShards": cohort["parquetShards"]} if "parquetShards" in cohort
+                    else {"parquetSha256": cohort["parquetSha256"]})
+    return {"pastRevision": PAST_REVISION, "datasetRevision": cohort.get("datasetRevision", DATA_REVISION),
+            "split": split, **parquet_lock,
             "scope": f"{cohort['conversations']} conversations / {cohort['questions']} questions; one answer per question, no tuning or repeats",
             "model": MODEL, "reasoningEffort": "none", "transport": "direct OpenAI Chat Completions",
             "recall": {"limit": 100, "maxTokens": 8000,
@@ -92,13 +102,29 @@ def protocol_settings(split="100k"):
                             "Batch dates retain their source precision; no synthetic send-time labels"]}
 
 
+def parquet_files(split):
+    cohort = SPLITS[split]
+    return cohort.get("parquetShards", {f"{split}.parquet": cohort.get("parquetSha256")})
+
+
+def read_parquet_rows(root, split):
+    import pyarrow.parquet as parquet
+    rows = []
+    # Verify every shard before parsing any of them; retain pinned shard order.
+    for name, digest in parquet_files(split).items():
+        assert sha((root / name).read_bytes()) == digest, f"Parquet checksum differs: {name}"
+    for name in parquet_files(split):
+        rows.extend(parquet.read_table(root / name).to_pylist())
+    return rows
+
+
 def source_file_hashes(root, split="100k"):
     files = {str(path.relative_to(REPO)): sha(path.read_bytes()) for path in [
         Path(__file__), REPO / "scripts/beam-past-memory.mjs", REPO / "src/client.js",
         REPO / "src/chunking.js", REPO / "vendor/lambdadb.js",
     ]}
     # Run-local identities must survive an external --root or bundle relocation.
-    run_files = ["memory-input.json", f"{split}.parquet", f"dataset-cache/{split}.json", f"dataset-cache/{split}.revision"]
+    run_files = ["memory-input.json", *parquet_files(split), f"dataset-cache/{split}.json", f"dataset-cache/{split}.revision"]
     run_files += [f"tokenizer/node_modules/tiktoken/{name}" for name in
                   ["package.json", "tiktoken.cjs", "tiktoken_bg.cjs", "tiktoken_bg.wasm"]]
     files.update({f"run/{name}": sha((root / name).read_bytes()) for name in run_files})
@@ -107,16 +133,15 @@ def source_file_hashes(root, split="100k"):
 
 def prepare(root, dataset, upstream_files, split="100k"):
     assert not (root / "protocol-lock.json").exists(), "Do not overwrite an existing frozen run"
-    import pyarrow.parquet as parquet
     cohort = SPLITS[split]
-    assert sha((root / f"{split}.parquet").read_bytes()) == cohort["parquetSha256"]
-    rows = parquet.read_table(root / f"{split}.parquet").to_pylist()
+    rows = read_parquet_rows(root, split)
     conversations = [dataset.build_conversation(row) for row in rows]
     assert len(conversations) == cohort["conversations"] and sum(len(c.questions) for c in conversations) == cohort["questions"]
     cache = root / "dataset-cache"
     cache.mkdir(exist_ok=True)
     save(cache / f"{split}.json", rows)
-    (cache / f"{split}.revision").write_text(DATA_REVISION)
+    revision = cohort.get("datasetRevision", DATA_REVISION)
+    (cache / f"{split}.revision").write_text(revision)
     # The backend gets source input and literal questions, never categories,
     # rubrics, reference answers, or evaluation source annotations.
     memory_input = {"split": split, "conversations": [{
@@ -128,14 +153,16 @@ def prepare(root, dataset, upstream_files, split="100k"):
                        "asOfMicros": micros(datetime.fromisoformat(q.as_of))} for q in c.questions],
     } for c in conversations]}
     input_path = root / "memory-input.json"
-    save(input_path, memory_input)
+    # The pretty 10M input exceeds V8's single-string limit. Compact only the
+    # JSON envelope; preserve every source string and the complete cohort.
+    save(input_path, memory_input, compact=split == "10m")
     lock = {**protocol_settings(split), "upstreamFiles": upstream_files, "files": source_file_hashes(root, split)}
     save(root / "protocol-lock.json", lock)
     import verify
     problems = verify.verify_run(root / f"upstream/past/beam/results/{split}")
     assert not problems, problems
     published = json.loads((root / f"upstream/past/beam/results/{split}/summary.json").read_text())
-    assert published["datasetRevision"] == DATA_REVISION
+    assert published["datasetRevision"] == revision
     assert published["conversations"] == cohort["conversations"] and published["questions"] == cohort["questions"]
     save(root / "preflight.json", {"passed": True, "publishedScoreRecomputed": published["microAverage"],
                                    "split": split, "conversations": len(conversations), "questions": cohort["questions"]})

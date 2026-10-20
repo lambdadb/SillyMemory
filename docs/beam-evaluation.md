@@ -1,5 +1,214 @@
 # BEAM evaluation decisions
 
+## Complete fixed ranked-8K length grid (2026-10-21)
+
+**Complete the scale baseline and pause further optimization.** The two remaining
+full runs score **85.99/100 at 500K** and **80.64/100 at 10M**. Retain the original
+ranked-8K reference; no presentation candidate or product default is promoted.
+The four rows below use original full cohorts, not the 651-question source-frame
+subset. Scores are **partial-credit means**, including the pinned normalized
+event-ordering score, not binary accuracy.
+
+| History bucket | Conversations / questions | SillyMemory /100 | Historical Past /100 | Gap |
+| --- | ---: | ---: | ---: | ---: |
+| 100K | 20 /400 | **89.00** | 92.08 | −3.08 |
+| 500K | 35 /700 | **85.99** | 89.63 | −3.63 |
+| 1M | 35 /700 | **86.62** | 90.65 | −4.03 |
+| 10M | 10 /200 | **80.64** | 85.03 | −4.39 |
+
+Past's scores are recomputed from the pinned historical
+[public results](https://github.com/pastdotdev/benchmarks/tree/1faac1e70fa50d92d966904358be98bb1beca0c8/beam/results),
+not a newly matched vendor execution. Across **2,000 question occurrences** there
+are **1,999 distinct question texts**; only one text overlaps between 500K and
+1M, with zero overlap for other bucket pairs. Histories, references and task
+difficulty also differ. These are descriptive dataset buckets, **not a controlled
+causal length-effect curve**, an unseen holdout or a SOTA/parity result.
+
+### Ability comparison
+
+| Ability | 100K /40 each | 500K /70 each | 1M /70 each | 10M /20 each |
+| --- | ---: | ---: | ---: | ---: |
+| Abstention | 97.50 | 90.71 | 88.57 | 85.00 |
+| Contradiction resolution | 67.81 | 70.36 | 67.86 | 64.38 |
+| Event ordering | 100.00 | 100.00 | 99.37 | 98.89 |
+| Information extraction | 88.91 | 87.89 | 78.83 | 72.50 |
+| Instruction following | 95.62 | 87.14 | 95.30 | 93.75 |
+| Knowledge update | 83.12 | 76.19 | 75.71 | 80.00 |
+| Multi-session reasoning | 66.55 | 58.45 | 67.34 | 29.42 |
+| Preference following | 99.38 | 98.45 | 98.63 | 97.50 |
+| Summarization | 96.72 | 97.88 | 98.57 | 93.75 |
+| Temporal reasoning | 94.38 | 92.86 | 96.07 | 91.25 |
+
+Multi-session reasoning is especially difficult in the 10M cohort: SillyMemory
+**29.42**, historical Past **28.17**. That shared difficulty does not identify
+a causal retrieval failure or a benefit from widening retrieval. Contradiction,
+update and extraction weaknesses and previously documented source/reference/judge
+ambiguities remain; no labels are corrected and no follow-up tuning is performed.
+Annotation-derived generation hints remain part of this public protocol, so these
+scores do not establish annotation-blind product behavior.
+
+### Answer tokens, model-rate proxies and construction
+
+| Bucket | Total answer input | Median answer input | Answer output | Judge input | All model input |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| 100K | 5,098,292 | 12,597.5 | 100,717 | 563,836 | 5,662,128 |
+| 500K | 9,188,001 | 12,757 | 198,546 | 1,329,189 | 10,517,190 |
+| 1M | 9,096,396 | 12,619 | 221,530 | 1,591,124 | 10,687,520 |
+| 10M | 2,728,229 | 13,420 | 52,560 | 306,829 | 3,035,058 |
+
+Mean answer input is **12,745.73 /13,125.72 /12,994.85 /13,641.15** tokens. The
+fixed source-only estimate keeps answer inputs in a similar observed range;
+metadata and prompt overhead mean this is not an 8K cap on final model input.
+Different question counts explain why 10M's total answer input is lower.
+
+| Bucket | Answer USD | Judge USD | Construction + query embedding proxy USD | Answer + embedding proxy USD |
+| --- | ---: | ---: | ---: | ---: |
+| 100K | 1.395373 | 0.177641 | 0.052111 | 1.447484 |
+| 500K | 2.535150 | 0.403336 | 0.351818 | 2.886969 |
+| 1M | 2.539830 | 0.486461 | 0.719194 | 3.259024 |
+| 10M | 0.745099 | 0.097004 | 2.158827 | 2.903926 |
+
+These use the same frozen historical comparison rates: input $0.20/M, cache reads
+$0.02/M, cache writes $0.25/M, output $1.20/M, and embeddings $0.02/M. Cache
+writes are subsets of input. They are **not invoices or complete system costs**:
+managed-service margins, DB, search, native reranking and storage charges are
+excluded. Embedding inputs are independently counted text, not provider receipts;
+global/service cache reuse and cold-cache independence are unmeasured. Judge
+costs are evaluation overhead, separate from production answer costs. The two
+historical 100K setup calls (79 input /22 output tokens) are outside this table.
+
+| Bucket | Source chunks | Construction embedding tokens | Literal-query embedding tokens | Memory HTTP requests | Deleted collections |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| 100K | 21,119 | 2,597,266 | 8,271 | 1,152 | 20 |
+| 500K | 134,198 | 17,576,375 | 14,546 | 4,940 | 35 |
+| 1M | 278,332 | 35,944,747 | 14,949 | 9,259 | 35 |
+| 10M | 786,869 | 107,936,429 | 4,908 | 23,868 | 10 |
+
+No generative memory-construction calls occur. Memory-request totals include
+benchmark strong-fetch audits and owned cleanup, not just production ingestion
+or search. All **100** owned collections across the four original runs have
+verified 404 absence. Provider request durations remain available in raw receipts;
+no SillyTavern host latency, peak indexing throughput or deployment claim follows.
+
+### New-run verification and decision
+
+The new **900 first answers** use **3,486 HTTP-200 model calls** (500K: 2,658;
+10M: 828), with no model transport retries, failed questions/verdicts, empty
+answers or truncated outputs. All **28,808** memory requests succeed without
+unexpected errors/retries; expected cleanup 404s confirm absence. The original
+100K/1M archives, answers and scores remain unchanged.
+
+The frozen maintained verifier reconstructs all 900 contexts from original source
+and saved queries, validates exact roles/offsets/as-of eligibility and budgets,
+binds saved answer inputs and recomputes scoring. Offline transport replay feeds
+every recorded judge response through the original scorer and reproduces all
+900 score/verdict records exactly, with no model call. Native prompts, strict
+schemas/settings and usage sums verify separately. This is retained-source and
+arithmetic consistency, not independent judge calibration or receipt authentication.
+
+One local completion-helper launch selected base Python by resolving a venv
+symlink, then failed to import `httpx` **before any model call or scored directory**.
+Preserve the failure/producer under `preparation-history/python-launch/`; retain
+the venv launcher path and check dependencies before starting. No retrieval or
+answer was repeated. Local checks pass **395 Node tests**, **13 Python policy
+tests**, runtime/release syntax and SDK validation. No host/browser integration
+or deployment is performed. This closes the authorized scale baseline with
+further optimization paused.
+
+### Evidence retention and summary replay
+
+The new frozen producer is repository base
+`e4e22d0100c8f82d49dd3a39e50df1d78c9627d5` plus the retained pre-call patch;
+each run also includes the exact executed `source-runtime/` tree, upstream
+revision, inputs/settings, original notices and dependency lock. No raw run,
+scratch producer, local report or large fixture is committed to Git.
+
+All archives below are under
+`/Users/steven/Dev/sillymemory/artifacts/archive/`:
+
+| Archive | Bytes | Verified members | SHA-256 |
+| --- | ---: | ---: | --- |
+| `beam-past-500k-v1.tar.gz` | 279,383,384 | 7,842 | `2422acee82048921391457ef7535cd88e942c78a1856055225d794c4b5e143ed` |
+| `beam-past-10m-v1.tar.gz` | 1,096,834,072 | 24,889 | `8132339c03bda171615135dec3a33fbb0fe075e783cf4251a6caed33cdb992d6` |
+| `beam-length-completion-v1.tar.gz` | 142,390 | 53 | `4ddb03b376a768e552c4ecbe36b0e67646b783affd66d868dc2c6fa3e781c5c1` |
+
+Every member is read back and size/hash-verified, with zero configured-secret
+matches. Both new active manifests verify; original 100K/1M archive checksums
+are unchanged. The per-run `RESTORE.md` explains offline source/native/scoring
+verification. The small summary archive retains copied original and new
+analyses, published Past summaries, exact question texts, overlap arithmetic,
+the plan and report producer. In a fresh directory, `python3 summarize.py`
+reproduces `summary.json` and `report.html` byte-for-byte using only retained JSON
+and the Python standard library, with no provider call or worktree dependency.
+
+The active report is
+`/Users/steven/Dev/sillymemory/artifacts/beam-length-completion-v1/report.html`.
+Detailed active runs remain under the roots recorded below. These archives are
+**local-only**, unavailable in a fresh clone and without an independent remote
+backup. Checksums establish byte consistency, not provider authenticity or an
+independent answer-quality audit. No unresolved owned remote resources remain.
+
+### Frozen scope and source provenance
+
+Pause further quality optimization. The user authorized the remaining **500K
+(35 conversations /700 questions)** and **10M (10 /200)** full runs, then one
+four-length summary with the original 100K and 1M results. Retain Small managed
+embeddings, original 800-character chunks, literal Query1/k200, native Jev
+candidate 200/final 100, strong source reads, ranked **8,000 estimated source
+tokens**, pinned Past/ExaBase answer/judge instructions and annotation hints,
+`gpt-5.6-luna`/reasoning `none`, and direct OpenAI transport. None of the three
+deferred presentation candidates is used. The old GPT-4.1/4K 10M results remain
+a separate protocol and do not populate this table.
+
+The runner now pins the 500K Parquet at BEAM revision
+`3205395e897e7318c7b094ef4e6047b9b82dbb03`, SHA-256
+`af05921c979355038e1761b7cde3d2dd713200dd3071b278de0200f6c7f30122`.
+10M uses BEAM-10M revision `9b2096193fe74e2837e4713e483351e19817773c` and two
+ordered shards, verified together before either is parsed:
+
+- `10m-00000-of-00002.parquet`:
+  `31d96fd47ec56221d202e68792f26c00e49467dd4b36ee105c36ebd19ef78ad5`.
+- `10m-00001-of-00002.parquet`:
+  `a4f13fe25af51d57405ae41008689c31d1421377f3efde56a024b441deb2ee65`.
+
+The complete original pretty 10M input exceeds V8's single-string limit
+(**549,136,780 bytes**). Compact only its JSON envelope to **519,696,042 bytes**;
+parsed objects compare equal, with every source string and question preserved.
+Retain the pre-paid original input/lock and exact producer under
+`preparation-history/pretty-input/`. Historical 100K/1M policy values and all
+answer/scoring/source-verification function bodies remain unchanged. The harness
+extension changes supported split metadata, pinned shard reading and input-file
+serialization, not retrieval or answer quality policy. Node uses an 8GB heap for
+these runs; no source or recent-dialogue truncation is introduced.
+
+Offline preflight verifies the published Past score arithmetic (**89.63** for
+500K, **85.03** for 10M) and all input/query constraints. 500K has **134,198
+chunks /17,576,375** independently counted embedding tokens and **4,940** normal
+memory requests; 10M has **786,869 /107,936,429** and **23,868**. Frozen $0.02/M
+embedding-rate proxies are **$0.351528 /$2.158729**, excluding query embeddings,
+managed-service margins, DB, search, reranking and storage. These are estimates,
+not provider receipts or invoices.
+
+Freeze **900 new first answers**, **20,000 aggregate model attempts**, a
+**$50 conservative aggregate model reservation ceiling** ($25 per split), and
+**70,000 memory operations** (20,000 /50,000, each including its 51-request owned
+cleanup reserve). Each live recall/score phase has an eight-hour bound. Stop on
+bounds/account refusal, retain incomplete evidence and verify owned cleanup.
+No tuning, favorable answer repeats, new prompt track or default promotion.
+Complete both runs, verify exact source/answer/scoring/usage receipts, and report
+the four original full cohorts, abilities, construction/search counts, generation
+tokens and modeled costs, or the precise external blocker. Length cohorts and
+historical vendor runs are not a controlled causal length intervention.
+
+The aggregate plan SHA-256 is
+`80f64f4a512d651f6026cf3068f4b5eb8acc4267ae2864bc956058630b85e390`.
+Ignored roots are `/Users/steven/Dev/sillymemory/artifacts/beam-past-500k-v1/`
+and `/Users/steven/Dev/sillymemory/artifacts/beam-past-10m-v1/`; frozen runtime
+snapshots, base revision/patches and original notices are retained before calls.
+Keep the harness, both runs or concrete blockers, final comparison and cleanup
+in the existing BEAM PR. The product decision is completing the evaluated scale
+baseline, not adopting another improvement candidate.
+
 ## Verbatim source-frame follow-up (2026-10-21)
 
 **Defer adoption and retain ranked 8K.** Fresh answers on **651 paired questions**
