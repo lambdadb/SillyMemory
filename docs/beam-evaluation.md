@@ -152,8 +152,11 @@ is promoted by this length run.
 
 ### 1M validation and retention
 
-`npm test` passes **393 tests**; the Python policy suite passes **11**.
-Runtime/release syntax and SDK checks pass. The documented offline `verify` phase
+The producing tree passes **393** `npm test` cases; after integrating the latest
+`develop` (including PR #93), the combined suite passes **394**. The Python policy
+suite passes **11**. Runtime/release syntax and SDK checks pass at the latest
+head. All frozen producer/input/tokenizer hashes remain identical after that
+integration; no paid re-evaluation was performed. The offline `verify` phase
 reconstructs all **700** contexts from retained source and raw retrieval receipts,
 checks their linked answer contexts and recomputes score arithmetic. Independent
 analysis binds native answer/judge prompts and schemas to recorded calls and
