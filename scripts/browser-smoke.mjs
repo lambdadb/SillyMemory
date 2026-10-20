@@ -74,7 +74,7 @@ const remote = createServer({ key: await readFile(key), cert: await readFile(cer
         const filter = knn?.filter || body.query;
         if (body.query.bayesian) {
             assert.deepEqual(body.query.bayesian[1].bool[0], { ...filter, occur: 'filter' });
-            assert.equal(knn.k, 100); assert.equal(body.size, 50); assert.equal(body.rerank.candidateSize, 100);
+            assert.equal(knn.k, 200); assert.equal(body.size, 50); assert.equal(body.rerank.candidateSize, 200);
         }
         const match = /^owner:([a-f0-9]+) AND scope:([a-f0-9]+)(?: AND message:\[0 TO (\d+)\])?$/.exec(filter.queryString?.query || '');
         assert.ok(match, 'owner and scope query filters required');
@@ -244,8 +244,8 @@ try {
         // Exercise the actual host interceptor dispatcher, including manifest order.
         const { runGenerationInterceptors } = await import('/scripts/extensions.js');
         aborted = await runGenerationInterceptors(chat, 4096, 'normal');
-        const rendered = chat.filter(m => m.mes.startsWith('[Past conversation excerpt:')).map(m => m.mes).join('\n');
-        const result = { before, after: JSON.stringify(c.chat), chat, aborted, rendered, preparation: document.querySelector('[data-sm="status"]').textContent, renderedTokens: await c.getTokenCountAsync(rendered), macroValue: c.chatMetadata.variables?.sillymemory_test, injection: rendered, inspection: document.querySelector('[data-sm="inspection"]').textContent };
+        const rendered = chat.filter(m => m.mes.startsWith('[Recalled conversation excerpts]')).map(m => m.mes).join('\n');
+        const result = { before, after: JSON.stringify(c.chat), chat, aborted, rendered, guidance: c.extensionPrompts.sillymemory?.value || '', preparation: document.querySelector('[data-sm="status"]').textContent, renderedTokens: await c.getTokenCountAsync(rendered), macroValue: c.chatMetadata.variables?.sillymemory_test, injection: rendered, inspection: document.querySelector('[data-sm="inspection"]').textContent };
         // This suite calls only the interceptor dispatcher. Emulate its completion
         // boundary to release prompt ownership; full packing/dispatch is tested
         // by prompt-delivery-smoke.mjs, not by this synthetic final event.
@@ -254,15 +254,22 @@ try {
     });
     const result = await prompt();
     const latestSearch = calls.findLast(call => call.body?.query?.bayesian)?.body;
-    check('one query=2 request shares the complete preceding reply and question with both search legs and reranking',
-        latestSearch?.query.bayesian[0].knn.queryText === 'Assistant: Synthetic passage 5: the blue compass is beneath the cedar tree.\n\nUser: Synthetic passage 6: the blue compass is beneath the cedar tree.'
+    check('one current-message request shares the active input with both search legs and reranking',
+        latestSearch?.query.bayesian[0].knn.queryText === 'User: Synthetic passage 6: the blue compass is beneath the cedar tree.'
         && latestSearch.rerank.queryText === latestSearch.query.bayesian[0].knn.queryText);
     const archive = [...collections.values()][0].branches.get(await page.evaluate(() => `chat_${SillyTavern.getContext().chatMetadata.sillymemory.id}`));
     check('ordinary native synchronization archives one complete pair outside the retained recent exchanges',
         JSON.stringify([...archive.values()].map(doc => doc.message).sort((a, b) => a - b)) === '[0,1]');
-    check('real host dispatcher injects bounded memory', Boolean(result.injection) && /\d+ \/ 250 tokens/.test(result.inspection));
-    check('native recalled excerpts keep macros literal within budget', result.rendered.includes('｛｛char｝｝') && result.rendered.includes('＜USER＞') && result.macroValue === undefined && result.renderedTokens <= 250);
-    check('a completed reply retains six messages without splitting a pair and leaves persisted source unchanged', JSON.stringify(result.chat.filter(m => !m.mes.startsWith('[Past conversation excerpt:')).map(m => m.index)) === '[2,3,4,5,6,7]' && result.chat.at(-1).mes.includes('passage 7') && result.before === result.after);
+    check('a tight allocation succeeds without partially injecting a dated source', !result.aborted && !result.injection && /Prepared 0 source passages/.test(result.preparation) && /\d+ \/ 250 tokens/.test(result.inspection));
+    check('small memory stays inside its budget with sent guidance', result.renderedTokens <= 250);
+    // The longer macro-bearing source can be skipped at 250 once the shared
+    // time explanation is counted. Test literal delivery when that whole source
+    // fits, independently of the small-budget admission assertion above.
+    await field('budget').fill('400'); await field('budget').dispatchEvent('change');
+    const macroResult = await prompt();
+    check('native recalled excerpts keep macros literal within budget', macroResult.rendered.includes('｛｛char｝｝') && macroResult.rendered.includes('＜USER＞') && macroResult.macroValue === undefined && macroResult.renderedTokens <= 400);
+    await field('budget').fill('400'); await field('budget').dispatchEvent('change');
+    check('a completed reply retains six messages without splitting a pair and leaves persisted source unchanged', JSON.stringify(result.chat.filter(m => !m.mes.startsWith('[Recalled conversation excerpts]')).map(m => m.index)) === '[2,3,4,5,6,7]' && result.chat.at(-1).mes.includes('passage 7') && result.before === result.after);
     // Ineligible active inputs still preserve recent dialogue. The actual native
     // hook is exercised with attachment/media/tool metadata, without uploading files.
     const originalSource = await page.evaluate(() => structuredClone(SillyTavern.getContext().chat));
@@ -291,7 +298,7 @@ try {
         }, { originalSource, extra });
         const special = await prompt();
         check('an ineligible active input preserves recent source without splitting an eligible pair', !special.aborted
-            && JSON.stringify(special.chat.filter(m => !m.mes.startsWith('[Past conversation excerpt:')).map(m => m.index)) === '[2,3,4,5,6,7,8]'
+            && JSON.stringify(special.chat.filter(m => !m.mes.startsWith('[Recalled conversation excerpts]')).map(m => m.index)) === '[2,3,4,5,6,7,8]'
             && special.before === special.after);
     }
     await page.evaluate(async originalSource => {
@@ -307,14 +314,15 @@ try {
     });
     const assembled = await prompt();
     const preparedCounts = /Prepared (\d+) source passages in (\d+) memory excerpts/.exec(assembled.preparation);
-    const assembledMessage = assembled.chat.find(m => m.mes.startsWith('[Past conversation excerpt:') && m.index === 0);
+    const assembledMessage = assembled.chat.find(m => m.mes.startsWith('[Recalled conversation excerpts]') && m.mes.includes('message 1, passages 1-'));
     check('real host dispatcher assembles same-message chunks with their source and one shared header',
-        !assembled.aborted && preparedCounts && Number(preparedCounts[1]) > Number(preparedCounts[2]) && assembledMessage?.mes.includes('passages 1-') && assembledMessage.mes.endsWith(assemblySource.text)
+        !assembled.aborted && preparedCounts && Number(preparedCounts[1]) > Number(preparedCounts[2]) && assembledMessage?.mes.includes('passages 1-') && assembledMessage.mes.includes(assemblySource.text)
         && assembled.renderedTokens <= 1024 && assembled.before === assembled.after);
     await page.evaluate(async original => {
         const c = SillyTavern.getContext(); c.chat[0].mes = original; await c.eventSource.emit(c.eventTypes.MESSAGE_UPDATED, 0);
     }, assemblySource.original);
-    await field('budget').fill('250'); await field('budget').dispatchEvent('change');
+    // Keep a complete dated source available for the cancellation/race assertions.
+    await field('budget').fill('400'); await field('budget').dispatchEvent('change');
     await waitStatus('synchronized');
     delayedQuery = 400;
     const olderGeneration = prompt();
@@ -458,13 +466,13 @@ try {
     });
     await field('enabled').check(); await waitStatus('synchronized');
     const timed = await prompt();
-    check('host timestamp reaches interceptor with explicit non-event attribution', timed.chat.some(m => m.mes.includes('2024-02-29T12:34:56.123Z') && m.mes.includes('not story/event date')));
+    check('host timestamp reaches interceptor with explicit non-event attribution', timed.chat.some(m => m.mes.includes('sent: 2024-02-29T12:34:56.123Z')) && timed.guidance.includes('not necessarily event time') && !timed.chat.some(m => m.mes.includes('not necessarily event time')));
     const beforeTimestampEdit = calls.filter(call => call.path.endsWith('/upsert')).length;
     await page.evaluate(async () => { const c = SillyTavern.getContext(); c.chat[0].send_date = '2024-03-01T00:00:00.000Z'; await c.saveChat(); });
     const changedTime = await prompt();
     check('timestamp-only edit replaces stale remote provenance', changedTime.chat.some(m => m.mes.includes('2024-03-01T00:00:00.000Z')) && !JSON.stringify(changedTime.chat).includes('2024-02-29T12:34:56.123Z') && calls.filter(call => call.path.endsWith('/upsert')).length > beforeTimestampEdit);
     const timestampSource = await page.evaluate(() => SillyTavern.getContext().chat.map(m => m.mes));
-    check('time labels never enter source or embedding text', timestampSource.every(text => !text.includes('[Conversation timestamp:')) && [...collections.values()].every(c => [...c.branches.values()].every(branch => [...branch.values()].every(doc => !doc.text.includes('[Conversation timestamp:')))));
+    check('time labels never enter source or embedding text', timestampSource.every(text => !text.includes(', sent:')) && [...collections.values()].every(c => [...c.branches.values()].every(branch => [...branch.values()].every(doc => !doc.text.includes(', sent:')))));
     check('current host timestamp is stored on indexed source chunks', [...collections.values()].some(c => [...c.branches.values()].some(branch => [...branch.values()].some(doc => doc.conversationTimestamp === '2024-03-01T00:00:00.000Z' && doc.timestampSource === 'host_message'))));
     // Restore the ordinary test budget before existing fault/cleanup scenarios.
     await field('budget').fill('400'); await field('budget').dispatchEvent('change');

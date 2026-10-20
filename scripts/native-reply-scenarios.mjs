@@ -1,4 +1,12 @@
 // Pinned host with controlled plain completions; not answer-model quality evidence.
+const hasAdoptedGuidance = text => [
+    'build on relevant supported experiences and preferences',
+    'Do not merge different events or roles',
+    'state what can and cannot be established without inventing facts',
+].every(part => text.includes(part))
+    && !text.includes('ask one brief clarifying question')
+    && !text.includes('request only the additional context needed to help');
+
 export async function runNativeReplyScenarios({ page, field, waitStatus, check, calls }) {
     const requests = []; let reply = '';
     await page.route('**/api/backends/chat-completions/status', route => route.fulfill({ json: { data: [{ id: 'native-reply-fixture' }] } }));
@@ -38,15 +46,15 @@ export async function runNativeReplyScenarios({ page, field, waitStatus, check, 
     };
     await generate('Where was it?', 'Which visit do you mean?');
     check('no schema-support setting or schema request is added', await field('clarification').count() === 0 && !requests.at(-1).response_format && !requests.at(-1).json_schema);
-    check('natural memory guidance reaches native generation', requests.at(-1).messages.some(m => m.role === 'system' && m.content.includes('ask one brief clarifying question') && m.content.includes('state what can and cannot be established')));
+    check('natural memory guidance reaches native generation', requests.at(-1).messages.some(m => m.role === 'system' && hasAdoptedGuidance(m.content)));
     await generate('My Friday visit.', 'The city museum.', { stream: true });
     const query = calls.findLast(c => c.body?.query?.bayesian)?.body.query.bayesian[0].knn.queryText;
-    check('follow-up search uses only the previous natural reply and latest input', query === 'Assistant: Which visit do you mean?\n\nUser: My Friday visit.');
+    check('follow-up search uses only the latest input', query === 'User: My Friday visit.');
     const observations = await page.evaluate(() => nativeStreamObservations);
     check('stream text is visible while generation is active without a hidden wrapper', observations.some(x => x.generating && x.visible && x.text) && observations.every(x => !x.hiddenWrapper));
     await generate('What is my account number?', 'The available conversation does not establish your account number.');
     await generate('Forget that. What is 7 times 8?', '56');
-    check('topic changes use query=2 without a pending root', calls.findLast(c => c.body?.query?.bayesian)?.body.query.bayesian[0].knn.queryText === 'Assistant: The available conversation does not establish your account number.\n\nUser: Forget that. What is 7 times 8?');
+    check('topic changes search only the current input', calls.findLast(c => c.body?.query?.bayesian)?.body.query.bayesian[0].knn.queryText === 'User: Forget that. What is 7 times 8?');
     await generate('Return this JSON literally.', '{"reply":"This is literal JSON requested by the user."}');
     check('legitimate JSON remains native authored text', await page.evaluate(() => SillyTavern.getContext().chat.at(-1).mes.startsWith('{')));
     await generate('', 'A replacement native reply.', { type: 'regenerate', stream: true });
@@ -113,7 +121,7 @@ export async function runNativeReplyScenarios({ page, field, waitStatus, check, 
         return { answer: c.chat.at(-1).mes, before, source: c.chat.slice(0, -2).map(m => m.mes) };
     });
     check('text completion dispatches without a required reply schema', textRequests.length === 1 && !textRequests[0].json_schema && textResult.answer === 'A plain text completion.');
-    check('text completion contains natural guidance and preserves source', textRequests[0].prompt.includes('ask one brief clarifying question') && JSON.stringify(textResult.before) === JSON.stringify(textResult.source));
+    check('text completion contains natural guidance and preserves source', hasAdoptedGuidance(textRequests[0].prompt) && JSON.stringify(textResult.before) === JSON.stringify(textResult.source));
     check('flattened text prompt verification is explicitly unavailable', (await field('delivery').textContent()).includes('verification unavailable'));
     await page.unroute('**/api/backends/text-completions/generate'); await page.unroute('**/api/backends/text-completions/status');
     await page.unroute('**/api/backends/chat-completions/generate'); await page.unroute('**/api/backends/chat-completions/status');

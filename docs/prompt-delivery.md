@@ -2,17 +2,20 @@
 
 > Historical evidence: detailed runs and retired tools are preserved at the
 > [pre-cleanup revision](https://github.com/lambdadb/SillyMemory/tree/94b9bc04cf664587ae4c96b7739c22af87897b6b).
-> Reproduction commands below require their recorded producer; see
-> [evidence retention](evidence-retention.md) for archives and recovery.
+> Historical reports require their recorded producer; commands below run the
+> maintained runner against current code. See [evidence retention](evidence-retention.md)
+> for archives and recovery.
 
 ## User-visible change
 
 SillyMemory now checks the host's assembled Chat Completion prompt before a
 generation request proceeds. It no longer describes prepared memory as confirmed
-delivery. The panel reports how many memory passages and active input messages are
-verified, and the inspection view separates included memory from missing/changed
-memory. This result remains visible when background synchronization updates the
-separate operation-status line.
+delivery. The panel reports how many memory archive blocks and protected recent
+messages are verified. With selected memory, `1/1` means the complete quoted
+archive passed verification; the prepared source-passage count is separate. The
+inspection view separates included memory from missing/changed memory. This result
+remains visible when background synchronization updates the separate operation-status
+line.
 
 **Stop on missing context** defaults to on, including for existing installations.
 When verifiable content is missing or changed, SillyMemory calls the host's
@@ -35,17 +38,24 @@ LambdaDB credentials remain the product path.
 
 ## Contract and limits
 
-The adapter captures expected native roles and full text after retrieval, including
-the active input and memory guidance even when no memory fits. It consumes the
-non-dry-run `GENERATE_AFTER_DATA` event once for that generation, checks the
+The adapter captures the prepared messages' expected roles and full text after
+retrieval. Selected older excerpts form one user-role archive, beginning with
+`[Recalled conversation excerpts]`, at the latest selected source index. Original
+source roles, speakers, message/passage coordinates and available sent-time labels
+remain embedded in the quoted text; they are not separate live conversation roles.
+Protected recent messages keep their native roles and order. Expected content also
+includes the active input and memory guidance even when no memory fits. It consumes
+the non-dry-run `GENERATE_AFTER_DATA` event once for that generation, checks the
 captured chat/scope revision, and compares against `data.prompt` for Chat
 Completion. It uses the host's cancellation API because the host catches event
 listener exceptions. No host method is patched and no prompt is repacked.
 
-Matching requires the original user/assistant role and the entire expected text
-inside a single prompt message, bounded by message edges or newlines. The
-known source speaker’s `name: ` prefix and line-separated injections are allowed;
-arbitrary interior substrings (for example `OK` inside `BOOK A TRIP`) are not.
+Matching requires the prepared carrier role and the entire expected text inside
+a single prompt message, bounded by message edges or newlines. For memory, this
+means the complete archive in one user message; losing one embedded excerpt or
+changing the carrier role fails the check. Recent turns require their original
+user/assistant roles. The known carrier speaker’s `name: ` prefix and
+line-separated injections are allowed; arbitrary interior substrings (for example `OK` inside `BOOK A TRIP`) are not.
 Each prompt message can satisfy at most one expected message, so one duplicate
 cannot stand for two turns. CRLF is normalized. Text parts of multipart messages
 can be checked; this does not verify media delivery.
@@ -75,13 +85,20 @@ or key is persisted by this feature.
 
 ## Verification and reproduction
 
-The synthetic regression runner uses actual pinned SillyTavern 1.19.0,
-Chromium, the manifest loader, normal generation and built-in proxy, with local
-LambdaDB/completion fixtures. It reads no `.env.local` and calls no real embedding
-or generation provider. The [report](https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/prompt-delivery-v1.json) binds runtime,
+The maintained `scripts/prompt-delivery-smoke.mjs` runner uses actual pinned
+SillyTavern 1.19.0, Chromium, the manifest loader and normal generation, with local
+LambdaDB/completion fixtures over the current direct-CORS path. It reads no
+`.env.local` and calls no real embedding or generation provider. Current coverage
+includes complete-archive delivery/loss, recent-five retention, stop/warn behavior
+and packing/assembly; the [latest retained validation](prompt-capacity-evaluation.md#retired-tool-preservation)
+records 18 delivery cases plus packing/assembly.
+
+The historical reports below instead used the built-in proxy, separate recalled
+messages and four recent messages. Their counts and key-handling results describe
+that producer, not the current archive contract. The [report](https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/prompt-delivery-v1.json) binds runtime,
 UI, runner and pinned host source hashes before/after execution.
 
-The checks cover:
+The historical checks cover:
 
 - All three selected passages and four recent messages present in the outgoing
   short prompt, with accurate panel counts.

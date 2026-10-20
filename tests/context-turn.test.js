@@ -29,11 +29,11 @@ test('fixed 62-case corpus keeps every target old and freezes fourteen new shape
     assert.equal(contextTurnDecision([]),null);
 });
 
-test('runtime keeps both complete query messages and leaves context limits to the client', async () => {
+test('runtime excludes arbitrarily long preceding replies from current-message search', async () => {
     const { retrievalQueries, RETRIEVAL_POLICY } = await import('../src/memory.js');
-    assert.equal(RETRIEVAL_POLICY, 'recent-two-native-reply-v1');
+    assert.equal(RETRIEVAL_POLICY, 'current-message-native-reply-v1');
     const messages = [{ user: false, text: 'Context '.repeat(10000) }, { user: true, text: 'Where is the compass?' }];
-    assert.deepEqual(retrievalQueries({ messages }), [`Assistant: ${messages[0].text.trim()}\n\nUser: Where is the compass?`]);
+    assert.deepEqual(retrievalQueries({ messages }), ['User: Where is the compass?']);
 });
 
 test('generation amendment preserves new cases and adds the two historical boundary controls before execution', async () => {
@@ -64,6 +64,6 @@ test('file, media and tool turns cannot become the current query anchor', async 
     const { capture, retrievalQueries } = await import('../src/memory.js');
     for (const extra of [{file:{name:'synthetic.txt'}}, {media:[{url:'synthetic'}]}, {tool_invocations:[{name:'synthetic'}]}]) {
         const snapshot = capture({chat:[{mes:'Plain question',is_user:true},{mes:'Special reply',is_user:false,extra}],characterId:0,characters:[{avatar:'test.png'}],getCurrentChatId:()=> 'test'});
-        for (const type of ['normal','swipe','regenerate','continue']) assert.deepEqual(retrievalQueries(snapshot,type), ['Plain question']);
+        for (const type of ['normal','swipe','regenerate','continue']) assert.deepEqual(retrievalQueries(snapshot,type), ['User: Plain question']);
     }
 });

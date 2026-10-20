@@ -2,8 +2,38 @@
 
 Review date: 2026-10-01. This is a source-based selection and experiment-design
 record, not a completed benchmark, frozen run protocol, or claim of SillyMemory
-superiority. No external benchmark adapter or new paid run is delivered here.
+superiority. This opening review did not deliver an adapter or paid run; later
+execution is linked in the current sequence below.
 It complements the [evaluation follow-ups](evaluation-and-device-followups.md).
+
+The later [LongMemEval and BEAM reference](memory-benchmark-reference.md) reviews
+published results and evaluation conditions as of October 18, including answer
+assistance, scoring differences and implications after our completed S comparison.
+Its next-suite recommendation was a selection decision, not the later frozen paid protocol.
+
+## Evaluation sequence (updated 2026-10-19)
+
+The [completed BEAM report](beam-evaluation.md) now covers 128K/1M/10M baselines
+and bounded follow-ups closed by PR #84. The subsequent
+[Small/Large 10M screen](beam-large-embedding-evaluation.md) completed all 40
+development questions and deferred adoption because concrete gains coexist with
+losses and higher cost. The conditional remaining 160 and fresh answers were not run.
+
+The historical selection review below is preserved. The October 18 decision was
+to close LongMemEval-S and move to **BEAM**, excluding LongMemEval-M. The initial
+protocol froze the product policy before BEAM results and excluded earlier
+model/retrieval grids. It started with all 20 conversations and 400 probes in the official
+`chats/100K` directory (called 128K in its README), pinned to upstream commit
+`b2da22eac88bb0874c64665f13457eb99835774a`, before expanding to larger buckets. BEAM's synthetic
+conversations do not replace real character-chat UX validation.
+
+Preserve its per-item 0/0.5/1 rubric and default GPT-4.1-mini judge for the first
+baseline. LongMemEval's Jev Yes/No policy does not transfer unchanged to partial
+credit. Report uniform rubric means separately from the upstream reporting script's
+mixed event-ordering metric. Source evidence coverage, final answers, costs and
+latency remain separate. Do not infer sent timestamps from BEAM's `time_anchor`.
+The [completed baseline](beam-evaluation.md) records both scoring paths, source
+checks, costs, latency and cleanup.
 
 ## Questions the next evaluation should answer
 

@@ -4,6 +4,10 @@
 > [pre-cleanup revision](https://github.com/lambdadb/SillyMemory/tree/94b9bc04cf664587ae4c96b7739c22af87897b6b).
 > Reproduction commands below require their recorded producer; see
 > [evidence retention](evidence-retention.md) for archives and recovery.
+> The runner/inspector are no longer maintained in the active tree. Use
+> [current final-delivery checks](prompt-delivery.md#verification-and-reproduction) for quoted archive
+> accounting, recent-five protection and overflow stop/warn behavior. The findings
+> and settings below describe the historical product, not today's defaults.
 
 ## Finding
 

@@ -7,9 +7,12 @@ messages in order. It works as a SillyTavern UI extension, with managed embeddin
 and reranking provided by LambdaDB. No separate embedding-provider key, server
 plugin, or build step is needed.
 
-[**0.4.0 — experimental pre-release**](https://github.com/lambdadb/SillyMemory/releases/tag/v0.4.0)
-is available on `main`. Start with a test chat; broader model/browser compatibility
-and answer quality are still being evaluated.
+**Experimental pre-release.** Start with a test chat; broader model/browser
+compatibility and answer quality are still being evaluated. See the
+[0.5.0 release boundary](docs/releases/0.5.0.md) for prepared changes and
+[GitHub Releases](https://github.com/lambdadb/SillyMemory/releases) for published
+versions. `main` is the public installation baseline; dated development notes
+alone do not establish publication.
 
 ## Before you start
 
@@ -63,8 +66,9 @@ No npm commands, proxy setting, or SillyTavern server restart are needed.
 
 Chat normally. SillyMemory archives older completed messages and recalls relevant
 passages before each reply. It retains at least five recent eligible messages,
-keeping an adjacent user/reply pair together. Search uses the two latest eligible
-messages; edits, swipes and deletions are reconciled against the current chat.
+keeping an adjacent user/reply pair together. Search uses only the current eligible
+message; recent dialogue still accompanies recalled memory in the generation prompt.
+Edits, swipes and deletions are reconciled against the current chat.
 Your original chat file stays intact.
 
 - Open **Memory in the last prompt** to inspect the prepared excerpts. Check the
@@ -127,8 +131,8 @@ button and reload. Updates follow the installed Git branch, not the newest relea
 tag. Automatic updates are disabled. Normal updates preserve settings and ownership;
 do not delete remote memory just to update.
 
-See [release notes](docs/releases/0.4.0.md), [CHANGELOG](CHANGELOG.md),
-[installation validation](docs/releases/0.4.0-validation.md) and
+See [release notes](docs/releases/0.5.0.md), [CHANGELOG](CHANGELOG.md),
+[installation validation](docs/releases/0.5.0-validation.md) and
 [live reply validation](docs/native-reply-validation.md) for measured scope and limitations.
 
 ## Development and verification

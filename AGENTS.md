@@ -43,14 +43,15 @@ Read [CONTRIBUTING.md](CONTRIBUTING.md) before changing this repository.
   use against that measured reference. Retain operational safety, provider context
   limits, source validity, isolation, and authorized total experiment bounds.
 - The product default archives completed eligible messages only after they leave
-  the recent-five window. Ordinarily search the two most recent eligible messages
-  through the generation anchor, in one role-labelled request. Always retain at
+  the recent-five window. Ordinarily search only the eligible generation anchor
+  in one role-labelled request. Recent dialogue stays in generation, not the
+  retrieval query. Always retain at
   least five recent eligible messages including the active input, alongside selected
   memory and native system/character settings. Exclude full retained turns from
   memory selection. Align the recent boundary to an adjacent eligible
   user/assistant pair: normal user input retains five, a completed reply can retain
   six. Upload the whole displaced pair together using existing 50-document batches;
-  do not introduce a five-message write queue. Query 2 and checkpoint semantics
+  do not introduce a five-message write queue. Query 1 and checkpoint semantics
   remain independent of this alignment. Checkpoints explicitly synchronize the
   full completed transcript.
 - Preserve native model/API response formats and streaming. Do not impose a reply
@@ -66,6 +67,16 @@ Read [CONTRIBUTING.md](CONTRIBUTING.md) before changing this repository.
 
 ## Current evaluation priority
 
+- Follow [the memory evaluation criteria](docs/memory-evaluation.md): separate
+  retrieved evidence, final prompt delivery, generated answers and judge labels.
+  Map chunks to source-message spans; distinguish missing/partial/complete
+  annotation coverage from verified necessary-fact recall. Report resource costs
+  alongside quality, and keep evaluation annotations out of the runtime pipeline.
+- Use pinned `jev-1.13.0` Noul with Yes at probability >=0.50 for new internal
+  LongMemEval answer evaluations, preserving the original task-specific rules and
+  references. Follow [the evaluator policy](docs/memory-evaluation.md#answer-evaluator-policy).
+  Label the judge/threshold explicitly; compare arms under the same protocol,
+  retain raw probabilities and preserve historical GPT-4o results separately.
 - Prioritize English for near-term answer-quality evaluation and optimization.
   Defer new Korean/other-language live experiments and targeted optimization.
 - Preserve historical multilingual results and existing inexpensive unit tests.

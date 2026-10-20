@@ -88,7 +88,7 @@ export async function runFaultScenarios({ page, field, waitStatus, prompt, check
         await field('enabled').check(); await waitStatus('synchronized');
     }
     // Fault recovery verifies reconciliation, not ranking: the emulator returns
-    // insertion order. Fit all six old fixture messages including quote labels.
+    // insertion order. Fit both archived fixture messages including quote/time labels.
     // The base browser checks above already exercise the tighter 250-token budget.
     await field('budget').fill('800'); await field('budget').dispatchEvent('change');
     await waitStatus('synchronized');
@@ -174,7 +174,7 @@ export async function runFaultScenarios({ page, field, waitStatus, prompt, check
         const failure = faults.arm('query', 'http', status);
         const result = await prompt(); await entered(failure);
         check(`HTTP ${status} stops generation, clears previous memory and preserves source`, !result.injection && result.before === result.after && result.chat.length === 8 && result.aborted);
-        check(`HTTP ${status} explains how to retry and clears progress`, (await field('status').innerText()).includes('Sync this chat') && await field('progress').isHidden());
+        check(`HTTP ${status} explains how to retry and clears progress`, (await field('status').innerText()).includes('regenerate to retry this request') && await field('progress').isHidden());
         const queries = calls.filter(c => c.path.endsWith('/query')).slice(before).map(c => (c.body.query.bayesian?.[0]?.knn || c.body.query.knn).queryText);
         check(`HTTP ${status} does not immediately retry retrieval`, queries.length >= 1 && queries.length <= 2 && new Set(queries).size === queries.length);
         check(`HTTP ${status} recovers on the next generation`, Boolean((await prompt()).injection));
@@ -183,7 +183,7 @@ export async function runFaultScenarios({ page, field, waitStatus, prompt, check
     const started = performance.now(), timingOut = prompt(); await entered(stalled);
     const timeout = await timingOut; timings.queryTimeoutMs = performance.now() - started; stalled.release();
     check('real 15-second query timeout stops generation without changing source or injecting memory', !timeout.injection && timeout.chat.length === 8 && timeout.before === timeout.after && timeout.aborted && timings.queryTimeoutMs >= 14000 && timings.queryTimeoutMs < 25000);
-    check('timeout is distinct from an HTTP error and includes recovery guidance', /timed out.*Sync this chat/.test(await field('status').innerText()) && await field('progress').isHidden());
+    check('timeout is distinct from an HTTP error and includes recovery guidance', /timed out.*regenerate to retry this request/.test(await field('status').innerText()) && await field('progress').isHidden());
     check('query timeout recovers on a subsequent generation', Boolean((await prompt()).injection));
 
     for (const operation of ['edit', 'delete', 'branch', 'disable']) {
