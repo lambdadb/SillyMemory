@@ -184,10 +184,11 @@ def summarize_resources(answers, judgments, database, operations, indexed_docume
                 else sum(tokens(r["response"]["usage"][output_field]) for r in receipts),
                 "responseHeaderMilliseconds": total_time(receipts)}
     assert len(database) == operations
+    memory_time = None if any(r.get("error") and "milliseconds" not in r for r in database) else total_time(database)
     return {"generation": models(answers, "prompt_tokens", "completion_tokens"),
             "judging": models(judgments, "input_tokens", "output_tokens"),
             "memory": {"indexedDocuments": tokens(indexed_documents), "databaseOperations": tokens(operations),
-                       "httpResponseMilliseconds": total_time(database),
+                       "httpResponseMilliseconds": memory_time,
                        "ingestRetrievePackMilliseconds": milliseconds(memory_milliseconds)},
             "billedCostUsd": None}
 
@@ -213,6 +214,18 @@ def record_response(file, response, metadata, clean=lambda text: text):
     saved["response"] = json.loads(saved["rawResponse"])
     atomic(file, saved, clean)
     return saved["response"]
+
+
+def database_receipts(root, operations):
+    receipts = []
+    for number in range(1, operations + 1):
+        response = root / "memory" / f"http-{number}.json"
+        failure = root / "memory" / f"http-{number}-error.json"
+        assert response.exists() != failure.exists(), "Missing or ambiguous database receipt"
+        receipt = read_json(response if response.exists() else failure)
+        assert response.exists() or receipt.get("error"), "Invalid database error receipt"
+        receipts.append(receipt)
+    return receipts
 
 
 class Receipts:
@@ -307,7 +320,7 @@ def score(root, phase, lock, binding, config, rows, rules, credentials):
     assert operations <= config["limits"]["memoryOperations"]
     answers = [read_json(root / "answer" / f"{id}.json") for id in lock["ids"]]
     judgments = [read_json(root / "judge" / f"{id}.json") for id in lock["ids"]]
-    database = [read_json(root / "memory" / f"http-{i}.json") for i in range(1, operations + 1)]
+    database = database_receipts(root, operations)
     correct = sum(row["correct"] for row in scores)
     summary = {"questions": len(scores), "fullCohort": len(scores) == config["questions"], "correct": correct,
                "accuracy": correct / len(scores), "generator": config["generator"], "judge": config["judge"], "binding": binding,

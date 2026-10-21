@@ -95,6 +95,21 @@ class LongMemEvalTests(unittest.TestCase):
                         receipts.get("answer", "example", {"messages": []})
                     self.assertEqual(request.call_count, 1)
 
+    def test_database_errors_keep_unknown_timing_and_reject_missing_or_ambiguous_receipts(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "memory").mkdir()
+            runner.write_json(root / "memory/http-1-error.json", {"error": "Transport failed"})
+            database = runner.database_receipts(root, 1)
+            resources = runner.summarize_resources([], [], database, 1, 0, 0)
+            self.assertEqual(resources["memory"]["databaseOperations"], 1)
+            self.assertIsNone(resources["memory"]["httpResponseMilliseconds"])
+            with self.assertRaisesRegex(AssertionError, "Missing or ambiguous"):
+                runner.database_receipts(root, 2)
+            runner.write_json(root / "memory/http-1.json", {"status": 200, "milliseconds": 2})
+            with self.assertRaisesRegex(AssertionError, "Missing or ambiguous"):
+                runner.database_receipts(root, 1)
+
     def test_total_provider_deadline_restores_signal_handler(self):
         previous = signal.getsignal(signal.SIGALRM)
         with self.assertRaisesRegex(TimeoutError, "total time limit"):
@@ -187,7 +202,9 @@ class LongMemEvalTests(unittest.TestCase):
                 (root / folder).mkdir()
             lock = {"ids": ["example"], "owner": "owner"}
             runner.write_json(root / "memory/state.json", {"binding": "binding", "status": "completed", "completed": ["example"],
-                "owned": [{"deleted": True, "absent404": True, "owner": "owner"}], "operations": 0})
+                "owned": [{"deleted": True, "absent404": True, "owner": "owner"}], "operations": 2})
+            runner.write_json(root / "memory/http-1-error.json", {"error": "Transport failed", "milliseconds": 4})
+            runner.write_json(root / "memory/http-2.json", {"status": 404, "milliseconds": 3})
             row = {"question_id": "example", "question_type": "single-session-user", "question": "Where?", "answer": "cedar"}
             rules = {"single-session-user": {"referenceField": "Answer", "instructions": "Match."}}
             answer = {"model": CONFIG["generator"]["model"], "choices": [{"finish_reason": "stop", "message": {"content": "cedar"}}],
@@ -203,6 +220,9 @@ class LongMemEvalTests(unittest.TestCase):
                 args = (lock, "binding", CONFIG, {"example": row}, rules, credentials)
                 runner.score(root, "score", *args)
                 runner.score(root, "verify", *args)
+                resources = runner.read_json(root / "summary.json")["resources"]["memory"]
+                self.assertEqual(resources["databaseOperations"], 2)
+                self.assertEqual(resources["httpResponseMilliseconds"], 7)
                 saved = runner.read_json(root / "scores.json")
                 for incorrect in (False, 1):
                     saved[0]["correct"] = incorrect

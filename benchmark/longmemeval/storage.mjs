@@ -83,7 +83,9 @@ export async function memoryPhase({ phase, root, lock, binding, config, env, pre
                 }, clean);
                 return response;
             } catch (error) {
-                await atomic(path.join(directory, `http-${number}-error.json`), { ...receipt, error: 'Transport or receipt persistence failed' }, clean);
+                await atomic(path.join(directory, `http-${number}-error.json`), {
+                    ...receipt, error: 'Transport or receipt persistence failed', milliseconds: performance.now() - started,
+                }, clean);
                 throw error;
             }
         },
