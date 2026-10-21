@@ -130,6 +130,10 @@ class LongMemEvalTests(unittest.TestCase):
                     receipts.get("answer", "limit", body)
                 self.assertEqual(request.call_count, 1)
             saved = runner.read_json(root / "answer/done.json")
+            saved["response"]["ok"] = False
+            runner.write_json(root / "answer/done.json", saved)
+            with self.assertRaisesRegex(AssertionError, "differs from raw receipt"):
+                receipts.get("answer", "done", body)
             saved["binding"] = "another-run"
             runner.write_json(root / "answer/done.json", saved)
             with self.assertRaises(AssertionError):
@@ -151,7 +155,7 @@ class LongMemEvalTests(unittest.TestCase):
             bodies = {"answer": {"messages": []}, "judge": runner.judge_request(row, "cedar", rules["single-session-user"], CONFIG)}
             for kind, response in (("answer", answer), ("judge", judgment)):
                 runner.write_json(root / kind / "example.json", {"binding": "binding", "requestSha256": runner.sha(runner.encode(bodies[kind])),
-                    "status": 200, "response": response, "milliseconds": 1})
+                    "status": 200, "response": response, "rawResponse": runner.encode(response), "milliseconds": 1})
             packed = {"requests": {"example": bodies["answer"]}, "indexedDocuments": 2, "memoryMilliseconds": 3}
             credentials = {"LLM_BASE_URL": "https://api.openai.com/v1", "LLM_API_KEY": "synthetic-key", "TYPESAFE_API_KEY": "synthetic-key"}
             with patch.object(runner, "adapter", return_value=packed), patch.object(runner.urllib.request, "urlopen", side_effect=AssertionError("Network forbidden")), patch("sys.stdout", new_callable=io.StringIO):
