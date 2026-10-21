@@ -10,3 +10,35 @@
 
 #sillymemory .sm-checkpoint { border-top: 1px solid var(--SmartThemeBorderColor); padding: 0.6rem 0; overflow-wrap: anywhere; }
 #sillymemory .sm-checkpoint p { margin: 0.3rem 0; }
+
+#sillymemory h4 { margin: 0.8rem 0 0.4rem; font-size: 1em; }
+#sillymemory section > small { display: block; }
+#sillymemory .sm-status { margin: 0.8rem 0; overflow-wrap: anywhere; }
+#sillymemory .sm-section { border-top: 1px solid var(--SmartThemeBorderColor); padding: 0.7rem 0; }
+#sillymemory summary { cursor: pointer; }
+#sillymemory summary:focus-visible { outline: 2px solid var(--SmartThemeQuoteColor, #8ab4f8); outline-offset: 2px; }
+#sillymemory .sm-section > summary { font-weight: bold; }
+#sillymemory .sm-section > summary span { display: block; font-weight: normal; font-size: 0.85em; margin-top: 0.2rem; }
+#sillymemory .sm-footer { display: block; margin-top: 0.8rem; }
+
+#sillymemory [hidden] { display: none !important; }
+#sillymemory .sm-connection { border-top: 0; }
+#sillymemory [data-sm="prepare-controls"] > small { display: block; margin-top: 0.4rem; }
+#sillymemory [data-sm="connection-state"] { overflow-wrap: anywhere; }
+
+#sillymemory-chat { white-space: normal; margin: 0 0 0.25rem; border: 1px solid var(--SmartThemeBorderColor); border-radius: 8px; background: var(--SmartThemeBlurTintColor); overflow-wrap: anywhere; }
+#sillymemory-chat summary { display: flex; align-items: center; gap: 0.5rem; padding: 0.3rem 0.6rem; cursor: pointer; font-size: 0.85em; }
+#sillymemory-chat summary::after { content: "▸"; margin-left: auto; }
+#sillymemory-chat[open] summary::after { content: "▾"; }
+#sillymemory-chat summary:focus-visible { outline: 2px solid var(--SmartThemeQuoteColor); outline-offset: -2px; border-radius: 8px; }
+#sillymemory-chat .sm-chat-dot { flex: 0 0 0.5rem; height: 0.5rem; border-radius: 50%; background: currentColor; opacity: 0.55; }
+#sillymemory-chat[data-kind="working"] .sm-chat-dot,
+#sillymemory-chat[data-kind="ready"] .sm-chat-dot { background: var(--SmartThemeQuoteColor); opacity: 1; }
+#sillymemory-chat[data-kind="warning"] .sm-chat-dot { background: #e4b95b; opacity: 1; }
+#sillymemory-chat[data-kind="error"] .sm-chat-dot { background: #f08080; opacity: 1; }
+#sillymemory-chat .sm-chat-detail { padding: 0 0.6rem 0.5rem; font-size: 0.85em; max-height: 40vh; overflow-y: auto; }
+#sillymemory-chat p { margin: 0.4rem 0; }
+#sillymemory-chat progress { width: 100%; accent-color: var(--SmartThemeQuoteColor); }
+#sillymemory-chat .sm-chat-actions { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+#sillymemory-chat button { width: auto; margin: 0; }
+#sillymemory-chat [hidden] { display: none !important; }

@@ -1,3 +1,4 @@
+import { expandMemorySettings, openMemoryConnection } from './settings-panel.mjs';
 import { collectionResponse, branchResponse, documentResponse, rerankedResponse } from '../tests/helpers/lambdadb-responses.js';
 import { emulatorCors } from './emulator-cors.mjs';
 // Real pinned host/Chromium/direct CORS, local LambdaDB and completion emulators only.
@@ -76,7 +77,7 @@ const source = process.env.ST_SOURCE || '/tmp/sillymemory-st-prompt-delivery';
 const output = path.resolve(process.argv[2] || path.join(root, 'artifacts/prompt-delivery.json'));
 assert.equal(execFileSync('git', ['-C', source, 'rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(), plan.host);
 assert.equal(await realpath(path.join(source, 'public/scripts/extensions/third-party/sillymemory')), root);
-const sourceFiles = ['vendor/lambdadb.js', 'package-lock.json', 'tests/helpers/lambdadb-responses.js', 'index.js', 'src/chat-collections.js', 'manifest.json', 'src/chunking.js', 'src/client.js', 'src/credentials.js', 'src/context.js', 'src/gate.js', 'src/memory.js', 'src/time.js', 'src/status.js', 'scripts/prompt-delivery-smoke.mjs', 'scripts/emulator-cors.mjs', 'src/delivery.js', 'settings.html', 'scripts/prompt-capacity-cases.mjs'];
+const sourceFiles = ['vendor/lambdadb.js', 'package-lock.json', 'tests/helpers/lambdadb-responses.js', 'index.js', 'src/chat-collections.js', 'manifest.json', 'src/chunking.js', 'src/client.js', 'src/credentials.js', 'src/context.js', 'src/gate.js', 'src/memory.js', 'src/time.js', 'src/status.js', 'scripts/prompt-delivery-smoke.mjs', 'scripts/settings-panel.mjs', 'scripts/emulator-cors.mjs', 'src/delivery.js', 'settings.html', 'scripts/prompt-capacity-cases.mjs'];
 sourceFiles.push('scripts/semantic-long.mjs', 'tests/fixtures/semantic-long-v1.json', 'tests/fixtures/packing-ranks.json');
 const hostFiles = ['public/script.js', 'public/scripts/openai.js', 'public/scripts/PromptManager.js', 'public/scripts/tokenizers.js', 'src/endpoints/tokenizers.js', 'src/endpoints/backends/chat-completions.js', 'package-lock.json'];
 async function hashes() {
@@ -217,6 +218,7 @@ try {
     const waitStatus = text => page.waitForFunction(text => document.querySelector('[data-sm="status"]')?.textContent.includes(text), text);
     await page.locator('#extensions-settings-button .drawer-toggle').click();
     await page.locator('#sillymemory .inline-drawer-toggle').click();
+    await expandMemorySettings(page);
     await field('endpoint').fill(endpoint); await field('project').fill('synthetic'); await field('key').fill('synthetic-session-key');
     await field('connect').click(); await field('gate').click(); await waitStatus('Transport gate passed');
     assert.equal(collections.size, 0);
@@ -498,10 +500,12 @@ try {
     assert.equal(await field('key').inputValue(), '', 'Reload restores the key without exposing it in the input');
     assert.equal(await field('delivery').innerText(), 'No prompt checked in this chat.', 'No stale final prompt after reload');
     await page.locator('#extensions-settings-button .drawer-toggle').click();
-    if (!await field('endpoint').isVisible()) await page.locator('#sillymemory .inline-drawer-toggle').click();
+    if (!await page.locator('#sillymemory .inline-drawer-content').isVisible()) await page.locator('#sillymemory .inline-drawer-toggle').click();
+    await expandMemorySettings(page);
     await field('key').fill('synthetic-session-key'); await field('connect').click();
     page.once('dialog', dialog => dialog.accept()); await field('delete').click(); await waitStatus('no longer accessible');
     assert.equal(collections.size, 0);
+    await openMemoryConnection(page);
     await field('forget').click(); await waitStatus('Saved key removed');
     const stored = await page.evaluate(() => JSON.stringify({ local: { ...localStorage }, session: { ...sessionStorage }, settings: SillyTavern.getContext().extensionSettings }));
     assert.ok(!stored.includes('synthetic-session-key'));

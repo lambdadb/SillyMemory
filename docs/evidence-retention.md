@@ -1789,3 +1789,84 @@ run, storage migration, main promotion, tag or Release publication is claimed.
   the artifact tag. The archive's generic setup/settings images are from the later
   recovery run; both uniquely named JSON/log receipts remain. The original archive
   is unchanged; use the addendum and current acceptance commands for reproduction.
+
+## Branch/checkpoint operating-cost screen
+
+The [bounded comparison](branch-checkpoint-cost.md) uses the actual pinned host,
+default local Vector Storage embeddings and live managed LambdaDB. The 45-minute
+cap stopped the third 500-message native branch: 71/84 operations completed,
+with three complete 50-message pairs and two complete 500-message pairs.
+Unmatched/interrupted work remains in the raw records and is excluded from the
+paired medians. This is not a completed full matrix, quality score or invoice.
+The v1 managed check fetched expected IDs only after timing; it did not establish
+absence of an inherited suffix. Its fast midpoint/resume timings describe UI
+synchronization, not verified committed readiness. See the result document for
+the separate v2 correction; the original archive remains unchanged.
+
+- Local-only archive:
+  `/Users/steven/Dev/sillymemory/artifacts/branch-checkpoint-v1/evidence.tar.gz`.
+  SHA-256 `c2e0c24520415112e00f0565f6bab6d8fc398ca53818e90ca4f45f8e2dea4708`;
+  all 17 members were read back and matched byte-for-byte.
+- Product producer: `c659750508cc20b90e3dcca682ab2bb169b4bedb` with the exact
+  uncommitted runner preserved as `attempt-1/producer.mjs`. The frozen plan,
+  raw report, model hashes, counters, analysis, runner maintenance diff and
+  `RESTORE.md` are retained. No credentials, personal chats or model weights.
+- All six generated owned collections were independently rechecked as HTTP 404;
+  native temporary data was removed and host instrumentation restored.
+  This archive is unavailable in a fresh clone and is not a CI dependency.
+
+The corrective v2 run completed all 28/28 operations once per size/arm, requiring
+an exact committed document set inside synchronization timing. It confirmed stale
+suffixes on the first midpoint/resume list and waited for their disappearance.
+This is conservative committed readiness, not first semantic-query latency.
+
+- Local-only corrective archive:
+  `/Users/steven/Dev/sillymemory/artifacts/branch-checkpoint-v2/evidence.tar.gz`.
+  SHA-256 `ba68a99a04ffd69d44ca17e58f3ef5eb93c69be94adf6d95d8f3997d3799d0a9`;
+  all 18 members were read back and matched byte-for-byte.
+- Product files match v1. The exact v2 runner, frozen inputs, raw report/counters,
+  model hashes, offline analysis/verification and `RESTORE.md` are retained.
+  All three generated collections independently returned HTTP 404 after cleanup;
+  disposable native data was removed and host instrumentation restored.
+- v1 and v2 timings have different completion boundaries. Do not replace the v1
+  raw report, pool their repetitions or label the v1 1–2 second values as fully
+  committed isolation. Neither run measures generated answers or provider bills.
+- Post-run cleanup-constructor correction and synthetic invalid-endpoint check:
+  `/Users/steven/Dev/sillymemory/artifacts/branch-checkpoint-v2/cleanup-evidence.tar.gz`,
+  SHA-256 `30c766f1d15add6b565ce6f7ac6254a10b7ce17fa57961a24a3f308860dbb8ed`.
+  All 12 members verified; contains the producer patch, addendum and actual-host
+  failure/teardown receipts. No remote API calls or new latency measurements.
+  Original v1/v2 archives are unchanged.
+- Subsequent host-ownership/per-collection cleanup guards and four local
+  regressions (388 full-suite tests passed):
+  `/Users/steven/Dev/sillymemory/artifacts/branch-checkpoint-v2/hardening-evidence.tar.gz`,
+  SHA-256 `45123e7791778acc03a26bf5f9773704983fedd20f36df65278dd902a7922ecc`.
+  All eight members verified; exact maintained runner/helper/test source, diff
+  from the v2 producer and local verification. No new live matrix or timings.
+- Final pre-execution native input cap and concurrent/failing-call regression:
+  `/Users/steven/Dev/sillymemory/artifacts/branch-checkpoint-v2/BUDGET-ADDENDUM.md`,
+  SHA-256 `b35ba99ba253b8ab8d2a72526061146ce416f23004387b7ed41bbe8efcda365d`.
+  Records the patch over the hardening sidecar, five passing safety regressions,
+  389 passing full-suite tests and pinned instrumentation syntax validation.
+  Local fixture evidence only; original live observations/archives unchanged.
+- Clean tracked-host precondition, including staged and unstaged changes:
+  `/Users/steven/Dev/sillymemory/artifacts/branch-checkpoint-v2/HOST-PIN-ADDENDUM.md`,
+  SHA-256 `aa6c106d8b3612cc8a56da1c1429b2637672132e65d29d543301417a730cf3b3`.
+  Local temporary-Git fixture; six safety regressions and 390 full-suite tests
+  pass. No new live measurements or changes to the original archives.
+- Guarded atomic host-file mutation and independent local teardown:
+  `/Users/steven/Dev/sillymemory/artifacts/branch-checkpoint-v2/ATOMIC-WRITE-ADDENDUM.md`,
+  SHA-256 `398f58e91f8528892e4a03d1694de21022d0cbe095f1ae05a56ba6fd734e3c86`.
+  Local partial-write failure/replacement/restoration fixture; seven safety
+  regressions and 391 full-suite tests pass. No new live timings.
+
+- One OpenAI Small native end-branch follow-up (500 identical synthetic messages):
+  `/Users/steven/Dev/sillymemory/artifacts/branch-checkpoint-openai-small-once/evidence.tar.gz`,
+  SHA-256 `cb4553e148b23d9e07b7e1ce6282acab04b47dff936eb102e5408e4378105660`. All archive members were read back and verified.
+  Contains exact one-off producer/settings, raw request timing and provider usage,
+  result/cleanup records and two setup-only failures with zero paid calls.
+  One completed live vectorization: 47.911 seconds including branch creation,
+  100 HTTP-200 calls, 23,500 tokens and 500 exact index hashes. No generation,
+  judging or LambdaDB operations. Temporary hosts/data removed. Local-only,
+  unavailable in a fresh clone, and not a CI dependency. See the result document
+  for omitted parent indexing, dependency-symlink image warnings and timing limits.

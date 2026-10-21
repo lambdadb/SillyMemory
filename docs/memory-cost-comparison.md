@@ -1,9 +1,10 @@
 # LongMemEval-S: the 95% experiment, comparison arms and cost estimates
 
-Analysis date: **2026-10-19**. This extends the
+Historical analysis date: **2026-10-19**; the dated **2026-10-21** sections add
+hosted-service billing and retention comparisons. This extends the
 [benchmark reference](memory-benchmark-reference.md) using retained receipts and
 offline reconstruction. No new model or database calls were made. All USD figures
-are current Standard/list-rate estimates, not invoices or controlled cost trials.
+use the rates stated in their respective sections, not invoices or controlled cost trials.
 
 ## Consolidated LongMemEval-S comparison
 
@@ -313,6 +314,99 @@ disclosing its hosted extraction call budget. Their BEAM results have the cohort
 and answer-assistance qualifications in the reference document. Neither supports
 a numerical claim that our construction is a particular multiple cheaper.
 
+### Hosted storage and retention terms (2026-10-21)
+
+A separate GB-month charge is not universal among hosted memory products.
+Storage can be included in ingestion charges or a subscription; this billing
+observation does not disclose a vendor's internal costs or guarantee perpetual
+retention. Current public terms differ:
+
+| Service | Published billing basis | Storage and retention qualification |
+| --- | --- | --- |
+| [LambdaDB](https://docs.lambdadb.ai/guides/costs/understanding-costs) | Writes, reads, managed inference and storage | Active storage is metered. Historical snapshot/deleted-data retention is a separate concept from keeping a live collection or branch. |
+| [past.dev](https://past.dev/pricing) | Ingestion bytes; PAYG also meters recall; Flex includes unlimited recall | No separate storage charge. Data retention: PAYG 365 days, Flex 3 years, Enterprise unlimited under its agreement. |
+| [Zep](https://www.getzep.com/pricing/) | Episode-size credits and a subscription | Storage, graph storage and retrieval are unmetered. This pricing page alone does not establish lifetime retention. |
+| [Mem0](https://mem0.ai/pricing) | Subscription allowances for adds and retrievals | No separate GB-month rate in the inspected public sheet; do not infer unlimited storage or lifetime retention from its absence. |
+| [Supermemory](https://supermemory.ai/pricing/) | Ingestion SM tokens, queries, additional operations and plan credits | No separate GB-month rate in the inspected public sheet; retention guarantees are not established by that sheet. |
+
+Past's unlimited Enterprise retention is not an unconditional lifetime-storage
+promise: its [public terms](https://past.dev/terms) allow 30 days to export after
+account closure, then delete the data. Credit expiry and API-log retention are
+also separate from memory-data retention. Unused data continues to incur service
+cost, but an upfront ingestion payment may cover that cost; inactivity alone
+does not establish that a customer is unprofitable.
+
+### Past PAYG benchmark budget (2026-10-21)
+
+This is an **offline list-price estimate**, not a Past API run, quote or invoice.
+It excludes final-answer generation and evaluation judging entirely. Count the
+retained cleaned LongMemEval-S 500 histories and the four completed
+[BEAM cohorts](beam-evaluation.md#complete-fixed-ranked-8k-length-grid-2026-10-21).
+Each history is independent: no cross-history reuse or deduplication is assumed.
+
+The pinned [Past BEAM loader](https://github.com/pastdotdev/benchmarks/blob/1faac1e70fa50d92d966904358be98bb1beca0c8/beam/dataset.py)
+sends each nonempty message as one data point. Apply that same explicit assumption
+to S; count only literal message content in UTF-8, excluding profiles, metadata,
+transport JSON and added headers. One question makes one recall. The
+[pricing rules](https://past.dev/pricing) are:
+
+```text
+ingestion credits = sum(max(1, ceil(message UTF-8 bytes / 350)))
+recall credits = questions * 0.1
+base-rate usage USD = (ingestion credits + recall credits) * 0.0003
+```
+
+| Cohort | Histories / questions | Content MB (decimal) | Ingestion credits | Total credits, including recall | Base-rate usage USD | Cash purchase USD, no signup credit |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| LongMemEval-S | 500 / 500 | 244.779 | 826,504 | 826,554 | 247.97 | **215.02** |
+| BEAM 100K | 20 / 400 | 12.232 | 37,633 | 37,673 | 11.30 | **30.00** |
+| BEAM 500K | 35 / 700 | 77.592 | 240,665 | 240,735 | 72.22 | **72.30** |
+| BEAM 1M | 35 / 700 | 160.080 | 497,297 | 497,367 | 149.21 | **130.00** |
+| BEAM 10M | 10 / 200 | 463.502 | 1,434,949 | 1,434,969 | 430.49 | **315.70** |
+| All BEAM, one purchase | 100 / 2,000 | 713.406 | 2,210,544 | 2,210,744 | 663.22 | **486.42** |
+| S + all BEAM, one purchase | 600 / 2,500 | 958.185 | 3,037,048 | 3,037,298 | 911.19 | **668.36** |
+
+Cash minimizes a single purchase under the published volume tiers, with at least
+100,000 credits bought in increments of 1,000. Per-credit rates are $0.00030 from
+100K, $0.00026 from 500K, $0.00022 from 1M, $0.00017 from 5M and $0.00013 from
+10M; the attained rate applies to the whole purchase. Unspent credits remain.
+For example, 500K credits for $130 cover BEAM 1M, while the $30 minimum purchase
+exceeds 100K's $11.30 base-rate usage. Joint purchases receive their own discount;
+do not add the per-cohort cash column to obtain the joint budget.
+
+The joint budget is 3,038,000 purchased credits for $668.36, with 702 left.
+Applying the one-time 400K work-email signup grant to the entire joint workload
+requires 2,638,000 purchased credits for **$580.36**. Do not apply that grant
+separately to each cohort and add the discounted results. Purchased PAYG credits
+expire after 90 days. Base-rate recall cost alone is **$0.015 for S** and
+**$0.060 for all BEAM**; most of this workload's estimated charge is ingestion.
+
+These are the benchmark buckets' nominal lengths, not identical corpus sizes or
+tokenizers: BEAM 1M is 35 histories, not one 1M-token corpus. Its literal content
+totals 160,079,877 bytes; embedding input is a different measurement.
+
+Implementation assumptions matter. The current
+[sending guide](https://past.dev/docs/memory-api/sending-data) recommends
+conversation/day grouping and conversation parts below 16,000 characters, unlike
+the pinned per-message benchmark client. The retained inputs contain respectively
+13 / 3 / 15 / 30 / 100 messages at or above that character threshold for
+S / 100K / 500K / 1M / 10M. A production adapter must handle those messages;
+splitting, grouping and speaker/date headers change the billable bytes and
+per-point rounding. The table prices the declared historical message units,
+not a validated current-service import. Webhooks, retries, optional diagnostic
+recalls and taxes are excluded.
+
+PAYG permits one project, whereas the public BEAM runner creates one per
+conversation. An actual PAYG reproduction needs scoped audiences/readers or
+sequential isolated cleanup; it cannot run that project-creation path unchanged.
+See the [operational comparison](memory-benchmark-reference.md#operational-boundaries-and-lifecycle-2026-10-21).
+No quality, latency or universal cost ratio against Past follows from this budget;
+our LambdaDB estimates above model different configurations and exclude some costs.
+
+The calculation, input checksums and dated source captures are retained in the
+local-only ignored `artifacts/memory-product-comparison-2026-10-21/` bundle.
+Detailed availability and its verified archive checksum are recorded below.
+
 ### Mem0 Platform subscription scenarios
 
 Checked **2026-10-19**. The hosted product's [public pricing](https://mem0.ai/pricing)
@@ -415,3 +509,17 @@ SHA-256 `957c3c1f022615b1ad8d19251823e3e5b224a35a05762b83c3a747c25aadf2ba`.
 All 13 members were read back and checked; the adjacent `.tar.gz.receipt.json`
 records verification. These details are local-only evidence, not fresh-clone or
 CI dependencies. The earlier cost archive and original source archives are unchanged.
+
+The October 21 hosted-service extension is retained at
+`artifacts/archive/memory-product-comparison-2026-10-21.tar.gz`, **114,419 bytes**,
+SHA-256 `404ecd51d5f8a6d86044dc4685c183aefa2d9ba9d9f566949b831bcc01af9de1`.
+All **28 file members** were read back against their originals. The adjacent
+`.tar.gz.receipt.json` records verification. The bundle contains the one-off
+calculator, exact byte/credit results and input hashes, fifteen dated primary-source
+captures, maintainer policy provenance and local validation logs. Its
+`RESTORE.md` identifies the existing cleaned-S and four BEAM source bundles needed
+for full byte-count replay. Documentation base is
+`03a592a9bc7e45b68238ed6f90b34b611d2d01f3`; calculation needs only the saved
+Python standard-library script and original inputs. Availability is local-only,
+with no new public download, remote backup or CI dependency promised. No source
+archive or benchmark answer/score was modified.

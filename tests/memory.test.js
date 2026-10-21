@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { capture, documents, selectMemory, MemoryEngine, Journal, options, chunks, literal, retrievalQueries, interleaveHits, memoryBoundary, archiveBoundary } from '../src/memory.js';
+import { capture, supportsChat, documents, selectMemory, MemoryEngine, Journal, options, chunks, literal, retrievalQueries, interleaveHits, memoryBoundary, archiveBoundary } from '../src/memory.js';
 const owner = 'a'.repeat(32);
 const config = { recent: 2, budget: 400, chunkChars: 200 };
 const snapshot = (chat = 'chat', character = 'alice.png') => ({ chat, character, memory: { story: chat }, messages: Array.from({ length: 6 }, (_, index) => ({ index, text: `Synthetic message ${index}: the blue compass is under the tree.`, name: index % 2 ? 'Alice' : 'User', user: !(index % 2), swipe: 0, eligible: true })) });
@@ -251,6 +251,12 @@ test('settings are clamped and capture refuses group/no character chats', () => 
     assert.equal(Object.hasOwn(options({ recent: 100 }), 'recent'), false);
     assert.equal(capture({ groupId: 'group' }), null);
     assert.equal(capture({ characterId: undefined }), null);
+    const context = { characterId: 0, characters: [{ avatar: 'test.png' }], getCurrentChatId: () => 'chat', chat: [] };
+    assert.equal(supportsChat(context), true);
+    assert.deepEqual(capture(context).messages, []);
+    context.chat.push({ is_system: true, extra: { tool_invocations: [{}] } });
+    assert.equal(supportsChat(context), false);
+    assert.equal(capture(context), null);
 });
 
 test('recalled macros are literal before token counting and include host separators', async () => {

@@ -1,0 +1,229 @@
+{
+  "metric": "Question-weighted partial-credit mean, scaled to 100",
+  "rows": [
+    {
+      "split": "100k",
+      "conversations": 20,
+      "questions": 400,
+      "score": 89.0,
+      "resources": {
+        "modelPhases": {
+          "answer": {
+            "calls": 400,
+            "inputTokens": 5098292,
+            "cachedInputTokens": 0,
+            "cacheWriteTokens": 5097092,
+            "outputTokens": 100717,
+            "medianHttpResponseMilliseconds": 2313.5649994947016,
+            "modeledCostUsd": 1.3953734
+          },
+          "rubric": {
+            "calls": 838,
+            "inputTokens": 545486,
+            "cachedInputTokens": 0,
+            "cacheWriteTokens": 271095,
+            "outputTokens": 40222,
+            "medianHttpResponseMilliseconds": 1638.9908748678863,
+            "modeledCostUsd": 0.17091835
+          },
+          "equivalence": {
+            "calls": 212,
+            "inputTokens": 18350,
+            "cachedInputTokens": 0,
+            "cacheWriteTokens": 0,
+            "outputTokens": 2544,
+            "medianHttpResponseMilliseconds": 1115.8463330939412,
+            "modeledCostUsd": 0.0067228
+          }
+        },
+        "memory": {
+          "indexedDocuments": 21119,
+          "databaseOperations": 1152,
+          "constructionEmbeddingTokensEstimate": 2597266,
+          "queryEmbeddingTokensEstimate": 8271,
+          "queryMedianMilliseconds": null,
+          "httpResponseMilliseconds": null,
+          "embeddingModeledCostUsd": 0.052110739999999996
+        },
+        "wallMilliseconds": null,
+        "billedCostUsd": null
+      }
+    },
+    {
+      "split": "500k",
+      "conversations": 35,
+      "questions": 700,
+      "score": 85.99,
+      "resources": {
+        "modelPhases": {
+          "answer": {
+            "calls": 700,
+            "inputTokens": 9188001,
+            "cachedInputTokens": 0,
+            "cacheWriteTokens": 9185901,
+            "outputTokens": 198546,
+            "medianHttpResponseMilliseconds": 2288.419103715569,
+            "modeledCostUsd": 2.53515045
+          },
+          "rubric": {
+            "calls": 1456,
+            "inputTokens": 1285006,
+            "cachedInputTokens": 0,
+            "cacheWriteTokens": 838847,
+            "outputTokens": 73606,
+            "medianHttpResponseMilliseconds": 1568.4675835072994,
+            "modeledCostUsd": 0.38727075
+          },
+          "equivalence": {
+            "calls": 502,
+            "inputTokens": 44183,
+            "cachedInputTokens": 0,
+            "cacheWriteTokens": 0,
+            "outputTokens": 6024,
+            "medianHttpResponseMilliseconds": 1133.1448326818645,
+            "modeledCostUsd": 0.0160654
+          }
+        },
+        "memory": {
+          "indexedDocuments": 134198,
+          "databaseOperations": 4940,
+          "constructionEmbeddingTokensEstimate": 17576375,
+          "queryEmbeddingTokensEstimate": 14546,
+          "queryMedianMilliseconds": 1416.0,
+          "httpResponseMilliseconds": null,
+          "embeddingModeledCostUsd": 0.35181841999999997
+        },
+        "wallMilliseconds": null,
+        "billedCostUsd": null
+      }
+    },
+    {
+      "split": "1m",
+      "conversations": 35,
+      "questions": 700,
+      "score": 86.62,
+      "resources": {
+        "modelPhases": {
+          "answer": {
+            "calls": 700,
+            "inputTokens": 9096396,
+            "cachedInputTokens": 0,
+            "cacheWriteTokens": 9094296,
+            "outputTokens": 221530,
+            "medianHttpResponseMilliseconds": 2255.995042156428,
+            "modeledCostUsd": 2.53983
+          },
+          "rubric": {
+            "calls": 1817,
+            "inputTokens": 1537619,
+            "cachedInputTokens": 0,
+            "cacheWriteTokens": 949364,
+            "outputTokens": 93320,
+            "medianHttpResponseMilliseconds": 1526.2321652844548,
+            "modeledCostUsd": 0.466976
+          },
+          "equivalence": {
+            "calls": 610,
+            "inputTokens": 53505,
+            "cachedInputTokens": 0,
+            "cacheWriteTokens": 0,
+            "outputTokens": 7320,
+            "medianHttpResponseMilliseconds": 1068.746667355299,
+            "modeledCostUsd": 0.019485
+          }
+        },
+        "memory": {
+          "indexedDocuments": 278332,
+          "databaseOperations": 9259,
+          "constructionEmbeddingTokensEstimate": 35944747,
+          "queryEmbeddingTokensEstimate": 14949,
+          "queryMedianMilliseconds": null,
+          "httpResponseMilliseconds": null,
+          "embeddingModeledCostUsd": 0.71919392
+        },
+        "wallMilliseconds": null,
+        "billedCostUsd": null
+      }
+    },
+    {
+      "split": "10m",
+      "conversations": 10,
+      "questions": 200,
+      "score": 80.64,
+      "resources": {
+        "modelPhases": {
+          "answer": {
+            "calls": 200,
+            "inputTokens": 2728229,
+            "cachedInputTokens": 0,
+            "cacheWriteTokens": 2727629,
+            "outputTokens": 52560,
+            "medianHttpResponseMilliseconds": 2677.0309368148446,
+            "modeledCostUsd": 0.74509925
+          },
+          "rubric": {
+            "calls": 399,
+            "inputTokens": 286415,
+            "cachedInputTokens": 0,
+            "cacheWriteTokens": 172982,
+            "outputTokens": 19743,
+            "medianHttpResponseMilliseconds": 1546.3641667738557,
+            "modeledCostUsd": 0.0896237
+          },
+          "equivalence": {
+            "calls": 229,
+            "inputTokens": 20414,
+            "cachedInputTokens": 0,
+            "cacheWriteTokens": 0,
+            "outputTokens": 2748,
+            "medianHttpResponseMilliseconds": 1141.294416040182,
+            "modeledCostUsd": 0.0073804
+          }
+        },
+        "memory": {
+          "indexedDocuments": 786869,
+          "databaseOperations": 23868,
+          "constructionEmbeddingTokensEstimate": 107936429,
+          "queryEmbeddingTokensEstimate": 4908,
+          "queryMedianMilliseconds": 1633.5,
+          "httpResponseMilliseconds": null,
+          "embeddingModeledCostUsd": 2.1588267400000003
+        },
+        "wallMilliseconds": null,
+        "billedCostUsd": null
+      }
+    }
+  ],
+  "resourceNotes": [
+    "Model token usage comes from provider receipts. Model HTTP medians include response-body reads, not host or end-to-end latency.",
+    "Rubric and equivalence calls are judge overhead. Memory operations include source readback audits and owned cleanup.",
+    "Embedding tokens are independently counted estimates. Modeled costs use frozen comparison rates, exclude database, search, reranking, storage and managed-service margins, and are not invoices. Cache-write tokens are a subset of input tokens.",
+    "Null means not available in the retained aggregate, not zero. The 100K setup calls (79 input and 22 output tokens) are excluded."
+  ],
+  "frozenCostRatesUsdPerMillionTokens": {
+    "input": 0.2,
+    "cacheRead": 0.02,
+    "cacheWrite": 0.25,
+    "output": 1.2,
+    "embedding": 0.02
+  },
+  "resourceSource": {
+    "document": "../../docs/beam-evaluation.md#answer-tokens-model-rate-proxies-and-construction",
+    "summarySha256": "9ad4058fd5bc60f03537eba433ec341f75dc975be7e8daa8f164f1a58a31bece",
+    "analyses": {
+      "100k": {
+        "analysisSha256": "05e6889b8329e32e24c68334605f4e34a80d429505e49b8f3eb78535aca9576e"
+      },
+      "500k": {
+        "analysisSha256": "746048681b7d6509d4b1b71089d900cdf02b158c2393bb927ca4dd959fd6c0fd"
+      },
+      "1m": {
+        "analysisSha256": "b3f224d1eb5acfbf295bb2a06e4824aefa8dad1f802c923aceb6d9889e7e5459"
+      },
+      "10m": {
+        "analysisSha256": "96f86002377b2d4a58a323adb915c8bb1780b30ecf35ac0be4e52cb7d099a252"
+      }
+    },
+    "detailedReceiptsAvailability": "Local retained evidence; not included in a fresh clone."
+  }
+}

@@ -1,4 +1,5 @@
 // Pinned host with controlled plain completions; not answer-model quality evidence.
+import { openChatMemory } from './settings-panel.mjs';
 const hasAdoptedGuidance = text => [
     'build on relevant supported experiences and preferences',
     'Do not merge different events or roles',
@@ -7,7 +8,7 @@ const hasAdoptedGuidance = text => [
     && !text.includes('ask one brief clarifying question')
     && !text.includes('request only the additional context needed to help');
 
-export async function runNativeReplyScenarios({ page, field, waitStatus, check, calls }) {
+export async function runNativeReplyScenarios({ page, field, waitStatus, check, calls, screenshot }) {
     const requests = []; let reply = '';
     await page.route('**/api/backends/chat-completions/status', route => route.fulfill({ json: { data: [{ id: 'native-reply-fixture' }] } }));
     await page.route('**/api/backends/chat-completions/generate', async route => {
@@ -45,6 +46,8 @@ export async function runNativeReplyScenarios({ page, field, waitStatus, check, 
         return result;
     };
     await generate('Where was it?', 'Which visit do you mean?');
+    await waitStatus('synchronized');
+    check('chat status claims verification only after the final native prompt check', (await page.locator('#sillymemory-chat [data-sm-chat="label"]').innerText()).includes('Last prompt verified'));
     check('no schema-support setting or schema request is added', await field('clarification').count() === 0 && !requests.at(-1).response_format && !requests.at(-1).json_schema);
     check('natural memory guidance reaches native generation', requests.at(-1).messages.some(m => m.role === 'system' && hasAdoptedGuidance(m.content)));
     await generate('My Friday visit.', 'The city museum.', { stream: true });
@@ -83,12 +86,38 @@ export async function runNativeReplyScenarios({ page, field, waitStatus, check, 
     check('native generation aborts before dispatch on search failure', requests.length === completedBeforeFailure);
     const failureGuidance = await field('delivery').textContent();
     check('generation failure stays visible with the correct recovery action after background synchronization', failureGuidance.includes('Generation stopped: memory preparation failed.') && failureGuidance.includes('HTTP 503') && failureGuidance.includes('regenerate to retry this request') && !failureGuidance.includes('Sync this chat'));
+    const chatStatus = page.locator('#sillymemory-chat');
+    check('chat status retains a stopped reply after background synchronization completes', (await chatStatus.locator('[data-sm-chat="label"]').innerText()).includes('Reply stopped') && (await chatStatus.locator('[data-sm-chat="status"]').innerText()).includes('HTTP 503'));
     check('failed native generation preserves source and the pending user input', await page.evaluate(source => {
         const chat = SillyTavern.getContext().chat;
         return chat.at(-1).is_user && chat.at(-1).mes === 'A transient search failure.' && JSON.stringify(chat.slice(0, -1).map(m => m.mes)) === JSON.stringify(source);
     }, sourceBeforeFailure));
     await page.unroute('**/projects/synthetic/collections/*/query');
-    await page.evaluate(async () => { const c = SillyTavern.getContext(); await c.deleteMessage(c.chat.length - 1); });
+    await openChatMemory(page);
+    const retry = chatStatus.locator('[data-sm-chat="retry"]');
+    await retry.waitFor({ state: 'visible' });
+    check('stopped reply guidance is shown once in the chat panel', !await chatStatus.locator('[data-sm-chat="delivery"]').isVisible());
+    await screenshot?.('chat-memory-recovery');
+    // A queued click must revalidate literal source even if no host edit event
+    // was emitted. Restoring the untouched fixture permits the real UI retry.
+    await page.evaluate(async () => {
+        const c = SillyTavern.getContext(), pending = c.chat.at(-1), text = pending.mes;
+        pending.mes = 'Changed pending request.';
+        try { await document.querySelector('#sillymemory-chat [data-sm-chat="retry"]').onclick(new MouseEvent('click')); }
+        finally { pending.mes = text; }
+    });
+    check('a stale retry action never generates against changed source', requests.length === completedBeforeFailure);
+    reply = 'Recovered native reply.';
+    await retry.click();
+    await page.waitForFunction(() => SillyTavern.getContext().chat.at(-1)?.mes === 'Recovered native reply.' && !document.body.dataset.generating);
+    check('one explicit chat retry uses native regeneration without duplicating the pending user turn', requests.length === completedBeforeFailure + 1 && await page.evaluate(source => {
+        const chat = SillyTavern.getContext().chat;
+        return chat.at(-2).is_user && chat.at(-2).mes === 'A transient search failure.' && JSON.stringify(chat.slice(0, -2).map(m => m.mes)) === JSON.stringify(source);
+    }, sourceBeforeFailure));
+    check('a successful retry removes the stopped-request action', !await retry.isVisible());
+    await page.evaluate(async () => { const c = SillyTavern.getContext(); await c.deleteMessage(c.chat.length - 1); await c.deleteMessage(c.chat.length - 1); });
+    await chatStatus.locator('[data-sm-chat="settings"]').click();
+    await field('enabled').waitFor({ state: 'visible' });
     await page.evaluate(async () => { const { oai_settings } = await import('/scripts/openai.js'); oai_settings.custom_include_body = 'response_format:\n  type: json_object'; });
     await generate('Use my existing native response format.', '{"answer":"User-controlled format."}');
     check('user-selected response formats survive without a schema conflict', requests.at(-1).custom_include_body?.includes('type: json_object') && !JSON.stringify(requests.at(-1)).includes('sillymemory_reply'));

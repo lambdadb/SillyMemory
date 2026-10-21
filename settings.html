@@ -1,34 +1,82 @@
 <div id="sillymemory" class="inline-drawer">
+  <template data-sm="chat-status-template">
+    <details id="sillymemory-chat" class="sm-chat-status">
+      <summary><span class="sm-chat-dot" aria-hidden="true"></span><span data-sm-chat="label" role="status">Memory · Connect</span></summary>
+      <div class="sm-chat-detail">
+        <p data-sm-chat="status">Connect SillyMemory to get started.</p>
+        <progress data-sm-chat="progress" aria-label="Memory operation progress" hidden></progress>
+        <p data-sm-chat="delivery">No prompt checked in this chat.</p>
+        <div class="sm-chat-actions">
+          <button type="button" data-sm-chat="settings" class="menu_button">SillyMemory settings</button>
+          <button type="button" data-sm-chat="vectors" class="menu_button" hidden>Open Vector Storage</button>
+          <button type="button" data-sm-chat="cleanup" class="menu_button" hidden>Clean up test data</button>
+          <button type="button" data-sm-chat="sync" class="menu_button" hidden>Retry synchronization</button>
+          <button type="button" data-sm-chat="retry" class="menu_button" hidden>Retry reply</button>
+          <button type="button" data-sm-chat="disable" class="menu_button" hidden>Turn memory off</button>
+        </div>
+      </div>
+    </details>
+  </template>
   <div class="inline-drawer-toggle inline-drawer-header"><b>SillyMemory</b><div class="inline-drawer-icon fa-solid fa-circle-chevron-down down"></div></div>
   <div class="inline-drawer-content">
-    <p>Long-term memory for SillyTavern.<br><strong>Powered by LambdaDB</strong></p>
-    <p>Chat excerpts, available host message timestamps and retrieval queries are sent directly from this browser to LambdaDB. Excerpt text and queries are processed by managed embedding and reranking providers. A LambdaDB account and inference usage are required. Disable pauses use; it does not delete remote data.</p>
-    <label>Regional HTTPS endpoint <input data-sm="endpoint" class="text_pole" type="url" placeholder="Regional base URL from your project"></label>
-    <label>Project name <input data-sm="project" class="text_pole" autocomplete="off"></label>
-    <label>Project API key <input data-sm="key" class="text_pole" type="password" autocomplete="off" spellcheck="false"></label>
-    <div class="sm-actions"><button data-sm="connect" class="menu_button">Save and connect</button><button data-sm="forget" class="menu_button">Forget key</button></div>
-    <small>Save and connect stores your key in this browser for automatic reconnection. Other extensions on this page can access browser storage. Forget key removes it and disables memory.</small>
-    <p>Connects directly to LambdaDB from this browser. No SillyTavern proxy setting or restart is needed.</p>
-    <div class="sm-actions"><button data-sm="gate" class="menu_button">Test synthetic upsert / query / delete</button><button data-sm="cleanup" class="menu_button">Clean up test collection</button><button data-sm="provision" class="menu_button">Prepare chat memory</button></div>
-    <label class="sm-toggle"><input data-sm="enabled" type="checkbox"> Enable memory (isolated chat history)</label>
-    <p>Each story has its own collection. Native branches reuse committed memory in isolated LambdaDB branches automatically. Completed eligible messages are indexed when they leave the recent-five window, keeping adjacent input/reply pairs together. Checkpoints synchronize the full completed transcript. Initial indexing consumes managed embedding usage. Save a checkpoint explicitly when you want to preserve a resumable transcript.</p>
-    <label>Checkpoint name (optional)<input data-sm="checkpoint-name" class="text_pole" maxlength="120" placeholder="Before entering the observatory"></label>
-    <div class="sm-actions"><button data-sm="checkpoint-save" class="menu_button">Save / finish checkpoint</button><button data-sm="checkpoint-resume" class="menu_button">Resume checkpoint in new chat</button></div>
-    <p>Checkpoints save this transcript and its memory branch. Editing a saved transcript invalidates it. Refresh the list after reconnecting to check remote availability.</p>
-    <button data-sm="checkpoint-refresh" class="menu_button">Refresh story checkpoints</button>
-    <div data-sm="checkpoint-list" aria-live="polite">Refresh to view checkpoints for this story.</div>
-    <p>Deleting a checkpoint removes only that saved transcript and memory branch. To rename or delete the currently open checkpoint, open another story path first. The all-owned remote cleanup below removes every story's memory but keeps native chat files.</p>
-    <p>Search ordinarily includes your latest message and the preceding reply. Recent dialogue stays in the prompt, and older completed exchanges are archived together as new messages arrive. The model answers naturally, asks a brief follow-up when context is unclear, and explains gaps in recalled information. SillyMemory does not force a response format or accumulate unresolved requests.</p>
-    <label>Memory token budget (including labels, dates and guidance) <input data-sm="budget" class="text_pole" type="number" min="64" max="4096"></label>
-    <label class="sm-toggle"><input data-sm="stopOnLoss" type="checkbox" checked> Stop on missing context</label>
-    <p>Stop generation if the final host prompt omits or changes prepared memory or the retained input dialogue. Turn off to proceed with a warning. Custom macros and continuation prefixes may be unverifiable.</p>
-    <p>Group chats, files, tool messages, Data Bank, and World Info are excluded. Turn off other chat vectorization extensions. The first version supports one active SillyMemory tab per browser profile.</p>
-    <div class="sm-actions"><button data-sm="sync" class="menu_button">Sync this chat</button><button data-sm="delete-chat" class="menu_button">Delete this chat’s remote memory</button><button data-sm="delete" class="menu_button">Delete all owned remote memory</button></div>
-    <p>Renaming keeps memory. Native chat deletion does not remove remote memory: use the delete buttons here. Separate devices must not write to the same memory simultaneously.</p>
-    <p data-sm="status" role="status">Enter your project API key to begin.</p>
-    <progress data-sm="progress" aria-label="Memory operation progress" hidden></progress>
-    <p data-sm="delivery" role="status">No prompt checked in this chat.</p>
-    <details><summary>Memory in the last prompt</summary><pre data-sm="inspection">No memory prepared.</pre></details>
-    <small>Copyright &copy; 2026 SillyMemory contributors. <a href="https://github.com/lambdadb/SillyMemory" target="_blank" rel="noopener noreferrer">Source</a> &middot; <a href="https://github.com/lambdadb/SillyMemory/blob/main/LICENSE" target="_blank" rel="noopener noreferrer">AGPL-3.0-only</a>. Redistribution and modification permitted under the license; no warranty.</small>
+    <p>Recall older conversations while you chat.<br><strong>Powered by LambdaDB</strong></p>
+    <details data-sm="connection" class="sm-section sm-connection" open>
+      <summary>Connection <span data-sm="connection-state">Not connected</span></summary>
+      <label>Regional HTTPS endpoint <input data-sm="endpoint" class="text_pole" type="url" placeholder="Regional base URL from your project"></label>
+      <label>Project name <input data-sm="project" class="text_pole" autocomplete="off"></label>
+      <label>Project API key <input data-sm="key" class="text_pole" type="password" autocomplete="off" spellcheck="false"></label>
+      <div class="sm-actions"><button data-sm="connect" class="menu_button">Save and connect</button><button data-sm="forget" class="menu_button">Forget key</button></div>
+      <small>Your validated key is saved in this browser for reconnection. Other extensions on this page can access browser storage. Forget key removes it and disables memory.</small>
+    </details>
+    <section aria-labelledby="sm-memory-heading">
+      <h4 id="sm-memory-heading">Memory</h4>
+      <p data-sm="next-step">Connect your project above to get started.</p>
+      <div data-sm="prepare-controls" hidden>
+        <button data-sm="provision" class="menu_button">Prepare chat memory</button>
+        <small>Tests with temporary data, then deletes it. Uses inference allowance; no chat upload.</small>
+      </div>
+      <label data-sm="enable-control" class="sm-toggle" hidden><input data-sm="enabled" type="checkbox"> Enable memory</label>
+      <p data-sm="mode-help">When off, SillyTavern uses its usual chat history. Saved remote memory is kept.</p>
+      <small data-sm="usage-help" hidden>Memory sends older excerpts, host timestamps and queries to LambdaDB, with text and queries processed by managed embedding and reranking providers. Usage charges apply. Turn off other chat vectorization extensions. Use one active SillyMemory tab per browser profile.</small>
+    </section>
+    <div class="sm-status">
+      <p data-sm="status" role="status">Enter your project API key to begin.</p>
+      <progress data-sm="progress" aria-label="Memory operation progress" hidden></progress>
+      <div class="sm-actions" data-sm="recovery-actions" hidden>
+        <button data-sm="recover-cleanup" class="menu_button" hidden>Clean up test data</button>
+        <button data-sm="retry-sync" class="menu_button" hidden>Retry synchronization</button>
+      </div>
+      <p data-sm="delivery" role="status">No prompt checked in this chat.</p>
+    </div>
+    <details data-sm="checkpoints" class="sm-section">
+      <summary>Checkpoints <span>Save or resume a story</span></summary>
+      <p>Optional: save this transcript and its memory branch to resume later in a new chat. Checkpoints synchronize the full completed transcript. Editing a saved transcript invalidates it.</p>
+      <label>Checkpoint name (optional)<input data-sm="checkpoint-name" class="text_pole" maxlength="120" placeholder="Before entering the observatory"></label>
+      <div class="sm-actions"><button data-sm="checkpoint-save" class="menu_button">Save / finish checkpoint</button><button data-sm="checkpoint-resume" class="menu_button">Resume checkpoint in new chat</button></div>
+      <button data-sm="checkpoint-refresh" class="menu_button">Refresh story checkpoints</button>
+      <small>Refresh after reconnecting to check remote availability.</small>
+      <div data-sm="checkpoint-list" aria-live="polite">Refresh to view checkpoints for this story.</div>
+      <p>Deleting a checkpoint removes only that saved transcript and memory branch. To rename or delete the currently open checkpoint, open another story path first.</p>
+    </details>
+    <details data-sm="advanced" class="sm-section">
+      <summary>Advanced <span>Limits, diagnostics and remote data</span></summary>
+      <h4>Memory limits</h4>
+      <label>Memory token budget (including labels, dates and guidance) <input data-sm="budget" class="text_pole" type="number" min="64" max="4096"></label>
+      <small>The default is 4,096 tokens, capped at one quarter of the host context. Saved custom budgets are preserved.</small>
+      <label class="sm-toggle"><input data-sm="stopOnLoss" type="checkbox" checked> Stop on missing context</label>
+      <p>Stop generation if the final host prompt omits or changes prepared memory or the retained input dialogue. Turn off to proceed with a warning. Custom macros and continuation prefixes may be unverifiable.</p>
+      <h4>Diagnostics</h4>
+      <p>Connects directly to LambdaDB from this browser. No SillyTavern proxy setting or restart is needed.</p>
+      <div class="sm-actions"><button data-sm="gate" class="menu_button">Test synthetic upsert / query / delete</button><button data-sm="cleanup" class="menu_button">Clean up test collection</button><button data-sm="sync" class="menu_button">Sync this chat</button></div>
+      <details><summary>Memory in the last prompt</summary><pre data-sm="inspection">No memory prepared.</pre></details>
+      <h4>Remote data</h4>
+      <p>These actions delete remote memory and keep local chat files. Native chat deletion does not remove remote memory. All-owned cleanup removes every story's memory, including checkpoints.</p>
+      <div class="sm-actions"><button data-sm="delete-chat" class="menu_button">Delete this chat’s remote memory</button><button data-sm="delete" class="menu_button">Delete all owned remote memory</button></div>
+      <h4>How memory works</h4>
+      <p>Each story has its own collection. Native branches reuse committed memory in isolated LambdaDB branches. Completed eligible messages are indexed when they leave the recent-five window, keeping adjacent input/reply pairs together. Initial indexing consumes managed embedding usage.</p>
+      <p>Search uses only the current eligible message; recent dialogue stays in the prompt. The model answers naturally and receives guidance for unclear context and missing evidence. SillyMemory does not force a response format or accumulate unresolved requests.</p>
+      <p>Group chats, files, tool messages, Data Bank, and World Info are excluded. Renaming keeps memory. Separate devices must not write to the same memory simultaneously.</p>
+    </details>
+    <small class="sm-footer">Copyright &copy; 2026 SillyMemory contributors. <a href="https://github.com/lambdadb/SillyMemory" target="_blank" rel="noopener noreferrer">Source</a> &middot; <a href="https://github.com/lambdadb/SillyMemory/blob/main/LICENSE" target="_blank" rel="noopener noreferrer">AGPL-3.0-only</a>. Redistribution and modification permitted under the license; no warranty.</small>
   </div>
 </div>

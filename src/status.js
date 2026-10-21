@@ -32,7 +32,10 @@ export function failureText(error, { sync = true, generation = false } = {}) {
 // manual sync may replace the display without aborting an otherwise valid prompt.
 export class OperationStatus {
     constructor(render) { this.render = render; this.revision = 0; }
-    show(text) { this.revision++; this.render(text, null); }
+    show(text, { error = false } = {}) {
+        this.revision++; this.progress = null; this.error = error;
+        this.render(text, null);
+    }
     start(valid = () => true) {
         const revision = ++this.revision;
         let last;
@@ -42,10 +45,11 @@ export class OperationStatus {
             update: value => {
                 if (!current()) return;
                 last = { ...value };
+                this.progress = last; this.error = false;
                 this.render(progressText(last), last);
             },
             finish: text => { if (current()) this.show(text); },
-            fail: (error, prefix = '', generation = false) => { if (current()) this.show(`${prefix}${last ? `${progressText(last)} ` : ''}${failureText(error, { generation })}`); },
+            fail: (error, prefix = '', generation = false) => { if (current()) this.show(`${prefix}${last ? `${progressText(last)} ` : ''}${failureText(error, { generation })}`, { error: true }); },
         };
     }
 }
