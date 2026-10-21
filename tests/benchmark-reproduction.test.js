@@ -1,10 +1,28 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
+import { readFile, mkdtemp, rm } from 'node:fs/promises';
+import os from 'node:os';
+import path from 'node:path';
 import { createHash } from 'node:crypto';
-import { requestFor, judgeRequest, verdict } from '../benchmark/longmemeval/protocol.mjs';
+import { requestFor, judgeRequest, verdict, recordResponse } from '../benchmark/longmemeval/protocol.mjs';
 import { recallQuery } from '../scripts/beam-past-memory.mjs';
 const sha = bytes => createHash('sha256').update(bytes).digest('hex');
+
+test('provider receipts retain redacted non-JSON errors and malformed successes', async t => {
+    const directory = await mkdtemp(path.join(os.tmpdir(), 'benchmark-receipt-'));
+    t.after(() => rm(directory, { recursive: true, force: true }));
+    const file = path.join(directory, 'receipt.json'), metadata = { requestSha256: 'request', milliseconds: 42 };
+    for (const [status, body] of [[502, '<html>synthetic-secret</html>'], [401, ''], [200, 'malformed']]) {
+        await assert.rejects(recordResponse(file, new Response(body, { status }), metadata,
+            text => text.replaceAll('synthetic-secret', '[redacted]')));
+        assert.deepEqual(JSON.parse(await readFile(file)), {
+            ...metadata, status, rawResponse: body.replaceAll('synthetic-secret', '[redacted]'),
+        });
+    }
+    const response = { choices: [{ message: { content: 'cedar' } }] };
+    assert.deepEqual(await recordResponse(file, new Response(JSON.stringify(response)), metadata), response);
+    assert.deepEqual(JSON.parse(await readFile(file)).response, response);
+});
 
 function fixture() {
     const row = { question_id: 'example', question: 'Where is the compass?', answer: 'cedar',

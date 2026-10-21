@@ -50,7 +50,8 @@ automatically. A `.running` directory prevents concurrent runs; inspect the run
 before removing a lock left by a terminated process.
 
 Outputs are `answer/`, `judge/`, `scores.json` and `summary.json`. `verify`
-reconstructs the requests, checks response bindings and recomputes the summary
+reconstructs the requests, checks response bindings, and compares every saved
+per-question score and the summary with the recomputed results
 without provider calls. The recorded aggregate is in [results.json](results.json).
 
 ## Sources

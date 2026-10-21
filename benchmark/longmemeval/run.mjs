@@ -1,10 +1,10 @@
 import assert from 'node:assert/strict';
-import { readFile, writeFile, mkdir, rename, rm } from 'node:fs/promises';
+import { readFile, writeFile, mkdir, rm } from 'node:fs/promises';
 import { parseArgs, parseEnv } from 'node:util';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import { fetchVerifiedFile } from '../../scripts/fetch-benchmark-data.mjs';
-import { requestFor, judgeRequest, verdict, sha256 } from './protocol.mjs';
+import { requestFor, judgeRequest, verdict, sha256, recordResponse } from './protocol.mjs';
 
 const { values, positionals } = parseArgs({ allowPositionals: true, options: {
     root: { type: 'string' }, 'env-file': { type: 'string' },
@@ -69,12 +69,9 @@ try {
                 method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + (kind === 'answer' ? env.LLM_API_KEY : env.TYPESAFE_API_KEY) },
                 body: JSON.stringify(body), signal: AbortSignal.timeout(kind === 'answer' ? 240000 : 120000),
             });
-            const result = await response.json();
-            const saved = { requestSha256, configSha256: binding, status: response.status, milliseconds: performance.now() - start, response: result };
-            await writeFile(file + '.tmp', clean(JSON.stringify(saved)));
-            await rename(file + '.tmp', file);
-            assert.equal(response.status, 200, `Provider HTTP ${response.status}; receipt retained`);
-            return result;
+            return recordResponse(file, response, {
+                requestSha256, configSha256: binding, milliseconds: performance.now() - start,
+            }, clean);
         }
         const scores = [];
         for (const selection of selections) {
@@ -96,7 +93,10 @@ try {
             const summary = { questions: scores.length, correct, accuracy: correct / scores.length,
                 generator: config.generator, judge: config.judge, configSha256: binding };
             const serialized = JSON.stringify(summary, null, 2) + '\n';
-            if (phase === 'verify') assert.deepEqual(await readJSON(path.join(root, 'summary.json')), summary);
+            if (phase === 'verify') {
+                assert.deepEqual(await readJSON(path.join(root, 'scores.json')), scores);
+                assert.deepEqual(await readJSON(path.join(root, 'summary.json')), summary);
+            }
             else {
                 await writeFile(path.join(root, 'scores.json'), JSON.stringify(scores, null, 2));
                 await writeFile(path.join(root, 'summary.json'), serialized);

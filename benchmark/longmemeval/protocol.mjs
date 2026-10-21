@@ -1,8 +1,21 @@
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
+import { writeFile, rename } from 'node:fs/promises';
 import { adaptLongMemEval } from '../../scripts/benchmark-audit.mjs';
 
 export const sha256 = value => createHash('sha256').update(value).digest('hex');
+export async function recordResponse(file, response, metadata, clean = text => text) {
+    const saved = { ...metadata, status: response.status, rawResponse: await response.text() };
+    async function persist() {
+        await writeFile(file + '.tmp', clean(JSON.stringify(saved)));
+        await rename(file + '.tmp', file);
+    }
+    await persist();
+    assert.equal(response.status, 200, `Provider HTTP ${response.status}; receipt retained`);
+    saved.response = JSON.parse(saved.rawResponse);
+    await persist();
+    return saved.response;
+}
 // Source coordinates are UTF-16 offsets after the benchmark's literal escaping.
 export function literal(text) {
     return text.replaceAll('{', '｛').replaceAll('}', '｝')
