@@ -1,6 +1,7 @@
 # LongMemEval and BEAM: published results and implications
 
-Source review: **2026-10-18**. This is a research reference for future technical
+Benchmark source review: **2026-10-18**; operational comparison checked
+**2026-10-21**. This is a research reference for future technical
 writing and comparison design, not an independently reproduced leaderboard or a
 new experiment. Vendor claims, inspected artifacts, code observations and project
 decisions are distinguished below. Refresh sources before publishing a comparison.
@@ -8,6 +9,8 @@ decisions are distinguished below. Refresh sources before publishing a compariso
 The [October 19 cost comparison](memory-cost-comparison.md) adds the retained 95%
 direct-provider experiment, same-question Summarize subset, cache-aware generation
 costs and a source-reconstructed LambdaDB cost model with explicit uncertainty.
+Its [October 21 hosted-service section](memory-cost-comparison.md#hosted-storage-and-retention-terms-2026-10-21)
+adds storage/retention terms and a Past PAYG budget for S and the complete BEAM grid.
 
 ## Reading the numbers
 
@@ -185,6 +188,79 @@ finding does not establish the same issue in that company's LongMemEval run.
 Graph storage alone does not explain a score. Extraction fidelity, source retention,
 time handling, candidate ranking, budget admission and the reader all matter.
 A combined pipeline's score is not an ablation proving that its graph caused the gain.
+
+## Operational boundaries and lifecycle (2026-10-21)
+
+Compare the unit of search, credential authority and deletion separately. A
+project, collection, audience, user graph and conversation thread are not
+interchangeable units. A project-count limit is not a limit on how many end users
+a service supports, and logical separation does not establish dedicated compute,
+physical storage or an inherent latency/quality advantage.
+
+| System | User/conversation scope | Credential and operational boundary |
+| --- | --- | --- |
+| SillyMemory on LambdaDB | Current runtime: one collection per story and one writable branch per chat path. Independent copied stories get distinct scopes; verified native forks inherit the story and fork its branch. Historical QA runs instead used isolated collections per history. | LambdaDB projects have their own API keys and separately inspectable usage. Projects can be created as needed under the current policy confirmed by the maintainer on 2026-10-21. The extension connects to a selected project; it does not provision customer projects automatically. |
+| [past.dev](https://past.dev/docs/memory-api/access-control) | An audience determines who can read a data point; recall as an identity reaches all that identity's audiences plus project-visible data. | A project key reaches every audience in that project. Projects have separate keys, caps and usage lines. [Plans](https://past.dev/pricing): PAYG 1 project, Flex 5, Enterprise unlimited; archived projects count. |
+| [Mem0](https://docs.mem0.ai/platform/features/entity-scoped-memory) | `user_id`, `agent_id`, `app_id` and `run_id` scope writes and search filters; `run_id` can isolate sessions. Deletion also supports entity scopes. | Caller must select the intended scope. [Plans](https://mem0.ai/pricing): Hobby/Starter 1 project, Pro/Enterprise unlimited; all list unlimited end users. |
+| [Zep v4](https://help.getzep.com/mastra-memory) | Personal user graphs, shared context graphs and conversation threads. In the documented context path, a thread focuses relevance while retrieval still spans the user graph. | A thread is not proof of an independently searched memory store. [Plans](https://www.getzep.com/pricing/): Flex 5 projects, Flex Plus 10, Enterprise unlimited. |
+| [Supermemory](https://supermemory.ai/blog/memory-container-authorization/) | Containers/namespaces select memory scope; applications still authenticate callers and authorize the allowed scope for every operation. | A container name is not an authorization credential. Do not infer separate API keys, physical resources or deletion guarantees solely from the scope name. |
+
+LambdaDB's project-key boundary is also described on its
+[official site](https://lambdadb.ai/). Its
+[collection API](https://docs.lambdadb.ai/guides/documents/delete-data) supports
+deleting a collection. The project-count and separately inspectable usage policy
+above is maintainer-confirmed operational information, not a new quota or billing
+experiment. Current runtime details are grounded in
+[identity and source authority](architecture.md#identity-and-source-authority),
+[ownership/deletion](architecture.md#ownership-and-deletion) and
+[checkpoints](checkpoints.md); service capabilities are not automatically extension
+UI features.
+
+### Practical consequences of Past audiences
+
+- **A shared key remains broad.** A project key can select identities across its
+  audiences; the application must bind an authenticated caller to an allowed
+  reader. Separate projects reduce this credential's reach.
+- **Scope must survive every write.** Omitting `audience` makes a data point
+  project-visible, including on re-send. Author `identity` and arbitrary metadata
+  do not substitute for that read scope.
+- **One-chat-only recall needs its own reader scope.** If one reader belongs to
+  chats A and B, ordinary recall can reach both. Past documents a dedicated reader
+  whose only audience is the desired scope; its recall has no metadata filter.
+- **Management remains shared.** Audiences share project caps and the project's
+  usage line. Rights can take seconds to update, with an explicit recompute call
+  available. Deleting an audience makes its data unreadable; it is not deletion
+  of the underlying source records.
+
+These are documented contract differences, not observed leakage or benchmark
+failures. Sources: [access control](https://past.dev/docs/memory-api/access-control),
+[audience lifecycle](https://past.dev/docs/memory-api/concepts) and
+[ingestion contract](https://past.dev/docs/memory-api/api-reference).
+Audiences remain useful when readers need overlapping team/customer/shared
+knowledge. Their flexibility can be preferable to independent stores for that use.
+
+Our collection/branch model simplifies selecting a chat's search target and
+deleting its remote memory branch while preserving siblings. It is not complete
+user authorization: another holder of the same LambdaDB project key can address
+other collections, and owner/scope tags are application safeguards. Native chat
+deletion does not itself delete remote memory; explicit cleanup and absence
+verification remain necessary. API absence does not prove physical backup erasure.
+
+### Supported product positioning
+
+The evaluated configurations avoid separate generative extraction, summarization
+and query-rewrite calls while retaining literal source chunks. Embeddings,
+managed reranking, reads, writes and storage still cost money. Past's hosted
+extraction model/call budget is not disclosed by its benchmark client, so do not
+infer an internal LLM cost or profit margin from its customer price.
+
+The operational proposition is **project-level keys and usage visibility, with
+explicit story/chat storage targets and lifecycle management inside a project**.
+The historical 95% S result and completed BEAM grid remain separately qualified
+evaluations, not a matched vendor total-cost or security trial. Customer anecdotes
+can motivate this comparison but do not establish market-wide rejection rates.
+Use the [cost and retention comparison](memory-cost-comparison.md#hosted-storage-and-retention-terms-2026-10-21)
+for the dated billing assumptions; refresh vendor terms before external publication.
 
 ## Our measured comparison and its limits
 
