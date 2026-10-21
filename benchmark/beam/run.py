@@ -54,11 +54,16 @@ def setup(root, config, split):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("phase", choices=["setup", "prepare", "recall", "score", "verify"])
+    parser.add_argument("phase", choices=["setup", "prepare", "recall", "score", "verify", "cleanup"])
     parser.add_argument("--split", required=True, choices=protocol.SPLITS)
     parser.add_argument("--root", required=True, type=Path)
     parser.add_argument("--env-file", type=Path)
     args = parser.parse_args()
+    if args.phase == "cleanup":
+        assert args.env_file, "Pass --env-file explicitly for cleanup"
+        subprocess.run(["node", str(HERE / "adapter.mjs"), "--cleanup", str(args.root.resolve() / "memory"),
+                        str(args.env_file.resolve())], check=True)
+        return
     config = json.loads((HERE / "config.json").read_text())
     assert config["upstream"]["revision"] == protocol.PAST_REVISION
     assert config["generation"]["model"] == protocol.MODEL

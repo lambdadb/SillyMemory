@@ -70,7 +70,21 @@ eight-hour bound. The model phase allows up to 10,000 attempts within a $25
 reservation at the runner's fixed accounting rates; this is not a total-service
 price estimate. Database operation limits are 10,000 /20,000 /20,000 /50,000 for
 100K /500K /1M /10M. Inspect `memory/memory-state.json` if recall stops before
-cleanup completes. Existing scored output is never overwritten or silently rerun.
+cleanup completes. Retry owned-data cleanup with:
+
+```sh
+artifacts/beam-venv/bin/python benchmark/beam/run.py cleanup \
+  --split 100k --root artifacts/beam-100k --env-file /path/to/evaluation.env
+```
+
+Cleanup uses the saved connection, split and cumulative request count; it verifies
+ownership and absence without loading the dataset, tokenizer or upstream code.
+It does not resume recall or mark an incomplete run as scored. If the request
+budget is exhausted, cleanup stops and retains the unresolved ownership records.
+Recall and cleanup hold `memory/.running` exclusively. After a hard kill, remove
+that empty directory only after confirming no process is using the run.
+
+Existing scored output is never overwritten or silently rerun.
 
 Outputs include `protocol-lock.json`, `memory/`, `recall/`, `scored/calls/`,
 `scored/results.jsonl` and `scored/summary.json`. `verify` reconstructs source-bound

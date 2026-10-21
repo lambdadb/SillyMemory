@@ -11,6 +11,8 @@ import { memoryOperationBudget } from '../shared/memory-budget.mjs';
 import { chunkSpans } from '../../src/chunking.js';
 
 const sha = value => createHash('sha256').update(value).digest('hex');
+const cohorts = { '100k': [20, 10000], '500k': [35, 20000], '1m': [35, 20000], '10m': [10, 50000] };
+const connection = env => sha(JSON.stringify([env.LAMBDADB_BASE_URL, env.LAMBDADB_PROJECT_NAME]));
 export const serializeContext = context => JSON.stringify(context);
 // This formula reconstructs usedEvidenceTokens in all 400 published 100K
 // records. Metadata is outside that evidence budget. It is an observed accounting
@@ -142,7 +144,6 @@ export function packContext(hits, documents, asOf, asOfMicros, countTokens) {
 
 export function cohortSettings(input) {
     const split = input.split || '100k';
-    const cohorts = { '100k': [20, 10000], '500k': [35, 20000], '1m': [35, 20000], '10m': [10, 50000] };
     assert(Object.hasOwn(cohorts, split), 'Unsupported frozen split');
     const [conversations, memoryOperations] = cohorts[split], questions = conversations * 20;
     assert.equal(input.conversations.length, conversations);
@@ -152,8 +153,72 @@ export function cohortSettings(input) {
     return { conversations, questions, memoryOperations };
 }
 
+async function withMemoryLock(directory, work) {
+    await mkdir(directory, { recursive: true });
+    const lock = path.join(directory, '.running');
+    await mkdir(lock);
+    try { return await work(); }
+    finally { await rm(lock, { recursive: true }); }
+}
+
+export async function cleanupMemory(directory, env, fetcher = globalThis.fetch) {
+    for (const key of ['LAMBDADB_BASE_URL', 'LAMBDADB_PROJECT_NAME', 'LAMBDADB_PROJECT_API_KEY']) assert(env[key]?.trim(), `Missing ${key}`);
+    return withMemoryLock(directory, async () => {
+        const file = path.join(directory, 'memory-state.json');
+        const state = JSON.parse(await readFile(file));
+        assert.equal(state.connection, connection(env), 'Cleanup connection differs from the recorded run');
+        assert(Object.hasOwn(cohorts, state.split), 'Missing or invalid recorded split');
+        const [conversations, limit] = cohorts[state.split];
+        assert(Number.isSafeInteger(state.operations) && state.operations >= 0 && state.operations <= limit);
+        assert(Array.isArray(state.owned) && state.owned.length <= conversations);
+        for (const entry of state.owned) {
+            assert(/^smbpast_[a-f0-9]{24}$/.test(entry.collection) && /^[a-f0-9]{64}$/.test(entry.owner));
+            assert.equal(entry.scope, sha(entry.conversationId));
+        }
+        const save = async () => {
+            await writeFile(file + '.tmp', JSON.stringify(state, null, 2));
+            await rename(file + '.tmp', file);
+        };
+        const budget = memoryOperationBudget(state, limit), failures = [], deadline = Date.now() + 8 * 3600000;
+        const client = new LambdaClient({ endpoint: env.LAMBDADB_BASE_URL, project: env.LAMBDADB_PROJECT_NAME }, env.LAMBDADB_PROJECT_API_KEY, {
+            timeoutMs: 180000,
+            fetcher: async (url, options) => {
+                assert(Date.now() < deadline, 'Cleanup exceeded eight hours');
+                budget.consume(); await save();
+                const started = Date.now(), number = state.operations;
+                const response = await fetcher(url, options);
+                await writeFile(path.join(directory, `cleanup-http-${number}.json`), JSON.stringify({
+                    request: { pathname: new URL(url).pathname, method: options.method },
+                    status: response.status, elapsedMs: Date.now() - started,
+                }), { flag: 'wx' });
+                return response;
+            },
+        });
+        try {
+            for (const entry of state.owned.filter(item => !item.absent404)) {
+                try {
+                    await budget.run(() => client.deleteOwnedCollection(entry.collection, entry.owner, entry.scope), true);
+                    entry.deleted = true; entry.absent404 = true; await save();
+                } catch {
+                    failures.push(entry.collection);
+                }
+            }
+            if (failures.length) state.status = 'blocked';
+            else if (state.status !== 'completed') state.status = 'cleaned';
+            await save();
+        } finally { client.forget(); }
+        assert.equal(failures.length, 0, `Cleanup incomplete for ${failures.length} owned collections; inspect memory-state.json and retry cleanup`);
+    });
+}
+
 async function main() {
     const [inputFile, outputDirectory, envFile, tokenizerPackage, flag] = process.argv.slice(2);
+    if (inputFile === '--cleanup') {
+        assert(outputDirectory && envFile && !tokenizerPackage, 'Usage: node benchmark/beam/adapter.mjs --cleanup memory-directory env-file');
+        await cleanupMemory(path.resolve(outputDirectory), { ...parseEnv(await readFile(envFile, 'utf8')), ...process.env });
+        console.log('CLEANED: all recorded owned collections confirmed absent');
+        return;
+    }
     assert(inputFile && outputDirectory && envFile && tokenizerPackage, 'Usage: node benchmark/beam/adapter.mjs input.json output-directory env-file tokenizer-package.json');
     const inputBytes = await readFile(inputFile), input = JSON.parse(inputBytes);
     const cohort = cohortSettings(input);
@@ -203,80 +268,82 @@ async function main() {
     assert(env.LLM_API_KEY, 'Prepare the matching model credentials before creating memory');
     const root = path.resolve(outputDirectory);
     await mkdir(root, { recursive: true });
-    // Never replay a partial run or adopt an existing collection automatically.
-    const statePath = path.join(root, 'memory-state.json');
-    const state = { inputSha256: sha(inputBytes), startedAt: new Date().toISOString(), status: 'running',
-        owned: [], completed: [], operations: 0, retries: [], errors: [] };
-    await writeFile(statePath, JSON.stringify(state, null, 2), { flag: 'wx' });
-    const save = async () => { await writeFile(statePath + '.tmp', JSON.stringify(state, null, 2)); await rename(statePath + '.tmp', statePath); };
-    const deadline = Date.now() + 8 * 3600000;
-    let receiptNumber = 0, stopped = false;
-    const budget = memoryOperationBudget(state, cohort.memoryOperations);
-    for (const signal of ['SIGINT', 'SIGTERM']) process.on(signal, () => { stopped = true; });
-    const client = new LambdaClient({ endpoint: env.LAMBDADB_BASE_URL, project: env.LAMBDADB_PROJECT_NAME }, env.LAMBDADB_PROJECT_API_KEY,
-        { timeoutMs: 180000, fetcher: async (url, options) => {
-            budget.consume();
-            const number = receiptNumber++, started = Date.now();
-            const request = { number, pathname: new URL(url).pathname, method: options.method,
-                body: options.body ? JSON.parse(options.body) : null };
-            const response = await fetch(url, options);
-            await writeFile(path.join(root, `http-${String(number).padStart(5, '0')}.json`), JSON.stringify({
-                request, status: response.status, elapsedMs: Date.now() - started, response: await receiptBody(response),
-            }));
-            return response;
-        } });
-    const operation = async (job, cleanup = false) => {
-        for (let attempt = 0; ; attempt++) {
-            if (!cleanup) assert(!stopped && Date.now() < deadline, 'Memory run stopped or exceeded eight hours');
-            try { return await budget.run(job, cleanup); }
-            catch (error) {
-                if (attempt >= 2 || ![429, 500, 502, 503, 504].includes(error.status)) throw error;
-                state.retries.push({ status: error.status, attempt }); await save();
-                await new Promise(resolve => setTimeout(resolve, 1000 * 2 ** attempt));
-            }
-        }
-    };
-    try {
-        for (const conversation of input.conversations) {
-            const owner = sha(state.startedAt + randomBytes(16).toString('hex')), scope = sha(conversation.id);
-            const collection = `smbpast_${randomBytes(12).toString('hex')}`, docs = sourceDocuments(conversation, owner, scope);
-            const entry = { conversationId: conversation.id, collection, owner, scope, deleted: false };
-            state.owned.push(entry); await save();
-            console.log(`INGEST ${conversation.id}: ${docs.length} chunks`);
-            try {
-                await operation(() => client.call((sdk, opts) => sdk.createCollection({ collectionName: collection,
-                    indexConfigs: { ...schema, beamTimeMicros: { type: 'long' } },
-                    description: 'SillyMemory BEAM public-protocol comparison',
-                    tags: { application: 'sillymemory', owner, chat: scope }, snapshotRetentionInDays: 1 }, opts)));
-                await operation(() => client.assertOwned(collection, owner, undefined, scope));
-                for (let start = 0; start < docs.length; start += 50) await operation(() => client.upsert(collection, docs.slice(start, start + 50)));
-                for (let start = 0; start < docs.length; start += 100) {
-                    const expected = docs.slice(start, start + 100);
-                    const actual = new Map((await operation(() => client.fetchDocs(collection, expected.map(doc => doc.id)))).map(doc => [doc.id, doc]));
-                    for (const doc of expected) assert(Object.entries(doc).every(([key, value]) => actual.get(doc.id)?.[key] === value), 'Stored source mismatch');
+    await withMemoryLock(root, async () => {
+        // Never replay a partial run or adopt an existing collection automatically.
+        const statePath = path.join(root, 'memory-state.json');
+        const state = { inputSha256: sha(inputBytes), split: input.split || '100k', connection: connection(env), startedAt: new Date().toISOString(), status: 'running',
+            owned: [], completed: [], operations: 0, retries: [], errors: [] };
+        await writeFile(statePath, JSON.stringify(state, null, 2), { flag: 'wx' });
+        const save = async () => { await writeFile(statePath + '.tmp', JSON.stringify(state, null, 2)); await rename(statePath + '.tmp', statePath); };
+        const deadline = Date.now() + 8 * 3600000;
+        let receiptNumber = 0, stopped = false;
+        const budget = memoryOperationBudget(state, cohort.memoryOperations);
+        for (const signal of ['SIGINT', 'SIGTERM']) process.on(signal, () => { stopped = true; });
+        const client = new LambdaClient({ endpoint: env.LAMBDADB_BASE_URL, project: env.LAMBDADB_PROJECT_NAME }, env.LAMBDADB_PROJECT_API_KEY,
+            { timeoutMs: 180000, fetcher: async (url, options) => {
+                budget.consume(); await save();
+                const number = receiptNumber++, started = Date.now();
+                const request = { number, pathname: new URL(url).pathname, method: options.method,
+                    body: options.body ? JSON.parse(options.body) : null };
+                const response = await fetch(url, options);
+                await writeFile(path.join(root, `http-${String(number).padStart(5, '0')}.json`), JSON.stringify({
+                    request, status: response.status, elapsedMs: Date.now() - started, response: await receiptBody(response),
+                }));
+                return response;
+            } });
+        const operation = async (job, cleanup = false) => {
+            for (let attempt = 0; ; attempt++) {
+                if (!cleanup) assert(!stopped && Date.now() < deadline, 'Memory run stopped or exceeded eight hours');
+                try { return await budget.run(job, cleanup); }
+                catch (error) {
+                    if (attempt >= 2 || ![429, 500, 502, 503, 504].includes(error.status)) throw error;
+                    state.retries.push({ status: error.status, attempt }); await save();
+                    await new Promise(resolve => setTimeout(resolve, 1000 * 2 ** attempt));
                 }
-                const recalls = [];
-                for (const question of conversation.questions) {
-                    assert.deepEqual(Object.keys(question).sort(), ['asOf', 'asOfMicros', 'id', 'text'].sort());
-                    const { query, options } = recallQuery(owner, scope, question.text, question.asOfMicros), started = Date.now();
-                    const hits = await operation(() => client.query(collection, query, options));
-                    const queryMs = Date.now() - started;
-                    recalls.push({ questionId: question.id, queryMs, hitIds: hits.map(doc => doc.id),
-                        ...packContext(hits, docs, question.asOf, question.asOfMicros, countTokens) });
-                }
-                await writeFile(path.join(root, `recall-${conversation.id}.json`), JSON.stringify(recalls));
-                state.completed.push(conversation.id); await save();
-                console.log(`RECALL ${conversation.id}: ${recalls.length} questions`);
-            } finally {
-                await operation(() => client.deleteOwnedCollection(collection, owner, scope), true);
-                entry.deleted = true; entry.absent404 = true; await save();
             }
-        }
-        state.status = 'completed';
-    } catch (error) {
-        state.status = 'blocked'; state.errors.push({ message: error.message, status: error.status, code: error.code });
-        throw error;
-    } finally { await save(); client.forget(); encoder.free(); }
+        };
+        try {
+            for (const conversation of input.conversations) {
+                const owner = sha(state.startedAt + randomBytes(16).toString('hex')), scope = sha(conversation.id);
+                const collection = `smbpast_${randomBytes(12).toString('hex')}`, docs = sourceDocuments(conversation, owner, scope);
+                const entry = { conversationId: conversation.id, collection, owner, scope, deleted: false };
+                state.owned.push(entry); await save();
+                console.log(`INGEST ${conversation.id}: ${docs.length} chunks`);
+                try {
+                    await operation(() => client.call((sdk, opts) => sdk.createCollection({ collectionName: collection,
+                        indexConfigs: { ...schema, beamTimeMicros: { type: 'long' } },
+                        description: 'SillyMemory BEAM public-protocol comparison',
+                        tags: { application: 'sillymemory', owner, chat: scope }, snapshotRetentionInDays: 1 }, opts)));
+                    await operation(() => client.assertOwned(collection, owner, undefined, scope));
+                    for (let start = 0; start < docs.length; start += 50) await operation(() => client.upsert(collection, docs.slice(start, start + 50)));
+                    for (let start = 0; start < docs.length; start += 100) {
+                        const expected = docs.slice(start, start + 100);
+                        const actual = new Map((await operation(() => client.fetchDocs(collection, expected.map(doc => doc.id)))).map(doc => [doc.id, doc]));
+                        for (const doc of expected) assert(Object.entries(doc).every(([key, value]) => actual.get(doc.id)?.[key] === value), 'Stored source mismatch');
+                    }
+                    const recalls = [];
+                    for (const question of conversation.questions) {
+                        assert.deepEqual(Object.keys(question).sort(), ['asOf', 'asOfMicros', 'id', 'text'].sort());
+                        const { query, options } = recallQuery(owner, scope, question.text, question.asOfMicros), started = Date.now();
+                        const hits = await operation(() => client.query(collection, query, options));
+                        const queryMs = Date.now() - started;
+                        recalls.push({ questionId: question.id, queryMs, hitIds: hits.map(doc => doc.id),
+                            ...packContext(hits, docs, question.asOf, question.asOfMicros, countTokens) });
+                    }
+                    await writeFile(path.join(root, `recall-${conversation.id}.json`), JSON.stringify(recalls));
+                    state.completed.push(conversation.id); await save();
+                    console.log(`RECALL ${conversation.id}: ${recalls.length} questions`);
+                } finally {
+                    await operation(() => client.deleteOwnedCollection(collection, owner, scope), true);
+                    entry.deleted = true; entry.absent404 = true; await save();
+                }
+            }
+            state.status = 'completed';
+        } catch (error) {
+            state.status = 'blocked'; state.errors.push({ message: error.message, status: error.status, code: error.code });
+            throw error;
+        } finally { await save(); client.forget(); encoder.free(); }
+    });
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) {

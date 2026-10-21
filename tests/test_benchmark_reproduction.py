@@ -23,6 +23,17 @@ class ReproductionTests(unittest.TestCase):
             for file in cohort["files"]:
                 self.assertIn("/resolve/" + cohort["datasetRevision"] + "/data/", file["url"])
 
+    def test_cleanup_routes_directly_to_adapter_without_upstream_or_dataset(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory).resolve()
+            credentials = root / "synthetic.env"
+            argv = ["benchmark", "cleanup", "--split", "100k", "--root", str(root),
+                    "--env-file", str(credentials)]
+            with patch.object(runner.sys, "argv", argv), patch.object(runner.subprocess, "run") as command:
+                runner.main()
+            command.assert_called_once_with(["node", str(REPO / "benchmark/beam/adapter.mjs"),
+                                             "--cleanup", str(root / "memory"), str(credentials)], check=True)
+
     def test_setup_rejects_corrupt_existing_data_before_installation(self):
         config = json.loads((REPO / "benchmark/beam/config.json").read_text())
         with tempfile.TemporaryDirectory() as directory:

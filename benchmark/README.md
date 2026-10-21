@@ -36,6 +36,7 @@ are shown in [credentials.example](credentials.example).
 
 `setup` downloads public inputs and installs the tokenizer. `prepare` and `verify`
 do not call model or database APIs. Both benchmarks use paid `recall` and `score`
-phases. Neither requires a running SillyTavern or extension; clone the repository
+phases. Both also expose `cleanup` for retrying owned-collection deletion after
+a failed recall. Neither requires a running SillyTavern or extension; clone the repository
 because the runners reuse its source modules. Model access and
 provider availability are required; new responses can produce different scores.
