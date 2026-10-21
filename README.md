@@ -9,7 +9,7 @@ plugin, or build step is needed.
 
 **Experimental pre-release.** Start with a test chat; broader model/browser
 compatibility and answer quality are still being evaluated. See the
-[0.5.0 release boundary](docs/releases/0.5.0.md) for prepared changes and
+[0.6.0 release boundary](docs/releases/0.6.0.md) for prepared changes and
 [GitHub Releases](https://github.com/lambdadb/SillyMemory/releases) for published
 versions. `main` is the public installation baseline; dated development notes
 alone do not establish publication.
@@ -149,8 +149,8 @@ button and reload. Updates follow the installed Git branch, not the newest relea
 tag. Automatic updates are disabled. Normal updates preserve settings and ownership;
 do not delete remote memory just to update.
 
-See [release notes](docs/releases/0.5.0.md), [CHANGELOG](CHANGELOG.md),
-[installation validation](docs/releases/0.5.0-validation.md) and
+See [release notes](docs/releases/0.6.0.md), [CHANGELOG](CHANGELOG.md),
+[installation validation](docs/releases/0.6.0-validation.md) and
 [live reply validation](docs/native-reply-validation.md) for measured scope and limitations.
 
 ## Development and verification
