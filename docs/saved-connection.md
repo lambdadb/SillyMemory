@@ -18,8 +18,19 @@ remain in the client's private field; the password input is cleared on submissio
 A single authenticated `GET /projects/{project}/collections?size=1` validates the
 connection before save or activation. It does not create resources or invoke
 managed embeddings, reranking or the answer model. It proves the bounded read
-works, not every write permission. The initial synthetic transport test and
-explicit chat-memory preparation remain required before first activation.
+works, not every write permission. **Prepare chat memory** runs the required
+synthetic transport test (unless it already passed in this session) and verifies
+cleanup before marking memory ready. Activation remains a separate explicit step.
+The manual test and pending-test cleanup controls remain under **Advanced**.
+Pending test data also exposes a cleanup action beside the status. A failed
+background synchronization exposes a retry action; retrying a stopped generation
+still uses the native Regenerate action.
+
+After successful verification, the connection editor collapses to a project
+summary. It remains manually expandable and reopens when authentication or
+reconnection fails. Setup shows preparation only after connection, then the memory
+switch after preparation. These views do not change stored connection or memory
+settings.
 
 After reload, acquire the account's existing exclusive browser lock, restore the
 key and verify it. Only then restore the previous enabled state if chat memory was
