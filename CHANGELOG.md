@@ -4,6 +4,40 @@ Versions describe the extension, independently of the SillyTavern host version.
 An `Unreleased` entry is a development candidate. A dated entry records a release
 boundary; publication is confirmed by the corresponding Git tag and GitHub Release.
 
+## [0.6.0] - 2026-10-21
+
+### Added
+
+- Show a collapsible memory status above the native message composer, with
+  operation progress, final-prompt verification and relevant recovery actions.
+  Distinguish readiness from verified delivery, unsupported chats, checkpoints
+  and conflicting built-in Vector Storage chat vectorization.
+- Offer explicit synchronization recovery and a native Regenerate shortcut for
+  an unchanged pending user turn. Revalidate source, chat and host activity;
+  never retry generation automatically or change another extension's settings.
+- Publish bounded LongMemEval and BEAM reproduction profiles, protocol tests,
+  results and cost/operational reference documentation. These development tools
+  are separate from the installed extension's runtime.
+
+### Changed
+
+- Guide setup through connection, preparation and activation. Prepare chat memory
+  runs the existing synthetic transport gate when needed and exposes temporary
+  test cleanup without opening Advanced. Collapse credentials after connection;
+  keep advanced limits and checkpoint controls available in native settings.
+- Keep Query1, managed embeddings/reranking, collection/index formats, native
+  response formats, prompt guidance and token limits unchanged from 0.5.0.
+
+### Scope and limitations
+
+- Remain experimental on pinned SillyTavern 1.19.0 and Chromium. Final-prompt
+  verification is not an answer-quality or provider-receipt guarantee.
+- No new storage migration step is introduced relative to 0.5.0. Its existing
+  index requirements still apply to older experimental collections. Automatic
+  extension updates remain disabled.
+- See [release notes](docs/releases/0.6.0.md) and the separate
+  [installation/update acceptance](docs/releases/0.6.0-validation.md).
+
 ## [0.5.0] - 2026-10-20
 
 ### Changed
