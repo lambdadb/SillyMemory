@@ -58,7 +58,10 @@ test('recall verification rejects altered source, query, packing and partial rer
     const { config, prepared, response } = await fixture();
     const count = t => t.length, record = { id: prepared.id, binding: 'lock', sourceSha256: sha(JSON.stringify(prepared)),
         query: lmeQuery(prepared, config), response, packed: requestFor(prepared, prepared.docs, config, count) };
-    assert.deepEqual(verifyRecall(record, prepared, config, count, 'lock'), record.packed.body);
+    const collection = 'smlme_' + 'a'.repeat(24);
+    const receipt = { method: 'POST', status: 200, pathname: `/v1/projects/synthetic/collections/${collection}/query`,
+        request: record.query, rawResponse: JSON.stringify(response) };
+    assert.deepEqual(verifyRecall(record, prepared, config, count, 'lock', receipt, collection), record.packed.body);
     for (const mutate of [
         r => { r.response.docs[0].doc.text = 'forged'; },
         r => { r.query.rerank.candidateSize = 100; },
@@ -66,7 +69,28 @@ test('recall verification rejects altered source, query, packing and partial rer
         r => { r.response.rerank.scoredCount = 1; },
     ]) {
         const altered = structuredClone(record); mutate(altered);
-        assert.throws(() => verifyRecall(altered, prepared, config, count, 'lock'));
+        assert.throws(() => verifyRecall(altered, prepared, config, count, 'lock', receipt, collection));
+    }
+});
+
+test('recall verification binds reordered or substituted valid documents to the raw provider response', async () => {
+    const { config, prepared, response } = await fixture();
+    const count = text => text.length, collection = 'smlme_' + 'a'.repeat(24);
+    const record = { id: prepared.id, binding: 'lock', sourceSha256: sha(JSON.stringify(prepared)),
+        query: lmeQuery(prepared, config), response, packed: requestFor(prepared, prepared.docs, config, count) };
+    const receipt = { method: 'POST', status: 200, pathname: `/v1/projects/synthetic/collections/${collection}/query`,
+        request: record.query, rawResponse: JSON.stringify(response) };
+    for (const replace of [docs => docs.reverse(), docs => docs.slice(1)]) {
+        const altered = structuredClone(record);
+        altered.response.docs = replace(altered.response.docs);
+        altered.packed = requestFor(prepared, returnedDocs(altered.response, prepared, config), config, count);
+        assert.throws(() => verifyRecall(altered, prepared, config, count, 'lock', receipt, collection), /raw query receipt/);
+    }
+    for (const change of [r => { r.status = 500; }, r => { r.method = 'GET'; },
+        r => { r.pathname = r.pathname.replace(collection, 'smlme_' + 'b'.repeat(24)); },
+        r => { r.request.query.bayesian[0].knn.queryText = 'Another question'; }]) {
+        const altered = structuredClone(receipt); change(altered);
+        assert.throws(() => verifyRecall(record, prepared, config, count, 'lock', altered, collection));
     }
 });
 

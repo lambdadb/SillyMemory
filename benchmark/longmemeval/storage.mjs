@@ -30,10 +30,15 @@ export async function retrieveCase(client, collection, prepared, config) {
     return { query, response };
 }
 
-export function verifyRecall(record, prepared, config, countTokens, binding) {
+export function verifyRecall(record, prepared, config, countTokens, binding, receipt, collection) {
     assert.equal(record.binding, binding); assert.equal(record.id, prepared.id);
     assert.equal(record.sourceSha256, sha256(JSON.stringify(prepared)));
     assert.deepEqual(record.query, recallQuery(prepared, config));
+    assert(/^smlme_[a-f0-9]{24}$/.test(collection), 'Invalid recorded collection');
+    assert.equal(receipt.method, 'POST'); assert.equal(receipt.status, 200);
+    assert(receipt.pathname.endsWith(`/collections/${collection}/query`), 'Query receipt collection differs');
+    assert.deepEqual(receipt.request, record.query, 'Query receipt request differs');
+    assert.deepEqual(JSON.parse(receipt.rawResponse), record.response, 'Recall differs from raw query receipt');
     const packed = requestFor(prepared, returnedDocs(record.response, prepared, config), config, countTokens);
     assert.deepEqual(record.packed, packed);
     return packed.body;
@@ -106,7 +111,7 @@ export async function memoryPhase({ phase, root, lock, binding, config, env, pre
                     await client.create(collection, entry.owner, entry.scope);
                     const started = performance.now(), result = await retrieveCase(client, collection, prepared, config);
                     const packed = requestFor(prepared, returnedDocs(result.response, prepared, config), config, countTokens);
-                    const record = { id, binding, sourceSha256: sha256(JSON.stringify(prepared)), ...result,
+                    const record = { id, binding, sourceSha256: sha256(JSON.stringify(prepared)), queryReceipt: state.operations, ...result,
                         packed, milliseconds: performance.now() - started };
                     await atomic(path.join(root, 'recall', `${id}.json`), record, clean);
                     state.completed.push(id);

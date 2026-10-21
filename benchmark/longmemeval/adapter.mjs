@@ -49,11 +49,24 @@ if (action === 'environment') {
                 process.stdout.write('{}');
             } else {
                 const requests = {};
+                const state = await readJSON(path.join(root, 'memory/state.json'));
+                assert.equal(state.binding, binding); assert.equal(state.status, 'completed');
+                assert(Number.isSafeInteger(state.operations) && state.operations > 0
+                    && state.operations <= config.limits.memoryOperations);
+                const owned = new Map(state.owned.map(entry => [entry.id, entry]));
+                assert.equal(owned.size, state.owned.length);
+                assert.deepEqual([...owned.keys()].sort(), [...lock.ids].sort());
                 let indexedDocuments = 0, memoryMilliseconds = 0;
                 for (const id of lock.ids) {
                     const prepared = await prepare(id);
                     const record = await readJSON(path.join(root, 'recall', `${id}.json`));
-                    requests[id] = verifyRecall(record, prepared, config, countTokens, binding);
+                    const entry = owned.get(id);
+                    assert.equal(entry.owner, prepared.owner); assert.equal(entry.scope, prepared.scope);
+                    assert(entry.deleted && entry.absent404);
+                    assert(Number.isSafeInteger(record.queryReceipt) && record.queryReceipt > 0
+                        && record.queryReceipt <= state.operations, 'Invalid query receipt index');
+                    const receipt = await readJSON(path.join(root, 'memory', `http-${record.queryReceipt}.json`));
+                    requests[id] = verifyRecall(record, prepared, config, countTokens, binding, receipt, entry.collection);
                     assert(Number.isFinite(record.milliseconds) && record.milliseconds >= 0);
                     indexedDocuments += prepared.docs.length; memoryMilliseconds += record.milliseconds;
                 }
