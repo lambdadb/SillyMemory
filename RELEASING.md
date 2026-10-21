@@ -134,7 +134,7 @@ in the installed extension's Git directory (normally
 git status --short
 # Stop if there are local modifications; preserve them rather than discarding them.
 git fetch origin --tags
-git switch --detach v0.2.0
+git switch --detach v0.5.0
 ```
 
 Reload afterward. A detached tag is a fixed build; do not use the Update button
