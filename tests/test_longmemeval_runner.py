@@ -139,6 +139,47 @@ class LongMemEvalTests(unittest.TestCase):
             with self.assertRaises(AssertionError):
                 receipts.get("answer", "done", body)
 
+    def test_score_clock_survives_restarts_and_caps_requests_to_remaining_phase_time(self):
+        credentials = {"LLM_BASE_URL": "https://api.openai.com/v1", "LLM_API_KEY": "synthetic-key",
+                       "TYPESAFE_API_KEY": "synthetic-key"}
+        duration = CONFIG["limits"]["wallHours"] * 3600
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            with patch.object(runner.time, "time", return_value=1000), patch.object(runner.time, "monotonic", return_value=500), \
+                    patch.object(runner.urllib.request, "urlopen", return_value=Response(b'{"ok":true}')):
+                runner.Receipts(root, "score", "binding", CONFIG, credentials).get("answer", "first", {})
+            original_clock = (root / "score-clock.json").read_bytes()
+            self.assertEqual(runner.read_json(root / "score-clock.json"), {"binding": "binding", "startedAt": 1000})
+            with patch.object(runner.time, "time", return_value=1000 + duration - 5), \
+                    patch.object(runner.time, "monotonic", return_value=600), \
+                    patch.object(runner.urllib.request, "urlopen", return_value=Response(b'{"ok":true}')) as network:
+                runner.Receipts(root, "score", "binding", CONFIG, credentials).get("judge", "first", {})
+                self.assertEqual(network.call_args.kwargs["timeout"], 5)
+            with patch.object(runner.time, "time", return_value=1000 + duration + 1), \
+                    patch.object(runner.urllib.request, "urlopen") as network:
+                resumed = runner.Receipts(root, "score", "binding", CONFIG, credentials)
+                self.assertEqual(resumed.get("answer", "first", {}), {"ok": True})
+                with self.assertRaisesRegex(AssertionError, "Run limit"):
+                    resumed.get("answer", "unsent", {})
+                self.assertEqual(runner.Receipts(root, "verify", "binding", CONFIG, {}).get("judge", "first", {}), {"ok": True})
+                network.assert_not_called()
+            self.assertEqual((root / "score-clock.json").read_bytes(), original_clock)
+            self.assertFalse((root / "answer/unsent.json.pending").exists())
+
+    def test_missing_or_foreign_score_clock_cannot_grant_new_paid_time(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "answer").mkdir()
+            runner.write_json(root / "answer/old.json.pending", {})
+            with patch.object(runner.urllib.request, "urlopen") as network:
+                with self.assertRaisesRegex(AssertionError, "Missing score clock"):
+                    runner.Receipts(root, "score", "binding", CONFIG, {}).get("answer", "new", {})
+                self.assertFalse((root / "score-clock.json").exists())
+                runner.write_json(root / "score-clock.json", {"binding": "another-run", "startedAt": 1000})
+                with self.assertRaisesRegex(AssertionError, "another run"):
+                    runner.Receipts(root, "score", "binding", CONFIG, {}).get("answer", "new", {})
+                network.assert_not_called()
+
     def test_verify_checks_each_score_before_accepting_summary(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

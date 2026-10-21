@@ -219,7 +219,7 @@ class Receipts:
     def __init__(self, root, phase, binding, config, credentials):
         self.root, self.phase, self.binding, self.config = root, phase, binding, config
         self.credentials = credentials
-        self.deadline = time.monotonic() + config["limits"]["wallHours"] * 3600
+        self.deadline = None
         self.attempts = {"answer": 0, "judge": 0}
         self.secrets = [value for key, value in credentials.items()
                         if any(word in key.upper() for word in ("KEY", "TOKEN", "SECRET", "PASSWORD")) and len(value) >= 8]
@@ -228,6 +228,20 @@ class Receipts:
         for secret in self.secrets:
             text = text.replace(secret, "[redacted]")
         return text
+
+    def remaining_time(self):
+        if self.deadline is None:
+            file = self.root / "score-clock.json"
+            if not file.exists():
+                assert not any(self.root.glob("answer/*.json*")) and not any(self.root.glob("judge/*.json*")), "Missing score clock for prior model attempts"
+                write_json(file, {"binding": self.binding, "startedAt": time.time()}, exclusive=True)
+            clock = read_json(file)
+            assert clock["binding"] == self.binding, "Score clock belongs to another run"
+            started = clock["startedAt"]
+            assert type(started) in (int, float) and math.isfinite(started) and 0 < started <= time.time()
+            remaining = started + self.config["limits"]["wallHours"] * 3600 - time.time()
+            self.deadline = time.monotonic() + remaining
+        return self.deadline - time.monotonic()
 
     def get(self, kind, id, body):
         folder = self.root / kind
@@ -247,7 +261,7 @@ class Receipts:
                 atomic(file, saved, self.clean)
             return response
         assert self.phase == "score", f"Missing {kind} receipt: {id}"
-        assert time.monotonic() < self.deadline and self.attempts[kind] < self.config["limits"][kind + "Calls"], "Run limit reached"
+        assert self.remaining_time() > 0 and self.attempts[kind] < self.config["limits"][kind + "Calls"], "Run limit reached"
         write_json(file.with_suffix(".json.pending"), {"requestSha256": request_hash, "binding": self.binding,
                    "startedAt": datetime.now(timezone.utc).isoformat()}, exclusive=True)
         self.attempts[kind] += 1
@@ -255,7 +269,8 @@ class Receipts:
         key = self.credentials["LLM_API_KEY"] if kind == "answer" else self.credentials["TYPESAFE_API_KEY"]
         req = urllib.request.Request(url, data=request.encode("utf-8"), headers={"Content-Type": "application/json", "Authorization": "Bearer " + key})
         started = time.monotonic()
-        timeout = 240 if kind == "answer" else 120
+        timeout = min(240 if kind == "answer" else 120, self.remaining_time())
+        assert timeout > 0, "Run limit reached"
         with provider_deadline(timeout):
             try:
                 response = urllib.request.urlopen(req, timeout=timeout)

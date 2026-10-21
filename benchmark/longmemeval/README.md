@@ -67,9 +67,12 @@ collection with a verified absence check. `score` makes at most 500 generation a
 500 judge calls. Each live phase has an eight-hour bound; recall allows at most
 50,000 database operations with a cleanup reserve. Calls are not retried
 automatically. Scoring reuses completed receipts and blocks ambiguous interrupted
-requests to avoid duplicate spending.
+requests to avoid duplicate spending. `score-clock.json` records the first model
+attempt's start time; resumes share the same eight-hour deadline. Cached results
+remain available for offline verification after the deadline.
 
-Outputs include `lock.json`, `memory/`, `recall/`, `answer/`, `judge/`, `scores.json`
+Outputs include `lock.json`, `score-clock.json`, `memory/`, `recall/`, `answer/`,
+`judge/`, `scores.json`
 and `summary.json`. `verify` reconstructs every indexed source and delivered
 request, matches retrieval to its original HTTP query receipt and checks cleanup
 records, then compares all per-question scores and the aggregate without provider
