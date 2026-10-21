@@ -108,9 +108,12 @@ test('cleanup recovers an interrupted collection and rejects a different owner b
             collection: 'smlme_' + 'b'.repeat(24), scope: 'c'.repeat(64), deleted: false }] };
     const file = path.join(root, 'memory/state.json');
     await writeFile(file, JSON.stringify(state));
-    const transport = t.mock.method(globalThis, 'fetch', async (_url, options) => {
+    const originalFetch = Object.getOwnPropertyDescriptor(globalThis, 'fetch');
+    t.after(() => Object.defineProperty(globalThis, 'fetch', originalFetch));
+    const transport = t.mock.fn(async (_url, options) => {
         assert.equal(options.method, 'GET'); return new Response('', { status: 404 });
     });
+    Object.defineProperty(globalThis, 'fetch', { configurable: true, writable: true, value: transport });
     const args = { phase: 'cleanup', root, lock: { owner }, binding, config, env };
     await memoryPhase(args);
     const saved = JSON.parse(await readFile(file));
