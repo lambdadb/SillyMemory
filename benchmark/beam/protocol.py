@@ -38,10 +38,10 @@ def sha(data):
     return hashlib.sha256(data).hexdigest()
 
 
-def save(path, value, *, compact=False):
+def save(path, value, *, compact=False, clean=lambda text: text):
     temporary = path.with_suffix(path.suffix + ".tmp")
-    temporary.write_text(json.dumps(value, ensure_ascii=False, indent=None if compact else 2,
-                                    separators=(",", ":") if compact else None) + "\n")
+    temporary.write_text(clean(json.dumps(value, ensure_ascii=False, indent=None if compact else 2,
+                                          separators=(",", ":") if compact else None) + "\n"))
     temporary.replace(path)
 
 
@@ -251,6 +251,13 @@ async def score(root, dataset, env, lock):
     started = time.monotonic()
     http = httpx.AsyncClient(base_url="https://api.openai.com/v1", timeout=90,
                              headers={"Authorization": f"Bearer {env['LLM_API_KEY']}"})
+    secrets = [value for key, value in env.items()
+               if any(word in key.upper() for word in ("KEY", "TOKEN", "SECRET", "PASSWORD")) and len(value) >= 8]
+
+    def clean(text):
+        for secret in secrets:
+            text = text.replace(secret, "[redacted]")
+        return text
 
     class BoundReached(BaseException):
         pass
@@ -269,11 +276,13 @@ async def score(root, dataset, env, lock):
         reserved_usd += reservation
         entry = {"number": number, "questionId": question_id.get(), "request": native,
                  "startedAt": datetime.now(timezone.utc).isoformat()}
-        save(calls / f"{number:05d}.json", entry)
+        save(calls / f"{number:05d}.json", entry, clean=clean)
         call_started = time.monotonic()
         try:
             response = await http.post("/chat/completions", json=native)
             entry.update(status=response.status_code, elapsedMs=(time.monotonic() - call_started) * 1000)
+            entry["rawResponse"] = clean(response.text)
+            save(calls / f"{number:05d}.json", entry, clean=clean)
             data = model_reply(response, llm.ModelError)
             entry["response"] = data
             usage = data["usage"]
@@ -283,7 +292,7 @@ async def score(root, dataset, env, lock):
             return data
         finally:
             entry["finishedAt"] = datetime.now(timezone.utc).isoformat()
-            save(calls / f"{number:05d}.json", entry)
+            save(calls / f"{number:05d}.json", entry, clean=clean)
 
     llm._post_once = post_once
     # Keep llm's four-attempt transport retries, text/JSON parsers and upstream

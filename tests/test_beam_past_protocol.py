@@ -1,4 +1,5 @@
 import importlib.util
+import asyncio
 import json
 import shutil
 from copy import deepcopy
@@ -6,7 +7,7 @@ from pathlib import Path
 import unittest
 from tempfile import TemporaryDirectory
 from types import ModuleType, SimpleNamespace
-from unittest.mock import Mock, patch
+from unittest.mock import AsyncMock, Mock, patch
 
 spec = importlib.util.spec_from_file_location(
     "beam_past_protocol", Path(__file__).resolve().parents[1] / "benchmark/beam/protocol.py")
@@ -198,6 +199,49 @@ class TransportPolicy(unittest.TestCase):
                 protocol.model_reply(Response(status), ModelError)
             self.assertEqual(caught.exception.status, status)
             self.assertFalse(caught.exception.retryable)
+
+    def test_score_retains_redacted_bodies_before_status_or_json_failures(self):
+        success = {"choices": [{"message": {"content": "synthetic-secret"}}],
+                   "usage": {"prompt_tokens": 10, "completion_tokens": 2}}
+        cases = [(401, "<html>synthetic-secret</html>", ModelError),
+                 (503, "", ModelError), (200, "malformed synthetic-secret", ValueError),
+                 (200, '["synthetic-secret"]', ModelError), (200, json.dumps(success), None)]
+        class Finished(Exception):
+            pass
+        for status, raw, failure in cases:
+            with self.subTest(status=status, raw=raw), TemporaryDirectory() as directory:
+                root = Path(directory)
+                response = SimpleNamespace(status_code=status, is_error=status >= 400, text=raw,
+                                           json=lambda: json.loads(raw))
+                client = SimpleNamespace(post=AsyncMock(return_value=response), aclose=AsyncMock())
+                llm = SimpleNamespace(ModelError=ModelError)
+                async def answer_question(*args):
+                    result = await llm._post_once({"messages": []})
+                    self.assertEqual(result, success)
+                    raise Finished()
+                conversation = SimpleNamespace(id="c", questions=[SimpleNamespace(id="q")])
+                dataset = SimpleNamespace(load_rows=lambda split: ([{}], "revision"),
+                                          build_conversation=lambda row: conversation)
+                modules = {"httpx": SimpleNamespace(AsyncClient=Mock(return_value=client)), "llm": llm,
+                           "run": SimpleNamespace(answer_question=answer_question),
+                           "scoring": SimpleNamespace(), "verify": SimpleNamespace()}
+                with patch.dict(protocol.sys.modules, modules), patch.object(protocol, "validated_recalls", return_value={}):
+                    with self.assertRaises(failure or Finished):
+                        asyncio.run(protocol.score(root, dataset, {"LLM_API_KEY": "synthetic-secret"}, {"split": "100k"}))
+                receipts = list((root / "scored/calls").glob("*.json"))
+                self.assertEqual(len(receipts), 1)
+                saved_text = receipts[0].read_text()
+                self.assertNotIn("synthetic-secret", saved_text)
+                saved = json.loads(saved_text)
+                self.assertEqual(saved["rawResponse"], raw.replace("synthetic-secret", "[redacted]"))
+                self.assertEqual(saved["status"], status)
+                self.assertIn("finishedAt", saved)
+                if failure:
+                    self.assertNotIn("response", saved)
+                else:
+                    self.assertEqual(saved["response"], json.loads(saved["rawResponse"]))
+                client.post.assert_awaited_once()
+                client.aclose.assert_awaited_once()
 
     def test_non_json_transient_responses_keep_retry_status(self):
         for status in [429, 500, 503]:

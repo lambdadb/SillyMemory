@@ -109,6 +109,8 @@ Existing scored output is never overwritten or silently rerun.
 Outputs include `protocol-lock.json`, `memory/`, `recall/`, `scored/calls/`,
 `scored/results.jsonl` and `scored/summary.json`. `verify` reconstructs source-bound
 recall and checks linked answer contexts and saved score arithmetic offline.
+Model call receipts retain raw response bodies, including HTTP and JSON failures,
+with known credentials redacted.
 The recorded aggregates are in [results.json](results.json).
 
 ## Sources
