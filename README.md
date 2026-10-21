@@ -80,6 +80,13 @@ message; recent dialogue still accompanies recalled memory in the generation pro
 Edits, swipes and deletions are reconciled against the current chat.
 Your original chat file stays intact.
 
+- Open **Memory** above the message composer for current status and recovery
+  actions. **Ready** means the chat can use memory; **Last prompt verified** means
+  the final host prompt passed the delivery check. It does not guarantee answer
+  correctness. **SillyMemory settings** opens the native extension drawer.
+- SillyMemory connects directly to LambdaDB and does not depend on built-in Vector
+  Storage. Its chat vectorization must be off to avoid conflicting history injection;
+  the chat status links to its settings without changing them.
 - Open **Advanced → Memory in the last prompt** to inspect the prepared excerpts.
   Check the delivery status for whether the final host prompt was verified.
 - Under **Advanced**, the default **Memory token budget** is 4,096 tokens, capped
@@ -102,7 +109,7 @@ Your original chat file stays intact.
 | Connection or authentication failure | Check the regional endpoint/project/key, then use **Save and connect**. For network errors, check browser connectivity to LambdaDB. |
 | Failed connection test | Use **Clean up test data** beside the status, then retry **Prepare chat memory**. The diagnostic cleanup control also remains under **Advanced**. Keep pending cleanup records until it succeeds. |
 | Synchronization failure | Follow the status message; wait before retrying a temporary service error, then use **Retry synchronization** beside the status. **Advanced → Sync this chat** remains available for manual synchronization. |
-| Generation stopped during memory preparation | Read the last-prompt status, resolve the error, then use **Regenerate** for the pending input. Sync alone does not resume a stopped generation. Disable memory if you want to continue with native history. |
+| Generation stopped during memory preparation | Read the last-prompt status, resolve the error, then use **Retry reply** above the composer for an unchanged pending user input, or the native **Regenerate** action. The shortcut uses native regeneration and makes a new model request; it never retries automatically. Sync alone does not resume a stopped generation. Disable memory if you want to continue with native history. |
 | Query exceeds 8 KiB | Shorten the latest messages, or disable memory for that generation. Queries are not silently truncated. |
 
 ## Data, usage, and cleanup

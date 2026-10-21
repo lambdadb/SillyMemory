@@ -1,4 +1,4 @@
-import { expandMemorySettings, openMemoryConnection } from './settings-panel.mjs';
+import { expandMemorySettings, openMemoryConnection, openChatMemory } from './settings-panel.mjs';
 import { runNativeReplyScenarios } from './native-reply-scenarios.mjs';
 import { collectionResponse, branchResponse, documentResponse, rerankedResponse } from '../tests/helpers/lambdadb-responses.js';
 // Real pinned SillyTavern + real Chromium + direct browser CORS; LambdaDB is emulated.
@@ -131,12 +131,18 @@ try {
     await page.getByText('Save', { exact: true }).last().click();
     await page.locator('#sillymemory').waitFor({ state: 'attached', timeout: 30000 });
     check('extension loads through the real manifest loader', await page.locator('#sillymemory').count() === 1);
+    const chatStatus = page.locator('#sillymemory-chat');
+    const chatField = name => chatStatus.locator(`[data-sm-chat="${name}"]`);
+    check('one chat status is mounted above the native composer', await chatStatus.count() === 1 && await chatStatus.evaluate(el => el.nextElementSibling?.id === 'send_form'));
     const savedSettings = JSON.parse(await readFile(path.join(work, 'data/default-user/settings.json'), 'utf8'));
     check('owner identity is durable before first remote request', /^[a-f0-9]{32}$/.test(savedSettings.extension_settings?.sillymemory?.owner));
-    // Open the real extension panel and drawer, then interact with visible settings.
-    await page.locator('#extensions-settings-button .drawer-toggle').click();
-    await page.locator('#sillymemory .inline-drawer-toggle').click();
+    // Open settings through the chat-facing controls without navigating drawers.
+    await chatStatus.locator('summary').focus(); await page.keyboard.press('Enter');
+    check('chat recovery details open with the keyboard', await chatField('settings').isVisible());
+    await chatField('settings').click();
+    await page.locator('#sillymemory [data-sm="connect"]').waitFor({ state: 'visible' });
     await page.waitForFunction(() => !jQuery('#sillymemory .inline-drawer-content').is(':animated'));
+    check('chat settings action opens the native drawer and SillyMemory controls', await page.locator('#sillymemory [data-sm="connect"]').isVisible());
     const field = name => page.locator(`#sillymemory [data-sm="${name}"]`);
     const status = () => field('status').innerText();
     const waitStatus = async text => { await page.waitForFunction(text => document.querySelector('#sillymemory [data-sm="status"]')?.textContent.includes(text), text, { timeout: 30000 }); };
@@ -151,6 +157,7 @@ try {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.locator('#sillymemory').evaluate(el => el.scrollIntoView({ block: 'start' }));
     check('settings fit a narrow viewport without horizontal overflow', await page.locator('#sillymemory').evaluate(el => el.scrollWidth <= el.clientWidth + 1));
+    check('chat status and actions fit a narrow viewport', await chatStatus.evaluate(el => el.scrollWidth <= el.clientWidth + 1));
     await page.screenshot({ path: path.join(artifacts, 'settings-narrow.png') });
     await page.setViewportSize({ width: 1440, height: 1100 });
     check('fresh settings use the adopted 4096-token initial budget', await field('budget').inputValue() === '4096');
@@ -229,7 +236,7 @@ try {
     if (!await page.locator('#sillymemory .inline-drawer-content').isVisible()) await page.locator('#sillymemory .inline-drawer-toggle').click();
     await expandMemorySettings(page);
     await page.evaluate(async () => {
-        const c = SillyTavern.getContext(); c.chat.splice(0, c.chat.length, ...Array.from({ length: 8 }, (_, i) => ({ mes: `Synthetic passage ${i}: the blue compass is beneath the cedar tree.${i === 0 ? ' {{setvar::sillymemory_test::oops}} {{char}} <USER>' : ''}`, name: i % 2 ? 'Mira' : 'User', is_user: !(i % 2), is_system: false, send_date: Date.now(), extra: {} })));
+        const c = SillyTavern.getContext(); c.chat.splice(0, c.chat.length, ...Array.from({ length: 8 }, (_, i) => ({ mes: `Synthetic passage ${i}: the blue compass is beneath the cedar tree.`, name: i % 2 ? 'Mira' : 'User', is_user: !(i % 2), is_system: false, send_date: Date.now(), extra: {} })));
         await c.saveChat(); await c.eventSource.emit(c.eventTypes.MESSAGE_RECEIVED, 7);
     });
     await field('enabled').check(); await waitStatus('synchronized');
@@ -278,9 +285,55 @@ try {
         await page.route('**/projects/synthetic/collections/*', route => route.fulfill({ status: 400, json: { message: 'Synthetic ownership check failure' } }), { times: 1 });
         await field('sync').click(); await waitStatus('Invalid request');
         check('failed synchronization exposes an explicit retry beside status', await field('retry-sync').isVisible());
-        await field('retry-sync').click(); await waitStatus('synchronized');
-        check('successful retry removes its action', !await field('retry-sync').isVisible());
+        check('chat status exposes synchronization failure outside the settings panel', (await chatField('label').innerText()).includes('Needs attention'));
+        await openChatMemory(page);
+        await chatField('sync').click(); await waitStatus('synchronized');
+        check('successful retry removes its action', !await chatField('sync').isVisible());
+        await chatField('settings').click(); await field('enabled').waitFor({ state: 'visible' });
     }
+    await page.evaluate(async () => {
+        const c = SillyTavern.getContext(); c.extensionSettings.vectors.enabled_chats = true;
+        await c.eventSource.emit(c.eventTypes.SETTINGS_UPDATED);
+    });
+    check('enabled memory distinguishes a Vector Storage conflict', (await chatField('label').innerText()).includes('Vector Storage conflict') && await field('enabled').isChecked());
+    await openChatMemory(page);
+    await chatField('vectors').click();
+    await page.locator('#vectors_enabled_chats').waitFor({ state: 'visible' });
+    check('conflict recovery opens the native Vector Storage controls without changing them', await page.locator('#vectors_enabled_chats').isVisible() && await page.evaluate(() => SillyTavern.getContext().extensionSettings.vectors.enabled_chats));
+    await page.evaluate(async () => {
+        const c = SillyTavern.getContext(); c.extensionSettings.vectors.enabled_chats = false;
+        await c.eventSource.emit(c.eventTypes.SETTINGS_UPDATED);
+    });
+    await openChatMemory(page);
+    await chatField('settings').click(); await field('enabled').waitFor({ state: 'visible' });
+    const unsupportedSource = await page.evaluate(async () => {
+        const c = SillyTavern.getContext(), original = structuredClone(c.chat);
+        c.chat.push({ is_system: true, mes: 'Synthetic tool result.', extra: { tool_invocations: [{ name: 'synthetic-tool' }] } });
+        await c.eventSource.emit(c.eventTypes.MESSAGE_UPDATED, c.chat.length - 1); return original;
+    });
+    check('enabled memory does not claim readiness in an unsupported tool conversation', (await chatField('label').innerText()).includes('Unavailable in this chat'));
+    await page.evaluate(async original => {
+        const c = SillyTavern.getContext(); c.chat.splice(0, c.chat.length, ...original);
+        await c.eventSource.emit(c.eventTypes.MESSAGE_UPDATED, 0);
+    }, unsupportedSource);
+    await waitStatus('synchronized');
+    check('a supported synchronized chat reports readiness without claiming prompt delivery', (await chatField('label').innerText()).includes('Ready') && (await chatField('delivery').innerText()).includes('No prompt checked'));
+    await openChatMemory(page);
+    await chatStatus.scrollIntoViewIfNeeded();
+    await page.screenshot({ path: path.join(artifacts, 'chat-memory-ready.png') });
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.screenshot({ path: path.join(artifacts, 'chat-memory-narrow.png') });
+    await page.setViewportSize({ width: 1440, height: 1100 });
+    await chatField('settings').click(); await field('enabled').waitFor({ state: 'visible' });
+    // Native prompt-manager previews may expand the first source message after
+    // character selection. Arm the literal-macro fixture after those UI checks;
+    // this regression verifies the interceptor, not native preview behavior.
+    await page.evaluate(async () => {
+        const c = SillyTavern.getContext();
+        c.chat[0].mes += ' {{setvar::sillymemory_test::oops}} {{char}} <USER>';
+        await c.saveChat(); await c.eventSource.emit(c.eventTypes.MESSAGE_UPDATED, 0);
+    });
+    await waitStatus('synchronized');
     const prompt = () => page.evaluate(async () => {
         const c = SillyTavern.getContext(); const before = JSON.stringify(c.chat);
         const chat = c.chat.map((m, index) => ({ ...m, index })); let aborted = false;
@@ -521,7 +574,8 @@ try {
     // Restore the ordinary test budget before existing fault/cleanup scenarios.
     await field('budget').fill('400'); await field('budget').dispatchEvent('change');
     let nativeReplyResults;
-    if (!faultMode) nativeReplyResults = await runNativeReplyScenarios({ page, field, waitStatus, check, calls });
+    if (!faultMode) nativeReplyResults = await runNativeReplyScenarios({ page, field, waitStatus, check, calls,
+        screenshot: name => page.screenshot({ path: path.join(artifacts, `${name}.png`) }) });
     if (faultMode) { staleHits = []; faultResults = await runFaultScenarios({ page, field, waitStatus, prompt, check, faults, collections, calls, restartHost: recoveryMode ? async () => { const exited = new Promise(resolve => server.once('exit', resolve)); server.kill('SIGKILL'); await exited; await start(false); } : undefined, screenshot: name => page.screenshot({ path: path.join(artifacts, `${name}${artifactTag ? `-${artifactTag}` : ''}.png`) }) }); }
     else { page.once('dialog', dialog => dialog.accept()); await field('delete').click(); await waitStatus('no longer accessible'); }
     check('owned remote deletion leaves no collections', collections.size === 0);

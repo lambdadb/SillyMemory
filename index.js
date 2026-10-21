@@ -3,7 +3,7 @@ import { LambdaClient, ConnectionError, connectionConfig } from './src/client.js
 import { SavedKey } from './src/credentials.js';
 import { ChatCollections, chatCollection, ensureChatIdentity } from './src/chat-collections.js';
 import { runTransportGate } from './src/gate.js';
-import { MemoryEngine, Journal, capture, fingerprint, options, DEFAULTS, memoryBoundary, archiveBoundary } from './src/memory.js';
+import { MemoryEngine, Journal, capture, supportsChat, fingerprint, options, DEFAULTS, memoryBoundary, archiveBoundary } from './src/memory.js';
 import { OperationStatus, failureText } from './src/status.js';
 import { PromptDelivery, expectedMessages, deliverySummary } from './src/delivery.js';
 import { MEMORY_GUIDANCE, retentionAnchor, quoteMemoryText, quoteMemoryMessages } from './src/context.js';
@@ -19,11 +19,101 @@ let retrievalSequence = 0, retrievalOperation;
 let statusView, collections, identityKey;
 let preparation = Promise.resolve();
 let checkpointRevision = 0;
+let chatStatus, stoppedRequest, deliveryNotice, sessionUnavailable;
+let retrying = false, sourceRevision = 0;
+let hostGenerating = () => false;
+let promptType, promptSource;
 const engines = new Map();
 const entryKey = entry => `${entry.collection}:${entry.branch}`;
 const delivery = new PromptDelivery();
 const element = name => root.querySelector(`[data-sm="${name}"]`);
-const status = text => { retrySync = false; statusView.show(text); };
+const status = (text, options) => { retrySync = false; statusView.show(text, options); };
+const chatElement = name => chatStatus.querySelector(`[data-sm-chat="${name}"]`);
+function chatBlocker() {
+    const ctx = context();
+    if (ctx.extensionSettings.vectors?.enabled_chats) return { label: 'Vector Storage conflict', message: 'SillyMemory retrieval is skipped while Vector Storage chat vectorization is on. Turn off its chat vectorization to use SillyMemory, which connects directly to LambdaDB.' };
+    if (!supportsChat(ctx)) return { label: 'Unavailable in this chat', message: 'Select a saved, single-character text chat to use SillyMemory. Group chats and tool conversations are not supported.' };
+    if (ctx.chatMetadata.sillymemory?.checkpoint) return { label: 'Saved checkpoint', message: 'This is a saved checkpoint. Resume it in a new chat from SillyMemory settings to continue with memory.' };
+    return null;
+}
+function requestTarget() {
+    const ctx = context();
+    return JSON.stringify([ctx.characters[ctx.characterId]?.avatar, ctx.getCurrentChatId()]);
+}
+function currentStoppedRequest() {
+    return stoppedRequest && stoppedRequest.revision === sourceRevision && stoppedRequest.target === requestTarget() ? stoppedRequest : null;
+}
+function rememberStoppedRequest(message, type) {
+    stoppedRequest = { message, type, revision: sourceRevision, target: requestTarget(), source: promptSource };
+    renderChatStatus();
+}
+function showDelivery(text, notice) {
+    element('delivery').textContent = text;
+    deliveryNotice = notice;
+    renderChatStatus();
+}
+function renderChatStatus() {
+    if (!chatStatus || !state) return;
+    const connected = Boolean(sessionReady && connectionVerified && client);
+    const blocker = state.enabled ? chatBlocker() : null;
+    const stopped = currentStoppedRequest();
+    let label = 'Off', kind = 'idle';
+    if (sessionUnavailable) { label = 'Unavailable'; kind = 'warning'; }
+    else if (!connected) { label = busy ? 'Connecting' : 'Connect'; kind = statusView?.error ? 'error' : 'idle'; }
+    else if (state.testCollection) { label = 'Test cleanup needed'; kind = 'warning'; }
+    else if (!state.ready) label = 'Setup needed';
+    else if (blocker) { label = blocker.label; kind = 'warning'; }
+    else if (state.enabled) {
+        if (stopped) { label = 'Reply stopped'; kind = 'error'; }
+        else if (statusView.error) { label = 'Needs attention'; kind = 'error'; }
+        else if (statusView.progress) { label = statusView.progress.phase === 'searching' || statusView.progress.phase === 'budgeting' ? 'Preparing reply' : 'Updating'; kind = 'working'; }
+        else { label = deliveryNotice?.label || 'Ready'; kind = deliveryNotice?.kind || 'ready'; }
+    }
+    chatStatus.dataset.kind = kind;
+    chatElement('label').textContent = `Memory · ${label}`;
+    chatElement('status').textContent = sessionUnavailable || blocker?.message || stopped?.message || element('status').textContent;
+    chatElement('delivery').textContent = element('delivery').textContent;
+    chatElement('delivery').hidden = chatElement('delivery').textContent === chatElement('status').textContent;
+    const progress = chatElement('progress'), value = !blocker && !stopped && statusView.progress;
+    progress.hidden = !value;
+    if (value?.total > 0) { progress.max = value.total; progress.value = value.completed; }
+    else progress.removeAttribute('value');
+    const canAct = connected && sessionReady && !busy && !hostGenerating();
+    chatElement('vectors').hidden = !blocker || !context().extensionSettings.vectors?.enabled_chats;
+    chatElement('cleanup').hidden = !connected || !state.testCollection;
+    chatElement('sync').hidden = !retrySync || !state.enabled || Boolean(blocker) || !state.ready || Boolean(state.testCollection);
+    chatElement('retry').hidden = !stopped?.source || !['normal', 'regenerate'].includes(stopped.type) || !context().chat.at(-1)?.is_user || !state.enabled || !state.ready || Boolean(blocker) || Boolean(state.testCollection);
+    chatElement('disable').hidden = !state.enabled;
+    for (const name of ['cleanup', 'sync', 'retry', 'disable']) chatElement(name).disabled = !canAct || retrying;
+}
+async function openMemorySettings(vectors = false) {
+    const [{ doNavbarIconClick }, { toggleDrawer }] = await Promise.all([import('/script.js'), import('/scripts/utils.js')]);
+    const drawer = document.querySelector('#extensions-settings-button');
+    if (!drawer.querySelector('.drawer-content').classList.contains('openDrawer')) await doNavbarIconClick.call(drawer.querySelector('.drawer-toggle'));
+    const target = vectors ? document.querySelector('#vectors_container .inline-drawer') : root;
+    if (!target) return;
+    toggleDrawer(target, true);
+    if (!vectors && !connectionVerified) element('connection').open = true;
+    target.scrollIntoView({ block: 'nearest' });
+    target.tabIndex = -1; target.focus({ preventScroll: true });
+}
+async function retryReply() {
+    const request = currentStoppedRequest();
+    if (!request || retrying) return;
+    retrying = true; renderChatStatus();
+    try {
+        const { isGenerating } = await import('/script.js');
+        const snapshot = capture(context());
+        // Retry only an unchanged pending user turn through the host's own
+        // Regenerate action. Continue/swipe keep their native recovery controls.
+        if (isGenerating() || busy || !sessionReady || !connectionVerified || !state.enabled || !state.ready || state.testCollection || chatBlocker()
+            || currentStoppedRequest() !== request || request.source !== JSON.stringify([context().getCurrentChatId(), snapshot?.character, snapshot?.messages])
+            || !['normal', 'regenerate'].includes(request.type) || !context().chat.at(-1)?.is_user) return;
+        document.getElementById('option_regenerate')?.click();
+    } catch {
+        status('Could not retry this reply. Check the chat, then use SillyTavern’s Regenerate action.', { error: true });
+    } finally { retrying = false; renderChatStatus(); }
+}
 function renderSettings() {
     if (!root || !state) return;
     const connected = Boolean(sessionReady && connectionVerified && client);
@@ -50,6 +140,7 @@ function renderSettings() {
     element('retry-sync').hidden = !retrySync || !connected || !state.enabled || cleanup;
     element('recovery-actions').hidden = element('recover-cleanup').hidden && element('retry-sync').hidden;
     root.querySelectorAll('button, input').forEach(x => { x.disabled = busy || !sessionReady; });
+    renderChatStatus();
 }
 function clearInjection() {
     context().setExtensionPrompt('sillymemory', '', 1, 0, false, 0);
@@ -119,11 +210,15 @@ function schedule() {
     status('Waiting to synchronize current chat…');
     timer = setTimeout(sync, 400);
 }
-function fail(error, operation, generation = false) {
+function fail(error, operation, generation = false, type) {
     retrySync = Boolean(operation && !generation);
     // Native generation-ended sync can replace operation progress immediately.
     // Keep the failed generation visible independently of background progress.
-    if (root && generation) element('delivery').textContent = `Generation stopped: memory preparation failed. ${failureText(error, { generation: true })}`;
+    if (root && generation) {
+        const message = `Generation stopped: memory preparation failed. ${failureText(error, { generation: true })}`;
+        showDelivery(message, { label: 'Reply stopped', kind: 'error' });
+        rememberStoppedRequest(message, type);
+    }
     if (error.status === 401 && client) {
         connectionVerified = false;
         state.enabled = false; element('enabled').checked = false;
@@ -135,7 +230,7 @@ function fail(error, operation, generation = false) {
     }
     clearInjection();
     if (root) element('inspection').textContent = 'No memory injected: operation failed.';
-    if (operation) operation.fail(error, generation ? 'Generation stopped. ' : '', generation); else status(failureText(error, { sync: false }));
+    if (operation) operation.fail(error, generation ? 'Generation stopped. ' : '', generation); else status(failureText(error, { sync: false }), { error: true });
 }
 async function action(job) {
     if (busy) return;
@@ -149,7 +244,7 @@ globalThis.sillymemory_intercept = async (chat, contextSize, abort, type) => {
     if (delivery.awaitingPrompt) {
         // No final event will be emitted for this rejected interceptor. Keep the
         // previous slot until its own non-dry-run final event has been consumed.
-        element('delivery').textContent = 'Another prompt is awaiting final verification. Wait and generate again. If prompt preparation failed, reload to reset it.';
+        showDelivery('Another prompt is awaiting final verification. Wait and generate again. If prompt preparation failed, reload to reset it.', { label: 'Checking prompt', kind: 'warning' });
         abort(true); return;
     }
     // Quiet prompts cancel older reads/injection while preserving source sync.
@@ -165,6 +260,8 @@ globalThis.sillymemory_intercept = async (chat, contextSize, abort, type) => {
         status('Disable built-in Vector Storage chat vectorization before using SillyMemory.'); return;
     }
     let snapshot = capture(context()); if (!snapshot) { status('Select a supported character chat to use memory.'); return; }
+    promptType = type;
+    showDelivery('Preparing memory for this reply. Delivery is not yet verified.');
     clearTimeout(timer); // Retrieval below replaces the pending synchronization.
     let instance; const config = options(state);
     const before = memoryBoundary(snapshot, type);
@@ -172,6 +269,7 @@ globalThis.sillymemory_intercept = async (chat, contextSize, abort, type) => {
         ? chat.filter(message => message.index === before) : [];
     const promptBefore = JSON.stringify(chat);
     const sourceBefore = JSON.stringify([context().getCurrentChatId(), snapshot.character, snapshot.messages]);
+    promptSource = sourceBefore;
     const sameSource = () => { const s = capture(context()); return s && JSON.stringify([context().getCurrentChatId(), s.character, s.messages]) === sourceBefore; };
     const sourceValid = () => sequence === promptSequence && validSnapshot(snapshot, instance);
     const unchangedPrompt = () => sourceValid() && JSON.stringify(chat) === promptBefore;
@@ -225,10 +323,10 @@ globalThis.sillymemory_intercept = async (chat, contextSize, abort, type) => {
         element('inspection').textContent = `${preparedTokens} / ${config.budget} tokens\n\n${quoteMemoryText(result.text)}`;
         operation.finish(`Prepared ${result.passages.length} source passages in ${preparedMessages.length} memory excerpts (${preparedTokens} tokens); awaiting final prompt verification.`);
     } catch (e) {
-        if (!instance) { if (operation.current()) fail(e, operation, true); abandoned = true; abort(true); return; }
+        if (!instance) { if (operation.current()) fail(e, operation, true, type); abandoned = true; abort(true); return; }
         if (!valid()) { operation.finish('Memory operation canceled because the prompt changed. Generate again.'); abandoned = true; abort(true); return; }
         guidance = [];
-        if (operation.current()) fail(e, operation, true);
+        if (operation.current()) fail(e, operation, true, type);
         // Keep memory-on preparation failures explicit; native fallback is
         // available by disabling memory, without silently changing this request.
         abandoned = true; abort(true); return;
@@ -238,7 +336,7 @@ globalThis.sillymemory_intercept = async (chat, contextSize, abort, type) => {
         if (!abandoned && sourceValid()) {
             const names = { user: context().name1, character: context().name2 };
             delivery.begin({ memory: expectedMessages(preparedMessages, names), input: expectedMessages(protectedMessages, { ...names, continuation: type === 'continue' }), guidance }, sourceValid);
-            element('delivery').textContent = 'Memory prepared; waiting for the final host prompt. Delivery is not yet verified.';
+            showDelivery('Memory prepared; waiting for the final host prompt. Delivery is not yet verified.', { label: 'Checking prompt', kind: 'working' });
         }
         if (retrievalOperation === operation) retrievalOperation = undefined;
     }
@@ -266,6 +364,23 @@ async function initialize() {
     const html = await ctx.renderExtensionTemplateAsync(folder, 'settings');
     document.querySelector('#extensions_settings2').insertAdjacentHTML('beforeend', html);
     root = document.querySelector('#sillymemory');
+    hostGenerating = (await import('/script.js')).isGenerating;
+    const composer = document.getElementById('send_form');
+    if (composer) {
+        composer.before(element('chat-status-template').content.cloneNode(true));
+        chatStatus = document.getElementById('sillymemory-chat');
+        for (const [name, action] of [['settings', () => openMemorySettings()], ['vectors', () => openMemorySettings(true)]]) {
+            chatElement(name).onclick = event => {
+                event.stopPropagation();
+                return action().catch(() => status('Could not open extension settings. Open Extensions from the top bar.', { error: true }));
+            };
+        }
+        for (const [name, handler] of [['cleanup', () => element('recover-cleanup').click()],
+            ['sync', () => element('retry-sync').click()], ['retry', retryReply],
+            ['disable', () => { if (state.enabled) element('enabled').click(); }]]) {
+            chatElement(name).onclick = event => { event.stopPropagation(); return handler(); };
+        }
+    }
     statusView = new OperationStatus((text, progress) => {
         element('status').textContent = text;
         renderSettings();
@@ -280,10 +395,10 @@ async function initialize() {
     const restoreEnabled = state.enabled;
     element('enabled').checked = false; state.enabled = false;
     renderSettings();
-    if (!navigator.locks) { status('This browser needs Web Locks support (localhost or HTTPS) to use SillyMemory safely.'); return; }
+    if (!navigator.locks) { sessionUnavailable = 'This browser needs Web Locks support (localhost or HTTPS) to use SillyMemory safely.'; status(sessionUnavailable); return; }
     // One live instance per account/browser, preventing cross-tab write/delete races.
     navigator.locks.request(`sillymemory-session:${owner}`, { ifAvailable: true }, async lock => {
-        if (!lock) { status('SillyMemory is already open in another tab. Close that tab and reload this one.'); root.querySelectorAll('button,input').forEach(x => { x.disabled = true; }); return; }
+        if (!lock) { sessionUnavailable = 'SillyMemory is already open in another tab. Close that tab and reload this one.'; status(sessionUnavailable); root.querySelectorAll('button,input').forEach(x => { x.disabled = true; }); return; }
         sessionReady = true;
         const closed = new Promise(resolve => addEventListener('pagehide', () => {
             sessionReady = false; connectingClient?.forget(); client?.forget(); invalidate(); resolve();
@@ -345,7 +460,8 @@ async function initialize() {
         persist();
         status('Forgetting key: waiting for earlier writes to finish…');
         await drain(); client?.forget(); client = undefined; makeCollections();
-        element('delivery').textContent = 'Key forgotten. No pending prompt verification.';
+        stoppedRequest = undefined;
+        showDelivery('Key forgotten. No pending prompt verification.');
         element('inspection').textContent = 'No memory prepared.';
         element('key').value = ''; gatePassed = false; status('Saved key removed. Memory disabled. Enter your key to reconnect.');
     });
@@ -497,7 +613,7 @@ async function initialize() {
             status('Memory enabled. Current character chat will synchronize.');
         } else {
             status('Memory disabled. SillyTavern uses its usual chat history. Remote data is retained until deleted.');
-            element('delivery').textContent = 'Memory disabled. No pending prompt verification.';
+            showDelivery('Memory disabled. No pending prompt verification.');
             element('inspection').textContent = 'No memory prepared.';
         }
     });
@@ -530,7 +646,8 @@ async function initialize() {
         }
         engine = undefined;
         if (all) { state.ready = false; persist(); }
-        element('delivery').textContent = 'Owned memory deleted. No pending prompt verification.';
+        stoppedRequest = undefined;
+        showDelivery('Owned memory deleted. No pending prompt verification.');
         element('inspection').textContent = 'No memory prepared.';
         status('Owned remote memory is no longer accessible for the selected scope. Local chats remain. Prepare/enable memory to rebuild.');
     }
@@ -542,28 +659,42 @@ async function initialize() {
         if (!finished) return;
         if (finished.canceled) {
             ctx.stopGeneration();
-            element('delivery').textContent = 'Generation stopped because the chat or memory settings changed during prompt preparation. Generate again.';
+            showDelivery('Generation stopped because the chat or memory settings changed during prompt preparation. Generate again.', { label: 'Reply stopped', kind: 'error' });
             element('inspection').textContent = 'No current memory verified.';
             return;
         }
         const stop = state.stopOnLoss !== false;
         // The host catches listener exceptions; use its cancellation API instead.
         if (finished.lost && stop) ctx.stopGeneration();
-        element('delivery').textContent = deliverySummary(finished.result, stop);
+        const text = deliverySummary(finished.result, stop);
+        const uncertain = !finished.result || [...finished.result.memory, ...finished.result.input].some(m => m.outcome === 'unverified');
+        const notice = finished.lost ? { label: stop ? 'Reply stopped' : 'Prompt warning', kind: stop ? 'error' : 'warning' }
+            : uncertain ? { label: finished.result ? 'Prompt partly verified' : 'Verification unavailable', kind: 'warning' }
+                : { label: finished.result.memory.length ? 'Last prompt verified' : 'No excerpts selected', kind: 'ready' };
+        showDelivery(text, notice);
+        if (finished.lost && stop) rememberStoppedRequest(text, promptType);
         if (finished.result) {
             const included = finished.result.memory.filter(m => m.outcome === 'included');
             const omitted = finished.result.memory.filter(m => m.outcome !== 'included');
             element('inspection').textContent = `Memory excerpts in final host prompt (${included.length}/${finished.result.memory.length}):\n\n${included.map(m => m.content).join('\n\n') || 'None.'}${omitted.length ? `\n\nNot verified in final prompt:\n\n${omitted.map(m => m.content).join('\n\n')}` : ''}`;
         }
     });
+    ctx.eventSource.on(events.GENERATION_STARTED, (type, _options, dryRun) => {
+        if (dryRun || type === 'quiet') return;
+        stoppedRequest = undefined; deliveryNotice = undefined;
+        renderChatStatus();
+    });
+    ctx.eventSource.on(events.SETTINGS_UPDATED, renderSettings);
+    document.addEventListener('input', event => { if (event.target.id === 'vectors_enabled_chats') renderSettings(); });
     for (const name of ['CHAT_CHANGED', 'MESSAGE_SENT', 'MESSAGE_RECEIVED', 'MESSAGE_EDITED', 'MESSAGE_UPDATED', 'MESSAGE_SWIPED', 'MESSAGE_DELETED', 'GENERATION_ENDED', 'CHAT_RENAMED']) {
         if (events[name]) ctx.eventSource.on(events[name], () => {
             checkpointRevision++;
+            if (name !== 'GENERATION_ENDED') { sourceRevision++; stoppedRequest = undefined; }
             if (name === 'CHAT_CHANGED' || name === 'CHAT_RENAMED') {
                 identityKey = undefined;
                 listSequence++; element('checkpoint-list').textContent = 'Refresh to view checkpoints for this story.';
                 element('inspection').textContent = 'No memory injected in this chat.';
-                element('delivery').textContent = 'No prompt checked in this chat.';
+                showDelivery('No prompt checked in this chat.');
             }
             schedule();
         });
