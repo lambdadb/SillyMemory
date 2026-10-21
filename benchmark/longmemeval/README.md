@@ -56,7 +56,8 @@ python3.14 benchmark/longmemeval/run.py score --root artifacts/longmemeval \
 python3.14 benchmark/longmemeval/run.py verify --root artifacts/longmemeval
 ```
 
-`setup` downloads the pinned dataset and installs the locked tokenizer. `prepare`
+`setup` downloads the pinned dataset with a 15-minute total download deadline,
+verifies its byte count and SHA-256, and installs the locked tokenizer. `prepare`
 freezes dataset, source, runner and tokenizer hashes before any paid call. For a
 smoke run, add `--limit 1` to `prepare` in a separate output directory; this fixes
 the first question in sorted ID order. Partial runs are marked `fullCohort: false`.

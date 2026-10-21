@@ -103,7 +103,7 @@ def setup(root, config):
     if not target.exists():
         with tempfile.TemporaryDirectory(prefix=".download-", dir=root) as directory:
             temporary = Path(directory) / "payload"
-            with provider_deadline(120), urllib.request.urlopen(dataset["url"], timeout=120) as response, temporary.open("xb") as output:
+            with provider_deadline(900), urllib.request.urlopen(dataset["url"], timeout=120) as response, temporary.open("xb") as output:
                 received = 0
                 while chunk := response.read(1024 * 1024):
                     received += len(chunk)
