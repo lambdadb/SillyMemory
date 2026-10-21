@@ -31,19 +31,22 @@ enter indexing, retrieval or generation; references enter judging only.
 
 ## Run
 
-Use Node.js 24. Run from the repository root after `npm ci`. Download size is
-approximately 277 MB. No SillyTavern server or extension installation is required.
+Use Python 3.14 and Node.js 24 on Linux or macOS. Run from the repository root
+after `npm ci`. Download size is approximately 277 MB. The Python runner handles data preparation, generation,
+judging and result verification. The Node.js adapter reuses SillyMemory source
+modules for chunking, retrieval and memory assembly. No SillyTavern server or
+extension installation is required.
 
 ```sh
-node benchmark/longmemeval/run.mjs setup --root artifacts/longmemeval
-node benchmark/longmemeval/run.mjs prepare --root artifacts/longmemeval
+python benchmark/longmemeval/run.py setup --root artifacts/longmemeval
+python benchmark/longmemeval/run.py prepare --root artifacts/longmemeval
 
-node benchmark/longmemeval/run.mjs recall --root artifacts/longmemeval \
+python benchmark/longmemeval/run.py recall --root artifacts/longmemeval \
   --env-file /path/to/evaluation.env
-node benchmark/longmemeval/run.mjs score --root artifacts/longmemeval \
+python benchmark/longmemeval/run.py score --root artifacts/longmemeval \
   --env-file /path/to/evaluation.env
 
-node benchmark/longmemeval/run.mjs verify --root artifacts/longmemeval
+python benchmark/longmemeval/run.py verify --root artifacts/longmemeval
 ```
 
 `setup` downloads the pinned dataset and installs the locked tokenizer. `prepare`
@@ -73,7 +76,7 @@ terminated process before removing it. If recall fails, inspect `memory/state.js
 and finish owned-resource cleanup before starting a new run directory:
 
 ```sh
-node benchmark/longmemeval/run.mjs cleanup --root artifacts/longmemeval \
+python benchmark/longmemeval/run.py cleanup --root artifacts/longmemeval \
   --env-file /path/to/evaluation.env
 ```
 

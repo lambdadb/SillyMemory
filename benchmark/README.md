@@ -10,13 +10,15 @@ Reproduce the evaluated LongMemEval-S and BEAM profiles from a fresh clone.
 | [BEAM 1M](beam/) | 700 | 86.62 /100 | Past public protocol |
 | [BEAM 10M](beam/) | 200 | 80.64 /100 | Past public protocol |
 
-Use Node.js 24. BEAM also requires Python 3.14 and Git. From the repository root:
+Use Python 3.14 and Node.js 24. BEAM also requires Git. From the repository root:
 
 ```sh
 npm ci
 ```
 
-Each folder contains fixed settings, recorded results and execution commands.
+Both benchmarks expose a Python `run.py` with the same execution phases and
+use Node.js adapters for SillyMemory retrieval and memory assembly. Each folder
+contains fixed settings, recorded results and execution commands.
 Public datasets are downloaded at pinned revisions and checked by SHA-256.
 Runs write to ignored `artifacts/` directories. Keep credentials outside the run;
 pass an existing file explicitly with `--env-file`. The required variable names

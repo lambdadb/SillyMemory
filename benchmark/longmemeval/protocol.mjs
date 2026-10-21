@@ -1,24 +1,11 @@
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
-import { writeFile, rename } from 'node:fs/promises';
 import { adaptLongMemEval } from '../../scripts/benchmark-audit.mjs';
 import { literalBenchmarkText } from '../../scripts/benchmark-development-input.mjs';
 import { archiveBoundary, documents, memoryMessages, packedMemoryMessages } from '../../src/memory.js';
 import { scopeFilter } from '../../src/client.js';
 
 export const sha256 = value => createHash('sha256').update(value).digest('hex');
-export async function recordResponse(file, response, metadata, clean = text => text) {
-    const saved = { ...metadata, status: response.status, rawResponse: await response.text() };
-    async function persist() {
-        await writeFile(file + '.tmp', clean(JSON.stringify(saved)));
-        await rename(file + '.tmp', file);
-    }
-    await persist();
-    assert.equal(response.status, 200, `Provider HTTP ${response.status}; receipt retained`);
-    saved.response = JSON.parse(saved.rawResponse);
-    await persist();
-    return saved.response;
-}
 export async function prepareCase(row, config, owner = sha256(row.question_id)) {
     const source = adaptLongMemEval(row);
     source.messages = source.messages.map(m => ({ ...m, content: literalBenchmarkText(m.content) }));
@@ -100,40 +87,4 @@ export function requestFor(prepared, hits, config, countTokens) {
         { role: 'system', content: config.prompts.guidance },
     ] };
     return { body, selectedIds: selected.map(d => d.id), reservedTokens, memoryTokens, requestSha256: sha256(JSON.stringify(body)) };
-}
-export function judgeRequest(row, response, rule, config) {
-    assert(typeof response === 'string' && response.trim());
-    return { model: config.judge.model,
-        state: { Question: row.question, [rule.referenceField]: row.answer, 'Model Response': response },
-        questions: { correct: { type: 'noul', instructions: rule.instructions } } };
-}
-export function verdict(result, config) {
-    assert.equal(result?.model, config.judge.model);
-    assert.deepEqual(Object.keys(result.answers || {}), ['correct']);
-    const answer = result.answers.correct;
-    assert.equal(answer.type, 'noul');
-    assert(Number.isFinite(answer.noul) && answer.noul >= 0 && answer.noul <= 1);
-    assert(Number.isSafeInteger(result.usage?.input_tokens) && result.usage.input_tokens >= 0);
-    return { probability: answer.noul, correct: answer.noul >= config.judge.threshold };
-}
-
-export function summarizeResources({ answers, judgments, database, operations, indexedDocuments, memoryMilliseconds }) {
-    const milliseconds = value => { assert(Number.isFinite(value) && value >= 0); return value; };
-    const tokens = value => { assert(Number.isSafeInteger(value) && value >= 0); return value; };
-    const models = (receipts, input, output) => ({
-        calls: receipts.length,
-        inputTokens: receipts.reduce((sum, r) => sum + tokens(r.response.usage[input]), 0),
-        outputTokens: receipts.some(r => r.response.usage[output] === undefined) ? null
-            : receipts.reduce((sum, r) => sum + tokens(r.response.usage[output]), 0),
-        responseHeaderMilliseconds: receipts.reduce((sum, r) => sum + milliseconds(r.milliseconds), 0),
-    });
-    assert.equal(database.length, operations);
-    return {
-        generation: models(answers, 'prompt_tokens', 'completion_tokens'),
-        judging: models(judgments, 'input_tokens', 'output_tokens'),
-        memory: { indexedDocuments: tokens(indexedDocuments), databaseOperations: tokens(operations),
-            httpResponseMilliseconds: database.reduce((sum, r) => sum + milliseconds(r.milliseconds), 0),
-            ingestRetrievePackMilliseconds: milliseconds(memoryMilliseconds) },
-        billedCostUsd: null,
-    };
 }

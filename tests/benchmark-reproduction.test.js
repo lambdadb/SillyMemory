@@ -4,47 +4,10 @@ import { readFile, writeFile, mkdir, mkdtemp, rm } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { createHash } from 'node:crypto';
-import { prepareCase, recallQuery as lmeQuery, returnedDocs, requestFor, judgeRequest, verdict, recordResponse, summarizeResources } from '../benchmark/longmemeval/protocol.mjs';
+import { prepareCase, recallQuery as lmeQuery, returnedDocs, requestFor } from '../benchmark/longmemeval/protocol.mjs';
 import { retrieveCase, verifyRecall, memoryPhase } from '../benchmark/longmemeval/storage.mjs';
 import { recallQuery } from '../scripts/beam-past-memory.mjs';
 const sha = bytes => createHash('sha256').update(bytes).digest('hex');
-
-test('resource summary totals measured usage without inventing missing output usage or invoice cost', () => {
-    const inputs = {
-        answers: [
-            { milliseconds: 10, response: { usage: { prompt_tokens: 20, completion_tokens: 3 } } },
-            { milliseconds: 12, response: { usage: { prompt_tokens: 30, completion_tokens: 4 } } },
-        ],
-        judgments: [{ milliseconds: 2, response: { usage: { input_tokens: 15, output_tokens: 1 } } }],
-        database: [{ milliseconds: 5 }, { milliseconds: 8 }], operations: 2, indexedDocuments: 6, memoryMilliseconds: 16,
-    };
-    assert.deepEqual(summarizeResources(inputs), {
-        generation: { calls: 2, inputTokens: 50, outputTokens: 7, responseHeaderMilliseconds: 22 },
-        judging: { calls: 1, inputTokens: 15, outputTokens: 1, responseHeaderMilliseconds: 2 },
-        memory: { indexedDocuments: 6, databaseOperations: 2, httpResponseMilliseconds: 13, ingestRetrievePackMilliseconds: 16 },
-        billedCostUsd: null,
-    });
-    delete inputs.judgments[0].response.usage.output_tokens;
-    assert.equal(summarizeResources(inputs).judging.outputTokens, null);
-    inputs.answers[0].response.usage.prompt_tokens = -1;
-    assert.throws(() => summarizeResources(inputs));
-});
-
-test('provider receipts retain redacted non-JSON errors and malformed successes', async t => {
-    const directory = await mkdtemp(path.join(os.tmpdir(), 'benchmark-receipt-'));
-    t.after(() => rm(directory, { recursive: true, force: true }));
-    const file = path.join(directory, 'receipt.json'), metadata = { requestSha256: 'request', milliseconds: 42 };
-    for (const [status, body] of [[502, '<html>synthetic-secret</html>'], [401, ''], [200, 'malformed']]) {
-        await assert.rejects(recordResponse(file, new Response(body, { status }), metadata,
-            text => text.replaceAll('synthetic-secret', '[redacted]')));
-        assert.deepEqual(JSON.parse(await readFile(file)), {
-            ...metadata, status, rawResponse: body.replaceAll('synthetic-secret', '[redacted]'),
-        });
-    }
-    const response = { choices: [{ message: { content: 'cedar' } }] };
-    assert.deepEqual(await recordResponse(file, new Response(JSON.stringify(response)), metadata), response);
-    assert.deepEqual(JSON.parse(await readFile(file)).response, response);
-});
 
 async function fixture() {
     const config = JSON.parse(await readFile(new URL('../benchmark/longmemeval/config.json', import.meta.url)));
@@ -144,18 +107,6 @@ test('cleanup recovers an interrupted collection and rejects a different owner b
     await writeFile(file, JSON.stringify(state));
     await assert.rejects(memoryPhase(args));
     assert.equal(transport.mock.callCount(), 1);
-});
-
-test('judge retains the task reference field and validates Noul at the fixed threshold', async () => {
-    const { row, config } = await fixture();
-    assert.deepEqual(judgeRequest(row, 'cedar', { referenceField: 'Rubric', instructions: 'Use the rubric.' }, config), {
-        model: 'jev-1.13.0', state: { Question: row.question, Rubric: 'cedar', 'Model Response': 'cedar' },
-        questions: { correct: { type: 'noul', instructions: 'Use the rubric.' } },
-    });
-    const response = { model: 'jev-1.13.0', answers: { correct: { type: 'noul', noul: 0.5 } }, usage: { input_tokens: 10 } };
-    assert.equal(verdict(response, config).correct, true);
-    response.answers.correct.noul = 0.499; assert.equal(verdict(response, config).correct, false);
-    response.answers.correct.noul = NaN; assert.throws(() => verdict(response, config));
 });
 
 test('BEAM profile reflects the actual bounded retrieval request', async () => {
