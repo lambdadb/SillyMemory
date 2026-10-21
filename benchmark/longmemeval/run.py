@@ -24,7 +24,7 @@ SOURCE_FILES = [
     "benchmark/longmemeval/judge-rules.json", "benchmark/tokenizer/package.json",
     "benchmark/tokenizer/package-lock.json", "scripts/benchmark-audit.mjs",
     "scripts/benchmark-development-input.mjs", "scripts/benchmark-host-input.mjs",
-    "scripts/beam-past-memory.mjs", "src/client.js", "src/memory.js", "src/context.js",
+    "benchmark/shared/memory-budget.mjs", "src/client.js", "src/memory.js", "src/context.js",
     "src/time.js", "src/chunking.js", "src/commit.js", "vendor/lambdadb.js",
 ]
 

@@ -6,8 +6,9 @@ import { parseEnv } from 'node:util';
 import { pathToFileURL } from 'node:url';
 import { createRequire } from 'node:module';
 import path from 'node:path';
-import { LambdaClient, schema, scopeFilter } from '../src/client.js';
-import { chunkSpans } from '../src/chunking.js';
+import { LambdaClient, schema, scopeFilter } from '../../src/client.js';
+import { memoryOperationBudget } from '../shared/memory-budget.mjs';
+import { chunkSpans } from '../../src/chunking.js';
 
 const sha = value => createHash('sha256').update(value).digest('hex');
 export const serializeContext = context => JSON.stringify(context);
@@ -139,23 +140,6 @@ export function packContext(hits, documents, asOf, asOfMicros, countTokens) {
     return { context, tokens, serializedTokens: countTokens(serializeContext(context)), selectedIds: selected.map(doc => doc.id) };
 }
 
-// One collection is active at a time. Owned deletion makes at most 17 requests
-// (ownership, delete, 15 absence polls), with at most three operation attempts.
-export function memoryOperationBudget(state, limit) {
-    let cleanup = false;
-    return {
-        consume() {
-            assert(state.operations < limit - (cleanup ? 0 : 51), 'Memory operation bound exceeded');
-            state.operations++;
-        },
-        async run(job, isCleanup = false) {
-            cleanup = isCleanup;
-            try { return await job(); }
-            finally { cleanup = false; }
-        },
-    };
-}
-
 export function cohortSettings(input) {
     const split = input.split || '100k';
     const cohorts = { '100k': [20, 10000], '500k': [35, 20000], '1m': [35, 20000], '10m': [10, 50000] };
@@ -170,7 +154,7 @@ export function cohortSettings(input) {
 
 async function main() {
     const [inputFile, outputDirectory, envFile, tokenizerPackage, flag] = process.argv.slice(2);
-    assert(inputFile && outputDirectory && envFile && tokenizerPackage, 'Usage: node scripts/beam-past-memory.mjs input.json output-directory env-file tokenizer-package.json');
+    assert(inputFile && outputDirectory && envFile && tokenizerPackage, 'Usage: node benchmark/beam/adapter.mjs input.json output-directory env-file tokenizer-package.json');
     const inputBytes = await readFile(inputFile), input = JSON.parse(inputBytes);
     const cohort = cohortSettings(input);
     const require = createRequire(path.resolve(tokenizerPackage)), encoder = require('tiktoken').get_encoding('cl100k_base');

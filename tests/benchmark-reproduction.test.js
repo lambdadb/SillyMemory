@@ -6,7 +6,7 @@ import path from 'node:path';
 import { createHash } from 'node:crypto';
 import { prepareCase, recallQuery as lmeQuery, returnedDocs, requestFor } from '../benchmark/longmemeval/protocol.mjs';
 import { retrieveCase, verifyRecall, memoryPhase } from '../benchmark/longmemeval/storage.mjs';
-import { recallQuery } from '../scripts/beam-past-memory.mjs';
+import { recallQuery } from '../benchmark/beam/adapter.mjs';
 const sha = bytes => createHash('sha256').update(bytes).digest('hex');
 
 async function fixture() {

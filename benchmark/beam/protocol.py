@@ -31,7 +31,7 @@ SPLITS = {
             }, "conversations": 10, "questions": 200, "memoryOperations": 50000},
 }
 MODEL = "gpt-5.6-luna"
-REPO = Path(__file__).resolve().parents[1]
+REPO = Path(__file__).resolve().parents[2]
 
 
 def sha(data):
@@ -120,7 +120,8 @@ def read_parquet_rows(root, split):
 
 def source_file_hashes(root, split="100k"):
     files = {str(path.relative_to(REPO)): sha(path.read_bytes()) for path in [
-        Path(__file__), REPO / "scripts/beam-past-memory.mjs", REPO / "src/client.js",
+        Path(__file__), REPO / "benchmark/beam/run.py", REPO / "benchmark/beam/adapter.mjs",
+        REPO / "benchmark/shared/memory-budget.mjs", REPO / "src/client.js",
         REPO / "src/chunking.js", REPO / "vendor/lambdadb.js",
     ]}
     # Run-local identities must survive an external --root or bundle relocation.
@@ -207,11 +208,11 @@ def validated_recalls(root, conversation_ids):
     recall_lock = json.loads((root / "recall/lock.json").read_text())
     assert recall_lock["inputSha256"] == memory_state["inputSha256"]
     assert recall_lock["memoryStateSha256"] == sha((root / "memory/memory-state.json").read_bytes())
-    assert recall_lock["packingSourceSha256"] == sha((REPO / "scripts/beam-past-memory.mjs").read_bytes())
+    assert recall_lock["packingSourceSha256"] == sha((REPO / "benchmark/beam/adapter.mjs").read_bytes())
     check_recall_files(root, recall_lock["files"], conversation_ids)
     # A mutable recall file and its digest must not authorize changed evidence.
     # Rebuild from saved retrieval receipts and source before any model side effect.
-    verified = subprocess.run(["node", str(REPO / "scripts/beam-past-memory.mjs"), str(root / "memory-input.json"),
+    verified = subprocess.run(["node", str(REPO / "benchmark/beam/adapter.mjs"), str(root / "memory-input.json"),
                                str(root / "memory"), "unused", str(root / "tokenizer/package.json"),
                                "--verify-recall"], check=True, capture_output=True, text=True)
     canonical = json.loads(verified.stdout)
@@ -342,16 +343,16 @@ def main():
         print(f"VERIFIED: all {SPLITS[args.split]['questions']} source-derived recalls, linked answer contexts and saved score arithmetic")
         return
     if args.phase == "repack":
-        subprocess.run(["node", str(REPO / "scripts/beam-past-memory.mjs"), str(root / "memory-input.json"),
+        subprocess.run(["node", str(REPO / "benchmark/beam/adapter.mjs"), str(root / "memory-input.json"),
                         str(root / "memory"), "unused", str(root / "tokenizer/package.json"), "--repack"], check=True)
         return
     assert args.env_file, "Pass the existing credential file explicitly"
     env = environment(args.env_file)
     assert env.get("LLM_API_KEY"), "OpenAI key missing"
     if args.phase == "recall":
-        subprocess.run(["node", str(REPO / "scripts/beam-past-memory.mjs"), str(root / "memory-input.json"),
+        subprocess.run(["node", str(REPO / "benchmark/beam/adapter.mjs"), str(root / "memory-input.json"),
                         str(root / "memory"), str(args.env_file.resolve()), str(root / "tokenizer/package.json")], check=True)
-        subprocess.run(["node", str(REPO / "scripts/beam-past-memory.mjs"), str(root / "memory-input.json"),
+        subprocess.run(["node", str(REPO / "benchmark/beam/adapter.mjs"), str(root / "memory-input.json"),
                         str(root / "memory"), "unused", str(root / "tokenizer/package.json"), "--repack"], check=True)
     else:
         asyncio.run(score(root, dataset, env, lock))

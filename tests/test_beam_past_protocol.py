@@ -9,7 +9,7 @@ from types import ModuleType, SimpleNamespace
 from unittest.mock import Mock, patch
 
 spec = importlib.util.spec_from_file_location(
-    "beam_past_protocol", Path(__file__).resolve().parents[1] / "scripts/beam-past-protocol.py")
+    "beam_past_protocol", Path(__file__).resolve().parents[1] / "benchmark/beam/protocol.py")
 protocol = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(protocol)
 
@@ -127,6 +127,8 @@ class TransportPolicy(unittest.TestCase):
                 target.parent.mkdir(parents=True, exist_ok=True)
                 target.write_bytes(data)
             files = protocol.source_file_hashes(root)
+            self.assertTrue({"benchmark/beam/run.py", "benchmark/beam/protocol.py",
+                             "benchmark/beam/adapter.mjs", "benchmark/shared/memory-budget.mjs"} <= files.keys())
             self.assertEqual({k: v for k, v in files.items() if k.startswith("run/")},
                              {f"run/{k}": protocol.sha(v) for k, v in contents.items()})
             lock = {**protocol.protocol_settings(), "files": files, "upstreamFiles": {}}

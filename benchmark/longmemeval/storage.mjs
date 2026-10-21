@@ -3,7 +3,7 @@ import { readFile, writeFile, mkdir, rename } from 'node:fs/promises';
 import { randomBytes } from 'node:crypto';
 import path from 'node:path';
 import { LambdaClient, schema } from '../../src/client.js';
-import { memoryOperationBudget } from '../../scripts/beam-past-memory.mjs';
+import { memoryOperationBudget } from '../shared/memory-budget.mjs';
 import { recallQuery, returnedDocs, requestFor, sha256 } from './protocol.mjs';
 
 const readJSON = async file => JSON.parse(await readFile(file));

@@ -83,6 +83,6 @@ The recorded aggregates are in [results.json](results.json).
 - [BEAM dataset](https://huggingface.co/datasets/Mohammadta/BEAM).
 
 Setup retains upstream code and its original license notices under the run's
-`upstream/past/` directory. The storage adapter and runner remain in
-[`scripts/beam-past-memory.mjs`](../../scripts/beam-past-memory.mjs) and
-[`scripts/beam-past-protocol.py`](../../scripts/beam-past-protocol.py).
+`upstream/past/` directory. The Python entry point is
+[`run.py`](run.py), the execution protocol is [`protocol.py`](protocol.py),
+and the Node.js storage and recall adapter is [`adapter.mjs`](adapter.mjs).

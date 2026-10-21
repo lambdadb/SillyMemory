@@ -19,6 +19,16 @@ npm ci
 Both benchmarks expose a Python `run.py` with the same execution phases and
 use Node.js adapters for SillyMemory retrieval and memory assembly. Each folder
 contains fixed settings, recorded results and execution commands.
+
+| Code | Responsibility |
+| --- | --- |
+| `longmemeval/run.py`, `beam/run.py` | Python command-line entry points |
+| `longmemeval/adapter.mjs`, `beam/adapter.mjs` | Node.js adapters for each benchmark's memory protocol |
+| `beam/protocol.py` | Pinned Past loading, generation, scoring and verification |
+| `longmemeval/protocol.mjs`, `longmemeval/storage.mjs` | LongMemEval source preparation, memory assembly and storage |
+| `shared/memory-budget.mjs` | Database request limits with a reserved cleanup allowance |
+| `tokenizer/` | Shared, locked tokenizer dependency |
+
 Public datasets are downloaded at pinned revisions and checked by SHA-256.
 Runs write to ignored `artifacts/` directories. Keep credentials outside the run;
 pass an existing file explicitly with `--env-file`. The required variable names

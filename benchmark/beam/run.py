@@ -10,8 +10,7 @@ import sys
 import urllib.request
 
 HERE = Path(__file__).resolve().parent
-REPO = HERE.parents[1]
-spec = importlib.util.spec_from_file_location("beam_protocol", REPO / "scripts/beam-past-protocol.py")
+spec = importlib.util.spec_from_file_location("beam_protocol", HERE / "protocol.py")
 protocol = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(protocol)
 
@@ -70,7 +69,7 @@ def main():
     if args.phase == "setup":
         setup(root, config, args.split)
         return
-    command = [sys.executable, str(REPO / "scripts/beam-past-protocol.py"), args.phase,
+    command = [sys.executable, str(HERE / "protocol.py"), args.phase,
                "--split", args.split, "--root", str(root)]
     if args.phase in ["recall", "score"]:
         assert args.env_file, "Pass --env-file explicitly for paid phases"
