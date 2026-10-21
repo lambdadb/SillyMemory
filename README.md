@@ -155,6 +155,11 @@ and historical results. [Evidence retention](docs/evidence-retention.md) tracks
 preserved runs. Historical scores describe their recorded settings, not a current
 accuracy guarantee.
 
+## Benchmarks
+
+See [benchmark/](benchmark/) for the evaluated LongMemEval-S and BEAM settings,
+recorded results, and reproduction commands.
+
 ## License
 
 Copyright (C) 2026 SillyMemory contributors.

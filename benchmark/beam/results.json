@@ -1,0 +1,29 @@
+{
+  "metric": "Question-weighted partial-credit mean, scaled to 100",
+  "rows": [
+    {
+      "split": "100k",
+      "conversations": 20,
+      "questions": 400,
+      "score": 89.0
+    },
+    {
+      "split": "500k",
+      "conversations": 35,
+      "questions": 700,
+      "score": 85.99
+    },
+    {
+      "split": "1m",
+      "conversations": 35,
+      "questions": 700,
+      "score": 86.62
+    },
+    {
+      "split": "10m",
+      "conversations": 10,
+      "questions": 200,
+      "score": 80.64
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "dataset": "LongMemEval-S",
+  "questions": 500,
+  "correct": 475,
+  "accuracy": 0.95,
+  "generator": {
+    "model": "gpt-6.1-sol",
+    "reasoning_effort": "low"
+  },
+  "judge": {
+    "model": "jev-1.13.0",
+    "type": "noul",
+    "yesThreshold": 0.5
+  },
+  "input": "Frozen retrieved source selection, reconstructed from the public dataset"
+}
