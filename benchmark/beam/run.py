@@ -44,7 +44,7 @@ def setup(root, config, split):
     tokenizer = root / "tokenizer"
     tokenizer.mkdir(exist_ok=True)
     for name in ["package.json", "package-lock.json"]:
-        source, target = HERE / "tokenizer" / name, tokenizer / name
+        source, target = HERE.parent / "tokenizer" / name, tokenizer / name
         if target.exists():
             assert target.read_bytes() == source.read_bytes(), "Tokenizer lock differs"
         else:

@@ -12,5 +12,5 @@
     "type": "noul",
     "yesThreshold": 0.5
   },
-  "input": "Frozen retrieved source selection, reconstructed from the public dataset"
+  "input": "Recorded answer evaluation using saved retrieval responses; fresh end-to-end results are written to each run directory."
 }
