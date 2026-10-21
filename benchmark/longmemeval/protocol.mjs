@@ -116,3 +116,24 @@ export function verdict(result, config) {
     assert(Number.isSafeInteger(result.usage?.input_tokens) && result.usage.input_tokens >= 0);
     return { probability: answer.noul, correct: answer.noul >= config.judge.threshold };
 }
+
+export function summarizeResources({ answers, judgments, database, operations, indexedDocuments, memoryMilliseconds }) {
+    const milliseconds = value => { assert(Number.isFinite(value) && value >= 0); return value; };
+    const tokens = value => { assert(Number.isSafeInteger(value) && value >= 0); return value; };
+    const models = (receipts, input, output) => ({
+        calls: receipts.length,
+        inputTokens: receipts.reduce((sum, r) => sum + tokens(r.response.usage[input]), 0),
+        outputTokens: receipts.some(r => r.response.usage[output] === undefined) ? null
+            : receipts.reduce((sum, r) => sum + tokens(r.response.usage[output]), 0),
+        responseHeaderMilliseconds: receipts.reduce((sum, r) => sum + milliseconds(r.milliseconds), 0),
+    });
+    assert.equal(database.length, operations);
+    return {
+        generation: models(answers, 'prompt_tokens', 'completion_tokens'),
+        judging: models(judgments, 'input_tokens', 'output_tokens'),
+        memory: { indexedDocuments: tokens(indexedDocuments), databaseOperations: tokens(operations),
+            httpResponseMilliseconds: database.reduce((sum, r) => sum + milliseconds(r.milliseconds), 0),
+            ingestRetrievePackMilliseconds: milliseconds(memoryMilliseconds) },
+        billedCostUsd: null,
+    };
+}

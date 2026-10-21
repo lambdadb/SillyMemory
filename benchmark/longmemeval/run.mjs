@@ -7,7 +7,7 @@ import { execFileSync } from 'node:child_process';
 import { randomBytes } from 'node:crypto';
 import path from 'node:path';
 import { fetchVerifiedFile } from '../../scripts/fetch-benchmark-data.mjs';
-import { prepareCase, judgeRequest, verdict, sha256, recordResponse } from './protocol.mjs';
+import { prepareCase, judgeRequest, verdict, sha256, recordResponse, summarizeResources } from './protocol.mjs';
 import { memoryPhase, verifyRecall } from './storage.mjs';
 
 const { values, positionals } = parseArgs({ allowPositionals: true, options: {
@@ -94,8 +94,14 @@ try {
                     assert.equal(state.owned.length, lock.ids.length);
                     assert(state.owned.every(e => e.deleted && e.absent404 && e.owner === lock.owner));
                     const requests = new Map();
+                    let indexedDocuments = 0, memoryMilliseconds = 0;
                     // Verify all source-bound recall and request bodies before any generation.
-                    for (const id of lock.ids) requests.set(id, verifyRecall(await readJSON(path.join(root, 'recall', `${id}.json`)), await prepare(id), config, countTokens, binding));
+                    for (const id of lock.ids) {
+                        const prepared = await prepare(id), recalled = await readJSON(path.join(root, 'recall', `${id}.json`));
+                        requests.set(id, verifyRecall(recalled, prepared, config, countTokens, binding));
+                        assert(Number.isFinite(recalled.milliseconds) && recalled.milliseconds >= 0);
+                        indexedDocuments += prepared.docs.length; memoryMilliseconds += recalled.milliseconds;
+                    }
                     const secrets = credentials ? Object.entries(credentials).filter(([key, value]) => /KEY|TOKEN|SECRET|PASSWORD/i.test(key) && value.length >= 8).map(([, value]) => value) : [];
                     const clean = text => secrets.reduce((result, secret) => result.replaceAll(secret, '[redacted]'), text);
                     if (phase === 'score') {
@@ -133,8 +139,19 @@ try {
                         scores.push({ id, type: row.question_type, ...verdict(judgment, config) });
                     }
                     const correct = scores.filter(x => x.correct).length;
+                    assert(Number.isSafeInteger(state.operations) && state.operations >= 0 && state.operations <= config.limits.memoryOperations);
+                    const answers = [], judgments = [], database = [];
+                    for (const id of lock.ids) {
+                        answers.push(await readJSON(path.join(root, 'answer', `${id}.json`)));
+                        judgments.push(await readJSON(path.join(root, 'judge', `${id}.json`)));
+                    }
+                    for (let i = 1; i <= state.operations; i++) {
+                        const receipt = await readJSON(path.join(root, 'memory', `http-${i}.json`));
+                        database.push({ milliseconds: receipt.milliseconds });
+                    }
                     const summary = { questions: scores.length, fullCohort: scores.length === config.questions, correct,
-                        accuracy: correct / scores.length, generator: config.generator, judge: config.judge, binding };
+                        accuracy: correct / scores.length, generator: config.generator, judge: config.judge, binding,
+                        resources: summarizeResources({ answers, judgments, database, operations: state.operations, indexedDocuments, memoryMilliseconds }) };
                     if (phase === 'verify') {
                         assert.deepEqual(await readJSON(path.join(root, 'scores.json')), scores);
                         assert.deepEqual(await readJSON(path.join(root, 'summary.json')), summary);

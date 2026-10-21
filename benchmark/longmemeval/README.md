@@ -63,6 +63,10 @@ Outputs include `lock.json`, `memory/`, `recall/`, `answer/`, `judge/`, `scores.
 and `summary.json`. `verify` reconstructs every indexed source and delivered
 request, validates saved retrieval responses and cleanup records, then compares
 all per-question scores and the aggregate without provider calls.
+The summary includes generation/judge token totals, indexed documents, database
+operations and measured timings. Model timings run through response headers;
+database HTTP timings include response-body reads. Billed cost remains `null`
+because the runner does not receive provider invoices.
 
 A `.running` directory prevents concurrent runs. Inspect a lock left by a
 terminated process before removing it. If recall fails, inspect `memory/state.json`

@@ -4,10 +4,31 @@ import { readFile, writeFile, mkdir, mkdtemp, rm } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { createHash } from 'node:crypto';
-import { prepareCase, recallQuery as lmeQuery, returnedDocs, requestFor, judgeRequest, verdict, recordResponse } from '../benchmark/longmemeval/protocol.mjs';
+import { prepareCase, recallQuery as lmeQuery, returnedDocs, requestFor, judgeRequest, verdict, recordResponse, summarizeResources } from '../benchmark/longmemeval/protocol.mjs';
 import { retrieveCase, verifyRecall, memoryPhase } from '../benchmark/longmemeval/storage.mjs';
 import { recallQuery } from '../scripts/beam-past-memory.mjs';
 const sha = bytes => createHash('sha256').update(bytes).digest('hex');
+
+test('resource summary totals measured usage without inventing missing output usage or invoice cost', () => {
+    const inputs = {
+        answers: [
+            { milliseconds: 10, response: { usage: { prompt_tokens: 20, completion_tokens: 3 } } },
+            { milliseconds: 12, response: { usage: { prompt_tokens: 30, completion_tokens: 4 } } },
+        ],
+        judgments: [{ milliseconds: 2, response: { usage: { input_tokens: 15, output_tokens: 1 } } }],
+        database: [{ milliseconds: 5 }, { milliseconds: 8 }], operations: 2, indexedDocuments: 6, memoryMilliseconds: 16,
+    };
+    assert.deepEqual(summarizeResources(inputs), {
+        generation: { calls: 2, inputTokens: 50, outputTokens: 7, responseHeaderMilliseconds: 22 },
+        judging: { calls: 1, inputTokens: 15, outputTokens: 1, responseHeaderMilliseconds: 2 },
+        memory: { indexedDocuments: 6, databaseOperations: 2, httpResponseMilliseconds: 13, ingestRetrievePackMilliseconds: 16 },
+        billedCostUsd: null,
+    });
+    delete inputs.judgments[0].response.usage.output_tokens;
+    assert.equal(summarizeResources(inputs).judging.outputTokens, null);
+    inputs.answers[0].response.usage.prompt_tokens = -1;
+    assert.throws(() => summarizeResources(inputs));
+});
 
 test('provider receipts retain redacted non-JSON errors and malformed successes', async t => {
     const directory = await mkdtemp(path.join(os.tmpdir(), 'benchmark-receipt-'));
