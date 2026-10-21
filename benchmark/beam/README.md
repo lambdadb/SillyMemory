@@ -12,6 +12,10 @@ Run SillyMemory with the pinned Past public evaluation protocol.
 Scores are question-weighted partial-credit means, including normalized event
 ordering. The cohorts contain different histories and questions.
 
+[results.json](results.json) includes recorded token usage, available timings and
+resource counts. Unavailable measurements are `null`; modeled costs are labelled
+separately from billed cost.
+
 ## Settings
 
 | Component | Setting |

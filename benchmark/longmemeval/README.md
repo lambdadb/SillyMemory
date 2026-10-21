@@ -6,6 +6,9 @@ Run ingestion, retrieval, memory selection, answer generation and judging from
 the public dataset. The recorded score used saved retrieval responses; this runner
 performs retrieval again and reports the new run's score separately.
 
+[results.json](results.json) includes recorded token usage, available timings and
+resource counts. Unavailable measurements and billed cost are `null`.
+
 ## Settings
 
 | Component | Setting |

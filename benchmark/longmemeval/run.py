@@ -239,6 +239,9 @@ class Receipts:
             saved = read_json(file)
             assert saved["requestSha256"] == request_hash and saved["binding"] == self.binding
             assert saved["status"] == 200
+            if "response" not in saved:
+                saved["response"] = json.loads(saved["rawResponse"])
+                atomic(file, saved, self.clean)
             return saved["response"]
         assert self.phase == "score", f"Missing {kind} receipt: {id}"
         assert time.monotonic() < self.deadline and self.attempts[kind] < self.config["limits"][kind + "Calls"], "Run limit reached"

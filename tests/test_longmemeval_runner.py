@@ -91,7 +91,7 @@ class LongMemEvalTests(unittest.TestCase):
                     saved = runner.read_json(root / "answer/example.json")
                     self.assertEqual(saved["status"], status)
                     self.assertEqual(saved["rawResponse"], raw.decode().replace("synthetic-secret", "[redacted]"))
-                    with self.assertRaises((AssertionError, KeyError)):
+                    with self.assertRaises((AssertionError, json.JSONDecodeError)):
                         receipts.get("answer", "example", {"messages": []})
                     self.assertEqual(request.call_count, 1)
 
@@ -112,6 +112,13 @@ class LongMemEvalTests(unittest.TestCase):
             with patch.object(runner.urllib.request, "urlopen", return_value=Response(b'{"ok":true}')) as request:
                 self.assertEqual(receipts.get("answer", "done", body), {"ok": True})
                 self.assertEqual(receipts.get("answer", "done", body), {"ok": True})
+                interrupted = runner.read_json(root / "answer/done.json")
+                del interrupted["response"]
+                runner.write_json(root / "answer/done.json", interrupted)
+                receipts.phase = "verify"
+                self.assertEqual(receipts.get("answer", "done", body), {"ok": True})
+                self.assertEqual(runner.read_json(root / "answer/done.json")["response"], {"ok": True})
+                receipts.phase = "score"
                 sent = request.call_args.args[0]
                 self.assertEqual(sent.data, runner.encode(body).encode())
                 self.assertEqual(sent.get_header("Authorization"), "Bearer synthetic-secret")
