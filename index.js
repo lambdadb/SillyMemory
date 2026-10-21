@@ -31,9 +31,9 @@ const status = (text, options) => { retrySync = false; statusView.show(text, opt
 const chatElement = name => chatStatus.querySelector(`[data-sm-chat="${name}"]`);
 function chatBlocker() {
     const ctx = context();
-    if (ctx.extensionSettings.vectors?.enabled_chats) return { label: 'Vector Storage conflict', message: 'SillyMemory retrieval is skipped while Vector Storage chat vectorization is on. Turn off its chat vectorization to use SillyMemory, which connects directly to LambdaDB.' };
     if (!supportsChat(ctx)) return { label: 'Unavailable in this chat', message: 'Select a saved, single-character text chat to use SillyMemory. Group chats and tool conversations are not supported.' };
     if (ctx.chatMetadata.sillymemory?.checkpoint) return { label: 'Saved checkpoint', message: 'This is a saved checkpoint. Resume it in a new chat from SillyMemory settings to continue with memory.' };
+    if (ctx.extensionSettings.vectors?.enabled_chats) return { action: 'vectors', label: 'Vector Storage conflict', message: 'SillyMemory retrieval is skipped while Vector Storage chat vectorization is on. Turn off its chat vectorization to use SillyMemory, which connects directly to LambdaDB.' };
     return null;
 }
 function requestTarget() {
@@ -79,7 +79,7 @@ function renderChatStatus() {
     if (value?.total > 0) { progress.max = value.total; progress.value = value.completed; }
     else progress.removeAttribute('value');
     const canAct = connected && sessionReady && !busy && !hostGenerating();
-    chatElement('vectors').hidden = !blocker || !context().extensionSettings.vectors?.enabled_chats;
+    chatElement('vectors').hidden = blocker?.action !== 'vectors';
     chatElement('cleanup').hidden = !connected || !state.testCollection;
     chatElement('sync').hidden = !retrySync || !state.enabled || Boolean(blocker) || !state.ready || Boolean(state.testCollection);
     chatElement('retry').hidden = !stopped?.source || !['normal', 'regenerate'].includes(stopped.type) || !context().chat.at(-1)?.is_user || !state.enabled || !state.ready || Boolean(blocker) || Boolean(state.testCollection);

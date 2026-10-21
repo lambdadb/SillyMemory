@@ -25,7 +25,8 @@ excerpt inspection remains in Advanced settings.
 - Built-in Vector Storage is not a dependency. SillyMemory connects directly to
   LambdaDB. Existing retrieval skips chats with built-in chat vectorization on;
   the new notice opens its native controls without changing another extension's
-  settings. Group/tool conversations remain unsupported.
+  settings. Unsupported chats and saved checkpoints take priority, without showing
+  an unrelated Vector Storage recovery action. Group/tool conversations remain unsupported.
 - Synchronization recovery uses the existing retry action. A stopped generation
   remains visible after background synchronization finishes.
 - Retry reply is available only for a failed normal/regenerate request with an
@@ -68,7 +69,7 @@ Executed on Node.js 24.15.0:
 | `npm run check`, `npm run check:release`, `npm run check:sdk` | Passed; release metadata remains 0.5.0. |
 | `node --check` for every `scripts/*.mjs` and `tests/*.js` | Passed. |
 | `python3 -m unittest discover -s tests -p 'test_beam_past_protocol.py'` | 13 passed. |
-| `ST_SOURCE=<pinned host> ST_TEST_PORT=18160 SM_ARTIFACT_TAG=chat-status-reviewed npm run test:browser` | 132 checks passed. |
+| `ST_SOURCE=<pinned host> ST_TEST_PORT=18160 SM_ARTIFACT_TAG=chat-status-review-fix npm run test:browser` | 133 checks passed. |
 | Same host/port, `SM_ARTIFACT_TAG=chat-status-faults npm run test:faults` | 112 checks passed. |
 | `ST_SOURCE=<pinned host> ST_DELIVERY_PORT=18162 node scripts/prompt-delivery-smoke.mjs artifacts/prompt-delivery-chat-status-reviewed.json` | 18 delivery cases plus packing, assembly and overlap controls passed. |
 
@@ -88,3 +89,14 @@ CI dependency. Its 81 hashed file members were read back and verified. Archive:
 `31a8b15d7062b86f6f071a919e2b89e40623a9f0da4d1432537c8a52400bdc7a`.
 Selected final reports and screenshots are also retained under
 `artifacts/chat-memory-status-2026-10-21/` in that checkout.
+
+The final blocker-priority correction is retained separately in
+`artifacts/archive/chat-memory-status-review-fix-2026-10-21.tar.gz` (also local-only):
+448,878 bytes; SHA-256
+`1a5090098fb6bbfc17257510af3ad2dc7614a0a5e3f150093bcb149e3edc34bb`.
+Its 29 hashed members were verified, including final producer sources, the patch
+against `415d401`, the 133-check browser receipt and repeated 402-test unit result.
+The combined Vector Storage/checkpoint and Vector Storage/tool-chat controls pass;
+this correction changes only notice priority and the corresponding settings link.
+The earlier fault and delivery receipts remain evidence for unchanged generation,
+synchronization and packing behavior, rather than re-runs of the priority change.

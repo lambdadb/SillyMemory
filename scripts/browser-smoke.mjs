@@ -306,14 +306,23 @@ try {
     });
     await openChatMemory(page);
     await chatField('settings').click(); await field('enabled').waitFor({ state: 'visible' });
+    await page.evaluate(async () => {
+        const c = SillyTavern.getContext();
+        c.extensionSettings.vectors.enabled_chats = true;
+        c.chatMetadata.sillymemory.checkpoint = true;
+        await c.eventSource.emit(c.eventTypes.SETTINGS_UPDATED);
+    });
+    check('checkpoint recovery takes priority over an unrelated vector setting', (await chatField('label').innerText()).includes('Saved checkpoint') && !await chatField('vectors').isVisible());
+    await page.evaluate(() => { delete SillyTavern.getContext().chatMetadata.sillymemory.checkpoint; });
     const unsupportedSource = await page.evaluate(async () => {
         const c = SillyTavern.getContext(), original = structuredClone(c.chat);
         c.chat.push({ is_system: true, mes: 'Synthetic tool result.', extra: { tool_invocations: [{ name: 'synthetic-tool' }] } });
         await c.eventSource.emit(c.eventTypes.MESSAGE_UPDATED, c.chat.length - 1); return original;
     });
-    check('enabled memory does not claim readiness in an unsupported tool conversation', (await chatField('label').innerText()).includes('Unavailable in this chat'));
+    check('enabled memory does not claim readiness in an unsupported tool conversation', (await chatField('label').innerText()).includes('Unavailable in this chat') && !await chatField('vectors').isVisible());
     await page.evaluate(async original => {
         const c = SillyTavern.getContext(); c.chat.splice(0, c.chat.length, ...original);
+        c.extensionSettings.vectors.enabled_chats = false;
         await c.eventSource.emit(c.eventTypes.MESSAGE_UPDATED, 0);
     }, unsupportedSource);
     await waitStatus('synchronized');
