@@ -100,7 +100,10 @@ export async function memoryPhase({ phase, root, lock, binding, config, env, pre
     try {
         if (phase === 'cleanup') {
             for (const entry of state.owned.filter(e => !e.deleted)) await cleanup(entry);
-            state.status = state.status === 'completed' ? 'completed' : 'cleaned';
+            const complete = state.completed.length === lock.ids.length && state.completed.every((id, i) => id === lock.ids[i])
+                && state.owned.length === lock.ids.length && new Set(state.owned.map(entry => entry.id)).size === lock.ids.length
+                && state.owned.every(entry => lock.ids.includes(entry.id) && entry.deleted && entry.absent404);
+            state.status = complete ? 'completed' : 'cleaned';
         } else {
             for (const id of lock.ids) {
                 const prepared = await prepare(id), collection = `smlme_${randomBytes(12).toString('hex')}`;

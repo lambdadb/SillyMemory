@@ -87,8 +87,20 @@ artifacts/beam-venv/bin/python benchmark/beam/run.py cleanup \
 
 Cleanup uses the saved connection, split and cumulative request count; it verifies
 ownership and absence without loading the dataset, tokenizer or upstream code.
-It does not resume recall or mark an incomplete run as scored. If the request
-budget is exhausted, cleanup stops and retains the unresolved ownership records.
+Cleanup restores `completed` only when every conversation in the frozen cohort
+was retrieved and all owned collections are confirmed absent. Partial cohorts
+remain `cleaned` and cannot be scored. If the final deletion was the only failure,
+rebuild the packed recall offline and then run `score`:
+
+```sh
+artifacts/beam-venv/bin/python benchmark/beam/run.py repack \
+  --split 100k --root artifacts/beam-100k
+```
+
+`repack` uses the pinned source input, tokenizer and saved HTTP query receipts;
+it makes no provider calls. An existing packed recall is not overwritten.
+If the request budget is exhausted, cleanup stops and retains the unresolved
+ownership records.
 Recall and cleanup hold `memory/.running` exclusively. After a hard kill, remove
 that empty directory only after confirming no process is using the run.
 

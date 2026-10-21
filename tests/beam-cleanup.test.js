@@ -90,3 +90,21 @@ test('BEAM cleanup does not enter an active run or remove its lock', async t => 
     await assert.rejects(cleanupMemory(directory, env, () => assert.fail('Active run must not be accessed')), { code: 'EEXIST' });
     await assert.rejects(mkdir(lock), { code: 'EEXIST' });
 });
+
+test('BEAM cleanup restores only a complete unique frozen cohort after final deletion fails', async t => {
+    const { directory, file, state, load } = await fixture(t, 20);
+    state.completed = state.owned.map(entry => entry.conversationId);
+    for (const entry of state.owned.slice(0, -1)) { entry.deleted = true; entry.absent404 = true; }
+    await writeFile(file, JSON.stringify(state));
+    let calls = 0;
+    await cleanupMemory(directory, env, async () => { calls++; return absent(); });
+    assert.equal(calls, 1);
+    assert.equal((await load()).status, 'completed');
+    for (const ids of [state.completed.slice(0, -1), [...state.completed.slice(0, -1), '0'],
+        [...state.completed.slice(0, -1), 'unknown']]) {
+        const changed = await load(); changed.completed = ids; changed.status = 'blocked';
+        await writeFile(file, JSON.stringify(changed));
+        await cleanupMemory(directory, env, () => assert.fail('Confirmed absence needs no HTTP'));
+        assert.equal((await load()).status, 'cleaned');
+    }
+});

@@ -171,6 +171,7 @@ export async function cleanupMemory(directory, env, fetcher = globalThis.fetch) 
         const [conversations, limit] = cohorts[state.split];
         assert(Number.isSafeInteger(state.operations) && state.operations >= 0 && state.operations <= limit);
         assert(Array.isArray(state.owned) && state.owned.length <= conversations);
+        assert(Array.isArray(state.completed));
         for (const entry of state.owned) {
             assert(/^smbpast_[a-f0-9]{24}$/.test(entry.collection) && /^[a-f0-9]{64}$/.test(entry.owner));
             assert.equal(entry.scope, sha(entry.conversationId));
@@ -203,8 +204,11 @@ export async function cleanupMemory(directory, env, fetcher = globalThis.fetch) 
                     failures.push(entry.collection);
                 }
             }
-            if (failures.length) state.status = 'blocked';
-            else if (state.status !== 'completed') state.status = 'cleaned';
+            const ownedIds = new Set(state.owned.map(entry => entry.conversationId));
+            const complete = ownedIds.size === conversations && state.completed.length === conversations
+                && new Set(state.completed).size === conversations && state.completed.every(id => ownedIds.has(id))
+                && state.owned.every(entry => entry.absent404);
+            state.status = failures.length ? 'blocked' : complete ? 'completed' : 'cleaned';
             await save();
         } finally { client.forget(); }
         assert.equal(failures.length, 0, `Cleanup incomplete for ${failures.length} owned collections; inspect memory-state.json and retry cleanup`);

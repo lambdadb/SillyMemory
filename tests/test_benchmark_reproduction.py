@@ -43,6 +43,15 @@ class ReproductionTests(unittest.TestCase):
             command.assert_called_once_with(["node", str(REPO / "benchmark/beam/adapter.mjs"),
                                              "--cleanup", str(root / "memory"), str(credentials)], check=True)
 
+    def test_repack_is_public_and_does_not_require_credentials(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory).resolve()
+            with patch.object(runner.sys, "argv", ["benchmark", "repack", "--split", "100k", "--root", str(root)]), \
+                    patch.object(runner.subprocess, "run") as command:
+                runner.main()
+            command.assert_called_once_with([runner.sys.executable, str(REPO / "benchmark/beam/protocol.py"),
+                                             "repack", "--split", "100k", "--root", str(root)], check=True)
+
     def test_setup_rejects_corrupt_existing_data_before_installation(self):
         config = json.loads((REPO / "benchmark/beam/config.json").read_text())
         config["cohorts"]["100k"]["files"][0]["bytes"] = len(b"corrupt")

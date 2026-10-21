@@ -122,15 +122,20 @@ test('cleanup recovers an interrupted collection and rejects a different owner b
         assert.equal(options.method, 'GET'); return new Response('', { status: 404 });
     });
     Object.defineProperty(globalThis, 'fetch', { configurable: true, writable: true, value: transport });
-    const args = { phase: 'cleanup', root, lock: { owner }, binding, config, env };
+    const args = { phase: 'cleanup', root, lock: { owner, ids: ['example'] }, binding, config, env };
     await memoryPhase(args);
     const saved = JSON.parse(await readFile(file));
     assert.equal(saved.status, 'cleaned'); assert.equal(saved.owned[0].absent404, true);
     assert.equal(transport.mock.callCount(), 1);
+    state.completed = ['example'];
+    await writeFile(file, JSON.stringify(state));
+    await memoryPhase(args);
+    assert.equal(JSON.parse(await readFile(file)).status, 'completed');
+    assert.equal(transport.mock.callCount(), 2);
     state.owned[0].owner = 'd'.repeat(64);
     await writeFile(file, JSON.stringify(state));
     await assert.rejects(memoryPhase(args));
-    assert.equal(transport.mock.callCount(), 1);
+    assert.equal(transport.mock.callCount(), 2);
 });
 
 test('BEAM profile reflects the actual bounded retrieval request', async () => {

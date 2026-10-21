@@ -80,7 +80,7 @@ def setup(root, config, split):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("phase", choices=["setup", "prepare", "recall", "score", "verify", "cleanup"])
+    parser.add_argument("phase", choices=["setup", "prepare", "recall", "score", "verify", "cleanup", "repack"])
     parser.add_argument("--split", required=True, choices=protocol.SPLITS)
     parser.add_argument("--root", required=True, type=Path)
     parser.add_argument("--env-file", type=Path)

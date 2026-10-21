@@ -72,8 +72,8 @@ requests to avoid duplicate spending.
 Outputs include `lock.json`, `memory/`, `recall/`, `answer/`, `judge/`, `scores.json`
 and `summary.json`. `verify` reconstructs every indexed source and delivered
 request, matches retrieval to its original HTTP query receipt and checks cleanup
-records, then compares
-all per-question scores and the aggregate without provider calls.
+records, then compares all per-question scores and the aggregate without provider
+calls.
 The summary includes generation/judge token totals, indexed documents, database
 operations and measured timings. Model timings run through response headers;
 database HTTP timings include response-body reads. Billed cost remains `null`
@@ -87,6 +87,10 @@ and finish owned-resource cleanup before starting a new run directory:
 python3.14 benchmark/longmemeval/run.py cleanup --root artifacts/longmemeval \
   --env-file /path/to/evaluation.env
 ```
+
+If only the final collection deletion failed, successful cleanup restores the
+completed run so `score` can proceed. An unfinished frozen question set remains
+incomplete.
 
 ## Sources
 
