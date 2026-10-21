@@ -47,6 +47,19 @@ def read_json(file):
     return json.loads(file.read_text(encoding="utf-8"))
 
 
+def same_json(actual, expected):
+    # JSON numbers share a type in JavaScript; booleans must remain distinct.
+    if type(actual) in (int, float) and type(expected) in (int, float):
+        return actual == expected
+    if type(actual) is not type(expected):
+        return False
+    if isinstance(expected, dict):
+        return actual.keys() == expected.keys() and all(same_json(actual[key], value) for key, value in expected.items())
+    if isinstance(expected, list):
+        return len(actual) == len(expected) and all(same_json(a, b) for a, b in zip(actual, expected))
+    return actual == expected
+
+
 def write_json(file, value, exclusive=False):
     with file.open("x" if exclusive else "w", encoding="utf-8") as stream:
         stream.write(encode(value))
@@ -137,8 +150,8 @@ def judge_request(row, response, rule, config):
 
 
 def tokens(value):
-    assert type(value) is int and 0 <= value <= 2**53 - 1
-    return value
+    assert type(value) in (int, float) and 0 <= value <= 2**53 - 1 and int(value) == value
+    return int(value)
 
 
 def milliseconds(value):
@@ -247,7 +260,6 @@ class Receipts:
                                        "milliseconds": (time.monotonic() - started) * 1000}, self.clean)
 
 
-
 def score(root, phase, lock, binding, config, rows, rules, credentials):
     state = read_json(root / "memory/state.json")
     assert state["binding"] == binding and state["status"] == "completed"
@@ -280,8 +292,8 @@ def score(root, phase, lock, binding, config, rows, rules, credentials):
                "accuracy": correct / len(scores), "generator": config["generator"], "judge": config["judge"], "binding": binding,
                "resources": summarize_resources(answers, judgments, database, operations, packed["indexedDocuments"], packed["memoryMilliseconds"])}
     if phase == "verify":
-        assert read_json(root / "scores.json") == scores, "Per-question scores differ"
-        assert read_json(root / "summary.json") == summary, "Summary differs"
+        assert same_json(read_json(root / "scores.json"), scores), "Per-question scores differ"
+        assert same_json(read_json(root / "summary.json"), summary), "Summary differs"
     else:
         write_json(root / "scores.json", scores)
         write_json(root / "summary.json", summary)

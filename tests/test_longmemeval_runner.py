@@ -52,6 +52,9 @@ class LongMemEvalTests(unittest.TestCase):
         self.assertTrue(runner.verdict(result, CONFIG)["correct"])
         result["answers"]["correct"]["noul"] = 0.499
         self.assertFalse(runner.verdict(result, CONFIG)["correct"])
+        self.assertEqual(runner.tokens(10.0), 10)
+        with self.assertRaises(AssertionError):
+            runner.tokens(True)
         for bad in (True, float("nan"), -0.1, 1.1):
             result["answers"]["correct"]["noul"] = bad
             with self.assertRaises(AssertionError):
@@ -149,10 +152,11 @@ class LongMemEvalTests(unittest.TestCase):
                 runner.score(root, "score", *args)
                 runner.score(root, "verify", *args)
                 saved = runner.read_json(root / "scores.json")
-                saved[0]["correct"] = False
-                runner.write_json(root / "scores.json", saved)
-                with self.assertRaisesRegex(AssertionError, "Per-question"):
-                    runner.score(root, "verify", *args)
+                for incorrect in (False, 1):
+                    saved[0]["correct"] = incorrect
+                    runner.write_json(root / "scores.json", saved)
+                    with self.assertRaisesRegex(AssertionError, "Per-question"):
+                        runner.score(root, "verify", *args)
 
 
 if __name__ == "__main__":
