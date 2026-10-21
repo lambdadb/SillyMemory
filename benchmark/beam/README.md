@@ -20,7 +20,7 @@ separately from billed cost.
 
 | Component | Setting |
 | --- | --- |
-| Dataset | `Mohammadta/BEAM`; revisions and every Parquet shard hash in `config.json` |
+| Dataset | `Mohammadta/BEAM` (100K–1M), `Mohammadta/BEAM-10M` (10M); revisions, shard sizes and hashes in `config.json` |
 | Protocol | Past commit `1faac1e70fa50d92d966904358be98bb1beca0c8` |
 | Embedding | Managed OpenAI `text-embedding-3-small`, original source text |
 | Chunking | 800 characters |
@@ -38,8 +38,9 @@ points) / 4)` per result. Full serialized context tokens are recorded separately
 
 ## Run
 
-Use Python 3.14, Node.js 24 and Git. The Python protocol requires `pyarrow` for
-Parquet input, `scipy` for event-order scoring and `httpx` for model requests.
+Use Python 3.14, Node.js 24 and Git on Linux or macOS. The Python protocol requires
+`pyarrow` for Parquet input, `scipy` for event-order scoring and `httpx` for model
+requests.
 [requirements.txt](requirements.txt) pins these packages and their transitive
 dependencies. `setup` installs the locked Node.js tokenizer into the run directory.
 
@@ -65,8 +66,10 @@ artifacts/beam-venv/bin/python benchmark/beam/run.py verify \
 
 Repeat with `--split 500k`, `1m` or `10m`, using a separate output directory for
 each. `setup` fetches pinned upstream code and data and installs the locked
-JavaScript tokenizer. `prepare` checks every shard before parsing and freezes
-the settings, source hashes and full cohort.
+JavaScript tokenizer. Downloads enforce each pinned byte count and a 15-minute
+total deadline per shard, including response-body reads; failed downloads leave
+no partial dataset file. The deadline uses POSIX signals. `prepare` checks every
+shard before parsing and freezes the settings, source hashes and full cohort.
 
 `recall` indexes each conversation, retrieves and packs evidence, then deletes
 its owned test collection with a verified absence check. `score` generates one
@@ -99,7 +102,8 @@ The recorded aggregates are in [results.json](results.json).
 ## Sources
 
 - [Past BEAM protocol](https://github.com/pastdotdev/benchmarks/tree/1faac1e70fa50d92d966904358be98bb1beca0c8/beam).
-- [BEAM dataset](https://huggingface.co/datasets/Mohammadta/BEAM).
+- [BEAM dataset (100K–1M)](https://huggingface.co/datasets/Mohammadta/BEAM).
+- [BEAM-10M dataset](https://huggingface.co/datasets/Mohammadta/BEAM-10M).
 
 Setup retains upstream code and its original license notices under the run's
 `upstream/past/` directory. The Python entry point is

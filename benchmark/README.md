@@ -23,8 +23,8 @@ npm ci
 | BEAM | Install the pinned packages in [beam/requirements.txt](beam/requirements.txt) using the [BEAM setup commands](beam/README.md#run) | Node.js, npm and Git |
 
 Each runner's `setup` phase installs the locked Node.js tokenizer into its run
-directory. LongMemEval supports Linux and macOS; its request deadlines use POSIX
-signals.
+directory. Both runners support Linux and macOS; their request or download
+deadlines use POSIX signals.
 
 Both benchmarks expose a Python `run.py` with the same execution phases and
 use Node.js adapters for SillyMemory retrieval and memory assembly. Each folder
