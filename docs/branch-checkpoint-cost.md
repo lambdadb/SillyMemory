@@ -131,6 +131,89 @@ pass. `HOST-PIN-ADDENDUM.md` records this preflight-only patch and local evidenc
 SHA-256 `aa6c106d8b3612cc8a56da1c1429b2637672132e65d29d543301417a730cf3b3`.
 No historical live measurements or archives changed.
 
+Host mutation is now inside teardown protection and uses atomic file replacement.
+A partial-write failure fixture preserves the original bytes and mode; cleanup
+steps continue independently and native data is removed before final report save.
+Seven local safety regressions and all 391 tests pass. The patch and local evidence
+are in `ATOMIC-WRITE-ADDENDUM.md`, SHA-256
+`398f58e91f8528892e4a03d1694de21022d0cbe095f1ae05a56ba6fd734e3c86`.
+This is startup/teardown maintenance, without another live timing run.
+
+## Interpreting user-visible waits
+
+Native checkpoint save alone does not embed messages (0.142 / 0.148 seconds at
+50 / 500 messages). In the pinned host, chat vectorization is event-driven:
+message send, receive, edit, delete and swipe attempt synchronization, with up to
+five unindexed messages per automatic call. Opening a checkpoint does not itself
+run Vectorize All, and there is no continuously draining timer in this extension.
+The explicit Vectorize All action used here repeats until complete. Consequently,
+native timings below measure full-index readiness, not a mandatory pause before
+continuing a conversation. Unindexed messages are unavailable to vector search.
+See the [pinned host implementation](https://github.com/SillyTavern/SillyTavern/blob/06bde939fb1e9c4c8d8641d810f0a916b5bce127/public/scripts/extensions/vectors/index.js).
+
+The v2 logs separate managed processing from the additional committed full-list
+verification. Subtracting that recorded verification interval gives:
+
+| Messages | Operation | Before/without full-list verification | Full-list verification | Total seconds |
+| --- | --- | ---: | ---: | ---: |
+| 50 | End branch | 1.132 | 0.044 | 1.176 |
+| 50 | Midpoint branch | 1.129 | 55.549 | 56.678 |
+| 50 | First resume | 1.412 | 65.965 | 67.377 |
+| 50 | Second resume | 1.457 | 47.024 | 48.481 |
+| 500 | End branch | 1.768 | 0.230 | 1.998 |
+| 500 | Midpoint branch | 1.985 | 61.581 | 63.567 |
+| 500 | First resume | 2.209 | 54.158 | 56.366 |
+| 500 | Second resume | 2.242 | 61.414 | 63.657 |
+
+The verification column includes enumeration requests and polling, not pure server
+commit time. Removing it does not establish first-query readiness. Checkpoint
+save's internal product commit wait was not separately instrumented, so its
+57.387 / 49.635 seconds cannot be decomposed from these logs.
+
+## One OpenAI Small native comparison
+
+A bounded follow-up used the same 500-message synthetic transcript and pinned host
+for **one** fresh end branch with `text-embedding-3-small`. It ran the actual native
+Vectorize All handler through the same `vllm` OpenAI-compatible loopback transport
+as earlier quality benchmarks; credentials stayed in process memory. No new
+SillyMemory run, generation, judging or checkpoint matrix was performed.
+
+| Native Vector Storage, 500 messages | Local quantized Jina | OpenAI Small |
+| --- | ---: | ---: |
+| Full vectorization and index verification, including control overhead | 142.194 s | 47.821 s |
+| Including branch creation | 142.350 s | 47.911 s |
+
+OpenAI Small took **66.3% less time** in these single observations at different
+times. The local Vectorize All handler processes one message per iteration;
+OpenAI-compatible transport processes five. The result includes model, network
+and batching differences, not an isolated model or backend speed comparison.
+All **100 upstream requests returned HTTP 200**, with 500 inputs and **23,500
+provider-reported tokens**. Provider request/response time totaled 28.904 seconds;
+other index/control work took 18.917 seconds. No invoice or USD saving is claimed.
+
+The branched transcript matched the source, its index was initially empty, and
+all 500 expected message hashes matched on completion. Parent indexing was omitted
+to keep this trial to 500 inputs; it does not independently repeat inheritance
+testing with an already indexed parent. The reused dependency directory had an
+identical lockfile, but its symlink caused avatar/image WASM path warnings. Do not
+use this run as a precise chat-opening UI comparison; transcript/index checks
+passed. Two setup-only failures made zero embedding calls; only one paid run was
+performed. All temporary host/data directories were removed and port 18189 was
+confirmed closed.
+
+**Decision:** the earlier 143-second local baseline must not be generalized to
+OpenAI-backed Vector Storage. OpenAI Small substantially reduced native rebuild
+time in this case, while still embedding all 500 child messages. Keep the measured
+reuse benefit distinct from first-answer latency, model quality and invoice costs.
+No further trial or product default change is required for this operating-cost
+screen; broader claims remain deferred.
+
+The exact one-off producer, plan, reports, setup failures and cleanup evidence are
+retained locally in `branch-checkpoint-openai-small-once/evidence.tar.gz` under the
+primary repository artifacts directory; all members were read back and verified.
+SHA-256 `cb4553e148b23d9e07b7e1ce6282acab04b47dff936eb102e5408e4378105660`. The archive is unavailable in a fresh clone and is not a CI
+dependency; the one-off runner is not added to maintained scripts.
+
 ## Historical v1 UI synchronization results
 
 The completed paired comparisons contain three repetitions at 50 messages and two

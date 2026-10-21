@@ -2,7 +2,8 @@
 import assert from 'node:assert/strict';
 import { createServer } from 'node:net';
 import { execFileSync } from 'node:child_process';
-import { readFile } from 'node:fs/promises';
+import { readFile, writeFile, stat, rename, rm } from 'node:fs/promises';
+import { randomUUID } from 'node:crypto';
 import { stripVTControlCharacters } from 'node:util';
 
 export function assertPinnedHost(source, revision) {
@@ -67,4 +68,16 @@ export function instrumentEmbedding(original, inputLimit) {
     const started = performance.now(), cpu = process.cpuUsage();
     ${target}
     appendFileSync(process.env.SM_EMBED_METRICS, JSON.stringify({ milliseconds: performance.now() - started, cpu: process.cpuUsage(cpu), characters: text.length }) + '\\n');`);
+}
+
+export async function replaceHostEmbedding(file, contents, write = writeFile) {
+    const temporary = `${file}.sillymemory-${randomUUID()}`;
+    try {
+        const mode = (await stat(file)).mode & 0o777;
+        await write(temporary, contents, { flag: 'wx', mode });
+        await rename(temporary, file);
+    } catch (error) {
+        await rm(temporary, { force: true });
+        throw error;
+    }
 }

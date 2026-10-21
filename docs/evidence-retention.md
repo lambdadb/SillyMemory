@@ -1854,3 +1854,19 @@ This is conservative committed readiness, not first semantic-query latency.
   SHA-256 `aa6c106d8b3612cc8a56da1c1429b2637672132e65d29d543301417a730cf3b3`.
   Local temporary-Git fixture; six safety regressions and 390 full-suite tests
   pass. No new live measurements or changes to the original archives.
+- Guarded atomic host-file mutation and independent local teardown:
+  `/Users/steven/Dev/sillymemory/artifacts/branch-checkpoint-v2/ATOMIC-WRITE-ADDENDUM.md`,
+  SHA-256 `398f58e91f8528892e4a03d1694de21022d0cbe095f1ae05a56ba6fd734e3c86`.
+  Local partial-write failure/replacement/restoration fixture; seven safety
+  regressions and 391 full-suite tests pass. No new live timings.
+
+- One OpenAI Small native end-branch follow-up (500 identical synthetic messages):
+  `/Users/steven/Dev/sillymemory/artifacts/branch-checkpoint-openai-small-once/evidence.tar.gz`,
+  SHA-256 `cb4553e148b23d9e07b7e1ce6282acab04b47dff936eb102e5408e4378105660`. All archive members were read back and verified.
+  Contains exact one-off producer/settings, raw request timing and provider usage,
+  result/cleanup records and two setup-only failures with zero paid calls.
+  One completed live vectorization: 47.911 seconds including branch creation,
+  100 HTTP-200 calls, 23,500 tokens and 500 exact index hashes. No generation,
+  judging or LambdaDB operations. Temporary hosts/data removed. Local-only,
+  unavailable in a fresh clone, and not a CI dependency. See the result document
+  for omitted parent indexing, dependency-symlink image warnings and timing limits.

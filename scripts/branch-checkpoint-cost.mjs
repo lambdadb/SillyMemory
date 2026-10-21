@@ -8,7 +8,7 @@ import { readFile, writeFile, mkdir, mkdtemp, rm, realpath } from 'node:fs/promi
 import { spawn, execFileSync } from 'node:child_process';
 import { tmpdir, cpus, platform, arch } from 'node:os';
 import path from 'node:path';
-import { assertPinnedHost, assertPortAvailable, waitForOwnedHost, cleanupOwnedCollections, instrumentEmbedding } from './branch-checkpoint-cost-support.mjs';
+import { assertPinnedHost, assertPortAvailable, waitForOwnedHost, cleanupOwnedCollections, instrumentEmbedding, replaceHostEmbedding } from './branch-checkpoint-cost-support.mjs';
 
 const root = path.resolve(new URL('..', import.meta.url).pathname);
 const source = process.env.ST_SOURCE;
@@ -26,7 +26,7 @@ await assertPortAvailable(port); // Fail before instrumenting a host or creating
 const artifacts = path.resolve(output);
 await mkdir(artifacts, { recursive: true });
 await writeFile(path.join(artifacts, 'plan.json'), planBytes, { flag: 'wx' });
-const work = await mkdtemp(path.join(tmpdir(), 'sm-branch-cost-'));
+let work, hostInstrumented = false;
 const metricPath = path.join(artifacts, 'local-embedding.ndjson');
 await writeFile(metricPath, '', { flag: 'wx' });
 const pendingPath = path.join(artifacts, 'pending.json'), pending = [];
@@ -53,7 +53,6 @@ const originalEmbedding = await readFile(embeddingPath, 'utf8');
 const instrumented = instrumentEmbedding(originalEmbedding, plan.limits.nativeEmbeddingInputs);
 await writeFile(path.join(artifacts, 'host-embedding-original.js'), originalEmbedding);
 await writeFile(path.join(artifacts, 'host-embedding-instrumented.js'), instrumented);
-await writeFile(embeddingPath, instrumented);
 report.hostInstrumentation = 'Time/CPU counters around actual local model execution, one NDJSON append per input. Model loading excluded from this counter and timed separately. No model outputs or input text logged.';
 const url = `http://127.0.0.1:${port}`;
 let server, browser, page, stage = 'setup', timeout, timedOut = false;
@@ -222,6 +221,9 @@ async function runArm(arm, count, rep) {
     await nativeEnabled(false); await memoryOff();
 }
 try {
+    work = await mkdtemp(path.join(tmpdir(), 'sm-branch-cost-'));
+    await replaceHostEmbedding(embeddingPath, instrumented);
+    hostInstrumented = true;
     const config = path.join(work, 'config.yaml');
     const configBytes = await readFile(path.join(source, 'default/config.yaml'));
     await writeFile(config, configBytes);
@@ -311,11 +313,23 @@ try {
         await writeFile(pendingPath, JSON.stringify(result.remaining, null, 2));
     } catch (error) { report.cleanupFailure = { type: error.name, message: String(error.message).replaceAll(credentials.key, '[redacted]').slice(0, 300) }; }
     finally { client?.forget(); }
-    if (server?.pid && server.exitCode === null && server.signalCode === null) { server.kill('SIGTERM'); await new Promise(r => server.once('exit', r)); }
-    await writeFile(embeddingPath, originalEmbedding);
+    // Attempt every local cleanup step even if another step fails. Keep evidence
+    // outside the disposable data directory, and remove native data before save.
+    try {
+        if (server?.pid && server.exitCode === null && server.signalCode === null) { server.kill('SIGTERM'); await new Promise(r => server.once('exit', r)); }
+    } catch (error) { report.serverShutdownFailure = { type: error.name, code: error.code }; }
+    try {
+        if (hostInstrumented) await replaceHostEmbedding(embeddingPath, originalEmbedding);
+        report.hostRestored = await readFile(embeddingPath, 'utf8') === originalEmbedding;
+    } catch (error) { report.hostRestoreFailure = { type: error.name, code: error.code }; }
     report.sourceUnchanged = true;
-    for (const [file, digest] of Object.entries(report.sourceSha256)) if (hash(await readFile(path.join(root, file))) !== digest) report.sourceUnchanged = false;
-    report.passed &&= report.cleanup && report.sourceUnchanged;
-    await save(); await rm(work, { recursive: true, force: true });
+    try {
+        for (const [file, digest] of Object.entries(report.sourceSha256)) if (hash(await readFile(path.join(root, file))) !== digest) report.sourceUnchanged = false;
+    } catch (error) { report.sourceUnchanged = false; report.sourceCheckFailure = { type: error.name, code: error.code }; }
+    try { if (work) await rm(work, { recursive: true, force: true }); }
+    catch (error) { report.nativeCleanupFailure = { type: error.name, code: error.code, directory: work }; }
+    report.passed &&= report.cleanup === true && report.sourceUnchanged && report.hostRestored === true
+        && !report.browserShutdownFailure && !report.serverShutdownFailure && !report.nativeCleanupFailure;
+    await save();
 }
 process.exitCode = report.passed ? 0 : 1;

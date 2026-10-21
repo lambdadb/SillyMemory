@@ -4,10 +4,10 @@ import { createServer } from 'node:http';
 import { EventEmitter } from 'node:events';
 import { spawn, execFile, execFileSync } from 'node:child_process';
 import { promisify } from 'node:util';
-import { mkdtemp, writeFile, readFile, rm } from 'node:fs/promises';
+import { mkdtemp, writeFile, readFile, readdir, stat, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { assertPinnedHost, assertPortAvailable, waitForOwnedHost, cleanupOwnedCollections, instrumentEmbedding } from '../scripts/branch-checkpoint-cost-support.mjs';
+import { assertPinnedHost, assertPortAvailable, waitForOwnedHost, cleanupOwnedCollections, instrumentEmbedding, replaceHostEmbedding } from '../scripts/branch-checkpoint-cost-support.mjs';
 
 async function localServer(t) {
     let requests = 0;
@@ -102,4 +102,21 @@ test('benchmark host pin rejects unstaged and staged tracked edits', async t => 
     git('add', 'host.js');
     assert.throws(() => assertPinnedHost(directory, revision));
     assert.equal(git('rev-parse', 'HEAD'), revision, 'A matching commit alone does not establish clean source');
+});
+
+test('benchmark atomic instrumentation preserves the original after a partial write failure', async t => {
+    const file = await logFile(t, 'original host bytes\n');
+    const originalMode = (await stat(file)).mode & 0o777;
+    await assert.rejects(replaceHostEmbedding(file, 'instrumented host bytes\n', async temporary => {
+        await writeFile(temporary, 'partial bytes');
+        throw Object.assign(new Error('Synthetic disk full'), { code: 'ENOSPC' });
+    }), { code: 'ENOSPC' });
+    assert.equal(await readFile(file, 'utf8'), 'original host bytes\n');
+    assert.deepEqual(await readdir(path.dirname(file)), ['host.log']);
+    await replaceHostEmbedding(file, 'instrumented host bytes\n');
+    assert.equal(await readFile(file, 'utf8'), 'instrumented host bytes\n');
+    assert.equal((await stat(file)).mode & 0o777, originalMode);
+    await replaceHostEmbedding(file, 'original host bytes\n');
+    assert.equal(await readFile(file, 'utf8'), 'original host bytes\n');
+    assert.deepEqual(await readdir(path.dirname(file)), ['host.log']);
 });
