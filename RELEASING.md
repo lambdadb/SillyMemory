@@ -6,7 +6,7 @@ Release or highest version tag. Keep `main` at reviewed release boundaries.
 `develop` integrates ongoing work. Merge `develop` into `main` with a merge
 commit to preserve long-lived branch ancestry.
 
-The prepared release boundary is **0.6.0 (experimental)**, currently **Unreleased**.
+The prepared release boundary is **0.6.0 (experimental)**, dated **2026-10-21**.
 A dated preparation entry is not main promotion or publication.
 See the [release notes](docs/releases/0.6.0.md),
 [acceptance record](docs/releases/0.6.0-validation.md) and
