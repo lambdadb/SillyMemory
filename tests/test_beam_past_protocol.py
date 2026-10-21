@@ -1,4 +1,5 @@
 import importlib.util
+import asyncio
 import json
 import shutil
 from copy import deepcopy
@@ -6,10 +7,10 @@ from pathlib import Path
 import unittest
 from tempfile import TemporaryDirectory
 from types import ModuleType, SimpleNamespace
-from unittest.mock import Mock, patch
+from unittest.mock import AsyncMock, Mock, patch
 
 spec = importlib.util.spec_from_file_location(
-    "beam_past_protocol", Path(__file__).resolve().parents[1] / "scripts/beam-past-protocol.py")
+    "beam_past_protocol", Path(__file__).resolve().parents[1] / "benchmark/beam/protocol.py")
 protocol = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(protocol)
 
@@ -127,6 +128,8 @@ class TransportPolicy(unittest.TestCase):
                 target.parent.mkdir(parents=True, exist_ok=True)
                 target.write_bytes(data)
             files = protocol.source_file_hashes(root)
+            self.assertTrue({"benchmark/beam/run.py", "benchmark/beam/protocol.py",
+                             "benchmark/beam/adapter.mjs", "benchmark/shared/memory-budget.mjs"} <= files.keys())
             self.assertEqual({k: v for k, v in files.items() if k.startswith("run/")},
                              {f"run/{k}": protocol.sha(v) for k, v in contents.items()})
             lock = {**protocol.protocol_settings(), "files": files, "upstreamFiles": {}}
@@ -197,12 +200,110 @@ class TransportPolicy(unittest.TestCase):
             self.assertEqual(caught.exception.status, status)
             self.assertFalse(caught.exception.retryable)
 
+    def test_score_retains_redacted_bodies_before_status_or_json_failures(self):
+        success = {"choices": [{"message": {"content": "synthetic-secret"}}],
+                   "usage": {"prompt_tokens": 10, "completion_tokens": 2}}
+        cases = [(401, "<html>synthetic-secret</html>", ModelError),
+                 (503, "", ModelError), (200, "malformed synthetic-secret", ValueError),
+                 (200, '["synthetic-secret"]', ModelError), (200, json.dumps(success), None)]
+        class Finished(Exception):
+            pass
+        for status, raw, failure in cases:
+            with self.subTest(status=status, raw=raw), TemporaryDirectory() as directory:
+                root = Path(directory)
+                response = SimpleNamespace(status_code=status, is_error=status >= 400, text=raw,
+                                           json=lambda: json.loads(raw))
+                client = SimpleNamespace(post=AsyncMock(return_value=response), aclose=AsyncMock())
+                llm = SimpleNamespace(ModelError=ModelError)
+                async def answer_question(*args):
+                    result = await llm._post_once({"messages": []})
+                    self.assertEqual(result, success)
+                    raise Finished()
+                conversation = SimpleNamespace(id="c", questions=[SimpleNamespace(id="q")])
+                dataset = SimpleNamespace(load_rows=lambda split: ([{}], "revision"),
+                                          build_conversation=lambda row: conversation)
+                modules = {"httpx": SimpleNamespace(AsyncClient=Mock(return_value=client), HTTPError=type("HTTPError", (Exception,), {})), "llm": llm,
+                           "run": SimpleNamespace(answer_question=answer_question),
+                           "scoring": SimpleNamespace(), "verify": SimpleNamespace()}
+                with patch.dict(protocol.sys.modules, modules), patch.object(protocol, "validated_recalls", return_value={}):
+                    with self.assertRaises(failure or Finished):
+                        asyncio.run(protocol.score(root, dataset, {"LLM_API_KEY": "synthetic-secret"}, {"split": "100k"}))
+                receipts = list((root / "scored/calls").glob("*.json"))
+                self.assertEqual(len(receipts), 1)
+                saved_text = receipts[0].read_text()
+                self.assertNotIn("synthetic-secret", saved_text)
+                saved = json.loads(saved_text)
+                self.assertEqual(saved["rawResponse"], raw.replace("synthetic-secret", "[redacted]"))
+                self.assertEqual(saved["status"], status)
+                self.assertIn("finishedAt", saved)
+                if failure:
+                    self.assertNotIn("response", saved)
+                else:
+                    self.assertEqual(saved["response"], json.loads(saved["rawResponse"]))
+                client.post.assert_awaited_once()
+                client.aclose.assert_awaited_once()
+
     def test_non_json_transient_responses_keep_retry_status(self):
         for status in [429, 500, 503]:
             with self.subTest(status=status), self.assertRaises(ModelError) as caught:
                 protocol.model_reply(Response(status), ModelError)
             self.assertEqual(caught.exception.status, status)
             self.assertTrue(caught.exception.retryable)
+
+    def test_model_replay_rejects_changed_answers_judges_and_receipts(self):
+        llm = SimpleNamespace(_post_once=AsyncMock(), RETRY_DELAYS_SECONDS=(1, 2, 4), ModelError=ModelError)
+        original_post = llm._post_once
+        async def answer_question(memory, conversation, question, slots):
+            context = await memory.recall(question.text, question.as_of, identity=conversation.user_identity)
+            answer = await llm._post_once({"messages": [{"content": context["text"]}]})
+            text = answer["choices"][0]["message"]["content"]
+            try:
+                judge = await llm._post_once({"messages": [{"content": text}]})
+                label = judge["choices"][0]["message"]["content"]
+            except Exception:
+                label = "failed"
+            return {"questionId": question.id, "answer": text, "judge": label}
+        question = SimpleNamespace(id="q", text="Question", as_of="time")
+        conversations = [SimpleNamespace(id="c", user_identity="user", questions=[question])]
+        recalls = {"q": {"context": {"text": "Source"}}}
+        modules = {"llm": llm, "run": SimpleNamespace(answer_question=answer_question),
+                   "httpx": SimpleNamespace(HTTPError=type("HTTPError", (Exception,), {}))}
+        with TemporaryDirectory() as directory, patch.dict(protocol.sys.modules, modules):
+            root = Path(directory)
+            (root / "scored/calls").mkdir(parents=True)
+            result = {"questionId": "q", "answer": "Answer", "judge": "Yes"}
+            entries = []
+            for number, (prompt, text) in enumerate([("Source", "Answer"), ("Answer", "Yes")]):
+                response = {"choices": [{"message": {"content": text}}]}
+                entries.append({"number": number, "questionId": "q", "finishedAt": "time", "status": 200,
+                                "request": protocol.native_request({"messages": [{"content": prompt}]}),
+                                "response": response, "rawResponse": json.dumps(response)})
+            def write(row=result, receipts=entries):
+                (root / "scored/results.jsonl").write_text(json.dumps(row) + "\n")
+                for entry in receipts:
+                    protocol.save(root / f"scored/calls/{entry['number']:05d}.json", entry)
+            def verify():
+                asyncio.run(protocol.verify_model_receipts(root, conversations, recalls))
+                self.assertIs(llm._post_once, original_post)
+                self.assertEqual(llm.RETRY_DELAYS_SECONDS, (1, 2, 4))
+            write()
+            verify()
+            for field in ("answer", "judge"):
+                write({**result, field: "changed"})
+                with self.assertRaisesRegex(AssertionError, "Scored row differs"):
+                    verify()
+            changed = deepcopy(entries)
+            changed[1]["response"]["choices"][0]["message"]["content"] = "changed"
+            write(receipts=changed)
+            with self.assertRaisesRegex(AssertionError, "differs from raw receipt"):
+                verify()
+            changed = deepcopy(entries)
+            changed[1]["request"]["messages"][0]["content"] = "changed"
+            write({**result, "judge": "failed"}, changed)
+            with self.assertRaisesRegex(BaseException, "Model request differs"):
+                verify()
+            self.assertIs(llm._post_once, original_post)
+            self.assertEqual(llm.RETRY_DELAYS_SECONDS, (1, 2, 4))
 
     def test_successful_response_preserves_payload_and_unreadable_json_failure(self):
         payload = {"choices": [{"message": {"content": "OK"}}], "usage": {"prompt_tokens": 10}}

@@ -61,10 +61,10 @@ jobs:
       - name: Check development tool syntax
         shell: bash
         run: |
-          for file in scripts/*.mjs tests/*.js; do
+          for file in scripts/*.mjs tests/*.js benchmark/*/*.mjs; do
             node --check "$file"
           done
       - name: Run unit regressions
         run: npm test
-      - name: Check benchmark transport policy
-        run: python3 -m unittest discover -s tests -p 'test_beam_past_protocol.py'
+      - name: Check benchmark protocols
+        run: python3 -m unittest discover -s tests -p 'test_*.py'

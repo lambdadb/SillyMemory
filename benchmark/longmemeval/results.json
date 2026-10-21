@@ -1,0 +1,49 @@
+{
+  "dataset": "LongMemEval-S",
+  "questions": 500,
+  "correct": 475,
+  "accuracy": 0.95,
+  "generator": {
+    "model": "gpt-6.1-sol",
+    "reasoning_effort": "low"
+  },
+  "judge": {
+    "model": "jev-1.13.0",
+    "type": "noul",
+    "yesThreshold": 0.5
+  },
+  "input": "Recorded answer evaluation using saved retrieval responses; fresh end-to-end results are written to each run directory.",
+  "resources": {
+    "generation": {
+      "calls": 500,
+      "inputTokens": 2442878,
+      "outputTokens": 31195,
+      "httpResponseMilliseconds": 1429519,
+      "medianHttpResponseMilliseconds": 2284.0
+    },
+    "judging": {
+      "calls": 500,
+      "inputTokens": 239234,
+      "outputTokens": 10000,
+      "httpResponseMilliseconds": 94922,
+      "medianHttpResponseMilliseconds": 181.0
+    },
+    "memory": {
+      "indexedDocuments": null,
+      "databaseOperations": null,
+      "httpResponseMilliseconds": null
+    },
+    "wallMilliseconds": null,
+    "billedCostUsd": null
+  },
+  "resourceNotes": [
+    "Measured generation and judge usage for these 500 answers only. Model HTTP timings include response-body reads and exclude queue waits.",
+    "Retrieval responses were reused. End-to-end indexing, database operations and memory latency are not attributed to this answer-only result.",
+    "Null means unavailable for this recorded result. Billed cost and combined run wall time are unavailable."
+  ],
+  "resourceSource": {
+    "document": "../../docs/query1-evidence-index.md",
+    "receiptsSha256": "79b83991e86b305a02f6d3c80844cde6407f58f6f0b8736fb216f4794c3ab18f",
+    "detailedReceiptsAvailability": "Local retained evidence; not included in a fresh clone."
+  }
+}

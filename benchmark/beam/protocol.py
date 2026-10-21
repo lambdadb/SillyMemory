@@ -10,6 +10,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
+from types import SimpleNamespace
 import subprocess
 import sys
 import time
@@ -31,17 +32,17 @@ SPLITS = {
             }, "conversations": 10, "questions": 200, "memoryOperations": 50000},
 }
 MODEL = "gpt-5.6-luna"
-REPO = Path(__file__).resolve().parents[1]
+REPO = Path(__file__).resolve().parents[2]
 
 
 def sha(data):
     return hashlib.sha256(data).hexdigest()
 
 
-def save(path, value, *, compact=False):
+def save(path, value, *, compact=False, clean=lambda text: text):
     temporary = path.with_suffix(path.suffix + ".tmp")
-    temporary.write_text(json.dumps(value, ensure_ascii=False, indent=None if compact else 2,
-                                    separators=(",", ":") if compact else None) + "\n")
+    temporary.write_text(clean(json.dumps(value, ensure_ascii=False, indent=None if compact else 2,
+                                          separators=(",", ":") if compact else None) + "\n"))
     temporary.replace(path)
 
 
@@ -82,6 +83,12 @@ def model_reply(response, error_type):
     return data
 
 
+def native_request(payload):
+    native = {key: value for key, value in payload.items() if key not in ("reasoning", "provider", "usage")}
+    native.update(model=MODEL, reasoning_effort="none")
+    return native
+
+
 def protocol_settings(split="100k"):
     cohort = SPLITS[split]
     parquet_lock = ({"parquetShards": cohort["parquetShards"]} if "parquetShards" in cohort
@@ -120,7 +127,8 @@ def read_parquet_rows(root, split):
 
 def source_file_hashes(root, split="100k"):
     files = {str(path.relative_to(REPO)): sha(path.read_bytes()) for path in [
-        Path(__file__), REPO / "scripts/beam-past-memory.mjs", REPO / "src/client.js",
+        Path(__file__), REPO / "benchmark/beam/run.py", REPO / "benchmark/beam/adapter.mjs",
+        REPO / "benchmark/shared/memory-budget.mjs", REPO / "src/client.js",
         REPO / "src/chunking.js", REPO / "vendor/lambdadb.js",
     ]}
     # Run-local identities must survive an external --root or bundle relocation.
@@ -207,11 +215,11 @@ def validated_recalls(root, conversation_ids):
     recall_lock = json.loads((root / "recall/lock.json").read_text())
     assert recall_lock["inputSha256"] == memory_state["inputSha256"]
     assert recall_lock["memoryStateSha256"] == sha((root / "memory/memory-state.json").read_bytes())
-    assert recall_lock["packingSourceSha256"] == sha((REPO / "scripts/beam-past-memory.mjs").read_bytes())
+    assert recall_lock["packingSourceSha256"] == sha((REPO / "benchmark/beam/adapter.mjs").read_bytes())
     check_recall_files(root, recall_lock["files"], conversation_ids)
     # A mutable recall file and its digest must not authorize changed evidence.
     # Rebuild from saved retrieval receipts and source before any model side effect.
-    verified = subprocess.run(["node", str(REPO / "scripts/beam-past-memory.mjs"), str(root / "memory-input.json"),
+    verified = subprocess.run(["node", str(REPO / "benchmark/beam/adapter.mjs"), str(root / "memory-input.json"),
                                str(root / "memory"), "unused", str(root / "tokenizer/package.json"),
                                "--verify-recall"], check=True, capture_output=True, text=True)
     canonical = json.loads(verified.stdout)
@@ -222,13 +230,69 @@ def validated_recalls(root, conversation_ids):
 
 def verify_saved_run(root, dataset, split="100k"):
     rows, _ = dataset.load_rows(split)
-    recalls = validated_recalls(root, [dataset.build_conversation(row).id for row in rows])
+    conversations = [dataset.build_conversation(row) for row in rows]
+    recalls = validated_recalls(root, [c.id for c in conversations])
     import verify
     problems = verify.verify_run(root / "scored")
     assert not problems, problems
-    for row in (json.loads(line) for line in (root / "scored/results.jsonl").read_text().splitlines() if line.strip()):
-        if not row.get("error"):
-            assert row["recall"] == recalls[row["questionId"]]["context"], "Scored context differs from reconstructed source"
+    asyncio.run(verify_model_receipts(root, conversations, recalls))
+
+
+async def verify_model_receipts(root, conversations, recalls):
+    import httpx
+    import llm
+    import run
+    rows = [json.loads(line) for line in (root / "scored/results.jsonl").read_text().splitlines() if line.strip()]
+    expected_ids = {q.id for c in conversations for q in c.questions}
+    saved = {row["questionId"]: row for row in rows}
+    assert len(rows) == len(saved) and set(saved) == expected_ids, "Scored question set differs from source"
+    calls = {id: [] for id in expected_ids}
+    for number, file in enumerate(sorted((root / "scored/calls").glob("*.json"))):
+        entry = json.loads(file.read_text())
+        assert file.name == f"{number:05d}.json" and entry["number"] == number and entry.get("finishedAt"), "Incomplete model receipt"
+        assert entry["questionId"] in calls, "Unknown model receipt question"
+        if "response" in entry:
+            assert json.dumps(entry["response"], sort_keys=True) == json.dumps(json.loads(entry["rawResponse"]), sort_keys=True), "Parsed model response differs from raw receipt"
+        calls[entry["questionId"]].append(entry)
+
+    class ReceiptMismatch(BaseException):
+        # Upstream scores ordinary provider exceptions as zero; evidence failures
+        # must escape that handler rather than become an accepted failed verdict.
+        pass
+
+    def require(condition, message):
+        if not condition:
+            raise ReceiptMismatch(message)
+
+    async def replay(payload):
+        require(calls[question.id], "Missing model receipt")
+        entry = calls[question.id].pop(0)
+        require(json.dumps(entry["request"], sort_keys=True) == json.dumps(native_request(payload), sort_keys=True), "Model request differs from source and prior responses")
+        if "rawResponse" not in entry:
+            require(isinstance(entry.get("transportError"), str), "Missing raw model response")
+            raise httpx.HTTPError(entry["transportError"])
+        response = SimpleNamespace(status_code=entry["status"], is_error=entry["status"] >= 400,
+                                   json=lambda: json.loads(entry["rawResponse"]))
+        data = model_reply(response, llm.ModelError)
+        require("response" in entry, "Missing parsed model response")
+        return data
+
+    class Memory:
+        async def recall(self, text, as_of, *, identity):
+            assert (text, as_of, identity) == (question.text, question.as_of, conversation.user_identity)
+            return recalls[question.id]["context"]
+
+    original_post, original_delays = llm._post_once, llm.RETRY_DELAYS_SECONDS
+    try:
+        llm._post_once = replay
+        llm.RETRY_DELAYS_SECONDS = tuple(0 for _ in original_delays)
+        for conversation in conversations:
+            for question in conversation.questions:
+                actual = await run.answer_question(Memory(), conversation, question, asyncio.Semaphore(1))
+                assert json.dumps(actual, sort_keys=True) == json.dumps(saved[question.id], sort_keys=True), "Scored row differs from retained model receipts"
+                assert not calls[question.id], "Unused model receipts"
+    finally:
+        llm._post_once, llm.RETRY_DELAYS_SECONDS = original_post, original_delays
 
 
 async def score(root, dataset, env, lock):
@@ -250,14 +314,20 @@ async def score(root, dataset, env, lock):
     started = time.monotonic()
     http = httpx.AsyncClient(base_url="https://api.openai.com/v1", timeout=90,
                              headers={"Authorization": f"Bearer {env['LLM_API_KEY']}"})
+    secrets = [value for key, value in env.items()
+               if any(word in key.upper() for word in ("KEY", "TOKEN", "SECRET", "PASSWORD")) and len(value) >= 8]
+
+    def clean(text):
+        for secret in secrets:
+            text = text.replace(secret, "[redacted]")
+        return text
 
     class BoundReached(BaseException):
         pass
 
     async def post_once(payload):
         nonlocal attempts, reserved_usd
-        native = {key: value for key, value in payload.items() if key not in ("reasoning", "provider", "usage")}
-        native.update(model=MODEL, reasoning_effort="none")
+        native = native_request(payload)
         # Reserve the documented 128K maximum output and a byte-count upper
         # proxy for input, using premium/cache-write rates without changing caps.
         reservation = (128000 * 1.8 + (len(json.dumps(native).encode()) + 1024) * 0.5) / 1e6
@@ -268,11 +338,13 @@ async def score(root, dataset, env, lock):
         reserved_usd += reservation
         entry = {"number": number, "questionId": question_id.get(), "request": native,
                  "startedAt": datetime.now(timezone.utc).isoformat()}
-        save(calls / f"{number:05d}.json", entry)
+        save(calls / f"{number:05d}.json", entry, clean=clean)
         call_started = time.monotonic()
         try:
             response = await http.post("/chat/completions", json=native)
             entry.update(status=response.status_code, elapsedMs=(time.monotonic() - call_started) * 1000)
+            entry["rawResponse"] = clean(response.text)
+            save(calls / f"{number:05d}.json", entry, clean=clean)
             data = model_reply(response, llm.ModelError)
             entry["response"] = data
             usage = data["usage"]
@@ -280,9 +352,12 @@ async def score(root, dataset, env, lock):
             estimate = (usage["prompt_tokens"] * 0.5 + usage["completion_tokens"] * 1.8) / 1e6
             reserved_usd += estimate - reservation
             return data
+        except httpx.HTTPError as error:
+            entry["transportError"] = clean(str(error))
+            raise
         finally:
             entry["finishedAt"] = datetime.now(timezone.utc).isoformat()
-            save(calls / f"{number:05d}.json", entry)
+            save(calls / f"{number:05d}.json", entry, clean=clean)
 
     llm._post_once = post_once
     # Keep llm's four-attempt transport retries, text/JSON parsers and upstream
@@ -321,6 +396,7 @@ async def score(root, dataset, env, lock):
     save(output / "summary.json", summary)
     problems = verify.verify_run(output)
     assert not problems, problems
+    await verify_model_receipts(root, conversations, recalls)
     print(json.dumps(summary, indent=2))
 
 
@@ -339,19 +415,19 @@ def main():
     lock = check_lock(root, upstream_files, args.split)
     if args.phase == "verify":
         verify_saved_run(root, dataset, args.split)
-        print(f"VERIFIED: all {SPLITS[args.split]['questions']} source-derived recalls, linked answer contexts and saved score arithmetic")
+        print(f"VERIFIED: all {SPLITS[args.split]['questions']} source-derived recalls, model requests, raw-response-derived answers and judge verdicts, and score arithmetic")
         return
     if args.phase == "repack":
-        subprocess.run(["node", str(REPO / "scripts/beam-past-memory.mjs"), str(root / "memory-input.json"),
+        subprocess.run(["node", str(REPO / "benchmark/beam/adapter.mjs"), str(root / "memory-input.json"),
                         str(root / "memory"), "unused", str(root / "tokenizer/package.json"), "--repack"], check=True)
         return
     assert args.env_file, "Pass the existing credential file explicitly"
     env = environment(args.env_file)
     assert env.get("LLM_API_KEY"), "OpenAI key missing"
     if args.phase == "recall":
-        subprocess.run(["node", str(REPO / "scripts/beam-past-memory.mjs"), str(root / "memory-input.json"),
+        subprocess.run(["node", str(REPO / "benchmark/beam/adapter.mjs"), str(root / "memory-input.json"),
                         str(root / "memory"), str(args.env_file.resolve()), str(root / "tokenizer/package.json")], check=True)
-        subprocess.run(["node", str(REPO / "scripts/beam-past-memory.mjs"), str(root / "memory-input.json"),
+        subprocess.run(["node", str(REPO / "benchmark/beam/adapter.mjs"), str(root / "memory-input.json"),
                         str(root / "memory"), "unused", str(root / "tokenizer/package.json"), "--repack"], check=True)
     else:
         asyncio.run(score(root, dataset, env, lock))

@@ -1,0 +1,6 @@
+{
+  "name": "sillymemory-benchmark-tokenizer",
+  "private": true,
+  "version": "1.0.0",
+  "dependencies": { "tiktoken": "1.0.22" }
+}

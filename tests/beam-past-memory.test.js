@@ -4,9 +4,7 @@ import { mkdtemp, readFile, writeFile, readdir, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { createHash } from 'node:crypto';
-import { LambdaClient } from '../src/client.js';
-import { collectionResponse } from './helpers/lambdadb-responses.js';
-import { memoryOperationBudget, cohortSettings, sourceDocuments, recallQuery, packContext, serializeContext, evidenceTokens, successfulQueryReceipts, receiptBody, publishRepackedRecall, verifyRepackedRecall } from '../scripts/beam-past-memory.mjs';
+import { cohortSettings, sourceDocuments, recallQuery, packContext, serializeContext, evidenceTokens, successfulQueryReceipts, receiptBody, verifiedQueryResponse, publishRepackedRecall, verifyRepackedRecall } from '../benchmark/beam/adapter.mjs';
 
 const conversation = { id: 'synthetic', userIdentity: 'synthetic-user', userTraits: {}, messages: [{
     sourceId: 'source-1', ordinal: 0, content: 'The older account limit is 15.',
@@ -78,12 +76,23 @@ test('BEAM repacking selects successful attempts without counting retries as que
 
 test('BEAM receipt logging preserves non-JSON HTTP errors and the original response body', async () => {
     const busy = new Response('<html>busy</html>', { status: 503 });
-    assert.deepEqual(await receiptBody(busy), { nonJsonResponse: true });
+    assert.deepEqual(await receiptBody(busy), { rawResponse: '<html>busy</html>', response: { nonJsonResponse: true } });
     assert.equal(busy.status, 503);
     assert.equal(await busy.text(), '<html>busy</html>');
     const success = Response.json({ docs: [] });
-    assert.deepEqual(await receiptBody(success), { docs: [] });
+    assert.deepEqual(await receiptBody(success), { rawResponse: '{"docs":[]}', response: { docs: [] } });
     assert.deepEqual(await success.json(), { docs: [] });
+});
+
+test('BEAM repacking rejects changed parsed queries even with valid source documents', () => {
+    const docs = [{ doc: { id: 'first', text: 'one' } }, { doc: { id: 'second', text: 'two' } }];
+    const rawResponse = JSON.stringify({ docs });
+    const receipt = { rawResponse, response: { docs: structuredClone(docs) } };
+    assert.deepEqual(verifiedQueryResponse(receipt), { docs });
+    receipt.response.docs.reverse();
+    assert.throws(() => verifiedQueryResponse(receipt), /differs from raw receipt/);
+    delete receipt.rawResponse;
+    assert.throws(() => verifiedQueryResponse(receipt), /Missing raw query response/);
 });
 
 test('BEAM recall applies the exact microsecond cutoff to both components', () => {
@@ -158,31 +167,4 @@ test('BEAM length selection requires the complete unique frozen cohort before pr
     assert.deepEqual(cohortSettings({ split: '10m', conversations: input.conversations.slice(0, 10) }),
         { conversations: 10, questions: 200, memoryOperations: 50000 });
     assert.throws(() => cohortSettings({ ...input, split: '__proto__' }), /Unsupported/);
-});
-
-
-test('BEAM operation exhaustion preserves bounded owned deletion and absence verification', async () => {
-    const state = { operations: 49 }, budget = memoryOperationBudget(state, 100), methods = [];
-    await assert.rejects(budget.run(() => { budget.consume(); throw new Error('Must not reach work'); }), /bound exceeded/);
-    assert.equal(state.operations, 49);
-    const client = new LambdaClient({ endpoint: 'https://example.test', project: 'synthetic' }, 'synthetic-key', {
-        fetcher: async (_url, options) => {
-            budget.consume(); methods.push(options.method);
-            if (methods.length === 1) return Response.json({ collection: collectionResponse({ tags: {
-                application: 'sillymemory', owner: 'aa', chat: 'bb',
-            } }) });
-            return options.method === 'DELETE' ? Response.json({ message: 'Collection deletion requested' }) : new Response('{}', { status: 404 });
-        },
-    });
-    try { await budget.run(() => client.deleteOwnedCollection('test', 'aa', 'bb'), true); }
-    finally { client.forget(); }
-    assert.deepEqual(methods, ['GET', 'DELETE', 'GET']);
-    assert.equal(state.operations, 52);
-    // Cleanup mode must not leak into subsequent ordinary work.
-    await assert.rejects(budget.run(() => budget.consume()), /bound exceeded/);
-    assert.equal(state.operations, 52);
-    // The reserved allowance also has a hard total cap and no rejected increment.
-    await budget.run(() => { for (let i = 0; i < 48; i++) budget.consume(); }, true);
-    await assert.rejects(budget.run(() => budget.consume(), true), /bound exceeded/);
-    assert.equal(state.operations, 100);
 });

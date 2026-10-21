@@ -756,8 +756,10 @@ using the matched accounting rule. This makes no new provider calls and does not
 select answers or tune to scores. Separate retrieval and generation source locks
 retain this pre-generation correction.
 
-Entry points are `scripts/beam-past-protocol.py` and
-`scripts/beam-past-memory.mjs`. The former imports the pinned upstream source from
+The original run used `scripts/beam-past-protocol.py` and
+`scripts/beam-past-memory.mjs`. The commands below refer to that archived producer.
+For new runs, use the maintained [benchmark entry points](../benchmark/beam/README.md).
+The original Python runner imports the pinned upstream source from
 the ignored bundle, preserving its original MIT/BEAM/ExaBase notices rather than
 vendoring third-party prompts. Its `prepare`, `recall`, `score`, and `verify`
 phases, plus an offline `repack` phase, keep source freezing separate from paid
