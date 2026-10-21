@@ -38,7 +38,12 @@ points) / 4)` per result. Full serialized context tokens are recorded separately
 
 ## Run
 
-From the repository root after `npm ci`:
+Use Python 3.14, Node.js 24 and Git. The Python protocol requires `pyarrow` for
+Parquet input, `scipy` for event-order scoring and `httpx` for model requests.
+[requirements.txt](requirements.txt) pins these packages and their transitive
+dependencies. `setup` installs the locked Node.js tokenizer into the run directory.
+
+Run from the repository root after `npm ci`:
 
 ```sh
 python3.14 -m venv artifacts/beam-venv

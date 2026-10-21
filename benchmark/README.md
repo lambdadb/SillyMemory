@@ -10,11 +10,21 @@ Reproduce the evaluated LongMemEval-S and BEAM profiles from a fresh clone.
 | [BEAM 1M](beam/) | 700 | 86.62 /100 | Past public protocol |
 | [BEAM 10M](beam/) | 200 | 80.64 /100 | Past public protocol |
 
-Use Python 3.14 and Node.js 24. BEAM also requires Git. From the repository root:
+Use Python 3.14 and Node.js 24. Install repository Node.js dependencies from the
+repository root:
 
 ```sh
 npm ci
 ```
+
+| Benchmark | Python dependencies | Additional tools |
+| --- | --- | --- |
+| LongMemEval-S | Standard library only; no `pip install` required | Node.js and npm |
+| BEAM | Install the pinned packages in [beam/requirements.txt](beam/requirements.txt) using the [BEAM setup commands](beam/README.md#run) | Node.js, npm and Git |
+
+Each runner's `setup` phase installs the locked Node.js tokenizer into its run
+directory. LongMemEval supports Linux and macOS; its request deadlines use POSIX
+signals.
 
 Both benchmarks expose a Python `run.py` with the same execution phases and
 use Node.js adapters for SillyMemory retrieval and memory assembly. Each folder
@@ -37,6 +47,6 @@ are shown in [credentials.example](credentials.example).
 `setup` downloads public inputs and installs the tokenizer. `prepare` and `verify`
 do not call model or database APIs. Both benchmarks use paid `recall` and `score`
 phases. Both also expose `cleanup` for retrying owned-collection deletion after
-a failed recall. Neither requires a running SillyTavern or extension; clone the repository
-because the runners reuse its source modules. Model access and
+a failed recall. Neither requires a running SillyTavern or extension; clone the
+repository because the runners reuse its source modules. Model access and
 provider availability are required; new responses can produce different scores.

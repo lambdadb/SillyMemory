@@ -35,21 +35,25 @@ enter indexing, retrieval or generation; references enter judging only.
 ## Run
 
 Use Python 3.14 and Node.js 24 on Linux or macOS. Run from the repository root
-after `npm ci`. Download size is approximately 277 MB. The Python runner handles data preparation, generation,
-judging and result verification. The Node.js adapter reuses SillyMemory source
-modules for chunking, retrieval and memory assembly. No SillyTavern server or
-extension installation is required.
+after `npm ci`. The Python runner uses only the standard library, so no additional
+Python packages or `pip install` step are required. `setup` installs the locked
+Node.js tokenizer into the run directory. Download size is approximately 277 MB.
+
+The Python runner handles data preparation, generation, judging and result
+verification. The Node.js adapter reuses SillyMemory source modules for chunking,
+retrieval and memory assembly. No SillyTavern server or extension installation is
+required.
 
 ```sh
-python benchmark/longmemeval/run.py setup --root artifacts/longmemeval
-python benchmark/longmemeval/run.py prepare --root artifacts/longmemeval
+python3.14 benchmark/longmemeval/run.py setup --root artifacts/longmemeval
+python3.14 benchmark/longmemeval/run.py prepare --root artifacts/longmemeval
 
-python benchmark/longmemeval/run.py recall --root artifacts/longmemeval \
+python3.14 benchmark/longmemeval/run.py recall --root artifacts/longmemeval \
   --env-file /path/to/evaluation.env
-python benchmark/longmemeval/run.py score --root artifacts/longmemeval \
+python3.14 benchmark/longmemeval/run.py score --root artifacts/longmemeval \
   --env-file /path/to/evaluation.env
 
-python benchmark/longmemeval/run.py verify --root artifacts/longmemeval
+python3.14 benchmark/longmemeval/run.py verify --root artifacts/longmemeval
 ```
 
 `setup` downloads the pinned dataset and installs the locked tokenizer. `prepare`
@@ -79,7 +83,7 @@ terminated process before removing it. If recall fails, inspect `memory/state.js
 and finish owned-resource cleanup before starting a new run directory:
 
 ```sh
-python benchmark/longmemeval/run.py cleanup --root artifacts/longmemeval \
+python3.14 benchmark/longmemeval/run.py cleanup --root artifacts/longmemeval \
   --env-file /path/to/evaluation.env
 ```
 
