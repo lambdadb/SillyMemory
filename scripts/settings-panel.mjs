@@ -16,3 +16,16 @@ export async function expandMemorySettings(page) {
         }
     }
 }
+
+// Native drawers overlay the composer. Close the settings drawer before using
+// chat-facing controls, as a user returning to the conversation would do.
+export async function openChatMemory(page) {
+    const drawer = page.locator('#extensions-settings-button .drawer-content');
+    if (await drawer.evaluate(el => el.classList.contains('openDrawer'))) {
+        await page.locator('#extensions-settings-button .drawer-toggle').click();
+        await drawer.waitFor({ state: 'hidden' });
+    }
+    const view = page.locator('#sillymemory-chat');
+    if (await view.getAttribute('open') === null) await view.locator('summary').click();
+    return view;
+}

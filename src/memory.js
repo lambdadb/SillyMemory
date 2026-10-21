@@ -12,11 +12,14 @@ export async function digest(value) {
     const bytes = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(value));
     return Array.from(new Uint8Array(bytes), x => x.toString(16).padStart(2, '0')).join('');
 }
+export function supportsChat(context) {
+    if (context.groupId || context.characterId === undefined || !context.getCurrentChatId()) return false;
+    if (context.chat.some(m => m.is_system && m.extra?.tool_invocations?.length)) return false;
+    return Boolean(context.characters[context.characterId]?.avatar);
+}
 export function capture(context) {
-    if (context.groupId || context.characterId === undefined || !context.getCurrentChatId()) return null;
-    if (context.chat.some(m => m.is_system && m.extra?.tool_invocations?.length)) return null;
-    const avatar = context.characters[context.characterId]?.avatar;
-    if (!avatar) return null;
+    if (!supportsChat(context)) return null;
+    const avatar = context.characters[context.characterId].avatar;
     const messages = context.chat.filter(x => !x.is_system).map((m, index) => {
         const recordedAt = hostTimestamp(m.send_date);
         return {

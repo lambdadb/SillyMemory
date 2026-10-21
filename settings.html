@@ -1,4 +1,22 @@
 <div id="sillymemory" class="inline-drawer">
+  <template data-sm="chat-status-template">
+    <details id="sillymemory-chat" class="sm-chat-status">
+      <summary><span class="sm-chat-dot" aria-hidden="true"></span><span data-sm-chat="label" role="status">Memory · Connect</span></summary>
+      <div class="sm-chat-detail">
+        <p data-sm-chat="status">Connect SillyMemory to get started.</p>
+        <progress data-sm-chat="progress" aria-label="Memory operation progress" hidden></progress>
+        <p data-sm-chat="delivery">No prompt checked in this chat.</p>
+        <div class="sm-chat-actions">
+          <button type="button" data-sm-chat="settings" class="menu_button">SillyMemory settings</button>
+          <button type="button" data-sm-chat="vectors" class="menu_button" hidden>Open Vector Storage</button>
+          <button type="button" data-sm-chat="cleanup" class="menu_button" hidden>Clean up test data</button>
+          <button type="button" data-sm-chat="sync" class="menu_button" hidden>Retry synchronization</button>
+          <button type="button" data-sm-chat="retry" class="menu_button" hidden>Retry reply</button>
+          <button type="button" data-sm-chat="disable" class="menu_button" hidden>Turn memory off</button>
+        </div>
+      </div>
+    </details>
+  </template>
   <div class="inline-drawer-toggle inline-drawer-header"><b>SillyMemory</b><div class="inline-drawer-icon fa-solid fa-circle-chevron-down down"></div></div>
   <div class="inline-drawer-content">
     <p>Recall older conversations while you chat.<br><strong>Powered by LambdaDB</strong></p>
