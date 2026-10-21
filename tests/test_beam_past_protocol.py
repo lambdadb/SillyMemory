@@ -222,7 +222,7 @@ class TransportPolicy(unittest.TestCase):
                 conversation = SimpleNamespace(id="c", questions=[SimpleNamespace(id="q")])
                 dataset = SimpleNamespace(load_rows=lambda split: ([{}], "revision"),
                                           build_conversation=lambda row: conversation)
-                modules = {"httpx": SimpleNamespace(AsyncClient=Mock(return_value=client)), "llm": llm,
+                modules = {"httpx": SimpleNamespace(AsyncClient=Mock(return_value=client), HTTPError=type("HTTPError", (Exception,), {})), "llm": llm,
                            "run": SimpleNamespace(answer_question=answer_question),
                            "scoring": SimpleNamespace(), "verify": SimpleNamespace()}
                 with patch.dict(protocol.sys.modules, modules), patch.object(protocol, "validated_recalls", return_value={}):
@@ -249,6 +249,61 @@ class TransportPolicy(unittest.TestCase):
                 protocol.model_reply(Response(status), ModelError)
             self.assertEqual(caught.exception.status, status)
             self.assertTrue(caught.exception.retryable)
+
+    def test_model_replay_rejects_changed_answers_judges_and_receipts(self):
+        llm = SimpleNamespace(_post_once=AsyncMock(), RETRY_DELAYS_SECONDS=(1, 2, 4), ModelError=ModelError)
+        original_post = llm._post_once
+        async def answer_question(memory, conversation, question, slots):
+            context = await memory.recall(question.text, question.as_of, identity=conversation.user_identity)
+            answer = await llm._post_once({"messages": [{"content": context["text"]}]})
+            text = answer["choices"][0]["message"]["content"]
+            try:
+                judge = await llm._post_once({"messages": [{"content": text}]})
+                label = judge["choices"][0]["message"]["content"]
+            except Exception:
+                label = "failed"
+            return {"questionId": question.id, "answer": text, "judge": label}
+        question = SimpleNamespace(id="q", text="Question", as_of="time")
+        conversations = [SimpleNamespace(id="c", user_identity="user", questions=[question])]
+        recalls = {"q": {"context": {"text": "Source"}}}
+        modules = {"llm": llm, "run": SimpleNamespace(answer_question=answer_question),
+                   "httpx": SimpleNamespace(HTTPError=type("HTTPError", (Exception,), {}))}
+        with TemporaryDirectory() as directory, patch.dict(protocol.sys.modules, modules):
+            root = Path(directory)
+            (root / "scored/calls").mkdir(parents=True)
+            result = {"questionId": "q", "answer": "Answer", "judge": "Yes"}
+            entries = []
+            for number, (prompt, text) in enumerate([("Source", "Answer"), ("Answer", "Yes")]):
+                response = {"choices": [{"message": {"content": text}}]}
+                entries.append({"number": number, "questionId": "q", "finishedAt": "time", "status": 200,
+                                "request": protocol.native_request({"messages": [{"content": prompt}]}),
+                                "response": response, "rawResponse": json.dumps(response)})
+            def write(row=result, receipts=entries):
+                (root / "scored/results.jsonl").write_text(json.dumps(row) + "\n")
+                for entry in receipts:
+                    protocol.save(root / f"scored/calls/{entry['number']:05d}.json", entry)
+            def verify():
+                asyncio.run(protocol.verify_model_receipts(root, conversations, recalls))
+                self.assertIs(llm._post_once, original_post)
+                self.assertEqual(llm.RETRY_DELAYS_SECONDS, (1, 2, 4))
+            write()
+            verify()
+            for field in ("answer", "judge"):
+                write({**result, field: "changed"})
+                with self.assertRaisesRegex(AssertionError, "Scored row differs"):
+                    verify()
+            changed = deepcopy(entries)
+            changed[1]["response"]["choices"][0]["message"]["content"] = "changed"
+            write(receipts=changed)
+            with self.assertRaisesRegex(AssertionError, "differs from raw receipt"):
+                verify()
+            changed = deepcopy(entries)
+            changed[1]["request"]["messages"][0]["content"] = "changed"
+            write({**result, "judge": "failed"}, changed)
+            with self.assertRaisesRegex(BaseException, "Model request differs"):
+                verify()
+            self.assertIs(llm._post_once, original_post)
+            self.assertEqual(llm.RETRY_DELAYS_SECONDS, (1, 2, 4))
 
     def test_successful_response_preserves_payload_and_unreadable_json_failure(self):
         payload = {"choices": [{"message": {"content": "OK"}}], "usage": {"prompt_tokens": 10}}

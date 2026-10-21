@@ -107,8 +107,11 @@ that empty directory only after confirming no process is using the run.
 Existing scored output is never overwritten or silently rerun.
 
 Outputs include `protocol-lock.json`, `memory/`, `recall/`, `scored/calls/`,
-`scored/results.jsonl` and `scored/summary.json`. `verify` reconstructs source-bound
-recall and checks linked answer contexts and saved score arithmetic offline.
+`scored/results.jsonl` and `scored/summary.json`. `verify` matches parsed retrieval
+to raw query receipts, reconstructs source-bound recall and model requests, and
+replays the pinned answer and judge parsers against retained model responses.
+Every answer, judge verdict and score must match the saved result; verification
+makes no provider calls.
 Model call receipts retain raw response bodies, including HTTP and JSON failures,
 with known credentials redacted.
 The recorded aggregates are in [results.json](results.json).

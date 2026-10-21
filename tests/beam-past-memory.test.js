@@ -4,7 +4,7 @@ import { mkdtemp, readFile, writeFile, readdir, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { createHash } from 'node:crypto';
-import { cohortSettings, sourceDocuments, recallQuery, packContext, serializeContext, evidenceTokens, successfulQueryReceipts, receiptBody, publishRepackedRecall, verifyRepackedRecall } from '../benchmark/beam/adapter.mjs';
+import { cohortSettings, sourceDocuments, recallQuery, packContext, serializeContext, evidenceTokens, successfulQueryReceipts, receiptBody, verifiedQueryResponse, publishRepackedRecall, verifyRepackedRecall } from '../benchmark/beam/adapter.mjs';
 
 const conversation = { id: 'synthetic', userIdentity: 'synthetic-user', userTraits: {}, messages: [{
     sourceId: 'source-1', ordinal: 0, content: 'The older account limit is 15.',
@@ -76,12 +76,23 @@ test('BEAM repacking selects successful attempts without counting retries as que
 
 test('BEAM receipt logging preserves non-JSON HTTP errors and the original response body', async () => {
     const busy = new Response('<html>busy</html>', { status: 503 });
-    assert.deepEqual(await receiptBody(busy), { nonJsonResponse: true });
+    assert.deepEqual(await receiptBody(busy), { rawResponse: '<html>busy</html>', response: { nonJsonResponse: true } });
     assert.equal(busy.status, 503);
     assert.equal(await busy.text(), '<html>busy</html>');
     const success = Response.json({ docs: [] });
-    assert.deepEqual(await receiptBody(success), { docs: [] });
+    assert.deepEqual(await receiptBody(success), { rawResponse: '{"docs":[]}', response: { docs: [] } });
     assert.deepEqual(await success.json(), { docs: [] });
+});
+
+test('BEAM repacking rejects changed parsed queries even with valid source documents', () => {
+    const docs = [{ doc: { id: 'first', text: 'one' } }, { doc: { id: 'second', text: 'two' } }];
+    const rawResponse = JSON.stringify({ docs });
+    const receipt = { rawResponse, response: { docs: structuredClone(docs) } };
+    assert.deepEqual(verifiedQueryResponse(receipt), { docs });
+    receipt.response.docs.reverse();
+    assert.throws(() => verifiedQueryResponse(receipt), /differs from raw receipt/);
+    delete receipt.rawResponse;
+    assert.throws(() => verifiedQueryResponse(receipt), /Missing raw query response/);
 });
 
 test('BEAM recall applies the exact microsecond cutoff to both components', () => {

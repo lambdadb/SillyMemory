@@ -30,8 +30,16 @@ export function successfulQueryReceipts(receipts, collection) {
 
 export async function receiptBody(response) {
     // Logging must not turn a retryable HTTP status into a JSON parse failure.
-    try { return await response.clone().json(); }
-    catch { return { nonJsonResponse: true }; }
+    const rawResponse = await response.clone().text();
+    try { return { rawResponse, response: JSON.parse(rawResponse) }; }
+    catch { return { rawResponse, response: { nonJsonResponse: true } }; }
+}
+
+export function verifiedQueryResponse(receipt) {
+    assert.equal(typeof receipt.rawResponse, 'string', 'Missing raw query response');
+    const response = JSON.parse(receipt.rawResponse);
+    assert.deepEqual(receipt.response, response, 'Parsed query response differs from raw receipt');
+    return response;
 }
 
 export async function publishRepackedRecall(parent, build) {
@@ -73,7 +81,7 @@ function* repackedRecallRecords(input, state, receipts, countTokens) {
             const receipt = queries[i], expected = recallQuery(owned.owner, owned.scope, question.text, question.asOfMicros);
             assert.equal(receipt.status, 200); assert.deepEqual(receipt.request.body.query, expected.query);
             assert.deepEqual(receipt.request.body.rerank, expected.options.rerank); assert.equal(receipt.request.body.size, 100);
-            const hits = receipt.response.docs.map(hit => hit.doc);
+            const hits = verifiedQueryResponse(receipt).docs.map(hit => hit.doc);
             return { questionId: question.id, queryMs: receipt.elapsedMs, hitIds: hits.map(doc => doc.id),
                 ...packContext(hits, docs, question.asOf, question.asOfMicros, countTokens) };
         });
@@ -268,6 +276,9 @@ async function main() {
         encoder.free(); return;
     }
     const env = { ...parseEnv(await readFile(envFile, 'utf8')), ...process.env };
+    const secrets = Object.entries(env).filter(([key, value]) => /KEY|TOKEN|SECRET|PASSWORD/i.test(key) && value.length >= 8)
+        .map(([, value]) => value);
+    const clean = text => secrets.reduce((value, secret) => value.split(secret).join('[redacted]'), text);
     assert(env.LAMBDADB_BASE_URL && env.LAMBDADB_PROJECT_NAME && env.LAMBDADB_PROJECT_API_KEY);
     assert(env.LLM_API_KEY, 'Prepare the matching model credentials before creating memory');
     const root = path.resolve(outputDirectory);
@@ -290,9 +301,9 @@ async function main() {
                 const request = { number, pathname: new URL(url).pathname, method: options.method,
                     body: options.body ? JSON.parse(options.body) : null };
                 const response = await fetch(url, options);
-                await writeFile(path.join(root, `http-${String(number).padStart(5, '0')}.json`), JSON.stringify({
-                    request, status: response.status, elapsedMs: Date.now() - started, response: await receiptBody(response),
-                }));
+                await writeFile(path.join(root, `http-${String(number).padStart(5, '0')}.json`), clean(JSON.stringify({
+                    request, status: response.status, elapsedMs: Date.now() - started, ...await receiptBody(response),
+                })));
                 return response;
             } });
         const operation = async (job, cleanup = false) => {
