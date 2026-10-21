@@ -138,6 +138,10 @@ Seven local safety regressions and all 391 tests pass. The patch and local evide
 are in `ATOMIC-WRITE-ADDENDUM.md`, SHA-256
 `398f58e91f8528892e4a03d1694de21022d0cbe095f1ae05a56ba6fd734e3c86`.
 This is startup/teardown maintenance, without another live timing run.
+The runner also opens optional Advanced/Checkpoints sections when present, so
+it works with both the original settings markup and the settings-UX change.
+Both actual HTML variants passed a local Chromium control-visibility check;
+no live matrix was rerun for this UI-only runner adjustment.
 
 ## Interpreting user-visible waits
 

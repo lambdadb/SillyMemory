@@ -67,6 +67,13 @@ const status = text => page.waitForFunction(text => {
 async function panel() {
     if (!await page.locator('#sillymemory .inline-drawer-toggle').isVisible()) await page.locator('#extensions-settings-button .drawer-toggle').click();
     if (!await page.locator('#sillymemory .inline-drawer-content').isVisible()) await page.locator('#sillymemory .inline-drawer-toggle').click();
+    // Optional sections are collapsed by the settings UX; older revisions have none.
+    for (const name of ['advanced', 'checkpoints']) {
+        const section = page.locator(`#sillymemory details[data-sm="${name}"]`);
+        if (await section.count() && await section.getAttribute('open') === null) {
+            await section.locator(':scope > summary').click();
+        }
+    }
 }
 async function nativeEnabled(value) {
     await page.evaluate(value => jQuery('#vectors_enabled_chats').prop('checked', value).trigger('input'), value);
