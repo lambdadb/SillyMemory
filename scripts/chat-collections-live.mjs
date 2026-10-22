@@ -371,7 +371,7 @@ finally {
         try {
             if (pending.length) {
                 await connect(); await panel();
-                await page.locator('[data-sm="delete"]').click();
+                await answerMemoryPopup(page, () => page.locator('[data-sm="delete"]').click());
                 await page.waitForFunction(() => document.querySelector('[data-sm="status"]')?.textContent.includes('no longer accessible'), null, { timeout: 180000 });
             }
             await page.evaluate(() => document.querySelector('[data-sm="forget"]').onclick());

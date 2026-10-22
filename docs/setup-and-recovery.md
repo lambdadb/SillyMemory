@@ -84,6 +84,8 @@ with `SM_ARTIFACT_TAG=setup-recovery-cleanup` passed 227 assertions with matchin
 producer hashes, zero browser errors/proxy requests and no remaining collections.
 The original recovery and delivery reports retain their original producer hashes;
 those suites and paid/live runners were not rerun for this readability cleanup.
+The live runner's failure-cleanup deletion also uses the native-popup helper;
+its syntax and shared-helper browser coverage passed, but live cleanup was not run.
 
 These ignored local artifacts are not available in a fresh clone or used by CI.
 Other maintained paid/live runners were adapted to combined setup and native
