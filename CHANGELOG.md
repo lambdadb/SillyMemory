@@ -4,7 +4,7 @@ Versions describe the extension, independently of the SillyTavern host version.
 An `Unreleased` entry is a development candidate. A dated entry records a release
 boundary; publication is confirmed by the corresponding Git tag and GitHub Release.
 
-## [0.6.1] - Unreleased
+## [0.7.0] - 2026-10-22
 
 ### Changed
 
@@ -41,6 +41,15 @@ boundary; publication is confirmed by the corresponding Git tag and GitHub Relea
   scheduling follow-up synchronization.
 - Keep scheduled synchronization pending during slow manual work without
   leaving stale progress or overwriting a newer failure.
+
+### Update behavior and limits
+
+- Memory activation is now saved per chat. Chats without an explicit saved
+  on/off choice start off; the former global switch does not activate every chat.
+  After updating, open each desired chat and use **Turn memory on in this chat**.
+- Keep the 0.6.0 storage/index formats, retrieval policy, SDK and native generation
+  formats. Remain experimental on pinned SillyTavern 1.19.0 and Chromium; token
+  estimates are not billing or provider-receipt measurements.
 
 ## [0.6.0] - 2026-10-21
 
