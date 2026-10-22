@@ -7,9 +7,14 @@ Memory panel. Offer an optional, on-demand comparison of raw dialogue text befor
 and after memory preparation. Keep generation, retrieval, native response formats
 and streaming unchanged; add no model or memory-service requests for diagnostics.
 
-The on/off preference remains account-wide in this browser, rather than per chat.
-Both the action label and panel explain that scope. Disabling keeps saved memory
-and the validated connection; it stops normal memory synchronization and injection.
+The on/off preference is stored in each native chat’s `sillymemoryEnabled` metadata
+flag. New chats default off. Native checkpoints and branches copy the flag, then
+remain independent; resumed remote snapshots inherit their saved flag. Frozen
+snapshots cannot be toggled in place because their metadata is integrity-checked.
+The panel explains the scope, and extension settings manage the shared LambdaDB
+connection and preparation. Disabling one chat retains its saved memory and the
+connection; it stops that chat’s normal synchronization and injection. The former
+browser-wide `enabled` preference is not used as a default for other chats.
 
 ## What the numbers mean
 
@@ -61,7 +66,8 @@ memory-off estimates, unsupported text completion and a longer dialogue that
 shrinks under a smaller memory budget. These are display/integration regressions,
 not answer-quality, provider-cost or latency measurements.
 
-Final local validation on Node.js 24.15.0 and Chromium 153.0.8010.12:
+Token-display validation before per-chat activation, at `48c3ddf54516147061aa18781d5900fb574cff91`,
+on Node.js 24.15.0 and Chromium 153.0.8010.12:
 
 - `npm test`: 420 tests passed.
 - `ST_SOURCE=/tmp/sillymemory-native-workflow-host ST_TEST_PORT=18130 SM_ARTIFACT_TAG=token-usage-final-v3 npm run test:browser`: 201 assertions passed.
@@ -70,7 +76,8 @@ Final local validation on Node.js 24.15.0 and Chromium 153.0.8010.12:
 Both runs used host revision `06bde939fb1e9c4c8d8641d810f0a916b5bce127`,
 synthetic chats and a local HTTPS LambdaDB emulator. Both had zero uncaught page
 errors, host proxy requests and remaining emulator collections. Both reports
-match final runtime/harness hashes.
+match that revision’s runtime/harness hashes. Current per-chat validation is recorded
+in [the workflow record](native-chat-workflow.md#per-chat-activation-validation).
 
 Reports and desktop/narrow screenshots are local-only under
 `artifacts/token-usage-final-v3/` and `artifacts/token-usage-recovery-final/`. Intermediate

@@ -54,7 +54,12 @@ their distinct verified-memory semantics.
 
 Once connection and preparation have completed, the same chat-panel action
 switches between **Turn memory on** and **Turn memory off**. Both directions use
-the existing settings checkbox handler, including persistence and synchronization.
+a native chat metadata preference (`sillymemoryEnabled`), including verified
+persistence and synchronization. Settings manage the shared LambdaDB connection;
+there is no global memory activation switch. New chats default off. Native
+checkpoints/branches and resumed snapshots inherit their saved source preference
+and can then change independently. Frozen remote snapshots cannot be toggled in
+place because their metadata is integrity-checked.
 Initial connection/preparation and pending test cleanup do not expose activation.
 Manual memory operations and native generation disable switching; the click
 handler also rechecks these guards to reject queued actions. Enabling resets the
@@ -80,6 +85,30 @@ Previews are plain text in the current DOM, without additional persistence or
 memory-service requests. They clear on new reply preparation, source changes, chat
 switch/reload, memory-off, connection loss or operation failure. Normal assistant
 reply completion and background synchronization preserve the last selection.
+
+## Per-chat activation
+
+Activation is a native chat preference, separate from the shared LambdaDB
+connection. `sillymemoryEnabled: true` opts a saved chat in; an absent or false
+flag leaves it off. The old browser-wide `enabled` field is not applied to chats.
+A different browser still needs its own validated connection before a saved on
+preference can access memory. Keys remain in the dedicated browser record.
+
+Switching clears injection, previews and token diagnostics immediately. Off also
+clears previous progress and prompt-verification text while the local preference
+save is pending. The extension drains earlier writes, uses native
+`saveChatConditional` with the host save lock and a blocking loader to keep its
+current-chat target stable, then reads back the captured target's flag before starting enabled synchronization.
+The native save can swallow server errors, so an unconfirmed on preference rolls
+back without memory uploads. A chat switch discards late completion/failure UI.
+
+Native checkpoints and branches copy the source preference at creation; later
+switches affect only that path. Resumed remote snapshots inherit their saved flag.
+Frozen snapshot metadata stays immutable, so its toggle is hidden and guarded;
+Resume remains available even for an off snapshot. Deleting one chat's remote
+memory disables only that chat. Deleting all owned memory first clears global
+preparation, stops pending access, then drains and deletes data. The native chat
+preferences remain saved; reconnecting alone cannot bypass preparation.
 
 ## Validation
 
@@ -192,6 +221,38 @@ remote requests), and snapshot saving from a disabled native fork without
 modifying its frozen parent. Final desktop, narrow and memory-off screenshots
 were opened and visually checked. Local-only reports/screenshots are under
 `artifacts/deferred-sync-final/` and `artifacts/deferred-sync-recovery/`.
+
+### Per-chat activation validation
+
+The final per-chat implementation passed on Node.js 24.15.0, Chromium
+153.0.8010.12 and the same pinned SillyTavern host with disposable synthetic
+chats and a local HTTPS LambdaDB emulator:
+
+- `npm test`: 420 tests passed.
+- `npm run check`, `npm run check:release`, `npm run check:sdk` and staged diff checks passed.
+- `node --check` on `scripts/*.mjs`, `tests/*.js` and `benchmark/*/*.mjs`: 163 files passed.
+- `python3 -m unittest discover -s tests -p 'test_*.py'`: 32 tests passed.
+- `ST_SOURCE=/tmp/sillymemory-native-workflow-host ST_TEST_PORT=18130 SM_ARTIFACT_TAG=per-chat-browser-final-v5 npm run test:browser`: 211 assertions passed.
+- `ST_SOURCE=/tmp/sillymemory-native-workflow-host ST_TEST_PORT=18131 SM_ARTIFACT_TAG=per-chat-recovery-final-v5 npm run test:recovery`: 243 assertions passed, including two host restarts and 24 recovery cycles.
+
+The browser checks cover default-off and independent saved choices; failed
+preference saves without uploads; switching targets during a save; checkpoint and
+branch inheritance with independent parent/child flags; off frozen-snapshot Resume
+without metadata mutation; and saving from an off native snapshot fork. Existing
+identity-save, ownership, cancellation, native generation, token-display and
+recovery regressions remain exercised. An off click clears previous progress and
+verification text immediately while saving its local preference.
+
+Both final reports match the final runtime/harness hashes and contain zero page
+errors, host proxy requests and remaining emulator collections. Desktop, narrow
+and memory-off screenshots were opened and visually checked. Detailed reports,
+logs and screenshots remain local-only under `artifacts/per-chat-browser-final-v5/`
+and `artifacts/per-chat-recovery-final-v5/`. Earlier `artifacts/per-chat-*/` attempts
+are retained separately, including fixture assumptions about global activation,
+native drawer visibility and previous progress during preference saving. They are
+not counted as final passing runs. These ignored artifacts are not CI dependencies
+or fresh-clone downloads. Other maintained runners use the chat button and were
+syntax-checked; paid/live runners and installation/update acceptance were not run.
 
 ## Boundaries
 

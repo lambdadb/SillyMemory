@@ -53,8 +53,9 @@ checkpoint creation also persists a fresh chat identity before remote use.
    select it in the native chat list and click **Resume snapshot in new chat**.
    It checks the persisted transcript digest and remote branch
    snapshot, saves a separate `SillyMemory resume ...` chat, verifies it and opens
-   it. Enabled memory automatically inherits from the frozen branch and synchronizes;
-   if you had explicitly turned memory off, it stays off. Repeating
+   it. The resumed chat inherits the snapshot’s saved on/off preference. When on,
+   memory automatically inherits from the frozen branch and synchronizes; an off
+   snapshot resumes with memory off. Each resumed chat can change independently. Repeating
    this creates another independent path.
 4. If creation stops partway, reconnect, refresh the current-story list and click
    **Finish / retry** on the pending checkpoint. Its pending record contains the original memory

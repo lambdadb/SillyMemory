@@ -58,15 +58,15 @@ of the normal installation.
    temporary data and verifies cleanup, using your LambdaDB allowance. Your chat
    is not uploaded by this step. If a test collection needs cleanup, use the
    **Clean up test data** button beside the status before retrying.
-6. Open a saved character chat and check **Enable memory**. Wait for synchronization
-   before sending a message. Turn off built-in Vector Storage chat vectorization
+6. Open a saved character chat, expand **Memory** above the composer and click
+   **Turn memory on in this chat**. Wait for synchronization before sending a message. Turn off built-in Vector Storage chat vectorization
    and other extensions that rewrite chat history.
 
 The basic panel shows the next setup action: connect, prepare, then enable.
 Once ready, the memory switch and status remain visible; connection details stay
 collapsed after successful verification, including reconnection after reload.
 Use SillyTavern's existing chat history, **Save checkpoint** and **Create Branch**
-controls. Memory follows the selected chat without changing your enabled preference.
+controls. Memory follows the selected chat and its own saved on/off preference.
 **Advanced** holds memory limits, diagnostic tools, prompt inspection, remote cleanup
 and optional **Frozen memory snapshots**. Advanced controls start collapsed;
 existing saved settings are preserved.
@@ -90,7 +90,10 @@ Your original chat file stays intact.
 - Once connected and prepared, use **Turn memory on / off** in the same panel
   without reopening settings. Switching is disabled during generation or a
   manual memory operation; initial connection and preparation stay in settings.
-  This preference applies to all chats for this account in the current browser.
+  This preference is saved in the selected chat’s native metadata. New chats start
+  off; native checkpoints and branches inherit the source preference and can then
+  be changed independently. Extension settings manage the shared LambdaDB
+  connection, preparation and advanced options, without a global memory switch.
 - SillyMemory connects directly to LambdaDB and does not depend on built-in Vector
   Storage. Its chat vectorization must be off to avoid conflicting history injection;
   the chat status links to its settings without changing them.
@@ -109,12 +112,12 @@ Your original chat file stays intact.
 - Under **Advanced**, the default **Memory token budget** is 4,096 tokens, capped
   at one quarter of the host context. Recent messages and character instructions also need room;
   SillyTavern can still trim the final prompt to its context limit.
-- Uncheck **Enable memory** to return to ordinary SillyTavern history handling.
+- Click **Turn memory off in this chat** to return to ordinary SillyTavern history handling.
   Continue the same chat: the original transcript is preserved, and the next
   generation uses the host’s existing context limits and settings without
   SillyMemory retrieval. Saved remote memory is kept; other extensions’ settings
   are not changed.
-- Reload reconnects using the saved key and restores the previous enabled state
+- Reload reconnects using the saved key and restores the selected chat’s saved on/off state
   after verification. **Connection → Forget key** removes the saved key and disables memory.
 - Use the native **Save checkpoint**, **Create Branch**, **Back to parent chat**
   and **Manage chat files** controls as usual. With memory enabled, opening a

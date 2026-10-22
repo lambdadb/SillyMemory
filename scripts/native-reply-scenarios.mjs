@@ -20,7 +20,7 @@ export async function runNativeReplyScenarios({ page, field, waitStatus, check, 
             const button = document.querySelector('#sillymemory-chat [data-sm-chat="toggle"]');
             const disabled = button.disabled;
             await button.onclick(new MouseEvent('click'));
-            return { disabled, enabled: document.querySelector('#sillymemory [data-sm="enabled"]').checked,
+            return { disabled, enabled: document.querySelector('#sillymemory-chat [data-sm-chat="toggle"]').getAttribute('aria-pressed') === 'true',
                 nativeTokens: (await import('/scripts/openai.js')).promptManager.tokenUsage };
         });
         if (body.stream) {
@@ -79,7 +79,7 @@ export async function runNativeReplyScenarios({ page, field, waitStatus, check, 
     await screenshot?.('token-usage');
     await page.setViewportSize({ width: 390, height: 844 });
     await tokenPanel.locator('strong').evaluate(element => element.scrollIntoView({ block: 'start' }));
-    check('token estimates and global toggle wording fit a narrow viewport', await page.locator('#sillymemory-chat').evaluate(element => element.scrollWidth <= element.clientWidth + 1));
+    check('token estimates and per-chat toggle wording fit a narrow viewport', await page.locator('#sillymemory-chat').evaluate(element => element.scrollWidth <= element.clientWidth + 1));
     await screenshot?.('token-usage-narrow');
     await page.setViewportSize({ width: 1440, height: 1100 });
     await screenshot?.('chat-memory-preview');
@@ -186,7 +186,7 @@ export async function runNativeReplyScenarios({ page, field, waitStatus, check, 
     check('a successful retry removes the stopped-request action', !await retry.isVisible());
     await page.evaluate(async () => { const c = SillyTavern.getContext(); await c.deleteMessage(c.chat.length - 1); await c.deleteMessage(c.chat.length - 1); });
     await chatStatus.locator('[data-sm-chat="settings"]').click();
-    await field('enabled').waitFor({ state: 'visible' });
+    await field('next-step').waitFor({ state: 'visible' });
     await page.evaluate(async () => { const { oai_settings } = await import('/scripts/openai.js'); oai_settings.custom_include_body = 'response_format:\n  type: json_object'; });
     await generate('Use my existing native response format.', '{"answer":"User-controlled format."}');
     check('user-selected response formats survive without a schema conflict', requests.at(-1).custom_include_body?.includes('type: json_object') && !JSON.stringify(requests.at(-1)).includes('sillymemory_reply'));
@@ -194,15 +194,15 @@ export async function runNativeReplyScenarios({ page, field, waitStatus, check, 
     await openChatMemory(page);
     const toggle = page.locator('#sillymemory-chat [data-sm-chat="toggle"]');
     await toggle.click(); const reads = calls.filter(c => c.body?.query?.bayesian).length;
-    check('chat deactivation exposes Turn memory on in the same place and persists off', !await field('enabled').isChecked() && (await toggle.textContent()) === 'Turn memory on (all chats)' && await page.evaluate(() => !JSON.parse(localStorage.getItem(`sillymemory:state:${SillyTavern.getContext().extensionSettings.sillymemory.owner}`)).enabled));
+    check('chat deactivation exposes Turn memory on in the same place and persists off', !await field('enabled').isChecked() && (await toggle.textContent()) === 'Turn memory on in this chat' && await page.evaluate(() => SillyTavern.getContext().chatMetadata.sillymemoryEnabled === false) && await chatStatus.locator('[data-sm-chat="progress"]').isHidden() && (await chatStatus.locator('[data-sm-chat="delivery"]').textContent()).includes('Memory disabled for this chat'));
     await screenshot?.('chat-memory-off');
     check('turning memory off removes the previous selected content', await preview.getAttribute('hidden') !== null && await preview.locator('li').count() === 0);
     await generate('A native request with memory disabled.', 'A normal native response.');
     check('disabled memory uses native output without retrieval or rewriting', calls.filter(c => c.body?.query?.bayesian).length === reads && !requests.at(-1).response_format);
     check('native memory-off replies still expose their host input estimate with zero prepared memory', numeric(await tokenPanel.locator('[data-sm-chat="token-input"]').textContent()) > 0 && (await tokenPanel.locator('[data-sm-chat="token-memory"]').textContent()).includes('~0 tokens · memory off') && await tokenCompare.isHidden());
     await toggle.click(); await waitStatus('synchronized');
-    check('chat reactivation restores memory without opening settings or retaining an off notice', await field('enabled').isChecked() && (await toggle.textContent()) === 'Turn memory off (all chats)' && !(await page.locator('#sillymemory-chat [data-sm-chat="delivery"]').textContent()).includes('Memory disabled') && await page.evaluate(() => !document.querySelector('#extensions-settings-button .drawer-content').classList.contains('openDrawer')));
-    await page.locator('#sillymemory-chat [data-sm-chat="settings"]').click(); await field('enabled').waitFor({ state: 'visible' });
+    check('chat reactivation restores memory without opening settings or retaining an off notice', await field('enabled').isChecked() && (await toggle.textContent()) === 'Turn memory off in this chat' && !(await page.locator('#sillymemory-chat [data-sm-chat="delivery"]').textContent()).includes('Memory disabled') && await page.evaluate(() => !document.querySelector('#extensions-settings-button .drawer-content').classList.contains('openDrawer')));
+    await page.locator('#sillymemory-chat [data-sm-chat="settings"]').click(); await field('next-step').waitFor({ state: 'visible' });
     // Native text completions do not require a chat reply schema. Their flattened
     // prompt cannot be role-verified by the current final-delivery checker.
     const textRequests = [];
@@ -255,7 +255,7 @@ export async function runNativeReplyScenarios({ page, field, waitStatus, check, 
     await page.setViewportSize({ width: 390, height: 844 });
     await screenshot?.('token-usage-long-narrow');
     await page.setViewportSize({ width: 1440, height: 1100 });
-    await page.locator('#sillymemory-chat [data-sm-chat="settings"]').click(); await field('enabled').waitFor({ state: 'visible' });
+    await page.locator('#sillymemory-chat [data-sm-chat="settings"]').click(); await field('next-step').waitFor({ state: 'visible' });
     // Commit the numeric edit through blur before cleanup clicks; an explicit
     // change event alone leaves another native change pending on the next click.
     await field('budget').fill(previousBudget); await field('budget').press('Tab'); await waitStatus('synchronized');

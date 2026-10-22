@@ -31,9 +31,9 @@
           <button type="button" data-sm-chat="cleanup" class="menu_button" hidden>Clean up test data</button>
           <button type="button" data-sm-chat="sync" class="menu_button" hidden>Retry synchronization</button>
           <button type="button" data-sm-chat="retry" class="menu_button" hidden>Retry reply</button>
-          <button type="button" data-sm-chat="toggle" class="menu_button" hidden>Turn memory on (all chats)</button>
+          <button type="button" data-sm-chat="toggle" class="menu_button" aria-pressed="false" hidden>Turn memory on in this chat</button>
         </div>
-        <small>On/off applies to all chats in this browser for this account. Saved memory is kept when off.</small>
+        <small>On/off is saved with this chat. Other chats and the LambdaDB connection are unchanged. Saved memory is kept when off.</small>
       </div>
     </details>
   </template>
@@ -55,7 +55,6 @@
         <button data-sm="provision" class="menu_button">Prepare chat memory</button>
         <small>Tests with temporary data, then deletes it. Uses inference allowance; no chat upload.</small>
       </div>
-      <label data-sm="enable-control" class="sm-toggle" hidden><input data-sm="enabled" type="checkbox"> Enable memory for all chats</label>
       <p data-sm="mode-help">When off, SillyTavern uses its usual chat history. Saved remote memory is kept.</p>
       <small data-sm="usage-help" hidden>Memory sends older excerpts, host timestamps and queries to LambdaDB, with text and queries processed by managed embedding and reranking providers. Usage charges apply. Turn off other chat vectorization extensions. Use one active SillyMemory tab per browser profile.</small>
     </section>
@@ -86,7 +85,7 @@
       <details><summary>Memory in the last prompt</summary><pre data-sm="inspection">No memory prepared.</pre></details>
       <details data-sm="checkpoints" class="sm-section">
         <summary>Frozen memory snapshots <span>Optional verified transcript and remote memory saves</span></summary>
-        <p>Use SillyTavern’s normal checkpoint and branch controls for everyday chat. These optional snapshots also preserve verified remote memory. Saving and resuming keep your memory preference. Editing a saved snapshot invalidates it.</p>
+        <p>Use SillyTavern’s normal checkpoint and branch controls for everyday chat. These optional snapshots also preserve verified remote memory. Snapshots preserve the source chat’s on/off choice; resumed chats can change it independently. Editing a saved snapshot invalidates it.</p>
         <label>Snapshot name (optional)<input data-sm="checkpoint-name" class="text_pole" maxlength="120" placeholder="Before entering the observatory"></label>
         <div class="sm-actions"><button data-sm="checkpoint-save" class="menu_button">Save memory snapshot</button><button data-sm="checkpoint-resume" class="menu_button">Resume snapshot in new chat</button></div>
         <button data-sm="checkpoint-refresh" class="menu_button">Refresh memory snapshots</button>

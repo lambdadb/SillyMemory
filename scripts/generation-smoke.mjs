@@ -1,3 +1,4 @@
+import { memoryControl } from './settings-panel.mjs';
 import { expandMemorySettings } from './settings-panel.mjs';
 // Full SillyTavern Generate/UI path + live LambdaDB. Model is deterministic by
 // default; --live-model requires explicitly supplied compatible-model settings.
@@ -222,7 +223,7 @@ await new Promise(r => bridge.listen(0, '127.0.0.1', r));
 const port = Number(process.env.ST_GENERATION_PORT || 18128), url = `http://127.0.0.1:${port}`;
 const bridgeUrl = `http://127.0.0.1:${bridge.address().port}/v1`;
 let events = [], evaluation;
-const field = name => page.locator(`#sillymemory [data-sm="${name}"]`);
+const field = name => name === 'enabled' ? memoryControl(page) : page.locator(`#sillymemory [data-sm="${name}"]`);
 const waitStatus = text => page.waitForFunction(text => document.querySelector('[data-sm="status"]')?.textContent.includes(text), text, { timeout: 90000 });
 async function openSettings() {
     if (!await page.locator('#sillymemory .inline-drawer-content').isVisible()) {

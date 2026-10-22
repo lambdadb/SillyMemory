@@ -10,9 +10,10 @@ boundary; publication is confirmed by the corresponding Git tag and GitHub Relea
 
 - Show existing host input-token estimates and prepared memory size, with an
   optional local dialogue-text comparison that distinguishes its reference from
-  native memory-off prompts and billing. Label on/off as applying to all chats.
+  native memory-off prompts and billing.
 - Let users turn prepared memory on and off directly from the chat panel through
-  the same activation controls as settings.
+  saved native chat metadata. Each chat has its own on/off preference; settings
+  manage the shared LambdaDB connection without a global memory switch.
 - Preview selected memory in the expanded chat panel with source coordinates,
   short excerpts and a shortcut to the full last-prompt memory inspector.
 - Use green for ready/verified memory, orange for work in progress, yellow for
