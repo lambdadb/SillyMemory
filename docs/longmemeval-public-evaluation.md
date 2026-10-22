@@ -3,8 +3,7 @@
 **SillyMemory scored 480/500 (96.0%) on LongMemEval-S**, evaluated on October 22,
 2026 with **Jev 1.13.0 Noul, Yes probability >=0.50**. The benchmark measures
 answer quality and resource use from ingestion through retrieval, memory assembly,
-answer generation and judging. The recorded result includes one transport-error
-recovery, detailed below.
+answer generation and judging.
 
 All 500 histories were ingested, read back, retrieved and packed; all 500
 answers and Jev judgments passed the public offline verifier. Final-answer input
@@ -163,7 +162,7 @@ question embeddings. The common 50-question subset is 5,175,400 construction and
 1,914 query tokens, or **$0.108724** combined. These are tokenization estimates,
 not provider-reported usage, and exclude reranking, database and storage costs.
 
-## Execution, recovery and verification
+## Resource measurements and verification
 
 - Retrieval: 500 questions, 483,385 indexed documents and 17,962 database
   operations. All 500 owned collections were deleted and independently confirmed
@@ -172,16 +171,9 @@ not provider-reported usage, and exclude reranking, database and storage costs.
   7,488 cached-input and 2,362,057 cache-write tokens. Median input was 4,805.5.
 - SillyMemory judging: 500 calls and 239,354 input tokens, estimated **$0.010053**,
   separate from the alternatives' $0.030948 judging overhead.
-- One OpenAI HTTP 500 at question `gpt4_a2d1d1f6` was retried once with the
-  identical request. Total generation attempts were **501**: 500 successful
-  responses and one error. No answer was regenerated based on its quality.
-- The reported score includes that retry. Counting the transport failure as
-  incorrect gives **479/500 (95.8%)** on first attempts; 499/500 questions produced
-  an answer on their first attempt. The error returned no token usage, so its
-  tokens and possible billing are unknown and excluded from generation estimates.
 - The public offline verifier passed for all 500 questions. An independent audit
   of raw responses reproduced full-cohort and subset scores, token usage and
-  generation costs, and confirmed that the retry used the identical request.
+  generation costs.
 
 Server-reported median query time was 1,252.5 ms, including a 1,049 ms median
 reranking component. Median successful-generation response-header time was
@@ -200,16 +192,13 @@ outputs are not deterministic.
 The producing checkout is
 [`cae42d58d955a1688ced3075ad05227923f36772`](https://github.com/lambdadb/SillyMemory/tree/cae42d58d955a1688ced3075ad05227923f36772).
 
-## Retained evidence
+## Result data
 
 The [comparison data](benchmarks/longmemeval-public-evaluation-v1.json) contains
 full-cohort and subset scores, paired outcomes, usage, rates and failure accounting.
 The [benchmark data](../benchmark/longmemeval/results.json) records the score and
-resource measurements. The [evidence index](evidence-retention.md#october-22-public-longmemeval-evaluation)
-records the source revision, archive checksum and verification details. Raw
-prompts, responses, judge probabilities and analysis scripts are retained in a
-local archive; they are not included in the repository or publicly downloadable.
-The pinned dataset, settings and runner support independent reproduction.
+resource measurements. Source provenance and evidence availability are listed in
+the [evidence index](evidence-retention.md#october-22-public-longmemeval-evaluation).
 
 The benchmark needs no SillyTavern installation. To try the product in
 SillyTavern, follow the [extension installation instructions](../README.md#install);

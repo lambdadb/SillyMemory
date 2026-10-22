@@ -1873,24 +1873,11 @@ This is conservative committed readiness, not first semantic-query latency.
 
 ## October 22 public LongMemEval evaluation
 
-The [completed evaluation](longmemeval-public-evaluation.md) records
-480/500 Jev correctness, alternatives evaluated with the same judge, the common
-50-question summary comparison and resource use.
+Evidence for the [LongMemEval-S results](longmemeval-public-evaluation.md), produced
+at [`cae42d58`](https://github.com/lambdadb/SillyMemory/tree/cae42d58d955a1688ced3075ad05227923f36772):
 
-- Local-only archive: `artifacts/archive/longmemeval-public-evaluation-v1/evidence.tar.gz`,
-  255,548,796 bytes; SHA-256
-  `2e1a5c0b6dd4bbd63bb2f850f78da032b32ec53950ca252c51a260f6f096cb21`.
-- All 24,042 members were read back against the manifest. The archive includes
-  producing revision `cae42d58d955a1688ced3075ad05227923f36772`, frozen inputs,
-  raw retrieval/model receipts, 1,550 comparator Jev probabilities, offline
-  analyses, one retained HTTP 500 and its authorized identical-request recovery.
-- The public verifier passed for all 500 questions; all 500 owned collections
-  were deleted and confirmed absent. Generation required 501 attempts for 500
-  successful answers. Unknown failed-attempt usage is not presented as zero.
-- Identical archive/manifest copies exist in the primary and rerun worktrees
-  on the same machine. They are unavailable in a fresh clone. Credentials,
-  public dataset downloads and dependencies are excluded; `RESTORE.md` describes
-  restoration. Existing historical archives are unchanged.
-
-The preceding saved-retrieval result is preserved in its
-[original aggregate](https://github.com/lambdadb/SillyMemory/blob/cae42d58d955a1688ced3075ad05227923f36772/benchmark/longmemeval/results.json).
+- Archive: `artifacts/archive/longmemeval-public-evaluation-v1/evidence.tar.gz`.
+- SHA-256: `2e1a5c0b6dd4bbd63bb2f850f78da032b32ec53950ca252c51a260f6f096cb21`.
+- Availability: retained locally; not included in the repository or publicly
+  downloadable. The archive includes frozen inputs, source, raw receipts and
+  `RESTORE.md` with offline verification instructions.

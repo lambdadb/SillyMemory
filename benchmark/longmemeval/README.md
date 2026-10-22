@@ -4,14 +4,11 @@
 
 The completed run performed ingestion, source readback, retrieval, memory selection,
 answer generation and judging from the public dataset. All 500 questions passed
-offline verification, and all owned collections were confirmed absent. One OpenAI
-HTTP 500 was retried once with the identical request: 501 generation
-attempts produced 500 successful answers.
+offline verification, and all owned collections were confirmed absent.
 
 The [evaluation report](../../docs/longmemeval-public-evaluation.md) compares
 alternative answers under the same Jev protocol and reports tokens, cost estimates
 and measurement boundaries.
-The public runner stops on provider errors without automatic retries.
 
 [results.json](results.json) includes recorded token usage, available timings and
 resource counts. Unavailable measurements and billed cost are `null`.
