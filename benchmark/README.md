@@ -1,14 +1,17 @@
 # Benchmarks
 
-Reproduce the evaluated LongMemEval-S and BEAM profiles from a fresh clone.
+Run the LongMemEval-S and BEAM evaluations using the included settings.
 
 | Benchmark | Questions | Recorded score | Protocol |
 | --- | ---: | ---: | --- |
-| [LongMemEval-S](longmemeval/) | 500 | 95.0% | LambdaDB retrieval, answer generation and judging |
+| [LongMemEval-S](longmemeval/) | 500 | 96.0% | LambdaDB retrieval, answer generation and judging |
 | [BEAM 100K](beam/) | 400 | 89.00 /100 | Past public protocol |
 | [BEAM 500K](beam/) | 700 | 85.99 /100 | Past public protocol |
 | [BEAM 1M](beam/) | 700 | 86.62 /100 | Past public protocol |
 | [BEAM 10M](beam/) | 200 | 80.64 /100 | Past public protocol |
+
+The [LongMemEval evaluation report](../docs/longmemeval-public-evaluation.md)
+compares answer quality, token usage and cost under the same Jev judging protocol.
 
 Use Python 3.14 and Node.js 24. Install repository Node.js dependencies from the
 repository root:
@@ -40,8 +43,11 @@ contains fixed settings, recorded results and execution commands.
 | `tokenizer/` | Shared, locked tokenizer dependency |
 
 Public datasets are downloaded at pinned revisions and checked by SHA-256.
-Runs write to ignored `artifacts/` directories. Keep credentials outside the run;
-pass an existing file explicitly with `--env-file`. The required variable names
+The examples create new output directories under `artifacts/`; no previous run
+files are required. The committed results are aggregates; raw responses for those
+results are not published. `verify` checks outputs from the run you execute.
+Keep credentials outside the run and pass an existing file explicitly with
+`--env-file`. The required variable names
 are shown in [credentials.example](credentials.example).
 
 `setup` downloads public inputs and installs the tokenizer. `prepare` and `verify`
