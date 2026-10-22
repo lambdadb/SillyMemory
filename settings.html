@@ -28,6 +28,7 @@
           <button type="button" data-sm-chat="resume" class="menu_button" hidden>Resume snapshot</button>
           <button type="button" data-sm-chat="settings" class="menu_button">SillyMemory settings</button>
           <button type="button" data-sm-chat="vectors" class="menu_button" hidden>Open Vector Storage</button>
+          <button type="button" data-sm-chat="reconnect" class="menu_button" hidden>Reconnect</button>
           <button type="button" data-sm-chat="cleanup" class="menu_button" hidden>Clean up test data</button>
           <button type="button" data-sm-chat="sync" class="menu_button" hidden>Retry synchronization</button>
           <button type="button" data-sm-chat="retry" class="menu_button" hidden>Retry reply</button>
@@ -45,14 +46,14 @@
       <label>Regional HTTPS endpoint <input data-sm="endpoint" class="text_pole" type="url" placeholder="Regional base URL from your project"></label>
       <label>Project name <input data-sm="project" class="text_pole" autocomplete="off"></label>
       <label>Project API key <input data-sm="key" class="text_pole" type="password" autocomplete="off" spellcheck="false"></label>
-      <div class="sm-actions"><button data-sm="connect" class="menu_button">Save and connect</button><button data-sm="forget" class="menu_button">Forget key</button></div>
-      <small>Your validated key is saved in this browser for reconnection. Other extensions on this page can access browser storage. Forget key removes it and disables memory.</small>
+      <div class="sm-actions"><button data-sm="connect" class="menu_button">Connect and prepare</button><button data-sm="forget" class="menu_button">Forget key</button></div>
+      <small>Connect and prepare checks temporary data and verifies cleanup using inference allowance; it does not upload your chat. Turn memory on separately in each chat. Your validated key is saved in this browser for reconnection. Other extensions on this page can access browser storage. Forget key removes it and disables memory.</small>
     </details>
     <section aria-labelledby="sm-memory-heading">
       <h4 id="sm-memory-heading">Memory</h4>
       <p data-sm="next-step">Connect your project above to get started.</p>
       <div data-sm="prepare-controls" hidden>
-        <button data-sm="provision" class="menu_button">Prepare chat memory</button>
+        <button data-sm="provision" class="menu_button">Finish preparation</button>
         <small>Tests with temporary data, then deletes it. Uses inference allowance; no chat upload.</small>
       </div>
       <p data-sm="mode-help">When off, SillyTavern uses its usual chat history. Saved remote memory is kept.</p>
@@ -89,7 +90,7 @@
         <label>Snapshot name (optional)<input data-sm="checkpoint-name" class="text_pole" maxlength="120" placeholder="Before entering the observatory"></label>
         <div class="sm-actions"><button data-sm="checkpoint-save" class="menu_button">Save memory snapshot</button><button data-sm="checkpoint-resume" class="menu_button">Resume snapshot in new chat</button></div>
         <button data-sm="checkpoint-refresh" class="menu_button">Refresh memory snapshots</button>
-        <small>Refresh after reconnecting to check remote availability.</small>
+        <small>The list refreshes when opened or reconnected. Refresh checks remote availability without uploading chat data.</small>
         <div data-sm="checkpoint-list" aria-live="polite">Refresh to view checkpoints for this story.</div>
         <p>Deleting a checkpoint removes only that saved transcript and memory branch. To rename or delete the currently open checkpoint, open another story path first.</p>
       </details>

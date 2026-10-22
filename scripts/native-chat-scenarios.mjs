@@ -1,3 +1,4 @@
+import { answerMemoryPopup } from './settings-panel.mjs';
 // Native chat/checkpoint/branch actions on a disposable host and local emulator.
 import assert from 'node:assert/strict';
 import { expandMemorySettings, openChatMemory } from './settings-panel.mjs';
@@ -181,8 +182,7 @@ export async function runNativeChatScenarios({ page, field, waitStatus, check, f
         if (enabled) { await field('enabled').check(); await waitStatus('synchronized'); }
         for (const name of ['Rename', 'Delete checkpoint']) {
             const before = calls.length;
-            page.once('dialog', dialog => dialog.dismiss());
-            await rows.filter({ has: page.locator(`button:text-is("${name}")`) }).first().getByRole('button', { name, exact: true }).click();
+            await answerMemoryPopup(page, () => rows.filter({ has: page.locator(`button:text-is("${name}")`) }).first().getByRole('button', { name, exact: true }).click(), { accept: false });
             await page.waitForFunction(() => !document.querySelector('#sillymemory [data-sm="checkpoint-save"]').disabled);
             await waitStatus('Memory snapshot operation canceled.');
             // Successful snapshot actions schedule sync after 400 ms; cancellation must not.

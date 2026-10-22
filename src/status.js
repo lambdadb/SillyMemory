@@ -19,7 +19,7 @@ export function failureText(error, { sync = true, generation = false } = {}) {
     const retry = generation ? 'regenerate to retry this request' : sync ? 'click Sync this chat' : 'retry this action';
     if (!(error instanceof ConnectionError)) return `Memory operation failed. Check browser storage${sync ? ' and token counting' : ''}, then ${retry}. Local chat preserved.`;
     let next = '';
-    if (error.status === 401) next = 'Replace your project key and click Save and connect. Memory is disabled; an invalid submitted key is not saved.';
+    if (error.status === 401) next = 'Replace your project key in Connection settings, then reconnect. Memory is disabled; an invalid submitted key is not saved.';
     else if (error.status === 403 || error.status === 400) next = `Check connection settings and permissions, reconnect${sync ? ' and enable memory' : ''}, then ${retry}.`;
     else if (error.code === 'timeout') next = `Wait, then ${retry}. A timed-out write may still have reached the service.`;
     else if (error.status === 429 || error.status >= 500) next = `Wait, then ${retry}.`;

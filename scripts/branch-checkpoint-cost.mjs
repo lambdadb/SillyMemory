@@ -273,9 +273,7 @@ try {
     await page.getByText('Save', { exact: true }).last().click();
     await page.locator('#sillymemory').waitFor({ state: 'attached', timeout: 45000 }); await panel();
     await field('endpoint').fill(credentials.endpoint); await field('project').fill(credentials.project); await field('key').fill(credentials.key);
-    await field('connect').click(); await status('Connected.'); await idle();
-    await field('gate').click(); await status('Transport gate passed'); await idle();
-    await field('provision').click(); await status('Chat memory is ready'); await idle();
+    await field('connect').click(); await status('Chat memory is ready'); await idle();
     await page.evaluate(async () => {
         const c = SillyTavern.getContext(), body = new FormData(); body.set('ch_name', 'Branch Cost Synthetic'); body.set('first_mes', 'Synthetic expedition.');
         const r = await fetch('/api/characters/create', { method: 'POST', headers: c.getRequestHeaders({ omitContentType: true }), body });

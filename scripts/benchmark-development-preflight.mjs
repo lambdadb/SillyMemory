@@ -1,3 +1,4 @@
+import { answerMemoryPopup } from './settings-panel.mjs';
 import { memoryControl } from './settings-panel.mjs';
 import { expandMemorySettings } from './settings-panel.mjs';
 import { emulatorCors } from './emulator-cors.mjs';
@@ -193,8 +194,8 @@ try {
     await page.locator('#sillymemory .inline-drawer-toggle').click();
     await expandMemorySettings(page);
     await field('endpoint').fill(endpoint); await field('project').fill('synthetic'); await field('key').fill('synthetic-session-key');
-    await field('connect').click(); await field('gate').click(); await status('Transport gate passed');
-    assert.equal(collections.size, 0); await field('provision').click(); await status('Chat memory is ready');
+    await field('connect').click(); await status('Chat memory is ready');
+    assert.equal(collections.size, 0);
     report.settings = await page.evaluate(() => {
         const c = SillyTavern.getContext();
         c.extensionSettings.memory.source = 'main'; c.extensionSettings.memory.memoryFrozen = true;
@@ -355,7 +356,7 @@ try {
         }
     }, [...vectors.keys()]);
     page.on('dialog', dialog => dialog.accept());
-    await field('delete').click(); await status('Owned remote memory collection is no longer accessible');
+    await answerMemoryPopup(page, () => field('delete').click()); await status('Owned remote memory collection is no longer accessible');
     assert.equal(collections.size, 0); assert.equal(vectors.size, 0);
     assert.equal(report.traffic.hostBlocked, 0); assert.equal(report.traffic.browserBlocked, 0);
     assert.deepEqual(errors, []); assert.equal(report.rows.length, 70);

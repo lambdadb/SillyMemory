@@ -1,3 +1,5 @@
+import { runSetupRecoveryScenarios } from './setup-recovery-scenarios.mjs';
+import { answerMemoryPopup } from './settings-panel.mjs';
 import { runPerChatMemoryScenarios } from './per-chat-memory-scenarios.mjs';
 import { memoryControl } from './settings-panel.mjs';
 import { expandMemorySettings, openMemoryConnection, openChatMemory } from './settings-panel.mjs';
@@ -174,9 +176,11 @@ try {
     corsEnabled = true;
     await field('key').fill('wrong-synthetic-key'); await field('connect').click();
     await waitStatus('Authentication failed');
-    check('auth failure is visible with reconnect guidance', (await status()).includes('Authentication failed') && (await status()).includes('Save and connect'));
+    check('auth failure is visible with reconnect guidance', (await status()).includes('Authentication failed') && (await status()).includes('Connection settings'));
     await field('key').fill('synthetic-session-key'); await field('connect').click(); await waitStatus('Connected.');
-    check('verified connection collapses credentials and exposes preparation only', !await field('endpoint').isVisible() && await field('provision').isVisible() && !await field('enabled').isVisible());
+    await waitStatus('Chat memory is ready');
+    check('one explicit connection prepares and cleans up temporary data without activating a chat', !await field('endpoint').isVisible() && !await field('provision').isVisible() && !await field('enabled').isChecked() && collections.size === 0 && calls.some(c => c.path.endsWith('/docs/upsert')));
+    check('setup discloses temporary inference usage and separate chat activation before connecting', (await field('connection').textContent()).includes('inference allowance') && (await field('connection').textContent()).includes('Turn memory on separately'));
     await openMemoryConnection(page);
     const storedBeforeFailure = await page.evaluate(() => {
         const owner = SillyTavern.getContext().extensionSettings.sillymemory.owner;
@@ -203,6 +207,10 @@ try {
         const record = JSON.parse(localStorage.getItem(name)); return record.project === 'synthetic' && record.key === 'synthetic-session-key';
     }) && collections.size === 0);
     await field('project').fill('synthetic'); await field('connect').click(); await waitStatus('Connected.');
+    await expandMemorySettings(page);
+    await answerMemoryPopup(page, () => field('delete').click()); await waitStatus('no longer accessible');
+    await field('advanced').locator(':scope > summary').click();
+    await field('connection').locator(':scope > summary').click();
     if (!faultMode) {
         faults.arm('delete-collection', 'http', 400);
         await field('provision').click(); await waitStatus('Invalid request');
@@ -269,10 +277,21 @@ try {
     await page.locator('#extensions-settings-button .drawer-toggle').click();
     if (!await page.locator('#sillymemory .inline-drawer-content').isVisible()) await page.locator('#sillymemory .inline-drawer-toggle').click();
     await expandMemorySettings(page);
-    await field('connect').click();
+    await field('project').fill('unsaved-other-project');
+    await openChatMemory(page);
+    check('a saved scoped key exposes reconnect directly in the chat panel', await chatField('reconnect').isVisible());
+    await page.screenshot({ path: path.join(artifacts, 'chat-reconnect.png') });
+    const beforeReconnect = calls.length, reconnectHold = faults.arm('connection', 'hold');
+    await chatField('reconnect').click(); await reconnectHold.entered;
+    try {
+        await chatField('reconnect').evaluate(button => button.onclick(new MouseEvent('click')));
+        check('reconnect disables and revalidates duplicate clicks while checking the saved connection', await chatField('reconnect').isDisabled() && calls.length === beforeReconnect + 1);
+    } finally { reconnectHold.release(); }
     await page.waitForFunction(() => !document.querySelector('#sillymemory [data-sm=connect]').disabled);
+    check('chat reconnect ignores unsaved form edits and does not create temporary test data', await field('project').inputValue() === 'unsaved-other-project' && calls.slice(beforeReconnect).every(call => call.path.includes('/projects/synthetic/') && call.method === 'GET') && await chatField('reconnect').getAttribute('hidden') !== null);
+    await chatField('settings').click();
     await page.evaluate(async () => { const c = SillyTavern.getContext(); await c.selectCharacterById(c.characters.findIndex(x => x.name === 'SillyMemory Synthetic')); });
-    await page.waitForFunction(() => !document.querySelector('#sillymemory [data-sm=connect]').disabled && document.querySelector('#sillymemory-chat [data-sm-chat=toggle]').getAttribute('aria-pressed') === 'true');
+    await page.waitForFunction(() => document.querySelector('#sillymemory-chat [data-sm-chat=toggle]').getAttribute('aria-pressed') === 'true');
     check('successful reconnect collapses the connection editor again', await field('connection').getAttribute('open') === null);
     check('retry uses the saved key and restores the prior enabled preference without password re-entry', await field('key').inputValue() === '' && await field('enabled').isChecked());
     await page.evaluate(() => {
@@ -281,7 +300,7 @@ try {
     });
     await page.reload(); await page.locator('#sillymemory').waitFor({ state: 'attached', timeout: 45000 }); await waitStatus('Authentication failed');
     check('failed authentication reopens the connection editor', await field('connection').getAttribute('open') !== null);
-    check('rejected restored key is removed and memory stays disabled', !await field('enabled').isChecked() && await page.evaluate(() => !Object.keys(localStorage).some(k => k.startsWith('sillymemory:credential:'))));
+    check('rejected restored key removes chat reconnect and keeps memory disabled', await chatField('reconnect').getAttribute('hidden') !== null && !await field('enabled').isChecked() && await page.evaluate(() => !Object.keys(localStorage).some(k => k.startsWith('sillymemory:credential:'))));
     await page.locator('#extensions-settings-button .drawer-toggle').click();
     if (!await page.locator('#sillymemory .inline-drawer-content').isVisible()) await page.locator('#sillymemory .inline-drawer-toggle').click();
     await expandMemorySettings(page);
@@ -479,7 +498,7 @@ try {
         const beforeCopy = await page.evaluate(() => SillyTavern.getContext().chatMetadata.sillymemory.id);
         await field('enabled').uncheck();
         await page.evaluate(async () => { const c = SillyTavern.getContext(), { saveChat } = await import('/script.js'); await saveChat({ chatName: 'Synthetic copied' }); await c.openCharacterChat('Synthetic copied'); });
-        page.once('dialog', d => d.accept()); await field('delete-chat').click(); await waitStatus('no longer accessible');
+        await answerMemoryPopup(page, () => field('delete-chat').click()); await waitStatus('no longer accessible');
         check('deleting an unactivated copy cannot delete its parent', collections.size === 1);
         const uncertainCreate = faults.arm('create', 'hold'); await field('enabled').check();
         await uncertainCreate.entered; await waitStatus('timed out'); uncertainCreate.release();
@@ -488,9 +507,9 @@ try {
         check('create retry recovers the same collection', collections.size === 2);
         check('copied metadata receives a distinct collection', collections.size === 2 && await page.evaluate(() => SillyTavern.getContext().chatMetadata.sillymemory.id) !== beforeCopy);
         faults.arm('delete-branch', 'http', 503);
-        page.once('dialog', d => d.accept()); await field('delete-chat').click(); await waitStatus('HTTP 503');
+        await answerMemoryPopup(page, () => field('delete-chat').click()); await waitStatus('HTTP 503');
         check('failed individual deletion keeps remote collection for retry', collections.size === 2);
-        page.once('dialog', d => d.accept()); await field('delete-chat').click(); await waitStatus('no longer accessible');
+        await answerMemoryPopup(page, () => field('delete-chat').click()); await waitStatus('no longer accessible');
         check('individual deletion preserves the story collections and sibling branches', collections.size === 2 && [...collections.values()][1].branches.size === 1);
         await field('enabled').check(); await waitStatus('synchronized');
     }
@@ -586,6 +605,8 @@ try {
         screenshot: name => page.screenshot({ path: path.join(artifacts, `${name}.png`) }) });
     if (!faultMode) nativeChatResults = await runNativeChatScenarios({ page, field, waitStatus, check, faults, collections, calls, prompt,
         screenshot: name => page.screenshot({ path: path.join(artifacts, name) }) });
+    if (!faultMode) await runSetupRecoveryScenarios({ page, field, waitStatus, check, calls, nativeChats: nativeChatResults,
+        screenshot: name => page.screenshot({ path: path.join(artifacts, `${name}.png`) }) });
     // Time provenance is synchronized metadata and budgeted with each excerpt.
     await field('enabled').uncheck();
     await field('budget').fill('2000'); await field('budget').dispatchEvent('change');
@@ -611,7 +632,7 @@ try {
     if (!faultMode) nativeReplyResults = await runNativeReplyScenarios({ page, field, waitStatus, check, calls,
         screenshot: name => page.screenshot({ path: path.join(artifacts, `${name}.png`) }) });
     if (faultMode) { staleHits = []; faultResults = await runFaultScenarios({ page, field, waitStatus, prompt, check, faults, collections, calls, restartHost: recoveryMode ? async () => { const exited = new Promise(resolve => server.once('exit', resolve)); server.kill('SIGKILL'); await exited; await start(false); } : undefined, screenshot: name => page.screenshot({ path: path.join(artifacts, `${name}${artifactTag ? `-${artifactTag}` : ''}.png`) }) }); }
-    else { page.once('dialog', dialog => dialog.accept()); await field('delete').click(); await waitStatus('no longer accessible'); }
+    else { await answerMemoryPopup(page, () => field('delete').click()); await waitStatus('no longer accessible'); }
     check('owned remote deletion leaves no collections', collections.size === 0);
     await field('budget').fill('512'); await field('budget').dispatchEvent('change');
     await page.reload(); await page.locator('#sillymemory').waitFor({ state: 'attached', timeout: 45000 });
@@ -633,7 +654,7 @@ try {
 
     if (faultMode) check('fault run has no uncaught browser page errors', errors.length === 0);
     const sourceSha256 = {};
-    for (const file of ['index.js', 'manifest.json', 'settings.html', 'style.css', 'src/chunking.js', 'src/client.js', 'src/credentials.js', 'src/commit.js', 'src/chat-collections.js', 'src/checkpoints.js', 'src/gate.js', 'src/memory.js', 'src/time.js', 'src/context.js', 'scripts/native-chat-scenarios.mjs', 'scripts/per-chat-memory-scenarios.mjs', 'scripts/native-reply-scenarios.mjs', 'src/delivery.js', 'src/token-usage.js', 'src/status.js', 'scripts/browser-smoke.mjs', 'scripts/settings-panel.mjs', 'scripts/emulator-cors.mjs', 'scripts/fault-scenarios.mjs', 'scripts/recovery-scenarios.mjs']) {
+    for (const file of ['index.js', 'manifest.json', 'settings.html', 'style.css', 'src/chunking.js', 'src/client.js', 'src/credentials.js', 'src/commit.js', 'src/chat-collections.js', 'src/checkpoints.js', 'src/gate.js', 'src/memory.js', 'src/time.js', 'src/context.js', 'scripts/native-chat-scenarios.mjs', 'scripts/per-chat-memory-scenarios.mjs', 'scripts/setup-recovery-scenarios.mjs', 'scripts/native-reply-scenarios.mjs', 'src/delivery.js', 'src/token-usage.js', 'src/status.js', 'scripts/browser-smoke.mjs', 'scripts/settings-panel.mjs', 'scripts/emulator-cors.mjs', 'scripts/fault-scenarios.mjs', 'scripts/recovery-scenarios.mjs']) {
         sourceSha256[file] = createHash('sha256').update(await readFile(path.join(root, file))).digest('hex');
     }
     await writeFile(path.join(artifacts, artifactName), JSON.stringify({ passed: true, faultResults, nativeChatResults, nativeReplyResults, sourceSha256, time: new Date().toISOString(), sillyTavern: revision, node: process.version, browser: browser.version(), upstream: 'Local HTTPS LambdaDB emulator; no live managed embeddings', checks, pageErrors: errors, requestCount: calls.length, preflights, proxyRequests, remainingCollections: collections.size }, null, 2));

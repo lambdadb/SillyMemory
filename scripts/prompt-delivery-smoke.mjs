@@ -1,3 +1,4 @@
+import { answerMemoryPopup } from './settings-panel.mjs';
 import { memoryControl } from './settings-panel.mjs';
 import { expandMemorySettings, openMemoryConnection } from './settings-panel.mjs';
 import { collectionResponse, branchResponse, documentResponse, rerankedResponse } from '../tests/helpers/lambdadb-responses.js';
@@ -221,9 +222,8 @@ try {
     await page.locator('#sillymemory .inline-drawer-toggle').click();
     await expandMemorySettings(page);
     await field('endpoint').fill(endpoint); await field('project').fill('synthetic'); await field('key').fill('synthetic-session-key');
-    await field('connect').click(); await field('gate').click(); await waitStatus('Transport gate passed');
+    await field('connect').click(); await waitStatus('Chat memory is ready');
     assert.equal(collections.size, 0);
-    await field('provision').click(); await waitStatus('Chat memory is ready');
     // Isolate capacity/delivery with plain local completions. The native
     for (const name of ['budget']) { await field(name).fill(String(plan[name])); await field(name).dispatchEvent('change'); }
 
@@ -504,7 +504,7 @@ try {
     if (!await page.locator('#sillymemory .inline-drawer-content').isVisible()) await page.locator('#sillymemory .inline-drawer-toggle').click();
     await expandMemorySettings(page);
     await field('key').fill('synthetic-session-key'); await field('connect').click();
-    page.once('dialog', dialog => dialog.accept()); await field('delete').click(); await waitStatus('no longer accessible');
+    await answerMemoryPopup(page, () => field('delete').click()); await waitStatus('no longer accessible');
     assert.equal(collections.size, 0);
     await openMemoryConnection(page);
     await field('forget').click(); await waitStatus('Saved key removed');
