@@ -27,6 +27,39 @@ export async function runNativeChatScenarios({ page, field, waitStatus, check, f
         await c.saveChat(); await c.reloadCurrentChat();
     });
     await waitStatus('synchronized');
+    await expandMemorySettings(page);
+    for (const outcome of ['success', 'failure']) {
+        let release, entered;
+        const held = new Promise(resolve => { release = resolve; });
+        const reached = new Promise(resolve => { entered = resolve; });
+        await page.route('**/api/characters/chats', async route => {
+            entered(); await held;
+            if (outcome === 'failure') await route.fulfill({ status: 400, json: { error: true } });
+            else await route.continue();
+        }, { times: 1 });
+        const writes = () => calls.filter(call => call.path.endsWith('/docs/upsert')).length;
+        const before = writes();
+        await page.evaluate(async outcome => {
+            const c = SillyTavern.getContext(); c.chat[0].mes += ` Deferred source ${outcome}.`;
+            await c.saveChat(); await c.eventSource.emit(c.eventTypes.MESSAGE_UPDATED, 0);
+            document.querySelector('#sillymemory [data-sm="checkpoint-refresh"]').click();
+        }, outcome);
+        await reached;
+        try {
+            await page.waitForTimeout(900); // Cross two 400 ms debounce ticks while busy.
+            check(`pending sync waits through a slow ${outcome} action without writing`, await field('checkpoint-refresh').isDisabled() && writes() === before && (await field('status').textContent()).includes('Preparing older messages'));
+        } finally { release(); }
+        await page.waitForFunction(() => !document.querySelector('#sillymemory [data-sm="checkpoint-refresh"]').disabled);
+        if (outcome === 'success') {
+            await waitStatus('synchronized');
+            check('pending sync resumes after a slow action completes', writes() > before && remote((await selected()).memory).some(doc => doc.text.includes('Deferred source success.')));
+        } else {
+            await waitStatus('Could not read the saved checkpoint');
+            await page.waitForTimeout(600);
+            check('a failed action supersedes deferred sync and keeps its failure visible', writes() === before && (await field('status').textContent()).includes('Could not read the saved checkpoint') && await field('progress').isHidden());
+            await field('sync').click(); await waitStatus('synchronized');
+        }
+    }
     const source = await selected();
     const sourceDocuments = structuredClone(remote(source.memory));
     await openChatMemory(page);

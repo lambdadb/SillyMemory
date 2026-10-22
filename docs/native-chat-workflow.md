@@ -60,6 +60,11 @@ Manual memory operations and native generation disable switching; the click
 handler also rechecks these guards to reject queued actions. Enabling resets the
 delivery notice so an old disabled notice does not remain under an enabled state.
 
+Debounced source synchronization waits through slow manual work while its
+preparing status still owns the display. A newer status, including an action
+failure, cancels that deferred attempt instead of being overwritten. Enabling
+leaves the pending synchronization status intact rather than replacing it.
+
 The collapsed-by-default **Memory** panel now shows short source previews when
 expanded after prompt preparation. These are the selected, source-validated
 passages admitted to the memory budget, rather than all search candidates or
@@ -173,7 +178,7 @@ emulator collections. These are local-emulator results, not live-provider checks
 ### Chat toggle and review follow-up validation
 
 After the chat toggle and snapshot edge-case fixes, `npm test` passed all 416
-tests. The final actual-host browser suite passed 180 assertions; fault/recovery
+tests. The final actual-host browser suite passed 184 assertions; fault/recovery
 passed 243, including both host restarts and all 24 recovery cycles. Both reports'
 runtime and harness hashes match the final implementation. Neither run had
 uncaught page errors, host proxy requests or remaining emulator collections.
@@ -181,11 +186,12 @@ uncaught page errors, host proxy requests or remaining emulator collections.
 New checks cover activation without reopening settings, persisted on/off state,
 disabled activation before preparation or pending cleanup, queued clicks during
 native generation/manual snapshot work, and removal of the old disabled notice.
-They also cover canceled rename/delete with memory both on and off (no follow-up
+They also cover resuming pending sync after a slow management action, preserving
+a failed action's newer status, canceled rename/delete with memory both on and off (no follow-up
 remote requests), and snapshot saving from a disabled native fork without
 modifying its frozen parent. Final desktop, narrow and memory-off screenshots
 were opened and visually checked. Local-only reports/screenshots are under
-`artifacts/chat-workflow-final/` and `artifacts/chat-workflow-recovery-final/`.
+`artifacts/deferred-sync-final/` and `artifacts/deferred-sync-recovery/`.
 
 ## Boundaries
 

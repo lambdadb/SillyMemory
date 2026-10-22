@@ -268,8 +268,14 @@ function schedule() {
     if (!state.ready || !capture(context())) { status('Select a supported character chat and connect to a memory collection.'); return; }
     if (savedSnapshot()) { status(chatBlocker().message); return; }
     retrySync = false;
-    statusView.start().update({ phase: 'preparing' });
-    timer = setTimeout(sync, 400);
+    const operation = statusView.start();
+    operation.update({ phase: 'preparing' });
+    const run = () => {
+        if (!operation.current()) return;
+        if (busy) { timer = setTimeout(run, 400); return; }
+        sync();
+    };
+    timer = setTimeout(run, 400);
 }
 function fail(error, operation, generation = false, type) {
     showMemoryPreview();
@@ -702,7 +708,6 @@ async function initialize() {
             state.enabled = true; element('enabled').checked = true; persist();
             showDelivery('Memory enabled. No prompt checked yet.');
             schedule();
-            status('Memory enabled. Current character chat will synchronize.');
         } else {
             status('Memory disabled. SillyTavern uses its usual chat history. Remote data is retained until deleted.');
             showDelivery('Memory disabled. No pending prompt verification.');

@@ -27,6 +27,8 @@ boundary; publication is confirmed by the corresponding Git tag and GitHub Relea
 - Normalize writable snapshot forks before saving another snapshot even with
   memory off. Canceled snapshot rename/delete actions clear preparation without
   scheduling follow-up synchronization.
+- Keep scheduled synchronization pending during slow manual work without
+  leaving stale progress or overwriting a newer failure.
 
 ## [0.6.0] - 2026-10-21
 
