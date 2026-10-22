@@ -61,7 +61,6 @@ export async function runSetupRecoveryScenarios({ page, field, check, calls, wai
     }
     await field('delete-chat').click();
     const popup = page.locator('dialog.popup[open]').last(); await popup.waitFor({ state: 'visible' });
-    await screenshot?.('native-memory-confirmation');
     await page.keyboard.press('Escape'); await popup.waitFor({ state: 'hidden' });
     check('escaping a native deletion popup is cancellation', writes() === before && await field('enabled').isChecked());
     const beforeStalePopup = writes();

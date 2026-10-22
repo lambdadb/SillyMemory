@@ -687,7 +687,12 @@ async function initialize() {
         if (!force && listRequest?.valid()) return listRequest.promise;
         const sequence = ++listSequence, ctx = context(), file = ctx.getCurrentChatId(), listClient = client;
         const avatar = ctx.characters[ctx.characterId]?.avatar, story = ctx.chatMetadata.sillymemory?.story;
-        const valid = () => sequence === listSequence && connectionVerified && client === listClient && context().chatMetadata.sillymemory?.story === story && context().getCurrentChatId() === file && context().characters[context().characterId]?.avatar === avatar;
+        const valid = () => {
+            if (sequence !== listSequence || !connectionVerified || client !== listClient) return false;
+            const current = context();
+            return current.chatMetadata.sillymemory?.story === story && current.getCurrentChatId() === file
+                && current.characters[current.characterId]?.avatar === avatar;
+        };
         const list = element('checkpoint-list'); list.replaceChildren();
         if (!connectionVerified || !listClient) { list.textContent = 'Reconnect to view saved snapshots.'; return; }
         if (!capture(ctx) || !story) { list.textContent = 'Select a story to view its checkpoints.'; return; }

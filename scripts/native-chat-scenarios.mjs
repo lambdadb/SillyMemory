@@ -1,7 +1,6 @@
-import { answerMemoryPopup } from './settings-panel.mjs';
+import { answerMemoryPopup, expandMemorySettings, openChatMemory } from './settings-panel.mjs';
 // Native chat/checkpoint/branch actions on a disposable host and local emulator.
 import assert from 'node:assert/strict';
-import { expandMemorySettings, openChatMemory } from './settings-panel.mjs';
 
 export async function runNativeChatScenarios({ page, field, waitStatus, check, faults, collections, calls, prompt, screenshot }) {
     if (!await field('enabled').isChecked()) { await field('enabled').check(); await waitStatus('synchronized'); }

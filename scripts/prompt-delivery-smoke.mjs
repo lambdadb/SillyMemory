@@ -1,6 +1,4 @@
-import { answerMemoryPopup } from './settings-panel.mjs';
-import { memoryControl } from './settings-panel.mjs';
-import { expandMemorySettings, openMemoryConnection } from './settings-panel.mjs';
+import { answerMemoryPopup, memoryControl, expandMemorySettings, openMemoryConnection } from './settings-panel.mjs';
 import { collectionResponse, branchResponse, documentResponse, rerankedResponse } from '../tests/helpers/lambdadb-responses.js';
 import { emulatorCors } from './emulator-cors.mjs';
 // Real pinned host/Chromium/direct CORS, local LambdaDB and completion emulators only.

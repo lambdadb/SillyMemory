@@ -1,6 +1,4 @@
-import { answerMemoryPopup } from './settings-panel.mjs';
-import { memoryControl } from './settings-panel.mjs';
-import { expandMemorySettings } from './settings-panel.mjs';
+import { answerMemoryPopup, memoryControl, expandMemorySettings } from './settings-panel.mjs';
 import { emulatorCors } from './emulator-cors.mjs';
 // Real pinned host and Chromium; local completion/LambdaDB fixtures and vector API
 // emulation only. Never reads .env.local. Raw source/prompt text stays in ignored private checkpoints.
@@ -355,8 +353,7 @@ try {
             if (!response.ok) throw new Error('Native purge failed');
         }
     }, [...vectors.keys()]);
-    page.on('dialog', dialog => dialog.accept());
-    await answerMemoryPopup(page, () => field('delete').click()); await status('Owned remote memory collection is no longer accessible');
+    await answerMemoryPopup(page, () => field('delete').click()); await status('Owned remote memory is no longer accessible');
     assert.equal(collections.size, 0); assert.equal(vectors.size, 0);
     assert.equal(report.traffic.hostBlocked, 0); assert.equal(report.traffic.browserBlocked, 0);
     assert.deepEqual(errors, []); assert.equal(report.rows.length, 70);

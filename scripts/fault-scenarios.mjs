@@ -1,5 +1,4 @@
-import { answerMemoryPopup } from './settings-panel.mjs';
-import { expandMemorySettings } from './settings-panel.mjs';
+import { answerMemoryPopup, expandMemorySettings } from './settings-panel.mjs';
 // Deterministic upstream failures. Only used by the local HTTPS emulator harness.
 import assert from 'node:assert/strict';
 import { runRecoveryScenarios } from './recovery-scenarios.mjs';

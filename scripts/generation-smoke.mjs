@@ -1,6 +1,4 @@
-import { answerMemoryPopup } from './settings-panel.mjs';
-import { memoryControl } from './settings-panel.mjs';
-import { expandMemorySettings } from './settings-panel.mjs';
+import { answerMemoryPopup, memoryControl, expandMemorySettings } from './settings-panel.mjs';
 // Full SillyTavern Generate/UI path + live LambdaDB. Model is deterministic by
 // default; --live-model requires explicitly supplied compatible-model settings.
 import { runHybrid, hybridFiles } from './hybrid-eval.mjs';

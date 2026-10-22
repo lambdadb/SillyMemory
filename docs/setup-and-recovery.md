@@ -63,8 +63,7 @@ per-chat preference, source retention, retrieval and response-format regressions
 remain covered. Every final report matches its recorded runtime/harness hashes
 and has zero browser errors, proxy requests and remaining emulator collections.
 The chat reconnect and automatically refreshed snapshot screenshots were opened
-and visually checked. The native confirmation capture was taken during its
-opening animation; functional popup results are established by the browser checks.
+and visually checked.
 
 Detailed reports, logs and screenshots are retained locally under the directories
 below. SHA-256 values identify the reports; their `sourceSha256` records identify
@@ -77,6 +76,14 @@ completion. They are not counted as final passing runs.
 | `setup-recovery-final/browser-smoke-setup-recovery-final.json` | `cb3128ab2a4152f669b45a95d34ade800cc4be7e6502ee21718cc0dd8a8a42ea` |
 | `setup-recovery-final-faults/recovery-smoke-setup-recovery-final-faults.json` | `63d722f48d843a4b97d12e86d7edc38f68e310edaa6c4373f213dc5208c9a74f` |
 | `setup-recovery-prompt-delivery/report.json` | `daabbea99674918d2daf4a193af88ecd45a7a9e599baba68f969b2552a5be8e1` |
+| `setup-recovery-cleanup/browser-smoke-setup-recovery-cleanup.json` | `7b8287a9b5529ff19a837332859d51a0f18c4bca2bc9d41efc2aa332040782b7` |
+
+Cleanup after `447e15e` passed the same unit (420), Python (32), development-tool
+syntax (164), runtime, release and SDK checks again. Repeating the browser command
+with `SM_ARTIFACT_TAG=setup-recovery-cleanup` passed 227 assertions with matching
+producer hashes, zero browser errors/proxy requests and no remaining collections.
+The original recovery and delivery reports retain their original producer hashes;
+those suites and paid/live runners were not rerun for this readability cleanup.
 
 These ignored local artifacts are not available in a fresh clone or used by CI.
 Other maintained paid/live runners were adapted to combined setup and native

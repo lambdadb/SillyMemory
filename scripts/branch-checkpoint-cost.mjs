@@ -246,7 +246,6 @@ try {
     browser = await chromium.launch(); page = await browser.newPage(); page.setDefaultTimeout(20000);
     timeout = setTimeout(() => { timedOut = true; void page.close(); }, plan.limits.wallMinutes * 60000);
     page.on('pageerror', e => report.pageErrors.push(e.name));
-    page.on('dialog', d => void d.accept());
     page.on('request', req => {
         const u = new URL(req.url());
         if (u.origin !== url || !u.pathname.startsWith('/api/vector/')) return;

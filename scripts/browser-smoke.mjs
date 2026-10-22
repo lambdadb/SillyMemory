@@ -1,8 +1,6 @@
 import { runSetupRecoveryScenarios } from './setup-recovery-scenarios.mjs';
-import { answerMemoryPopup } from './settings-panel.mjs';
+import { answerMemoryPopup, memoryControl, expandMemorySettings, openMemoryConnection, openChatMemory } from './settings-panel.mjs';
 import { runPerChatMemoryScenarios } from './per-chat-memory-scenarios.mjs';
-import { memoryControl } from './settings-panel.mjs';
-import { expandMemorySettings, openMemoryConnection, openChatMemory } from './settings-panel.mjs';
 import { runNativeReplyScenarios } from './native-reply-scenarios.mjs';
 import { runNativeChatScenarios } from './native-chat-scenarios.mjs';
 import { collectionResponse, branchResponse, documentResponse, rerankedResponse } from '../tests/helpers/lambdadb-responses.js';

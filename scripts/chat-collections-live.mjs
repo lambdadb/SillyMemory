@@ -1,6 +1,4 @@
-import { answerMemoryPopup } from './settings-panel.mjs';
-import { memoryControl } from './settings-panel.mjs';
-import { expandMemorySettings } from './settings-panel.mjs';
+import { answerMemoryPopup, memoryControl, expandMemorySettings } from './settings-panel.mjs';
 // Bounded real UI + direct browser CORS + managed LambdaDB lifecycle acceptance.
 // No generation calls; at most four small collections, or two with --large-history (1,100 submitted documents).
 import assert from 'node:assert/strict';
@@ -46,7 +44,6 @@ try {
     const profile = JSON.parse(await readFile(profilePath, 'utf8')); profile.main_api = 'openai'; await writeFile(profilePath, JSON.stringify(profile));
     browser = await chromium.launch(); page = await browser.newPage({ viewport: { width: 1440, height: 1100 } }); page.setDefaultTimeout(20000);
     page.on('request', req => { if (new URL(req.url()).pathname.startsWith('/proxy/')) report.proxyRequests++; });
-    page.on('dialog', dialog => { void dialog.accept(dialog.type() === 'prompt' ? 'Observatory checkpoint' : undefined).catch(error => report.pageErrors.push(error.name)); });
     await page.route(`${new URL(credentials.endpoint).origin}/**`, async route => {
         try {
         const req = route.request(), target = new URL(req.url());
