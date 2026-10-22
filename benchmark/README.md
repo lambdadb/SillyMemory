@@ -4,11 +4,15 @@ Reproduce the evaluated LongMemEval-S and BEAM profiles from a fresh clone.
 
 | Benchmark | Questions | Recorded score | Protocol |
 | --- | ---: | ---: | --- |
-| [LongMemEval-S](longmemeval/) | 500 | 95.0% | LambdaDB retrieval, answer generation and judging |
+| [LongMemEval-S](longmemeval/) | 500 | 96.0% | Fresh LambdaDB retrieval, answer generation and judging |
 | [BEAM 100K](beam/) | 400 | 89.00 /100 | Past public protocol |
 | [BEAM 500K](beam/) | 700 | 85.99 /100 | Past public protocol |
 | [BEAM 1M](beam/) | 700 | 86.62 /100 | Past public protocol |
 | [BEAM 10M](beam/) | 200 | 80.64 /100 | Past public protocol |
+
+The October 22 LongMemEval run completed after one authorized retry of a provider
+HTTP 500; see its [result and comparison boundaries](../docs/longmemeval-public-evaluation.md).
+BEAM rows retain their previously recorded results.
 
 Use Python 3.14 and Node.js 24. Install repository Node.js dependencies from the
 repository root:

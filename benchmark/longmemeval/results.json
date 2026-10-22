@@ -1,10 +1,13 @@
 {
   "dataset": "LongMemEval-S",
+  "evaluatedAt": "2026-10-22",
   "questions": 500,
-  "correct": 475,
-  "accuracy": 0.95,
+  "correct": 480,
+  "accuracy": 0.96,
   "generator": {
     "model": "gpt-6.1-sol",
+    "max_completion_tokens": 4096,
+    "stream": false,
     "reasoning_effort": "low"
   },
   "judge": {
@@ -12,38 +15,106 @@
     "type": "noul",
     "yesThreshold": 0.5
   },
-  "input": "Recorded answer evaluation using saved retrieval responses; fresh end-to-end results are written to each run directory.",
+  "input": "Fresh ingestion, source readback, retrieval, memory assembly, answer generation and judging with the unchanged public profile.",
+  "producerRevision": "cae42d58d955a1688ced3075ad05227923f36772",
+  "binding": "7929d08cdda4f9f875b23f3c168107f9acc6cdd7e41119901e56b799332b150b",
   "resources": {
     "generation": {
       "calls": 500,
-      "inputTokens": 2442878,
-      "outputTokens": 31195,
-      "httpResponseMilliseconds": 1429519,
-      "medianHttpResponseMilliseconds": 2284.0
+      "inputTokens": 2443045,
+      "outputTokens": 31351,
+      "responseHeaderMilliseconds": 1607496.9092719257,
+      "attempts": 501,
+      "failedAttempts": 1,
+      "cachedInputTokens": 7488,
+      "cacheWriteTokens": 2362057,
+      "medianResponseHeaderMilliseconds": 2617.4084786325693,
+      "modeledCostUsd": 6.3664013
     },
     "judging": {
       "calls": 500,
-      "inputTokens": 239234,
+      "inputTokens": 239354,
       "outputTokens": 10000,
-      "httpResponseMilliseconds": 94922,
-      "medianHttpResponseMilliseconds": 181.0
+      "responseHeaderMilliseconds": 110629.67141158879,
+      "modeledCostUsd": 0.010052868
     },
     "memory": {
-      "indexedDocuments": null,
-      "databaseOperations": null,
-      "httpResponseMilliseconds": null
+      "indexedDocuments": 483385,
+      "databaseOperations": 17962,
+      "httpResponseMilliseconds": 6630621.1237080125,
+      "ingestRetrievePackMilliseconds": 6719553.720747,
+      "embeddingInputEstimate": {
+        "questions": 500,
+        "documents": 483385,
+        "constructionInputTokensEstimate": 51721513,
+        "queryInputTokensEstimate": 19505,
+        "constructionEstimatedUsd": 1.086151773,
+        "queryEstimatedUsd": 0.000409605
+      }
     },
-    "wallMilliseconds": null,
-    "billedCostUsd": null
+    "billedCostUsd": null,
+    "wallMilliseconds": null
+  },
+  "generationAttempts": {
+    "successful": 500,
+    "failed": 1,
+    "total": 501,
+    "failedQuestion": "gpt4_a2d1d1f6",
+    "failureStatus": 500,
+    "sameRequestRetryAuthorized": true,
+    "failedAttemptTokens": null,
+    "failedAttemptBilledCostUsd": null,
+    "firstAttemptCompletedQuestions": 499,
+    "firstAttemptCorrect": 479,
+    "firstAttemptAccuracy": 0.958
   },
   "resourceNotes": [
-    "Measured generation and judge usage for these 500 answers only. Model HTTP timings include response-body reads and exclude queue waits.",
-    "Retrieval responses were reused. End-to-end indexing, database operations and memory latency are not attributed to this answer-only result.",
-    "Null means unavailable for this recorded result. Billed cost and combined run wall time are unavailable."
+    "All 500 questions completed after one explicitly authorized identical-request retry of an OpenAI HTTP 500. Generation calls and tokens cover 500 successful responses; total attempts were 501. Failed-attempt token usage and billing are unavailable.",
+    "Model timings stop at response headers. Database HTTP timings include body reads; ingestRetrievePackMilliseconds excludes collection creation and cleanup. These are not SillyTavern reply timings.",
+    "Database operations include source-readback audits and owned cleanup for 500 isolated histories; all owned collections were confirmed absent.",
+    "Modeled generation and judge costs use October 22 Standard rates and reported cache categories. Embedding costs are independently tokenized estimates. Reranking, database, storage, host costs and unknown failure billing are excluded; no complete-service cost or invoice is claimed."
   ],
+  "frozenCostRates": {
+    "checkedAt": "2026-10-22",
+    "basis": "Published Standard list rates, before account allowances; estimates, not invoices",
+    "generation": {
+      "model": "gpt-6.1-sol",
+      "inputPerMillion": 2,
+      "cachedInputPerMillion": 0.1,
+      "cacheWritePerMillion": 2.5,
+      "outputPerMillion": 10,
+      "source": "https://developers.openai.com/api/docs/models/gpt-6.1-sol"
+    },
+    "judge": {
+      "model": "jev-1.13.0",
+      "inputPerMillion": 0.042,
+      "outputPerMillion": 0,
+      "source": "https://docs.typesafe.ai/models"
+    },
+    "memory": {
+      "embeddingPerMillion": 0.021,
+      "rerankingPerMillion": 0.0441,
+      "writesPerGB": 1,
+      "readsPerPB": 5,
+      "storagePerGBMonth": 0.33,
+      "source": "https://docs.lambdadb.ai/guides/costs/understanding-costs",
+      "limitations": "No per-call billed embedding/rerank token usage in the observed query/upsert responses; do not infer full service cost from operation counts."
+    }
+  },
   "resourceSource": {
-    "document": "../../docs/query1-evidence-index.md",
-    "receiptsSha256": "79b83991e86b305a02f6d3c80844cde6407f58f6f0b8736fb216f4794c3ab18f",
-    "detailedReceiptsAvailability": "Local retained evidence; not included in a fresh clone."
+    "document": "../../docs/longmemeval-public-evaluation.md",
+    "aggregate": "../../docs/benchmarks/longmemeval-public-evaluation-v1.json",
+    "localArchive": "artifacts/archive/longmemeval-public-evaluation-v1/evidence.tar.gz",
+    "sha256": "2e1a5c0b6dd4bbd63bb2f850f78da032b32ec53950ca252c51a260f6f096cb21",
+    "bytes": 255548796,
+    "verifiedMembers": 24042,
+    "availability": "Local-only copies in the primary and rerun worktrees on the same machine; absent in a fresh clone."
+  },
+  "previousRecordedResult": {
+    "correct": 475,
+    "questions": 500,
+    "accuracy": 0.95,
+    "boundary": "Historical saved-retrieval answer evaluation; preserved separately.",
+    "source": "https://github.com/lambdadb/SillyMemory/blob/cae42d58d955a1688ced3075ad05227923f36772/benchmark/longmemeval/results.json"
   }
 }

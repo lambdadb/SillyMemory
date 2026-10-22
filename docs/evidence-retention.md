@@ -1870,3 +1870,25 @@ This is conservative committed readiness, not first semantic-query latency.
   judging or LambdaDB operations. Temporary hosts/data removed. Local-only,
   unavailable in a fresh clone, and not a CI dependency. See the result document
   for omitted parent indexing, dependency-symlink image warnings and timing limits.
+
+## October 22 public LongMemEval evaluation
+
+The [completed evaluation](longmemeval-public-evaluation.md) records fresh
+480/500 Jev correctness, same-judge historical alternatives, the common 50-question
+summary comparison and resource use. The 400-word arm is excluded from the new
+comparison; its historical evidence remains unchanged.
+
+- Local-only archive: `artifacts/archive/longmemeval-public-evaluation-v1/evidence.tar.gz`,
+  255,548,796 bytes; SHA-256
+  `2e1a5c0b6dd4bbd63bb2f850f78da032b32ec53950ca252c51a260f6f096cb21`.
+- All 24,042 members were read back against the manifest. The archive includes
+  producing revision `cae42d58d955a1688ced3075ad05227923f36772`, frozen inputs,
+  raw retrieval/model receipts, 1,550 comparator Jev probabilities, offline
+  analyses, one retained HTTP 500 and its authorized identical-request recovery.
+- The public verifier passed for all 500 questions; all 500 owned collections
+  were deleted and confirmed absent. Generation required 501 attempts for 500
+  successful answers. Unknown failed-attempt usage is not presented as zero.
+- Identical archive/manifest copies exist in the primary and rerun worktrees
+  on the same machine. They are unavailable in a fresh clone. Credentials,
+  public dataset downloads and dependencies are excluded; `RESTORE.md` describes
+  restoration. Existing historical archives are unchanged.
