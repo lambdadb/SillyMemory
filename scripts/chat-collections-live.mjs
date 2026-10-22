@@ -304,7 +304,7 @@ try {
         await field('enabled').uncheck();
         await page.evaluate(async name => SillyTavern.getContext().openCharacterChat(name), checkpointFile);
         const checkpoint = await identity();
-        await field('enabled').check(); await status('This is a saved checkpoint'); await field('enabled').uncheck();
+        await field('enabled').check(); await status('This is a frozen memory snapshot'); await field('enabled').uncheck();
         check('opening a checkpoint refuses ordinary memory writes', (await inspect(checkpoint)).some(d => d.text.includes('cedar tree')));
         stage = 'checkpoint resume';
         loseResume = recovery;

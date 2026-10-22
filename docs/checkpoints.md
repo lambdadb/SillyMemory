@@ -1,4 +1,15 @@
-# Frozen story checkpoints
+# Frozen memory snapshots (advanced)
+
+For ordinary use, keep SillyTavern's native **Save checkpoint**, **Create Branch**,
+**Back to parent chat** and **Manage chat files** workflow. SillyMemory follows
+the selected saved transcript, prepares a separate writable memory path, and
+preserves the enabled preference across chat changes. Native checkpoint saving
+does not freeze remote memory; it remains reconstructible from the saved transcript.
+Use **Chat history** in the Memory panel to open the native chat list.
+
+The optional **Advanced → Frozen memory snapshots** controls below additionally
+bind a saved transcript to a verified, retained remote memory branch. The internal
+metadata and historical acceptance records call these snapshots checkpoints.
 
 ## Decision and bounded acceptance
 
@@ -19,25 +30,31 @@ or large-history performance. Preserve complete failed/successful run evidence.
 
 ## Use
 
-Use 0.3.0 with the validated SillyTavern 1.19.0 host.
+Use the validated SillyTavern 1.19.0 host.
 Connect, prepare memory and select a character chat. Story branches are automatic;
 checkpoint creation also persists a fresh chat identity before remote use.
 
-1. Click **Save / finish checkpoint** on a normal story path. The extension
-   disables memory and drains previous writes, saves a separate native chat with
+1. Open **Advanced → Frozen memory snapshots** and click **Save memory snapshot**
+   on a normal story path. The extension pauses memory operations and drains previous writes,
+   saves a separate native chat with
    a unique `SillyMemory checkpoint ...` name, then prepares its memory branch.
-   The original chat stays selected. Re-enable memory to continue that original
-   path after saving, or resume the saved checkpoint from the manager below.
+   The original chat stays selected and your enabled preference is preserved.
+   After success, enabled memory synchronizes automatically on that original path;
+   an explicitly disabled preference stays off. Alternatively, resume the saved snapshot below.
+   Newly saved snapshots link to their actual source through the native
+   **Back to parent chat** action, including when saved from an existing branch.
+   Older snapshots remain accessible through **Chat history**.
 2. A checkpoint is ready only after its intended older documents are committed
    and the matching snapshot ID is saved and read back from the host. A
    [last-write commit check](commit-confirmation.md) can shorten polling; the final
    complete document comparison remains required. Creation
    can take minutes while waiting for commits. No generation model is called.
 3. Click **Resume** on that checkpoint in the current-story list. Alternatively,
-   select it in the native chat list and click **Resume checkpoint in new chat**.
+   select it in the native chat list and click **Resume snapshot in new chat**.
    It checks the persisted transcript digest and remote branch
    snapshot, saves a separate `SillyMemory resume ...` chat, verifies it and opens
-   it. Enable memory to inherit from the frozen branch and continue. Repeating
+   it. Enabled memory automatically inherits from the frozen branch and synchronizes;
+   if you had explicitly turned memory off, it stays off. Repeating
    this creates another independent path.
 4. If creation stops partway, reconnect, refresh the current-story list and click
    **Finish / retry** on the pending checkpoint. Its pending record contains the original memory
@@ -267,9 +284,9 @@ checkpoint/versioning evidence was not modified or deleted.
 
 ## Checkpoint manager
 
-Open **Checkpoints** in the SillyMemory settings. Give a checkpoint an optional
+Open **Advanced → Frozen memory snapshots** in the SillyMemory settings. Give a snapshot an optional
 name (up to 120 characters) before saving. Use
-**Refresh story checkpoints** to list checkpoints belonging to the selected
+**Refresh memory snapshots** to list snapshots belonging to the selected
 character and versioned story. Each row shows the name, creation time and verified
 status. Names live in the checkpoint's presentation metadata, so renaming does not
 change its identity, transcript hash, native filename or memory branch.

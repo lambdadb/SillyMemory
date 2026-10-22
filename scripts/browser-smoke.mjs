@@ -1,5 +1,6 @@
 import { expandMemorySettings, openMemoryConnection, openChatMemory } from './settings-panel.mjs';
 import { runNativeReplyScenarios } from './native-reply-scenarios.mjs';
+import { runNativeChatScenarios } from './native-chat-scenarios.mjs';
 import { collectionResponse, branchResponse, documentResponse, rerankedResponse } from '../tests/helpers/lambdadb-responses.js';
 // Real pinned SillyTavern + real Chromium + direct browser CORS; LambdaDB is emulated.
 // Never use this harness with personal data or a real API key.
@@ -20,13 +21,13 @@ const artifactTag = process.env.SM_ARTIFACT_TAG || '';
 if (artifactTag && !/^[a-zA-Z0-9][a-zA-Z0-9._-]{0,79}$/.test(artifactTag)) throw new Error('Invalid SM_ARTIFACT_TAG.');
 const artifactName = `${recoveryMode ? 'recovery' : faultMode ? 'fault' : 'browser'}-smoke${artifactTag ? `-${artifactTag}` : ''}.json`;
 const faults = faultController();
-let faultResults;
+let faultResults, nativeChatResults;
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const source = process.env.ST_SOURCE || '/tmp/sillymemory-st-source';
 const revision = '06bde939fb1e9c4c8d8641d810f0a916b5bce127';
 assert.equal(execFileSync('git', ['-C', source, 'rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(), revision);
 const work = await mkdtemp(path.join(tmpdir(), 'sillymemory-smoke-'));
-const artifacts = path.join(root, 'artifacts'); await mkdir(artifacts, { recursive: true });
+const artifacts = path.join(root, 'artifacts', artifactTag); await mkdir(artifacts, { recursive: true });
 const extension = path.join(source, 'public/scripts/extensions/third-party/sillymemory');
 try { await lstat(extension); } catch (error) { if (error.code !== 'ENOENT') throw error; await symlink(root, extension); }
 assert.equal(await realpath(extension), root, 'Host extension must point to the checkout under test.');
@@ -312,7 +313,7 @@ try {
         c.chatMetadata.sillymemory.checkpoint = true;
         await c.eventSource.emit(c.eventTypes.SETTINGS_UPDATED);
     });
-    check('checkpoint recovery takes priority over an unrelated vector setting', (await chatField('label').innerText()).includes('Saved checkpoint') && !await chatField('vectors').isVisible());
+    check('snapshot recovery takes priority over an unrelated vector setting', (await chatField('label').innerText()).includes('Saved snapshot') && !await chatField('vectors').isVisible());
     await page.evaluate(() => { delete SillyTavern.getContext().chatMetadata.sillymemory.checkpoint; });
     const unsupportedSource = await page.evaluate(async () => {
         const c = SillyTavern.getContext(), original = structuredClone(c.chat);
@@ -561,6 +562,8 @@ try {
             }
         }, originalFile);
     }
+    if (!faultMode) nativeChatResults = await runNativeChatScenarios({ page, field, waitStatus, check, faults, collections, calls, prompt,
+        screenshot: name => page.screenshot({ path: path.join(artifacts, name) }) });
     // Time provenance is synchronized metadata and budgeted with each excerpt.
     await field('enabled').uncheck();
     await field('budget').fill('2000'); await field('budget').dispatchEvent('change');
@@ -608,12 +611,12 @@ try {
 
     if (faultMode) check('fault run has no uncaught browser page errors', errors.length === 0);
     const sourceSha256 = {};
-    for (const file of ['index.js', 'manifest.json', 'settings.html', 'style.css', 'src/chunking.js', 'src/client.js', 'src/credentials.js', 'src/commit.js', 'src/chat-collections.js', 'src/checkpoints.js', 'src/gate.js', 'src/memory.js', 'src/time.js', 'src/context.js', 'scripts/native-reply-scenarios.mjs', 'src/delivery.js', 'src/status.js', 'scripts/browser-smoke.mjs', 'scripts/settings-panel.mjs', 'scripts/emulator-cors.mjs', 'scripts/fault-scenarios.mjs', 'scripts/recovery-scenarios.mjs']) {
+    for (const file of ['index.js', 'manifest.json', 'settings.html', 'style.css', 'src/chunking.js', 'src/client.js', 'src/credentials.js', 'src/commit.js', 'src/chat-collections.js', 'src/checkpoints.js', 'src/gate.js', 'src/memory.js', 'src/time.js', 'src/context.js', 'scripts/native-chat-scenarios.mjs', 'scripts/native-reply-scenarios.mjs', 'src/delivery.js', 'src/status.js', 'scripts/browser-smoke.mjs', 'scripts/settings-panel.mjs', 'scripts/emulator-cors.mjs', 'scripts/fault-scenarios.mjs', 'scripts/recovery-scenarios.mjs']) {
         sourceSha256[file] = createHash('sha256').update(await readFile(path.join(root, file))).digest('hex');
     }
-    await writeFile(path.join(artifacts, artifactName), JSON.stringify({ passed: true, faultResults, nativeReplyResults, sourceSha256, time: new Date().toISOString(), sillyTavern: revision, node: process.version, browser: browser.version(), upstream: 'Local HTTPS LambdaDB emulator; no live managed embeddings', checks, pageErrors: errors, requestCount: calls.length, preflights, proxyRequests, remainingCollections: collections.size }, null, 2));
+    await writeFile(path.join(artifacts, artifactName), JSON.stringify({ passed: true, faultResults, nativeChatResults, nativeReplyResults, sourceSha256, time: new Date().toISOString(), sillyTavern: revision, node: process.version, browser: browser.version(), upstream: 'Local HTTPS LambdaDB emulator; no live managed embeddings', checks, pageErrors: errors, requestCount: calls.length, preflights, proxyRequests, remainingCollections: collections.size }, null, 2));
 } catch (error) {
-    if (faultMode) await writeFile(path.join(artifacts, artifactName), JSON.stringify({ passed: false, checks, faultResults, faultObservations: faults.observations, failure: error.message, pageErrors: errors, pageErrorDetails, hostFailures, remainingCollections: collections.size }, null, 2));
+    await writeFile(path.join(artifacts, artifactName), JSON.stringify({ passed: false, checks, faultResults, nativeChatResults, faultObservations: faults.observations, failure: error.message, pageErrors: errors, pageErrorDetails, hostFailures, remainingCollections: collections.size }, null, 2));
     console.error('Browser failure status:', await debugPage?.locator('[data-sm="status"]').innerText().catch(() => 'unavailable'));
     console.error('Upstream request count:', calls.length);
     await debugPage?.screenshot({ path: path.join(artifacts, faultMode ? 'fault-failure.png' : 'failure.png') }).catch(() => {});

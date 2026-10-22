@@ -2,7 +2,8 @@
 
 The current development candidate uses this layout for every chat. The
 [default-storage decision](default-story-memory.md) removes the pre-release
-opt-in and compatibility paths. Checkpoints remain explicitly saved/resumed.
+opt-in and compatibility paths. Native checkpoints and branches use the ordinary
+chat workflow; optional frozen memory snapshots are explicitly saved/resumed under Advanced.
 The dated validation sections below preserve the original PR #53 results.
 
 ## Decision and acceptance boundary
@@ -76,7 +77,8 @@ are preserved. Deleting a native chat or uninstalling the extension does not
 remove remote memory automatically. Snapshot retention/backups remain provider
 policies; branch disappearance is not proof of physical erasure.
 
-Reload still clears the key and disables memory. Concurrent writers on multiple
+Reload verifies the saved browser key before restoring the enabled preference.
+Concurrent writers on multiple
 devices remain unsupported. Out-of-line document responses fail safely. Long
 histories need paginated source reconciliation; latency and memory consumption at
 large scale are not established by the small acceptance fixture.

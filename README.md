@@ -65,9 +65,11 @@ of the normal installation.
 The basic panel shows the next setup action: connect, prepare, then enable.
 Once ready, the memory switch and status remain visible; connection details stay
 collapsed after successful verification, including reconnection after reload.
-**Checkpoints** holds optional story save/resume controls. **Advanced** holds
-memory limits, diagnostic tools, prompt inspection and remote cleanup. Both
-optional sections start collapsed; existing saved settings are preserved.
+Use SillyTavern's existing chat history, **Save checkpoint** and **Create Branch**
+controls. Memory follows the selected chat without changing your enabled preference.
+**Advanced** holds memory limits, diagnostic tools, prompt inspection, remote cleanup
+and optional **Frozen memory snapshots**. Advanced controls start collapsed;
+existing saved settings are preserved.
 
 No npm commands, proxy setting, or SillyTavern server restart are needed.
 
@@ -83,7 +85,8 @@ Your original chat file stays intact.
 - Open **Memory** above the message composer for current status and recovery
   actions. **Ready** means the chat can use memory; **Last prompt verified** means
   the final host prompt passed the delivery check. It does not guarantee answer
-  correctness. **SillyMemory settings** opens the native extension drawer.
+  correctness. **Chat history** opens SillyTavern's existing chat list so you can
+  return to the original conversation. **SillyMemory settings** opens the native extension drawer.
 - SillyMemory connects directly to LambdaDB and does not depend on built-in Vector
   Storage. Its chat vectorization must be off to avoid conflicting history injection;
   the chat status links to its settings without changing them.
@@ -99,8 +102,17 @@ Your original chat file stays intact.
   are not changed.
 - Reload reconnects using the saved key and restores the previous enabled state
   after verification. **Connection → Forget key** removes the saved key and disables memory.
-- Native story branches keep separate memory paths. Open **Checkpoints** to save,
-  browse and resume a story state. See the [checkpoint guide](docs/checkpoints.md).
+- Use the native **Save checkpoint**, **Create Branch**, **Back to parent chat**
+  and **Manage chat files** controls as usual. With memory enabled, opening a
+  checkpoint or branch automatically prepares its separate memory path from that
+  chat's transcript; later messages from another path are excluded. Preparation
+  can take time and consume embedding allowance. Native checkpoint saving does
+  not freeze a remote memory snapshot at the moment you click Save.
+- **Advanced → Frozen memory snapshots** additionally binds a saved transcript
+  to verified remote memory. This optional feature has separate save/resume controls.
+  Saving or resuming preserves your memory preference and shows operation progress;
+  an enabled writable chat synchronizes automatically after success. See the
+  [snapshot guide](docs/checkpoints.md) and [native workflow validation](docs/native-chat-workflow.md).
 
 ## If something goes wrong
 

@@ -20,6 +20,7 @@ let statusView, collections, identityKey;
 let preparation = Promise.resolve();
 let checkpointRevision = 0;
 let chatStatus, stoppedRequest, deliveryNotice, sessionUnavailable;
+let snapshotOperation;
 let retrying = false, sourceRevision = 0;
 let hostGenerating = () => false;
 let promptType, promptSource;
@@ -29,10 +30,20 @@ const delivery = new PromptDelivery();
 const element = name => root.querySelector(`[data-sm="${name}"]`);
 const status = (text, options) => { retrySync = false; statusView.show(text, options); };
 const chatElement = name => chatStatus.querySelector(`[data-sm-chat="${name}"]`);
+function savedSnapshot() {
+    const ctx = context(), memory = ctx.chatMetadata?.sillymemory;
+    // A native fork inherits extension metadata but has a new host integrity.
+    // It is a writable chat, not the frozen snapshot it was copied from.
+    return Boolean(memory?.checkpoint && memory.integrity === ctx.chatMetadata.integrity);
+}
+function canBrowseChats() {
+    const ctx = context();
+    return Boolean(ctx.groupId || ctx.characters[ctx.characterId]?.avatar);
+}
 function chatBlocker() {
     const ctx = context();
     if (!supportsChat(ctx)) return { label: 'Unavailable in this chat', message: 'Select a saved, single-character text chat to use SillyMemory. Group chats and tool conversations are not supported.' };
-    if (ctx.chatMetadata.sillymemory?.checkpoint) return { label: 'Saved checkpoint', message: 'This is a saved checkpoint. Resume it in a new chat from SillyMemory settings to continue with memory.' };
+    if (savedSnapshot()) return { action: 'resume', label: 'Saved snapshot', message: 'This is a frozen memory snapshot. Resume it in a new chat to continue, or use Chat history to return to your conversation.' };
     if (ctx.extensionSettings.vectors?.enabled_chats) return { action: 'vectors', label: 'Vector Storage conflict', message: 'SillyMemory retrieval is skipped while Vector Storage chat vectorization is on. Turn off its chat vectorization to use SillyMemory, which connects directly to LambdaDB.' };
     return null;
 }
@@ -60,6 +71,7 @@ function renderChatStatus() {
     let label = 'Off', kind = 'idle';
     if (sessionUnavailable) { label = 'Unavailable'; kind = 'warning'; }
     else if (!connected) { label = busy ? 'Connecting' : 'Connect'; kind = statusView?.error ? 'error' : 'idle'; }
+    else if (snapshotOperation) { label = snapshotOperation; kind = 'working'; }
     else if (state.testCollection) { label = 'Test cleanup needed'; kind = 'warning'; }
     else if (!state.ready) label = 'Setup needed';
     else if (blocker) { label = blocker.label; kind = 'warning'; }
@@ -71,20 +83,28 @@ function renderChatStatus() {
     }
     chatStatus.dataset.kind = kind;
     chatElement('label').textContent = `Memory · ${label}`;
-    chatElement('status').textContent = sessionUnavailable || blocker?.message || stopped?.message || element('status').textContent;
+    chatElement('status').textContent = sessionUnavailable || (snapshotOperation ? element('status').textContent : blocker?.message || stopped?.message || element('status').textContent);
     chatElement('delivery').textContent = element('delivery').textContent;
     chatElement('delivery').hidden = chatElement('delivery').textContent === chatElement('status').textContent;
-    const progress = chatElement('progress'), value = !blocker && !stopped && statusView.progress;
+    const progress = chatElement('progress'), value = snapshotOperation ? {} : !blocker && !stopped && statusView.progress;
     progress.hidden = !value;
     if (value?.total > 0) { progress.max = value.total; progress.value = value.completed; }
     else progress.removeAttribute('value');
     const canAct = connected && sessionReady && !busy && !hostGenerating();
     chatElement('vectors').hidden = blocker?.action !== 'vectors';
+    chatElement('resume').hidden = blocker?.action !== 'resume';
+    chatElement('history').disabled = busy || !sessionReady || hostGenerating() || !canBrowseChats();
     chatElement('cleanup').hidden = !connected || !state.testCollection;
     chatElement('sync').hidden = !retrySync || !state.enabled || Boolean(blocker) || !state.ready || Boolean(state.testCollection);
     chatElement('retry').hidden = !stopped?.source || !['normal', 'regenerate'].includes(stopped.type) || !context().chat.at(-1)?.is_user || !state.enabled || !state.ready || Boolean(blocker) || Boolean(state.testCollection);
     chatElement('disable').hidden = !state.enabled;
-    for (const name of ['cleanup', 'sync', 'retry', 'disable']) chatElement(name).disabled = !canAct || retrying;
+    for (const name of ['cleanup', 'sync', 'retry', 'disable', 'resume']) chatElement(name).disabled = !canAct || retrying;
+}
+async function openChatHistory() {
+    const { doNavbarIconClick } = await import('/script.js');
+    const drawer = document.querySelector('#extensions-settings-button');
+    if (drawer.querySelector('.drawer-content').classList.contains('openDrawer')) await doNavbarIconClick.call(drawer.querySelector('.drawer-toggle'));
+    document.getElementById('option_select_chat').click();
 }
 async function openMemorySettings(vectors = false) {
     const [{ doNavbarIconClick }, { toggleDrawer }] = await Promise.all([import('/script.js'), import('/scripts/utils.js')]);
@@ -140,6 +160,7 @@ function renderSettings() {
     element('retry-sync').hidden = !retrySync || !connected || !state.enabled || cleanup;
     element('recovery-actions').hidden = element('recover-cleanup').hidden && element('retry-sync').hidden;
     root.querySelectorAll('button, input').forEach(x => { x.disabled = busy || !sessionReady; });
+    element('history').disabled = busy || !sessionReady || hostGenerating() || !canBrowseChats();
     renderChatStatus();
 }
 function clearInjection() {
@@ -189,6 +210,7 @@ function validSnapshot(snapshot, instance) {
 }
 async function sync() {
     if (!sessionReady || !state.enabled || !state.ready || !client || busy) return;
+    if (savedSnapshot()) { status(chatBlocker().message); return; }
     retrySync = false; renderSettings();
     const sequence = promptSequence;
     const current = () => sequence === promptSequence && sessionReady && state.enabled;
@@ -207,7 +229,9 @@ function schedule() {
     if (!client) { status('Enter your project API key and click Save and connect.'); return; }
     if (!state.enabled) { status('Memory disabled. SillyTavern uses its usual chat history. Remote data is retained until deleted.'); return; }
     if (!state.ready || !capture(context())) { status('Select a supported character chat and connect to a memory collection.'); return; }
-    status('Waiting to synchronize current chat…');
+    if (savedSnapshot()) { status(chatBlocker().message); return; }
+    retrySync = false;
+    statusView.start().update({ phase: 'preparing' });
     timer = setTimeout(sync, 400);
 }
 function fail(error, operation, generation = false, type) {
@@ -255,7 +279,12 @@ globalThis.sillymemory_intercept = async (chat, contextSize, abort, type) => {
     invalidate();
     const sequence = promptSequence;
     const retrieval = ++retrievalSequence;
-    if (!sessionReady || busy || !state?.enabled || !state.ready || !client) return;
+    if (!sessionReady || !state?.enabled || !state.ready || !client) return;
+    if (busy) {
+        promptSource = undefined;
+        fail(new ConnectionError('Wait for the current memory operation to finish, then regenerate.'), undefined, true, type);
+        abort(true); return;
+    }
     if (context().extensionSettings.vectors?.enabled_chats) {
         status('Disable built-in Vector Storage chat vectorization before using SillyMemory.'); return;
     }
@@ -369,15 +398,15 @@ async function initialize() {
     if (composer) {
         composer.before(element('chat-status-template').content.cloneNode(true));
         chatStatus = document.getElementById('sillymemory-chat');
-        for (const [name, action] of [['settings', () => openMemorySettings()], ['vectors', () => openMemorySettings(true)]]) {
+        for (const [name, action] of [['settings', () => openMemorySettings()], ['vectors', () => openMemorySettings(true)], ['history', openChatHistory]]) {
             chatElement(name).onclick = event => {
                 event.stopPropagation();
-                return action().catch(() => status('Could not open extension settings. Open Extensions from the top bar.', { error: true }));
+                return action().catch(() => status('Could not open the requested panel. Use SillyTavern’s native menus.', { error: true }));
             };
         }
         for (const [name, handler] of [['cleanup', () => element('recover-cleanup').click()],
             ['sync', () => element('retry-sync').click()], ['retry', retryReply],
-            ['disable', () => { if (state.enabled) element('enabled').click(); }]]) {
+            ['disable', () => { if (state.enabled) element('enabled').click(); }], ['resume', () => element('checkpoint-resume').click()]]) {
             chatElement(name).onclick = event => { event.stopPropagation(); return handler(); };
         }
     }
@@ -389,6 +418,7 @@ async function initialize() {
         if (progress?.total > 0) { bar.max = progress.total; bar.value = progress.completed; }
         else bar.removeAttribute('value');
     });
+    element('history').onclick = () => openChatHistory().catch(() => status('Could not open chat history. Use Manage chat files beside the chat input.', { error: true }));
     for (const name of ['endpoint', 'project', 'budget']) element(name).value = state[name];
     element('stopOnLoss').checked = state.stopOnLoss !== false;
     element('stopOnLoss').onchange = () => { state.stopOnLoss = element('stopOnLoss').checked; persist(); };
@@ -527,11 +557,26 @@ async function initialize() {
     }
     element('checkpoint-refresh').onclick = () => action(refreshCheckpoints);
     async function checkpointAction(resume, selected, command) {
+        if (hostGenerating()) throw new ConnectionError('Wait for generation to finish before changing a memory snapshot.');
+        snapshotOperation = command === 'rename' ? 'Renaming snapshot' : command === 'delete' ? 'Deleting snapshot' : resume ? 'Resuming snapshot' : 'Saving snapshot';
+        invalidate(); clearTimeout(timer); status('Preparing memory snapshot operation…');
+        let succeeded = false;
+        try { await checkpointWork(resume, selected, command); succeeded = true; }
+        finally {
+            snapshotOperation = undefined;
+            // Keep the user's preference throughout the operation. Only resume
+            // background work after success; failures must remain visible.
+            if (succeeded && state.enabled && connectionVerified && capture(context()) && !savedSnapshot()) {
+                clearTimeout(timer); timer = setTimeout(sync, 400);
+            }
+            renderSettings();
+        }
+    }
+    async function checkpointWork(resume, selected, command) {
         if (!client || !collections || !state.ready || !capture(context())) throw new ConnectionError('Connect, prepare memory and select a character chat first.');
         const ctx = context(), file = ctx.getCurrentChatId(), avatar = ctx.characters[ctx.characterId]?.avatar;
         const revision = checkpointRevision;
         const valid = () => revision === checkpointRevision && context().getCurrentChatId() === file && context().characters[context().characterId]?.avatar === avatar;
-        state.enabled = false; element('enabled').checked = false; persist(); invalidate(); clearTimeout(timer);
         await drain();
         const { saveChat, isGenerating } = await import('/script.js');
         if (isGenerating()) throw new ConnectionError('Wait for generation to finish before preparing a checkpoint.');
@@ -585,7 +630,7 @@ async function initialize() {
         }
         if (resume) {
             const name = await resumeCheckpoint(args);
-            status(`Checkpoint resumed as ${name}. Enable memory to continue.`);
+            status(`Checkpoint resumed as ${name}. ${state.enabled ? 'Memory will synchronize automatically.' : 'Memory remains off as selected.'}`);
         } else if (selected || ctx.chatMetadata.sillymemory?.checkpoint) {
             await finishCheckpoint(args);
             if (!selected && valid()) await host.open(file);
@@ -594,7 +639,7 @@ async function initialize() {
             if (!await ensureChatIdentity(ctx, saveChat, valid)) return;
             const rows = [{ chat_metadata: structuredClone(ctx.chatMetadata) }, ...structuredClone(ctx.chat)];
             const name = await createCheckpoint({ ...args, rows, config: options(state), name: element('checkpoint-name').value });
-            status(`Checkpoint saved: ${name}. Use the checkpoint list to resume. Memory remains disabled.`);
+            status(`Checkpoint saved: ${name}. ${state.enabled ? 'Memory will continue in the original chat.' : 'Memory remains off as selected.'}`);
         }
         await refreshCheckpoints();
     }
