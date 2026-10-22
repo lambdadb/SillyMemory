@@ -1,3 +1,4 @@
+import { memoryControl } from './settings-panel.mjs';
 // Real pinned host, native local embeddings, and live managed LambdaDB.
 // No generation calls. Run only with a disposable host checkout and data directory.
 import assert from 'node:assert/strict';
@@ -57,8 +58,8 @@ report.hostInstrumentation = 'Time/CPU counters around actual local model execut
 const url = `http://127.0.0.1:${port}`;
 let server, browser, page, stage = 'setup', timeout, timedOut = false;
 const metrics = async () => (await readFile(metricPath, 'utf8')).trim().split('\n').filter(Boolean).map(line => JSON.parse(line));
-const field = name => page.locator(`#sillymemory [data-sm="${name}"]`);
-const idle = () => page.waitForFunction(() => !document.querySelector('#sillymemory [data-sm=enabled]')?.disabled);
+const field = name => name === 'enabled' ? memoryControl(page) : page.locator(`#sillymemory [data-sm="${name}"]`);
+const idle = () => page.waitForFunction(() => !document.querySelector('#sillymemory [data-sm=connect]')?.disabled);
 const status = text => page.waitForFunction(text => {
     const value = document.querySelector('#sillymemory [data-sm=status]')?.textContent || '';
     if (/failed|Invalid request|HTTP 4|HTTP 5|Timed out/i.test(value)) throw new Error(value);

@@ -1,3 +1,4 @@
+import { memoryControl } from './settings-panel.mjs';
 import { expandMemorySettings, openMemoryConnection } from './settings-panel.mjs';
 import { collectionResponse, branchResponse, documentResponse, rerankedResponse } from '../tests/helpers/lambdadb-responses.js';
 import { emulatorCors } from './emulator-cors.mjs';
@@ -214,7 +215,7 @@ try {
     await page.locator('.character_select').filter({ hasText: 'Mira' }).click();
     await page.locator('#api_button_openai').dispatchEvent('click');
     await page.waitForFunction(() => SillyTavern.getContext().onlineStatus !== 'no_connection');
-    const field = name => page.locator(`#sillymemory [data-sm="${name}"]`);
+    const field = name => name === 'enabled' ? memoryControl(page) : page.locator(`#sillymemory [data-sm="${name}"]`);
     const waitStatus = text => page.waitForFunction(text => document.querySelector('[data-sm="status"]')?.textContent.includes(text), text);
     await page.locator('#extensions-settings-button .drawer-toggle').click();
     await page.locator('#sillymemory .inline-drawer-toggle').click();

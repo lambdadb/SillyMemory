@@ -1,3 +1,4 @@
+import { memoryControl } from './settings-panel.mjs';
 import { expandMemorySettings } from './settings-panel.mjs';
 // Bounded real UI + direct browser CORS + managed LambdaDB lifecycle acceptance.
 // No generation calls; at most four small collections, or two with --large-history (1,100 submitted documents).
@@ -89,7 +90,7 @@ try {
     }
     page.on('response', r => { if (new URL(r.url()).origin === new URL(credentials.endpoint).origin) report.responses.push({ stage, status: r.status(), method: r.request().method(), resource: new URL(r.url()).pathname.split('/').slice(5).join('/') || 'collection' }); });
     await page.goto(url); await page.getByText('Welcome to SillyTavern!', { exact: true }).waitFor(); await page.getByText('Save', { exact: true }).last().click();
-    const field = name => page.locator(`#sillymemory [data-sm="${name}"]`);
+    const field = name => name === 'enabled' ? memoryControl(page) : page.locator(`#sillymemory [data-sm="${name}"]`);
     const status = async text => page.waitForFunction(text => document.querySelector('[data-sm="status"]')?.textContent.includes(text), text, { timeout: 180000 });
     panel = async () => {
         await page.locator('#sillymemory').waitFor({ state: 'attached', timeout: 45000 });
@@ -304,7 +305,7 @@ try {
         await field('enabled').uncheck();
         await page.evaluate(async name => SillyTavern.getContext().openCharacterChat(name), checkpointFile);
         const checkpoint = await identity();
-        await field('enabled').check(); await status('This is a saved checkpoint'); await field('enabled').uncheck();
+        await field('enabled').check(); await status('This is a frozen memory snapshot'); await field('enabled').uncheck();
         check('opening a checkpoint refuses ordinary memory writes', (await inspect(checkpoint)).some(d => d.text.includes('cedar tree')));
         stage = 'checkpoint resume';
         loseResume = recovery;
@@ -376,9 +377,10 @@ finally {
                 await page.locator('[data-sm="delete"]').click();
                 await page.waitForFunction(() => document.querySelector('[data-sm="status"]')?.textContent.includes('no longer accessible'), null, { timeout: 180000 });
             }
+            await page.evaluate(() => document.querySelector('[data-sm="forget"]').onclick());
+            await page.waitForFunction(() => document.querySelector('[data-sm="status"]')?.textContent.includes('Saved key removed'));
             await page.evaluate(async ({ credentials, entries }) => {
                 const c = SillyTavern.getContext();
-                const enabled = document.querySelector('[data-sm="enabled"]'); if (enabled?.checked) { enabled.checked = false; enabled.dispatchEvent(new Event('change')); }
                 const { LambdaClient } = await import('/scripts/extensions/third-party/sillymemory/src/client.js');
                 const client = new LambdaClient(credentials, credentials.key);
                 try { for (const e of entries) await client.deleteOwnedCollection(e.collection, e.owner, e.scope); } finally { client.forget(); }

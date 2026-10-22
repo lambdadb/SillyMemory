@@ -37,12 +37,12 @@ async function saveVerified(host, file, rows, valid) {
     }
 }
 
-export async function createCheckpoint({ host, client, collections, owner, rows, avatar, config, name = '', valid = () => true, progress = () => {} }) {
+export async function createCheckpoint({ host, client, collections, owner, rows, avatar, config, file: sourceFile, name = '', valid = () => true, progress = () => {} }) {
     const metadata = metadataOf(rows), memory = metadata?.sillymemory;
     if (memory?.version !== 1 || memory.checkpoint) fail('Select a versioned story path before saving a checkpoint.');
     const copy = structuredClone(rows), checkpointId = id();
     const file = `SillyMemory checkpoint ${checkpointId}`;
-    copy[0].chat_metadata = { ...metadata, integrity: id(), sillymemory: { version: 1, id: checkpointId,
+    copy[0].chat_metadata = { ...metadata, ...(sourceFile ? { main_chat: sourceFile } : {}), integrity: id(), sillymemory: { version: 1, id: checkpointId,
         story: memory.story, source: memory.id } };
     copy[0].chat_metadata.sillymemory.integrity = copy[0].chat_metadata.integrity;
     const mark = { name: checkpointName(name), state: 'pending', config: options(config), createdAt: new Date().toISOString() };

@@ -58,16 +58,18 @@ of the normal installation.
    temporary data and verifies cleanup, using your LambdaDB allowance. Your chat
    is not uploaded by this step. If a test collection needs cleanup, use the
    **Clean up test data** button beside the status before retrying.
-6. Open a saved character chat and check **Enable memory**. Wait for synchronization
-   before sending a message. Turn off built-in Vector Storage chat vectorization
+6. Open a saved character chat, expand **Memory** above the composer and click
+   **Turn memory on in this chat**. Wait for synchronization before sending a message. Turn off built-in Vector Storage chat vectorization
    and other extensions that rewrite chat history.
 
 The basic panel shows the next setup action: connect, prepare, then enable.
 Once ready, the memory switch and status remain visible; connection details stay
 collapsed after successful verification, including reconnection after reload.
-**Checkpoints** holds optional story save/resume controls. **Advanced** holds
-memory limits, diagnostic tools, prompt inspection and remote cleanup. Both
-optional sections start collapsed; existing saved settings are preserved.
+Use SillyTavern's existing chat history, **Save checkpoint** and **Create Branch**
+controls. Memory follows the selected chat and its own saved on/off preference.
+**Advanced** holds memory limits, diagnostic tools, prompt inspection, remote cleanup
+and optional **Frozen memory snapshots**. Advanced controls start collapsed;
+existing saved settings are preserved.
 
 No npm commands, proxy setting, or SillyTavern server restart are needed.
 
@@ -83,24 +85,51 @@ Your original chat file stays intact.
 - Open **Memory** above the message composer for current status and recovery
   actions. **Ready** means the chat can use memory; **Last prompt verified** means
   the final host prompt passed the delivery check. It does not guarantee answer
-  correctness. **SillyMemory settings** opens the native extension drawer.
+  correctness. **Chat history** opens SillyTavern's existing chat list so you can
+  return to the original conversation. **SillyMemory settings** opens the native extension drawer.
+- Once connected and prepared, use **Turn memory on / off** in the same panel
+  without reopening settings. Switching is disabled during generation or a
+  manual memory operation; initial connection and preparation stay in settings.
+  This preference is saved in the selected chat’s native metadata. New chats start
+  off; native checkpoints and branches inherit the source preference and can then
+  be changed independently. Extension settings manage the shared LambdaDB
+  connection, preparation and advanced options, without a global memory switch.
 - SillyMemory connects directly to LambdaDB and does not depend on built-in Vector
   Storage. Its chat vectorization must be off to avoid conflicting history injection;
   the chat status links to its settings without changing them.
-- Open **Advanced → Memory in the last prompt** to inspect the prepared excerpts.
-  Check the delivery status for whether the final host prompt was verified.
+- Expand **Memory** to preview up to three selected source passages from the
+  last prompt, with speaker and message positions. **View full memory** opens
+  **Advanced → Memory in the last prompt** directly. Check the delivery status
+  for whether the final host prompt was verified. Previews stay in this tab and
+  clear when changing chats, changing source messages, disabling memory or
+  preparing another reply; normal reply completion keeps the last selection.
+- The expanded panel shows the last prepared input estimate from SillyTavern's
+  existing Chat Completions counter, plus the prepared memory size. **Compare
+  dialogue text** optionally measures raw dialogue before/after memory using the
+  local tokenizer. This reference precedes host formatting/context trimming and
+  excludes character/system settings; its percentage is not full-prompt or billing
+  savings. See [token display semantics](docs/prompt-token-display.md).
 - Under **Advanced**, the default **Memory token budget** is 4,096 tokens, capped
   at one quarter of the host context. Recent messages and character instructions also need room;
   SillyTavern can still trim the final prompt to its context limit.
-- Uncheck **Enable memory** to return to ordinary SillyTavern history handling.
+- Click **Turn memory off in this chat** to return to ordinary SillyTavern history handling.
   Continue the same chat: the original transcript is preserved, and the next
   generation uses the host’s existing context limits and settings without
   SillyMemory retrieval. Saved remote memory is kept; other extensions’ settings
   are not changed.
-- Reload reconnects using the saved key and restores the previous enabled state
+- Reload reconnects using the saved key and restores the selected chat’s saved on/off state
   after verification. **Connection → Forget key** removes the saved key and disables memory.
-- Native story branches keep separate memory paths. Open **Checkpoints** to save,
-  browse and resume a story state. See the [checkpoint guide](docs/checkpoints.md).
+- Use the native **Save checkpoint**, **Create Branch**, **Back to parent chat**
+  and **Manage chat files** controls as usual. With memory enabled, opening a
+  checkpoint or branch automatically prepares its separate memory path from that
+  chat's transcript; later messages from another path are excluded. Preparation
+  can take time and consume embedding allowance. Native checkpoint saving does
+  not freeze a remote memory snapshot at the moment you click Save.
+- **Advanced → Frozen memory snapshots** additionally binds a saved transcript
+  to verified remote memory. This optional feature has separate save/resume controls.
+  Saving or resuming preserves your memory preference and shows operation progress;
+  an enabled writable chat synchronizes automatically after success. See the
+  [snapshot guide](docs/checkpoints.md) and [native workflow validation](docs/native-chat-workflow.md).
 
 ## If something goes wrong
 

@@ -4,6 +4,36 @@ Versions describe the extension, independently of the SillyTavern host version.
 An `Unreleased` entry is a development candidate. A dated entry records a release
 boundary; publication is confirmed by the corresponding Git tag and GitHub Release.
 
+## [0.6.1] - Unreleased
+
+### Changed
+
+- Show existing host input-token estimates and prepared memory size, with an
+  optional local dialogue-text comparison that distinguishes its reference from
+  native memory-off prompts and billing.
+- Let users turn prepared memory on and off directly from the chat panel through
+  saved native chat metadata. Each chat has its own on/off preference; settings
+  manage the shared LambdaDB connection without a global memory switch.
+- Preview selected memory in the expanded chat panel with source coordinates,
+  short excerpts and a shortcut to the full last-prompt memory inspector.
+- Use green for ready/verified memory, orange for work in progress, yellow for
+  warnings and red for errors, independently of the theme's quote color.
+- Follow SillyTavern's native chat history, checkpoint and branch workflow in the
+  basic panel. Move optional frozen memory snapshots under Advanced and link to
+  the native chat list from the chat-facing Memory panel. New frozen snapshots
+  retain a native parent link back to their actual source conversation.
+- Preserve the memory enabled preference during frozen snapshot save/resume,
+  show operation progress, and automatically synchronize the writable chat after
+  success. An explicitly disabled preference stays off.
+- Treat native forks of frozen snapshots as writable paths while keeping the
+  original snapshot protected. Stop generation explicitly while a manual memory
+  operation is in progress instead of silently skipping enabled memory.
+- Normalize writable snapshot forks before saving another snapshot even with
+  memory off. Canceled snapshot rename/delete actions clear preparation without
+  scheduling follow-up synchronization.
+- Keep scheduled synchronization pending during slow manual work without
+  leaving stale progress or overwriting a newer failure.
+
 ## [0.6.0] - 2026-10-21
 
 ### Added
