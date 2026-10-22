@@ -1870,14 +1870,3 @@ This is conservative committed readiness, not first semantic-query latency.
   judging or LambdaDB operations. Temporary hosts/data removed. Local-only,
   unavailable in a fresh clone, and not a CI dependency. See the result document
   for omitted parent indexing, dependency-symlink image warnings and timing limits.
-
-## October 22 public LongMemEval evaluation
-
-Evidence for the [LongMemEval-S results](longmemeval-public-evaluation.md), produced
-at [`cae42d58`](https://github.com/lambdadb/SillyMemory/tree/cae42d58d955a1688ced3075ad05227923f36772):
-
-- Archive: `artifacts/archive/longmemeval-public-evaluation-v1/evidence.tar.gz`.
-- SHA-256: `2e1a5c0b6dd4bbd63bb2f850f78da032b32ec53950ca252c51a260f6f096cb21`.
-- Availability: retained locally; not included in the repository or publicly
-  downloadable. The archive includes frozen inputs, source, raw receipts and
-  `RESTORE.md` with offline verification instructions.

@@ -35,7 +35,6 @@ The rules SHA-256 is
 `0e2c981b54ecea007bc538982671b474b77cf857065327bb7f2f332a00e81e42`.
 The 1,550 comparison judgments used 736,867 input tokens, with a list-rate estimate
 of **$0.030948**. Judging is evaluation overhead, separate from answer serving cost.
-Raw probabilities and request/response receipts are retained.
 
 ### Full 500-question comparison
 
@@ -171,9 +170,7 @@ not provider-reported usage, and exclude reranking, database and storage costs.
   7,488 cached-input and 2,362,057 cache-write tokens. Median input was 4,805.5.
 - SillyMemory judging: 500 calls and 239,354 input tokens, estimated **$0.010053**,
   separate from the alternatives' $0.030948 judging overhead.
-- The public offline verifier passed for all 500 questions. An independent audit
-  of raw responses reproduced full-cohort and subset scores, token usage and
-  generation costs.
+- The public offline verifier passed for all 500 questions.
 
 Server-reported median query time was 1,252.5 ms, including a 1,049 ms median
 reranking component. Median successful-generation response-header time was
@@ -197,8 +194,8 @@ The producing checkout is
 The [comparison data](benchmarks/longmemeval-public-evaluation-v1.json) contains
 full-cohort and subset scores, paired outcomes, usage, rates and failure accounting.
 The [benchmark data](../benchmark/longmemeval/results.json) records the score and
-resource measurements. Source provenance and evidence availability are listed in
-the [evidence index](evidence-retention.md#october-22-public-longmemeval-evaluation).
+resource measurements. Raw per-question responses are not published; the commands
+above produce a separate run for independent reproduction.
 
 The benchmark needs no SillyTavern installation. To try the product in
 SillyTavern, follow the [extension installation instructions](../README.md#install);

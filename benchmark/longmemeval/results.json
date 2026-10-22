@@ -17,7 +17,6 @@
   },
   "input": "Ingestion, source readback, retrieval, memory assembly, answer generation and judging with the public benchmark profile.",
   "producerRevision": "cae42d58d955a1688ced3075ad05227923f36772",
-  "binding": "7929d08cdda4f9f875b23f3c168107f9acc6cdd7e41119901e56b799332b150b",
   "resources": {
     "generation": {
       "calls": 500,
@@ -103,12 +102,7 @@
   },
   "resourceSource": {
     "document": "../../docs/longmemeval-public-evaluation.md",
-    "aggregate": "../../docs/benchmarks/longmemeval-public-evaluation-v1.json",
-    "localArchive": "artifacts/archive/longmemeval-public-evaluation-v1/evidence.tar.gz",
-    "sha256": "2e1a5c0b6dd4bbd63bb2f850f78da032b32ec53950ca252c51a260f6f096cb21",
-    "bytes": 255548796,
-    "verifiedMembers": 24042,
-    "availability": "Local archive; raw evidence is not included in the repository or publicly downloadable."
+    "aggregate": "../../docs/benchmarks/longmemeval-public-evaluation-v1.json"
   },
   "evidenceCoverage": {
     "retrievedEvidence": {

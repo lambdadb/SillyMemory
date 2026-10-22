@@ -113,7 +113,6 @@
     "tokenizer": "tiktoken 1.0.22 / cl100k_base",
     "embeddingModel": "text-embedding-3-small",
     "datasetSha256": "d6f21ea9d60a0d56f34a05b609c79c88a451d2ae03597821ea3d5a9678c3a442",
-    "lockSha256": "7929d08cdda4f9f875b23f3c168107f9acc6cdd7e41119901e56b799332b150b",
     "inputRatePerMillionUsd": 0.021,
     "source": "https://docs.lambdadb.ai/guides/costs/understanding-costs",
     "boundary": "Independent token estimate for frozen text fields and one question embedding each. Not provider-reported usage or invoices. Excludes reranking, database operations, storage and retries.",
@@ -478,13 +477,6 @@
       "bothWrong": 11
     }
   },
-  "evidence": {
-    "localArchive": "artifacts/archive/longmemeval-public-evaluation-v1/evidence.tar.gz",
-    "sha256": "2e1a5c0b6dd4bbd63bb2f850f78da032b32ec53950ca252c51a260f6f096cb21",
-    "bytes": 255548796,
-    "verifiedMembers": 24042,
-    "availability": "Local archive; raw evidence is not included in the repository or publicly downloadable."
-  },
   "costRates": {
     "checkedAt": "2026-10-22",
     "basis": "Published Standard list rates, before account allowances; estimates, not invoices",
@@ -524,7 +516,6 @@
         "endpoint": "https://api.typesafe.ai/v1/systemone"
       },
       "rulesSha256": "0e2c981b54ecea007bc538982671b474b77cf857065327bb7f2f332a00e81e42",
-      "binding": "7a91ab6a7d00730245a263c177835f382e09751e0762408f5619b1f89116b89a",
       "arms": {
         "plain": {
           "questions": 500,
@@ -549,9 +540,7 @@
       "billedCostUsd": null,
       "newAnswerCalls": 0,
       "newDatabaseCalls": 0
-    },
-    "preparedRequestsSha256": "9c1923aae5fa8544840e290c3c38719fc656b06f8fecfd219802cab7304957f0",
-    "retainedProbabilities": "producer/artifacts/longmemeval-blog-audit/comparator-rejudge-prepared/scores.json inside the local archive."
+    }
   },
   "evidenceCoverage": {
     "retrievedEvidence": {
