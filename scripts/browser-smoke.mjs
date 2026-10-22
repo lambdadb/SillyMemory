@@ -217,7 +217,7 @@ try {
     check('basic preparation runs the required transport test and cleans up without opening Advanced', collections.size === 0 && calls.filter(c => c.path.endsWith('/docs/upsert')).length > gateUploads && !await field('budget').isVisible() && !await field('enabled').isChecked());
     check('direct requests carry the key and origin but omit cookies and host CSRF', calls.some(c => c.keyPresent) && calls.every(c => !c.cookiePresent && !c.csrfPresent && c.origin === url) && preflights > 0 && proxyRequests === 0);
     check('prepared setup shows the memory switch instead of setup controls', !await field('provision').isVisible() && await field('enabled').isVisible() && !await field('endpoint').isVisible() && (await field('mode-help').innerText()).includes('usual chat history'));
-    check('prepared memory exposes a chat-facing Turn memory on action', await chatField('toggle').getAttribute('hidden') === null && (await chatField('toggle').textContent()) === 'Turn memory on');
+    check('prepared memory exposes a chat-facing Turn memory on action', await chatField('toggle').getAttribute('hidden') === null && (await chatField('toggle').textContent()) === 'Turn memory on (all chats)');
     check('preparation creates no collection before a chat is enabled', collections.size === 0);
     await page.locator('#sillymemory .inline-drawer-toggle').scrollIntoViewIfNeeded();
     if (!faultMode) await page.screenshot({ path: path.join(artifacts, 'setup.png') });
@@ -285,7 +285,7 @@ try {
     await page.evaluate(async () => { const c = SillyTavern.getContext(); await c.selectCharacterById(c.characters.findIndex(x => x.name === 'SillyMemory Synthetic')); });
     await openChatMemory(page);
     await chatField('toggle').click(); await waitStatus('synchronized');
-    check('chat activation persists the same enabled preference without reopening settings', await field('enabled').isChecked() && (await chatField('toggle').textContent()) === 'Turn memory off' && (await chatField('delivery').textContent()).includes('Memory enabled. No prompt checked') && await page.evaluate(() => JSON.parse(localStorage.getItem(`sillymemory:state:${SillyTavern.getContext().extensionSettings.sillymemory.owner}`)).enabled && !document.querySelector('#extensions-settings-button .drawer-content').classList.contains('openDrawer')));
+    check('chat activation persists the same enabled preference without reopening settings', await field('enabled').isChecked() && (await chatField('toggle').textContent()) === 'Turn memory off (all chats)' && (await chatField('delivery').textContent()).includes('Memory enabled. No prompt checked') && await page.evaluate(() => JSON.parse(localStorage.getItem(`sillymemory:state:${SillyTavern.getContext().extensionSettings.sillymemory.owner}`)).enabled && !document.querySelector('#extensions-settings-button .drawer-content').classList.contains('openDrawer')));
     await chatField('settings').click(); await field('enabled').waitFor({ state: 'visible' });
     if (!faultMode) {
         // Fail a read-only ownership check so this UI case does not leave an
@@ -624,7 +624,7 @@ try {
 
     if (faultMode) check('fault run has no uncaught browser page errors', errors.length === 0);
     const sourceSha256 = {};
-    for (const file of ['index.js', 'manifest.json', 'settings.html', 'style.css', 'src/chunking.js', 'src/client.js', 'src/credentials.js', 'src/commit.js', 'src/chat-collections.js', 'src/checkpoints.js', 'src/gate.js', 'src/memory.js', 'src/time.js', 'src/context.js', 'scripts/native-chat-scenarios.mjs', 'scripts/native-reply-scenarios.mjs', 'src/delivery.js', 'src/status.js', 'scripts/browser-smoke.mjs', 'scripts/settings-panel.mjs', 'scripts/emulator-cors.mjs', 'scripts/fault-scenarios.mjs', 'scripts/recovery-scenarios.mjs']) {
+    for (const file of ['index.js', 'manifest.json', 'settings.html', 'style.css', 'src/chunking.js', 'src/client.js', 'src/credentials.js', 'src/commit.js', 'src/chat-collections.js', 'src/checkpoints.js', 'src/gate.js', 'src/memory.js', 'src/time.js', 'src/context.js', 'scripts/native-chat-scenarios.mjs', 'scripts/native-reply-scenarios.mjs', 'src/delivery.js', 'src/token-usage.js', 'src/status.js', 'scripts/browser-smoke.mjs', 'scripts/settings-panel.mjs', 'scripts/emulator-cors.mjs', 'scripts/fault-scenarios.mjs', 'scripts/recovery-scenarios.mjs']) {
         sourceSha256[file] = createHash('sha256').update(await readFile(path.join(root, file))).digest('hex');
     }
     await writeFile(path.join(artifacts, artifactName), JSON.stringify({ passed: true, faultResults, nativeChatResults, nativeReplyResults, sourceSha256, time: new Date().toISOString(), sillyTavern: revision, node: process.version, browser: browser.version(), upstream: 'Local HTTPS LambdaDB emulator; no live managed embeddings', checks, pageErrors: errors, requestCount: calls.length, preflights, proxyRequests, remainingCollections: collections.size }, null, 2));

@@ -7,6 +7,7 @@ import { MemoryEngine, Journal, capture, supportsChat, fingerprint, options, DEF
 import { OperationStatus, failureText } from './src/status.js';
 import { PromptDelivery, expectedMessages, deliverySummary } from './src/delivery.js';
 import { MEMORY_GUIDANCE, retentionAnchor, quoteMemoryText, quoteMemoryMessages } from './src/context.js';
+import { hostPromptTokens, dialogueSnapshot, compareDialogue, comparisonLabel, tokenLabel } from './src/token-usage.js';
 
 const context = () => SillyTavern.getContext();
 const uuid = () => crypto.randomUUID().replaceAll('-', '');
@@ -24,6 +25,7 @@ let snapshotOperation;
 let retrying = false, sourceRevision = 0;
 let hostGenerating = () => false;
 let promptType, promptSource;
+let hostOpenAI, hostTokenizers, tokenUsage;
 const engines = new Map();
 const entryKey = entry => `${entry.collection}:${entry.branch}`;
 const delivery = new PromptDelivery();
@@ -85,10 +87,49 @@ function showMemoryPreview(passages) {
     chatElement('inspect').textContent = remaining > 0 ? `View full memory (${remaining} more ${remaining === 1 ? 'passage' : 'passages'})` : 'View full memory';
     chatElement('inspect').hidden = !passages.length;
 }
+const tokenizerKey = () => `${context().mainApi}:${hostTokenizers?.getTokenizerModel()}`;
+function clearTokenUsage() { tokenUsage = undefined; renderTokenUsage(); }
+function renderTokenUsage() {
+    if (!chatStatus) return;
+    const usage = tokenUsage;
+    chatElement('tokens').hidden = !usage?.finished;
+    if (!usage?.finished) return;
+    chatElement('token-input').textContent = `${tokenLabel(usage.input)}${usage.input === undefined ? '' : ' tokens'}`;
+    chatElement('token-memory').textContent = `${tokenLabel(usage.memory)}${usage.memory === undefined ? '' : ' tokens'}${usage.enabled ? '' : ' · memory off'}`;
+    chatElement('token-compare').hidden = !usage.enabled || !usage.after || Boolean(usage.comparison) || !usage.model.startsWith('openai:');
+    chatElement('token-compare').disabled = Boolean(usage.comparing) || busy || hostGenerating() || usage.model !== tokenizerKey();
+    chatElement('token-compare').textContent = usage.comparing ? 'Counting dialogue text…' : 'Compare dialogue text';
+    chatElement('token-reference').textContent = usage.comparison ? `Dialogue reference: ${comparisonLabel(usage.comparison)}` : usage.error || '';
+    chatElement('token-reference').hidden = !usage.comparison && !usage.error;
+    chatElement('token-reference-help').hidden = !usage.comparison && !usage.comparing;
+}
+async function compareTokenUsage() {
+    const usage = tokenUsage;
+    if (!usage?.finished || !usage.enabled || !usage.after || usage.comparing || usage.comparison || busy || hostGenerating() || !usage.model.startsWith('openai:') || usage.model !== tokenizerKey()) return;
+    usage.comparing = true; usage.error = undefined; renderTokenUsage();
+    const current = () => tokenUsage === usage && usage.target === requestTarget() && usage.model === tokenizerKey();
+    try {
+        const comparison = await compareDialogue(usage.before, usage.after, usage.guidance, context().getTokenCountAsync);
+        if (current()) usage.comparison = comparison;
+    } catch {
+        if (current()) usage.error = 'Dialogue reference unavailable. You can retry; generation is unaffected.';
+    } finally {
+        if (tokenUsage === usage) { usage.comparing = false; renderTokenUsage(); }
+    }
+}
+function beginTokenUsage(chat) {
+    if (!chatStatus || !sessionReady || !connectionVerified || !client || !state.ready || !supportsChat(context())) return;
+    const before = dialogueSnapshot(chat);
+    tokenUsage = { before, after: state.enabled ? undefined : before, memory: state.enabled ? undefined : 0,
+        enabled: state.enabled, model: tokenizerKey(), target: requestTarget() };
+    return tokenUsage;
+}
 function renderChatStatus() {
     if (!chatStatus || !state) return;
     const connected = Boolean(sessionReady && connectionVerified && client);
     if (!connected || !state.enabled) showMemoryPreview();
+    if (!connected || (tokenUsage && tokenUsage.enabled !== state.enabled)) clearTokenUsage();
+    renderTokenUsage();
     const blocker = state.enabled ? chatBlocker() : null;
     const stopped = currentStoppedRequest();
     let label = 'Off', kind = 'idle';
@@ -121,7 +162,7 @@ function renderChatStatus() {
     chatElement('sync').hidden = !retrySync || !state.enabled || Boolean(blocker) || !state.ready || Boolean(state.testCollection);
     chatElement('retry').hidden = !stopped?.source || !['normal', 'regenerate'].includes(stopped.type) || !context().chat.at(-1)?.is_user || !state.enabled || !state.ready || Boolean(blocker) || Boolean(state.testCollection);
     chatElement('toggle').hidden = !state.enabled && (!connected || !state.ready || Boolean(state.testCollection));
-    chatElement('toggle').textContent = state.enabled ? 'Turn memory off' : 'Turn memory on';
+    chatElement('toggle').textContent = state.enabled ? 'Turn memory off (all chats)' : 'Turn memory on (all chats)';
     for (const name of ['cleanup', 'sync', 'retry', 'toggle', 'resume']) chatElement(name).disabled = !canAct || retrying;
 }
 function toggleMemory() {
@@ -279,6 +320,7 @@ function schedule() {
 }
 function fail(error, operation, generation = false, type) {
     showMemoryPreview();
+    clearTokenUsage();
     retrySync = Boolean(operation && !generation);
     // Native generation-ended sync can replace operation progress immediately.
     // Keep the failed generation visible independently of background progress.
@@ -317,11 +359,14 @@ globalThis.sillymemory_intercept = async (chat, contextSize, abort, type) => {
     }
     // Quiet prompts cancel older reads/injection while preserving source sync.
     if (type === 'quiet') {
+        if (!tokenUsage?.finished) clearTokenUsage();
         retrievalOperation?.finish('Memory retrieval skipped for quiet generation.');
         retrievalSequence++; engine?.cancelReads(); clearInjection(); delivery.clear(); return;
     }
     showMemoryPreview();
+    clearTokenUsage();
     invalidate();
+    const requestTokens = beginTokenUsage(chat);
     const sequence = promptSequence;
     const retrieval = ++retrievalSequence;
     if (!sessionReady || !state?.enabled || !state.ready || !client) return;
@@ -395,6 +440,7 @@ globalThis.sillymemory_intercept = async (chat, contextSize, abort, type) => {
             if (eligible.has(chat[i].index)) chat.splice(i, 1, ...(recalled.get(chat[i].index) || []));
         }
         element('inspection').textContent = `${preparedTokens} / ${config.budget} tokens\n\n${quoteMemoryText(result.text)}`;
+        if (requestTokens && tokenUsage === requestTokens) Object.assign(requestTokens, { after: dialogueSnapshot(chat), memory: preparedTokens, guidance: requestGuidance });
         showMemoryPreview(result.passages);
         operation.finish(`Prepared ${result.passages.length} source passages in ${preparedMessages.length} memory excerpts (${preparedTokens} tokens); awaiting final prompt verification.`);
     } catch (e) {
@@ -440,6 +486,7 @@ async function initialize() {
     document.querySelector('#extensions_settings2').insertAdjacentHTML('beforeend', html);
     root = document.querySelector('#sillymemory');
     hostGenerating = (await import('/script.js')).isGenerating;
+    [hostOpenAI, hostTokenizers] = await Promise.all([import('/scripts/openai.js'), import('/scripts/tokenizers.js')]);
     const composer = document.getElementById('send_form');
     if (composer) {
         composer.before(element('chat-status-template').content.cloneNode(true));
@@ -452,7 +499,7 @@ async function initialize() {
         }
         for (const [name, handler] of [['cleanup', () => element('recover-cleanup').click()],
             ['sync', () => element('retry-sync').click()], ['retry', retryReply],
-            ['toggle', toggleMemory], ['resume', () => element('checkpoint-resume').click()]]) {
+            ['toggle', toggleMemory], ['token-compare', compareTokenUsage], ['resume', () => element('checkpoint-resume').click()]]) {
             chatElement(name).onclick = event => { event.stopPropagation(); return handler(); };
         }
     }
@@ -697,6 +744,7 @@ async function initialize() {
     element('checkpoint-save').onclick = () => action(() => checkpointAction(false));
     element('checkpoint-resume').onclick = () => action(() => checkpointAction(true));
     element('enabled').onchange = () => action(async () => {
+        clearTokenUsage();
         invalidate();
         const requested = element('enabled').checked;
         state.enabled = false; persist();
@@ -751,11 +799,21 @@ async function initialize() {
     element('delete').onclick = () => action(() => deleteMemory(true));
     element('delete-chat').onclick = () => action(() => deleteMemory(false));
     const events = ctx.eventTypes;
+    ctx.eventSource.on(events.CHAT_COMPLETION_PROMPT_READY, data => {
+        if (data.dryRun || !tokenUsage || tokenUsage.finished || tokenUsage.model !== tokenizerKey()) return;
+        tokenUsage.native = { packet: JSON.stringify(data.chat), tokens: hostPromptTokens(hostOpenAI.promptManager, data.chat) };
+    });
     ctx.eventSource.on(events.GENERATE_AFTER_DATA, (data, dryRun) => {
+        if (!dryRun && tokenUsage && !tokenUsage.finished) {
+            const usage = tokenUsage;
+            usage.input = usage.target === requestTarget() && usage.model === tokenizerKey() && usage.native?.packet === JSON.stringify(data?.prompt) ? usage.native?.tokens : undefined;
+            delete usage.native; usage.finished = true; renderTokenUsage();
+        }
         const finished = delivery.finish(context().mainApi === 'openai' ? data?.prompt : null, dryRun);
         if (!finished) return;
         if (finished.canceled) {
             showMemoryPreview();
+            clearTokenUsage();
             ctx.stopGeneration();
             showDelivery('Generation stopped because the chat or memory settings changed during prompt preparation. Generate again.', { label: 'Reply stopped', kind: 'error' });
             element('inspection').textContent = 'No current memory verified.';
@@ -780,6 +838,7 @@ async function initialize() {
     ctx.eventSource.on(events.GENERATION_STARTED, (type, _options, dryRun) => {
         if (dryRun || type === 'quiet') return;
         showMemoryPreview();
+        clearTokenUsage();
         stoppedRequest = undefined; deliveryNotice = undefined;
         renderChatStatus();
     });
@@ -789,7 +848,7 @@ async function initialize() {
         if (events[name]) ctx.eventSource.on(events[name], () => {
             checkpointRevision++;
             if (name !== 'GENERATION_ENDED') { sourceRevision++; stoppedRequest = undefined; }
-            if (!['GENERATION_ENDED', 'MESSAGE_RECEIVED'].includes(name)) showMemoryPreview();
+            if (!['GENERATION_ENDED', 'MESSAGE_RECEIVED'].includes(name)) { showMemoryPreview(); clearTokenUsage(); }
             if (name === 'CHAT_CHANGED' || name === 'CHAT_RENAMED') {
                 identityKey = undefined;
                 listSequence++; element('checkpoint-list').textContent = 'Refresh to view checkpoints for this story.';

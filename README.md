@@ -90,6 +90,7 @@ Your original chat file stays intact.
 - Once connected and prepared, use **Turn memory on / off** in the same panel
   without reopening settings. Switching is disabled during generation or a
   manual memory operation; initial connection and preparation stay in settings.
+  This preference applies to all chats for this account in the current browser.
 - SillyMemory connects directly to LambdaDB and does not depend on built-in Vector
   Storage. Its chat vectorization must be off to avoid conflicting history injection;
   the chat status links to its settings without changing them.
@@ -99,6 +100,12 @@ Your original chat file stays intact.
   for whether the final host prompt was verified. Previews stay in this tab and
   clear when changing chats, changing source messages, disabling memory or
   preparing another reply; normal reply completion keeps the last selection.
+- The expanded panel shows the last prepared input estimate from SillyTavern's
+  existing Chat Completions counter, plus the prepared memory size. **Compare
+  dialogue text** optionally measures raw dialogue before/after memory using the
+  local tokenizer. This reference precedes host formatting/context trimming and
+  excludes character/system settings; its percentage is not full-prompt or billing
+  savings. See [token display semantics](docs/prompt-token-display.md).
 - Under **Advanced**, the default **Memory token budget** is 4,096 tokens, capped
   at one quarter of the host context. Recent messages and character instructions also need room;
   SillyTavern can still trim the final prompt to its context limit.

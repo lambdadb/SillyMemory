@@ -8,6 +8,9 @@ boundary; publication is confirmed by the corresponding Git tag and GitHub Relea
 
 ### Changed
 
+- Show existing host input-token estimates and prepared memory size, with an
+  optional local dialogue-text comparison that distinguishes its reference from
+  native memory-off prompts and billing. Label on/off as applying to all chats.
 - Let users turn prepared memory on and off directly from the chat panel through
   the same activation controls as settings.
 - Preview selected memory in the expanded chat panel with source coordinates,

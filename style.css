@@ -43,6 +43,9 @@
 #sillymemory-chat .sm-chat-memory ul { list-style: none; padding: 0; margin: 0.5rem 0; }
 #sillymemory-chat .sm-chat-memory li + li { margin-top: 0.6rem; }
 #sillymemory-chat .sm-chat-memory small { display: block; opacity: 0.75; }
+#sillymemory-chat .sm-token-counts { display: grid; grid-template-columns: 1fr auto; gap: 0.25rem 0.6rem; margin: 0.4rem 0; }
+#sillymemory-chat .sm-token-counts dd { margin: 0; text-align: right; }
+#sillymemory-chat [data-sm-chat="token-compare"] { margin-top: 0.4rem; }
 #sillymemory-chat .sm-chat-actions { display: flex; flex-wrap: wrap; gap: 0.4rem; }
 #sillymemory-chat button { width: auto; margin: 0; }
 #sillymemory-chat [hidden] { display: none !important; }
