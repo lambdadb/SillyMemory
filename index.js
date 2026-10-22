@@ -125,6 +125,10 @@ function beginTokenUsage(chat) {
         enabled: memoryEnabled(), model: tokenizerKey(), target: requestTarget() };
     return tokenUsage;
 }
+function canReconnect() {
+    try { return Boolean(sessionReady && !connectionVerified && savedKey?.read(state)); }
+    catch { return false; }
+}
 function renderChatStatus() {
     if (!chatStatus || !state) return;
     const connected = Boolean(sessionReady && connectionVerified && client);
@@ -159,6 +163,8 @@ function renderChatStatus() {
     chatElement('vectors').hidden = blocker?.action !== 'vectors';
     chatElement('resume').hidden = blocker?.action !== 'resume';
     chatElement('history').disabled = busy || !sessionReady || hostGenerating() || !canBrowseChats();
+    chatElement('reconnect').hidden = !canReconnect();
+    chatElement('reconnect').disabled = !sessionReady || busy || retrying || hostGenerating();
     chatElement('cleanup').hidden = !connected || !state.testCollection;
     chatElement('sync').hidden = !retrySync || !memoryEnabled() || Boolean(blocker) || !state.ready || Boolean(state.testCollection);
     chatElement('retry').hidden = !stopped?.source || !['normal', 'regenerate'].includes(stopped.type) || !context().chat.at(-1)?.is_user || !memoryEnabled() || !state.ready || Boolean(blocker) || Boolean(state.testCollection);
@@ -274,6 +280,7 @@ function renderSettings() {
     }
     element('connection-state').textContent = connected ? `Connected · ${state.project}` : 'Not connected';
     const cleanup = Boolean(connected && state.testCollection);
+    element('connect').textContent = state.ready || state.testCollection ? 'Save and connect' : 'Connect and prepare';
     element('prepare-controls').hidden = !connected || state.ready || cleanup;
     element('usage-help').hidden = !connected || !state.ready;
     element('next-step').textContent = !connected ? 'Connect your project above to get started.'
@@ -351,7 +358,7 @@ async function sync() {
 function schedule() {
     if (!sessionReady) return; // Preserve the lock-conflict explanation.
     invalidate(); clearTimeout(timer);
-    if (!client) { status('Enter your project API key and click Save and connect.'); return; }
+    if (!client) { status('Enter your project API key in Connection settings to connect.'); return; }
     if (!memoryEnabled()) { status('Memory disabled. SillyTavern uses its usual chat history. Remote data is retained until deleted.'); return; }
     if (!state.ready || !capture(context())) { status('Select a supported character chat and connect to a memory collection.'); return; }
     if (savedSnapshot()) { status(chatBlocker().message); return; }
@@ -546,7 +553,7 @@ async function initialize() {
         }
         for (const [name, handler] of [['cleanup', () => element('recover-cleanup').click()],
             ['sync', () => element('retry-sync').click()], ['retry', retryReply],
-            ['toggle', toggleMemory], ['token-compare', compareTokenUsage], ['resume', () => element('checkpoint-resume').click()]]) {
+            ['reconnect', reconnect], ['toggle', toggleMemory], ['token-compare', compareTokenUsage], ['resume', () => element('checkpoint-resume').click()]]) {
             chatElement(name).onclick = event => { event.stopPropagation(); return handler(); };
         }
     }
@@ -600,8 +607,9 @@ async function initialize() {
             else savedKey.commit(candidate, key, nextState);
             state = nextState;
             client = candidateClient; connectionVerified = true; makeCollections(); gatePassed = false;
+            autoRefreshCheckpoints();
             if (memoryEnabled()) schedule();
-            else status(state.ready ? 'Connected. Memory remains disabled.' : 'Connected. Click Prepare chat memory, then enable memory in a saved character chat.');
+            else status(state.ready ? 'Connected. Memory remains disabled.' : 'Connected. Finish preparation, then turn memory on in a saved character chat.');
         } catch (error) {
             connectionVerified = false;
             candidateClient.forget();
@@ -612,12 +620,24 @@ async function initialize() {
             throw error;
         } finally { if (connectingClient === candidateClient) connectingClient = undefined; }
     }
-    element('connect').onclick = () => action(async () => {
-        const candidate = connectionConfig({ endpoint: element('endpoint').value.trim(), project: element('project').value.trim() });
-        const typed = element('key').value.trim();
-        const key = typed || savedKey.read(candidate) || ''; element('key').value = '';
-        await connect(candidate, key, !typed);
-    });
+    element('connect').onclick = () => {
+        if (!sessionReady || busy || hostGenerating()) return;
+        return action(async () => {
+            const candidate = connectionConfig({ endpoint: element('endpoint').value.trim(), project: element('project').value.trim() });
+            const typed = element('key').value.trim();
+            const key = typed || savedKey.read(candidate) || ''; element('key').value = '';
+            await connect(candidate, key, !typed);
+            if (!state.ready && !state.testCollection) await prepareConnection();
+        });
+    };
+    function reconnect() {
+        if (!sessionReady || busy || retrying || hostGenerating() || connectionVerified) return;
+        return action(async () => {
+            const key = savedKey.read(state);
+            if (!key) throw new ConnectionError('No saved key is available for this project. Open Connection settings to connect.');
+            await connect(state, key, true);
+        });
+    }
     element('forget').onclick = () => action(async () => {
         connectionVerified = false;
         invalidate();
@@ -647,12 +667,13 @@ async function initialize() {
     });
     element('recover-cleanup').onclick = () => element('cleanup').click();
     element('retry-sync').onclick = () => element('sync').click();
-    element('provision').onclick = () => action(async () => {
-        if (!client) throw new ConnectionError('Save and connect before preparing chat memory.');
+    async function prepareConnection() {
+        if (!client) throw new ConnectionError('Connect your project before preparing chat memory.');
         if (!gatePassed) await testConnection();
         state.ready = true; persist();
-        status('Chat memory is ready. Enable memory to synchronize. Native branches share unchanged committed history.');
-    });
+        status('Connected. Chat memory is ready. Turn memory on separately in each saved character chat.');
+    }
+    element('provision').onclick = () => action(prepareConnection);
     function checkpointReader(ctx, avatar) {
         const request = async (url, body) => {
             const response = await fetch(url, { method: 'POST', signal: AbortSignal.timeout(15000), headers: ctx.getRequestHeaders(), body: JSON.stringify({ avatar_url: avatar, ...body }) });
@@ -661,37 +682,72 @@ async function initialize() {
         };
         return { read: name => request('/api/chats/get', { file_name: name }), list: () => request('/api/characters/chats', { metadata: true }) };
     }
-    let listSequence = 0;
-    async function refreshCheckpoints() {
-        const sequence = ++listSequence, ctx = context(), file = ctx.getCurrentChatId();
+    let listSequence = 0, listRequest;
+    function refreshCheckpoints(force = false) {
+        if (!force && listRequest?.valid()) return listRequest.promise;
+        const sequence = ++listSequence, ctx = context(), file = ctx.getCurrentChatId(), listClient = client;
         const avatar = ctx.characters[ctx.characterId]?.avatar, story = ctx.chatMetadata.sillymemory?.story;
-        const valid = () => sequence === listSequence && context().getCurrentChatId() === file && context().characters[context().characterId]?.avatar === avatar;
+        const valid = () => {
+            if (sequence !== listSequence || !connectionVerified || client !== listClient) return false;
+            const current = context();
+            return current.chatMetadata.sillymemory?.story === story && current.getCurrentChatId() === file
+                && current.characters[current.characterId]?.avatar === avatar;
+        };
         const list = element('checkpoint-list'); list.replaceChildren();
+        if (!connectionVerified || !listClient) { list.textContent = 'Reconnect to view saved snapshots.'; return; }
         if (!capture(ctx) || !story) { list.textContent = 'Select a story to view its checkpoints.'; return; }
         list.textContent = 'Checking saved transcripts and memory branches…';
-        try {
-            const rows = await listCheckpoints({ host: checkpointReader(ctx, avatar), client, owner, story, avatar, valid });
-            if (!valid()) return;
-            list.replaceChildren();
-            const labels = { ready: 'Ready', pending: 'Pending — finish preparation', modified: 'Transcript modified', missing: 'Remote memory missing', 'remote-changed': 'Remote memory changed', duplicate: 'Duplicate identity — actions blocked', unverified: 'Remote state unverified — reconnect and refresh' };
-            for (const row of rows) {
-                const item = document.createElement('div'); item.className = 'sm-checkpoint'; item.dataset.file = row.file;
-                const title = document.createElement('strong'); title.textContent = row.name;
-                const detail = document.createElement('p'); detail.textContent = `${row.createdAt || 'Unknown creation time'} · ${labels[row.status]}`;
-                const buttons = document.createElement('div'); buttons.className = 'sm-actions';
-                const add = (text, handler) => { const button = document.createElement('button'); button.type = 'button'; button.className = 'menu_button'; button.textContent = text; button.onclick = () => action(handler); buttons.append(button); };
-                if (row.status === 'ready') add('Resume', () => checkpointAction(true, row.file));
-                if (row.status === 'pending') add('Finish / retry', () => checkpointAction(false, row.file));
-                if (row.status !== 'duplicate' && row.file !== file) {
-                    if (['ready', 'pending', 'missing', 'unverified', 'remote-changed'].includes(row.status)) add('Rename', () => checkpointAction(false, row.file, 'rename'));
-                    add('Delete checkpoint', () => checkpointAction(false, row.file, 'delete'));
+        const request = { valid };
+        listRequest = request;
+        request.promise = (async () => {
+            try {
+                const rows = await listCheckpoints({ host: checkpointReader(ctx, avatar), client: listClient, owner, story, avatar, valid });
+                if (!valid()) return;
+                list.replaceChildren();
+                const labels = { ready: 'Ready', pending: 'Pending — finish preparation', modified: 'Transcript modified', missing: 'Remote memory missing', 'remote-changed': 'Remote memory changed', duplicate: 'Duplicate identity — actions blocked', unverified: 'Remote state unverified — reconnect and refresh' };
+                for (const row of rows) {
+                    const item = document.createElement('div'); item.className = 'sm-checkpoint'; item.dataset.file = row.file;
+                    const title = document.createElement('strong'); title.textContent = row.name;
+                    const detail = document.createElement('p'); detail.textContent = `${row.createdAt || 'Unknown creation time'} · ${labels[row.status]}`;
+                    const buttons = document.createElement('div'); buttons.className = 'sm-actions';
+                    const add = (text, handler) => { const button = document.createElement('button'); button.type = 'button'; button.className = 'menu_button'; button.textContent = text; button.onclick = () => action(handler); buttons.append(button); };
+                    if (row.status === 'ready') add('Resume', () => checkpointAction(true, row.file));
+                    if (row.status === 'pending') add('Finish / retry', () => checkpointAction(false, row.file));
+                    if (row.status !== 'duplicate' && row.file !== file) {
+                        if (['ready', 'pending', 'missing', 'unverified', 'remote-changed'].includes(row.status)) add('Rename', () => checkpointAction(false, row.file, 'rename'));
+                        add('Delete checkpoint', () => checkpointAction(false, row.file, 'delete'));
+                    }
+                    item.append(title, detail, buttons); list.append(item);
                 }
-                item.append(title, detail, buttons); list.append(item);
-            }
-            if (!rows.length) list.textContent = 'No saved checkpoints in this story.';
-        } catch (error) { if (valid()) list.textContent = 'Checkpoint list unavailable. Reconnect and refresh.'; throw error; }
+                if (!rows.length) list.textContent = 'No saved checkpoints in this story.';
+            } catch (error) {
+                if (valid()) { list.textContent = 'Checkpoint list unavailable. Reconnect and refresh.'; throw error; }
+            } finally { if (listRequest === request) listRequest = undefined; }
+        })();
+        return request.promise;
     }
-    element('checkpoint-refresh').onclick = () => action(refreshCheckpoints);
+    const settingsDrawer = root.closest('.drawer-content');
+    const snapshotPanelVisible = () => settingsDrawer.classList.contains('openDrawer')
+        && element('advanced').open && element('checkpoints').open && element('checkpoints').getClientRects().length > 0;
+    function autoRefreshCheckpoints() {
+        if (!snapshotPanelVisible()) return;
+        // Automatic list reads stay outside the global operation status.
+        // They never start synchronization, uploads or a generation.
+        refreshCheckpoints()?.catch(() => {});
+    }
+    let snapshotPanelWasVisible = false;
+    const panelVisibilityChanged = () => {
+        const visible = snapshotPanelVisible();
+        if (visible && !snapshotPanelWasVisible) autoRefreshCheckpoints();
+        snapshotPanelWasVisible = visible;
+    };
+    for (const name of ['advanced', 'checkpoints']) element(name).addEventListener('toggle', panelVisibilityChanged);
+    const panelObserver = new MutationObserver(panelVisibilityChanged);
+    for (const target of [settingsDrawer, root.querySelector('.inline-drawer-content')]) {
+        panelObserver.observe(target, { attributes: true, attributeFilter: ['class', 'style'] });
+    }
+    addEventListener('pagehide', () => panelObserver.disconnect(), { once: true });
+    element('checkpoint-refresh').onclick = () => action(() => refreshCheckpoints(true));
     async function checkpointAction(resume, selected, command) {
         if (hostGenerating()) throw new ConnectionError('Wait for generation to finish before changing a memory snapshot.');
         snapshotOperation = command === 'rename' ? 'Renaming snapshot' : command === 'delete' ? 'Deleting snapshot' : resume ? 'Resuming snapshot' : 'Saving snapshot';
@@ -755,18 +811,21 @@ async function initialize() {
         if (command === 'rename' || command === 'delete') {
             if (selected === file) throw new ConnectionError('Open another story path before renaming or deleting this checkpoint.');
             if (command === 'rename') {
-                const name = prompt('Checkpoint name (up to 120 characters):');
+                const name = await ctx.Popup.show.input('Rename memory snapshot', 'Checkpoint name (up to 120 characters):');
                 if (name === null) return false;
+                if (!valid()) throw new ConnectionError('Chat changed while the popup was open. Select the snapshot and retry.');
                 await renameCheckpoint(args, name);
                 status('Checkpoint name saved.');
             } else {
-                if (!confirm('Delete this checkpoint transcript and its remote memory branch? This cannot be undone. Other saved chats and branches remain. A resumed chat that has not synchronized yet will rebuild its memory.')) return false;
+                const answer = await ctx.Popup.show.confirm('Delete memory snapshot', 'Delete this checkpoint transcript and its remote memory branch? This cannot be undone. Other saved chats and branches remain. A resumed chat that has not synchronized yet will rebuild its memory.');
+                if (answer !== ctx.POPUP_RESULT.AFFIRMATIVE) return false;
+                if (!valid()) throw new ConnectionError('Chat changed while the popup was open. Select the snapshot and retry.');
                 const entry = await deleteCheckpoint(args);
                 engines.delete(entryKey(entry)); engine = undefined;
                 new Journal(localStorage, `${owner}:${entry.collection}:${entry.branch}`).clear();
                 status('Checkpoint transcript and memory branch deleted. Other story paths remain.');
             }
-            await refreshCheckpoints(); return true;
+            await refreshCheckpoints(true); return true;
         }
         if (resume) {
             const name = await resumeCheckpoint(args);
@@ -781,7 +840,7 @@ async function initialize() {
             const name = await createCheckpoint({ ...args, rows, config: options(state), name: element('checkpoint-name').value });
             status(`Checkpoint saved: ${name}. ${memoryEnabled() ? 'Memory will continue in the original chat.' : 'Memory remains off as selected.'}`);
         }
-        await refreshCheckpoints();
+        await refreshCheckpoints(true);
         return true;
     }
     element('checkpoint-save').onclick = () => action(() => checkpointAction(false));
@@ -794,9 +853,11 @@ async function initialize() {
     async function deleteMemory(all) {
         if (!client || !collections) throw new ConnectionError('Reconnect before deleting remote memory.');
         if (!all && (!capture(context()) || !context().chatMetadata.sillymemory?.id)) throw new ConnectionError('This chat has no saved memory identity.');
-        if (!confirm(all ? 'Delete ALL owned SillyMemory collections, including every story and branch? Local chats remain.' : 'Delete this chat’s remote memory? Other chats and branches remain. Your local chat is preserved.')) return;
         const target = context(), file = target.getCurrentChatId(), avatar = target.characters[target.characterId]?.avatar;
         const sameChat = () => context().getCurrentChatId() === file && context().characters[context().characterId]?.avatar === avatar;
+        const answer = await target.Popup.show.confirm('Delete remote memory', all ? 'Delete ALL owned SillyMemory collections, including every story and branch? Local chats remain.' : 'Delete this chat’s remote memory? Other chats and branches remain. Your local chat is preserved.');
+        if (answer !== target.POPUP_RESULT.AFFIRMATIVE) return;
+        if (!sameChat()) throw new ConnectionError('Chat changed while the popup was open. Select it and retry deletion.');
         if (all) { state.ready = false; persist(); }
         if (!all && supportsChat(context()) && !savedSnapshot()) await setChatMemory(false);
         invalidate(); clearTimeout(timer);
@@ -879,6 +940,7 @@ async function initialize() {
                 listSequence++; element('checkpoint-list').textContent = 'Refresh to view checkpoints for this story.';
                 element('inspection').textContent = 'No memory injected in this chat.';
                 showDelivery('No prompt checked in this chat.');
+                autoRefreshCheckpoints();
             }
             schedule();
         });

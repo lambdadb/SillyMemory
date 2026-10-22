@@ -60,3 +60,12 @@ export function memoryControl(page) {
     return { isChecked, setChecked, check: () => setChecked(true), uncheck: () => setChecked(false),
         isVisible: () => button.isVisible() };
 }
+
+export async function answerMemoryPopup(page, action, { accept = true, value } = {}) {
+    await action();
+    const popup = page.locator('dialog.popup[open]').last();
+    await popup.waitFor({ state: 'visible' });
+    if (value !== undefined) await popup.locator('.popup-input').fill(value);
+    await popup.locator(accept ? '.popup-button-ok' : '.popup-button-cancel').click();
+    await popup.waitFor({ state: 'hidden' });
+}

@@ -286,8 +286,9 @@ checkpoint/versioning evidence was not modified or deleted.
 ## Checkpoint manager
 
 Open **Advanced → Frozen memory snapshots** in the SillyMemory settings. Give a snapshot an optional
-name (up to 120 characters) before saving. Use
-**Refresh memory snapshots** to list snapshots belonging to the selected
+name (up to 120 characters) before saving. The list refreshes automatically when
+opened, on reconnection, and when changing chats while the panel is visible.
+**Refresh memory snapshots** also checks snapshots belonging to the selected
 character and versioned story. Each row shows the name, creation time and verified
 status. Names live in the checkpoint's presentation metadata, so renaming does not
 change its identity, transcript hash, native filename or memory branch.
@@ -302,19 +303,25 @@ change its identity, transcript hash, native filename or memory branch.
   failures are not reported as missing data.
 - **Duplicate identity**: actions are blocked until the native copies are resolved.
 
-The list is refreshed explicitly and after successful management actions. Changing
-chats clears old rows; actions check story identity and saved state again. Listing
-checks each candidate transcript and shares one ownership check/branch listing
-across the story. It never queries embeddings or writes remote documents.
+Matching automatic reads share an in-flight request. Manual refresh and successful
+management actions force a fresh read. Hidden settings do not trigger automatic
+listing. Changing chats clears old rows, and late results for an old chat, story
+or client are discarded. Automatic failures stay in the list without taking over
+chat progress or blocking controls. Actions check story identity and saved state
+again. Listing checks each candidate transcript and shares one ownership check/branch
+listing across the story. It never synchronizes chats, queries embeddings, writes
+remote documents or generates answers.
 
 From another path in the same story, **Rename** changes a checkpoint's display
-name. **Delete checkpoint**, after confirmation, deletes only that native
-checkpoint file and its remote branch. Remote absence is verified first. If local
+name through a native SillyTavern input popup. **Delete checkpoint**, after native
+confirmation, deletes only that native checkpoint file and its remote branch. Remote absence is verified first. If local
 deletion subsequently fails, the retained row shows missing memory and deletion
 can be retried. Other source/resumed chat files and existing memory branches are
 preserved. A resumed path that has never synchronized must rebuild from its own
 transcript if its source checkpoint was deleted. The currently open checkpoint
 cannot be renamed or deleted through this list; open another story path first.
+Canceling or escaping a popup leaves data unchanged. Every asynchronous popup
+revalidates its captured chat target before renaming or deleting anything.
 
 This differs from **Delete this chat's remote memory**, which keeps its native
 file, and all-owned cleanup, which removes all owned remote story collections but

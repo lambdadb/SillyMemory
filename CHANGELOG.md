@@ -8,6 +8,14 @@ boundary; publication is confirmed by the corresponding Git tag and GitHub Relea
 
 ### Changed
 
+- Reconnect from the chat panel with the scoped saved key, preserving per-chat
+  activation and ignoring unsaved connection form edits.
+- Combine initial connection and temporary transport preparation into **Connect
+  and prepare**, with usage guidance and separate per-chat activation.
+- Refresh visible frozen snapshot lists on opening, chat changes and reconnection;
+  keep automatic errors local to the list and discard stale results.
+- Use native SillyTavern input/confirmation popups for snapshot management and
+  remote deletion, with cancellation and target revalidation before changes.
 - Show existing host input-token estimates and prepared memory size, with an
   optional local dialogue-text comparison that distinguishes its reference from
   native memory-off prompts and billing.

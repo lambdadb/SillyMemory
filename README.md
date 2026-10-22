@@ -49,20 +49,19 @@ of the normal installation.
    | Project name | Your LambdaDB project name. |
    | Project API key | Your LambdaDB project key, not your chat model's key. |
 
-4. Click **Save and connect**. This verifies the key and saves it in this browser
-   for automatic reconnection. Other extensions on the same page can access
-   browser storage; it is not an isolated secret vault. After verification,
-   **Connection** collapses to show the connected project. Reopen it to edit
-   connection details or use **Forget key**.
-5. Click **Prepare chat memory**. It runs the required connection test with
-   temporary data and verifies cleanup, using your LambdaDB allowance. Your chat
-   is not uploaded by this step. If a test collection needs cleanup, use the
-   **Clean up test data** button beside the status before retrying.
-6. Open a saved character chat, expand **Memory** above the composer and click
-   **Turn memory on in this chat**. Wait for synchronization before sending a message. Turn off built-in Vector Storage chat vectorization
-   and other extensions that rewrite chat history.
+4. Click **Connect and prepare**. This verifies and saves the key in this browser,
+   tests temporary data using your LambdaDB inference allowance and verifies cleanup.
+   Your chat is not uploaded or activated by setup. Other extensions on the same
+   page can access browser storage; it is not an isolated secret vault. After
+   verification, **Connection** collapses to show the project. Reopen it to edit
+   details or use **Forget key**. If preparation is interrupted, use **Clean up
+   test data** when shown, then **Finish preparation**.
+5. Open a saved character chat, expand **Memory** above the composer and click
+   **Turn memory on in this chat**. Wait for synchronization before sending a message.
+   Turn off built-in Vector Storage chat vectorization and other extensions that
+   rewrite chat history.
 
-The basic panel shows the next setup action: connect, prepare, then enable.
+The basic panel combines connection and preparation, followed by per-chat activation.
 Once ready, the memory switch and status remain visible; connection details stay
 collapsed after successful verification, including reconnection after reload.
 Use SillyTavern's existing chat history, **Save checkpoint** and **Create Branch**
@@ -135,8 +134,8 @@ Your original chat file stays intact.
 
 | What you see | What to do |
 | --- | --- |
-| Connection or authentication failure | Check the regional endpoint/project/key, then use **Save and connect**. For network errors, check browser connectivity to LambdaDB. |
-| Failed connection test | Use **Clean up test data** beside the status, then retry **Prepare chat memory**. The diagnostic cleanup control also remains under **Advanced**. Keep pending cleanup records until it succeeds. |
+| Connection or authentication failure | Use **Reconnect** in the chat panel when a saved key is available. Otherwise open **Connection** settings to check the regional endpoint/project/key and connect. Check browser connectivity to LambdaDB for network errors. |
+| Failed connection test | Use **Clean up test data** beside the status, then use **Finish preparation**. The diagnostic cleanup control also remains under **Advanced**. Keep pending cleanup records until it succeeds. |
 | Synchronization failure | Follow the status message; wait before retrying a temporary service error, then use **Retry synchronization** beside the status. **Advanced → Sync this chat** remains available for manual synchronization. |
 | Generation stopped during memory preparation | Read the last-prompt status, resolve the error, then use **Retry reply** above the composer for an unchanged pending user input, or the native **Regenerate** action. The shortcut uses native regeneration and makes a new model request; it never retries automatically. Sync alone does not resume a stopped generation. Disable memory if you want to continue with native history. |
 | Query exceeds 8 KiB | Shorten the latest messages, or disable memory for that generation. Queries are not silently truncated. |

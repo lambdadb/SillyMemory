@@ -246,7 +246,6 @@ try {
     browser = await chromium.launch(); page = await browser.newPage(); page.setDefaultTimeout(20000);
     timeout = setTimeout(() => { timedOut = true; void page.close(); }, plan.limits.wallMinutes * 60000);
     page.on('pageerror', e => report.pageErrors.push(e.name));
-    page.on('dialog', d => void d.accept());
     page.on('request', req => {
         const u = new URL(req.url());
         if (u.origin !== url || !u.pathname.startsWith('/api/vector/')) return;
@@ -273,9 +272,7 @@ try {
     await page.getByText('Save', { exact: true }).last().click();
     await page.locator('#sillymemory').waitFor({ state: 'attached', timeout: 45000 }); await panel();
     await field('endpoint').fill(credentials.endpoint); await field('project').fill(credentials.project); await field('key').fill(credentials.key);
-    await field('connect').click(); await status('Connected.'); await idle();
-    await field('gate').click(); await status('Transport gate passed'); await idle();
-    await field('provision').click(); await status('Chat memory is ready'); await idle();
+    await field('connect').click(); await status('Chat memory is ready'); await idle();
     await page.evaluate(async () => {
         const c = SillyTavern.getContext(), body = new FormData(); body.set('ch_name', 'Branch Cost Synthetic'); body.set('first_mes', 'Synthetic expedition.');
         const r = await fetch('/api/characters/create', { method: 'POST', headers: c.getRequestHeaders({ omitContentType: true }), body });
