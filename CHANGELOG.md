@@ -8,6 +8,8 @@ boundary; publication is confirmed by the corresponding Git tag and GitHub Relea
 
 ### Changed
 
+- Use green for ready/verified memory, orange for work in progress, yellow for
+  warnings and red for errors, independently of the theme's quote color.
 - Follow SillyTavern's native chat history, checkpoint and branch workflow in the
   basic panel. Move optional frozen memory snapshots under Advanced and link to
   the native chat list from the chat-facing Memory panel. New frozen snapshots

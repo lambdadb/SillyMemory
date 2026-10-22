@@ -59,7 +59,9 @@ synthetic character. Browser and source hashes are recorded in each report.
   no uncaught page errors, host proxy requests or remaining emulator collections.
 - Fault/recovery suite: 233 assertions passed on the same final runtime, also
   with no uncaught page errors, host proxy requests or remaining collections.
-- Both reports' recorded source hashes match the final staged runtime and harness.
+- Both reports' recorded source hashes match the runtime and harness at
+  `e34c2726a63da8d497de132dfffc41da2b303b6f`. A subsequent CSS-only status-color
+  refinement is verified separately below; the JavaScript behavior is unchanged.
 - The saving, native-history and original-chat screenshots were opened and
   visually checked. Narrow-layout checks also remain in the browser suite.
 
@@ -95,6 +97,24 @@ sources: 2,172,356 bytes, SHA-256
 All 75 members were read back byte-for-byte. Preliminary UI-selector/setup
 failures are retained separately from the reproduced product failure and final
 passing runs. No personal chats or real service credentials are included.
+
+### Status color refinement
+
+Ready and verified delivery use green (`#68d391`), active work uses orange
+(`#f6ad55`), warnings use yellow (`#f6d365`), and errors retain red (`#f08080`).
+The status dot no longer takes its ready/working color from the theme's quote
+color. Status labels remain visible alongside the dot so color is not the only
+way to distinguish states.
+
+An isolated Chromium preview uses the actual chat-status template and stylesheet
+with an orange quote-color theme. It checks computed dot colors for all four
+semantic states and retains the preview and stylesheet hash under
+`artifacts/status-colors/`. This is a CSS/DOM check, separate from the earlier
+actual-host workflow and local-emulator results. All six header previews passed
+their color, opacity and label checks and the resulting image was opened and
+visually checked. `npm test` again passed all 416 tests; release metadata and the
+staged diff checks also passed. No new maintained test or fixture was added for
+this reversible stylesheet change.
 
 ## Boundaries
 

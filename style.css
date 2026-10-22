@@ -32,9 +32,9 @@
 #sillymemory-chat[open] summary::after { content: "▾"; }
 #sillymemory-chat summary:focus-visible { outline: 2px solid var(--SmartThemeQuoteColor); outline-offset: -2px; border-radius: 8px; }
 #sillymemory-chat .sm-chat-dot { flex: 0 0 0.5rem; height: 0.5rem; border-radius: 50%; background: currentColor; opacity: 0.55; }
-#sillymemory-chat[data-kind="working"] .sm-chat-dot,
-#sillymemory-chat[data-kind="ready"] .sm-chat-dot { background: var(--SmartThemeQuoteColor); opacity: 1; }
-#sillymemory-chat[data-kind="warning"] .sm-chat-dot { background: #e4b95b; opacity: 1; }
+#sillymemory-chat[data-kind="working"] .sm-chat-dot { background: #f6ad55; opacity: 1; }
+#sillymemory-chat[data-kind="ready"] .sm-chat-dot { background: #68d391; opacity: 1; }
+#sillymemory-chat[data-kind="warning"] .sm-chat-dot { background: #f6d365; opacity: 1; }
 #sillymemory-chat[data-kind="error"] .sm-chat-dot { background: #f08080; opacity: 1; }
 #sillymemory-chat .sm-chat-detail { padding: 0 0.6rem 0.5rem; font-size: 0.85em; max-height: 40vh; overflow-y: auto; }
 #sillymemory-chat p { margin: 0.4rem 0; }
