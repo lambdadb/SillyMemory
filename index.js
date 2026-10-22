@@ -63,9 +63,32 @@ function showDelivery(text, notice) {
     deliveryNotice = notice;
     renderChatStatus();
 }
+function showMemoryPreview(passages) {
+    if (!chatStatus) return;
+    const preview = chatElement('memory'), list = chatElement('memory-list');
+    list.replaceChildren();
+    preview.hidden = !passages;
+    if (!passages) return;
+    chatElement('memory-summary').textContent = passages.length
+        ? `${passages.length} source passage${passages.length === 1 ? '' : 's'} selected. Delivery status is shown above.`
+        : 'No older memory selected for this prompt.';
+    // Preview limits affect only this display, never retrieval or prompt contents.
+    const ordered = [...passages].sort((a, b) => a.message - b.message || a.chunk - b.chunk);
+    for (const passage of ordered.slice(0, 3)) {
+        const item = document.createElement('li'), source = document.createElement('small'), text = document.createElement('p');
+        source.textContent = `${passage.role === 'user' ? 'User' : 'Assistant'} · ${passage.speaker} · message ${passage.message + 1}, passage ${passage.chunk + 1}`;
+        const characters = Array.from(passage.text.trim().replace(/\s+/gu, ' '));
+        text.textContent = characters.slice(0, 180).join('') + (characters.length > 180 ? '…' : '');
+        item.append(source, text); list.append(item);
+    }
+    const remaining = passages.length - 3;
+    chatElement('inspect').textContent = remaining > 0 ? `View full memory (${remaining} more ${remaining === 1 ? 'passage' : 'passages'})` : 'View full memory';
+    chatElement('inspect').hidden = !passages.length;
+}
 function renderChatStatus() {
     if (!chatStatus || !state) return;
     const connected = Boolean(sessionReady && connectionVerified && client);
+    if (!connected || !state.enabled) showMemoryPreview();
     const blocker = state.enabled ? chatBlocker() : null;
     const stopped = currentStoppedRequest();
     let label = 'Off', kind = 'idle';
@@ -116,6 +139,14 @@ async function openMemorySettings(vectors = false) {
     if (!vectors && !connectionVerified) element('connection').open = true;
     target.scrollIntoView({ block: 'nearest' });
     target.tabIndex = -1; target.focus({ preventScroll: true });
+}
+async function openMemoryInspection() {
+    await openMemorySettings();
+    element('advanced').open = true;
+    const inspection = element('inspection');
+    inspection.closest('details').open = true;
+    inspection.scrollIntoView({ block: 'nearest' });
+    inspection.tabIndex = -1; inspection.focus({ preventScroll: true });
 }
 async function retryReply() {
     const request = currentStoppedRequest();
@@ -235,6 +266,7 @@ function schedule() {
     timer = setTimeout(sync, 400);
 }
 function fail(error, operation, generation = false, type) {
+    showMemoryPreview();
     retrySync = Boolean(operation && !generation);
     // Native generation-ended sync can replace operation progress immediately.
     // Keep the failed generation visible independently of background progress.
@@ -276,6 +308,7 @@ globalThis.sillymemory_intercept = async (chat, contextSize, abort, type) => {
         retrievalOperation?.finish('Memory retrieval skipped for quiet generation.');
         retrievalSequence++; engine?.cancelReads(); clearInjection(); delivery.clear(); return;
     }
+    showMemoryPreview();
     invalidate();
     const sequence = promptSequence;
     const retrieval = ++retrievalSequence;
@@ -350,6 +383,7 @@ globalThis.sillymemory_intercept = async (chat, contextSize, abort, type) => {
             if (eligible.has(chat[i].index)) chat.splice(i, 1, ...(recalled.get(chat[i].index) || []));
         }
         element('inspection').textContent = `${preparedTokens} / ${config.budget} tokens\n\n${quoteMemoryText(result.text)}`;
+        showMemoryPreview(result.passages);
         operation.finish(`Prepared ${result.passages.length} source passages in ${preparedMessages.length} memory excerpts (${preparedTokens} tokens); awaiting final prompt verification.`);
     } catch (e) {
         if (!instance) { if (operation.current()) fail(e, operation, true, type); abandoned = true; abort(true); return; }
@@ -398,7 +432,7 @@ async function initialize() {
     if (composer) {
         composer.before(element('chat-status-template').content.cloneNode(true));
         chatStatus = document.getElementById('sillymemory-chat');
-        for (const [name, action] of [['settings', () => openMemorySettings()], ['vectors', () => openMemorySettings(true)], ['history', openChatHistory]]) {
+        for (const [name, action] of [['settings', () => openMemorySettings()], ['vectors', () => openMemorySettings(true)], ['history', openChatHistory], ['inspect', openMemoryInspection]]) {
             chatElement(name).onclick = event => {
                 event.stopPropagation();
                 return action().catch(() => status('Could not open the requested panel. Use SillyTavern’s native menus.', { error: true }));
@@ -703,6 +737,7 @@ async function initialize() {
         const finished = delivery.finish(context().mainApi === 'openai' ? data?.prompt : null, dryRun);
         if (!finished) return;
         if (finished.canceled) {
+            showMemoryPreview();
             ctx.stopGeneration();
             showDelivery('Generation stopped because the chat or memory settings changed during prompt preparation. Generate again.', { label: 'Reply stopped', kind: 'error' });
             element('inspection').textContent = 'No current memory verified.';
@@ -726,6 +761,7 @@ async function initialize() {
     });
     ctx.eventSource.on(events.GENERATION_STARTED, (type, _options, dryRun) => {
         if (dryRun || type === 'quiet') return;
+        showMemoryPreview();
         stoppedRequest = undefined; deliveryNotice = undefined;
         renderChatStatus();
     });
@@ -735,6 +771,7 @@ async function initialize() {
         if (events[name]) ctx.eventSource.on(events[name], () => {
             checkpointRevision++;
             if (name !== 'GENERATION_ENDED') { sourceRevision++; stoppedRequest = undefined; }
+            if (!['GENERATION_ENDED', 'MESSAGE_RECEIVED'].includes(name)) showMemoryPreview();
             if (name === 'CHAT_CHANGED' || name === 'CHAT_RENAMED') {
                 identityKey = undefined;
                 listSequence++; element('checkpoint-list').textContent = 'Refresh to view checkpoints for this story.';

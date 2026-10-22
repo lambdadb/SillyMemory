@@ -90,8 +90,12 @@ Your original chat file stays intact.
 - SillyMemory connects directly to LambdaDB and does not depend on built-in Vector
   Storage. Its chat vectorization must be off to avoid conflicting history injection;
   the chat status links to its settings without changing them.
-- Open **Advanced → Memory in the last prompt** to inspect the prepared excerpts.
-  Check the delivery status for whether the final host prompt was verified.
+- Expand **Memory** to preview up to three selected source passages from the
+  last prompt, with speaker and message positions. **View full memory** opens
+  **Advanced → Memory in the last prompt** directly. Check the delivery status
+  for whether the final host prompt was verified. Previews stay in this tab and
+  clear when changing chats, changing source messages, disabling memory or
+  preparing another reply; normal reply completion keeps the last selection.
 - Under **Advanced**, the default **Memory token budget** is 4,096 tokens, capped
   at one quarter of the host context. Recent messages and character instructions also need room;
   SillyTavern can still trim the final prompt to its context limit.

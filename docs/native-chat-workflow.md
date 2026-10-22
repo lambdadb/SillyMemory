@@ -45,6 +45,22 @@ the existing native list. They do not create another chat manager. The basic
 panel directs users to native checkpoints and branches; advanced snapshots retain
 their distinct verified-memory semantics.
 
+The collapsed-by-default **Memory** panel now shows short source previews when
+expanded after prompt preparation. These are the selected, source-validated
+passages admitted to the memory budget, rather than all search candidates or
+model-generated summaries. It lists up to three passages in source order, with
+role, speaker, message and passage positions, and the first 180 Unicode code
+points per excerpt followed by an ellipsis when clipped. These are display limits
+only. **View full memory** opens the
+existing final-prompt inspector, including any omitted or unverifiable excerpts.
+An empty selection is explicit; selection itself does not claim delivery or
+answer correctness.
+
+Previews are plain text in the current DOM, without additional persistence or
+memory-service requests. They clear on new reply preparation, source changes, chat
+switch/reload, memory-off, connection loss or operation failure. Normal assistant
+reply completion and background synchronization preserve the last selection.
+
 ## Validation
 
 Host: SillyTavern 1.19.0 at
@@ -61,7 +77,7 @@ synthetic character. Browser and source hashes are recorded in each report.
   with no uncaught page errors, host proxy requests or remaining collections.
 - Both reports' recorded source hashes match the runtime and harness at
   `e34c2726a63da8d497de132dfffc41da2b303b6f`. A subsequent CSS-only status-color
-  refinement is verified separately below; the JavaScript behavior is unchanged.
+  refinement and selected-memory previews are verified separately below.
 - The saving, native-history and original-chat screenshots were opened and
   visually checked. Narrow-layout checks also remain in the browser suite.
 
@@ -115,6 +131,29 @@ their color, opacity and label checks and the resulting image was opened and
 visually checked. `npm test` again passed all 416 tests; release metadata and the
 staged diff checks also passed. No new maintained test or fixture was added for
 this reversible stylesheet change.
+
+### Selected-memory preview validation
+
+`npm test` passed all 416 tests again. Runtime/development syntax, release
+metadata and SDK checks passed, as did all 32 Python protocol tests.
+
+The final actual-host browser run passed 165 assertions with recorded source
+hashes matching this preview implementation and harness. It verifies empty and
+budget-limited selections, plain-text rendering of markup, source coordinates,
+three-item/180-character display limits, the full-memory shortcut, preservation
+through native reply completion/background sync, and clearing on chat switch,
+reload, disabled memory and retrieval failure. Desktop and narrow screenshots
+were opened and visually checked. Reports and screenshots are local-only under
+`artifacts/memory-preview-final/`.
+
+The fault/recovery run passed 240 assertions, including two host kills and 24
+bounded recovery cycles. Its local-only report is under
+`artifacts/memory-preview-recovery/`. This ran before the final singular/plural
+button-label correction and matching assertion adjustment; those two producer
+files are retained under that directory's `producer/`, with hashes verified
+against the report. The final browser rerun covers the corrected label. Both
+runs finished without uncaught page errors, host proxy requests or remaining
+emulator collections. These are local-emulator results, not live-provider checks.
 
 ## Boundaries
 

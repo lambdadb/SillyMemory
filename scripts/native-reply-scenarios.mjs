@@ -48,6 +48,16 @@ export async function runNativeReplyScenarios({ page, field, waitStatus, check, 
     await generate('Where was it?', 'Which visit do you mean?');
     await waitStatus('synchronized');
     check('chat status claims verification only after the final native prompt check', (await page.locator('#sillymemory-chat [data-sm-chat="label"]').innerText()).includes('Last prompt verified'));
+    const preview = page.locator('#sillymemory-chat [data-sm-chat="memory"]');
+    check('selected memory preview survives native reply completion and background sync', await preview.getAttribute('hidden') === null && (await preview.textContent()).includes('I visited the city museum on Friday.') && (await preview.textContent()).includes('message 1, passage 1'));
+    await openChatMemory(page);
+    await screenshot?.('chat-memory-preview');
+    await page.setViewportSize({ width: 390, height: 844 });
+    await screenshot?.('chat-memory-preview-narrow');
+    await page.setViewportSize({ width: 1440, height: 1100 });
+    await preview.locator('[data-sm-chat="inspect"]').click();
+    await field('inspection').waitFor({ state: 'visible' });
+    check('full memory action opens the final prompt inspector directly', await field('advanced').evaluate(el => el.open) && (await field('inspection').innerText()).includes('Memory excerpts in final host prompt') && (await field('inspection').innerText()).includes('I visited the city museum on Friday.'));
     check('no schema-support setting or schema request is added', await field('clarification').count() === 0 && !requests.at(-1).response_format && !requests.at(-1).json_schema);
     check('natural memory guidance reaches native generation', requests.at(-1).messages.some(m => m.role === 'system' && hasAdoptedGuidance(m.content)));
     await generate('My Friday visit.', 'The city museum.', { stream: true });
@@ -62,6 +72,7 @@ export async function runNativeReplyScenarios({ page, field, waitStatus, check, 
     check('legitimate JSON remains native authored text', await page.evaluate(() => SillyTavern.getContext().chat.at(-1).mes.startsWith('{')));
     await generate('', 'A replacement native reply.', { type: 'regenerate', stream: true });
     await page.evaluate(async () => { await SillyTavern.getContext().saveChat(); await SillyTavern.getContext().reloadCurrentChat(); });
+    check('reloading a chat does not restore a previous in-memory selection', await preview.getAttribute('hidden') !== null && await preview.locator('li').count() === 0);
     check('reload preserves plain selected replies without recovery markers', await page.evaluate(() => SillyTavern.getContext().chat.at(-1).mes === 'A replacement native reply.' && SillyTavern.getContext().chat.every(m => !m.extra?.sillymemoryRequest && !m.extra?.sillymemoryPending)));
     const previousSwipe = await page.evaluate(() => SillyTavern.getContext().chat.at(-1).mes);
     const requestsBeforeSwipe = requests.length; reply = 'A selected native swipe.';
@@ -84,6 +95,7 @@ export async function runNativeReplyScenarios({ page, field, waitStatus, check, 
     await page.evaluate(async () => { document.querySelector('#send_textarea').value = 'A transient search failure.'; await SillyTavern.getContext().generate('normal'); });
     await waitStatus('synchronized');
     check('native generation aborts before dispatch on search failure', requests.length === completedBeforeFailure);
+    check('a stopped native reply has no stale selected-memory preview', await preview.getAttribute('hidden') !== null && await preview.locator('li').count() === 0);
     const failureGuidance = await field('delivery').textContent();
     check('generation failure stays visible with the correct recovery action after background synchronization', failureGuidance.includes('Generation stopped: memory preparation failed.') && failureGuidance.includes('HTTP 503') && failureGuidance.includes('regenerate to retry this request') && !failureGuidance.includes('Sync this chat'));
     const chatStatus = page.locator('#sillymemory-chat');
@@ -123,6 +135,7 @@ export async function runNativeReplyScenarios({ page, field, waitStatus, check, 
     check('user-selected response formats survive without a schema conflict', requests.at(-1).custom_include_body?.includes('type: json_object') && !JSON.stringify(requests.at(-1)).includes('sillymemory_reply'));
     await page.evaluate(async () => { const { oai_settings } = await import('/scripts/openai.js'); oai_settings.custom_include_body = ''; });
     await field('enabled').uncheck(); const reads = calls.filter(c => c.body?.query?.bayesian).length;
+    check('turning memory off removes the previous selected content', await preview.getAttribute('hidden') !== null && await preview.locator('li').count() === 0);
     await generate('A native request with memory disabled.', 'A normal native response.');
     check('disabled memory uses native output without retrieval or rewriting', calls.filter(c => c.body?.query?.bayesian).length === reads && !requests.at(-1).response_format);
     // Native text completions do not require a chat reply schema. Their flattened

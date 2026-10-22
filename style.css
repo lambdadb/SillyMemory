@@ -39,6 +39,10 @@
 #sillymemory-chat .sm-chat-detail { padding: 0 0.6rem 0.5rem; font-size: 0.85em; max-height: 40vh; overflow-y: auto; }
 #sillymemory-chat p { margin: 0.4rem 0; }
 #sillymemory-chat progress { width: 100%; accent-color: var(--SmartThemeQuoteColor); }
+#sillymemory-chat .sm-chat-memory { border-top: 1px solid var(--SmartThemeBorderColor); margin: 0.6rem 0; padding-top: 0.5rem; }
+#sillymemory-chat .sm-chat-memory ul { list-style: none; padding: 0; margin: 0.5rem 0; }
+#sillymemory-chat .sm-chat-memory li + li { margin-top: 0.6rem; }
+#sillymemory-chat .sm-chat-memory small { display: block; opacity: 0.75; }
 #sillymemory-chat .sm-chat-actions { display: flex; flex-wrap: wrap; gap: 0.4rem; }
 #sillymemory-chat button { width: auto; margin: 0; }
 #sillymemory-chat [hidden] { display: none !important; }

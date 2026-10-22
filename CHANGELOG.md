@@ -8,6 +8,8 @@ boundary; publication is confirmed by the corresponding Git tag and GitHub Relea
 
 ### Changed
 
+- Preview selected memory in the expanded chat panel with source coordinates,
+  short excerpts and a shortcut to the full last-prompt memory inspector.
 - Use green for ready/verified memory, orange for work in progress, yellow for
   warnings and red for errors, independently of the theme's quote color.
 - Follow SillyTavern's native chat history, checkpoint and branch workflow in the

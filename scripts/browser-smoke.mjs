@@ -135,6 +135,7 @@ try {
     const chatStatus = page.locator('#sillymemory-chat');
     const chatField = name => chatStatus.locator(`[data-sm-chat="${name}"]`);
     check('one chat status is mounted above the native composer', await chatStatus.count() === 1 && await chatStatus.evaluate(el => el.nextElementSibling?.id === 'send_form'));
+    check('memory details start collapsed with no previous prompt preview', await chatStatus.getAttribute('open') === null && await chatField('memory').getAttribute('hidden') !== null);
     const savedSettings = JSON.parse(await readFile(path.join(work, 'data/default-user/settings.json'), 'utf8'));
     check('owner identity is durable before first remote request', /^[a-f0-9]{32}$/.test(savedSettings.extension_settings?.sillymemory?.owner));
     // Open settings through the chat-facing controls without navigating drawers.
@@ -367,6 +368,7 @@ try {
     check('ordinary native synchronization archives one complete pair outside the retained recent exchanges',
         JSON.stringify([...archive.values()].map(doc => doc.message).sort((a, b) => a - b)) === '[0,1]');
     check('a tight allocation succeeds without partially injecting a dated source', !result.aborted && !result.injection && /Prepared 0 source passages/.test(result.preparation) && /\d+ \/ 250 tokens/.test(result.inspection));
+    check('empty selection explains that no older memory was selected', (await chatField('memory-summary').textContent()).includes('No older memory selected') && await chatField('memory-list').locator('li').count() === 0 && await chatField('inspect').getAttribute('hidden') !== null);
     check('small memory stays inside its budget with sent guidance', result.renderedTokens <= 250);
     // The longer macro-bearing source can be skipped at 250 once the shared
     // time explanation is counted. Test literal delivery when that whole source
@@ -374,6 +376,8 @@ try {
     await field('budget').fill('400'); await field('budget').dispatchEvent('change');
     const macroResult = await prompt();
     check('native recalled excerpts keep macros literal within budget', macroResult.rendered.includes('｛｛char｝｝') && macroResult.rendered.includes('＜USER＞') && macroResult.macroValue === undefined && macroResult.renderedTokens <= 400);
+    check('memory preview shows selected source text and coordinates as plain text', (await chatField('memory-list').textContent()).includes('Synthetic passage 0') && (await chatField('memory-list').textContent()).includes('User · User · message 1, passage 1') && (await chatField('memory-list').textContent()).includes('<USER>') && await chatField('memory-list').locator('user').count() === 0);
+    check('memory preview excludes candidates omitted from the prompt', await chatField('memory-list').locator('li').count() === Number(/Prepared (\d+) source passages/.exec(macroResult.preparation)[1]));
     await field('budget').fill('400'); await field('budget').dispatchEvent('change');
     check('a completed reply retains six messages without splitting a pair and leaves persisted source unchanged', JSON.stringify(result.chat.filter(m => !m.mes.startsWith('[Recalled conversation excerpts]')).map(m => m.index)) === '[2,3,4,5,6,7]' && result.chat.at(-1).mes.includes('passage 7') && result.before === result.after);
     // Ineligible active inputs still preserve recent dialogue. The actual native
@@ -424,6 +428,7 @@ try {
     check('real host dispatcher assembles same-message chunks with their source and one shared header',
         !assembled.aborted && preparedCounts && Number(preparedCounts[1]) > Number(preparedCounts[2]) && assembledMessage?.mes.includes('passages 1-') && assembledMessage.mes.includes(assemblySource.text)
         && assembled.renderedTokens <= 1024 && assembled.before === assembled.after);
+    check('long selections show only three short source previews without reducing prepared memory', Number(preparedCounts[1]) > 3 && await chatField('memory-list').locator('li').count() === 3 && (await chatField('memory-list').locator('p').allTextContents()).every(text => Array.from(text).length <= 181) && (await chatField('inspect').textContent()).includes(`${Number(preparedCounts[1]) - 3} more passage`));
     await page.evaluate(async original => {
         const c = SillyTavern.getContext(); c.chat[0].mes = original; await c.eventSource.emit(c.eventTypes.MESSAGE_UPDATED, 0);
     }, assemblySource.original);
@@ -454,6 +459,7 @@ try {
     await page.evaluate(async () => { const c = SillyTavern.getContext(); const { createBranch } = await import('/scripts/bookmarks.js'); const name = await createBranch(c.chat.length - 1); if (!name) throw new Error('Native branch creation failed'); await c.openCharacterChat(name); });
     const raced = await pending; delayedQuery = 0;
     check('chat switch rejects late result and aborts old generation', raced.aborted && !raced.injection);
+    check('chat switches clear the previous selection even after a late retrieval', await chatField('memory').getAttribute('hidden') !== null && await chatField('memory-list').locator('li').count() === 0);
     await waitStatus('synchronized'); staleHits = [old];
     const branch = await prompt();
     check('native branch shares its story collection and rejects stale source', !branch.injection.includes('Edited:') && collections.size === 1 && [...collections.values()][0].branches.size === 3);
@@ -488,6 +494,7 @@ try {
     failQuery = true;
     const failed = await prompt(); failQuery = false;
     check('query failure stops generation and preserves unmodified source', failed.aborted && !failed.injection && failed.before === failed.after && failed.chat.length === 7);
+    check('a failed search never leaves a previous memory preview', await chatField('memory').getAttribute('hidden') !== null && await chatField('memory-list').locator('li').count() === 0);
     await field('enabled').uncheck(); const off = await prompt();
     check('disable clears injection and preserves full prompt', !off.injection && off.chat.length === 7);
     check('disabled memory explains native chat behavior without deleting saved memory', (await field('mode-help').innerText()).includes('SillyTavern uses its usual chat history') && collections.size > 0);

@@ -6,6 +6,12 @@
         <p data-sm-chat="status">Connect SillyMemory to get started.</p>
         <progress data-sm-chat="progress" aria-label="Memory operation progress" hidden></progress>
         <p data-sm-chat="delivery">No prompt checked in this chat.</p>
+        <section data-sm-chat="memory" class="sm-chat-memory" aria-labelledby="sm-chat-memory-heading" hidden>
+          <strong id="sm-chat-memory-heading">Memory selected for the last prompt</strong>
+          <p data-sm-chat="memory-summary"></p>
+          <ul data-sm-chat="memory-list"></ul>
+          <button type="button" data-sm-chat="inspect" class="menu_button">View full memory</button>
+        </section>
         <div class="sm-chat-actions">
           <button type="button" data-sm-chat="history" class="menu_button">Chat history</button>
           <button type="button" data-sm-chat="resume" class="menu_button" hidden>Resume snapshot</button>
