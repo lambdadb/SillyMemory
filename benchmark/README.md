@@ -1,6 +1,6 @@
 # Benchmarks
 
-Reproduce the evaluated LongMemEval-S and BEAM profiles from a fresh clone.
+Run the LongMemEval-S and BEAM evaluations using the included settings.
 
 | Benchmark | Questions | Recorded score | Protocol |
 | --- | ---: | ---: | --- |
@@ -43,8 +43,11 @@ contains fixed settings, recorded results and execution commands.
 | `tokenizer/` | Shared, locked tokenizer dependency |
 
 Public datasets are downloaded at pinned revisions and checked by SHA-256.
-Runs write to ignored `artifacts/` directories. Keep credentials outside the run;
-pass an existing file explicitly with `--env-file`. The required variable names
+The examples create new output directories under `artifacts/`; no previous run
+files are required. The committed results are aggregates; raw responses for those
+results are not published. `verify` checks outputs from the run you execute.
+Keep credentials outside the run and pass an existing file explicitly with
+`--env-file`. The required variable names
 are shown in [credentials.example](credentials.example).
 
 `setup` downloads public inputs and installs the tokenizer. `prepare` and `verify`

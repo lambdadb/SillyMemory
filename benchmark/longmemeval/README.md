@@ -46,7 +46,7 @@ Node.js tokenizer into the run directory. Download size is approximately 277 MB.
 The Python runner handles data preparation, generation, judging and result
 verification. The Node.js adapter reuses SillyMemory source modules for chunking,
 retrieval and memory assembly. No SillyTavern server or extension installation is
-required.
+required. The commands below create `artifacts/longmemeval` for your run.
 
 ```sh
 python3.14 benchmark/longmemeval/run.py setup --root artifacts/longmemeval
