@@ -9,10 +9,16 @@ const hasAdoptedGuidance = text => [
     && !text.includes('request only the additional context needed to help');
 
 export async function runNativeReplyScenarios({ page, field, waitStatus, check, calls, screenshot }) {
-    const requests = []; let reply = '';
+    const requests = []; let reply = '', generationToggle;
     await page.route('**/api/backends/chat-completions/status', route => route.fulfill({ json: { data: [{ id: 'native-reply-fixture' }] } }));
     await page.route('**/api/backends/chat-completions/generate', async route => {
         const body = route.request().postDataJSON(); requests.push(body);
+        if (requests.length === 1) generationToggle = await page.evaluate(async () => {
+            const button = document.querySelector('#sillymemory-chat [data-sm-chat="toggle"]');
+            const disabled = button.disabled;
+            await button.onclick(new MouseEvent('click'));
+            return { disabled, enabled: document.querySelector('#sillymemory [data-sm="enabled"]').checked };
+        });
         if (body.stream) {
             const chunks = [reply.slice(0, 8), reply.slice(8, 20), reply.slice(20)].filter(Boolean).map(content => `data: ${JSON.stringify({ choices: [{ delta: { content }, finish_reason: null }] })}\n\n`).join('');
             await route.fulfill({ contentType: 'text/event-stream', body: chunks + 'data: {"choices":[{"delta":{},"finish_reason":"stop"}]}\n\ndata: [DONE]\n\n' });
@@ -46,6 +52,7 @@ export async function runNativeReplyScenarios({ page, field, waitStatus, check, 
         return result;
     };
     await generate('Where was it?', 'Which visit do you mean?');
+    check('native generation disables and revalidates chat memory switching', generationToggle?.disabled && generationToggle.enabled);
     await waitStatus('synchronized');
     check('chat status claims verification only after the final native prompt check', (await page.locator('#sillymemory-chat [data-sm-chat="label"]').innerText()).includes('Last prompt verified'));
     const preview = page.locator('#sillymemory-chat [data-sm-chat="memory"]');
@@ -134,10 +141,17 @@ export async function runNativeReplyScenarios({ page, field, waitStatus, check, 
     await generate('Use my existing native response format.', '{"answer":"User-controlled format."}');
     check('user-selected response formats survive without a schema conflict', requests.at(-1).custom_include_body?.includes('type: json_object') && !JSON.stringify(requests.at(-1)).includes('sillymemory_reply'));
     await page.evaluate(async () => { const { oai_settings } = await import('/scripts/openai.js'); oai_settings.custom_include_body = ''; });
-    await field('enabled').uncheck(); const reads = calls.filter(c => c.body?.query?.bayesian).length;
+    await openChatMemory(page);
+    const toggle = page.locator('#sillymemory-chat [data-sm-chat="toggle"]');
+    await toggle.click(); const reads = calls.filter(c => c.body?.query?.bayesian).length;
+    check('chat deactivation exposes Turn memory on in the same place and persists off', !await field('enabled').isChecked() && (await toggle.textContent()) === 'Turn memory on' && await page.evaluate(() => !JSON.parse(localStorage.getItem(`sillymemory:state:${SillyTavern.getContext().extensionSettings.sillymemory.owner}`)).enabled));
+    await screenshot?.('chat-memory-off');
     check('turning memory off removes the previous selected content', await preview.getAttribute('hidden') !== null && await preview.locator('li').count() === 0);
     await generate('A native request with memory disabled.', 'A normal native response.');
     check('disabled memory uses native output without retrieval or rewriting', calls.filter(c => c.body?.query?.bayesian).length === reads && !requests.at(-1).response_format);
+    await toggle.click(); await waitStatus('synchronized');
+    check('chat reactivation restores memory without opening settings or retaining an off notice', await field('enabled').isChecked() && (await toggle.textContent()) === 'Turn memory off' && !(await page.locator('#sillymemory-chat [data-sm-chat="delivery"]').textContent()).includes('Memory disabled') && await page.evaluate(() => !document.querySelector('#extensions-settings-button .drawer-content').classList.contains('openDrawer')));
+    await page.locator('#sillymemory-chat [data-sm-chat="settings"]').click(); await field('enabled').waitFor({ state: 'visible' });
     // Native text completions do not require a chat reply schema. Their flattened
     // prompt cannot be role-verified by the current final-delivery checker.
     const textRequests = [];

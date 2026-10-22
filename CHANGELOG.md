@@ -8,6 +8,8 @@ boundary; publication is confirmed by the corresponding Git tag and GitHub Relea
 
 ### Changed
 
+- Let users turn prepared memory on and off directly from the chat panel through
+  the same activation controls as settings.
 - Preview selected memory in the expanded chat panel with source coordinates,
   short excerpts and a shortcut to the full last-prompt memory inspector.
 - Use green for ready/verified memory, orange for work in progress, yellow for
@@ -22,6 +24,9 @@ boundary; publication is confirmed by the corresponding Git tag and GitHub Relea
 - Treat native forks of frozen snapshots as writable paths while keeping the
   original snapshot protected. Stop generation explicitly while a manual memory
   operation is in progress instead of silently skipping enabled memory.
+- Normalize writable snapshot forks before saving another snapshot even with
+  memory off. Canceled snapshot rename/delete actions clear preparation without
+  scheduling follow-up synchronization.
 
 ## [0.6.0] - 2026-10-21
 

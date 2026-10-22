@@ -40,10 +40,25 @@ itself remains protected. New snapshots also retain a native `main_chat` link to
 their actual source, rather than inheriting an earlier ancestor's link or lacking
 one. Existing snapshots are not rewritten.
 
+Snapshot saving uses the same integrity-aware classification while memory is
+off, so an inherited frozen marker cannot route a writable native fork into
+frozen-snapshot validation. Its identity is normalized before the new snapshot
+is created. Rename/delete cancellation returns an explicit incomplete result,
+clears the preparing notice and does not schedule synchronization. Completed
+actions and failed actions retain their existing follow-up/error behavior.
+
 **Chat history** in the Memory panel and **Open chat history** in settings open
 the existing native list. They do not create another chat manager. The basic
 panel directs users to native checkpoints and branches; advanced snapshots retain
 their distinct verified-memory semantics.
+
+Once connection and preparation have completed, the same chat-panel action
+switches between **Turn memory on** and **Turn memory off**. Both directions use
+the existing settings checkbox handler, including persistence and synchronization.
+Initial connection/preparation and pending test cleanup do not expose activation.
+Manual memory operations and native generation disable switching; the click
+handler also rechecks these guards to reject queued actions. Enabling resets the
+delivery notice so an old disabled notice does not remain under an enabled state.
 
 The collapsed-by-default **Memory** panel now shows short source previews when
 expanded after prompt preparation. These are the selected, source-validated
@@ -137,8 +152,8 @@ this reversible stylesheet change.
 `npm test` passed all 416 tests again. Runtime/development syntax, release
 metadata and SDK checks passed, as did all 32 Python protocol tests.
 
-The final actual-host browser run passed 165 assertions with recorded source
-hashes matching this preview implementation and harness. It verifies empty and
+The preview actual-host browser run passed 165 assertions with recorded source
+hashes matching `c19f13703f46ed693e0a16af9f2bd9e018cd3995`. It verifies empty and
 budget-limited selections, plain-text rendering of markup, source coordinates,
 three-item/180-character display limits, the full-memory shortcut, preservation
 through native reply completion/background sync, and clearing on chat switch,
@@ -154,6 +169,23 @@ files are retained under that directory's `producer/`, with hashes verified
 against the report. The final browser rerun covers the corrected label. Both
 runs finished without uncaught page errors, host proxy requests or remaining
 emulator collections. These are local-emulator results, not live-provider checks.
+
+### Chat toggle and review follow-up validation
+
+After the chat toggle and snapshot edge-case fixes, `npm test` passed all 416
+tests. The final actual-host browser suite passed 180 assertions; fault/recovery
+passed 243, including both host restarts and all 24 recovery cycles. Both reports'
+runtime and harness hashes match the final implementation. Neither run had
+uncaught page errors, host proxy requests or remaining emulator collections.
+
+New checks cover activation without reopening settings, persisted on/off state,
+disabled activation before preparation or pending cleanup, queued clicks during
+native generation/manual snapshot work, and removal of the old disabled notice.
+They also cover canceled rename/delete with memory both on and off (no follow-up
+remote requests), and snapshot saving from a disabled native fork without
+modifying its frozen parent. Final desktop, narrow and memory-off screenshots
+were opened and visually checked. Local-only reports/screenshots are under
+`artifacts/chat-workflow-final/` and `artifacts/chat-workflow-recovery-final/`.
 
 ## Boundaries
 

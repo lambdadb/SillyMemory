@@ -59,6 +59,12 @@ export async function runNativeChatScenarios({ page, field, waitStatus, check, f
     try {
         check('saving a frozen memory snapshot preserves the enabled preference', await field('enabled').isChecked());
         check('snapshot progress is visible in the chat header', (await page.locator('#sillymemory-chat [data-sm-chat="label"]').innerText()).includes('Saving snapshot'));
+        check('snapshot operations disable and revalidate chat memory switching', await page.evaluate(async () => {
+            const button = document.querySelector('#sillymemory-chat [data-sm-chat="toggle"]');
+            const disabled = button.disabled;
+            await button.onclick(new MouseEvent('click'));
+            return disabled && document.querySelector('#sillymemory [data-sm="enabled"]').checked;
+        }));
         await openChatMemory(page);
         await page.evaluate(() => toastr.clear());
         await screenshot('snapshot-saving.png');
@@ -126,6 +132,30 @@ export async function runNativeChatScenarios({ page, field, waitStatus, check, f
     await rows.first().getByRole('button', { name: 'Resume', exact: true }).click();
     await page.waitForFunction(() => !document.querySelector('#sillymemory [data-sm="checkpoint-resume"]').disabled);
     check('snapshot Resume preserves an explicitly disabled memory preference', !await field('enabled').isChecked());
+    for (const enabled of [false, true]) {
+        if (enabled) { await field('enabled').check(); await waitStatus('synchronized'); }
+        for (const name of ['Rename', 'Delete checkpoint']) {
+            const before = calls.length;
+            page.once('dialog', dialog => dialog.dismiss());
+            await rows.filter({ has: page.locator(`button:text-is("${name}")`) }).first().getByRole('button', { name, exact: true }).click();
+            await page.waitForFunction(() => !document.querySelector('#sillymemory [data-sm="checkpoint-save"]').disabled);
+            await waitStatus('Memory snapshot operation canceled.');
+            // Successful snapshot actions schedule sync after 400 ms; cancellation must not.
+            await page.waitForTimeout(600);
+            check(`${name} cancellation with memory ${enabled ? 'on' : 'off'} clears preparation without remote work`, await field('enabled').isChecked() === enabled && calls.length === before && !(await field('status').textContent()).includes('Preparing memory snapshot operation'));
+        }
+    }
+    await field('enabled').uncheck();
+    await page.evaluate(async file => { await SillyTavern.getContext().openCharacterChat(file); }, snapshotFile);
+    await page.evaluate(async () => { await (await import('/scripts/bookmarks.js')).branchChat(7); });
+    const disabledFork = await selected();
+    check('a disabled native snapshot fork retains its inherited marker until identity normalization', !await field('enabled').isChecked() && Boolean(disabledFork.memory.checkpoint) && await page.evaluate(() => SillyTavern.getContext().chatMetadata.sillymemory.integrity !== SillyTavern.getContext().chatMetadata.integrity));
+    await field('checkpoint-save').click();
+    await page.waitForFunction(() => !document.querySelector('#sillymemory [data-sm="checkpoint-save"]').disabled);
+    await waitStatus('Checkpoint saved:');
+    const normalizedFork = await selected();
+    check('saving a snapshot from a disabled native fork normalizes the writable source without enabling memory', !await field('enabled').isChecked() && normalizedFork.file === disabledFork.file && !normalizedFork.memory.checkpoint && normalizedFork.memory.id !== frozenMemory.id && normalizedFork.memory.story === frozenMemory.story && normalizedFork.memory.source === frozenMemory.id);
+    check('the disabled fork snapshot action preserves the frozen parent transcript and remote memory', JSON.stringify(remote(frozenMemory)) === JSON.stringify(frozenDocuments) && JSON.stringify((await saved(snapshotFile)).slice(1).map(message => message.mes)) === JSON.stringify(source.messages));
     // Later harness scenarios replace this disposable transcript themselves.
     return { source: source.file, nativeCheckpoint: checkpoint.file, branch: branch.file, snapshot: snapshotFile, resumed: resumed.file, sourceMessages: source.messages.length, initialFile: original.file };
 }

@@ -149,6 +149,7 @@ try {
     const status = () => field('status').innerText();
     const waitStatus = async text => { await page.waitForFunction(text => document.querySelector('#sillymemory [data-sm="status"]')?.textContent.includes(text), text, { timeout: 30000 }); };
     check('fresh setup shows connection before preparation or activation', await field('connect').isVisible() && !await field('provision').isVisible() && !await field('enabled').isVisible() && !await field('budget').isVisible() && !await field('checkpoint-save').isVisible());
+    check('chat activation is not exposed before connection and preparation', await chatField('toggle').getAttribute('hidden') !== null);
     const advancedSummary = field('advanced').locator(':scope > summary');
     await advancedSummary.focus(); await page.keyboard.press('Enter');
     check('Advanced opens with the keyboard', await field('budget').isVisible());
@@ -205,6 +206,7 @@ try {
         await field('provision').click(); await waitStatus('Invalid request');
         check('failed setup cleanup cannot mark memory ready or enable it', collections.size === 1 && !await field('enabled').isChecked() && await page.evaluate(() => !JSON.parse(localStorage.getItem(`sillymemory:state:${SillyTavern.getContext().extensionSettings.sillymemory.owner}`)).ready));
         check('pending cleanup is actionable without opening Advanced', await field('recover-cleanup').isVisible() && !await field('cleanup').isVisible() && !await field('provision').isVisible() && collections.size === 1);
+        check('chat activation cannot bypass pending test cleanup', await chatField('toggle').getAttribute('hidden') !== null);
         await field('recover-cleanup').click(); await waitStatus('No pending');
         check('cleanup restores preparation and removes the recovery action', await field('provision').isVisible() && !await field('recover-cleanup').isVisible());
     }
@@ -215,6 +217,7 @@ try {
     check('basic preparation runs the required transport test and cleans up without opening Advanced', collections.size === 0 && calls.filter(c => c.path.endsWith('/docs/upsert')).length > gateUploads && !await field('budget').isVisible() && !await field('enabled').isChecked());
     check('direct requests carry the key and origin but omit cookies and host CSRF', calls.some(c => c.keyPresent) && calls.every(c => !c.cookiePresent && !c.csrfPresent && c.origin === url) && preflights > 0 && proxyRequests === 0);
     check('prepared setup shows the memory switch instead of setup controls', !await field('provision').isVisible() && await field('enabled').isVisible() && !await field('endpoint').isVisible() && (await field('mode-help').innerText()).includes('usual chat history'));
+    check('prepared memory exposes a chat-facing Turn memory on action', await chatField('toggle').getAttribute('hidden') === null && (await chatField('toggle').textContent()) === 'Turn memory on');
     check('preparation creates no collection before a chat is enabled', collections.size === 0);
     await page.locator('#sillymemory .inline-drawer-toggle').scrollIntoViewIfNeeded();
     if (!faultMode) await page.screenshot({ path: path.join(artifacts, 'setup.png') });
@@ -280,7 +283,10 @@ try {
     await expandMemorySettings(page);
     await field('key').fill('synthetic-session-key'); await field('connect').click(); await waitStatus('Connected. Memory remains disabled.');
     await page.evaluate(async () => { const c = SillyTavern.getContext(); await c.selectCharacterById(c.characters.findIndex(x => x.name === 'SillyMemory Synthetic')); });
-    await field('enabled').check(); await waitStatus('synchronized');
+    await openChatMemory(page);
+    await chatField('toggle').click(); await waitStatus('synchronized');
+    check('chat activation persists the same enabled preference without reopening settings', await field('enabled').isChecked() && (await chatField('toggle').textContent()) === 'Turn memory off' && (await chatField('delivery').textContent()).includes('Memory enabled. No prompt checked') && await page.evaluate(() => JSON.parse(localStorage.getItem(`sillymemory:state:${SillyTavern.getContext().extensionSettings.sillymemory.owner}`)).enabled && !document.querySelector('#extensions-settings-button .drawer-content').classList.contains('openDrawer')));
+    await chatField('settings').click(); await field('enabled').waitFor({ state: 'visible' });
     if (!faultMode) {
         // Fail a read-only ownership check so this UI case does not leave an
         // uncertain-write journal that changes the existing no-write controls.

@@ -87,6 +87,9 @@ Your original chat file stays intact.
   the final host prompt passed the delivery check. It does not guarantee answer
   correctness. **Chat history** opens SillyTavern's existing chat list so you can
   return to the original conversation. **SillyMemory settings** opens the native extension drawer.
+- Once connected and prepared, use **Turn memory on / off** in the same panel
+  without reopening settings. Switching is disabled during generation or a
+  manual memory operation; initial connection and preparation stay in settings.
 - SillyMemory connects directly to LambdaDB and does not depend on built-in Vector
   Storage. Its chat vectorization must be off to avoid conflicting history injection;
   the chat status links to its settings without changing them.
