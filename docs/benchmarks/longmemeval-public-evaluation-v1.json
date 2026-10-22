@@ -1,0 +1,557 @@
+{
+  "producerRevision": "cae42d58d955a1688ced3075ad05227923f36772",
+  "evaluatedAt": "2026-10-22",
+  "judge": {
+    "model": "jev-1.13.0",
+    "type": "noul",
+    "threshold": 0.5,
+    "rulesSha256": "0e2c981b54ecea007bc538982671b474b77cf857065327bb7f2f332a00e81e42"
+  },
+  "questions": 500,
+  "correct": 480,
+  "accuracy": 0.96,
+  "answerUsage": {
+    "input": 2443045,
+    "cached": 7488,
+    "cacheWrite": 2362057,
+    "output": 31351
+  },
+  "meanAnswerInput": 4886.09,
+  "medianAnswerInput": 4805.5,
+  "generationEstimatedUsd": 6.3664013,
+  "judgeEstimatedUsd": 0.010052868,
+  "billedCostUsd": null,
+  "completeServiceCostUsd": null,
+  "byType": {
+    "single-session-user": {
+      "questions": 70,
+      "correct": 69,
+      "accuracy": 0.9857142857142858
+    },
+    "multi-session": {
+      "questions": 133,
+      "correct": 120,
+      "accuracy": 0.9022556390977443
+    },
+    "knowledge-update": {
+      "questions": 78,
+      "correct": 77,
+      "accuracy": 0.9871794871794872
+    },
+    "single-session-preference": {
+      "questions": 30,
+      "correct": 28,
+      "accuracy": 0.9333333333333333
+    },
+    "temporal-reasoning": {
+      "questions": 133,
+      "correct": 130,
+      "accuracy": 0.9774436090225563
+    },
+    "single-session-assistant": {
+      "questions": 56,
+      "correct": 56,
+      "accuracy": 1.0
+    }
+  },
+  "same50QuestionSubset": {
+    "questions": 50,
+    "correct": 45,
+    "comparisons": {
+      "chars400": {
+        "bothWrong": 4,
+        "bothCorrect": 33,
+        "sillymemoryOnly": 12,
+        "summaryOnly": 1
+      }
+    }
+  },
+  "operations": {
+    "POST collections": 500,
+    "GET collection": 1500,
+    "POST upsert": 9920,
+    "POST fetch": 5042,
+    "POST query": 500,
+    "DELETE collection": 500
+  },
+  "httpStatuses": {
+    "201": 500,
+    "200": 7042,
+    "202": 9920,
+    "404": 500
+  },
+  "cleanup": {
+    "owned": 500,
+    "deletedAndAbsent": 500
+  },
+  "medianGenerationResponseHeaderMs": 2617.4084786325693,
+  "medianQueryServerMs": 1252.5,
+  "medianRerankServerMs": 1049.0,
+  "limitations": [
+    "Standalone direct-provider benchmark, not a SillyTavern host run.",
+    "English data used during development; not an unseen holdout.",
+    "Estimated model costs use provider-reported cache categories at October 22 Standard rates, not invoices.",
+    "Memory inference billing and storage costs are unavailable; judging is evaluation overhead.",
+    "The 50-question summary comparison uses recorded answers under the same Jev rules; generation/prompt paths differ.",
+    "All alternatives use the same Jev rules; SillyTavern host and standalone generation paths differ.",
+    "One OpenAI HTTP 500 was retried once with the identical request. Quality is after recovery; generation usage excludes the unreported failed-attempt usage."
+  ],
+  "generationAttempts": {
+    "successful": 500,
+    "failed": 1,
+    "total": 501,
+    "failedQuestion": "gpt4_a2d1d1f6",
+    "failureStatus": 500,
+    "failedAttemptTokens": null,
+    "failedAttemptBilledCostUsd": null,
+    "firstAttemptCompletedQuestions": 499,
+    "firstAttemptCorrect": 479,
+    "firstAttemptAccuracy": 0.958,
+    "identicalRequestRetry": true
+  },
+  "embeddingInputEstimate": {
+    "tokenizer": "tiktoken 1.0.22 / cl100k_base",
+    "embeddingModel": "text-embedding-3-small",
+    "datasetSha256": "d6f21ea9d60a0d56f34a05b609c79c88a451d2ae03597821ea3d5a9678c3a442",
+    "inputRatePerMillionUsd": 0.021,
+    "source": "https://docs.lambdadb.ai/guides/costs/understanding-costs",
+    "boundary": "Independent token estimate for frozen text fields and one question embedding each. Not provider-reported usage or invoices. Excludes reranking, database operations, storage and retries.",
+    "full500": {
+      "questions": 500,
+      "documents": 483385,
+      "constructionInputTokensEstimate": 51721513,
+      "queryInputTokensEstimate": 19505,
+      "constructionEstimatedUsd": 1.086151773,
+      "queryEstimatedUsd": 0.000409605
+    },
+    "common50": {
+      "questions": 50,
+      "documents": 48372,
+      "constructionInputTokensEstimate": 5175400,
+      "queryInputTokensEstimate": 1914,
+      "constructionEstimatedUsd": 0.10868340000000001,
+      "queryEstimatedUsd": 4.0194e-05
+    }
+  },
+  "full500Comparison": {
+    "plain": {
+      "questions": 500,
+      "correct": 163,
+      "accuracy": 0.326,
+      "inputTokens": 14028181,
+      "meanInputTokens": 28056.362,
+      "medianInputTokens": 28080.0,
+      "usage": {
+        "input": 14028181,
+        "cached": 2075879,
+        "cacheWrite": 11950802,
+        "output": 31847
+      },
+      "generationEstimatedUsd": 30.4060629,
+      "byType": {
+        "single-session-user": {
+          "questions": 70,
+          "correct": 28
+        },
+        "multi-session": {
+          "questions": 133,
+          "correct": 23
+        },
+        "knowledge-update": {
+          "questions": 78,
+          "correct": 44
+        },
+        "single-session-preference": {
+          "questions": 30,
+          "correct": 11
+        },
+        "temporal-reasoning": {
+          "questions": 133,
+          "correct": 29
+        },
+        "single-session-assistant": {
+          "questions": 56,
+          "correct": 28
+        }
+      }
+    },
+    "vectors": {
+      "questions": 500,
+      "correct": 173,
+      "accuracy": 0.346,
+      "inputTokens": 14028603,
+      "meanInputTokens": 28057.206,
+      "medianInputTokens": 28078.0,
+      "usage": {
+        "input": 14028603,
+        "cached": 8864605,
+        "cacheWrite": 5162498,
+        "output": 32362
+      },
+      "generationEstimatedUsd": 14.1193255,
+      "byType": {
+        "single-session-user": {
+          "questions": 70,
+          "correct": 31
+        },
+        "multi-session": {
+          "questions": 133,
+          "correct": 26
+        },
+        "knowledge-update": {
+          "questions": 78,
+          "correct": 45
+        },
+        "single-session-preference": {
+          "questions": 30,
+          "correct": 13
+        },
+        "temporal-reasoning": {
+          "questions": 133,
+          "correct": 28
+        },
+        "single-session-assistant": {
+          "questions": 56,
+          "correct": 30
+        }
+      }
+    },
+    "plain-reference": {
+      "questions": 500,
+      "correct": 476,
+      "accuracy": 0.952,
+      "inputTokens": 52591554,
+      "meanInputTokens": 105183.108,
+      "medianInputTokens": 105319.5,
+      "usage": {
+        "input": 52591554,
+        "cached": 0,
+        "cacheWrite": 52590054,
+        "output": 34778
+      },
+      "generationEstimatedUsd": 131.825915,
+      "byType": {
+        "single-session-user": {
+          "questions": 70,
+          "correct": 70
+        },
+        "multi-session": {
+          "questions": 133,
+          "correct": 121
+        },
+        "knowledge-update": {
+          "questions": 78,
+          "correct": 77
+        },
+        "single-session-preference": {
+          "questions": 30,
+          "correct": 28
+        },
+        "temporal-reasoning": {
+          "questions": 133,
+          "correct": 126
+        },
+        "single-session-assistant": {
+          "questions": 56,
+          "correct": 54
+        }
+      }
+    },
+    "sillymemory": {
+      "questions": 500,
+      "correct": 480,
+      "accuracy": 0.96,
+      "inputTokens": 2443045,
+      "meanInputTokens": 4886.09,
+      "medianInputTokens": 4805.5,
+      "generationEstimatedUsd": 6.3664013
+    }
+  },
+  "common50Comparison": {
+    "plain": {
+      "questions": 50,
+      "correct": 16,
+      "accuracy": 0.32,
+      "inputTokens": 1400832,
+      "meanInputTokens": 28016.64,
+      "medianInputTokens": 28022.0,
+      "usage": {
+        "input": 1400832,
+        "cached": 279621,
+        "cacheWrite": 1121061,
+        "output": 3341
+      },
+      "generationEstimatedUsd": 2.8643246,
+      "byType": {
+        "knowledge-update": {
+          "questions": 8,
+          "correct": 5
+        },
+        "multi-session": {
+          "questions": 13,
+          "correct": 2
+        },
+        "single-session-preference": {
+          "questions": 3,
+          "correct": 1
+        },
+        "temporal-reasoning": {
+          "questions": 13,
+          "correct": 1
+        },
+        "single-session-assistant": {
+          "questions": 6,
+          "correct": 4
+        },
+        "single-session-user": {
+          "questions": 7,
+          "correct": 3
+        }
+      }
+    },
+    "vectors": {
+      "questions": 50,
+      "correct": 16,
+      "accuracy": 0.32,
+      "inputTokens": 1400668,
+      "meanInputTokens": 28013.36,
+      "medianInputTokens": 28014.0,
+      "usage": {
+        "input": 1400668,
+        "cached": 896776,
+        "cacheWrite": 503742,
+        "output": 3356
+      },
+      "generationEstimatedUsd": 1.3828926000000001,
+      "byType": {
+        "knowledge-update": {
+          "questions": 8,
+          "correct": 5
+        },
+        "multi-session": {
+          "questions": 13,
+          "correct": 2
+        },
+        "single-session-preference": {
+          "questions": 3,
+          "correct": 1
+        },
+        "temporal-reasoning": {
+          "questions": 13,
+          "correct": 1
+        },
+        "single-session-assistant": {
+          "questions": 6,
+          "correct": 4
+        },
+        "single-session-user": {
+          "questions": 7,
+          "correct": 3
+        }
+      }
+    },
+    "plain-reference": {
+      "questions": 50,
+      "correct": 48,
+      "accuracy": 0.96,
+      "inputTokens": 5262912,
+      "meanInputTokens": 105258.24,
+      "medianInputTokens": 105466.5,
+      "usage": {
+        "input": 5262912,
+        "cached": 0,
+        "cacheWrite": 5262762,
+        "output": 3377
+      },
+      "generationEstimatedUsd": 13.190975,
+      "byType": {
+        "knowledge-update": {
+          "questions": 8,
+          "correct": 8
+        },
+        "multi-session": {
+          "questions": 13,
+          "correct": 12
+        },
+        "single-session-preference": {
+          "questions": 3,
+          "correct": 3
+        },
+        "temporal-reasoning": {
+          "questions": 13,
+          "correct": 12
+        },
+        "single-session-assistant": {
+          "questions": 6,
+          "correct": 6
+        },
+        "single-session-user": {
+          "questions": 7,
+          "correct": 7
+        }
+      }
+    },
+    "summary": {
+      "questions": 50,
+      "correct": 17,
+      "accuracy": 0.34,
+      "inputTokens": 1404990,
+      "meanInputTokens": 28099.8,
+      "medianInputTokens": 28102.0,
+      "usage": {
+        "input": 1404990,
+        "cached": 0,
+        "cacheWrite": 1404840,
+        "output": 3385
+      },
+      "generationEstimatedUsd": 3.54625,
+      "byType": {
+        "knowledge-update": {
+          "questions": 8,
+          "correct": 5
+        },
+        "multi-session": {
+          "questions": 13,
+          "correct": 3
+        },
+        "single-session-preference": {
+          "questions": 3,
+          "correct": 1
+        },
+        "temporal-reasoning": {
+          "questions": 13,
+          "correct": 1
+        },
+        "single-session-assistant": {
+          "questions": 6,
+          "correct": 4
+        },
+        "single-session-user": {
+          "questions": 7,
+          "correct": 3
+        }
+      }
+    },
+    "chars400": {
+      "questions": 50,
+      "correct": 34,
+      "accuracy": 0.68,
+      "generatedAnswers": 48,
+      "operationalFailures": 2,
+      "inputTokens": 74633,
+      "meanInputTokensPerGeneratedAnswer": 1554.8541666666667,
+      "medianInputTokens": 1574,
+      "generationEstimatedUsd": 0.2102735,
+      "summaryMaintenanceEstimatedUsd": 15.771821,
+      "selectionEstimatedUsd": 0.31447,
+      "source": "docs/benchmarks/segment-summary-400chars-results-v1.json",
+      "boundary": "Evaluated with the same Jev rules. Failures remain in denominator; token statistics cover generated answers only. Source-grounded approximation, not a named commercial product replication."
+    },
+    "sillymemory": {
+      "questions": 50,
+      "correct": 45,
+      "accuracy": 0.9,
+      "inputTokens": 243932,
+      "meanInputTokens": 4878.64,
+      "medianInputTokens": 4891.0,
+      "generationEstimatedUsd": 0.635475
+    }
+  },
+  "pairedFull500": {
+    "plain": {
+      "bothCorrect": 159,
+      "sillymemoryOnly": 321,
+      "bothWrong": 16,
+      "alternativeOnly": 4
+    },
+    "vectors": {
+      "bothCorrect": 169,
+      "sillymemoryOnly": 311,
+      "bothWrong": 16,
+      "alternativeOnly": 4
+    },
+    "plain-reference": {
+      "bothCorrect": 467,
+      "sillymemoryOnly": 13,
+      "alternativeOnly": 9,
+      "bothWrong": 11
+    }
+  },
+  "costRates": {
+    "checkedAt": "2026-10-22",
+    "basis": "Published Standard list rates, before account allowances; estimates, not invoices",
+    "generation": {
+      "model": "gpt-6.1-sol",
+      "inputPerMillion": 2,
+      "cachedInputPerMillion": 0.1,
+      "cacheWritePerMillion": 2.5,
+      "outputPerMillion": 10,
+      "source": "https://developers.openai.com/api/docs/models/gpt-6.1-sol"
+    },
+    "judge": {
+      "model": "jev-1.13.0",
+      "inputPerMillion": 0.042,
+      "outputPerMillion": 0,
+      "source": "https://docs.typesafe.ai/models"
+    },
+    "memory": {
+      "embeddingPerMillion": 0.021,
+      "rerankingPerMillion": 0.0441,
+      "writesPerGB": 1,
+      "readsPerPB": 5,
+      "storagePerGBMonth": 0.33,
+      "source": "https://docs.lambdadb.ai/guides/costs/understanding-costs",
+      "limitations": "No per-call billed embedding/rerank token usage in the observed query/upsert responses; do not infer full service cost from operation counts."
+    }
+  },
+  "inputReductionVsFullHistory": 0.9535468185633001,
+  "alternativeJudging": {
+    "successfulJudgeCalls": 1550,
+    "generationCalls": 0,
+    "databaseCalls": 0,
+    "summary": {
+      "judge": {
+        "model": "jev-1.13.0",
+        "threshold": 0.5,
+        "endpoint": "https://api.typesafe.ai/v1/systemone"
+      },
+      "rulesSha256": "0e2c981b54ecea007bc538982671b474b77cf857065327bb7f2f332a00e81e42",
+      "arms": {
+        "plain": {
+          "questions": 500,
+          "correct": 163
+        },
+        "vectors": {
+          "questions": 500,
+          "correct": 173
+        },
+        "plain-reference": {
+          "questions": 500,
+          "correct": 476
+        },
+        "summary": {
+          "questions": 50,
+          "correct": 17
+        }
+      },
+      "calls": 1550,
+      "inputTokens": 736867,
+      "judgeEstimatedUsd": 0.030948414,
+      "billedCostUsd": null,
+      "newAnswerCalls": 0,
+      "newDatabaseCalls": 0
+    }
+  },
+  "evidenceCoverage": {
+    "retrievedEvidence": {
+      "sourceSpanAnnotationCoverage": null,
+      "necessaryFactRecall": null
+    },
+    "finalPromptDelivery": {
+      "sourceSpanAnnotationCoverage": null,
+      "necessaryFactRecall": null
+    },
+    "incorrectAnswerStageAttribution": null,
+    "boundary": "Not measured. Offline verification establishes source and request integrity, not evidence sufficiency or the cause of the 20 Jev-incorrect answers."
+  }
+}

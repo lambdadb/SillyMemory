@@ -1,5 +1,9 @@
 # LongMemEval-S actual-host comparison
 
+The [October 22 public-profile evaluation](longmemeval-public-evaluation.md) adds
+Jev 1.13.0 regrading of the saved Plain, Vector, Full-history and Summarize answers.
+The GPT-4o results and original host conditions below remain unchanged.
+
 The completed actual-host comparison used SillyMemory0.4.0's Query2 policy and
 scored414/500(82.8%). A subsequent fixed-policy Query1 comparison scored469/500
 (93.8%) with the same host, recent-five partition, search settings and4096budget.

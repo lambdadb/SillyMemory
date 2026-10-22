@@ -44,7 +44,8 @@ requests.
 [requirements.txt](requirements.txt) pins these packages and their transitive
 dependencies. `setup` installs the locked Node.js tokenizer into the run directory.
 
-Run from the repository root after `npm ci`:
+Run from the repository root after `npm ci`. The commands create the Python
+environment and run directory shown below:
 
 ```sh
 python3.14 -m venv artifacts/beam-venv

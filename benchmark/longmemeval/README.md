@@ -1,10 +1,14 @@
 # LongMemEval-S
 
-**Recorded result: 475/500 correct (95.0%).**
+**Result: 480/500 correct (96.0%), evaluated October 22, 2026.**
 
-Run ingestion, retrieval, memory selection, answer generation and judging from
-the public dataset. The recorded score used saved retrieval responses; this runner
-performs retrieval again and reports the new run's score separately.
+The completed run performed ingestion, source readback, retrieval, memory selection,
+answer generation and judging from the public dataset. All 500 questions passed
+offline verification, and all owned collections were confirmed absent.
+
+The [evaluation report](../../docs/longmemeval-public-evaluation.md) compares
+alternative answers under the same Jev protocol and reports tokens, cost estimates
+and measurement boundaries.
 
 [results.json](results.json) includes recorded token usage, available timings and
 resource counts. Unavailable measurements and billed cost are `null`.
@@ -42,7 +46,7 @@ Node.js tokenizer into the run directory. Download size is approximately 277 MB.
 The Python runner handles data preparation, generation, judging and result
 verification. The Node.js adapter reuses SillyMemory source modules for chunking,
 retrieval and memory assembly. No SillyTavern server or extension installation is
-required.
+required. The commands below create `artifacts/longmemeval` for your run.
 
 ```sh
 python3.14 benchmark/longmemeval/run.py setup --root artifacts/longmemeval
