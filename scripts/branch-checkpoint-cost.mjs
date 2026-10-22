@@ -1,3 +1,4 @@
+import { memoryControl } from './settings-panel.mjs';
 // Real pinned host, native local embeddings, and live managed LambdaDB.
 // No generation calls. Run only with a disposable host checkout and data directory.
 import assert from 'node:assert/strict';
@@ -57,8 +58,8 @@ report.hostInstrumentation = 'Time/CPU counters around actual local model execut
 const url = `http://127.0.0.1:${port}`;
 let server, browser, page, stage = 'setup', timeout, timedOut = false;
 const metrics = async () => (await readFile(metricPath, 'utf8')).trim().split('\n').filter(Boolean).map(line => JSON.parse(line));
-const field = name => page.locator(`#sillymemory [data-sm="${name}"]`);
-const idle = () => page.waitForFunction(() => !document.querySelector('#sillymemory [data-sm=enabled]')?.disabled);
+const field = name => name === 'enabled' ? memoryControl(page) : page.locator(`#sillymemory [data-sm="${name}"]`);
+const idle = () => page.waitForFunction(() => !document.querySelector('#sillymemory [data-sm=connect]')?.disabled);
 const status = text => page.waitForFunction(text => {
     const value = document.querySelector('#sillymemory [data-sm=status]')?.textContent || '';
     if (/failed|Invalid request|HTTP 4|HTTP 5|Timed out/i.test(value)) throw new Error(value);
@@ -245,7 +246,6 @@ try {
     browser = await chromium.launch(); page = await browser.newPage(); page.setDefaultTimeout(20000);
     timeout = setTimeout(() => { timedOut = true; void page.close(); }, plan.limits.wallMinutes * 60000);
     page.on('pageerror', e => report.pageErrors.push(e.name));
-    page.on('dialog', d => void d.accept());
     page.on('request', req => {
         const u = new URL(req.url());
         if (u.origin !== url || !u.pathname.startsWith('/api/vector/')) return;
@@ -272,9 +272,7 @@ try {
     await page.getByText('Save', { exact: true }).last().click();
     await page.locator('#sillymemory').waitFor({ state: 'attached', timeout: 45000 }); await panel();
     await field('endpoint').fill(credentials.endpoint); await field('project').fill(credentials.project); await field('key').fill(credentials.key);
-    await field('connect').click(); await status('Connected.'); await idle();
-    await field('gate').click(); await status('Transport gate passed'); await idle();
-    await field('provision').click(); await status('Chat memory is ready'); await idle();
+    await field('connect').click(); await status('Chat memory is ready'); await idle();
     await page.evaluate(async () => {
         const c = SillyTavern.getContext(), body = new FormData(); body.set('ch_name', 'Branch Cost Synthetic'); body.set('first_mes', 'Synthetic expedition.');
         const r = await fetch('/api/characters/create', { method: 'POST', headers: c.getRequestHeaders({ omitContentType: true }), body });

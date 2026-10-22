@@ -1,7 +1,7 @@
 """Bounded BEAM length comparison using Past's pinned loader, prompts and scoring.
 
-Third-party code stays in the ignored source bundle, with its original notices.
-Only the memory backend and the explicitly approved direct OpenAI transport differ.
+Setup downloads the pinned upstream code with its original license notices.
+SillyMemory supplies the memory backend and uses direct OpenAI transport.
 """
 import argparse
 import asyncio

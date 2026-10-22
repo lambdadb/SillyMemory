@@ -45,6 +45,16 @@ test('checkpoint reuses committed documents and restores full transcript/swipes 
     }
     assert.deepEqual(f.files.get(file), saved); assert.equal(f.writes, before);
 });
+test('a frozen snapshot links back to its actual source through the native parent navigation', async () => {
+    const f = await fixture();
+    f.rows[0].chat_metadata.main_chat = 'earlier-ancestor';
+    const before = structuredClone(f.rows);
+    const file = await createCheckpoint({ ...f, file: 'current-source' });
+    assert.equal(f.files.get(file)[0].chat_metadata.main_chat, 'current-source');
+    const resumed = await resumeCheckpoint({ ...f, file });
+    assert.equal(f.files.get(resumed)[0].chat_metadata.main_chat, file);
+    assert.deepEqual(f.rows, before, 'the source transcript and its own parent link are unchanged');
+});
 test('changed transcript, changed snapshot and pending checkpoint cannot be resumed', async () => {
     const f = await fixture(), file = await createCheckpoint(f), original = structuredClone(f.files.get(file));
     f.files.get(file)[1].swipes[0] = 'Changed hidden swipe';

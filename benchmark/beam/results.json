@@ -198,7 +198,7 @@
     "Model token usage comes from provider receipts. Model HTTP medians include response-body reads, not host or end-to-end latency.",
     "Rubric and equivalence calls are judge overhead. Memory operations include source readback audits and owned cleanup.",
     "Embedding tokens are independently counted estimates. Modeled costs use frozen comparison rates, exclude database, search, reranking, storage and managed-service margins, and are not invoices. Cache-write tokens are a subset of input tokens.",
-    "Null means not available in the retained aggregate, not zero. The 100K setup calls (79 input and 22 output tokens) are excluded."
+    "Null means unavailable, not zero. Resource totals exclude setup validation calls."
   ],
   "frozenCostRatesUsdPerMillionTokens": {
     "input": 0.2,
@@ -208,22 +208,6 @@
     "embedding": 0.02
   },
   "resourceSource": {
-    "document": "../../docs/beam-evaluation.md#answer-tokens-model-rate-proxies-and-construction",
-    "summarySha256": "9ad4058fd5bc60f03537eba433ec341f75dc975be7e8daa8f164f1a58a31bece",
-    "analyses": {
-      "100k": {
-        "analysisSha256": "05e6889b8329e32e24c68334605f4e34a80d429505e49b8f3eb78535aca9576e"
-      },
-      "500k": {
-        "analysisSha256": "746048681b7d6509d4b1b71089d900cdf02b158c2393bb927ca4dd959fd6c0fd"
-      },
-      "1m": {
-        "analysisSha256": "b3f224d1eb5acfbf295bb2a06e4824aefa8dad1f802c923aceb6d9889e7e5459"
-      },
-      "10m": {
-        "analysisSha256": "96f86002377b2d4a58a323adb915c8bb1780b30ecf35ac0be4e52cb7d099a252"
-      }
-    },
-    "detailedReceiptsAvailability": "Local retained evidence; not included in a fresh clone."
+    "document": "../../docs/beam-evaluation.md#answer-tokens-model-rate-proxies-and-construction"
   }
 }

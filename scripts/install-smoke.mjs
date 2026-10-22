@@ -1,3 +1,4 @@
+import { memoryControl } from './settings-panel.mjs';
 import { expandMemorySettings } from './settings-panel.mjs';
 // GitHub installation and optional same-branch update through the pinned host UI.
 // No provider calls; only a disposable installation is rewound for update testing.
@@ -70,7 +71,7 @@ try {
     check('user-scoped installation is a real Git checkout, not a symlink', !(await lstat(installed)).isSymbolicLink() && git(installed, 'remote', 'get-url', 'origin').replace(/\/$/, '') === repository);
     check('installed directory preserves the requested repository spelling', (await readdir(path.dirname(installed))).includes(installFolder));
     report.initialVersion = JSON.parse(await readFile(path.join(installed, 'manifest.json'), 'utf8')).version;
-    const field = name => page.locator(`#sillymemory [data-sm="${name}"]`);
+    const field = name => name === 'enabled' ? memoryControl(page) : page.locator(`#sillymemory [data-sm="${name}"]`);
     async function settings() {
         if (!await page.locator('#sillymemory .inline-drawer-content').isVisible()) {
             if (!await page.locator('#sillymemory .inline-drawer-toggle').isVisible()) await page.locator('#extensions-settings-button .drawer-toggle').click();

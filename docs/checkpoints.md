@@ -1,4 +1,15 @@
-# Frozen story checkpoints
+# Frozen memory snapshots (advanced)
+
+For ordinary use, keep SillyTavern's native **Save checkpoint**, **Create Branch**,
+**Back to parent chat** and **Manage chat files** workflow. SillyMemory follows
+the selected saved transcript, prepares a separate writable memory path, and
+preserves the enabled preference across chat changes. Native checkpoint saving
+does not freeze remote memory; it remains reconstructible from the saved transcript.
+Use **Chat history** in the Memory panel to open the native chat list.
+
+The optional **Advanced → Frozen memory snapshots** controls below additionally
+bind a saved transcript to a verified, retained remote memory branch. The internal
+metadata and historical acceptance records call these snapshots checkpoints.
 
 ## Decision and bounded acceptance
 
@@ -19,25 +30,32 @@ or large-history performance. Preserve complete failed/successful run evidence.
 
 ## Use
 
-Use 0.3.0 with the validated SillyTavern 1.19.0 host.
+Use the validated SillyTavern 1.19.0 host.
 Connect, prepare memory and select a character chat. Story branches are automatic;
 checkpoint creation also persists a fresh chat identity before remote use.
 
-1. Click **Save / finish checkpoint** on a normal story path. The extension
-   disables memory and drains previous writes, saves a separate native chat with
+1. Open **Advanced → Frozen memory snapshots** and click **Save memory snapshot**
+   on a normal story path. The extension pauses memory operations and drains previous writes,
+   saves a separate native chat with
    a unique `SillyMemory checkpoint ...` name, then prepares its memory branch.
-   The original chat stays selected. Re-enable memory to continue that original
-   path after saving, or resume the saved checkpoint from the manager below.
+   The original chat stays selected and your enabled preference is preserved.
+   After success, enabled memory synchronizes automatically on that original path;
+   an explicitly disabled preference stays off. Alternatively, resume the saved snapshot below.
+   Newly saved snapshots link to their actual source through the native
+   **Back to parent chat** action, including when saved from an existing branch.
+   Older snapshots remain accessible through **Chat history**.
 2. A checkpoint is ready only after its intended older documents are committed
    and the matching snapshot ID is saved and read back from the host. A
    [last-write commit check](commit-confirmation.md) can shorten polling; the final
    complete document comparison remains required. Creation
    can take minutes while waiting for commits. No generation model is called.
 3. Click **Resume** on that checkpoint in the current-story list. Alternatively,
-   select it in the native chat list and click **Resume checkpoint in new chat**.
+   select it in the native chat list and click **Resume snapshot in new chat**.
    It checks the persisted transcript digest and remote branch
    snapshot, saves a separate `SillyMemory resume ...` chat, verifies it and opens
-   it. Enable memory to inherit from the frozen branch and continue. Repeating
+   it. The resumed chat inherits the snapshot’s saved on/off preference. When on,
+   memory automatically inherits from the frozen branch and synchronizes; an off
+   snapshot resumes with memory off. Each resumed chat can change independently. Repeating
    this creates another independent path.
 4. If creation stops partway, reconnect, refresh the current-story list and click
    **Finish / retry** on the pending checkpoint. Its pending record contains the original memory
@@ -267,9 +285,10 @@ checkpoint/versioning evidence was not modified or deleted.
 
 ## Checkpoint manager
 
-Open **Checkpoints** in the SillyMemory settings. Give a checkpoint an optional
-name (up to 120 characters) before saving. Use
-**Refresh story checkpoints** to list checkpoints belonging to the selected
+Open **Advanced → Frozen memory snapshots** in the SillyMemory settings. Give a snapshot an optional
+name (up to 120 characters) before saving. The list refreshes automatically when
+opened, on reconnection, and when changing chats while the panel is visible.
+**Refresh memory snapshots** also checks snapshots belonging to the selected
 character and versioned story. Each row shows the name, creation time and verified
 status. Names live in the checkpoint's presentation metadata, so renaming does not
 change its identity, transcript hash, native filename or memory branch.
@@ -284,19 +303,25 @@ change its identity, transcript hash, native filename or memory branch.
   failures are not reported as missing data.
 - **Duplicate identity**: actions are blocked until the native copies are resolved.
 
-The list is refreshed explicitly and after successful management actions. Changing
-chats clears old rows; actions check story identity and saved state again. Listing
-checks each candidate transcript and shares one ownership check/branch listing
-across the story. It never queries embeddings or writes remote documents.
+Matching automatic reads share an in-flight request. Manual refresh and successful
+management actions force a fresh read. Hidden settings do not trigger automatic
+listing. Changing chats clears old rows, and late results for an old chat, story
+or client are discarded. Automatic failures stay in the list without taking over
+chat progress or blocking controls. Actions check story identity and saved state
+again. Listing checks each candidate transcript and shares one ownership check/branch
+listing across the story. It never synchronizes chats, queries embeddings, writes
+remote documents or generates answers.
 
 From another path in the same story, **Rename** changes a checkpoint's display
-name. **Delete checkpoint**, after confirmation, deletes only that native
-checkpoint file and its remote branch. Remote absence is verified first. If local
+name through a native SillyTavern input popup. **Delete checkpoint**, after native
+confirmation, deletes only that native checkpoint file and its remote branch. Remote absence is verified first. If local
 deletion subsequently fails, the retained row shows missing memory and deletion
 can be retried. Other source/resumed chat files and existing memory branches are
 preserved. A resumed path that has never synchronized must rebuild from its own
 transcript if its source checkpoint was deleted. The currently open checkpoint
 cannot be renamed or deleted through this list; open another story path first.
+Canceling or escaping a popup leaves data unchanged. Every asynchronous popup
+revalidates its captured chat target before renaming or deleting anything.
 
 This differs from **Delete this chat's remote memory**, which keeps its native
 file, and all-owned cleanup, which removes all owned remote story collections but

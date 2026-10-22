@@ -3,7 +3,8 @@
 ## Product decision
 
 Keep one UI extension and direct browser HTTPS/CORS. The user enters a project
-key once and chooses **Save and connect**. That action explicitly stores the key
+key once and chooses **Connect and prepare**. Prepared connections use the
+**Save and connect** label when edited. That action explicitly stores the key
 in this browser; there are no retention modes or extra server plugins. It replaces
 the previous session-only policy for the unreleased 0.4.0 candidate, not any
 historical test evidence.
@@ -18,9 +19,12 @@ remain in the client's private field; the password input is cleared on submissio
 A single authenticated `GET /projects/{project}/collections?size=1` validates the
 connection before save or activation. It does not create resources or invoke
 managed embeddings, reranking or the answer model. It proves the bounded read
-works, not every write permission. **Prepare chat memory** runs the required
-synthetic transport test (unless it already passed in this session) and verifies
-cleanup before marking memory ready. Activation remains a separate explicit step.
+works, not every write permission. The initial explicit **Connect and prepare**
+action then runs the required synthetic transport test (unless it already passed
+in this session) and verifies cleanup before marking memory ready. The UI discloses
+temporary inference usage and separate per-chat activation before the action.
+Setup never uploads or activates a chat. **Finish preparation** remains available
+after interrupted setup and verified pending-test cleanup.
 The manual test and pending-test cleanup controls remain under **Advanced**.
 Pending test data also exposes a cleanup action beside the status. A failed
 background synchronization exposes a retry action; retrying a stopped generation
@@ -28,9 +32,9 @@ still uses the native Regenerate action.
 
 After successful verification, the connection editor collapses to a project
 summary. It remains manually expandable and reopens when authentication or
-reconnection fails. Setup shows preparation only after connection, then the memory
-switch after preparation. These views do not change stored connection or memory
-settings.
+reconnection fails. Setup combines connection and preparation; interrupted
+preparation exposes the remaining action, then the memory switch after preparation.
+These views do not change stored connection or memory settings.
 
 After reload, acquire the account's existing exclusive browser lock, restore the
 key and verify it. Only then restore the previous enabled state if chat memory was
@@ -44,11 +48,15 @@ checks still guard writes and generation.
 - HTTP 401 disables memory. A rejected restored key is removed only if its exact
   endpoint/project and value still match storage. A rejected explicit candidate is
   not saved and preserves the previous credential. Replace the key and choose
-  **Save and connect**; switching back can retry the prior saved connection.
+  the connection action in **Connection** settings; switching back can retry the
+  prior saved connection.
 - Network/CORS, timeout, 403 and transient service errors leave saved credentials
-  available but do not enable memory. An empty key input may retry the saved key
-  for the exact selected connection via **Save and connect**, restoring the saved
-  enabled preference after verified recovery. No automatic retry loop.
+  available but do not enable memory. **Reconnect** in the chat panel retries the
+  key for the persisted endpoint/project, ignoring unsaved connection form edits
+  and preserving every chat's on/off choice. An empty key input in Connection
+  settings can also retry the exact selected connection. Automatic reload and
+  chat Reconnect do not start an unprepared transport test; initial preparation
+  requires the explicit setup action. No automatic retry loop.
 - **Forget key** clears the input and runtime key, cancels requests, removes the
   account credential even if ordinary connection settings were lost, disables
   memory and drains pending work. It retains remote
@@ -105,6 +113,9 @@ installation is not newly verified here. These checks establish connection/lifec
 real-provider acceptance. No benchmark rerun is needed for persistence.
 See [retained evidence](evidence-retention.md#saved-browser-connection-verification).
 
+
+Current setup/recovery browser results and boundaries are recorded in
+[Setup and recovery UX](setup-and-recovery.md).
 
 ## Historical integration with clarification continuity
 

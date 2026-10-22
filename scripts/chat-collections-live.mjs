@@ -1,4 +1,4 @@
-import { expandMemorySettings } from './settings-panel.mjs';
+import { answerMemoryPopup, memoryControl, expandMemorySettings } from './settings-panel.mjs';
 // Bounded real UI + direct browser CORS + managed LambdaDB lifecycle acceptance.
 // No generation calls; at most four small collections, or two with --large-history (1,100 submitted documents).
 import assert from 'node:assert/strict';
@@ -44,7 +44,6 @@ try {
     const profile = JSON.parse(await readFile(profilePath, 'utf8')); profile.main_api = 'openai'; await writeFile(profilePath, JSON.stringify(profile));
     browser = await chromium.launch(); page = await browser.newPage({ viewport: { width: 1440, height: 1100 } }); page.setDefaultTimeout(20000);
     page.on('request', req => { if (new URL(req.url()).pathname.startsWith('/proxy/')) report.proxyRequests++; });
-    page.on('dialog', dialog => { void dialog.accept(dialog.type() === 'prompt' ? 'Observatory checkpoint' : undefined).catch(error => report.pageErrors.push(error.name)); });
     await page.route(`${new URL(credentials.endpoint).origin}/**`, async route => {
         try {
         const req = route.request(), target = new URL(req.url());
@@ -89,7 +88,7 @@ try {
     }
     page.on('response', r => { if (new URL(r.url()).origin === new URL(credentials.endpoint).origin) report.responses.push({ stage, status: r.status(), method: r.request().method(), resource: new URL(r.url()).pathname.split('/').slice(5).join('/') || 'collection' }); });
     await page.goto(url); await page.getByText('Welcome to SillyTavern!', { exact: true }).waitFor(); await page.getByText('Save', { exact: true }).last().click();
-    const field = name => page.locator(`#sillymemory [data-sm="${name}"]`);
+    const field = name => name === 'enabled' ? memoryControl(page) : page.locator(`#sillymemory [data-sm="${name}"]`);
     const status = async text => page.waitForFunction(text => document.querySelector('[data-sm="status"]')?.textContent.includes(text), text, { timeout: 180000 });
     panel = async () => {
         await page.locator('#sillymemory').waitFor({ state: 'attached', timeout: 45000 });
@@ -114,8 +113,7 @@ try {
         const client = new LambdaClient(credentials, credentials.key);
         try { await client.assertOwned(entry.collection, owner, undefined, entry.scope); return await client.query(entry.collection, scopeFilter(owner, entry.scope), { branch: entry.branch || 'main' }); } finally { client.forget(); }
     }, { credentials, entry });
-    stage = 'transport'; await connect(); await field('gate').click(); await status('Transport gate passed');
-    await field('provision').click(); await status('Chat memory is ready');
+    stage = 'transport'; await connect(); await status('Chat memory is ready');
     await field('budget').fill('800'); await field('budget').dispatchEvent('change');
     await page.evaluate(async () => {
         const c = SillyTavern.getContext(), body = new FormData(); body.set('ch_name', 'Collection Lifecycle'); body.set('first_mes', 'Synthetic collection lifecycle.');
@@ -212,7 +210,7 @@ try {
     check('managed queryText through UI interceptor retrieves synthetic source', !recall.aborted && recall.archives === 1 && recall.text.includes('stone tower') && recall.last.includes('turn 9'));
     check('live recalled archive preserves role and sent label without duplicating rerank context',
         recall.text.includes('user "User"') && recall.text.includes('sent: 2024-02-29T12:34:56.123Z') && !recall.text.includes('Message sent at'));
-    stage = 'single deletion'; await panel(); await field('delete-chat').click(); await status('no longer accessible');
+    stage = 'single deletion'; await panel(); await answerMemoryPopup(page, () => field('delete-chat').click()); await status('no longer accessible');
     check('individual deletion confirmed absent before fallback cleanup', await absent(copy));
     check('deleting current copy preserves parent and branch', (await inspect(parent)).length === 4 && (await inspect(branch)).length === 4);
     stage = 'reload'; await page.reload(); await page.locator('#sillymemory').waitFor({ state: 'attached' });
@@ -229,7 +227,7 @@ try {
         await status('synchronized'); const earlier = await identity(), rows = await inspect(earlier);
         check('earlier native fork removes future and protected-recent remote chunks', earlier.collection === parent.collection && rows.length === 2 && rows.every(d => d.message < 2));
         check('earlier native fork submits no unchanged inherited documents', !report.upserts.some(r => r.stage === 'earlier branch'));
-        await panel(); await field('delete-chat').click(); await status('no longer accessible');
+        await panel(); await answerMemoryPopup(page, () => field('delete-chat').click()); await status('no longer accessible');
         check('current branch deletion preserves sibling and parent', await absent(earlier) && (await inspect(parent)).length === 4 && (await inspect(branch)).length === 4);
     }
     if (checkpoints) {
@@ -292,7 +290,7 @@ try {
         }
         if (manager) {
             await refreshList();
-            await checkpointRow('Before the harbor').getByRole('button', { name: 'Rename', exact: true }).click();
+            await answerMemoryPopup(page, () => checkpointRow('Before the harbor').getByRole('button', { name: 'Rename', exact: true }).click(), { value: 'Observatory checkpoint' });
             await status('Checkpoint name saved');
             await checkpointRow('Observatory checkpoint').waitFor();
             check('manager rename changes presentation only and leaves the current path selected', (await identity()).file === renamed.file && (await readChat(checkpointFile))[0].chat_metadata.sillymemory.checkpoint.name === 'Observatory checkpoint');
@@ -304,7 +302,7 @@ try {
         await field('enabled').uncheck();
         await page.evaluate(async name => SillyTavern.getContext().openCharacterChat(name), checkpointFile);
         const checkpoint = await identity();
-        await field('enabled').check(); await status('This is a saved checkpoint'); await field('enabled').uncheck();
+        await field('enabled').check(); await status('This is a frozen memory snapshot'); await field('enabled').uncheck();
         check('opening a checkpoint refuses ordinary memory writes', (await inspect(checkpoint)).some(d => d.text.includes('cedar tree')));
         stage = 'checkpoint resume';
         loseResume = recovery;
@@ -341,7 +339,7 @@ try {
             await page.evaluate(async name => SillyTavern.getContext().openCharacterChat(name), renamed.file);
             await refreshList();
             check('manager marks changed transcript and offers no resume', (await checkpointRow('Observatory checkpoint').innerText()).includes('Transcript modified') && await checkpointRow('Observatory checkpoint').getByRole('button', { name: 'Resume', exact: true }).count() === 0);
-            await checkpointRow('Observatory checkpoint').getByRole('button', { name: 'Delete checkpoint', exact: true }).click();
+            await answerMemoryPopup(page, () => checkpointRow('Observatory checkpoint').getByRole('button', { name: 'Delete checkpoint', exact: true }).click());
             await status('Checkpoint transcript and memory branch deleted');
             check('manager deletes one checkpoint while retaining resumed paths and source', !(await readChat(checkpointFile)).length && await absent(checkpoint) && (await inspect(second)).length > 0 && (await inspect(parent)).length > 0);
             // Create another snapshot of already committed history, then remove only its remote branch.
@@ -349,18 +347,18 @@ try {
             await field('checkpoint-save').click(); await status('Checkpoint saved:');
             const missingFile = (await files()).find(x => x.chat_metadata?.sillymemory?.checkpoint?.name === 'Missing remote example').file_name.replace(/\.jsonl$/, '');
             await page.evaluate(async name => SillyTavern.getContext().openCharacterChat(name), missingFile);
-            await field('delete-chat').click(); await status('no longer accessible');
+            await answerMemoryPopup(page, () => field('delete-chat').click()); await status('no longer accessible');
             await page.evaluate(async name => SillyTavern.getContext().openCharacterChat(name), renamed.file);
             await refreshList();
             check('manager reports missing branch without allowing resume', (await checkpointRow('Missing remote example').innerText()).includes('Remote memory missing') && await checkpointRow('Missing remote example').getByRole('button', { name: 'Resume', exact: true }).count() === 0);
-            await checkpointRow('Missing remote example').getByRole('button', { name: 'Delete checkpoint', exact: true }).click(); await status('Checkpoint transcript and memory branch deleted');
+            await answerMemoryPopup(page, () => checkpointRow('Missing remote example').getByRole('button', { name: 'Delete checkpoint', exact: true }).click()); await status('Checkpoint transcript and memory branch deleted');
             check('manager removes local checkpoint after already completed remote deletion', !(await readChat(missingFile)).length);
         }
     }
     stage = 'discovery cleanup';
     // Lose only the local registry: remote ownership discovery must still find both.
     await page.evaluate(() => { const c = SillyTavern.getContext(), key = `sillymemory:state:${c.extensionSettings.sillymemory.owner}`; const s = JSON.parse(localStorage.getItem(key)); s.chatCollections = []; localStorage.setItem(key, JSON.stringify(s)); });
-    await page.reload(); await connect(); await panel(); await field('delete').click(); await status('no longer accessible');
+    await page.reload(); await connect(); await panel(); await answerMemoryPopup(page, () => field('delete').click()); await status('no longer accessible');
     check('all-owned cleanup discovers collections after local registry loss', await absent(parent) && await absent(branch) && await absent(copy));
     check('credentials absent from persistent profile', !(await readFile(profilePath, 'utf8')).includes(credentials.key));
     check('direct lifecycle uses no host proxy or browser automation errors', report.proxyRequests === 0 && report.pageErrors.length === 0);
@@ -373,12 +371,13 @@ finally {
         try {
             if (pending.length) {
                 await connect(); await panel();
-                await page.locator('[data-sm="delete"]').click();
+                await answerMemoryPopup(page, () => page.locator('[data-sm="delete"]').click());
                 await page.waitForFunction(() => document.querySelector('[data-sm="status"]')?.textContent.includes('no longer accessible'), null, { timeout: 180000 });
             }
+            await page.evaluate(() => document.querySelector('[data-sm="forget"]').onclick());
+            await page.waitForFunction(() => document.querySelector('[data-sm="status"]')?.textContent.includes('Saved key removed'));
             await page.evaluate(async ({ credentials, entries }) => {
                 const c = SillyTavern.getContext();
-                const enabled = document.querySelector('[data-sm="enabled"]'); if (enabled?.checked) { enabled.checked = false; enabled.dispatchEvent(new Event('change')); }
                 const { LambdaClient } = await import('/scripts/extensions/third-party/sillymemory/src/client.js');
                 const client = new LambdaClient(credentials, credentials.key);
                 try { for (const e of entries) await client.deleteOwnedCollection(e.collection, e.owner, e.scope); } finally { client.forget(); }

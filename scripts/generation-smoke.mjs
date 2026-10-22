@@ -1,4 +1,4 @@
-import { expandMemorySettings } from './settings-panel.mjs';
+import { answerMemoryPopup, memoryControl, expandMemorySettings } from './settings-panel.mjs';
 // Full SillyTavern Generate/UI path + live LambdaDB. Model is deterministic by
 // default; --live-model requires explicitly supplied compatible-model settings.
 import { runHybrid, hybridFiles } from './hybrid-eval.mjs';
@@ -222,7 +222,7 @@ await new Promise(r => bridge.listen(0, '127.0.0.1', r));
 const port = Number(process.env.ST_GENERATION_PORT || 18128), url = `http://127.0.0.1:${port}`;
 const bridgeUrl = `http://127.0.0.1:${bridge.address().port}/v1`;
 let events = [], evaluation;
-const field = name => page.locator(`#sillymemory [data-sm="${name}"]`);
+const field = name => name === 'enabled' ? memoryControl(page) : page.locator(`#sillymemory [data-sm="${name}"]`);
 const waitStatus = text => page.waitForFunction(text => document.querySelector('[data-sm="status"]')?.textContent.includes(text), text, { timeout: 90000 });
 async function openSettings() {
     if (!await page.locator('#sillymemory .inline-drawer-content').isVisible()) {
@@ -343,8 +343,7 @@ try {
     stage = 'UI LambdaDB setup'; await openSettings();
     if (!nativeTuning && !summarizeMode) {
     await page.evaluate(({ endpoint, project, key }) => { for (const [name, value] of Object.entries({ endpoint, project, key })) document.querySelector(`[data-sm="${name}"]`).value = value; }, credentials);
-    await field('connect').click(); await field('gate').click(); await waitStatus('Transport gate passed');
-    await field('provision').click(); await waitStatus('Chat memory is ready');
+    await field('connect').click(); await waitStatus('Chat memory is ready');
     }
     if (hybridMode) {
         evaluation = {};
@@ -451,8 +450,7 @@ try {
                     // The shipped deletion path invalidates retrieval and drains writes.
                     // If it fails, retain the pending record instead of racing deletion.
                     await openSettings();
-                    page.once('dialog', dialog => dialog.accept());
-                    await field('delete').click();
+                    await answerMemoryPopup(page, () => field('delete').click());
                     await waitStatus('no longer accessible');
                     assert(true, 'settings deletion drains writes and removes owned memory');
                 }

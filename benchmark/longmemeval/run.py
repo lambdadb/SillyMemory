@@ -367,7 +367,7 @@ def run(args):
                     "files": files, "owner": owner, "ids": ids,
                     "inputs": adapter("prepare", root, ids=ids, owner=owner)}
             write_json(root / "lock.json", lock, exclusive=True)
-            print(f"Prepared {len(ids)}/{config['questions']} questions; no saved retrieval selection is used.")
+            print(f"Prepared {len(ids)}/{config['questions']} questions.")
             return
         assert lock["configSha256"] == digest(HERE / "config.json") and lock["datasetSha256"] == config["dataset"]["sha256"]
         assert lock["files"] == files, "Runner or tokenizer changed; use a new run directory"

@@ -1,4 +1,4 @@
-import { expandMemorySettings } from './settings-panel.mjs';
+import { answerMemoryPopup, expandMemorySettings } from './settings-panel.mjs';
 // Deterministic upstream failures. Only used by the local HTTPS emulator harness.
 import assert from 'node:assert/strict';
 import { runRecoveryScenarios } from './recovery-scenarios.mjs';
@@ -245,8 +245,8 @@ export async function runFaultScenarios({ page, field, waitStatus, prompt, check
     await seed(); const inFlight = faults.arm('upsert', 'hold');
     await edit('FAULT_DRAIN: Pending write before full deletion.'); await entered(inFlight);
     const deletesBefore = calls.filter(c => c.method === 'DELETE').length;
-    page.once('dialog', dialog => dialog.accept()); await field('delete').click();
-    await page.waitForFunction(() => document.querySelector('[data-sm="delete"]').disabled && !document.querySelector('[data-sm="enabled"]').checked);
+    await answerMemoryPopup(page, () => field('delete').click());
+    await page.waitForFunction(() => document.querySelector('[data-sm="delete"]').disabled && document.querySelector('#sillymemory-chat [data-sm-chat="toggle"]').getAttribute('aria-pressed') === 'false');
     check('owned collection deletion waits for the outstanding write', collections.size > 0 && calls.filter(c => c.method === 'DELETE').length === deletesBefore);
     inFlight.release(); await waitStatus('no longer accessible');
     check('drained collection deletion leaves no remote data or journal', collections.size === 0 && await page.evaluate(() => !Object.keys(localStorage).some(k => k.startsWith('sillymemory:journal:'))));
