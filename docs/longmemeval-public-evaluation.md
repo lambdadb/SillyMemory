@@ -18,6 +18,11 @@ four-answer aggregate difference does not establish general superiority or
 held-out gains. The supported finding is high measured answer quality with much
 smaller final-answer inputs under these disclosed configurations.
 
+Source-span annotation coverage and necessary-fact recall were not measured at
+retrieval or final-prompt delivery. The verifier checks source and request
+integrity, not evidence sufficiency. The 20 Jev-incorrect answers therefore have
+no measured attribution to retrieval, memory assembly, generation or judging.
+
 ## Comparison protocol
 
 All alternatives use the same Jev protocol and pinned task-specific rules.

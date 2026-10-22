@@ -552,5 +552,17 @@
     },
     "preparedRequestsSha256": "9c1923aae5fa8544840e290c3c38719fc656b06f8fecfd219802cab7304957f0",
     "retainedProbabilities": "producer/artifacts/longmemeval-blog-audit/comparator-rejudge-prepared/scores.json inside the local archive."
+  },
+  "evidenceCoverage": {
+    "retrievedEvidence": {
+      "sourceSpanAnnotationCoverage": null,
+      "necessaryFactRecall": null
+    },
+    "finalPromptDelivery": {
+      "sourceSpanAnnotationCoverage": null,
+      "necessaryFactRecall": null
+    },
+    "incorrectAnswerStageAttribution": null,
+    "boundary": "Not measured. Offline verification establishes source and request integrity, not evidence sufficiency or the cause of the 20 Jev-incorrect answers."
   }
 }

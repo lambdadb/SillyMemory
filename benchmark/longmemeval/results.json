@@ -109,5 +109,17 @@
     "bytes": 255548796,
     "verifiedMembers": 24042,
     "availability": "Local archive; raw evidence is not included in the repository or publicly downloadable."
+  },
+  "evidenceCoverage": {
+    "retrievedEvidence": {
+      "sourceSpanAnnotationCoverage": null,
+      "necessaryFactRecall": null
+    },
+    "finalPromptDelivery": {
+      "sourceSpanAnnotationCoverage": null,
+      "necessaryFactRecall": null
+    },
+    "incorrectAnswerStageAttribution": null,
+    "boundary": "Not measured. Offline verification establishes source and request integrity, not evidence sufficiency or the cause of the 20 Jev-incorrect answers."
   }
 }
