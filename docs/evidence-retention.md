@@ -1873,10 +1873,9 @@ This is conservative committed readiness, not first semantic-query latency.
 
 ## October 22 public LongMemEval evaluation
 
-The [completed evaluation](longmemeval-public-evaluation.md) records fresh
-480/500 Jev correctness, same-judge historical alternatives, the common 50-question
-summary comparison and resource use. The 400-word arm is excluded from the new
-comparison; its historical evidence remains unchanged.
+The [completed evaluation](longmemeval-public-evaluation.md) records
+480/500 Jev correctness, alternatives evaluated with the same judge, the common
+50-question summary comparison and resource use.
 
 - Local-only archive: `artifacts/archive/longmemeval-public-evaluation-v1/evidence.tar.gz`,
   255,548,796 bytes; SHA-256
@@ -1892,3 +1891,6 @@ comparison; its historical evidence remains unchanged.
   on the same machine. They are unavailable in a fresh clone. Credentials,
   public dataset downloads and dependencies are excluded; `RESTORE.md` describes
   restoration. Existing historical archives are unchanged.
+
+The preceding saved-retrieval result is preserved in its
+[original aggregate](https://github.com/lambdadb/SillyMemory/blob/cae42d58d955a1688ced3075ad05227923f36772/benchmark/longmemeval/results.json).

@@ -10,7 +10,6 @@
   "questions": 500,
   "correct": 480,
   "accuracy": 0.96,
-  "historicalRecordedAccuracy": 0.95,
   "answerUsage": {
     "input": 2443045,
     "cached": 7488,
@@ -62,8 +61,8 @@
       "chars400": {
         "bothWrong": 4,
         "bothCorrect": 33,
-        "newOnly": 12,
-        "historicalOnly": 1
+        "sillymemoryOnly": 12,
+        "summaryOnly": 1
       }
     }
   },
@@ -88,15 +87,14 @@
   "medianGenerationResponseHeaderMs": 2617.4084786325693,
   "medianQueryServerMs": 1252.5,
   "medianRerankServerMs": 1049.0,
-  "crossRunInputReductionVsHistoricalFullHistory": 0.9535468185633001,
   "limitations": [
     "Standalone direct-provider benchmark, not a SillyTavern host run.",
-    "Consumed development cohort, not unseen holdout.",
+    "English data used during development; not an unseen holdout.",
     "Estimated model costs use provider-reported cache categories at October 22 Standard rates, not invoices.",
     "Memory inference billing and storage costs are unavailable; judging is evaluation overhead.",
-    "The 50-question summary comparison reuses historical answers under the same Jev rules; generation/prompt paths differ.",
-    "Historical alternatives were regraded under the same Jev rules; historical host and current standalone generation paths differ.",
-    "One OpenAI HTTP 500 was retried once with explicit authorization. Quality is after recovery; generation usage excludes the unreported failed-attempt usage."
+    "The 50-question summary comparison uses recorded answers under the same Jev rules; generation/prompt paths differ.",
+    "All alternatives use the same Jev rules; SillyTavern host and standalone generation paths differ.",
+    "One OpenAI HTTP 500 was retried once with the identical request. Quality is after recovery; generation usage excludes the unreported failed-attempt usage."
   ],
   "generationAttempts": {
     "successful": 500,
@@ -104,12 +102,12 @@
     "total": 501,
     "failedQuestion": "gpt4_a2d1d1f6",
     "failureStatus": 500,
-    "sameRequestRetryAuthorized": true,
     "failedAttemptTokens": null,
     "failedAttemptBilledCostUsd": null,
     "firstAttemptCompletedQuestions": 499,
     "firstAttemptCorrect": 479,
-    "firstAttemptAccuracy": 0.958
+    "firstAttemptAccuracy": 0.958,
+    "identicalRequestRetry": true
   },
   "embeddingInputEstimate": {
     "tokenizer": "tiktoken 1.0.22 / cl100k_base",
@@ -448,7 +446,7 @@
       "summaryMaintenanceEstimatedUsd": 15.771821,
       "selectionEstimatedUsd": 0.31447,
       "source": "docs/benchmarks/segment-summary-400chars-results-v1.json",
-      "boundary": "Historical Jev labels reused unchanged. Failures remain in denominator; token statistics cover generated answers only. Source-grounded approximation, not a named commercial product replication."
+      "boundary": "Evaluated with the same Jev rules. Failures remain in denominator; token statistics cover generated answers only. Source-grounded approximation, not a named commercial product replication."
     },
     "sillymemory": {
       "questions": 50,
@@ -485,7 +483,7 @@
     "sha256": "2e1a5c0b6dd4bbd63bb2f850f78da032b32ec53950ca252c51a260f6f096cb21",
     "bytes": 255548796,
     "verifiedMembers": 24042,
-    "availability": "Local-only copies in the primary and rerun worktrees on the same machine; absent in a fresh clone."
+    "availability": "Local archive; raw evidence is not included in the repository or publicly downloadable."
   },
   "costRates": {
     "checkedAt": "2026-10-22",
@@ -514,7 +512,8 @@
       "limitations": "No per-call billed embedding/rerank token usage in the observed query/upsert responses; do not infer full service cost from operation counts."
     }
   },
-  "alternativeRegrading": {
+  "inputReductionVsFullHistory": 0.9535468185633001,
+  "alternativeJudging": {
     "successfulJudgeCalls": 1550,
     "generationCalls": 0,
     "databaseCalls": 0,
@@ -529,31 +528,19 @@
       "arms": {
         "plain": {
           "questions": 500,
-          "correct": 163,
-          "gpt4oCorrect": 164,
-          "gainsVsGpt4o": 4,
-          "lossesVsGpt4o": 5
+          "correct": 163
         },
         "vectors": {
           "questions": 500,
-          "correct": 173,
-          "gpt4oCorrect": 172,
-          "gainsVsGpt4o": 6,
-          "lossesVsGpt4o": 5
+          "correct": 173
         },
         "plain-reference": {
           "questions": 500,
-          "correct": 476,
-          "gpt4oCorrect": 465,
-          "gainsVsGpt4o": 12,
-          "lossesVsGpt4o": 1
+          "correct": 476
         },
         "summary": {
           "questions": 50,
-          "correct": 17,
-          "gpt4oCorrect": 16,
-          "gainsVsGpt4o": 1,
-          "lossesVsGpt4o": 0
+          "correct": 17
         }
       },
       "calls": 1550,

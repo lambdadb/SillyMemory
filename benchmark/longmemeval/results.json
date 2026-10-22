@@ -15,7 +15,7 @@
     "type": "noul",
     "yesThreshold": 0.5
   },
-  "input": "Fresh ingestion, source readback, retrieval, memory assembly, answer generation and judging with the unchanged public profile.",
+  "input": "Ingestion, source readback, retrieval, memory assembly, answer generation and judging with the public benchmark profile.",
   "producerRevision": "cae42d58d955a1688ced3075ad05227923f36772",
   "binding": "7929d08cdda4f9f875b23f3c168107f9acc6cdd7e41119901e56b799332b150b",
   "resources": {
@@ -61,15 +61,15 @@
     "total": 501,
     "failedQuestion": "gpt4_a2d1d1f6",
     "failureStatus": 500,
-    "sameRequestRetryAuthorized": true,
     "failedAttemptTokens": null,
     "failedAttemptBilledCostUsd": null,
     "firstAttemptCompletedQuestions": 499,
     "firstAttemptCorrect": 479,
-    "firstAttemptAccuracy": 0.958
+    "firstAttemptAccuracy": 0.958,
+    "identicalRequestRetry": true
   },
   "resourceNotes": [
-    "All 500 questions completed after one explicitly authorized identical-request retry of an OpenAI HTTP 500. Generation calls and tokens cover 500 successful responses; total attempts were 501. Failed-attempt token usage and billing are unavailable.",
+    "All 500 questions completed after one identical-request retry of an OpenAI HTTP 500. Generation calls and tokens cover 500 successful responses; total attempts were 501. Failed-attempt token usage and billing are unavailable.",
     "Model timings stop at response headers. Database HTTP timings include body reads; ingestRetrievePackMilliseconds excludes collection creation and cleanup. These are not SillyTavern reply timings.",
     "Database operations include source-readback audits and owned cleanup for 500 isolated histories; all owned collections were confirmed absent.",
     "Modeled generation and judge costs use October 22 Standard rates and reported cache categories. Embedding costs are independently tokenized estimates. Reranking, database, storage, host costs and unknown failure billing are excluded; no complete-service cost or invoice is claimed."
@@ -108,13 +108,6 @@
     "sha256": "2e1a5c0b6dd4bbd63bb2f850f78da032b32ec53950ca252c51a260f6f096cb21",
     "bytes": 255548796,
     "verifiedMembers": 24042,
-    "availability": "Local-only copies in the primary and rerun worktrees on the same machine; absent in a fresh clone."
-  },
-  "previousRecordedResult": {
-    "correct": 475,
-    "questions": 500,
-    "accuracy": 0.95,
-    "boundary": "Historical saved-retrieval answer evaluation; preserved separately.",
-    "source": "https://github.com/lambdadb/SillyMemory/blob/cae42d58d955a1688ced3075ad05227923f36772/benchmark/longmemeval/results.json"
+    "availability": "Local archive; raw evidence is not included in the repository or publicly downloadable."
   }
 }
