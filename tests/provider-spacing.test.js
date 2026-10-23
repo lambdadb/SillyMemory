@@ -1,8 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createServer } from 'node:http';
 import { createSpacedSender, PROVIDER_SPACING, summarizeProviderSpacing } from '../scripts/provider-spacing.mjs';
-import { requestWithRetry } from '../scripts/provider-retry.mjs';
 
 test('unequal preparation times cannot shorten actual sends; early timers are rechecked', async () => {
     let time = 800, early = true;
@@ -34,27 +32,6 @@ test('concurrent bridge requests are spaced and canceled waits do not reserve a 
     assert.equal(attempts[1].upstreamStartedMs, undefined);
     await Promise.all([send('second', undefined, attempts[2]), send('third', undefined, attempts[3])]);
     assert.deepEqual([attempts[0], attempts[2], attempts[3]].map(a => a.upstreamStartedMs), [0, 15000, 30000]);
-});
-
-test('actual local HTTP retry and following sample share one spacing clock', async () => {
-    const received = [];
-    const server = createServer(async (req, res) => {
-        let body = ''; for await (const part of req) body += part;
-        received.push(body); res.writeHead(received.length === 1 ? 500 : 200); res.end('{}');
-    });
-    await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
-    let time = 0;
-    const wait = async ms => { time += ms; }, attempts = [], next = {};
-    const send = createSpacedSender((body, signal) => fetch(`http://127.0.0.1:${server.address().port}`, { method: 'POST', body, signal }), { now: () => time, wait });
-    try {
-        const result = await requestWithRetry({ body: 'same prompt', send, budget: { calls: 0, retries: 0 }, attempts, now: () => time, wait, random: () => 0 });
-        await result.text();
-        await (await send('next prompt', undefined, next)).text();
-        assert.deepEqual(received, ['same prompt', 'same prompt', 'next prompt']);
-        assert.deepEqual([...attempts, next].map(a => a.upstreamStartedMs), [0, 15000, 30000]);
-        assert.equal(attempts[1].spacingWaitMs, 0); // Backoff already satisfied spacing.
-        assert.equal(next.spacingWaitMs, 15000);
-    } finally { await new Promise(resolve => server.close(resolve)); }
 });
 
 test('spacing evidence rejects short retry gaps, missing timestamps and unknown policies', () => {

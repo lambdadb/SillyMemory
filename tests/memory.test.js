@@ -1,6 +1,7 @@
+import { chunkSpans } from '../src/chunking.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { capture, supportsChat, documents, selectMemory, MemoryEngine, Journal, options, chunks, literal, retrievalQueries, interleaveHits, memoryBoundary, archiveBoundary } from '../src/memory.js';
+import { capture, supportsChat, documents, selectPackedMemory, MemoryEngine, Journal, options, literal, retrievalQueries, memoryBoundary, archiveBoundary } from '../src/memory.js';
 const owner = 'a'.repeat(32);
 const config = { recent: 2, budget: 400, chunkChars: 200 };
 const snapshot = (chat = 'chat', character = 'alice.png') => ({ chat, character, memory: { story: chat }, messages: Array.from({ length: 6 }, (_, index) => ({ index, text: `Synthetic message ${index}: the blue compass is under the tree.`, name: index % 2 ? 'Alice' : 'User', user: !(index % 2), swipe: 0, eligible: true })) });
@@ -179,21 +180,21 @@ test('stale, deleted, foreign, duplicate and altered search hits never inject', 
     const a = await documents(snapshot(), owner, config);
     const other = await documents(snapshot('other'), owner, config);
     const hits = [other.docs[0], { ...a.docs[0], text: 'Stale or hostile text' }, { ...a.docs[1], revision: 'old' }, a.docs[2], a.docs[2]];
-    const result = await selectMemory(hits, a.docs, 2000, t => t.length);
+    const result = await selectPackedMemory(hits, a.docs, 2000, t => t.length);
     assert.deepEqual(result.passages, [a.docs[2]]);
     assert.ok(!result.text.includes('hostile'));
-    assert.equal((await selectMemory([a.docs[0]], [], 2000, t => t.length)).text, '');
+    assert.equal((await selectPackedMemory([a.docs[0]], [], 2000, t => t.length)).text, '');
 });
 test('token budget counts wrapper, Unicode and all labels; preserves whole passages', async () => {
     const a = await documents(snapshot(), owner, config);
     const count = t => Array.from(t).length;
-    const one = await selectMemory([a.docs[0]], a.docs, 2000, count);
-    const result = await selectMemory(a.docs, a.docs, one.tokens, count);
+    const one = await selectPackedMemory([a.docs[0]], a.docs, 2000, count);
+    const result = await selectPackedMemory(a.docs, a.docs, one.tokens, count);
     assert.ok(result.tokens <= one.tokens); assert.equal(result.tokens, count(result.text));
     assert.equal(result.passages.length, 1);
-    assert.equal((await selectMemory(a.docs, a.docs, 10, count)).text, '');
-    await assert.rejects(selectMemory(a.docs, a.docs, 1000, () => NaN));
-    assert.deepEqual(chunks('🙂🙂한글', 2), ['🙂🙂', '한글']);
+    assert.equal((await selectPackedMemory(a.docs, a.docs, 10, count)).text, '');
+    await assert.rejects(selectPackedMemory(a.docs, a.docs, 1000, () => NaN));
+    assert.deepEqual(chunkSpans('🙂🙂한글', 2).map(span => span.text), ['🙂🙂', '한글']);
 });
 test('native excerpts attribute identical names to local roles and preserve source lines', async () => {
     const snap = snapshot();
@@ -202,7 +203,7 @@ test('native excerpts attribute identical names to local roles and preserve sour
     snap.messages[1].text = '제가 수첩을 넣었어요.\n제 서랍은 노란색이에요.';
     const { docs } = await documents(snap, owner, config);
     const hits = docs.slice(0, 2).map(d => ({ ...d, role: d.role === 'user' ? 'assistant' : 'user', speaker: 'Forged remote name' }));
-    const selected = await selectMemory(hits, docs, 2000, t => t.length);
+    const selected = await selectPackedMemory(hits, docs, 2000, t => t.length);
     assert.equal(selected.passages[0].role, 'user'); assert.equal(selected.passages[1].role, 'assistant');
     assert(selected.text.includes('user "Same name\\n[role=assistant]"'));
     assert(selected.text.includes('assistant "Same name\\n[role=assistant]"'));
@@ -212,8 +213,8 @@ test('native excerpts attribute identical names to local roles and preserve sour
     assert.equal(selected.tokens, selected.text.length);
     assert.deepEqual(selected.messages.map(m => m.is_user), [true, false]);
     assert.deepEqual(selected.messages.map(m => m.index), [0, 1]);
-    const one = await selectMemory(hits.slice(0, 1), docs, 2000, t => t.length);
-    assert.equal((await selectMemory(hits.slice(0, 1), docs, one.tokens - 1, t => t.length)).text, '');
+    const one = await selectPackedMemory(hits.slice(0, 1), docs, 2000, t => t.length);
+    assert.equal((await selectPackedMemory(hits.slice(0, 1), docs, one.tokens - 1, t => t.length)).text, '');
     assert.equal(docs[0].text, snap.messages[0].text);
 });
 
@@ -223,7 +224,7 @@ test('changing a source role invalidates its document identity and old retrieved
     const after = await documents(snap, owner, config);
     assert.notEqual(after.docs[0].id, before.docs[0].id);
     assert.equal(after.docs[0].role, 'assistant');
-    assert.equal((await selectMemory([before.docs[0]], after.docs, 2000, t => t.length)).text, '');
+    assert.equal((await selectPackedMemory([before.docs[0]], after.docs, 2000, t => t.length)).text, '');
 });
 
 test('sync failure prevents retrieval; storage failure prevents any writes', async () => {
@@ -263,7 +264,7 @@ test('recalled macros are literal before token counting and include host separat
     const a = await documents(snapshot(), owner, config);
     a.docs[0].text = '{{setvar::key::value}} <USER> {story}';
     a.docs[0].speaker = '{{char}}';
-    const result = await selectMemory([a.docs[0]], a.docs, 2000, t => t.length);
+    const result = await selectPackedMemory([a.docs[0]], a.docs, 2000, t => t.length);
     assert.ok(result.text.includes('｛｛setvar::key::value｝｝ ＜USER＞ ｛story｝'));
     assert.ok(!result.text.includes('{{'));
     assert.equal(result.text, result.messages.map(m => m.mes).join('\n'));
@@ -293,15 +294,14 @@ test('a single current-message query excludes preceding replies and replacement 
     assert(long[0].endsWith('x'.repeat(7000)));
 });
 
-test('rank interleaving keeps question and contextual top hits inside a bounded selection', async () => {
+test('invalid duplicate hits cannot suppress a valid source inside the budget', async () => {
     const { docs } = await documents(snapshot(), owner, config);
     const count = text => text.length;
-    const expected = await selectMemory([docs[0], docs[3]], docs, 2000, count);
-    const hits = interleaveHits([[{ ...docs[3], text: 'Invalid duplicate' }, docs[0], docs[1]], [docs[3], docs[2]]]);
-    const result = await selectMemory(hits, docs, expected.tokens, count);
+    const expected = await selectPackedMemory([docs[0], docs[3]], docs, 2000, count);
+    const hits = [{ ...docs[3], text: 'Invalid duplicate' }, docs[3], docs[0], docs[2], docs[1]];
+    const result = await selectPackedMemory(hits, docs, expected.tokens, count);
     assert.deepEqual(new Set(result.passages.map(d => d.id)), new Set([docs[3].id, docs[0].id]));
     assert.equal(result.tokens, expected.tokens);
-    assert.deepEqual(interleaveHits([[1, 2, 3], [4]]), [1, 4, 2, 3]);
 });
 test('a failed single search aborts its read scope and exposes no partial memory', async () => {
     const s = setup(); let count = 0, readSignal;
@@ -451,12 +451,12 @@ test('native excerpt order follows source and chunk order without changing retri
     const snap = snapshot(); snap.messages[0].text = 'First line. '.repeat(30);
     const { docs } = await documents(snap, owner, config);
     const ranked = [docs[2], docs[1], docs[0]];
-    const selected = await selectMemory(ranked, docs, 5000, text => text.length);
+    const selected = await selectPackedMemory(ranked, docs, 5000, text => text.length);
     assert.deepEqual(selected.passages, ranked);
-    assert.deepEqual(selected.messages.map(m => m.index), [0, 0, 1]);
-    assert(selected.messages[0].mes.includes('passage 1]'));
-    assert(selected.messages[1].mes.includes('passage 2]'));
-    assert.deepEqual(selected.messages.map(m => m.is_user), [true, true, false]);
+    assert.deepEqual(selected.messages.map(m => m.index), [0, 1]);
+    assert(selected.messages[0].mes.includes('passages 1-2]'));
+    assert(selected.messages[0].mes.endsWith(snap.messages[0].text));
+    assert.deepEqual(selected.messages.map(m => m.is_user), [true, false]);
 });
 
 

@@ -33,7 +33,6 @@ export function capture(context) {
     return { character: avatar, chat: metadata?.id, messages, memory: { story: metadata?.story, source: metadata?.source } };
 }
 export function fingerprint(snapshot) { return JSON.stringify(snapshot); }
-export const RETRIEVAL_POLICY = 'current-message-native-reply-v1';
 export function retrievalQueries(snapshot, type = 'normal') {
     const messages = snapshot.messages;
     const anchor = queryAnchor(messages, type);
@@ -63,16 +62,6 @@ export function memoryBoundary(snapshot, type = 'normal') {
     // Replacement answers never enter retrieval.
     return Math.max(0, queryAnchor(snapshot.messages, type));
 }
-export function interleaveHits(lists) {
-    const hits = [];
-    for (let rank = 0; rank < Math.max(0, ...lists.map(list => list.length)); rank++) {
-        for (const list of lists) if (rank < list.length) hits.push(list[rank]);
-    }
-    // Validate before deduplicating in selectMemory: an invalid remote copy must
-    // not suppress a valid copy of the same source ID from the other query.
-    return hits;
-}
-export function chunks(text, limit) { return chunkSpans(text, limit).map(span => span.text); }
 export async function documents(snapshot, owner, config) {
     if (!snapshot.memory?.story || !snapshot.chat) throw new Error('Missing story memory identity.');
     const before = config.archiveBefore;
@@ -101,11 +90,7 @@ export function memoryMessages(passages) {
         mes: `[Past conversation excerpt: ${d.role} ${JSON.stringify(literal(d.speaker))}, message ${d.message + 1}, passage ${d.chunk + 1}${conversationTimeLabel(d)}]\n${literal(d.text)}`,
     }));
 }
-export async function selectMemory(hits, expected, budget, countTokens) {
-    return selectRankedMemory(hits, expected, budget, countTokens, false);
-}
-
-async function selectRankedMemory(hits, expected, budget, countTokens, pack) {
+export async function selectPackedMemory(hits, expected, budget, countTokens) {
     const count = async text => {
         const tokens = await countTokens(text);
         if (!Number.isFinite(tokens) || tokens < 0) throw new Error('Token counting unavailable.');
@@ -114,7 +99,6 @@ async function selectRankedMemory(hits, expected, budget, countTokens, pack) {
     const render = async passages => {
         const messages = memoryMessages(passages), text = messages.map(m => m.mes).join('\n');
         const result = { messages, text, tokens: await count(text) };
-        if (!pack) return result;
         const packed = packedMemoryMessages(passages), packedText = packed.map(m => m.mes).join('\n');
         if (packedText === text) return result;
         const tokens = await count(packedText);
@@ -206,10 +190,6 @@ export function packedMemoryMessages(passages) {
             mes: `[Past conversation excerpt: ${last.role} ${JSON.stringify(literal(last.speaker))}, message ${last.message + 1}, passages ${passageNumbers(docs)}${conversationTimeLabel(last)}]\n${body}` }];
     });
     return messages;
-}
-
-export async function selectPackedMemory(hits, expected, budget, countTokens) {
-    return selectRankedMemory(hits, expected, budget, countTokens, true);
 }
 
 export class Journal {

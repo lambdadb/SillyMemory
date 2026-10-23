@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { chunkSpans } from '../src/chunking.js';
-import { documents, selectMemory } from '../src/memory.js';
+import { documents, selectPackedMemory } from '../src/memory.js';
 
 test('chunks round-trip exact Unicode/whitespace with bounded contiguous source offsets', () => {
     for (const text of ['', 'A short message.\n', 'Dr. Mira paid $3.14. Then she left. '.repeat(60), 'A paragraph.\r\n\r\n'.repeat(100), '🙂e\u0301한글'.repeat(500), 'x'.repeat(2401), ' '.repeat(1601)]) {
@@ -35,7 +35,7 @@ test('layout changes cannot reuse old IDs or inject old source coordinates', asy
     assert(a.docs.every(d => d.text === message.text.slice(d.start, d.end)));
     for (const x of a.docs) for (const y of b.docs) if (x.text !== y.text || x.start !== y.start || x.end !== y.end) assert.notEqual(x.id, y.id);
     const old = { ...a.docs[0], id: `${a.scope}_${a.docs[0].revision}_0` };
-    assert.equal((await selectMemory([old], a.docs, 800, text => text.length / 4)).text, '');
+    assert.equal((await selectPackedMemory([old], a.docs, 800, text => text.length / 4)).text, '');
 });
 
 test('resizing deletes superseded chunk IDs before writes, survives reload and skips duplicate writes', async () => {

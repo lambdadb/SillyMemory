@@ -14,20 +14,24 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { capacityPlan, capacityChat, capacityInstructions } from './prompt-capacity-cases.mjs';
-import { hostSource, loadLong } from './semantic-long.mjs';
 import { MEMORY_GUIDANCE } from '../src/context.js';
 import { SENT_GUIDANCE } from '../src/time.js';
-import { retrievalQueries, interleaveHits } from '../src/memory.js';
+import { retrievalQueries } from '../src/memory.js';
 
-const packingRanks = JSON.parse(await readFile(new URL('../tests/fixtures/packing-ranks.json', import.meta.url)));
-const packingFixture = { item: loadLong().cases.find(item => item.id === packingRanks.case) };
-assert.ok(packingFixture);
-const primaryRanks = packingRanks.queries.find(query => query.query === packingFixture.item.question);
-assert.ok(primaryRanks);
-// Preserve the historical packing input order, not historical query routing.
-// This emulator checks source delivery; it makes no current retrieval-quality claim.
-const packingOrder = [...new Map(interleaveHits([primaryRanks.hits, ...packingRanks.queries.filter(query => query !== primaryRanks).map(query => query.hits)])
-    .map(hit => [`${hit.message}:${hit.chunk}`, hit])).values()].slice(0, 30);
+// Small fixed source/rank control for repeated-source delivery. This is not a
+// captured retrieval run or a quality corpus; all ranking is supplied locally.
+const packingSource = [
+    { role: 'user', text: '편지에는 "금요일에 항구에서 만나자"라고 적혀 있어요.' },
+    { role: 'assistant', text: '편지의 서명은 미라입니다.' },
+    { role: 'user', text: '상자에는 파란 리본이 묶여 있어요.' },
+    { role: 'assistant', text: '파란 리본이 묶인 상자를 기억할게요.' },
+];
+const packingQuestion = '편지에 적힌 약속과 서명을 알려주세요.';
+const packingChat = Array.from({ length: 16 }, (_, index) => {
+    const source = index < 4 ? packingSource[index] : index < 12 && index % 4 >= 2 ? packingSource[index % 4] : { role: index % 2 ? 'assistant' : 'user', text: `중립적인 정원 대화 ${index}.` };
+    return { mes: source.text, name: source.role === 'user' ? 'User' : 'SillyMemory E2E Mira', is_user: source.role === 'user', is_system: false, send_date: 0, extra: {} };
+});
+const packingOrder = [2, 6, 10, 1, 0, 3, 7, 11];
 let packingQuery, onlyFirst = false;
 
 // Leave room for one excerpt after current memory guidance; separately sized
@@ -78,7 +82,6 @@ const output = path.resolve(process.argv[2] || path.join(root, 'artifacts/prompt
 assert.equal(execFileSync('git', ['-C', source, 'rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(), plan.host);
 assert.equal(await realpath(path.join(source, 'public/scripts/extensions/third-party/sillymemory')), root);
 const sourceFiles = ['vendor/lambdadb.js', 'package-lock.json', 'tests/helpers/lambdadb-responses.js', 'index.js', 'src/chat-collections.js', 'manifest.json', 'src/chunking.js', 'src/client.js', 'src/credentials.js', 'src/context.js', 'src/gate.js', 'src/memory.js', 'src/time.js', 'src/status.js', 'scripts/prompt-delivery-smoke.mjs', 'scripts/settings-panel.mjs', 'scripts/emulator-cors.mjs', 'src/delivery.js', 'settings.html', 'scripts/prompt-capacity-cases.mjs'];
-sourceFiles.push('scripts/semantic-long.mjs', 'tests/fixtures/semantic-long-v1.json', 'tests/fixtures/packing-ranks.json');
 const hostFiles = ['public/script.js', 'public/scripts/openai.js', 'public/scripts/PromptManager.js', 'public/scripts/tokenizers.js', 'src/endpoints/tokenizers.js', 'src/endpoints/backends/chat-completions.js', 'package-lock.json'];
 async function hashes() {
     return Object.fromEntries(await Promise.all(sourceFiles.map(async file => [file, createHash('sha256').update(await readFile(path.join(root, file))).digest('hex')])));
@@ -145,11 +148,11 @@ const remote = httpsServer({ key: await readFile(key), cert: await readFile(cert
             let docs = knn && noHits ? [] : [...branchDocs.values()].filter(d => d.owner === match[1] && d.scope === match[2] && (match[3] === undefined || d.message <= Number(match[3])));
             if (knn && onlyFirst) docs = docs.filter(d => d.message === 0 && d.chunk === 0);
             if (knn && packing) {
-                assert.equal(knn.queryText, packingQuery, 'Actual host uses the two-message policy');
+                assert.equal(knn.queryText, packingQuery, 'Actual host uses the current-message policy');
                 docs = packingOrder.map(hit => {
-                    const doc = docs.find(doc => doc.message === hit.message && doc.chunk === hit.chunk);
-                    assert.ok(doc, 'Recorded rank refers to a synchronized source');
-                    assert.equal(createHash('sha256').update(doc.text).digest('hex'), hit.textSha256);
+                    const doc = docs.find(doc => doc.message === hit && doc.chunk === 0);
+                    assert.ok(doc, 'Fixed rank refers to a synchronized source');
+                    assert.equal(doc.text, packingChat[hit].mes);
                     return doc;
                 });
             }
@@ -426,10 +429,9 @@ try {
     for (const [name, value] of [['budget', 600]]) {
         await field(name).fill(String(value)); await field(name).dispatchEvent('change');
     }
-    const packingChat = hostSource(packingFixture.item);
     packingQuery = retrievalQueries({ messages: [
         ...packingChat.map((message, index) => ({ index, text: message.mes, user: message.is_user, eligible: true })),
-        { index: packingChat.length, text: packingFixture.item.question, user: true, eligible: true },
+        { index: packingChat.length, text: packingQuestion, user: true, eligible: true },
     ] }, 'normal')[0];
     await page.evaluate(async chat => {
         const c = SillyTavern.getContext(), { oai_settings } = await import('/scripts/openai.js');
@@ -444,21 +446,20 @@ try {
         document.querySelector('#send_textarea').value = question;
         await c.generate('normal');
         return { chat: c.chat.map(m => m.mes), delivery: document.querySelector('[data-sm="delivery"]').textContent };
-    }, packingFixture.item.question);
+    }, packingQuestion);
     assert.equal(generations.length, packingStart + 1);
     const packingRequest = generations.at(-1), excerpts = packingRequest.messages.filter(m => m.content.startsWith('[Recalled conversation excerpts]'));
-    // Retrieval-order admission now keeps the higher-ranked repeated sources,
-    // not the lower-ranked fifth excerpt reserved by the old source floor.
+    // Every selected repeated source retains all of its coordinates.
     assert.equal(excerpts.length, 1);
     assert.match(packed.delivery, /1\/1 memory excerpts and 5\/5 input messages verified/);
     for (const index of [0, 1, 2, 3]) {
-        const original = packingFixture.item.messages[index];
+        const original = packingSource[index];
         assert(excerpts.some(m => m.role === 'user' && m.content.includes(`excerpt: ${original.role} `) && `\n${m.content}\n`.includes(`\n${original.text}\n`)), 'Full quoted source and original speaker label reached the completion endpoint');
     }
-    assert(excerpts.some(m => m.content.includes('identical text at message:passage 3:1, 11:1, 19:1, 27:1, 35:1, 43:1, 51:1]')));
-    assert(excerpts.some(m => m.content.includes('identical text at message:passage 4:1, 12:1, 20:1, 28:1, 36:1, 44:1, 52:1]')));
-    assert.deepEqual(packed.chat.slice(0, 60), packingChat.map(m => m.mes), 'Packing never changes stored history');
-    report.packing = { evidence: 'Actual host generation with recorded query ranks and a local completion fixture', case: packingFixture.item.id, configuredBudget: 600, effectiveBudget: 600, delivery: packed.delivery, request: packingRequest, storedHistoryUnchanged: true };
+    assert(excerpts.some(m => m.content.includes('identical text at message:passage 3:1, 7:1, 11:1]')));
+    assert(excerpts.some(m => m.content.includes('identical text at message:passage 4:1, 8:1, 12:1]')));
+    assert.deepEqual(packed.chat.slice(0, packingChat.length), packingChat.map(m => m.mes), 'Packing never changes stored history');
+    report.packing = { evidence: 'Actual host generation with fixed synthetic ranks and a local completion fixture', case: 'repeated-source-citations', configuredBudget: 600, effectiveBudget: 600, delivery: packed.delivery, request: packingRequest, storedHistoryUnchanged: true };
     packing = false;
     console.log('VERIFY same-message-assembly');
     await field('enabled').uncheck();

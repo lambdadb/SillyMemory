@@ -22,8 +22,7 @@ SOURCE_FILES = [
     "benchmark/longmemeval/run.py", "benchmark/longmemeval/adapter.mjs",
     "benchmark/longmemeval/protocol.mjs", "benchmark/longmemeval/storage.mjs",
     "benchmark/longmemeval/judge-rules.json", "benchmark/tokenizer/package.json",
-    "benchmark/tokenizer/package-lock.json", "scripts/benchmark-audit.mjs",
-    "scripts/benchmark-development-input.mjs", "scripts/benchmark-host-input.mjs",
+    "benchmark/tokenizer/package-lock.json", "benchmark/shared/longmemeval-input.mjs",
     "benchmark/shared/memory-budget.mjs", "src/client.js", "src/memory.js", "src/context.js",
     "src/time.js", "src/chunking.js", "src/commit.js", "vendor/lambdadb.js",
 ]

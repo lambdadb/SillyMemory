@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { selectMemory, selectPackedMemory, packedMemoryMessages } from '../src/memory.js';
+import { memoryMessages, selectPackedMemory, packedMemoryMessages } from '../src/memory.js';
 
 const doc = (message, text, overrides = {}) => ({ id: `id-${message}`, owner: 'owner', scope: 'scope', revision: `r-${message}`, role: 'user', speaker: 'User', message, chunk: 0, text, ...overrides });
 const repeated = 'The door is locked. {{keep_literal}}\n'.repeat(8);
@@ -8,12 +8,10 @@ const docs = [doc(0, repeated), doc(2, repeated), doc(1, 'Mira signed the letter
 const count = text => Array.from(text).length;
 
 test('ranked selection budgets repeated text once and keeps all selected citations', async () => {
-    const baseline = await selectMemory(docs.slice(0, 2), docs, 2000, count);
-    const before = await selectMemory(docs, docs, baseline.tokens, count);
-    const after = await selectPackedMemory(docs, docs, baseline.tokens, count);
-    assert.deepEqual(before.passages, docs.slice(0, 2));
+    const budget = count(memoryMessages(docs.slice(0, 2)).map(m => m.mes).join('\n'));
+    const after = await selectPackedMemory(docs, docs, budget, count);
     assert.deepEqual(after.passages, docs);
-    assert(after.tokens < baseline.tokens);
+    assert(after.tokens < budget);
     assert.equal(after.tokens, count(after.text));
     assert.equal(after.messages.length, 2);
     assert.deepEqual(after.messages.map(m => m.index), [1, 2]);
@@ -46,13 +44,13 @@ test('a repeated state keeps every coordinate at its latest occurrence after int
 
 test('no-repeat selections stay identical and expensive grouped labels fall back', async () => {
     const distinct = [doc(0, 'First'), doc(1, 'Second')];
-    assert.deepEqual(await selectPackedMemory(distinct, distinct, 1000, count), await selectMemory(distinct, distinct, 1000, count));
+    assert.deepEqual((await selectPackedMemory(distinct, distinct, 1000, count)).messages, memoryMessages(distinct));
     const expensiveLabels = text => count(text) + (text.includes('identical text at') ? 10000 : 0);
-    assert.deepEqual(await selectPackedMemory(docs, docs, 2000, expensiveLabels), await selectMemory(docs, docs, 2000, expensiveLabels));
+    assert.deepEqual((await selectPackedMemory(docs, docs, 2000, expensiveLabels)).messages, memoryMessages(docs));
 });
 
 test('newly affordable hits still require local identity and cannot be suppressed by invalid copies', async () => {
-    const budget = (await selectMemory(docs.slice(0, 2), docs, 2000, count)).tokens;
+    const budget = count(memoryMessages(docs.slice(0, 2)).map(m => m.mes).join('\n'));
     const invalid = ['owner', 'scope', 'revision', 'text'].map(key => ({ ...docs[2], [key]: 'forged' }));
     const hits = [...docs.slice(0, 2), ...invalid, { ...docs[2], id: 'deleted' }];
     const denied = await selectPackedMemory(hits, docs, budget, count);
