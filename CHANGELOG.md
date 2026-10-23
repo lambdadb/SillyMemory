@@ -4,6 +4,24 @@ Versions describe the extension, independently of the SillyTavern host version.
 An `Unreleased` entry is a development candidate. A dated entry records a release
 boundary; publication is confirmed by the corresponding Git tag and GitHub Release.
 
+## [0.7.1] - 2026-10-23
+
+### Fixed
+
+- Save frozen memory snapshots with the same older-history boundary as normal
+  synchronization. Preserve the complete native JSONL transcript while keeping
+  recent messages outside LambdaDB until later dialogue displaces them.
+- Bind the summary comparison runner to its maintained producer files after
+  retiring superseded experiment adapters.
+
+### Changed
+
+- Consolidate documentation around current behavior and final benchmark results.
+  Retire intermediate experiment code, fixtures and cohort-only tests while
+  preserving original sources and evidence at recorded revisions.
+- Keep the existing retrieval settings, collection/index formats, scoped saved
+  credentials, per-chat activation and native reply/streaming behavior.
+
 ## [0.7.0] - 2026-10-22
 
 ### Changed
