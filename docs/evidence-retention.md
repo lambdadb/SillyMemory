@@ -49,3 +49,15 @@ Public aggregate results and interpretation remain in the current
 [summary comparison](segment-summary-evaluation.md) and
 [checkpoint report](branch-checkpoint-cost.md). Earlier trials and detailed
 receipts are linked at immutable revisions. Git history is not rewritten.
+
+## Checkpoint-policy reconciliation
+
+The superseded retention log updated by the checkpoint fix is preserved at
+[`87f6d67`](https://github.com/lambdadb/SillyMemory/blob/87f6d67a79d991d735ae4ee31883a5f04a6e131f/docs/recent-dialogue-retention.md).
+Its current checkpoint behavior remains in [defaults](conversation-memory-defaults.md)
+and [the snapshot guide](checkpoints.md); the current timing report remains in
+[branch/checkpoint costs](branch-checkpoint-cost.md).
+The original updated log was archived and read back before retirement:
+`/Users/steven/Dev/sillymemory/artifacts/archive/intermediate-cleanup-review-v1/checkpoint-retention-source.tar.gz`,
+SHA-256 `a24243f8e7235c722337596f5de3dcbd2a36b5ed0e28f9fb62b0104c621564a8`. The adjacent manifest binds the exact
+producer and source hash. This archive is local-only, not a fresh-clone dependency.

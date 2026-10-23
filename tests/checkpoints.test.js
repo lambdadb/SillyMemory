@@ -2,11 +2,13 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createCheckpoint, finishCheckpoint, resumeCheckpoint, listCheckpoints, renameCheckpoint, deleteCheckpoint } from '../src/checkpoints.js';
 import { ChatCollections } from '../src/chat-collections.js';
-import { capture, Journal, MemoryEngine, options } from '../src/memory.js';
+import { archiveBoundary, capture, Journal, MemoryEngine, options } from '../src/memory.js';
 import { ConnectionError } from '../src/client.js';
-const owner = 'a'.repeat(32), chat = 'b'.repeat(32), avatar = 'Mira.png', config = options({ recent: 2 });
-async function fixture(count = 4) {
-    const rows = [{ chat_metadata: { integrity: 'native', variables: { flag: 'before' }, sillymemory: { id: chat, story: chat, integrity: 'native', version: 1 } } }, ...Array.from({ length: count }, (_, i) => ({ mes: `Fact ${i}`, name: 'Mira', is_user: false, swipe_id: 1, swipes: ['old choice', `Fact ${i}`], swipe_info: [{ extra: {} }, { extra: { note: 'retained' } }], extra: {} }))];
+const owner = 'a'.repeat(32), chat = 'b'.repeat(32), avatar = 'Mira.png', config = options();
+const snapshotOf = rows => capture({ characterId: 0, characters: [{ avatar }], getCurrentChatId: () => 'source', chatMetadata: rows[0].chat_metadata, chat: rows.slice(1) });
+const archival = snapshot => ({ ...config, archiveBefore: archiveBoundary(snapshot) });
+async function fixture(count = 10) {
+    const rows = [{ chat_metadata: { integrity: 'native', variables: { flag: 'before' }, sillymemory: { id: chat, story: chat, integrity: 'native', version: 1 } } }, ...Array.from({ length: count }, (_, i) => ({ mes: `Fact ${i}`, name: i % 2 ? 'Mira' : 'User', is_user: i % 2 === 0, swipe_id: 1, swipes: ['old choice', `Fact ${i}`], swipe_info: [{ extra: {} }, { extra: { note: 'retained' } }], extra: {} }))];
     const files = new Map(), branches = new Map(); let exists = false, writes = 0, opened;
     const host = { read: async f => structuredClone(files.get(f) || []), save: async (f, messages, metadata) => { files.set(f, [{ chat_metadata: structuredClone(metadata) }, ...structuredClone(messages)]); }, open: async f => { opened = f; } };
     host.list = async () => [...files].map(([file, rows]) => ({ file_name: `${file}.jsonl`, chat_metadata: structuredClone(rows[0].chat_metadata) }));
@@ -23,16 +25,23 @@ async function fixture(count = 4) {
         deleteIds: async (_, ids, _signal, name) => { const b = branches.get(name); ids.forEach(id => b.docs.delete(id)); b.head = `deleted-${name}`; },
     };
     const collections = new ChatCollections(client, owner, () => {}, () => {});
-    const snapshot = capture({ characterId: 0, characters: [{ avatar }], getCurrentChatId: () => 'source', chatMetadata: rows[0].chat_metadata, chat: rows.slice(1) });
-    const entry = await collections.ensure(snapshot, undefined, config);
-    await new MemoryEngine({ client, owner, ...entry, journal: new Journal({ getItem: () => null, setItem: () => {} }, 'unit') }).sync(snapshot, config);
-    return { host, client, collections, owner, avatar, story: chat, rows, config, files, branches, get writes() { return writes; }, get opened() { return opened; } };
+    const snapshot = snapshotOf(rows);
+    const sync = async snapshot => {
+        const settings = archival(snapshot), entry = await collections.ensure(snapshot, undefined, settings);
+        await new MemoryEngine({ client, owner, ...entry, journal: new Journal({ getItem: () => null, setItem: () => {} }, 'unit') }).sync(snapshot, settings);
+        return entry;
+    };
+    await sync(snapshot);
+    return { host, client, collections, owner, avatar, story: chat, rows, config, files, branches, sync, get writes() { return writes; }, get opened() { return opened; } };
 }
 test('checkpoint reuses committed documents and restores full transcript/swipes into independent paths', async () => {
     const f = await fixture(), before = f.writes;
     const file = await createCheckpoint(f), saved = structuredClone(f.files.get(file));
     assert.equal(f.writes, before);
     assert.equal(saved[0].chat_metadata.sillymemory.checkpoint.state, 'ready');
+    const frozen = f.branches.get(`chat_${saved[0].chat_metadata.sillymemory.id}`);
+    assert.deepEqual([...frozen.docs.values()].map(d => d.message), [0, 1, 2, 3]);
+    assert.equal(saved.length, 11, 'JSONL retains all ten messages, including the six outside memory');
     f.rows[1].mes = 'Changed future'; f.rows[0].chat_metadata.variables.flag = 'after';
     const a = await resumeCheckpoint({ ...f, file }), b = await resumeCheckpoint({ ...f, file });
     assert.notEqual(a, b); assert.equal(f.opened, b);
@@ -42,6 +51,8 @@ test('checkpoint reuses committed documents and restores full transcript/swipes 
         assert.equal(restored[0].chat_metadata.variables.flag, 'before');
         assert.equal(restored[0].chat_metadata.sillymemory.checkpoint, undefined);
         assert.equal(restored[0].chat_metadata.sillymemory.source, saved[0].chat_metadata.sillymemory.id);
+        const entry = await f.sync(snapshotOf(restored));
+        assert.deepEqual([...f.branches.get(entry.branch).docs.values()], [...frozen.docs.values()]);
     }
     assert.deepEqual(f.files.get(file), saved); assert.equal(f.writes, before);
 });
@@ -54,6 +65,40 @@ test('a frozen snapshot links back to its actual source through the native paren
     const resumed = await resumeCheckpoint({ ...f, file });
     assert.equal(f.files.get(resumed)[0].chat_metadata.main_chat, file);
     assert.deepEqual(f.rows, before, 'the source transcript and its own parent link are unchanged');
+});
+test('recent-only and pending-input checkpoints preserve JSONL without indexing the retained window', async () => {
+    for (const [count, indexed] of [[6, []], [11, [0, 1, 2, 3, 4, 5]]]) {
+        const f = await fixture(count), before = f.writes, transcript = structuredClone(f.rows.slice(1));
+        const file = await createCheckpoint(f), saved = f.files.get(file);
+        const frozen = f.branches.get(`chat_${saved[0].chat_metadata.sillymemory.id}`);
+        assert.deepEqual([...frozen.docs.values()].map(d => d.message), indexed);
+        const target = await resumeCheckpoint({ ...f, file });
+        await f.sync(snapshotOf(f.files.get(target)));
+        assert.deepEqual(f.files.get(target).slice(1), transcript);
+        assert.equal(f.writes, before);
+    }
+});
+test('checkpoint reconciles older edits and resumed dialogue archives displaced pairs independently', async () => {
+    const f = await fixture(), before = f.writes;
+    f.rows[1].mes = 'Corrected older fact';
+    f.rows[9].mes = 'Corrected recent fact';
+    const file = await createCheckpoint(f), saved = f.files.get(file);
+    const frozen = f.branches.get(`chat_${saved[0].chat_metadata.sillymemory.id}`);
+    assert.equal(f.writes, before + 1, 'only the changed older passage is submitted');
+    assert.deepEqual([...frozen.docs.values()].map(d => d.message).sort(), [0, 1, 2, 3]);
+    assert.equal([...frozen.docs.values()].find(d => d.message === 0).text, 'Corrected older fact');
+    assert.equal(saved[9].mes, 'Corrected recent fact');
+    const frozenDocuments = structuredClone([...frozen.docs.values()]);
+    const a = await resumeCheckpoint({ ...f, file }), b = await resumeCheckpoint({ ...f, file });
+    const first = f.files.get(a);
+    first.push({ mes: 'Next input', is_user: true }, { mes: 'Next reply', is_user: false });
+    const entry = await f.sync(snapshotOf(first));
+    assert.equal(f.writes, before + 3, 'the next completed pair displaces two messages into memory');
+    assert.deepEqual([...f.branches.get(entry.branch).docs.values()].map(d => d.message).sort(), [0, 1, 2, 3, 4, 5]);
+    const sibling = await f.sync(snapshotOf(f.files.get(b)));
+    assert.deepEqual([...f.branches.get(sibling.branch).docs.values()], frozenDocuments);
+    assert.deepEqual([...frozen.docs.values()], frozenDocuments);
+    assert.deepEqual([...f.branches.get(`chat_${chat}`).docs.values()].map(d => d.text), ['Fact 0', 'Fact 1', 'Fact 2', 'Fact 3']);
 });
 test('changed transcript, changed snapshot and pending checkpoint cannot be resumed', async () => {
     const f = await fixture(), file = await createCheckpoint(f), original = structuredClone(f.files.get(file));

@@ -13,9 +13,12 @@ import { assertPinnedHost, assertPortAvailable, waitForOwnedHost, cleanupOwnedCo
 
 const root = path.resolve(new URL('..', import.meta.url).pathname);
 const source = process.env.ST_SOURCE;
-const output = process.argv[2];
-assert(source && output && process.argv.length === 3, 'ST_SOURCE=<disposable host> SM_ENV_FILE=<env> node scripts/branch-checkpoint-cost.mjs <new artifact directory>');
-const planBytes = await readFile(path.join(root, 'docs/benchmarks/branch-checkpoint-v2.json'));
+const checkpointOnly = process.argv[2] === '--checkpoints-only';
+const memoryOnly = process.argv[2] === '--memory-prepare-only';
+const narrow = checkpointOnly || memoryOnly;
+const output = process.argv[narrow ? 3 : 2];
+assert(source && output && process.argv.length === (narrow ? 4 : 3), 'ST_SOURCE=<disposable host> SM_ENV_FILE=<env> node scripts/branch-checkpoint-cost.mjs [--checkpoints-only|--memory-prepare-only] <new artifact directory>');
+const planBytes = await readFile(path.join(root, memoryOnly ? 'docs/benchmarks/checkpoint-memory-prepare-v1.json' : checkpointOnly ? 'docs/benchmarks/checkpoint-memory-boundary-v1.json' : 'docs/benchmarks/branch-checkpoint-v2.json'));
 const plan = JSON.parse(planBytes);
 assertPinnedHost(source, plan.hostRevision);
 assert.equal(await realpath(path.join(source, 'public/scripts/extensions/third-party/sillymemory')), root);
@@ -27,7 +30,7 @@ await assertPortAvailable(port); // Fail before instrumenting a host or creating
 const artifacts = path.resolve(output);
 await mkdir(artifacts, { recursive: true });
 await writeFile(path.join(artifacts, 'plan.json'), planBytes, { flag: 'wx' });
-let work, hostInstrumented = false;
+let work, hostInstrumented = false, vectorsInstrumented = false;
 const metricPath = path.join(artifacts, 'local-embedding.ndjson');
 await writeFile(metricPath, '', { flag: 'wx' });
 const pendingPath = path.join(artifacts, 'pending.json'), pending = [];
@@ -51,10 +54,12 @@ const save = async () => {
 const check = (name, ok) => { assert(ok, name); report.checks.push(name); };
 const embeddingPath = path.join(source, 'src/vectors/embedding.js');
 const originalEmbedding = await readFile(embeddingPath, 'utf8');
-const instrumented = instrumentEmbedding(originalEmbedding, plan.limits.nativeEmbeddingInputs);
+const instrumented = checkpointOnly ? null : instrumentEmbedding(originalEmbedding, plan.limits.nativeEmbeddingInputs);
 await writeFile(path.join(artifacts, 'host-embedding-original.js'), originalEmbedding);
-await writeFile(path.join(artifacts, 'host-embedding-instrumented.js'), instrumented);
-report.hostInstrumentation = 'Time/CPU counters around actual local model execution, one NDJSON append per input. Model loading excluded from this counter and timed separately. No model outputs or input text logged.';
+if (instrumented) await writeFile(path.join(artifacts, 'host-embedding-instrumented.js'), instrumented);
+report.hostInstrumentation = checkpointOnly ? 'No host instrumentation or local embedding calls.' : 'Time/CPU counters around actual local model execution, one NDJSON append per input. Model loading excluded from this counter and timed separately. No model outputs or input text logged.';
+const vectorsPath = path.join(source, 'public/scripts/extensions/vectors/index.js');
+const originalVectors = memoryOnly ? await readFile(vectorsPath, 'utf8') : null;
 const url = `http://127.0.0.1:${port}`;
 let server, browser, page, stage = 'setup', timeout, timedOut = false;
 const metrics = async () => (await readFile(metricPath, 'utf8')).trim().split('\n').filter(Boolean).map(line => JSON.parse(line));
@@ -84,6 +89,9 @@ const open = name => page.evaluate(name => SillyTavern.getContext().openCharacte
 async function indexNative() {
     // Use the actual existing handler; it repeatedly synchronizes until complete.
     await page.evaluate(async () => { await jQuery('#vectors_vectorize_all').triggerHandler('click'); });
+    return verifyNative();
+}
+async function verifyNative() {
     const stats = await page.evaluate(async () => {
         const c = SillyTavern.getContext(), { getStringHash } = await import('/scripts/utils.js');
         const r = await fetch('/api/vector/list', { method: 'POST', headers: c.getRequestHeaders(), body: JSON.stringify({ source: 'transformers', collectionId: c.getCurrentChatId() }) });
@@ -99,8 +107,8 @@ async function indexMemory() {
     const uiSynchronizationMilliseconds = performance.now() - start;
     return { uiSynchronizationMilliseconds, ...await verifyMemory() };
 }
-async function verifyMemory(full = false) {
-    return page.evaluate(async ({ credentials, full }) => {
+async function verifyMemory() {
+    return page.evaluate(async ({ credentials }) => {
         const c = SillyTavern.getContext();
         const { LambdaClient } = await import('/scripts/extensions/third-party/sillymemory/src/client.js');
         const { capture, documents, options, archiveBoundary } = await import('/scripts/extensions/third-party/sillymemory/src/memory.js');
@@ -108,7 +116,7 @@ async function verifyMemory(full = false) {
         const snapshot = capture(c), owner = c.extensionSettings.sillymemory.owner;
         const entry = await chatCollection(snapshot, owner), client = new LambdaClient(credentials, credentials.key);
         try {
-            const expected = (await documents(snapshot, owner, { ...options({}), ...(!full ? { archiveBefore: archiveBoundary(snapshot) } : {}) })).docs;
+            const expected = (await documents(snapshot, owner, { ...options({}), archiveBefore: archiveBoundary(snapshot) })).docs;
             const expectedIds = new Set(expected.map(d => d.id));
             const start = performance.now(); let polls = 0, first;
             // List every committed document, including unwanted inherited suffixes.
@@ -128,24 +136,28 @@ async function verifyMemory(full = false) {
                 await new Promise(resolve => setTimeout(resolve, 1000));
             }
         } finally { client.forget(); }
-    }, { credentials, full });
+    }, { credentials });
 }
 async function measure(arm, messages, repetition, operation, job) {
     stage = `${arm}/${messages}/${repetition}/${operation}`;
-    const beforeTraffic = report.traffic.length, beforeMetric = (await metrics()).length, start = performance.now();
+    const beforeTraffic = report.traffic.length, beforeMetric = (await metrics()).length;
+    const beforeBranches = await page.evaluate(() => globalThis.branchCostCalls.length);
+    const start = performance.now();
     const value = await job();
     const elapsed = performance.now() - start, calls = report.traffic.slice(beforeTraffic), embeds = (await metrics()).slice(beforeMetric);
     report.rows.push({
         arm, messages, repetition, operation, milliseconds: elapsed,
+        ...(memoryOnly ? { harnessMilliseconds: elapsed, timingBoundary: 'memory-modules' } : {}),
         requests: calls.length, managedUpsertDocuments: calls.reduce((n, x) => n + (x.managedDocuments || 0), 0),
         managedUpsertCharacters: calls.reduce((n, x) => n + (x.managedCharacters || 0), 0),
         nativeInsertItems: calls.reduce((n, x) => n + (x.nativeItems || 0), 0),
         localEmbeddingInputs: embeds.length, localEmbeddingMilliseconds: embeds.reduce((n, x) => n + x.milliseconds, 0),
         localEmbeddingCpuMilliseconds: embeds.reduce((n, x) => n + (x.cpu.user + x.cpu.system) / 1000, 0),
+        branchCreateCalls: await page.evaluate(start => globalThis.branchCostCalls.slice(start), beforeBranches),
         ...value,
     });
     assert((await metrics()).length <= plan.limits.nativeEmbeddingInputs, 'Local embedding bound');
-    await save(); console.log(`DONE ${stage}: ${(elapsed / 1000).toFixed(3)}s`);
+    await save(); console.log(`DONE ${stage}: ${(report.rows.at(-1).milliseconds / 1000).toFixed(3)}s`);
     stage = 'verification';
 }
 function messagesFor(count) {
@@ -166,11 +178,83 @@ async function seed(rows, name) {
         await c.openCharacterChat(name);
     }, { rows, name });
 }
+async function readChat(file) {
+    return page.evaluate(async file => {
+        const c = SillyTavern.getContext();
+        const response = await fetch('/api/chats/get', { method: 'POST', headers: c.getRequestHeaders(), body: JSON.stringify({ avatar_url: c.characters[c.characterId].avatar, file_name: file }) });
+        if (!response.ok) throw new Error('Synthetic chat read failed');
+        return response.json();
+    }, file);
+}
 async function branch(index) {
     return page.evaluate(async index => {
         const { branchChat } = await import('/scripts/bookmarks.js');
         return branchChat(index);
     }, index);
+}
+async function prepareIndex(arm) {
+    // Let pending host chat-event debounces finish while both automatic memory
+    // paths remain off. This wait is outside the browser module timer.
+    await page.waitForTimeout(1500);
+    return page.evaluate(async ({ arm }) => {
+        // Imports and browser automation are outside the module-level timer.
+        if (arm === 'native') {
+            const { benchmarkPrepareIndex } = await import('/scripts/extensions/vectors/index.js');
+            const started = performance.now();
+            await benchmarkPrepareIndex();
+            return { milliseconds: performance.now() - started };
+        }
+        const { benchmarkPrepareMemory } = await import('/scripts/extensions/third-party/sillymemory/index.js');
+        const started = performance.now();
+        await benchmarkPrepareMemory();
+        return { milliseconds: performance.now() - started };
+    }, { arm });
+}
+async function runMemoryArm(arm, count, rep) {
+    const parent = `${arm}-${count}-${rep}`, rows = messagesFor(count);
+    await seed(rows, parent);
+    const verify = arm === 'native' ? verifyNative : verifyMemory;
+    await measure(arm, count, rep, 'initial', () => prepareIndex(arm));
+    await verify(); // Committed parent preparation is outside the performance timer.
+    stage = `${arm}/${count}/${rep}/snapshot-setup`;
+    const checkpoint = await saveSnapshot(arm, count, rep);
+    const checkpointRows = await readChat(checkpoint), resumedIds = [];
+    for (let resume = 1; resume <= 2; resume++) {
+        stage = `${arm}/${count}/${rep}/resume-${resume}-setup`;
+        await open(checkpoint);
+        if (arm === 'native') await branch(count - 1);
+        else { await panel(); await field('checkpoint-resume').click(); await status('Checkpoint resumed as'); await idle(); }
+        const file = await page.evaluate(() => SillyTavern.getContext().getCurrentChatId());
+        const restored = await readChat(file);
+        assert.deepEqual(restored.slice(1), checkpointRows.slice(1), 'All restored JSONL message fields match');
+        resumedIds.push(file);
+        await measure(arm, count, rep, `resume-${resume}`, () => prepareIndex(arm));
+        await verify(); // Measurement-only full-index verification is excluded for both arms.
+        const row = report.rows.at(-1);
+        check(`${arm}/${count}/resume-${resume}: all source indexed or inherited without new managed uploads`,
+            arm === 'native' ? row.localEmbeddingInputs === count : row.managedUpsertDocuments === 0);
+    }
+    check(`${arm}/${count}: independent restored files and preserved snapshot`, resumedIds[0] !== resumedIds[1]
+        && JSON.stringify((await readChat(checkpoint)).slice(1)) === JSON.stringify(checkpointRows.slice(1)));
+}
+async function saveSnapshot(arm, count, rep) {
+    let checkpoint;
+    if (arm === 'native') {
+        checkpoint = await page.evaluate(async () => {
+            const { createNewBookmark } = await import('/scripts/bookmarks.js');
+            return createNewBookmark(SillyTavern.getContext().chat.length - 1, { forceName: `native-checkpoint-${crypto.randomUUID()}` });
+        });
+    } else {
+        await panel(); await field('checkpoint-name').fill(`${count}-${rep}`);
+        await field('checkpoint-save').click(); await status('Checkpoint saved:'); await idle();
+        checkpoint = await page.evaluate(async () => {
+            const c = SillyTavern.getContext();
+            const r = await fetch('/api/characters/chats', { method: 'POST', headers: c.getRequestHeaders(), body: JSON.stringify({ avatar_url: c.characters[c.characterId].avatar, metadata: true }) });
+            return (await r.json()).find(x => x.chat_metadata?.sillymemory?.checkpoint?.name === document.querySelector('[data-sm=checkpoint-name]').value)?.file_name.replace(/\.jsonl$/, '');
+        });
+    }
+    assert(checkpoint, 'Checkpoint file confirmed');
+    return checkpoint;
 }
 async function runArm(arm, count, rep) {
     const rows = messagesFor(count), parent = `${arm}-${count}-${rep}`;
@@ -178,7 +262,7 @@ async function runArm(arm, count, rep) {
     const sync = arm === 'native' ? indexNative : indexMemory;
     await nativeEnabled(arm === 'native');
     await measure(arm, count, rep, 'initial', sync);
-    for (const [operation, index] of [['branch-end', count - 1], ['branch-middle', Math.floor(count / 2) - 1]]) {
+    for (const [operation, index] of checkpointOnly ? [] : [['branch-end', count - 1], ['branch-middle', Math.floor(count / 2) - 1]]) {
         await nativeEnabled(false); await open(parent);
         await measure(arm, count, rep, operation, async () => {
             const start = performance.now(); await branch(index);
@@ -190,29 +274,19 @@ async function runArm(arm, count, rep) {
         check(`${arm}/${count}/${rep}/${operation} preserves source prefix`, await page.evaluate(rows => JSON.stringify(SillyTavern.getContext().chat.map(m => m.mes)) === JSON.stringify(rows.map(m => m.mes)), rows.slice(0, index + 1)));
     }
     await nativeEnabled(false); await open(parent);
+    const sourceRows = checkpointOnly ? await readChat(parent) : null;
+    const resumes = [];
     let checkpoint;
     await measure(arm, count, rep, 'checkpoint-save', async () => {
-        if (arm === 'native') {
-            checkpoint = await page.evaluate(async () => {
-                const { createNewBookmark } = await import('/scripts/bookmarks.js');
-                return createNewBookmark(SillyTavern.getContext().chat.length - 1, { forceName: `native-checkpoint-${crypto.randomUUID()}` });
-            });
-        } else {
-            await panel(); await field('checkpoint-name').fill(`${count}-${rep}`);
-            await field('checkpoint-save').click(); await status('Checkpoint saved:'); await idle();
-            checkpoint = await page.evaluate(async () => {
-                const c = SillyTavern.getContext();
-                const r = await fetch('/api/characters/chats', { method: 'POST', headers: c.getRequestHeaders(), body: JSON.stringify({ avatar_url: c.characters[c.characterId].avatar, metadata: true }) });
-                return (await r.json()).find(x => x.chat_metadata?.sillymemory?.checkpoint?.name === document.querySelector('[data-sm=checkpoint-name]').value)?.file_name.replace(/\.jsonl$/, '');
-            });
-        }
+        checkpoint = await saveSnapshot(arm, count, rep);
         assert(checkpoint, 'Checkpoint file confirmed');
     });
     await measure(arm, count, rep, 'checkpoint-open', async () => {
         await open(checkpoint);
         if (arm === 'native') { await nativeEnabled(true); await sync(); }
-        else return verifyMemory(true);
+        else return verifyMemory();
     });
+    if (checkpointOnly) assert.deepEqual((await readChat(checkpoint)).slice(1), sourceRows.slice(1), 'Snapshot preserves every JSONL message field');
     for (let resume = 1; resume <= 2; resume++) {
         await nativeEnabled(false); await open(checkpoint);
         await measure(arm, count, rep, `resume-${resume}`, async () => {
@@ -224,14 +298,55 @@ async function runArm(arm, count, rep) {
             const synchronization = await sync();
             return { chatMilliseconds, ...(arm === 'sillymemory' ? synchronization : {}) };
         });
+        if (checkpointOnly) {
+            const file = await page.evaluate(() => SillyTavern.getContext().getCurrentChatId());
+            resumes.push(file);
+            assert.deepEqual((await readChat(file)).slice(1), sourceRows.slice(1), 'Resume preserves every JSONL message field');
+        }
         check(`${arm}/${count}/${rep}/resume-${resume} preserves transcript`, await page.evaluate(rows => JSON.stringify(SillyTavern.getContext().chat.map(m => m.mes)) === JSON.stringify(rows.map(m => m.mes)), rows));
+    }
+    if (checkpointOnly) {
+        const ids = await Promise.all([parent, checkpoint, ...resumes].map(async file => (await readChat(file))[0].chat_metadata.sillymemory.id));
+        check(`${count}: source, frozen snapshot and two resumes have distinct paths`, new Set(ids).size === 4);
+        await open(resumes[0]);
+        await page.evaluate(async () => { const c = SillyTavern.getContext(); c.chat[0].mes += ' Independent resumed edit.'; await c.saveChat(); });
+        await indexMemory();
+        for (const file of [parent, checkpoint, resumes[1]]) {
+            await memoryOff(); await open(file); await verifyMemory();
+            assert.deepEqual((await readChat(file)).slice(1), sourceRows.slice(1), 'Independent edit cannot change another transcript');
+        }
+        check(`${count}: resumed edit leaves original, frozen and sibling memory/transcripts unchanged`, true);
+        check(`${count}: save and both resumes submit zero documents`, report.rows.filter(r => r.messages === count && ['checkpoint-save', 'resume-1', 'resume-2'].includes(r.operation)).every(r => r.managedUpsertDocuments === 0));
     }
     await nativeEnabled(false); await memoryOff();
 }
 try {
     work = await mkdtemp(path.join(tmpdir(), 'sm-branch-cost-'));
-    await replaceHostEmbedding(embeddingPath, instrumented);
-    hostInstrumented = true;
+    if (instrumented) { await replaceHostEmbedding(embeddingPath, instrumented); hostInstrumented = true; }
+    if (memoryOnly) {
+        assert.equal(originalVectors.split('async function synchronizeChat(').length, 2);
+        const exposure = `
+// Disposable benchmark exposure: the existing Vectorize All batch loop without progress UI.
+export async function benchmarkPrepareIndex() {
+    const enabled = settings.enabled_chats;
+    settings.enabled_chats = true;
+    cachedSummaries.clear(); skippedHashes.clear();
+    try {
+        let remaining;
+        do {
+            remaining = await synchronizeChat(getBatchSize());
+            if (remaining === null) throw new Error('Native memory preparation failed');
+        } while (remaining > 0);
+        if (skippedHashes.size) throw new Error('Native memory preparation skipped source');
+    } finally { settings.enabled_chats = enabled; }
+}
+`;
+        await writeFile(path.join(artifacts, 'host-vectors-original.js'), originalVectors);
+        await writeFile(path.join(artifacts, 'host-vectors-instrumented.js'), originalVectors + exposure);
+        await replaceHostEmbedding(vectorsPath, originalVectors + exposure);
+        vectorsInstrumented = true;
+        report.timingBoundary = plan.timing;
+    }
     const config = path.join(work, 'config.yaml');
     const configBytes = await readFile(path.join(source, 'default/config.yaml'));
     await writeFile(config, configBytes);
@@ -246,6 +361,22 @@ try {
     browser = await chromium.launch(); page = await browser.newPage(); page.setDefaultTimeout(20000);
     timeout = setTimeout(() => { timedOut = true; void page.close(); }, plan.limits.wallMinutes * 60000);
     page.on('pageerror', e => report.pageErrors.push(e.name));
+    await page.route('**/api/**/generate', route => { report.pageErrors.push('Unexpected generation request'); return route.abort(); });
+    if (memoryOnly) {
+        const original = await readFile(path.join(root, 'index.js'), 'utf8');
+        const exposed = original + `
+// Disposable benchmark exposure: product memory preparation without UI actions.
+export async function benchmarkPrepareMemory() {
+    const prepared = await prepareMemory(() => true);
+    if (!prepared) throw new Error('Memory preparation did not complete');
+    return prepared.instance.sync(prepared.snapshot,
+        { ...options(state), archiveBefore: archiveBoundary(prepared.snapshot) }, () => true);
+}
+`;
+        await writeFile(path.join(artifacts, 'extension-index-instrumented.js'), exposed);
+        await page.route(`${url}/scripts/extensions/third-party/sillymemory/index.js`, route =>
+            route.fulfill({ status: 200, contentType: 'application/javascript', body: exposed }));
+    }
     page.on('request', req => {
         const u = new URL(req.url());
         if (u.origin !== url || !u.pathname.startsWith('/api/vector/')) return;
@@ -255,6 +386,7 @@ try {
     await page.route(`${new URL(credentials.endpoint).origin}/**`, async route => {
         try {
             const req = route.request(), u = new URL(req.url()), body = req.postData() ? req.postDataJSON() : {};
+            assert(!narrow || report.traffic.filter(x => x.kind === 'lambda').length < plan.limits.requests, 'Request bound');
             if (req.method() === 'POST' && u.pathname.endsWith('/collections')) {
                 assert(pending.length < plan.limits.collections, 'Collection bound');
                 pending.push({ collection: body.collectionName, owner: body.tags.owner, scope: body.tags.chat });
@@ -279,23 +411,37 @@ try {
         if (!r.ok) throw new Error('Character creation failed');
     });
     await page.reload(); await page.locator('#sillymemory').waitFor({ state: 'attached' }); await status('Connected.'); await idle();
+    await page.evaluate(async () => {
+        const { LambdaClient } = await import('/scripts/extensions/third-party/sillymemory/src/client.js');
+        const create = LambdaClient.prototype.createBranch;
+        globalThis.branchCostCalls = [];
+        LambdaClient.prototype.createBranch = async function (...args) {
+            const start = performance.now(); let success = false;
+            try { const result = await create.apply(this, args); success = true; return result; }
+            finally { globalThis.branchCostCalls.push({ milliseconds: performance.now() - start, success }); }
+        };
+    });
     await page.locator('#rightNavHolder .drawer-toggle').click(); await page.locator('.character_select').filter({ hasText: 'Branch Cost Synthetic' }).click();
     await page.waitForFunction(() => SillyTavern.getContext().characterId !== undefined); await panel();
-    stage = 'local-model-warmup';
-    const warmStart = performance.now();
-    await page.evaluate(async () => {
-        const c = SillyTavern.getContext();
-        const r = await fetch('/api/vector/insert', { method: 'POST', headers: c.getRequestHeaders(), body: JSON.stringify({ source: 'transformers', collectionId: 'branch-cost-warmup', items: [{ hash: 1, text: 'Warm up the local embedding model.', index: 0 }] }) });
-        if (!r.ok) throw new Error('Local model warmup failed');
-    });
-    report.modelDownloadAndWarmupMilliseconds = performance.now() - warmStart;
+    if (!checkpointOnly) {
+        stage = 'local-model-warmup';
+        const warmStart = performance.now();
+        await page.evaluate(async () => {
+            const c = SillyTavern.getContext();
+            const r = await fetch('/api/vector/insert', { method: 'POST', headers: c.getRequestHeaders(), body: JSON.stringify({ source: 'transformers', collectionId: 'branch-cost-warmup', items: [{ hash: 1, text: 'Warm up the local embedding model.', index: 0 }] }) });
+            if (!r.ok) throw new Error('Local model warmup failed');
+        });
+        report.modelDownloadAndWarmupMilliseconds = performance.now() - warmStart;
+    }
     for (const count of plan.messages) {
         report.inputs.push({ messages: count, sha256: hash(JSON.stringify(messagesFor(count))), characters: messagesFor(count).reduce((n, m) => n + m.mes.length, 0) });
         for (let rep = 1; rep <= plan.repetitions; rep++) {
-            for (const arm of rep % 2 ? ['native', 'sillymemory'] : ['sillymemory', 'native']) await runArm(arm, count, rep);
+            const arms = Object.keys(plan.arms);
+            for (const arm of rep % 2 ? arms : arms.reverse()) await (memoryOnly ? runMemoryArm : runArm)(arm, count, rep);
         }
     }
-    check('complete frozen matrix', report.rows.length === plan.messages.length * plan.repetitions * 2 * plan.operations.length);
+    check('complete frozen matrix', report.rows.length === plan.messages.length * plan.repetitions * Object.keys(plan.arms).length * plan.operations.length);
+    if (checkpointOnly) check('no local embedding calls', (await metrics()).length === 0 && !report.traffic.some(x => x.kind === 'native'));
     check('no browser errors', !report.pageErrors.length);
     report.passed = true;
 } catch (error) {
@@ -323,10 +469,17 @@ try {
     try {
         if (server?.pid && server.exitCode === null && server.signalCode === null) { server.kill('SIGTERM'); await new Promise(r => server.once('exit', r)); }
     } catch (error) { report.serverShutdownFailure = { type: error.name, code: error.code }; }
-    try {
-        if (hostInstrumented) await replaceHostEmbedding(embeddingPath, originalEmbedding);
-        report.hostRestored = await readFile(embeddingPath, 'utf8') === originalEmbedding;
-    } catch (error) { report.hostRestoreFailure = { type: error.name, code: error.code }; }
+    report.hostRestored = true;
+    for (const file of [{ path: embeddingPath, original: originalEmbedding, changed: hostInstrumented },
+        ...(memoryOnly ? [{ path: vectorsPath, original: originalVectors, changed: vectorsInstrumented }] : [])]) {
+        try {
+            if (file.changed) await replaceHostEmbedding(file.path, file.original);
+            report.hostRestored &&= await readFile(file.path, 'utf8') === file.original;
+        } catch (error) {
+            report.hostRestored = false;
+            (report.hostRestoreFailures ??= []).push({ type: error.name, code: error.code });
+        }
+    }
     report.sourceUnchanged = true;
     try {
         for (const [file, digest] of Object.entries(report.sourceSha256)) if (hash(await readFile(path.join(root, file))) !== digest) report.sourceUnchanged = false;

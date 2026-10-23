@@ -74,3 +74,17 @@ test('Noul adapter preserves official rules and reference labels and accepts thr
     for (const p of [NaN, -0.1, 1.1, '0.9']) assert.throws(() => jevDecision(response(p)));
     assert.throws(() => jevDecision({ ...response(0.9), model: 'jev-latest' }), /version/);
 });
+
+test('summary producer digest resolves maintained files after experiment retirement', async () => {
+    const { readFile } = await import('node:fs/promises');
+    const { createHash } = await import('node:crypto');
+    const { summaryProducerDigest } = await import('../scripts/segment-summary-tokenizer.mjs');
+    // Independently read the executable dependency closure from the repository.
+    // Missing paths fail here too; a fixed digest would hide future producer edits.
+    const files = ['scripts/segment-summary.mjs', 'scripts/segment-summary-eval.mjs',
+        'scripts/segment-summary-tokenizer.mjs', 'scripts/benchmark-checkpoint.mjs',
+        'benchmark/shared/longmemeval-input.mjs'];
+    const bytes = await Promise.all(files.map(file => readFile(new URL('../' + file, import.meta.url))));
+    const expected = createHash('sha256').update(Buffer.concat(bytes)).digest('hex');
+    assert.equal(await summaryProducerDigest(), expected);
+});

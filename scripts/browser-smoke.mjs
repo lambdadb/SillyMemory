@@ -60,7 +60,9 @@ const remote = createServer({ key: await readFile(key), cert: await readFile(cer
         if (req.method === 'POST') {
             if (c.branches.has(body.branchName)) return send(409);
             const source = c.branches.get(body.source.name); if (!source) return send(404);
-            c.branches.set(body.branchName, new Map(source)); return send(201, { branch: branchResponse(body.branchName, body.source.name) });
+            return faults.respond('create-branch', () => {
+                c.branches.set(body.branchName, new Map(source)); return [201, { branch: branchResponse(body.branchName, body.source.name) }];
+            }, send);
         }
         if (req.method === 'DELETE') return faults.respond('delete-branch', () => { c.branches.delete(parts[5]); return [200, { message: 'OK' }]; }, send);
     }

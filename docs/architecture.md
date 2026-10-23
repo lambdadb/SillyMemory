@@ -10,7 +10,7 @@ There is no server plugin. Runtime modules have no external dependencies. Playwr
 
 The current SillyTavern chat is authoritative. The owner is a random per-account identity kept in extension settings; its initial save is awaited and read back before the UI permits remote operations. Browser-local configuration and journals are keyed by that owner. Scope is SHA-256 of owner, character avatar filename, and the saved story ID. Every story has one owned collection; each chat path has its own writable branch. Native metadata is persisted and read back before remote use. Verified native forks inherit the story scope; independent copies start new stories. The source revision hashes message position, speaker, role, selected swipe, full text and normalized conversation-time metadata. A chunk ID contains scope, revision, chunking policy, ordinal and source offsets. Insertion/deletion can renumber subsequent messages and require reindexing; content is never deduplicated across scopes.
 
-Ordinary synchronization indexes completed eligible text only before the recent-five boundary, rounded back by one message if it splits an adjacent eligible user/assistant pair. A trailing user input remains pending. New source that crosses that boundary is uploaded immediately; the displaced pair shares existing batches of at most 50 documents, while document/chunk identities stay separate. A five-message write queue is not used. Checkpoints deliberately index the full completed transcript, including recent completed messages. Chunks are up to 800 Unicode code points by default. They retain message/chunk provenance and available host time/source metadata, separately from embedding text. The current implementation selects whole chunks and does not perform neighbor expansion. Renaming a chat preserves its saved identity. Changing the character avatar identity is not a continuity guarantee.
+Ordinary synchronization indexes completed eligible text only before the recent-five boundary, rounded back by one message if it splits an adjacent eligible user/assistant pair. A trailing user input remains pending. New source that crosses that boundary is uploaded immediately; the displaced pair shares existing batches of at most 50 documents, while document/chunk identities stay separate. A five-message write queue is not used. Checkpoints preserve the full native JSONL transcript and freeze the same older-history partition, without indexing recent messages solely for the snapshot. Chunks are up to 800 Unicode code points by default. They retain message/chunk provenance and available host time/source metadata, separately from embedding text. The current implementation selects whole chunks and does not perform neighbor expansion. Renaming a chat preserves its saved identity. Changing the character avatar identity is not a continuity guarantee.
 
 ## Write ordering and recovery
 
@@ -35,8 +35,8 @@ remains in the generation prompt but is not appended to the search query.
 Regenerate/swipe exclude the answer being replaced; continuation anchors on the
 eligible message being extended; Impersonate anchors on the latest eligible response.
 No query rewriting model or second search is used.
-Ordinary storage archives completed source before the recent-five boundary;
-checkpoints explicitly synchronize the full completed transcript. Generation
+Ordinary storage and checkpoint memory archive completed source before the
+recent-five boundary. Checkpoint JSONL files preserve the full transcript. Generation
 retains at least five recent eligible messages through the active anchor,
 including a paired user when the window would start at its adjacent assistant reply, together
 with selected memory alongside native settings.
