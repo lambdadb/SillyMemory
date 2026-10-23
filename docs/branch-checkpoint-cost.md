@@ -12,16 +12,84 @@ This comparison concerns operating cost and readiness, not retrieval accuracy or
 generated-answer quality. It does not add a new user-facing workflow or change
 product defaults. Native branching and native checkpoints already exist.
 
-## Current checkpoint behavior
+## Checkpoint memory boundary: live result
 
-Frozen snapshots now preserve the full native JSONL transcript with the same
-older-history memory partition used in ordinary synchronization. Saving no longer
-indexes the retained recent messages solely for the snapshot. The six-document
-checkpoint submissions and subsequent recent-document deletions below describe
-the measured historical implementation; these measurements have not been rerun
-for the changed behavior. The current runner verifies this older partition for
-checkpoint open as well; reproducing the historical full-transcript runs requires
-their recorded producer revision. See [frozen memory snapshots](checkpoints.md).
+Frozen snapshots preserve the full native JSONL transcript with the same
+older-history memory partition used in ordinary synchronization. Saving does not
+index retained recent messages solely for the snapshot. Missing or changed older
+passages still reconcile before readiness; resumed paths archive recent messages
+when later dialogue displaces them. See [frozen memory snapshots](checkpoints.md).
+
+The live run on October 23, 2026 used producer
+`efa63096c73e782ca95be7f77b258befabea9d75` and the
+[frozen checkpoint plan](benchmarks/checkpoint-memory-boundary-v1.json).
+It ran real SillyTavern 1.19.0 (`06bde939fb1e9c4c8d8641d810f0a916b5bce127`),
+Chromium and live LambdaDB on Node 24.15.0, macOS arm64 / Apple M5 Pro.
+The default managed Small embedding field and 800-character chunks were unchanged.
+Client/service locations were not recorded; no region-level latency claim is made.
+
+| Transcript messages | Indexed passages | Snapshot save | Open / verify | Resume 1 / synchronize | Resume 2 / synchronize | New document submissions for each save/open/resume |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 50 | 44 | 1.540 s | 0.200 s | 3.439 s | 3.492 s | 0 |
+| 500 | 494 | 2.154 s | 0.486 s | 4.477 s | 4.582 s | 0 |
+
+These are single observations per operation and size, after a committed initial
+index. Full timers include native UI actions and exact committed document-set
+verification. The harness saved with memory off, then explicitly enabled and
+synchronized each resumed path; these are not measurements of an enabled
+snapshot's automatic first answer. Initial synchronization took 63.764 / 62.661
+seconds and submitted 44 / 494 passages; it is excluded from the table above.
+
+The `LambdaClient.createBranch` timer separately covers only the client-observed
+API call, including transport and SDK validation, with retries disabled. Parent
+commit preparation, transcript reconciliation and document verification are
+outside this timer. Each call corresponded to one branch POST.
+
+| Transcript messages | Stored passages inherited per fork | Snapshot / resume 1 / resume 2 branch-create calls | Median of the three calls |
+| ---: | ---: | ---: | ---: |
+| 50 | 44 | 66.4 / 84.2 / 69.0 ms | 69.0 ms |
+| 500 | 494 | 66.9 / 60.0 / 61.9 ms | 61.9 ms |
+
+All ten timed operations passed. Snapshot and resumed JSONL message rows matched
+the original in every field, and all committed memory sets matched their intended
+older-history partition without extra recent documents. An older-message edit in
+one resumed path left the original path, frozen snapshot and sibling resume's
+transcripts and committed memory unchanged. All three owned collection intents
+were independently checked as HTTP 404 after cleanup. No browser errors,
+generation/judge calls or local embedding calls occurred. The run recorded 566
+browser LambdaDB requests and 541 managed document submissions: one transport-test
+document, 538 initial passages and two isolated edit submissions. Three additional
+Node reads independently verified cleanup.
+
+The deterministic input hashes match the historical v2 comparison exactly.
+Built-in Vector Storage was not rerun: its recorded checkpoint-open and each
+resume indexed 50 / 500 inputs. The results below remain dated historical
+observations, including the former six-document snapshot uploads; do not relabel
+them as measurements of this implementation or pool their latency samples.
+
+**Decision:** retain the shared recent-message boundary for snapshots. A complete
+JSONL plus frozen older memory preserves the transcript and isolated paths while
+avoiding recent-message indexing at save and subsequent recent-document deletion
+at resume. No answer-quality conclusion follows from this persistence test.
+
+Reproduce only the changed path on a disposable pinned host with its extension
+symlink pointing at the checkout under test:
+
+```sh
+ST_SOURCE=/absolute/path/to/disposable/SillyTavern \
+SM_ENV_FILE=/absolute/path/to/.env.local \
+node scripts/branch-checkpoint-cost.mjs --checkpoints-only artifacts/checkpoint-run
+```
+
+The plan bounds this to three collection intents, 550 submitted documents,
+125,000 submitted characters, 3,000 browser LambdaDB requests and 15 minutes, with
+no generation calls. Detailed evidence is retained in a local-only archive,
+not supplied by a fresh clone or required by CI. Archive SHA-256:
+`ae247c4ff623b0ab17ec1760e444cb2f28865a96977b75947e13f529338b6cc5`;
+raw report SHA-256:
+`ba79c8e06f869975a1daabf2039c925e3f8a898038d3058cb4c1a46aecfdbfe8`.
+All 408 archived files, including the exact producing source and frozen inputs,
+were read back and verified byte-for-byte. No credentials were included.
 
 ## Readiness correction
 
