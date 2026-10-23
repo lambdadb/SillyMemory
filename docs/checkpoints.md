@@ -11,6 +11,13 @@ The optional **Advanced → Frozen memory snapshots** controls below additionall
 bind a saved transcript to a verified, retained remote memory branch. The internal
 metadata and historical acceptance records call these snapshots checkpoints.
 
+A snapshot consists of the full native JSONL transcript plus a frozen LambdaDB
+branch containing the older-history memory partition. Saving uses the same
+recent-message boundary as ordinary synchronization: recent messages remain in
+the JSONL and are not uploaded just for the snapshot. Missing or changed older
+passages are still reconciled before readiness. Resumed writable paths archive
+recent messages normally as later dialogue displaces them from the window.
+
 ## Decision and bounded acceptance
 
 Bind a saved native SillyTavern transcript (including hidden swipes and chat

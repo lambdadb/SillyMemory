@@ -1,6 +1,6 @@
 import { sameDocument, waitForCommit } from './commit.js';
 import { ConnectionError } from './client.js';
-import { capture, digest, documents, Journal, MemoryEngine, options } from './memory.js';
+import { archiveBoundary, capture, digest, documents, Journal, MemoryEngine, options } from './memory.js';
 import { chatCollection } from './chat-collections.js';
 import { poll } from './gate.js';
 
@@ -58,7 +58,10 @@ export async function finishCheckpoint({ host, client, collections, owner, file,
     const rows = await checked(host, file), mark = metadataOf(rows).sillymemory.checkpoint;
     if (mark.state === 'ready') { await verifyRemote({ client, owner, rows, avatar, file }); current(valid); return file; }
     current(valid);
-    const snapshot = snapshotOf(rows, avatar, file), config = options(mark.config);
+    const snapshot = snapshotOf(rows, avatar, file);
+    // The saved JSONL already preserves recent messages. Freeze the same older
+    // partition as ordinary synchronization, including when finishing a retry.
+    const config = { ...options(mark.config), archiveBefore: archiveBoundary(snapshot) };
     progress('Preparing checkpoint memory. Waiting for committed history may take a few minutes…');
     const entry = await collections.ensure(snapshot, valid, config);
     current(valid);

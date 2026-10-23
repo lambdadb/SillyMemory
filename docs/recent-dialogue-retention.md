@@ -29,7 +29,7 @@ Ordinary storage now archives completed eligible messages only after they leave
 this five-message window. Upload displaced chunks immediately, grouping whatever
 is ready at the same synchronization in existing batches of up to 50 documents.
 There is no queue waiting for five displaced messages. The only ordinary extension
-is the one user message needed to avoid splitting its adjacent reply. Checkpoints synchronize the complete completed transcript.
+is the one user message needed to avoid splitting its adjacent reply. Checkpoints preserve the full native JSONL transcript and synchronize the same older-history memory partition; recent messages are not uploaded solely to save a checkpoint.
 Ordinary retrieval uses the two most recent eligible messages through the query
 anchor, normally the preceding assistant reply and current user question, with
 roles/order preserved in one request. A longer unresolved span takes precedence.

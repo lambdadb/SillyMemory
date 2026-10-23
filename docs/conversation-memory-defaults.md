@@ -60,7 +60,9 @@ window, aligned to keep an adjacent plain-text input/reply pair together. Normal
 user input retains five; a completed reply can retain six. Displaced pairs share
 an upsert with separate per-message chunks, subject to the existing 50-document
 batch. No five-message queue. A trailing user input waits for its answer.
-Checkpoints explicitly synchronize the full completed transcript.
+Checkpoints preserve the full native JSONL transcript and freeze the same older
+memory partition. Recent messages enter memory only when they leave the retained
+window on a writable path.
 
 One role-labelled Query 1 includes only the eligible generation anchor. Recent
 dialogue remains in the generation prompt but is not appended to the search query.
