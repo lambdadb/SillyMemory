@@ -12,7 +12,81 @@ This comparison concerns operating cost and readiness, not retrieval accuracy or
 generated-answer quality. It does not add a new user-facing workflow or change
 product defaults. Native branching and native checkpoints already exist.
 
-## Checkpoint memory boundary: live result
+## Memory preparation after restore: UI excluded
+
+Use these module-level timings for memory-performance comparisons. The later
+workflow diagnostics include UI automation and are not memory-preparation latency.
+
+On October 23, 2026, producer `5ae4a167be33e0ffe154f907763840e95f31605d`
+ran the [frozen memory-preparation plan](benchmarks/checkpoint-memory-prepare-v1.json)
+on the same deterministic 50/500-message fixtures and Apple M5 Pro / macOS arm64,
+Node 24.15.0, Chromium and pinned SillyTavern 1.19.0 host. Both arms were rerun.
+The local quantized Jina model was warmed before timing; LambdaDB used the
+unchanged native Small embedding field and 800-character chunks.
+
+| Restored transcript | Built-in Vector Storage: two preparations | LambdaDB memory: two preparations | New indexing inputs per preparation, built-in / LambdaDB |
+| ---: | ---: | ---: | ---: |
+| 50 messages | 12.876 / 12.680 s | 0.449 / 0.552 s | 50 / 0 |
+| 500 messages | 142.170 / 142.469 s | 0.997 / 1.011 s | 500 / 0 |
+
+Each timer starts after the restored JSONL is already selected and loaded. Browser
+`performance.now()` surrounds only the actual memory synchronization functions.
+For built-in Vector Storage, a disposable export invokes the existing
+`synchronizeChat(getBatchSize())` batches until complete, retaining the default
+batch size and embedding/indexing path while omitting button/progress UI. For
+SillyMemory, a disposable browser-module export invokes the actual
+`prepareMemory` and `MemoryEngine.sync` path, retaining saved-identity validation,
+branch creation, ownership checks and full inherited-source reconciliation.
+No production module behavior was changed.
+
+Module imports, model warmup, copying/opening chat files, UI clicking, toggling,
+settings drawers, automation waits and additional benchmark full-index checks
+are outside both timers. No UI-inclusive total is reduced by an estimated
+constant. Initial parent writes are verified committed before snapshot creation;
+initial acknowledged-write timings are not used as a ready-index comparison.
+These are memory-preparation measurements, not complete chat restoration or
+first-answer latency. Each range covers two paths, not a percentile distribution.
+
+The LambdaDB preparation made 7 requests for 50 messages and 15 for 500 messages,
+with zero upserts. The included branch-create calls were 76.9 / 67.8 ms and
+64.4 / 68.8 ms, respectively. The remaining time covers the real synchronization
+path, including inherited-document checks; it is not UI automation. Complete
+committed index/hash sets and every saved JSONL message field were verified
+outside the timers for both arms. The inherited memory contains 44 / 494 passages,
+with the six recent messages retained in the native transcript.
+
+All twelve preparations and fourteen checks passed. Local embedding executions
+were 1,651 including warmup and initial indexes; managed submissions were 539
+including the transport-test document and initial 538 passages. No restored path
+submitted managed documents. There were 3,307 native vector API requests and 305
+browser LambdaDB requests, plus three independent Node cleanup reads. No
+browser errors or generation/judge calls occurred. All three owned collection
+intents were independently verified as HTTP 404; disposable host instrumentation
+was restored and native data removed.
+
+**Decision:** compare actual memory preparation, excluding UI automation on both
+sides. Preserve UI-inclusive measurements below as workflow diagnostics only.
+The persistence/isolation conclusion is unchanged; these timings do not establish
+answer quality or latency across other models and hardware.
+
+```sh
+ST_SOURCE=/absolute/path/to/disposable/SillyTavern \
+SM_ENV_FILE=/absolute/path/to/.env.local \
+node scripts/branch-checkpoint-cost.mjs --memory-prepare-only artifacts/memory-prepare-run
+```
+
+The frozen plan bounds this to three collection intents, 550 managed documents,
+2,000 local embedding inputs and 20 minutes with no generation calls. Detailed
+raw evidence is retained locally, not bundled with a fresh clone or required by
+CI. Archive SHA-256:
+`7ff680c6c51e8b2950d174760355a62965954f1818155f7b602a39c655ed8543`;
+raw report SHA-256:
+`cb008a5102f6a2fa8b427645d9559917aff5bee18fd136809e662e7651d849a4`.
+All 413 archived files, including exact source, test-only exposures, frozen plan
+and raw counters, were read back and matched byte-for-byte. No credentials were
+included. The earlier evidence archives remain unchanged.
+
+## Checkpoint workflow diagnostics (UI included)
 
 Frozen snapshots preserve the full native JSONL transcript with the same
 older-history memory partition used in ordinary synchronization. Saving does not
