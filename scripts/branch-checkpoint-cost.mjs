@@ -14,9 +14,11 @@ import { assertPinnedHost, assertPortAvailable, waitForOwnedHost, cleanupOwnedCo
 const root = path.resolve(new URL('..', import.meta.url).pathname);
 const source = process.env.ST_SOURCE;
 const checkpointOnly = process.argv[2] === '--checkpoints-only';
-const output = process.argv[checkpointOnly ? 3 : 2];
-assert(source && output && process.argv.length === (checkpointOnly ? 4 : 3), 'ST_SOURCE=<disposable host> SM_ENV_FILE=<env> node scripts/branch-checkpoint-cost.mjs [--checkpoints-only] <new artifact directory>');
-const planBytes = await readFile(path.join(root, checkpointOnly ? 'docs/benchmarks/checkpoint-memory-boundary-v1.json' : 'docs/benchmarks/branch-checkpoint-v2.json'));
+const memoryOnly = process.argv[2] === '--memory-prepare-only';
+const narrow = checkpointOnly || memoryOnly;
+const output = process.argv[narrow ? 3 : 2];
+assert(source && output && process.argv.length === (narrow ? 4 : 3), 'ST_SOURCE=<disposable host> SM_ENV_FILE=<env> node scripts/branch-checkpoint-cost.mjs [--checkpoints-only|--memory-prepare-only] <new artifact directory>');
+const planBytes = await readFile(path.join(root, memoryOnly ? 'docs/benchmarks/checkpoint-memory-prepare-v1.json' : checkpointOnly ? 'docs/benchmarks/checkpoint-memory-boundary-v1.json' : 'docs/benchmarks/branch-checkpoint-v2.json'));
 const plan = JSON.parse(planBytes);
 assertPinnedHost(source, plan.hostRevision);
 assert.equal(await realpath(path.join(source, 'public/scripts/extensions/third-party/sillymemory')), root);
@@ -28,7 +30,7 @@ await assertPortAvailable(port); // Fail before instrumenting a host or creating
 const artifacts = path.resolve(output);
 await mkdir(artifacts, { recursive: true });
 await writeFile(path.join(artifacts, 'plan.json'), planBytes, { flag: 'wx' });
-let work, hostInstrumented = false;
+let work, hostInstrumented = false, vectorsInstrumented = false;
 const metricPath = path.join(artifacts, 'local-embedding.ndjson');
 await writeFile(metricPath, '', { flag: 'wx' });
 const pendingPath = path.join(artifacts, 'pending.json'), pending = [];
@@ -56,6 +58,8 @@ const instrumented = checkpointOnly ? null : instrumentEmbedding(originalEmbeddi
 await writeFile(path.join(artifacts, 'host-embedding-original.js'), originalEmbedding);
 if (instrumented) await writeFile(path.join(artifacts, 'host-embedding-instrumented.js'), instrumented);
 report.hostInstrumentation = checkpointOnly ? 'No host instrumentation or local embedding calls.' : 'Time/CPU counters around actual local model execution, one NDJSON append per input. Model loading excluded from this counter and timed separately. No model outputs or input text logged.';
+const vectorsPath = path.join(source, 'public/scripts/extensions/vectors/index.js');
+const originalVectors = memoryOnly ? await readFile(vectorsPath, 'utf8') : null;
 const url = `http://127.0.0.1:${port}`;
 let server, browser, page, stage = 'setup', timeout, timedOut = false;
 const metrics = async () => (await readFile(metricPath, 'utf8')).trim().split('\n').filter(Boolean).map(line => JSON.parse(line));
@@ -85,6 +89,9 @@ const open = name => page.evaluate(name => SillyTavern.getContext().openCharacte
 async function indexNative() {
     // Use the actual existing handler; it repeatedly synchronizes until complete.
     await page.evaluate(async () => { await jQuery('#vectors_vectorize_all').triggerHandler('click'); });
+    return verifyNative();
+}
+async function verifyNative() {
     const stats = await page.evaluate(async () => {
         const c = SillyTavern.getContext(), { getStringHash } = await import('/scripts/utils.js');
         const r = await fetch('/api/vector/list', { method: 'POST', headers: c.getRequestHeaders(), body: JSON.stringify({ source: 'transformers', collectionId: c.getCurrentChatId() }) });
@@ -140,6 +147,7 @@ async function measure(arm, messages, repetition, operation, job) {
     const elapsed = performance.now() - start, calls = report.traffic.slice(beforeTraffic), embeds = (await metrics()).slice(beforeMetric);
     report.rows.push({
         arm, messages, repetition, operation, milliseconds: elapsed,
+        ...(memoryOnly ? { harnessMilliseconds: elapsed, timingBoundary: 'memory-modules' } : {}),
         requests: calls.length, managedUpsertDocuments: calls.reduce((n, x) => n + (x.managedDocuments || 0), 0),
         managedUpsertCharacters: calls.reduce((n, x) => n + (x.managedCharacters || 0), 0),
         nativeInsertItems: calls.reduce((n, x) => n + (x.nativeItems || 0), 0),
@@ -149,7 +157,7 @@ async function measure(arm, messages, repetition, operation, job) {
         ...value,
     });
     assert((await metrics()).length <= plan.limits.nativeEmbeddingInputs, 'Local embedding bound');
-    await save(); console.log(`DONE ${stage}: ${(elapsed / 1000).toFixed(3)}s`);
+    await save(); console.log(`DONE ${stage}: ${(report.rows.at(-1).milliseconds / 1000).toFixed(3)}s`);
     stage = 'verification';
 }
 function messagesFor(count) {
@@ -184,6 +192,70 @@ async function branch(index) {
         return branchChat(index);
     }, index);
 }
+async function prepareIndex(arm) {
+    // Let pending host chat-event debounces finish while both automatic memory
+    // paths remain off. This wait is outside the browser module timer.
+    await page.waitForTimeout(1500);
+    return page.evaluate(async ({ arm }) => {
+        // Imports and browser automation are outside the module-level timer.
+        if (arm === 'native') {
+            const { benchmarkPrepareIndex } = await import('/scripts/extensions/vectors/index.js');
+            const started = performance.now();
+            await benchmarkPrepareIndex();
+            return { milliseconds: performance.now() - started };
+        }
+        const { benchmarkPrepareMemory } = await import('/scripts/extensions/third-party/sillymemory/index.js');
+        const started = performance.now();
+        await benchmarkPrepareMemory();
+        return { milliseconds: performance.now() - started };
+    }, { arm });
+}
+async function runMemoryArm(arm, count, rep) {
+    const parent = `${arm}-${count}-${rep}`, rows = messagesFor(count);
+    await seed(rows, parent);
+    const verify = arm === 'native' ? verifyNative : verifyMemory;
+    await measure(arm, count, rep, 'initial', () => prepareIndex(arm));
+    await verify(); // Committed parent preparation is outside the performance timer.
+    stage = `${arm}/${count}/${rep}/snapshot-setup`;
+    const checkpoint = await saveSnapshot(arm, count, rep);
+    const checkpointRows = await readChat(checkpoint), resumedIds = [];
+    for (let resume = 1; resume <= 2; resume++) {
+        stage = `${arm}/${count}/${rep}/resume-${resume}-setup`;
+        await open(checkpoint);
+        if (arm === 'native') await branch(count - 1);
+        else { await panel(); await field('checkpoint-resume').click(); await status('Checkpoint resumed as'); await idle(); }
+        const file = await page.evaluate(() => SillyTavern.getContext().getCurrentChatId());
+        const restored = await readChat(file);
+        assert.deepEqual(restored.slice(1), checkpointRows.slice(1), 'All restored JSONL message fields match');
+        resumedIds.push(file);
+        await measure(arm, count, rep, `resume-${resume}`, () => prepareIndex(arm));
+        await verify(); // Measurement-only full-index verification is excluded for both arms.
+        const row = report.rows.at(-1);
+        check(`${arm}/${count}/resume-${resume}: all source indexed or inherited without new managed uploads`,
+            arm === 'native' ? row.localEmbeddingInputs === count : row.managedUpsertDocuments === 0);
+    }
+    check(`${arm}/${count}: independent restored files and preserved snapshot`, resumedIds[0] !== resumedIds[1]
+        && JSON.stringify((await readChat(checkpoint)).slice(1)) === JSON.stringify(checkpointRows.slice(1)));
+}
+async function saveSnapshot(arm, count, rep) {
+    let checkpoint;
+    if (arm === 'native') {
+        checkpoint = await page.evaluate(async () => {
+            const { createNewBookmark } = await import('/scripts/bookmarks.js');
+            return createNewBookmark(SillyTavern.getContext().chat.length - 1, { forceName: `native-checkpoint-${crypto.randomUUID()}` });
+        });
+    } else {
+        await panel(); await field('checkpoint-name').fill(`${count}-${rep}`);
+        await field('checkpoint-save').click(); await status('Checkpoint saved:'); await idle();
+        checkpoint = await page.evaluate(async () => {
+            const c = SillyTavern.getContext();
+            const r = await fetch('/api/characters/chats', { method: 'POST', headers: c.getRequestHeaders(), body: JSON.stringify({ avatar_url: c.characters[c.characterId].avatar, metadata: true }) });
+            return (await r.json()).find(x => x.chat_metadata?.sillymemory?.checkpoint?.name === document.querySelector('[data-sm=checkpoint-name]').value)?.file_name.replace(/\.jsonl$/, '');
+        });
+    }
+    assert(checkpoint, 'Checkpoint file confirmed');
+    return checkpoint;
+}
 async function runArm(arm, count, rep) {
     const rows = messagesFor(count), parent = `${arm}-${count}-${rep}`;
     await seed(rows, parent);
@@ -206,20 +278,7 @@ async function runArm(arm, count, rep) {
     const resumes = [];
     let checkpoint;
     await measure(arm, count, rep, 'checkpoint-save', async () => {
-        if (arm === 'native') {
-            checkpoint = await page.evaluate(async () => {
-                const { createNewBookmark } = await import('/scripts/bookmarks.js');
-                return createNewBookmark(SillyTavern.getContext().chat.length - 1, { forceName: `native-checkpoint-${crypto.randomUUID()}` });
-            });
-        } else {
-            await panel(); await field('checkpoint-name').fill(`${count}-${rep}`);
-            await field('checkpoint-save').click(); await status('Checkpoint saved:'); await idle();
-            checkpoint = await page.evaluate(async () => {
-                const c = SillyTavern.getContext();
-                const r = await fetch('/api/characters/chats', { method: 'POST', headers: c.getRequestHeaders(), body: JSON.stringify({ avatar_url: c.characters[c.characterId].avatar, metadata: true }) });
-                return (await r.json()).find(x => x.chat_metadata?.sillymemory?.checkpoint?.name === document.querySelector('[data-sm=checkpoint-name]').value)?.file_name.replace(/\.jsonl$/, '');
-            });
-        }
+        checkpoint = await saveSnapshot(arm, count, rep);
         assert(checkpoint, 'Checkpoint file confirmed');
     });
     await measure(arm, count, rep, 'checkpoint-open', async () => {
@@ -264,6 +323,30 @@ async function runArm(arm, count, rep) {
 try {
     work = await mkdtemp(path.join(tmpdir(), 'sm-branch-cost-'));
     if (instrumented) { await replaceHostEmbedding(embeddingPath, instrumented); hostInstrumented = true; }
+    if (memoryOnly) {
+        assert.equal(originalVectors.split('async function synchronizeChat(').length, 2);
+        const exposure = `
+// Disposable benchmark exposure: the existing Vectorize All batch loop without progress UI.
+export async function benchmarkPrepareIndex() {
+    const enabled = settings.enabled_chats;
+    settings.enabled_chats = true;
+    cachedSummaries.clear(); skippedHashes.clear();
+    try {
+        let remaining;
+        do {
+            remaining = await synchronizeChat(getBatchSize());
+            if (remaining === null) throw new Error('Native memory preparation failed');
+        } while (remaining > 0);
+        if (skippedHashes.size) throw new Error('Native memory preparation skipped source');
+    } finally { settings.enabled_chats = enabled; }
+}
+`;
+        await writeFile(path.join(artifacts, 'host-vectors-original.js'), originalVectors);
+        await writeFile(path.join(artifacts, 'host-vectors-instrumented.js'), originalVectors + exposure);
+        await replaceHostEmbedding(vectorsPath, originalVectors + exposure);
+        vectorsInstrumented = true;
+        report.timingBoundary = plan.timing;
+    }
     const config = path.join(work, 'config.yaml');
     const configBytes = await readFile(path.join(source, 'default/config.yaml'));
     await writeFile(config, configBytes);
@@ -279,6 +362,21 @@ try {
     timeout = setTimeout(() => { timedOut = true; void page.close(); }, plan.limits.wallMinutes * 60000);
     page.on('pageerror', e => report.pageErrors.push(e.name));
     await page.route('**/api/**/generate', route => { report.pageErrors.push('Unexpected generation request'); return route.abort(); });
+    if (memoryOnly) {
+        const original = await readFile(path.join(root, 'index.js'), 'utf8');
+        const exposed = original + `
+// Disposable benchmark exposure: product memory preparation without UI actions.
+export async function benchmarkPrepareMemory() {
+    const prepared = await prepareMemory(() => true);
+    if (!prepared) throw new Error('Memory preparation did not complete');
+    return prepared.instance.sync(prepared.snapshot,
+        { ...options(state), archiveBefore: archiveBoundary(prepared.snapshot) }, () => true);
+}
+`;
+        await writeFile(path.join(artifacts, 'extension-index-instrumented.js'), exposed);
+        await page.route(`${url}/scripts/extensions/third-party/sillymemory/index.js`, route =>
+            route.fulfill({ status: 200, contentType: 'application/javascript', body: exposed }));
+    }
     page.on('request', req => {
         const u = new URL(req.url());
         if (u.origin !== url || !u.pathname.startsWith('/api/vector/')) return;
@@ -288,7 +386,7 @@ try {
     await page.route(`${new URL(credentials.endpoint).origin}/**`, async route => {
         try {
             const req = route.request(), u = new URL(req.url()), body = req.postData() ? req.postDataJSON() : {};
-            assert(!checkpointOnly || report.traffic.filter(x => x.kind === 'lambda').length < plan.limits.requests, 'Request bound');
+            assert(!narrow || report.traffic.filter(x => x.kind === 'lambda').length < plan.limits.requests, 'Request bound');
             if (req.method() === 'POST' && u.pathname.endsWith('/collections')) {
                 assert(pending.length < plan.limits.collections, 'Collection bound');
                 pending.push({ collection: body.collectionName, owner: body.tags.owner, scope: body.tags.chat });
@@ -339,7 +437,7 @@ try {
         report.inputs.push({ messages: count, sha256: hash(JSON.stringify(messagesFor(count))), characters: messagesFor(count).reduce((n, m) => n + m.mes.length, 0) });
         for (let rep = 1; rep <= plan.repetitions; rep++) {
             const arms = Object.keys(plan.arms);
-            for (const arm of rep % 2 ? arms : arms.reverse()) await runArm(arm, count, rep);
+            for (const arm of rep % 2 ? arms : arms.reverse()) await (memoryOnly ? runMemoryArm : runArm)(arm, count, rep);
         }
     }
     check('complete frozen matrix', report.rows.length === plan.messages.length * plan.repetitions * Object.keys(plan.arms).length * plan.operations.length);
@@ -371,10 +469,17 @@ try {
     try {
         if (server?.pid && server.exitCode === null && server.signalCode === null) { server.kill('SIGTERM'); await new Promise(r => server.once('exit', r)); }
     } catch (error) { report.serverShutdownFailure = { type: error.name, code: error.code }; }
-    try {
-        if (hostInstrumented) await replaceHostEmbedding(embeddingPath, originalEmbedding);
-        report.hostRestored = await readFile(embeddingPath, 'utf8') === originalEmbedding;
-    } catch (error) { report.hostRestoreFailure = { type: error.name, code: error.code }; }
+    report.hostRestored = true;
+    for (const file of [{ path: embeddingPath, original: originalEmbedding, changed: hostInstrumented },
+        ...(memoryOnly ? [{ path: vectorsPath, original: originalVectors, changed: vectorsInstrumented }] : [])]) {
+        try {
+            if (file.changed) await replaceHostEmbedding(file.path, file.original);
+            report.hostRestored &&= await readFile(file.path, 'utf8') === file.original;
+        } catch (error) {
+            report.hostRestored = false;
+            (report.hostRestoreFailures ??= []).push({ type: error.name, code: error.code });
+        }
+    }
     report.sourceUnchanged = true;
     try {
         for (const [file, digest] of Object.entries(report.sourceSha256)) if (hash(await readFile(path.join(root, file))) !== digest) report.sourceUnchanged = false;
