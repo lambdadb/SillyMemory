@@ -14,3 +14,12 @@ export async function loadSummaryTokenizer(require) {
     const encoder = require('tiktoken').get_encoding(identity.encoding);
     return { identity, count: text => encoder.encode(text, [], []).length, free: () => encoder.free() };
 }
+
+// Bind the complete maintained producer, including its shared input adapter.
+export async function summaryProducerDigest() {
+    const sources = ['segment-summary.mjs', 'segment-summary-eval.mjs',
+        'segment-summary-tokenizer.mjs', 'benchmark-checkpoint.mjs',
+        '../benchmark/shared/longmemeval-input.mjs'];
+    const bytes = await Promise.all(sources.map(file => readFile(new URL(file, import.meta.url))));
+    return createHash('sha256').update(Buffer.concat(bytes)).digest('hex');
+}

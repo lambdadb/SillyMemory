@@ -234,7 +234,7 @@ and regressions, resource tradeoff and evaluation uncertainty. Do not dismiss a
 demonstrated evidence-recall improvement solely because the final answer score
 barely changes, or claim an end-to-end benefit from recall alone. Freeze the
 semantically agreed source/time policy across arms. See the
-[same-policy budget comparison](query1-retrieval-quality.md#same-policy-capacity-comparison-4096-versus-8192)
+[same-policy budget comparison](https://github.com/lambdadb/SillyMemory/blob/e858fbaff040e60ee0de2ed9264cdd10bc37d722/docs/query1-retrieval-quality.md#same-policy-capacity-comparison-4096-versus-8192)
 for a completed example; its message-coverage counts are not a completed
 necessary-span audit.
 
@@ -271,26 +271,8 @@ runners and frozen receipts retain their producing protocol. It changes neither
 product generation nor retrieval/reranking defaults and adds no paid run.
 
 This policy applies to LongMemEval, not automatically to BEAM's partial-credit
-rubrics and event-ordering metric. The [fixed-answer BEAM comparison](beam-evaluation.md#fixed-answer-jev-judge-comparison-2026-10-18)
-evaluates all 400 saved answers three times with Jev Choice/Noul and defers primary
-judge replacement: partial-credit controls fail and inspected disagreements include
-explicit-statement false negatives. Retain GPT-4.1-mini as the BEAM reference and
-label the Jev results separately; neither judge is independently validated ground
-truth. Product defaults and the LongMemEval policy remain unchanged.
-
-The subsequent [Sol-medium comparison](beam-evaluation.md#fixed-answer-sol-medium-judge-comparison-2026-10-18)
-also retains the BEAM reference judge. Sol corrects several inspected errors but
-does not establish superior overall accuracy or repeat stability: four of 40
-preselected rubric averages change across three evaluations, including a full-to-
-zero abstention flip. Use its saved labels as diagnostic second opinions, not
-replacement primary scores. Original criteria and the template's omitted question
-remain unchanged; any future question-complete evaluator must be a separately
-reported protocol rather than a silent repair of these results.
-
-The final [Luna-medium comparison](beam-evaluation.md#fixed-answer-luna-medium-judge-comparison-2026-10-18)
-closes this model grid without replacing the BEAM reference. Luna corrects the
-same five inspected criteria and costs about $0.251 per saved 400-answer pass,
-but 10/40 preselected rubric averages vary across three evaluations, versus Sol's
-4/40. It is an inexpensive diagnostic option, not an adopted primary judge.
-Neither comparison independently calibrates overall judge accuracy; retain the
-original labels and disclose evaluator sensitivity separately from memory quality.
+rubrics and normalized event-ordering metric. The [current public BEAM profile](../benchmark/beam/README.md)
+pins its own answer/judge settings. Earlier fixed-answer judge comparisons did
+not establish an independently calibrated replacement; retain their original
+labels at the [recorded revision](https://github.com/lambdadb/SillyMemory/blob/e858fbaff040e60ee0de2ed9264cdd10bc37d722/docs/memory-evaluation.md#answer-evaluator-policy).
+Do not pool scores across those protocols or treat judge consistency as ground truth.

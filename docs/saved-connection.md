@@ -111,36 +111,13 @@ executed against live providers. The generation entry point requires credentials
 and was not pursued; no real keys were read or saved for this change. Fresh Git URL
 installation is not newly verified here. These checks establish connection/lifecycle behavior, not answer quality or
 real-provider acceptance. No benchmark rerun is needed for persistence.
-See [retained evidence](evidence-retention.md#saved-browser-connection-verification).
+See [retained evidence](https://github.com/lambdadb/SillyMemory/blob/e858fbaff040e60ee0de2ed9264cdd10bc37d722/docs/evidence-retention.md#saved-browser-connection-verification).
 
 
 Current setup/recovery browser results and boundaries are recorded in
 [Setup and recovery UX](setup-and-recovery.md).
 
-## Historical integration with clarification continuity
 
-The later [native reply decision](native-replies.md) retires the response adapter;
-credential persistence and ownership boundaries remain unchanged.
+## Historical evidence
 
-After PR #73 merged as `effc2211724280dc49e664800124356c847e3f2f`, the saved
-connection branch incorporated that develop baseline. Both defaults and settings
-handlers remain intact. The runtime clarification, indexing and selection code
-matches develop; only credential lifecycle and the relevant native fixtures change.
-
-- `npm test`: 371 passed; `npm run check`, `npm run check:release`,
-  `npm run check:sdk` and all script/test syntax checks passed.
-- `ST_SOURCE=<pinned host> SM_ARTIFACT_TAG=saved-connection-merged-final npm run test:browser`:
-  83 actual-host/Chromium checks with local HTTPS LambdaDB and completion emulators.
-  Verified reconnect without key re-entry, pending dialogue in retrieval/generation,
-  startup recovery, streaming/swipes and disabled memory reverting to native
-  history without the reply protocol or memory search.
-- The same environment/tag with `npm run test:faults`: 88 checks covering
-  synchronization, uncertain writes, stale queries, reload recovery and deletion.
-  Both runs ended with no page errors and zero remaining collections.
-
-The first startup fixture timed out because programmatic character selection did
-not persist the native last-clicked character required by auto-load. The fixture
-now sets that preference explicitly and releases its held template on failure.
-Product code does not change the user's native auto-load preference. Initial
-failure logs and final receipts are retained; no real credentials, paid calls,
-new Git URL installation or additional answer-quality evaluation were used.
+[Original validation and intermediate trials](https://github.com/lambdadb/SillyMemory/blob/e858fbaff040e60ee0de2ed9264cdd10bc37d722/docs/saved-connection.md) retain their producing settings, results and limitations. See [evidence recovery](evidence-retention.md). Current checks are listed in [development](development.md).

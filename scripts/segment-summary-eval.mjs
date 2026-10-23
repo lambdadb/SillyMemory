@@ -5,11 +5,10 @@ import { execFileSync } from 'node:child_process';
 import { createRequire } from 'node:module';
 import { parseEnv } from 'node:util';
 import path from 'node:path';
-import { adaptLongMemEval, sha } from './benchmark-audit.mjs';
-import { literalBenchmarkText } from './benchmark-development-input.mjs';
+import { adaptLongMemEval, sha, literalBenchmarkText } from '../benchmark/shared/longmemeval-input.mjs';
 import { openCheckpoint } from './benchmark-checkpoint.mjs';
 import { segmentHistory, summaryRequest, selectionRequest, selectMemories, replaceMemory, boundSummary, jevJudgeRequest, jevDecision } from './segment-summary.mjs';
-import { loadSummaryTokenizer } from './segment-summary-tokenizer.mjs';
+import { loadSummaryTokenizer, summaryProducerDigest } from './segment-summary-tokenizer.mjs';
 const [mode, directory, datasetFile, baselineFile, judgeFile, tokenizerRoot, historicalFile] = process.argv.slice(2);
 assert(['prepare', 'run'].includes(mode) && historicalFile, 'Usage: segment-summary-eval.mjs prepare|run OUT DATA BASELINES JUDGE TOKENIZER_ROOT HISTORICAL_RESULTS');
 const out = path.resolve(directory);
@@ -58,8 +57,7 @@ const summaryCalls = cases.reduce((n, c) => n + c.segments.length, 0);
 assert.equal(cases.length, 50, 'All frozen IDs must exist in the dataset');
 const config = { version: 'segment-summary-400chars-v1', historicalSha256: sha(historicalBytes), datasetSha256: sha(bytes), baselineSha256: sha(baselinesBytes), judgeSha256: sha(judgeBytes),
     tokenizer: tokenizer.identity,
-    codeSha256: sha(Buffer.concat(await Promise.all(['segment-summary.mjs', 'segment-summary-eval.mjs', 'segment-summary-tokenizer.mjs', 'benchmark-checkpoint.mjs',
-        'benchmark-audit.mjs', 'benchmark-development-input.mjs', 'benchmark-host-input.mjs'].map(f => readFile(new URL(f, import.meta.url)))))),
+    codeSha256: await summaryProducerDigest(),
     ids, summaryCalls, selectionCalls: cases.filter(c => c.segments.length > 5).length, answerCalls: 50, judgeCalls: 50 + historical.rows.filter(r => !r.operationalFailure).length,
     segmentMessages: 40, summaryMaxCharacters: 400, characterUnit: 'Unicode code points including whitespace and punctuation; deterministic prefix cap, raw output retained', recentMessages: 4, recentSummaries: 3, olderSelections: 2, memoryTokens: 4096,
     generator: 'gpt-6.1-sol', reasoning: 'low', judge: 'jev-1.13.0', judgeType: 'noul', judgeThreshold: 0.50, concurrency: 4,

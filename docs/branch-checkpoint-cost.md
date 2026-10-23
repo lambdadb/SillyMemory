@@ -12,6 +12,159 @@ This comparison concerns operating cost and readiness, not retrieval accuracy or
 generated-answer quality. It does not add a new user-facing workflow or change
 product defaults. Native branching and native checkpoints already exist.
 
+## Memory preparation after restore: UI excluded
+
+Use these module-level timings for memory-performance comparisons. The later
+workflow diagnostics include UI automation and are not memory-preparation latency.
+
+On October 23, 2026, producer `5ae4a167be33e0ffe154f907763840e95f31605d`
+ran the [frozen memory-preparation plan](benchmarks/checkpoint-memory-prepare-v1.json)
+on the same deterministic 50/500-message fixtures and Apple M5 Pro / macOS arm64,
+Node 24.15.0, Chromium and pinned SillyTavern 1.19.0 host. Both arms were rerun.
+The local quantized Jina model was warmed before timing; LambdaDB used the
+unchanged native Small embedding field and 800-character chunks.
+
+| Restored transcript | Built-in Vector Storage: two preparations | LambdaDB memory: two preparations | New indexing inputs per preparation, built-in / LambdaDB |
+| ---: | ---: | ---: | ---: |
+| 50 messages | 12.876 / 12.680 s | 0.449 / 0.552 s | 50 / 0 |
+| 500 messages | 142.170 / 142.469 s | 0.997 / 1.011 s | 500 / 0 |
+
+Each timer starts after the restored JSONL is already selected and loaded. Browser
+`performance.now()` surrounds only the actual memory synchronization functions.
+For built-in Vector Storage, a disposable export invokes the existing
+`synchronizeChat(getBatchSize())` batches until complete, retaining the default
+batch size and embedding/indexing path while omitting button/progress UI. For
+SillyMemory, a disposable browser-module export invokes the actual
+`prepareMemory` and `MemoryEngine.sync` path, retaining saved-identity validation,
+branch creation, ownership checks and full inherited-source reconciliation.
+No production module behavior was changed.
+
+Module imports, model warmup, copying/opening chat files, UI clicking, toggling,
+settings drawers, automation waits and additional benchmark full-index checks
+are outside both timers. No UI-inclusive total is reduced by an estimated
+constant. Initial parent writes are verified committed before snapshot creation;
+initial acknowledged-write timings are not used as a ready-index comparison.
+These are memory-preparation measurements, not complete chat restoration or
+first-answer latency. Each range covers two paths, not a percentile distribution.
+
+The LambdaDB preparation made 7 requests for 50 messages and 15 for 500 messages,
+with zero upserts. The included branch-create calls were 76.9 / 67.8 ms and
+64.4 / 68.8 ms, respectively. The remaining time covers the real synchronization
+path, including inherited-document checks; it is not UI automation. Complete
+committed index/hash sets and every saved JSONL message field were verified
+outside the timers for both arms. The inherited memory contains 44 / 494 passages,
+with the six recent messages retained in the native transcript.
+
+All twelve preparations and fourteen checks passed. Local embedding executions
+were 1,651 including warmup and initial indexes; managed submissions were 539
+including the transport-test document and initial 538 passages. No restored path
+submitted managed documents. There were 3,307 native vector API requests and 305
+browser LambdaDB requests, plus three independent Node cleanup reads. No
+browser errors or generation/judge calls occurred. All three owned collection
+intents were independently verified as HTTP 404; disposable host instrumentation
+was restored and native data removed.
+
+**Decision:** compare actual memory preparation, excluding UI automation on both
+sides. Preserve UI-inclusive measurements below as workflow diagnostics only.
+The persistence/isolation conclusion is unchanged; these timings do not establish
+answer quality or latency across other models and hardware.
+
+```sh
+ST_SOURCE=/absolute/path/to/disposable/SillyTavern \
+SM_ENV_FILE=/absolute/path/to/.env.local \
+node scripts/branch-checkpoint-cost.mjs --memory-prepare-only artifacts/memory-prepare-run
+```
+
+The frozen plan bounds this to three collection intents, 550 managed documents,
+2,000 local embedding inputs and 20 minutes with no generation calls. Detailed
+raw evidence is retained locally, not bundled with a fresh clone or required by
+CI. Archive SHA-256:
+`7ff680c6c51e8b2950d174760355a62965954f1818155f7b602a39c655ed8543`;
+raw report SHA-256:
+`cb008a5102f6a2fa8b427645d9559917aff5bee18fd136809e662e7651d849a4`.
+All 413 archived files, including exact source, test-only exposures, frozen plan
+and raw counters, were read back and matched byte-for-byte. No credentials were
+included. The earlier evidence archives remain unchanged.
+
+## Checkpoint workflow diagnostics (UI included)
+
+Frozen snapshots preserve the full native JSONL transcript with the same
+older-history memory partition used in ordinary synchronization. Saving does not
+index retained recent messages solely for the snapshot. Missing or changed older
+passages still reconcile before readiness; resumed paths archive recent messages
+when later dialogue displaces them. See [frozen memory snapshots](checkpoints.md).
+
+The live run on October 23, 2026 used producer
+`efa63096c73e782ca95be7f77b258befabea9d75` and the
+[frozen checkpoint plan](benchmarks/checkpoint-memory-boundary-v1.json).
+It ran real SillyTavern 1.19.0 (`06bde939fb1e9c4c8d8641d810f0a916b5bce127`),
+Chromium and live LambdaDB on Node 24.15.0, macOS arm64 / Apple M5 Pro.
+The default managed Small embedding field and 800-character chunks were unchanged.
+Client/service locations were not recorded; no region-level latency claim is made.
+
+| Transcript messages | Indexed passages | Snapshot save | Open / verify | Resume 1 / synchronize | Resume 2 / synchronize | New document submissions for each save/open/resume |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 50 | 44 | 1.540 s | 0.200 s | 3.439 s | 3.492 s | 0 |
+| 500 | 494 | 2.154 s | 0.486 s | 4.477 s | 4.582 s | 0 |
+
+These are single observations per operation and size, after a committed initial
+index. Full timers include native UI actions and exact committed document-set
+verification. The harness saved with memory off, then explicitly enabled and
+synchronized each resumed path; these are not measurements of an enabled
+snapshot's automatic first answer. Initial synchronization took 63.764 / 62.661
+seconds and submitted 44 / 494 passages; it is excluded from the table above.
+
+The `LambdaClient.createBranch` timer separately covers only the client-observed
+API call, including transport and SDK validation, with retries disabled. Parent
+commit preparation, transcript reconciliation and document verification are
+outside this timer. Each call corresponded to one branch POST.
+
+| Transcript messages | Stored passages inherited per fork | Snapshot / resume 1 / resume 2 branch-create calls | Median of the three calls |
+| ---: | ---: | ---: | ---: |
+| 50 | 44 | 66.4 / 84.2 / 69.0 ms | 69.0 ms |
+| 500 | 494 | 66.9 / 60.0 / 61.9 ms | 61.9 ms |
+
+All ten timed operations passed. Snapshot and resumed JSONL message rows matched
+the original in every field, and all committed memory sets matched their intended
+older-history partition without extra recent documents. An older-message edit in
+one resumed path left the original path, frozen snapshot and sibling resume's
+transcripts and committed memory unchanged. All three owned collection intents
+were independently checked as HTTP 404 after cleanup. No browser errors,
+generation/judge calls or local embedding calls occurred. The run recorded 566
+browser LambdaDB requests and 541 managed document submissions: one transport-test
+document, 538 initial passages and two isolated edit submissions. Three additional
+Node reads independently verified cleanup.
+
+The deterministic input hashes match the historical v2 comparison exactly.
+Built-in Vector Storage was not rerun: its recorded checkpoint-open and each
+resume indexed 50 / 500 inputs. The results below remain dated historical
+observations, including the former six-document snapshot uploads; do not relabel
+them as measurements of this implementation or pool their latency samples.
+
+**Decision:** retain the shared recent-message boundary for snapshots. A complete
+JSONL plus frozen older memory preserves the transcript and isolated paths while
+avoiding recent-message indexing at save and subsequent recent-document deletion
+at resume. No answer-quality conclusion follows from this persistence test.
+
+Reproduce only the changed path on a disposable pinned host with its extension
+symlink pointing at the checkout under test:
+
+```sh
+ST_SOURCE=/absolute/path/to/disposable/SillyTavern \
+SM_ENV_FILE=/absolute/path/to/.env.local \
+node scripts/branch-checkpoint-cost.mjs --checkpoints-only artifacts/checkpoint-run
+```
+
+The plan bounds this to three collection intents, 550 submitted documents,
+125,000 submitted characters, 3,000 browser LambdaDB requests and 15 minutes, with
+no generation calls. Detailed evidence is retained in a local-only archive,
+not supplied by a fresh clone or required by CI. Archive SHA-256:
+`ae247c4ff623b0ab17ec1760e444cb2f28865a96977b75947e13f529338b6cc5`;
+raw report SHA-256:
+`ba79c8e06f869975a1daabf2039c925e3f8a898038d3058cb4c1a46aecfdbfe8`.
+All 408 archived files, including the exact producing source and frozen inputs,
+were read back and verified byte-for-byte. No credentials were included.
+
 ## Readiness correction
 
 Review identified that the original managed verification fetched only expected
@@ -218,131 +371,6 @@ primary repository artifacts directory; all members were read back and verified.
 SHA-256 `cb4553e148b23d9e07b7e1ce6282acab04b47dff936eb102e5408e4378105660`. The archive is unavailable in a fresh clone and is not a CI
 dependency; the one-off runner is not added to maintained scripts.
 
-## Historical v1 UI synchronization results
-
-The completed paired comparisons contain three repetitions at 50 messages and two
-at 500. The table uses only those complete pairs. Values are median seconds,
-followed by the observed minimum–maximum; these are synchronization timings, not
-chat-screen opening or generated-answer latency.
-
-The run reached its predeclared **45-minute limit** during the third native
-500-message end branch. It completed 71 of 84 planned operations and returned
-exit code 1 with `timedOut: true`; the full frozen matrix did **not** pass.
-The unmatched third native initial-index result and interrupted work remain in
-the raw evidence and are excluded from paired summaries. No replacement cases
-were added to this historical summary. A separate corrective run uses the v2
-boundary above.
-
-| Messages | Operation | Native local Vector Storage | SillyMemory managed |
-| --- | --- | ---: | ---: |
-| 50 | Initial synchronization + first end branch | 25.687 (25.586–25.695) | 57.208 (48.685–90.087) |
-| 50 | End branch after initial synchronization | 12.914 (12.884–12.940) | 55.290 (47.090–88.222) |
-| 50 | Subsequent midpoint branch | 6.456 (6.452–6.464) | 1.083 (1.034–1.095) |
-| 50 | Checkpoint save + open/index | 13.019 (12.992–13.036) | 62.678 (60.406–64.692) |
-| 50 | First resume + synchronization | 12.922 (12.849–12.963) | 1.425 (1.341–1.453) |
-| 50 | Second resume + synchronization | 12.905 (12.849–12.921) | 1.441 (1.369–1.529) |
-| 500 | Initial synchronization + first end branch | 284.345 (284.321–284.369) | 52.527 (47.026–58.028) |
-| 500 | End branch after initial synchronization | 142.691 (142.668–142.715) | 44.557 (39.723–49.392) |
-| 500 | Subsequent midpoint branch | 67.836 (67.741–67.931) | 1.874 (1.857–1.892) |
-| 500 | Checkpoint save + open/index | 142.742 (142.629–142.855) | 57.509 (57.068–57.949) |
-| 500 | First resume + synchronization | 142.593 (142.438–142.749) | 2.142 (2.142–2.142) |
-| 500 | Second resume + synchronization | 142.696 (142.489–142.904) | 2.170 (2.158–2.183) |
-
-Native checkpoint **save alone** took a median 0.131/0.140 seconds for 50/500
-messages. Its later open/index step took 12.884/142.602 seconds. SillyMemory's
-checkpoint save took 62.555/57.354 seconds and its later open took 0.112/0.155
-seconds: it prepares and verifies the frozen memory during saving.
-
-| Work per completed operation | Native, 50 / 500 messages | SillyMemory, 50 / 500 messages |
-| --- | ---: | ---: |
-| Initial index | 50 / 500 local embedding inputs | 44 / 494 managed upsert documents |
-| End branch | 50 / 500 local embedding inputs | 0 / 0 additional upsert documents |
-| Midpoint branch | 25 / 250 local embedding inputs | 0 / 0 additional upsert documents |
-| Checkpoint save + open/index | 50 / 500 local embedding inputs | 6 / 6 additional upsert documents |
-| Each resume | 50 / 500 local embedding inputs | 0 / 0 additional upsert documents |
-
-The six checkpoint upserts are the retained recent messages, deliberately
-excluded from normal archival but included in a frozen checkpoint. These are
-client-side submission counts, not LambdaDB's internal embedding execution or
-billing records.
-
-On the measured Apple M5 Pro machine, native first-resume embedding execution
-used median process CPU times of 7.052 seconds at 50 messages and 70.340 seconds at
-500, excluding index/request work. Download/loading plus one warmup input took
-7.942 seconds separately. Local embeddings therefore have a measurable compute
-cost even without a per-request provider fee; this is not an electricity or
-hardware-cost estimate.
-
-The submission reduction is established independently of readiness timing.
-The historical timings do not establish that the midpoint/resumed branch has
-already committed every required deletion. Do not use their 1–2 second values as
-a complete isolation or readiness claim.
-
-## Historical v1 method
-
-The [input and operation plan](benchmarks/branch-checkpoint-v1.json) uses 50 and
-500 deterministic English messages, each approximately 200 characters, with three
-repetitions per size. Each message has a distinct numbered fact, and all fit in
-one chunk under both arms. The runner uses a new saved chat for each arm and
-repetition, alternates arm order, and tests the following sequence:
-
-1. Fully index the original chat.
-2. Branch at its end and finish the new path's memory synchronization.
-3. Return to the original, branch at its midpoint, and finish synchronization.
-4. Save a checkpoint; then open it and finish any required synchronization.
-5. Return to the saved checkpoint and create two independent resumed paths,
-   finishing each path's memory synchronization.
-
-The inherited message text is unchanged. This screen does not measure additional
-messages, edits, conflicting writers or recovery from provider failures.
-
-The native arm runs the pinned host's real Vector Storage and default local
-Transformers model, using **Vectorize All** to finish indexing. This measures an
-explicit complete-index operation, not the default background worker's catch-up
-schedule. The pinned handler processes local Transformers inputs one at a time;
-this is the native default, not an optimized batch-embedding baseline. Native
-checkpoint save does not itself prepare a vector index; its
-later open/index cost is reported separately. A native resumed path is a normal
-branch from the saved checkpoint.
-
-The SillyMemory arm runs current defaults against live managed LambdaDB, including
-OpenAI Small embeddings, real branch creation and checkpoint verification. Native
-chat vectorization is disabled for this arm. Ordinary SillyMemory synchronization
-excludes the retained recent-five window (six messages after an assistant reply);
-checkpoint creation synchronizes the full completed transcript. The remaining
-recent messages stay available in the native chat. Counts disclose this difference.
-
-Both arms use the same original transcript. Native vectors are checked against
-the complete expected hash set. SillyMemory's expected inherited documents were
-fetched and checked field by field; this did not detect extra remote documents.
-Branches and resumed chats are checked against
-their expected source text. These checks do not measure semantic retrieval or
-claim that a model will answer correctly.
-
-The host revision is `06bde939fb1e9c4c8d8641d810f0a916b5bce127`
-(SillyTavern 1.19.0). The local model is the configuration default,
-`Cohee/jina-embeddings-v2-base-en`, using its quantized ONNX weights. The actual
-downloaded model/tokenizer file hashes are retained with the run.
-Model download/loading and a warmup input are timed separately. A disposable
-host instrumentation patch records wall time and process CPU time around each
-actual local embedding call, without changing its inputs or outputs.
-
-Operation timing includes native chat creation/open and the explicit index
-completion, or the equivalent SillyMemory UI action and synchronization.
-Native synchronization also includes one final completeness-list request.
-SillyMemory source verification happens after its timed operation. Return
-navigation, setup and final cleanup are excluded. Different models and deployment
-locations prevent interpreting this as a storage-engine-only comparison.
-
-SillyMemory's initial synchronization can finish before writes are committed for
-branching. Its first branch then pays that remaining wait. Compare **initial
-synchronization plus first branch**, as well as the individual operations, to
-avoid treating shifted work as saved work. Similarly, compare **checkpoint save
-plus open/index** when the user needs a usable saved path. The midpoint branch
-runs after the end branch; its latency is not an independent cold-start result.
-This experiment does not measure first successful semantic query or final answer
-delivery after each operation.
-
 ## Cost interpretation
 
 - Local embedding inputs, model wall time and CPU time are measured. Hardware,
@@ -414,3 +442,8 @@ from the specified file and are not copied into the worktree or reports. Keep
 `pending.json` if cleanup fails; it records only the generated owned collections
 that the runner may delete. Preserve complete reports, instrumentation and logs
 under ignored artifacts. Do not reuse historical outputs as fresh-run evidence.
+
+## Historical evidence
+
+[Original v1 observations and method](https://github.com/lambdadb/SillyMemory/blob/e858fbaff040e60ee0de2ed9264cdd10bc37d722/docs/branch-checkpoint-cost.md#historical-v1-ui-synchronization-results)
+remain preserved separately; their UI timing does not establish committed readiness.

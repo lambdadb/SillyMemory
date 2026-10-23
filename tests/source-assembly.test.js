@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { packedMemoryMessages, memoryMessages, selectMemory, selectPackedMemory, DEFAULTS, RETRIEVAL_POLICY } from '../src/memory.js';
+import { packedMemoryMessages, memoryMessages, selectPackedMemory, DEFAULTS } from '../src/memory.js';
 
 const doc = (chunk, start, text, fields = {}) => ({
     id: `part-${chunk}`, owner: 'owner', scope: 'scope', revision: 'revision', message: 0,
@@ -15,7 +15,6 @@ test('returned chunks assemble in source order with one header and no full-messa
     assert.deepEqual(messages, [{ index: 0, name: 'User', is_user: true, is_system: false,
         mes: '[Past conversation excerpt: user "User", message 1, passages 1-2]\nFirst sentence. Second sentence.' }]);
     assert.deepEqual(DEFAULTS, { budget: 4096, chunkChars: 800 });
-    assert.equal(RETRIEVAL_POLICY, 'current-message-native-reply-v1');
 });
 
 test('missing intervals are explicit and exact overlaps use only returned text', () => {
@@ -78,8 +77,6 @@ test('selection budgets assembled text before a lower-ranked short passage can d
         + 'A'.repeat(100) + 'B'.repeat(100)
         + '\n[Past conversation excerpt: user "User", message 2, passage 1]\n' + fact.text;
     const budget = count(expectedText), hits = [a, b, fact, filler];
-    const unassembled = await selectMemory(hits, hits, budget, count);
-    assert.deepEqual(unassembled.passages, [a, b, filler]);
     const result = await selectPackedMemory(hits, hits, budget, count);
     assert.deepEqual(result.passages, [a, b, fact]);
     assert.equal(result.text, expectedText);
@@ -89,7 +86,7 @@ test('selection budgets assembled text before a lower-ranked short passage can d
 test('selection rejects stale/foreign/deleted text and takes attribution/offsets from current documents', async () => {
     const a = doc(0, 0, 'A'.repeat(50), timestamp), b = doc(1, 50, 'B'.repeat(50), timestamp);
     const extra = doc(0, 0, 'Current fact.', { id: 'extra', message: 1, revision: 'r1' });
-    const expected = [a, b, extra], budget = (await selectMemory([a, b], expected, 2000, count)).tokens;
+    const expected = [a, b, extra], budget = count(memoryMessages([a, b]).map(m => m.mes).join('\n'));
     const invalid = ['scope', 'owner', 'revision', 'text', 'conversationTimestamp', 'timestampSource'].map(k => ({ ...extra, [k]: 'forged' }));
     const denied = await selectPackedMemory([a, b, ...invalid, { ...extra, id: 'deleted' }], expected, budget, count);
     assert.deepEqual(denied.passages, [a, b]);
@@ -101,7 +98,7 @@ test('selection rejects stale/foreign/deleted text and takes attribution/offsets
 test('expensive assembly falls back exactly and token-count failures fail closed', async () => {
     const docs = [doc(0, 0, 'One'), doc(1, 3, 'Two')];
     const expensive = text => count(text) + (text.includes('passages 1-2]') ? 10000 : 0);
-    assert.deepEqual(await selectPackedMemory(docs, docs, 1000, expensive), await selectMemory(docs, docs, 1000, expensive));
+    assert.deepEqual((await selectPackedMemory(docs, docs, 1000, expensive)).messages, memoryMessages(docs));
     for (const invalid of [NaN, Infinity, -1]) {
         await assert.rejects(selectPackedMemory(docs, docs, 1000,
             text => text.includes('passages 1-2]') ? invalid : count(text)), /Token counting unavailable/);
@@ -113,7 +110,7 @@ test('adjacent chunks fit their assembled budget in either retrieval order', asy
     const expectedText = '[Past conversation excerpt: user "User", message 1, passages 1-2]\n'
         + 'A'.repeat(100) + 'B'.repeat(100);
     const budget = count(expectedText);
-    const baseline = await selectMemory([a, b], [a, b], budget, count);
+    const baseline = await selectPackedMemory([a], [a, b], budget, count);
     assert.deepEqual(baseline.passages, [a]);
     for (const hits of [[a, b], [b, a]]) {
         const result = await selectPackedMemory(hits, [a, b], budget, count);
@@ -135,10 +132,10 @@ test('selection keeps separate sources when boundaries or budget prevent joining
     for (const fields of [{ revision: 'other' }, { message: 1 }, { role: 'assistant' },
         { speaker: 'Other' }, { ...timestamp }, { start: 50, end: 150 }, { end: 999 }]) {
         const docs = [a, { ...b, ...fields }];
-        assert.deepEqual(await selectPackedMemory(docs, docs, budget, count), await selectMemory(docs, docs, budget, count));
+        assert.deepEqual((await selectPackedMemory(docs, docs, budget, count)).passages, [a]);
     }
     assert.deepEqual(await selectPackedMemory([a, b], [a, b], budget - 1, count),
-        await selectMemory([a, b], [a, b], budget - 1, count));
+        await selectPackedMemory([a], [a, b], budget - 1, count));
     for (const invalid of [NaN, Infinity, -1]) {
         await assert.rejects(selectPackedMemory([a, b], [a, b], budget,
             text => text.includes('passages 1-2]') ? invalid : count(text)), /Token counting unavailable/);

@@ -27,7 +27,7 @@ character/system prompt construction; a neutral Mira character supplies no oracl
 answers. No response schema, reply decoding, request-status flags, query rewriting
 model or paid judge is added.
 
-The [input lock](native-reply-ux-inputs.json) identifies three complete authored
+The [input lock](https://github.com/lambdadb/SillyMemory/blob/e858fbaff040e60ee0de2ed9264cdd10bc37d722/docs/native-reply-ux-inputs.json) identifies three complete authored
 histories previously used for conversation-time evaluation. Each original history
 has sixty older messages and three recent notes. Close its final inventory note
 with its existing acknowledgement; the place-history additionally receives the

@@ -7,7 +7,7 @@ and preserve immediate character-chat feedback. Remove the structured reply
 adapter, request-status classification, unresolved-dialogue accumulation, stream
 hiding and reply recovery markers. There is no new compatibility mode or setting.
 This supersedes the pending-span policy in the historical
-[clarification evaluation](clarification-context-evaluation.md), without changing
+[clarification evaluation](https://github.com/lambdadb/SillyMemory/blob/e858fbaff040e60ee0de2ed9264cdd10bc37d722/docs/clarification-context-evaluation.md), without changing
 its frozen results or deleting their evidence.
 
 Keep Query 1 (the current eligible message only), the recent-five/pair-aligned-six
@@ -56,7 +56,7 @@ chats remain unsupported.
 The receipts below tested the original Query 2 and mandatory-follow-up instruction.
 They remain historical evidence; current Query 1, optional follow-ups and system-role
 date guidance are recorded in [the current defaults](conversation-memory-defaults.md)
-and [evidence index](query1-evidence-index.md).
+and [evidence index](https://github.com/lambdadb/SillyMemory/blob/e858fbaff040e60ee0de2ed9264cdd10bc37d722/docs/query1-evidence-index.md).
 
 Validation uses SillyTavern 1.19.0 at
 `06bde939fb1e9c4c8d8641d810f0a916b5bce127`, isolated disposable profiles and Chromium.

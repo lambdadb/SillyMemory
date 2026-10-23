@@ -1,0 +1,33 @@
+{
+  "version": 1,
+  "decision": "Confirm that frozen snapshots preserve the full native JSONL plus the normal older-history LambdaDB partition, without uploading retained recent messages during save or either resume.",
+  "hostRevision": "06bde939fb1e9c4c8d8641d810f0a916b5bce127",
+  "messages": [
+    50,
+    500
+  ],
+  "repetitions": 1,
+  "dataset": "The existing deterministic English expedition fixture, with unchanged message text and metadata; no personal chats.",
+  "arms": {
+    "sillymemory": "PR #107 runtime, default 800-character chunks, managed OpenAI text-embedding-3-small, real LambdaDB branches."
+  },
+  "operations": [
+    "initial",
+    "checkpoint-save",
+    "checkpoint-open",
+    "resume-1",
+    "resume-2"
+  ],
+  "timing": "Record client-observed LambdaClient.createBranch calls separately from parent commit waits, reconciliation and verification. Full operation timers retain exact committed document-set checks. Exclude return navigation, isolation-edit verification and cleanup. One observation per size and operation, not a latency distribution.",
+  "fairness": "Reuse unchanged historical built-in Vector Storage results as separately dated observations. Do not compare one branch-create API call with full native indexing time as equivalent latency boundaries.",
+  "limits": {
+    "collections": 3,
+    "managedUpsertDocuments": 550,
+    "managedUpsertCharacters": 125000,
+    "nativeEmbeddingInputs": 0,
+    "requests": 3000,
+    "wallMinutes": 15,
+    "generationCalls": 0
+  },
+  "completion": "Complete ten timed operations; save and both resumes submit zero documents; JSONL message rows are identical; an older edit on one resumed path leaves its sibling, frozen snapshot and original path unchanged; verify owned cleanup. On failure retain evidence and a concrete blocker without broad retries."
+}

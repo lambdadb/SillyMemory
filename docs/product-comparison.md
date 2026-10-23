@@ -15,7 +15,7 @@ The benefit demonstrated here is smaller final-answer input with high English
 memory accuracy. This consumed benchmark does not establish held-out roleplay
 quality, total billed savings or superiority over sufficiently large full context.
 
-For external context, see the [LongMemEval and BEAM reference](memory-benchmark-reference.md).
+For external context, see the [LongMemEval and BEAM reference](https://github.com/lambdadb/SillyMemory/blob/e858fbaff040e60ee0de2ed9264cdd10bc37d722/docs/memory-benchmark-reference.md).
 It separates vendor-reported scores from inspected artifacts and explains why
 different prompts, judges, cohorts and cache conditions prevent a direct ranking.
 The later [cost comparison](memory-cost-comparison.md) prices retained generation
@@ -195,125 +195,6 @@ It is an English-focused, actual-host, consumed-benchmark comparison, not a held
 leaderboard submission. The automated judge can be wrong; ties and paired outcomes
 are not human adjudications.
 
-## Query1 adoption and remaining-error decision
-
-The native default now sends only the eligible generation anchor in one
-role-labelled request. Normal/regenerate/swipe use the active eligible user
-question; Continue/Impersonate keep their existing active-message anchor rules.
-Blank/special messages still follow existing eligibility/fallback rules. The
-recent-five/pair-aligned-six generation window, displaced-pair indexing, checkpoint
-synchronization, scope filters, consistent-read behavior, managed embeddings,
-Bayesian/Jev, k100/candidate100/size50,4096memory budget and native streaming remain
-unchanged. No contextual-query setting or extra LLM call is introduced.
-
-| Full500 observation | Query2 | Query1 | Query1 + compact session dates |
-| --- | ---: | ---: | ---: |
-| Correct |414|469|466|
-| Accuracy |82.8%|93.8%|93.2%|
-| Aggregate final-answer input |2526647|2524361|2517410|
-| Median final-answer input |4988.5|4970.5|4968|
-
-Query1 improved65 answers and lost10 versus Query2. All500 adapted input hashes,
-actual final prompt hashes and retained counts were verified;502 question-query
-attempts satisfy the intended Query1/search contract. Two transient generation
-fetch failures completed only pending cases, without score-driven regeneration.
-All experiment-owned collections and host profiles were confirmed removed.
-Observed Query1 host reply median was4.47seconds(p957.998seconds), but its execution
-was not contemporaneous or a controlled latency comparison against the other arms.
-
-The historical direct-provider source-assembly run scored475/500(95.0%). Compared
-with Query1,13 historical-only and7 Query1-only answers differ. Its raw-question
-search, full-history indexing, benchmark date formatter, evidence-oriented system
-prompt and o200k4096packing are different from native role/date queries, retained
-recent turns, host guidance and cl100kbudget accounting. Do not present that score
-as the current runtime's measured accuracy. Source assembly/overlap removal and
-compact date semantics were already established historically; they are not new
-techniques discovered by this reconciliation.
-
-### Completed compact-date trial
-
-The benchmark adapter supplies unknown-timezone session dates only on first turns
-and zeros native timestamps. Native product timestamps already have independent
-conversation-time provenance; do not manufacture per-turn UTC from session dates.
-The trial restored one shared provenance instruction and compact dates per excerpt
-under the actual host budget, with fixed captured Query1 search results. All500
-baseline memory arrays reproduce actual requests exactly. All10699 dated blocks
-have correct provenance and every candidate stays within4096tokens. Two date
-omissions now produce24days(ukulele to servicing) and6days(keyboard to bluegrass).
-
-The restored-date trial generated500 fresh answers and500 official judgments by
-replaying captured native provider requests with only the memory segment replaced.
-It is not a fresh end-to-end host run. Six answers improved and nine worsened;
-all15 pairs were inspected. Three annotated-message packing losses retained their
-old correctness labels, and all9 answer losses retained baseline marked-message
-coverage. Camping chose the wrong return date, baking chose the wrong temporal
-anchor, and iPad abstention added a speculative interval despite missing evidence.
-Other changes involve near-equivalent outputs, ambiguous targets and judge-sensitive
-wording. Official labels remain unchanged; inspection is not human adjudication.
-
-The trial completed all1000 successful calls without retries, in294.5seconds for
-the full launch plus its reused preflight. API-only generation median2.316seconds
-and p956.005seconds excludes search and host overhead. This trial confirms two
-adapter-date repairs but no aggregate quality improvement; reject it as a product
-optimization and stop the formatting sweep. Provider/model variation and altered
-budget admission prevent attributing the net0.6point decline solely to dates.
-
-### Query1 error audit and next bounded optimization
-
-All31 official Query1 errors were inspected using original questions/references,
-marked source messages, actual delivered prompts, captured final50 documents and
-later date-trial answers. Stage counts are annotation proxies, not proof that
-whole answer spans are sufficient:
-
-| Observation | Questions | Source-grounded interpretation |
-| --- | ---: | --- |
-| Marked message absent from final50 |6|Four necessary factual gaps; two nonessential/redundant annotation gaps. |
-| Marked message returned but absent from memory |1|Oakwood property excluded by budget. |
-| No marked-message gap |24|Includes three unannotated questions; remaining errors involve dates, evidence use, unsupported links, target scope or judging. |
-
-The four confirmed necessary final-result gaps are:
-
-| Question ID | Missing fact | Consequence |
-| --- | --- | --- |
-| `gpt4_d84a3211` | Helmet price$120(message117) | Bike total$65instead of$185. |
-| `ba358f49` | Current age32(message269) | Cannot compute33at next-year wedding. |
-| `gpt4_7abb270c` | Museum of Contemporary Art visit(message95) | Replaces one of six museums with another gallery. |
-| `6e984302` | Sculpting tools purchased(message436) | Returns related materials rather than established purchase. |
-
-Missing language-app message411is redundant with delivered French/Spanishexchange
-source419; missing wake-up annotation248is a thank-you message, while conflicting
-6:30and7:30facts are present. These are not two additional necessary search misses.
-The Oakwood property message439is a distinct packing loss. Numbers above are
-zero-based source-message indices, not chunk numbers.
-
-The audit also finds clear unsupported links: SeniorSoftwareEngineer counts are
-applied to a SoftwareEngineerManager premise, and Harvard conference attendance
-is asserted as an undergraduate poster presentation. Slow-cooker advice overlooks
-available beef-stew success while focusing on recent yogurt; publication advice
-asks broad topic selection despite medical-imaging expertise. Other references
-require caution: January19toApril10is81days(11weeks4days), not the released15weeks;
-poster versus album counts, rack plans, repeated boots, calendar-week boundaries
-and contradictory source facts should not be silently forced to the gold answer.
-All31 per-case dispositions remain local; official labels are not changed.
-
-Next product question: why do those four necessary facts fall outside final50?
-The retained receipts do not expose the complete100-candidate pre/post-rerank lists,
-so this audit cannot attribute them to candidate admission versus rerank order.
-Before a new technique, reconstruct the same synthetic benchmark corpus and capture
-the existing100-candidate pipeline stages for these four cases, with ordinary
-correct cases as frozen controls. Keep the product's query, chunking, embedding,
-fusion and candidate limits fixed; expose diagnostic rankings without increasing
-search depth. If the service cannot expose a stage, record that boundary explicitly
-rather than treating a different query/configuration as an equivalent replay.
-
-Then evaluate only the demonstrated cause: indexing/chunk boundaries if the fact
-never enters candidates, ranking if it enters but falls below50, and packing only
-for the separate returned Oakwood source. Prefer source/data/search engineering
-without an added model call. Freeze a disjoint confirmation cohort before tuning;
-run the unchanged full500 as consumed regression coverage for any adoption candidate.
-Stop after a supported adoption/reject/defer decision. Do not increase k, size,
-budget or tune reranker instructions merely to recover the historical95%.
-
 ## Validation and evidence availability
 
 Validation on Node24.15.0:
@@ -360,3 +241,7 @@ fixture, raw answer, diagnostic producer or one-off generator becomes a CI depen
 
 The adoption/error-audit archive is `artifacts/archive/query1-adoption-evidence-v1.tar.gz`,
 SHA-256 `5dae81bd1767b097775a1d74caf9f1e69ac1f9f97b126c7fe7484a7035071d68`; all21members were verified by archive readback.
+
+## Historical evidence
+
+[Superseded Query1 and compact-date trials](https://github.com/lambdadb/SillyMemory/blob/e858fbaff040e60ee0de2ed9264cdd10bc37d722/docs/product-comparison.md) remain available at the recorded revision. They describe their original settings, not the current product or benchmark profile. See [evidence recovery](evidence-retention.md) for retained source and raw-run availability.

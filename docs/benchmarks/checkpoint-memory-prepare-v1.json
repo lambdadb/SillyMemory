@@ -1,0 +1,31 @@
+{
+  "version": 1,
+  "decision": "Compare memory preparation on already-restored native JSONL chats without UI automation or measurement-only verification in either timer.",
+  "hostRevision": "06bde939fb1e9c4c8d8641d810f0a916b5bce127",
+  "messages": [
+    50,
+    500
+  ],
+  "repetitions": 1,
+  "dataset": "Unchanged deterministic English expedition fixture from the branch/checkpoint runner.",
+  "arms": {
+    "native": "Pinned built-in Vector Storage synchronization batches, default warm local quantized Jina model; no progress UI or button handler in timer.",
+    "sillymemory": "Saved identity validation, ChatCollections.ensure and MemoryEngine.sync with product defaults and the normal recent boundary."
+  },
+  "operations": [
+    "initial",
+    "resume-1",
+    "resume-2"
+  ],
+  "timing": "Browser performance.now around native synchronization batches or SillyMemory identity/fork/synchronization module calls. Imports, chat copying/opening, settings changes, model warmup, browser automation and additional full-index verification are outside timers. Necessary runtime ownership, reconciliation and branch checks remain inside. Initial writes are independently verified committed before checkpoint creation. No first-answer or complete-chat-restore latency claim.",
+  "limits": {
+    "collections": 3,
+    "managedUpsertDocuments": 550,
+    "managedUpsertCharacters": 125000,
+    "nativeEmbeddingInputs": 2000,
+    "requests": 3000,
+    "wallMinutes": 20,
+    "generationCalls": 0
+  },
+  "completion": "Twelve measured preparations, two independent resumed chats per size and arm; exact native hash/managed document sets and complete saved JSONL message preservation; zero managed submissions on resumes; all owned cleanup verified. Stop on a concrete failure without broad retries."
+}
