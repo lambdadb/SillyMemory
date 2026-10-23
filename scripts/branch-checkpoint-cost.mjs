@@ -13,9 +13,10 @@ import { assertPinnedHost, assertPortAvailable, waitForOwnedHost, cleanupOwnedCo
 
 const root = path.resolve(new URL('..', import.meta.url).pathname);
 const source = process.env.ST_SOURCE;
-const output = process.argv[2];
-assert(source && output && process.argv.length === 3, 'ST_SOURCE=<disposable host> SM_ENV_FILE=<env> node scripts/branch-checkpoint-cost.mjs <new artifact directory>');
-const planBytes = await readFile(path.join(root, 'docs/benchmarks/branch-checkpoint-v2.json'));
+const checkpointOnly = process.argv[2] === '--checkpoints-only';
+const output = process.argv[checkpointOnly ? 3 : 2];
+assert(source && output && process.argv.length === (checkpointOnly ? 4 : 3), 'ST_SOURCE=<disposable host> SM_ENV_FILE=<env> node scripts/branch-checkpoint-cost.mjs [--checkpoints-only] <new artifact directory>');
+const planBytes = await readFile(path.join(root, checkpointOnly ? 'docs/benchmarks/checkpoint-memory-boundary-v1.json' : 'docs/benchmarks/branch-checkpoint-v2.json'));
 const plan = JSON.parse(planBytes);
 assertPinnedHost(source, plan.hostRevision);
 assert.equal(await realpath(path.join(source, 'public/scripts/extensions/third-party/sillymemory')), root);
@@ -51,10 +52,10 @@ const save = async () => {
 const check = (name, ok) => { assert(ok, name); report.checks.push(name); };
 const embeddingPath = path.join(source, 'src/vectors/embedding.js');
 const originalEmbedding = await readFile(embeddingPath, 'utf8');
-const instrumented = instrumentEmbedding(originalEmbedding, plan.limits.nativeEmbeddingInputs);
+const instrumented = checkpointOnly ? null : instrumentEmbedding(originalEmbedding, plan.limits.nativeEmbeddingInputs);
 await writeFile(path.join(artifacts, 'host-embedding-original.js'), originalEmbedding);
-await writeFile(path.join(artifacts, 'host-embedding-instrumented.js'), instrumented);
-report.hostInstrumentation = 'Time/CPU counters around actual local model execution, one NDJSON append per input. Model loading excluded from this counter and timed separately. No model outputs or input text logged.';
+if (instrumented) await writeFile(path.join(artifacts, 'host-embedding-instrumented.js'), instrumented);
+report.hostInstrumentation = checkpointOnly ? 'No host instrumentation or local embedding calls.' : 'Time/CPU counters around actual local model execution, one NDJSON append per input. Model loading excluded from this counter and timed separately. No model outputs or input text logged.';
 const url = `http://127.0.0.1:${port}`;
 let server, browser, page, stage = 'setup', timeout, timedOut = false;
 const metrics = async () => (await readFile(metricPath, 'utf8')).trim().split('\n').filter(Boolean).map(line => JSON.parse(line));
@@ -132,7 +133,9 @@ async function verifyMemory() {
 }
 async function measure(arm, messages, repetition, operation, job) {
     stage = `${arm}/${messages}/${repetition}/${operation}`;
-    const beforeTraffic = report.traffic.length, beforeMetric = (await metrics()).length, start = performance.now();
+    const beforeTraffic = report.traffic.length, beforeMetric = (await metrics()).length;
+    const beforeBranches = await page.evaluate(() => globalThis.branchCostCalls.length);
+    const start = performance.now();
     const value = await job();
     const elapsed = performance.now() - start, calls = report.traffic.slice(beforeTraffic), embeds = (await metrics()).slice(beforeMetric);
     report.rows.push({
@@ -142,6 +145,7 @@ async function measure(arm, messages, repetition, operation, job) {
         nativeInsertItems: calls.reduce((n, x) => n + (x.nativeItems || 0), 0),
         localEmbeddingInputs: embeds.length, localEmbeddingMilliseconds: embeds.reduce((n, x) => n + x.milliseconds, 0),
         localEmbeddingCpuMilliseconds: embeds.reduce((n, x) => n + (x.cpu.user + x.cpu.system) / 1000, 0),
+        branchCreateCalls: await page.evaluate(start => globalThis.branchCostCalls.slice(start), beforeBranches),
         ...value,
     });
     assert((await metrics()).length <= plan.limits.nativeEmbeddingInputs, 'Local embedding bound');
@@ -166,6 +170,14 @@ async function seed(rows, name) {
         await c.openCharacterChat(name);
     }, { rows, name });
 }
+async function readChat(file) {
+    return page.evaluate(async file => {
+        const c = SillyTavern.getContext();
+        const response = await fetch('/api/chats/get', { method: 'POST', headers: c.getRequestHeaders(), body: JSON.stringify({ avatar_url: c.characters[c.characterId].avatar, file_name: file }) });
+        if (!response.ok) throw new Error('Synthetic chat read failed');
+        return response.json();
+    }, file);
+}
 async function branch(index) {
     return page.evaluate(async index => {
         const { branchChat } = await import('/scripts/bookmarks.js');
@@ -178,7 +190,7 @@ async function runArm(arm, count, rep) {
     const sync = arm === 'native' ? indexNative : indexMemory;
     await nativeEnabled(arm === 'native');
     await measure(arm, count, rep, 'initial', sync);
-    for (const [operation, index] of [['branch-end', count - 1], ['branch-middle', Math.floor(count / 2) - 1]]) {
+    for (const [operation, index] of checkpointOnly ? [] : [['branch-end', count - 1], ['branch-middle', Math.floor(count / 2) - 1]]) {
         await nativeEnabled(false); await open(parent);
         await measure(arm, count, rep, operation, async () => {
             const start = performance.now(); await branch(index);
@@ -190,6 +202,8 @@ async function runArm(arm, count, rep) {
         check(`${arm}/${count}/${rep}/${operation} preserves source prefix`, await page.evaluate(rows => JSON.stringify(SillyTavern.getContext().chat.map(m => m.mes)) === JSON.stringify(rows.map(m => m.mes)), rows.slice(0, index + 1)));
     }
     await nativeEnabled(false); await open(parent);
+    const sourceRows = checkpointOnly ? await readChat(parent) : null;
+    const resumes = [];
     let checkpoint;
     await measure(arm, count, rep, 'checkpoint-save', async () => {
         if (arm === 'native') {
@@ -213,6 +227,7 @@ async function runArm(arm, count, rep) {
         if (arm === 'native') { await nativeEnabled(true); await sync(); }
         else return verifyMemory();
     });
+    if (checkpointOnly) assert.deepEqual((await readChat(checkpoint)).slice(1), sourceRows.slice(1), 'Snapshot preserves every JSONL message field');
     for (let resume = 1; resume <= 2; resume++) {
         await nativeEnabled(false); await open(checkpoint);
         await measure(arm, count, rep, `resume-${resume}`, async () => {
@@ -224,14 +239,31 @@ async function runArm(arm, count, rep) {
             const synchronization = await sync();
             return { chatMilliseconds, ...(arm === 'sillymemory' ? synchronization : {}) };
         });
+        if (checkpointOnly) {
+            const file = await page.evaluate(() => SillyTavern.getContext().getCurrentChatId());
+            resumes.push(file);
+            assert.deepEqual((await readChat(file)).slice(1), sourceRows.slice(1), 'Resume preserves every JSONL message field');
+        }
         check(`${arm}/${count}/${rep}/resume-${resume} preserves transcript`, await page.evaluate(rows => JSON.stringify(SillyTavern.getContext().chat.map(m => m.mes)) === JSON.stringify(rows.map(m => m.mes)), rows));
+    }
+    if (checkpointOnly) {
+        const ids = await Promise.all([parent, checkpoint, ...resumes].map(async file => (await readChat(file))[0].chat_metadata.sillymemory.id));
+        check(`${count}: source, frozen snapshot and two resumes have distinct paths`, new Set(ids).size === 4);
+        await open(resumes[0]);
+        await page.evaluate(async () => { const c = SillyTavern.getContext(); c.chat[0].mes += ' Independent resumed edit.'; await c.saveChat(); });
+        await indexMemory();
+        for (const file of [parent, checkpoint, resumes[1]]) {
+            await memoryOff(); await open(file); await verifyMemory();
+            assert.deepEqual((await readChat(file)).slice(1), sourceRows.slice(1), 'Independent edit cannot change another transcript');
+        }
+        check(`${count}: resumed edit leaves original, frozen and sibling memory/transcripts unchanged`, true);
+        check(`${count}: save and both resumes submit zero documents`, report.rows.filter(r => r.messages === count && ['checkpoint-save', 'resume-1', 'resume-2'].includes(r.operation)).every(r => r.managedUpsertDocuments === 0));
     }
     await nativeEnabled(false); await memoryOff();
 }
 try {
     work = await mkdtemp(path.join(tmpdir(), 'sm-branch-cost-'));
-    await replaceHostEmbedding(embeddingPath, instrumented);
-    hostInstrumented = true;
+    if (instrumented) { await replaceHostEmbedding(embeddingPath, instrumented); hostInstrumented = true; }
     const config = path.join(work, 'config.yaml');
     const configBytes = await readFile(path.join(source, 'default/config.yaml'));
     await writeFile(config, configBytes);
@@ -246,6 +278,7 @@ try {
     browser = await chromium.launch(); page = await browser.newPage(); page.setDefaultTimeout(20000);
     timeout = setTimeout(() => { timedOut = true; void page.close(); }, plan.limits.wallMinutes * 60000);
     page.on('pageerror', e => report.pageErrors.push(e.name));
+    await page.route('**/api/**/generate', route => { report.pageErrors.push('Unexpected generation request'); return route.abort(); });
     page.on('request', req => {
         const u = new URL(req.url());
         if (u.origin !== url || !u.pathname.startsWith('/api/vector/')) return;
@@ -255,6 +288,7 @@ try {
     await page.route(`${new URL(credentials.endpoint).origin}/**`, async route => {
         try {
             const req = route.request(), u = new URL(req.url()), body = req.postData() ? req.postDataJSON() : {};
+            assert(!checkpointOnly || report.traffic.filter(x => x.kind === 'lambda').length < plan.limits.requests, 'Request bound');
             if (req.method() === 'POST' && u.pathname.endsWith('/collections')) {
                 assert(pending.length < plan.limits.collections, 'Collection bound');
                 pending.push({ collection: body.collectionName, owner: body.tags.owner, scope: body.tags.chat });
@@ -279,23 +313,37 @@ try {
         if (!r.ok) throw new Error('Character creation failed');
     });
     await page.reload(); await page.locator('#sillymemory').waitFor({ state: 'attached' }); await status('Connected.'); await idle();
+    await page.evaluate(async () => {
+        const { LambdaClient } = await import('/scripts/extensions/third-party/sillymemory/src/client.js');
+        const create = LambdaClient.prototype.createBranch;
+        globalThis.branchCostCalls = [];
+        LambdaClient.prototype.createBranch = async function (...args) {
+            const start = performance.now(); let success = false;
+            try { const result = await create.apply(this, args); success = true; return result; }
+            finally { globalThis.branchCostCalls.push({ milliseconds: performance.now() - start, success }); }
+        };
+    });
     await page.locator('#rightNavHolder .drawer-toggle').click(); await page.locator('.character_select').filter({ hasText: 'Branch Cost Synthetic' }).click();
     await page.waitForFunction(() => SillyTavern.getContext().characterId !== undefined); await panel();
-    stage = 'local-model-warmup';
-    const warmStart = performance.now();
-    await page.evaluate(async () => {
-        const c = SillyTavern.getContext();
-        const r = await fetch('/api/vector/insert', { method: 'POST', headers: c.getRequestHeaders(), body: JSON.stringify({ source: 'transformers', collectionId: 'branch-cost-warmup', items: [{ hash: 1, text: 'Warm up the local embedding model.', index: 0 }] }) });
-        if (!r.ok) throw new Error('Local model warmup failed');
-    });
-    report.modelDownloadAndWarmupMilliseconds = performance.now() - warmStart;
+    if (!checkpointOnly) {
+        stage = 'local-model-warmup';
+        const warmStart = performance.now();
+        await page.evaluate(async () => {
+            const c = SillyTavern.getContext();
+            const r = await fetch('/api/vector/insert', { method: 'POST', headers: c.getRequestHeaders(), body: JSON.stringify({ source: 'transformers', collectionId: 'branch-cost-warmup', items: [{ hash: 1, text: 'Warm up the local embedding model.', index: 0 }] }) });
+            if (!r.ok) throw new Error('Local model warmup failed');
+        });
+        report.modelDownloadAndWarmupMilliseconds = performance.now() - warmStart;
+    }
     for (const count of plan.messages) {
         report.inputs.push({ messages: count, sha256: hash(JSON.stringify(messagesFor(count))), characters: messagesFor(count).reduce((n, m) => n + m.mes.length, 0) });
         for (let rep = 1; rep <= plan.repetitions; rep++) {
-            for (const arm of rep % 2 ? ['native', 'sillymemory'] : ['sillymemory', 'native']) await runArm(arm, count, rep);
+            const arms = Object.keys(plan.arms);
+            for (const arm of rep % 2 ? arms : arms.reverse()) await runArm(arm, count, rep);
         }
     }
-    check('complete frozen matrix', report.rows.length === plan.messages.length * plan.repetitions * 2 * plan.operations.length);
+    check('complete frozen matrix', report.rows.length === plan.messages.length * plan.repetitions * Object.keys(plan.arms).length * plan.operations.length);
+    if (checkpointOnly) check('no local embedding calls', (await metrics()).length === 0 && !report.traffic.some(x => x.kind === 'native'));
     check('no browser errors', !report.pageErrors.length);
     report.passed = true;
 } catch (error) {
