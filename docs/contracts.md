@@ -1,6 +1,7 @@
 # Pinned integration contracts
 
-Reviewed on 2026-09-27. Source inspection is not a live LambdaDB integration test.
+Source inspection and unit/emulator checks are distinct from live service
+validation. Use [development](development.md) for the current verification paths.
 
 ## SillyTavern
 
@@ -10,47 +11,44 @@ Supported baseline: version **1.19.0**, commit `06bde939fb1e9c4c8d8641d810f0a916
 - [Context](https://github.com/SillyTavern/SillyTavern/blob/06bde939fb1e9c4c8d8641d810f0a916b5bce127/public/scripts/st-context.js): `eventTypes`, `eventSource`, `chat`, `characters`, `characterId`, `getCurrentChatId`, `getRequestHeaders`, `getTokenCountAsync`, `setExtensionPrompt`, and template rendering.
 - [Prompt construction](https://github.com/SillyTavern/SillyTavern/blob/06bde939fb1e9c4c8d8641d810f0a916b5bce127/public/script.js): creates a prompt-specific `coreChat` array with `index`, applies interceptors before prompt assembly, bypasses them in dry runs. The current adapter replaces eligible older entries with one new quoted archive object (`is_user: true`, `is_system: false`, `name: context().name1`), inserted at the latest selected source index. The archive starts with `[Recalled conversation excerpts]`; each embedded excerpt preserves its original role/speaker, message/passage coordinates and available sent-time label. Those source roles are provenance inside quoted text, not separate API message roles. Recent dialogue and special messages keep their native order/roles, and shared source message objects are not mutated. Final delivery verifies the complete archive in its user carrier role; see [the delivery contract](prompt-delivery.md#contract-and-limits). `setOpenAIMessages` in [openai.js](https://github.com/SillyTavern/SillyTavern/blob/06bde939fb1e9c4c8d8641d810f0a916b5bce127/public/scripts/openai.js) maps `is_user` to the native user/assistant API role. World Info scanning follows the interceptor and can inspect the replaced history; interoperability is unverified. First initialization uses its awaited `saveSettings()` and verifies `/api/settings/get` before allowing remote collection creation, so an immediate reload cannot lose the new installation identity.
 - [Events](https://github.com/SillyTavern/SillyTavern/blob/06bde939fb1e9c4c8d8641d810f0a916b5bce127/public/scripts/events.js): changes invalidate results immediately, reconciliation is debounced. `MESSAGE_UPDATED` covers the post-edit text update; `GENERATION_ENDED` also catches final streaming content.
-- [Proxy middleware](https://github.com/SillyTavern/SillyTavern/blob/06bde939fb1e9c4c8d8641d810f0a916b5bce127/src/middleware/corsProxy.js) and [server route](https://github.com/SillyTavern/SillyTavern/blob/06bde939fb1e9c4c8d8641d810f0a916b5bce127/src/server-main.js): `/proxy/:url(*)`, enabled with `enableCorsProxy`; preserves methods and `x-api-key`, serializes JSON bodies for POST/PUT/PATCH, strips cookies/origin/CSRF before forwarding. Document deletion therefore uses POST `/docs/delete`, not a DELETE request body. Disabled proxy returns 404. The shared response forwarder rewrites upstream 401 to `400 Unauthorized`; the client normalizes that to an authentication error without logging the response body.
 - [Official extension guide](https://docs.sillytavern.app/for-contributors/writing-extensions/) and [configuration reference](https://docs.sillytavern.app/administration/config-yaml/#cors-proxy-configuration) were reopened. Current online docs may advance beyond the pinned host.
 
 ## LambdaDB
 
-The official [managed embedding guide](https://docs.lambdadb.ai/guides/collections/managed-embeddings) and [quickstart](https://docs.lambdadb.ai/guides/get-started/quickstart) were reopened. Request/response details were also inspected in the local docs OpenAPI at docs revision `c9bf7d49de6565e15f06fe6491189cab0c00b228` and generated TypeScript client revision `b516aac7b449830e9c3247eea12b31130a889d85`. These are contract evidence, not proof of the endpoint's deployed version.
+The browser bundle is built from the exact SDK lock in `package-lock.json`.
+The current pin is `0.8.1-dev.38730896042001`, supporting 200 rerank candidates.
+`npm run check:sdk` verifies that the shipped bundle matches that lock.
 
 | Operation | Contract used |
 | --- | --- |
-| Endpoint | User-supplied regional HTTPS origin + `/projects/{project}` |
-| Authentication | `x-api-key` request header |
-| Create | POST `/collections`, managed `embedding` with `sourceField: text`; text uses English and Korean analyzers |
-| Upsert | POST `/collections/{name}/docs/upsert`, `{docs, branch: "main"}`; no bulk import |
-| Query | POST `/collections/{name}/query`, `knn.queryText`, `knn.filter.queryString`, `consistentRead: true`, `ref: {kind: "branch", name: "main"}` |
-| Result | `docs[].doc`; external `docsUrl` responses fail closed without forwarding credentials |
-| Document delete | POST `/collections/{name}/docs/delete`, `{ids, branch: "main"}` |
-| Ownership | GET collection metadata; match `tags.application` and `tags.owner` |
-| Collection delete | DELETE collection, then poll GET for 404 |
+| Endpoint and authentication | Regional HTTPS origin + `/projects/{project}`, with `x-api-key` |
+| Connection check | Authenticated list of one collection before adopting a saved/restored key; no collection creation or inference |
+| Storage | Owned collection per story; separate `chat_<ID>` branch per writable chat |
+| Embeddings | Native `text-embedding-3-small` from verbatim `text`; English lexical analyzer |
+| Writes | Explicit selected branch; source documents carry owner, story scope, revision and source coordinates |
+| Search | Bayesian vector/lexical fusion, k200, owner/scope/message-boundary filters, consistent reads |
+| Reranking | Native Jev 1.13.0, 200 candidates, 50 returned; confirmed provider/model/status required |
+| Results | Inline `docs[].doc`; external download responses fail closed without forwarding credentials |
+| Ownership and cleanup | Validate application, owner and story tags before mutation; verify branch deletion or collection HTTP 404 |
 
-The 2026-09-27 live proxy test subsequently confirmed authenticated creation/upsert, managed query-text visibility, scope filtering, edit/swipe/deletion reconciliation, invalid-key rejection, and owned collection cleanup in the supplied project. This does not establish all error paths, load behavior, or service performance. The emulator and live evidence remain separate in the validation record.
+Runtime search uses role/date/text reranking fields; the published LongMemEval
+profile fixes text-only fields. Preserve that disclosed difference. Generic
+transport tests and standalone benchmarks can use `main`; product memory uses
+the selected chat branch. See [current defaults](conversation-memory-defaults.md),
+[storage](versioned-memory.md) and [native workflows](native-chat-workflow.md).
 
-## Current transport supersedes the original proxy contract
+## Browser transport and credentials
 
-The proxy source inspection above describes the initial 0.1.0 design. The current
-development client uses direct HTTPS/CORS with credentials omitted and redirects
-rejected; it does not call `/proxy/` or use host CSRF headers. Host chat/settings
-requests remain same-origin. See [direct CORS](direct-cors.md) for configuration,
-error/cleanup semantics and separately labeled live evidence.
+Memory requests use direct browser HTTPS/CORS with `credentials: omit`,
+`redirect: error`, and no SillyTavern cookies or CSRF headers. Host chat/settings
+requests remain same-origin. There is no server plugin or proxy fallback.
+Validated credentials are saved only in the dedicated browser record scoped to
+the native account and exact endpoint/project; see [saved connections](saved-connection.md)
+and [direct CORS](direct-cors.md). Keys never belong in ordinary settings,
+reports or source control.
 
-## Current default storage contract
+## Historical contracts
 
-The original request table above used `main` in the initial transport fixture.
-The current product always sends the selected `chat_<ID>` branch, uses an
-owner/story scope filter and verifies the collection’s owner/story tags. Generic
-transport tests still use `main`. Branch list/create/delete, committed-list and
-consistent-fetch contracts are exercised by the [default story acceptance](default-story-memory.md).
-No old per-chat or shared-collection mode remains.
-
-## Current browser credential contract
-
-See [saved connections](saved-connection.md). The candidate authenticates one
-`GET /projects/{project}/collections?size=1` before saving/restoring a key. It
-creates no collection and invokes no embedding or answer model during reconnection.
-Direct memory requests still omit host cookies/CSRF and reject redirects.
+The [original proxy and storage inspection](https://github.com/lambdadb/SillyMemory/blob/e858fbaff040e60ee0de2ed9264cdd10bc37d722/docs/contracts.md)
+remains at its producing revision. It is not an alternative transport or storage
+mode supported by current code.

@@ -4,7 +4,8 @@
 import assert from 'node:assert/strict';
 import { mkdir, readFile, open, rename, unlink } from 'node:fs/promises';
 import path from 'node:path';
-import { sha } from './benchmark-audit.mjs';
+import { createHash } from 'node:crypto';
+const sha = value => createHash('sha256').update(value).digest('hex');
 export async function openCheckpoint(directory, binding, limits) {
     await mkdir(directory, { recursive: true, mode: 0o700 });
     const lock = await open(path.join(directory, 'writer.lock'), 'wx', 0o600);

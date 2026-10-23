@@ -90,7 +90,7 @@ memory allocation fits; the default loss guard stops that generation.
 Failed preparation clears it and stops generation; disabling memory restores native full-history behavior. This does not detect
 answer correctness or ensure that every model follows the instruction.
 
-The pinned host scans `coreChat` for World Info after interceptors. Recalled excerpts can therefore participate in its ordinary history scan, unlike the previous system extension prompt with scanning disabled. World Info, other prompt rewriters, non-chat-completion providers and different host revisions are unverified. See the [speaker results](speaker-attribution-results.md) for the bounded OpenAI validation and remaining actor-attribution failure.
+The pinned host scans `coreChat` for World Info after interceptors. Recalled excerpts can therefore participate in its ordinary history scan. World Info, other prompt rewriters, non-chat-completion providers and different host revisions are unverified. See the [speaker results](https://github.com/lambdadb/SillyMemory/blob/e858fbaff040e60ee0de2ed9264cdd10bc37d722/docs/speaker-attribution-results.md) for the bounded OpenAI validation and remaining actor-attribution failure.
 
 ## Ownership and deletion
 

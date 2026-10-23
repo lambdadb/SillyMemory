@@ -90,62 +90,16 @@ SillyTavern 1.19.0, Chromium, the manifest loader and normal generation, with lo
 LambdaDB/completion fixtures over the current direct-CORS path. It reads no
 `.env.local` and calls no real embedding or generation provider. Current coverage
 includes complete-archive delivery/loss, recent-five retention, stop/warn behavior
-and packing/assembly; the [latest retained validation](prompt-capacity-evaluation.md#retired-tool-preservation)
-records 18 delivery cases plus packing/assembly.
-
-The historical reports below instead used the built-in proxy, separate recalled
-messages and four recent messages. Their counts and key-handling results describe
-that producer, not the current archive contract. The [report](https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/prompt-delivery-v1.json) binds runtime,
-UI, runner and pinned host source hashes before/after execution.
-
-The historical checks cover:
-
-- All three selected passages and four recent messages present in the outgoing
-  short prompt, with accurate panel counts.
-- Zero completion requests after pressure stops in normal, streaming, swipe and
-  regenerate modes, and when search returns no hits. Generation locks/UI recover;
-  normal cancellation adds no phantom assistant response.
-- An explicit warning-only choice sends the truncated prompt with a visible
-  `0/3` memory and `2/4` recent warning.
-- Increasing context after a stop and manually regenerating in the same chat
-  completes, without duplicating the question or changing preceding text.
-- Larger-context recovery, continuation-prefix uncertainty, no-hit short prompts,
-  memory disabled, preference persistence, reload key clearing and owned cleanup.
-
-The [22-check browser integration report](https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/prompt-delivery-browser-v1.json)
-also checks synchronization, edits/swipes,
-deletion, chat-switch races, isolation, failure fallback and proxy/key boundaries.
-Unit tests cover role/content mismatches, repeated messages, macros, dry runs,
-stale checks and supersession. Historical experiments retain their original
-runtime hashes and archived producer source; they are not relabeled as evidence
-for the new runtime. Reproduce historical generation cohorts at their recorded
-revision: older inspection-text parsers are not the new final-prompt contract.
+and packing/assembly. Its fixed synthetic ranks check source integrity and final
+prompt delivery without importing an old quality corpus or simulating live search.
 
 ```sh
-npm ci
-npm test
-npm run check
-npm run check:release
-# Use an isolated pinned host linked to this extension checkout.
-ST_SOURCE=/path/to/SillyTavern \
+ST_SOURCE=/path/to/pinned/SillyTavern \
   node scripts/prompt-delivery-smoke.mjs artifacts/delivery-new.json
-ST_SOURCE=/path/to/SillyTavern npm run test:browser
 ```
 
-The runner uses port 18136 by default (`ST_DELIVERY_PORT` override). Keep a new
-report filename per run; its plan file prevents accidental evidence overwrite.
-This is host integration with emulated services. Managed-provider reliability,
-semantic answer quality and public release validation are separate; this change
-does not assert they have passed.
+Use [development](development.md) for setup and the other current host checks.
 
-### Review correction
+## Historical evidence
 
-The [review regression](https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/prompt-delivery-review-v1.json) holds an actual
-normal generation at `GENERATE_AFTER_DATA`, attempts another generation and then
-releases the old event. The overlapping generation emits no final event, neither
-stale/rejected request reaches the completion endpoint, and a manual retry is
-verified and completes. The full 11-scenario suite and same-chat recovery also
-pass. The [22-check browser rerun](https://github.com/lambdadb/SillyMemory/blob/94b9bc04cf664587ae4c96b7739c22af87897b6b/docs/results/prompt-delivery-review-browser-v1.json)
-retains latest-read-wins behavior during retrieval. That dispatcher-only suite
-now emits a synthetic final event to complete its lifecycle; full host packing
-and request assertions remain in the separate real-generation runner.
+[Original validation and intermediate trials](https://github.com/lambdadb/SillyMemory/blob/e858fbaff040e60ee0de2ed9264cdd10bc37d722/docs/prompt-delivery.md) retain their producing settings, results and limitations. See [evidence recovery](evidence-retention.md). Current checks are listed in [development](development.md).

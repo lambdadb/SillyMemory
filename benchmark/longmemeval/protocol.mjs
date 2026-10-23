@@ -1,7 +1,6 @@
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
-import { adaptLongMemEval } from '../../scripts/benchmark-audit.mjs';
-import { literalBenchmarkText } from '../../scripts/benchmark-development-input.mjs';
+import { adaptLongMemEval, literalBenchmarkText } from '../shared/longmemeval-input.mjs';
 import { archiveBoundary, documents, memoryMessages, packedMemoryMessages } from '../../src/memory.js';
 import { scopeFilter } from '../../src/client.js';
 
