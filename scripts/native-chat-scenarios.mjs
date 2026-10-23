@@ -89,7 +89,9 @@ export async function runNativeChatScenarios({ page, field, waitStatus, check, f
     check('enabling an off native branch leaves its parent off and an earlier checkpoint on', !await field('enabled').isChecked() && (await saved('Native checkpoint fixture'))[0].chat_metadata.sillymemoryEnabled === true);
     await field('enabled').check(); await waitStatus('synchronized');
     await expandMemorySettings(page);
-    const held = faults.arm('upsert', 'hold');
+    const writes = () => calls.filter(call => call.path.endsWith('/docs/upsert')).length;
+    const beforeSnapshot = writes();
+    const held = faults.arm('create-branch', 'hold');
     await field('checkpoint-save').click(); await held.entered;
     try {
         check('saving a frozen memory snapshot preserves the enabled preference', await field('enabled').isChecked());
@@ -114,12 +116,16 @@ export async function runNativeChatScenarios({ page, field, waitStatus, check, f
     const snapshotFile = await rows.first().getAttribute('data-file');
     const frozenMemory = (await saved(snapshotFile))[0].chat_metadata.sillymemory;
     const frozenDocuments = structuredClone(remote(frozenMemory));
+    check('frozen snapshot copies the full JSONL and inherits only older memory without new upserts',
+        (await saved(snapshotFile)).length === 13 && frozenDocuments.length === 6 && frozenDocuments.every(d => d.message < 6) && writes() === beforeSnapshot);
     check('a frozen snapshot is saved without replacing the native checkpoint', snapshotFile?.startsWith('SillyMemory checkpoint ') && (await saved(checkpoint.file)).length === 13);
     await rows.first().getByRole('button', { name: 'Resume', exact: true }).click();
     await page.waitForFunction(() => !document.querySelector('#sillymemory [data-sm="checkpoint-resume"]').disabled);
     await waitStatus('synchronized');
     const resumed = await selected();
     check('snapshot Resume opens a new chat and automatically prepares enabled memory', resumed.file.startsWith('SillyMemory resume ') && resumed.messages.length === 12 && await field('enabled').isChecked());
+    assert.deepEqual(remote(resumed.memory), frozenDocuments, 'Resume reuses the older memory partition');
+    check('snapshot resume keeps recent messages in JSONL without uploading them', writes() === beforeSnapshot);
     await page.evaluate(async file => { await SillyTavern.getContext().openCharacterChat(file); }, snapshotFile);
     await page.waitForFunction(() => document.querySelector('#sillymemory-chat [data-sm-chat="label"]').textContent.includes('Saved snapshot'));
     const beforeBranch = calls.length;

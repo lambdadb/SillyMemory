@@ -41,8 +41,8 @@ export function retrievalQueries(snapshot, type = 'normal') {
     const message = messages[anchor];
     return [`${message.user ? 'User' : 'Assistant'}: ${message.text.trim()}`];
 }
-// Checkpoints need the complete completed transcript. Ordinary UI synchronization
-// additionally supplies archiveBefore, excluding the recent five-message window.
+// Runtime synchronization supplies archiveBefore to exclude the recent window;
+// engine-only evaluations can explicitly index all completed source without it.
 export function completedMessages(snapshot) {
     return snapshot.messages.at(-1)?.user ? snapshot.messages.slice(0, -1) : snapshot.messages;
 }

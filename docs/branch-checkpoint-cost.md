@@ -12,6 +12,17 @@ This comparison concerns operating cost and readiness, not retrieval accuracy or
 generated-answer quality. It does not add a new user-facing workflow or change
 product defaults. Native branching and native checkpoints already exist.
 
+## Current checkpoint behavior
+
+Frozen snapshots now preserve the full native JSONL transcript with the same
+older-history memory partition used in ordinary synchronization. Saving no longer
+indexes the retained recent messages solely for the snapshot. The six-document
+checkpoint submissions and subsequent recent-document deletions below describe
+the measured historical implementation; these measurements have not been rerun
+for the changed behavior. The current runner verifies this older partition for
+checkpoint open as well; reproducing the historical full-transcript runs requires
+their recorded producer revision. See [frozen memory snapshots](checkpoints.md).
+
 ## Readiness correction
 
 Review identified that the original managed verification fetched only expected

@@ -99,8 +99,8 @@ async function indexMemory() {
     const uiSynchronizationMilliseconds = performance.now() - start;
     return { uiSynchronizationMilliseconds, ...await verifyMemory() };
 }
-async function verifyMemory(full = false) {
-    return page.evaluate(async ({ credentials, full }) => {
+async function verifyMemory() {
+    return page.evaluate(async ({ credentials }) => {
         const c = SillyTavern.getContext();
         const { LambdaClient } = await import('/scripts/extensions/third-party/sillymemory/src/client.js');
         const { capture, documents, options, archiveBoundary } = await import('/scripts/extensions/third-party/sillymemory/src/memory.js');
@@ -108,7 +108,7 @@ async function verifyMemory(full = false) {
         const snapshot = capture(c), owner = c.extensionSettings.sillymemory.owner;
         const entry = await chatCollection(snapshot, owner), client = new LambdaClient(credentials, credentials.key);
         try {
-            const expected = (await documents(snapshot, owner, { ...options({}), ...(!full ? { archiveBefore: archiveBoundary(snapshot) } : {}) })).docs;
+            const expected = (await documents(snapshot, owner, { ...options({}), archiveBefore: archiveBoundary(snapshot) })).docs;
             const expectedIds = new Set(expected.map(d => d.id));
             const start = performance.now(); let polls = 0, first;
             // List every committed document, including unwanted inherited suffixes.
@@ -128,7 +128,7 @@ async function verifyMemory(full = false) {
                 await new Promise(resolve => setTimeout(resolve, 1000));
             }
         } finally { client.forget(); }
-    }, { credentials, full });
+    }, { credentials });
 }
 async function measure(arm, messages, repetition, operation, job) {
     stage = `${arm}/${messages}/${repetition}/${operation}`;
@@ -211,7 +211,7 @@ async function runArm(arm, count, rep) {
     await measure(arm, count, rep, 'checkpoint-open', async () => {
         await open(checkpoint);
         if (arm === 'native') { await nativeEnabled(true); await sync(); }
-        else return verifyMemory(true);
+        else return verifyMemory();
     });
     for (let resume = 1; resume <= 2; resume++) {
         await nativeEnabled(false); await open(checkpoint);
