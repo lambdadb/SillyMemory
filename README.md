@@ -20,19 +20,28 @@ transcript on every request. We evaluated these alternatives:
 
 | Approach | How it handles older dialogue |
 | --- | --- |
-| Plain SillyTavern history | Sends history within the configured context limit; a larger window can retain more history but increases answer input. |
+| Plain SillyTavern history | Sends history within the configured context limit; a larger window can retain more history and increase answer input. |
 | Built-in Vector Storage | Retrieves matching chunks from older messages. In our tested configuration, answer input still filled the 32K context window. |
 | Built-in Summarize | Uses an LLM to maintain a summary alongside native history, adding summary-processing work. |
-| Separate 400-character segment-summary method | Uses an LLM to create compact summaries and select older summaries. This reduces answer input but adds construction/selection work and can omit details. It is an experimental comparator, not a built-in SillyTavern option. |
-| **SillyMemory** | Retrieves source passages into a bounded memory budget, with recent dialogue retained separately. It uses no generative LLM calls to construct or update memories, and reuses indexed history across linked conversation branches. |
+| Separate 400-character segment-summary experiment | Uses an LLM to create compact summaries and select older summaries. This reduces answer input but adds processing work and can omit details; it is not a built-in SillyTavern option. |
+| **SillyMemory** | Retrieves original passages into a bounded memory budget alongside recent dialogue, without generative LLM calls to maintain memories. Linked conversation branches reuse indexed history. |
 
 In the recorded 500-question LongMemEval-S evaluation, SillyMemory scored
-**96.0%**, versus **95.2%** for full history, with **95.35% lower mean answer input
-token usage**. The summary methods were evaluated on a shared 50-question subset;
-compare them using that subset, not the 500-question scores. See the
-[comparison report](docs/longmemeval-public-evaluation.md) for all configurations,
+**96.0%**, versus **95.2%** for full history under the same Jev grading rules, with
+**95.35% lower mean answer input token usage**. The full-history reference received
+the complete source transcript. The summary methods were evaluated on a shared
+50-question subset; compare them using that subset, not the 500-question scores.
+See the [comparison report](docs/longmemeval-public-evaluation.md) for all configurations,
 matched-cohort results and memory-processing costs. These results describe the
 tested English configurations, not a guarantee for every model or roleplay chat.
+
+Retrieving relevant past messages can help the model use details outside its
+recent context while keeping answer input small. For those 500 cases, our
+[published cost estimate](https://lambdadb.ai/blog/ai-memory-fewer-tokens-without-graphs#the-cost-of-remembering)
+was **about 91–93% lower than full history**, including memory preparation,
+retrieval, answer generation and LambdaDB usage. It uses standard rates without
+cache adjustments or free allowances, models reranking and two hours of storage,
+and excludes application hosting and benchmark judging.
 
 ## Before you start
 
@@ -42,8 +51,8 @@ tested English configurations, not a guarantee for every model or roleplay chat.
   conversations are outside the supported path; see [current limits](#current-limits).
 - A working chat model connection in SillyTavern. SillyMemory uses your existing
   model settings and native replies/streaming; it does not provide a chat model.
-  Live reply/streaming validation covers Sol; other generation providers remain
-  unverified.
+  Live reply/streaming validation covers OpenAI `gpt-6.1-sol`; other generation
+  models and providers remain unverified.
 - A **LambdaDB project** and its regional HTTPS endpoint, project name and project
   API key. The key needs collection, document and branch access.
 
@@ -52,14 +61,6 @@ credit card required. Initial indexing and ongoing searches consume the included
 allowances. On Free, further usage is restricted when a plan limit is reached;
 see [plan behavior](https://docs.lambdadb.ai/guides/costs/understanding-costs#plans).
 Your chat model provider's charges are separate.
-
-Retrieving relevant past messages can help the model use details outside its
-recent context while keeping answer input small. For the 500-case evaluation
-above, our [published cost estimate](https://lambdadb.ai/blog/ai-memory-fewer-tokens-without-graphs#the-cost-of-remembering)
-was **about 91–93% lower than full history**, including memory preparation,
-retrieval, answer generation and LambdaDB usage before free allowances. This
-standard-rate estimate models reranking and two hours of storage; application
-hosting and benchmark judging are excluded.
 
 [Create an account](https://app.lambdadb.ai/) and follow the
 [LambdaDB quickstart](https://docs.lambdadb.ai/guides/get-started/quickstart)
@@ -107,15 +108,19 @@ are needed.
 
 ## Try it with an existing chat
 
-You do not need to start over. On first activation, SillyMemory indexes the saved
-chat's older messages; recent dialogue stays directly in the answer context.
-Longer histories take more time and embedding/write allowance to prepare. Later
-synchronization reuses unchanged indexed passages and reconciles changes.
+You do not need to start over. **SillyMemory does not rewrite your saved message
+text or delete older messages.** It saves memory identifiers and the on/off
+preference in chat metadata. Turning memory off returns the same chat to ordinary
+SillyTavern history handling, within your model's context limit.
+
+On first activation, SillyMemory indexes the saved chat's older messages; recent
+dialogue stays directly in the answer context. Longer histories take more time
+and embedding/write allowance to prepare. Later synchronization reuses unchanged
+indexed passages and reconciles changes.
 
 Once the status is **Ready**, ask about a detail from earlier in that chat. Expand
 **Memory** to inspect selected source passages, or choose **View full memory** to
-inspect the last prepared prompt's memory. The original transcript stays intact;
-turning memory off returns to ordinary SillyTavern history handling.
+inspect the last prepared prompt's memory.
 
 Memory belongs to the selected chat and its linked conversation paths. Unrelated
 chats, including separate stories with the same character, are not automatically
@@ -123,12 +128,12 @@ combined into one memory.
 
 ## Use and behavior
 
-Chat normally. SillyMemory archives older completed messages and recalls relevant
-passages before each reply. It retains at least five recent eligible messages,
-keeping an adjacent user/reply pair together. Search uses only the current eligible
-message; recent dialogue still accompanies recalled memory in the generation prompt.
+Chat normally. SillyMemory indexes older completed messages and retrieves relevant
+passages before each reply. It retains at least five recent nonempty text messages,
+keeping an adjacent user/reply pair together. Search uses the current message;
+recent dialogue also stays in the generation prompt alongside retrieved memory.
 Edits, swipes and deletions are reconciled against the current chat.
-Your original chat file stays intact.
+Original message text is preserved.
 
 - Open **Memory** above the message composer for current status and recovery
   actions. **Ready** means the chat can use memory; **Last prompt verified** means
@@ -161,7 +166,7 @@ Your original chat file stays intact.
   at one quarter of the host context. Recent messages and character instructions also need room;
   SillyTavern can still trim the final prompt to its context limit.
 - Click **Turn memory off in this chat** to return to ordinary SillyTavern history handling.
-  Continue the same chat: the original transcript is preserved, and the next
+  Continue the same chat: the original messages are preserved, and the next
   generation uses the host’s existing context limits and settings without
   SillyMemory retrieval. Saved remote memory is kept; other extensions’ settings
   are not changed.
@@ -202,6 +207,8 @@ your browser to LambdaDB. Text and queries are also processed by its managed
 embedding/reranking providers. Storage, writes, searches and inference consume
 plan allowance; see [LambdaDB pricing](https://lambdadb.ai/pricing). The extension
 itself is open source, but connected services are not unlimited free resources.
+Turning memory off keeps remote data; on Pay as You Go, retained data continues
+to consume storage usage until deleted.
 
 The verified API key is saved in a dedicated browser credential record scoped to
 the SillyTavern account and exact endpoint/project. Reopen **Connection** to change
@@ -219,10 +226,11 @@ and provider backups are separate from deletion of current records. See
 ## Current limits
 
 - Experimental: successful retrieval does not guarantee a correct answer.
-- Live reply/streaming validation covers Sol on the supported host and Chromium;
-  other generation providers, including Claude, are not yet certified.
+- Live reply/streaming validation covers OpenAI `gpt-6.1-sol` on the supported
+  host and Chromium; other generation models and providers remain unverified.
 - Plain-text, single-character chats are the supported path. Group chats, files,
-  tool messages, Data Bank and World Info integration are outside this release.
+  and tool conversations are outside this release. Data Bank and World Info are
+  not indexed as memory sources.
 - Use one active SillyMemory tab per browser profile. Concurrent writers from
   different devices are unsupported.
 - Final prompt delivery is checked for Chat Completion. Other completion formats
