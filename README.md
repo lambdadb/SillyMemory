@@ -48,9 +48,21 @@ tested English configurations, not a guarantee for every model or roleplay chat.
   API key. The key needs collection, document and branch access.
 
 You can start with [LambdaDB's Free plan](https://lambdadb.ai/pricing), with no
-credit card required. [Create an account](https://app.lambdadb.ai/) and a project;
-usage must stay within the plan's included limits. Your chat model provider's
-charges are separate. Follow the [LambdaDB quickstart](https://docs.lambdadb.ai/guides/get-started/quickstart)
+credit card required. Initial indexing and ongoing searches consume the included
+allowances. On Free, further usage is restricted when a plan limit is reached;
+see [plan behavior](https://docs.lambdadb.ai/guides/costs/understanding-costs#plans).
+Your chat model provider's charges are separate.
+
+Retrieving relevant past messages can help the model use details outside its
+recent context while keeping answer input small. For the 500-case evaluation
+above, our [published cost estimate](https://lambdadb.ai/blog/ai-memory-fewer-tokens-without-graphs#the-cost-of-remembering)
+was **about 91–93% lower than full history**, including memory preparation,
+retrieval, answer generation and LambdaDB usage before free allowances. This
+standard-rate estimate models reranking and two hours of storage; application
+hosting and benchmark judging are excluded.
+
+[Create an account](https://app.lambdadb.ai/) and follow the
+[LambdaDB quickstart](https://docs.lambdadb.ai/guides/get-started/quickstart)
 to create a project, open its **API Keys** tab and create a key. Save the full key
 when shown, and keep the regional base URL and project name ready for installation.
 Older chat text and retrieval queries are processed by LambdaDB and its managed
