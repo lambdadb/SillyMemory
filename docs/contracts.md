@@ -16,7 +16,7 @@ Supported baseline: version **1.19.0**, commit `06bde939fb1e9c4c8d8641d810f0a916
 ## LambdaDB
 
 The browser bundle is built from the exact SDK lock in `package-lock.json`.
-The current pin is `0.8.1-dev.38730896042001`, supporting 200 rerank candidates.
+The current pin is `0.9.0`, supporting 200 rerank candidates.
 `npm run check:sdk` verifies that the shipped bundle matches that lock.
 
 | Operation | Contract used |
