@@ -4,6 +4,15 @@ Versions describe the extension, independently of the SillyTavern host version.
 An `Unreleased` entry is a development candidate. A dated entry records a release
 boundary; publication is confirmed by the corresponding Git tag and GitHub Release.
 
+## [0.7.2] - 2026-10-26
+
+### Changed
+
+- Update the pinned LambdaDB SDK from `0.8.1-dev.38730896042001` to stable
+  `0.9.0` and regenerate the shipped browser bundle. Existing retrieval defaults,
+  200 rerank candidates, credential scope and storage formats remain unchanged.
+- Refresh current integration documentation for the stable SDK.
+
 ## [0.7.1] - 2026-10-23
 
 ### Fixed

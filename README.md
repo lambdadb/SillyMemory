@@ -10,7 +10,7 @@ separate embedding-provider key, server plugin, or build step is needed.
 
 **Experimental pre-release.** Start with a test chat; broader model/browser
 compatibility and answer quality are still being evaluated. Install from `main`;
-see [release notes](docs/releases/0.7.1.md) and
+see [release notes](docs/releases/0.7.2.md) and
 [GitHub Releases](https://github.com/lambdadb/SillyMemory/releases) for version details.
 
 ## Why use SillyMemory?
@@ -249,8 +249,8 @@ When updating from 0.6.0, open each desired chat and choose **Turn memory on in
 this chat**. The previous global switch is replaced by explicit per-chat choices;
 chats without a saved choice start off.
 
-See [release notes](docs/releases/0.7.1.md), [CHANGELOG](CHANGELOG.md),
-[installation validation](docs/releases/0.7.1-validation.md) and
+See [release notes](docs/releases/0.7.2.md), [CHANGELOG](CHANGELOG.md),
+[installation validation](docs/releases/0.7.2-validation.md) and
 [live reply validation](docs/native-reply-validation.md) for measured scope and limitations.
 
 ## Development and verification
