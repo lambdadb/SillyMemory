@@ -12,10 +12,8 @@ Keep per-message boundary chunks with an 800-code-point ceiling. The 4,096-token
 maximum and host
 one-quarter-context cap remain; explicit saved budgets are respected. These are
 development defaults, not a release or a universal optimum. The browser bundle
-pins SDK `0.8.1-dev.38730896042001` because stable 0.8.1 still caps rerank
-candidates at 100. Git URL users use the shipped bundle without installing npm
-packages. Replace this prerelease with a stable SDK once the same contract is
-supported and validated. See [the depth200 decision and checks](https://github.com/lambdadb/SillyMemory/blob/e858fbaff040e60ee0de2ed9264cdd10bc37d722/docs/query1-retrieval-quality.md#product-adoption-of-depth200-2026-10-17).
+pins stable SDK `0.9.0`, which supports the existing 200-candidate rerank
+contract. Git URL users use the shipped bundle without installing npm packages. See [the depth200 decision and checks](https://github.com/lambdadb/SillyMemory/blob/e858fbaff040e60ee0de2ed9264cdd10bc37d722/docs/query1-retrieval-quality.md#product-adoption-of-depth200-2026-10-17).
 
 ### Quoted archive and recent dialogue
 
