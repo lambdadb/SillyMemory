@@ -13,6 +13,17 @@ compatibility and answer quality are still being evaluated. Install from `main`;
 see [release notes](docs/releases/0.7.2.md) and
 [GitHub Releases](https://github.com/lambdadb/SillyMemory/releases) for version details.
 
+## Demo
+
+[<img src="docs/assets/demo-poster.jpg" alt="Watch the SillyMemory demo (2:05)" width="640">](https://github.com/user-attachments/assets/8a34772d-b27f-4709-89c0-caee45c7fcf6)
+
+[Watch the demo (2:05, no audio)](https://github.com/user-attachments/assets/8a34772d-b27f-4709-89c0-caee45c7fcf6)
+to see memory recall, source inspection, input token comparison, checkpoints and
+separate conversation branches in SillyTavern.
+
+The recording uses real UI with synthetic dialogue and scripted retrieval/replies.
+Token figures are host input estimates, not billing or typical savings.
+
 ## Why use SillyMemory?
 
 Long chats need a way to keep earlier details available without sending the whole
