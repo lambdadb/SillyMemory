@@ -4,6 +4,18 @@ Versions describe the extension, independently of the SillyTavern host version.
 An `Unreleased` entry is a development candidate. A dated entry records a release
 boundary; publication is confirmed by the corresponding Git tag and GitHub Release.
 
+## [0.7.3] - 2026-10-28
+
+### Changed
+
+- Update the transitive Zod lockfile resolution from `4.6.5` to `4.6.7` for
+  GHSA-mrhx-c7xc-m3w5. The shipped LambdaDB browser bundle is byte-identical to
+  0.7.2; this does not change the installed extension's runtime behavior.
+- Add a linked product walkthrough to the README, showing memory recall, source
+  inspection, input token comparison, checkpoints and separate chat branches.
+  The recording uses synthetic dialogue and scripted retrieval/replies;
+  token figures are host input estimates, not billing or typical savings.
+
 ## [0.7.2] - 2026-10-26
 
 ### Changed

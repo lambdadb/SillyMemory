@@ -10,8 +10,19 @@ separate embedding-provider key, server plugin, or build step is needed.
 
 **Experimental pre-release.** Start with a test chat; broader model/browser
 compatibility and answer quality are still being evaluated. Install from `main`;
-see [release notes](docs/releases/0.7.2.md) and
+see [release notes](docs/releases/0.7.3.md) and
 [GitHub Releases](https://github.com/lambdadb/SillyMemory/releases) for version details.
+
+## Demo
+
+[<img src="docs/assets/demo-poster.jpg" alt="Watch the SillyMemory demo (2:05)" width="640">](https://github.com/user-attachments/assets/8a34772d-b27f-4709-89c0-caee45c7fcf6)
+
+[Watch the demo (2:05, no audio)](https://github.com/user-attachments/assets/8a34772d-b27f-4709-89c0-caee45c7fcf6)
+to see memory recall, source inspection, input token comparison, checkpoints and
+separate conversation branches in SillyTavern.
+
+The recording uses real UI with synthetic dialogue and scripted retrieval/replies.
+Token figures are host input estimates, not billing or typical savings.
 
 ## Why use SillyMemory?
 
@@ -249,8 +260,8 @@ When updating from 0.6.0, open each desired chat and choose **Turn memory on in
 this chat**. The previous global switch is replaced by explicit per-chat choices;
 chats without a saved choice start off.
 
-See [release notes](docs/releases/0.7.2.md), [CHANGELOG](CHANGELOG.md),
-[installation validation](docs/releases/0.7.2-validation.md) and
+See [release notes](docs/releases/0.7.3.md), [CHANGELOG](CHANGELOG.md),
+[installation validation](docs/releases/0.7.3-validation.md) and
 [live reply validation](docs/native-reply-validation.md) for measured scope and limitations.
 
 ## Development and verification
