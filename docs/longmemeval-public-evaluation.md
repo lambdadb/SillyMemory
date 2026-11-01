@@ -20,9 +20,11 @@ smaller final-answer inputs under these disclosed configurations.
 [Annotation coverage was attributed offline on 2026-11-01](longmemeval-retrieval-attribution.md):
 888 of 894 annotated evidence messages were complete in the returned list and 880
 in the final prompt, and all 53 annotated messages behind the 19 annotated
-incorrect answers were delivered complete. The failures are therefore downstream
-of retrieval and packing. Necessary-fact recall remains unmeasured; the verifier
-checks source and request integrity, not evidence sufficiency.
+incorrect answers were delivered complete, so no loss of annotated messages was
+observed at retrieval or packing. This is annotation coverage, not a sufficiency
+audit: unannotated turns and exact fact spans were not assessed, so the cause of
+each incorrect answer remains unattributed. Necessary-fact recall is unmeasured;
+the verifier checks source and request integrity, not evidence sufficiency.
 
 ## Comparison protocol
 
