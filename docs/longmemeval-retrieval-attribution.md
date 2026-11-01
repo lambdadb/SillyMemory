@@ -1,11 +1,13 @@
 # LongMemEval-S retrieval attribution
 
-**Finding: none of the 20 Jev-incorrect answers in the
-[2026-10-22 LongMemEval-S run](longmemeval-public-evaluation.md) lost annotated
-evidence at retrieval or packing.** All 53 annotated evidence messages behind the
-19 annotated incorrect answers were returned in the reranked list and delivered
-complete in the final prompt. The remaining incorrect answer is an abstention
-question without a positive evidence annotation.
+**Finding: no loss of annotated evidence messages was observed at retrieval or
+packing for any of the 20 Jev-incorrect answers in the
+[2026-10-22 LongMemEval-S run](longmemeval-public-evaluation.md).** All 53
+annotated evidence messages behind the 19 annotated incorrect answers were
+returned in the reranked list and delivered complete in the final prompt. The
+remaining incorrect answer is an abstention question without a positive evidence
+annotation. This does not establish that every fact needed by each question was
+delivered; the cause of each incorrect answer is not attributed by this measurement.
 
 This is an offline attribution of the retained run. It made no provider calls,
 regenerated no answers and rejudged nothing. It measures annotation coverage as
@@ -59,8 +61,10 @@ question; it names a university from a conference mention in delivered context.
 
 In three of the counting failures (`d851d5ba`, `gpt4_2f8be40d`, `88432d0a`) the
 generated answer used delivered excerpts that are not annotated evidence, such as
-other weddings, fundraisers or baking mentions from the same history. That is an over-inclusion pattern in generation given a wide
-delivered context, not a retrieval miss. Several references are also arguable
+other weddings, fundraisers or baking mentions from the same history. In these
+cases the annotated evidence was present alongside the additional excerpts; whether
+an unannotated dependency was also missing was not reviewed. Several references are
+also arguable
 (for example `ec81a493` asks about album copies while the source says the poster
 was limited to 500); the original labels are preserved and not rejudged.
 
@@ -107,16 +111,19 @@ rather than a measured quality loss.
 The wormhole-vector style pseudo-relevance feedback trial (mean-pooling the top
 lexical hits into a second dense query) that motivated this attribution is
 **deferred**. It targets candidate recall and cross-space expansion, and this
-cohort shows no incorrect answer attributable to a recall or ranking miss of
-annotated evidence. Four failures instead over-included delivered unannotated
-excerpts, so widening retrieval has no measured failure to fix here and a
-plausible precision cost. Re-evaluate the technique if a cohort with measured
+cohort shows no incorrect answer with an observed loss of annotated evidence at
+recall or ranking. Three failures instead used delivered unannotated excerpts in
+addition to the annotated ones, so widening retrieval has no observed failure to
+fix here and a plausible precision cost. A necessary-fact sufficiency review of
+the 19 failures would be required before attributing them causally to generation.
+Re-evaluate the technique if a cohort with measured
 `retrieval-loss` on incorrect answers appears, or on BEAM where coverage has not
 been attributed this way.
 
-The measured gaps worth following are generation-side: multi-session counting and
-date-window reasoning over correctly delivered evidence, abstention under related
-context, and preference personalization near the judge threshold.
+The patterns worth following next, from the manual reading rather than a measured
+attribution, are multi-session counting and date-window reasoning over delivered
+annotated evidence, abstention under related context, and preference
+personalization near the judge threshold.
 
 ## Evidence
 

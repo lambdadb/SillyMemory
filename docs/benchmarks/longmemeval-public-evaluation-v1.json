@@ -572,6 +572,6 @@
     },
     "attributedAt": "2026-11-01",
     "source": "../longmemeval-retrieval-attribution.md",
-    "boundary": "Offline attribution of the retained run with benchmark/longmemeval/attribute.mjs. Annotation coverage of whole has_answer turns; necessary-fact recall is not measured and candidate recall is not separable from reranking."
+    "boundary": "Offline attribution of the retained run with benchmark/longmemeval/attribute.mjs. Annotation coverage of whole has_answer turns only: delivered-complete means no loss of annotated messages was observed, not that every necessary fact was delivered. Necessary-fact recall is not measured and candidate recall is not separable from reranking."
   }
 }

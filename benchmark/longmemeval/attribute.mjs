@@ -69,7 +69,7 @@ export function attributeCase({ row, prepared, record, score }) {
 }
 
 export const stageDefinitions = {
-    'delivered-complete': 'Every annotated message is complete in the final prompt. An incorrect answer here fails downstream of retrieval and packing.',
+    'delivered-complete': 'Every annotated message is complete in the final prompt. No loss of annotated messages was observed; necessary-fact sufficiency is not established.',
     'delivered-partial': 'Every annotated message is present in the final prompt, at least one only partially.',
     'budget-loss': 'Every annotated message is present in the returned list, but at least one is missing from the final prompt.',
     'retrieval-loss': 'At least one annotated message is missing from the returned list. Candidate recall and reranking are not separable offline.',
