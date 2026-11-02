@@ -639,6 +639,17 @@ try {
     await waitStatus('Connected.');
     check('remote deletion leaves reconnection available but preserves disabled memory', await field('key').inputValue() === '' && !await field('enabled').isChecked());
     check('explicit user budget survives reload without default replacement', await field('budget').inputValue() === '512');
+    if (!faultMode) {
+        // Keep a stale native ON flag: preparing again must not revive uploads.
+        await page.evaluate(async () => { const ctx = SillyTavern.getContext(); ctx.chatMetadata.sillymemoryEnabled = true; await ctx.saveChat(); });
+        const memoryWrites = () => calls.filter(call => call.path.endsWith('/upsert') && !call.path.includes('/smtest_')).length;
+        const writesBeforePreparation = memoryWrites();
+        await expandMemorySettings(page);
+        await field('provision').click(); await waitStatus('Connected. Chat memory is ready.');
+        check('preparation after bulk deletion cannot revive a stale native ON preference',
+            !await field('enabled').isChecked() && collections.size === 0
+            && memoryWrites() === writesBeforePreparation);
+    }
     await page.evaluate(() => localStorage.removeItem(`sillymemory:state:${SillyTavern.getContext().extensionSettings.sillymemory.owner}`));
     await page.reload(); await page.locator('#sillymemory').waitFor({ state: 'attached', timeout: 45000 });
     await page.waitForFunction(() => !document.querySelector('#sillymemory [data-sm=connect]').disabled);
@@ -652,9 +663,45 @@ try {
     await page.waitForFunction(() => !document.querySelector('#sillymemory [data-sm=connect]').disabled);
     check('Forget key removes persistence and reload makes no credential request', calls.length === beforeForgottenReload && await page.evaluate(() => !Object.keys(localStorage).some(k => k.startsWith('sillymemory:credential:'))) && !await field('enabled').isChecked());
 
+    if (!faultMode) {
+        const appCalls = []; let appOutcome = 'region_requested';
+        await page.context().route('https://app.lambdadb.ai/auth/connect*', route => route.fulfill({ contentType: 'text/html', body: '<p>Synthetic LambdaDB approval fixture</p>' }));
+        await page.route('https://api.lambdadb.ai/auth/apps/*', async route => {
+            const req = route.request(), path = new URL(req.url()).pathname;
+            const headers = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': '*', 'Access-Control-Allow-Methods': 'POST,OPTIONS' };
+            if (req.method() === 'OPTIONS') return route.fulfill({ status: 204, headers });
+            appCalls.push({ path, body: req.postDataJSON(), headers: req.headers() });
+            const identity = { request_id: '11111111-1111-4111-8111-111111111111', project_id: '22222222-2222-4222-8222-222222222222', organization_id: '33333333-3333-4333-8333-333333333333' };
+            const value = path.endsWith('/start') ? { device_code: 'a'.repeat(64), user_code: 'ABCDE-FG234', verification_uri: 'https://app.lambdadb.ai/auth/connect', expires_in: 900, interval: 1 }
+                : path.endsWith('/poll') ? { ...identity, status: appOutcome }
+                : path.endsWith('/redeem') ? { endpoint, project: 'synthetic', credentials: { api_key: 'synthetic-session-key', key: { key_id: 'synthetic-app-key' } } }
+                : { status: 'canceled' };
+            await route.fulfill({ headers, json: value });
+        });
+        await expandMemorySettings(page);
+        await field('app-connect').click(); await waitStatus('Region requested.');
+        check('app region request ends waiting without issuing a key or connecting', !await field('app-waiting').isVisible() && !appCalls.some(c => c.path.endsWith('/redeem')) && !await field('enabled').isChecked());
+        appOutcome = 'approved';
+        const canceledVerification = faults.arm('connection', 'hold');
+        await field('app-connect').click();
+        await canceledVerification.entered;
+        await field('app-cancel').click();
+        canceledVerification.release();
+        await waitStatus('Connection canceled.');
+        check('canceling after redemption prevents a delayed connection check from saving or preparing the key',
+            !await field('enabled').isChecked() && collections.size === 0
+            && await page.evaluate(() => !Object.keys(localStorage).some(k => k.startsWith('sillymemory:credential:'))));
+        await field('app-connect').click(); await waitStatus('Connected. Chat memory is ready.');
+        check('app approval automatically saves and prepares the exact project without activating chat memory', await field('project').inputValue() === 'synthetic' && await field('key').inputValue() === '' && !await field('enabled').isChecked() && collections.size === 0
+            && appCalls.filter(c => c.path.endsWith('/redeem')).length === 2);
+        check('app authentication requests never forward the host cookies, CSRF or a project key', appCalls.every(c => !c.headers.cookie && !c.headers['x-csrf-token'] && !c.headers['x-api-key'] && !c.headers.authorization));
+        await openMemoryConnection(page);
+        await field('forget').click(); await waitStatus('Saved key removed');
+        for (const popup of page.context().pages()) if (popup !== page) await popup.close();
+    }
     if (faultMode) check('fault run has no uncaught browser page errors', errors.length === 0);
     const sourceSha256 = {};
-    for (const file of ['index.js', 'manifest.json', 'settings.html', 'style.css', 'src/chunking.js', 'src/client.js', 'src/credentials.js', 'src/commit.js', 'src/chat-collections.js', 'src/checkpoints.js', 'src/gate.js', 'src/memory.js', 'src/time.js', 'src/context.js', 'scripts/native-chat-scenarios.mjs', 'scripts/per-chat-memory-scenarios.mjs', 'scripts/setup-recovery-scenarios.mjs', 'scripts/native-reply-scenarios.mjs', 'src/delivery.js', 'src/token-usage.js', 'src/status.js', 'scripts/browser-smoke.mjs', 'scripts/settings-panel.mjs', 'scripts/emulator-cors.mjs', 'scripts/fault-scenarios.mjs', 'scripts/recovery-scenarios.mjs']) {
+    for (const file of ['index.js', 'manifest.json', 'settings.html', 'style.css', 'src/chunking.js', 'src/client.js', 'src/credentials.js', 'src/activation.js', 'src/app-connect.js', 'src/commit.js', 'src/chat-collections.js', 'src/checkpoints.js', 'src/gate.js', 'src/memory.js', 'src/time.js', 'src/context.js', 'scripts/native-chat-scenarios.mjs', 'scripts/per-chat-memory-scenarios.mjs', 'scripts/setup-recovery-scenarios.mjs', 'scripts/native-reply-scenarios.mjs', 'src/delivery.js', 'src/token-usage.js', 'src/status.js', 'scripts/browser-smoke.mjs', 'scripts/settings-panel.mjs', 'scripts/emulator-cors.mjs', 'scripts/fault-scenarios.mjs', 'scripts/recovery-scenarios.mjs']) {
         sourceSha256[file] = createHash('sha256').update(await readFile(path.join(root, file))).digest('hex');
     }
     await writeFile(path.join(artifacts, artifactName), JSON.stringify({ passed: true, faultResults, nativeChatResults, nativeReplyResults, sourceSha256, time: new Date().toISOString(), sillyTavern: revision, node: process.version, browser: browser.version(), upstream: 'Local HTTPS LambdaDB emulator; no live managed embeddings', checks, pageErrors: errors, requestCount: calls.length, preflights, proxyRequests, remainingCollections: collections.size }, null, 2));

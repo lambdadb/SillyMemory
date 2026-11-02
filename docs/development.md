@@ -5,6 +5,9 @@ Use [CONTRIBUTING](../CONTRIBUTING.md) for branch, PR and evidence-retention rul
 The current runtime and synthetic regressions are maintained here; retired
 experiments are recovered at their producing revisions, not run through current CI.
 
+The proposed cross-repository [LambdaDB app connection workflow](lambdadb-app-connect-design.md)
+is a design draft, separate from the current setup behavior below.
+
 ## Local setup
 
 Use Node.js 20.12+ and SillyTavern 1.19.0 at
