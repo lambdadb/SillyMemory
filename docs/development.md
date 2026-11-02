@@ -5,8 +5,23 @@ Use [CONTRIBUTING](../CONTRIBUTING.md) for branch, PR and evidence-retention rul
 The current runtime and synthetic regressions are maintained here; retired
 experiments are recovered at their producing revisions, not run through current CI.
 
-The proposed cross-repository [LambdaDB app connection workflow](lambdadb-app-connect-design.md)
-is a design draft, separate from the current setup behavior below.
+## Browser account connection
+
+The development connection flow opens LambdaDB for login, project selection and
+explicit approval, then verifies and saves the selected project in this browser.
+It requires the corresponding hosted connection feature to be available. Manual
+key setup remains available. Setup does not activate a chat; see the
+[README](../README.md#browser-account-connection-development) for usage and
+[saved connections](saved-connection.md) for credential and deletion behavior.
+
+`npm test` covers the extension's request protocol and activation bindings.
+The maintained `npm run test:browser` suite uses pinned ST with a local HTTPS data
+emulator and synthetic account/approval responses. It covers requested-region
+completion without connection, canceling delayed connection verification, verified
+credential adoption with chat memory off, and excluding host credentials from
+account requests. These fixtures do not establish live signup, provisioning or
+email delivery. The pre-submission run passed 253 unit tests and 234 browser checks
+with no browser errors or remaining emulator collections.
 
 ## Local setup
 
