@@ -81,6 +81,25 @@ Older chat text and retrieval queries are processed by LambdaDB and its managed
 inference providers; this is a cloud-connected extension, not a local-only memory
 store. See [data, usage, and cleanup](#data-usage-and-cleanup).
 
+## Browser account connection (development)
+
+This development change adds **Connect to LambdaDB** in the extension's Connection
+settings. It uses LambdaDB OAuth and needs a LambdaDB environment with browser
+connections enabled; the public installation baseline is not changed by this
+local implementation. SillyTavern must be served over HTTPS or from localhost.
+
+Choose the button, sign up or log in in the LambdaDB window, select or create a
+project, and explicitly approve its access. The window returns to a small
+SillyMemory page that you can close. SillyMemory fills in the connection and prepares
+it automatically. It does not activate or upload a chat; turn memory on separately.
+For a requested region, account setup ends without a connection. Organization owners
+receive the existing readiness email; start Connect again and select that project
+once ready. Pending region projects consume the existing project allowance.
+
+Manual connection below remains available. Existing memory prevents switching to
+another project until owned cleanup is confirmed. After Delete all, previous chat
+ON flags remain inactive until deliberately enabled again in this browser.
+
 ## Install
 
 1. In SillyTavern, open **Extensions → Install extension** and paste:

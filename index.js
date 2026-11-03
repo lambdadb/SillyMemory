@@ -1,6 +1,8 @@
 import { createCheckpoint, finishCheckpoint, resumeCheckpoint, listCheckpoints, checkpointRows, renameCheckpoint, deleteCheckpoint } from './src/checkpoints.js';
 import { LambdaClient, ConnectionError, connectionConfig } from './src/client.js';
 import { SavedKey } from './src/credentials.js';
+import { callbackUrl, connectWithLambdaDB } from './src/app-connect.js';
+import { activationBinding, chatActivated } from './src/activation.js';
 import { ChatCollections, chatCollection, ensureChatIdentity } from './src/chat-collections.js';
 import { runTransportGate } from './src/gate.js';
 import { MemoryEngine, Journal, capture, supportsChat, fingerprint, options, DEFAULTS, memoryBoundary, archiveBoundary } from './src/memory.js';
@@ -10,7 +12,7 @@ import { MEMORY_GUIDANCE, retentionAnchor, quoteMemoryText, quoteMemoryMessages 
 import { hostPromptTokens, dialogueSnapshot, compareDialogue, comparisonLabel, tokenLabel } from './src/token-usage.js';
 
 const context = () => SillyTavern.getContext();
-const memoryEnabled = () => connectionVerified && state?.ready && context().chatMetadata?.sillymemoryEnabled === true;
+const memoryEnabled = () => connectionVerified && state?.ready && chatActivated(context().chatMetadata, state);
 const uuid = () => crypto.randomUUID().replaceAll('-', '');
 let client, engine, root, state, stateKey, owner, timer, busy = false, gatePassed = false;
 let sessionReady = false;
@@ -185,7 +187,10 @@ async function setChatMemory(enabled) {
     if (!sessionReady || !connectionVerified || !client || !state.ready || state.testCollection || !supportsChat(ctx) || savedSnapshot() || hostGenerating()) return;
     clearTokenUsage(); invalidate(); clearTimeout(timer);
     const previous = metadata.sillymemoryEnabled;
+    const previousActivation = metadata.sillymemoryActivation;
     metadata.sillymemoryEnabled = enabled;
+    if (enabled) metadata.sillymemoryActivation = activationBinding(state);
+    else delete metadata.sillymemoryActivation;
     status(enabled ? 'Saving memory activation for this chat…' : 'Memory disabled for this chat. Saving this chat’s preference…');
     if (!enabled) {
         showDelivery('Memory disabled for this chat. No pending prompt verification.');
@@ -211,8 +216,13 @@ async function setChatMemory(enabled) {
         const rows = response.ok ? await response.json() : null;
         if (!current()) return;
         if (rows?.[0]?.chat_metadata?.sillymemoryEnabled !== enabled) throw new ConnectionError('The chat memory preference could not be saved. Check the SillyTavern connection and retry.');
+        if (enabled && !chatActivated(rows?.[0]?.chat_metadata, state)) throw new ConnectionError('The chat memory activation could not be saved. Retry enabling memory.');
     } catch (error) {
-        if (enabled) metadata.sillymemoryEnabled = previous;
+        if (enabled) {
+            metadata.sillymemoryEnabled = previous;
+            if (previousActivation === undefined) delete metadata.sillymemoryActivation;
+            else metadata.sillymemoryActivation = previousActivation;
+        }
         if (!current()) return;
         invalidate();
         throw error;
@@ -292,6 +302,7 @@ function renderSettings() {
     element('retry-sync').hidden = !retrySync || !connected || !memoryEnabled() || cleanup;
     element('recovery-actions').hidden = element('recover-cleanup').hidden && element('retry-sync').hidden;
     root.querySelectorAll('button, input').forEach(x => { x.disabled = busy || !sessionReady; });
+    if (element('app-cancel')) element('app-cancel').disabled = false;
     element('history').disabled = busy || !sessionReady || hostGenerating() || !canBrowseChats();
     renderChatStatus();
 }
@@ -535,6 +546,10 @@ async function initialize() {
     savedKey = new SavedKey(localStorage, owner);
     state = { endpoint: '', project: '', ready: false, budget: DEFAULTS.budget, stopOnLoss: true, chatCollections: [], ...JSON.parse(localStorage.getItem(stateKey) || '{}') };
     delete state.enabled;
+    if (!/^[a-f0-9]{32}$/.test(state.activationGeneration || '')) {
+        state.activationGeneration = uuid();
+        persist();
+    }
     const folder = new URL('.', import.meta.url).pathname.split('/scripts/extensions/')[1].replace(/\/$/, '');
     const html = await ctx.renderExtensionTemplateAsync(folder, 'settings');
     document.querySelector('#extensions_settings2').insertAdjacentHTML('beforeend', html);
@@ -586,7 +601,7 @@ async function initialize() {
         });
         await closed;
     });
-    async function connect(config, key, restoring = false) {
+    async function connect(config, key, restoring = false, valid = () => true) {
         const candidate = connectionConfig(config);
         if ((state.testCollection || state.chatCollections.length) && (candidate.endpoint !== state.endpoint || candidate.project !== state.project)) throw new ConnectionError('Clean up owned collections before changing the connection.');
         const changed = candidate.endpoint !== state.endpoint || candidate.project !== state.project;
@@ -596,12 +611,13 @@ async function initialize() {
         connectingClient = candidateClient;
         try {
             await drain(); client?.forget(); client = undefined; makeCollections();
-            if (!sessionReady) throw new ConnectionError('Connection canceled because the session changed.', 0, 'canceled');
+            if (!sessionReady || !valid()) throw new ConnectionError('Connection canceled because the session changed.', 0, 'canceled');
             status(restoring ? 'Reconnecting with the saved key…' : 'Checking the project key before saving…');
             await candidateClient.checkConnection();
-            if (!sessionReady || context().extensionSettings.sillymemory?.owner !== owner) throw new ConnectionError('Connection canceled because the session changed.', 0, 'canceled');
+            if (!sessionReady || !valid() || context().extensionSettings.sillymemory?.owner !== owner) throw new ConnectionError('Connection canceled because the session changed.', 0, 'canceled');
             const ready = !changed && state.ready;
             const nextState = { ...state, ...candidate, ready };
+            if (changed) { delete nextState.projectId; delete nextState.appRecovery; }
             delete nextState.enabled;
             if (restoring) persist(nextState);
             else savedKey.commit(candidate, key, nextState);
@@ -620,6 +636,66 @@ async function initialize() {
             throw error;
         } finally { if (connectingClient === candidateClient) connectingClient = undefined; }
     }
+    // The account API origin is fixed for users; developers may point a browser
+    // at another LambdaDB environment with this localStorage entry.
+    const accountApiOrigin = () => {
+        const override = localStorage.getItem('sillymemory:api-origin');
+        try { if (override && new URL(override).protocol === 'https:' && new URL(override).origin === override) return override; } catch { /* use the default */ }
+        return 'https://api.lambdadb.ai';
+    };
+    // One registered OAuth client per installation callback; it is not a secret.
+    const registration = {
+        read: () => { try { return JSON.parse(localStorage.getItem('sillymemory:oauth-client') || 'null'); } catch { return null; } },
+        write: value => localStorage.setItem('sillymemory:oauth-client', JSON.stringify(value)),
+    };
+    let appController;
+    const cancelApp = () => appController?.abort(new DOMException('Connection canceled', 'AbortError'));
+    addEventListener('pagehide', cancelApp, { once: true });
+    element('app-cancel').onclick = cancelApp;
+    element('app-connect').onclick = () => {
+        if (!sessionReady || busy || hostGenerating()) return;
+        const hasMemory = Boolean(state.testCollection || state.chatCollections.length);
+        if (connectionVerified) { status('This project is already connected. Clean up owned memory before connecting another project.'); return; }
+        const popup = window.open('about:blank', '_blank');
+        if (popup) { popup.opener = null; popup.document.title = 'Connect to LambdaDB'; }
+        appController = new AbortController();
+        const controller = appController, requestOwner = owner;
+        element('app-waiting').hidden = false;
+        return action(async () => {
+            try {
+                const valid = () => sessionReady && context().extensionSettings.sillymemory?.owner === requestOwner && !controller.signal.aborted;
+                const recover = recovery => {
+                    if (!valid()) throw new ConnectionError('Connection canceled because the account changed.');
+                    const next = { ...state, appRecovery: recovery }; persist(next); state = next;
+                };
+                const connected = await connectWithLambdaDB({ signal: controller.signal, popup, valid,
+                    apiOrigin: accountApiOrigin(), callback: callbackUrl(import.meta.url), clients: registration,
+                    projectId: hasMemory ? state.projectId || state.appRecovery?.projectId : state.appRecovery?.projectId,
+                    projectName: hasMemory && !state.projectId && !state.appRecovery?.projectId ? state.project : undefined,
+                    recoveryId: state.appRecovery?.connectionId,
+                    onStatus: (message, url) => {
+                        if (!valid()) return;
+                        status(message);
+                        if (url) element('app-link').href = url;
+                    },
+                    beforeAuthorize: recover,
+                    beforeIssue: recover,
+                });
+                if (!valid()) throw new ConnectionError('Connection canceled because the account changed.');
+                if (!connected) return;
+                if (hasMemory && (connected.endpoint !== state.endpoint || connected.project !== state.project)) throw new ConnectionError('Clean up owned memory before changing the connection.');
+                await connect(connected, connected.key, false, valid);
+                element('app-waiting').hidden = true;
+                const next = { ...state, projectId: connected.projectId }; delete next.appRecovery;
+                persist(next); state = next;
+                for (const name of ['endpoint', 'project']) element(name).value = state[name];
+                if (!state.ready && !state.testCollection) await prepareConnection();
+            } catch (error) {
+                if (controller.signal.aborted) status('Connection canceled. Existing project data is retained.');
+                else throw error;
+            } finally { element('app-waiting').hidden = true; appController = undefined; }
+        });
+    };
     element('connect').onclick = () => {
         if (!sessionReady || busy || hostGenerating()) return;
         return action(async () => {
@@ -627,6 +703,10 @@ async function initialize() {
             const typed = element('key').value.trim();
             const key = typed || savedKey.read(candidate) || ''; element('key').value = '';
             await connect(candidate, key, !typed);
+            if (typed && state.appRecovery) {
+                const next = { ...state }; delete next.appRecovery;
+                persist(next); state = next;
+            }
             if (!state.ready && !state.testCollection) await prepareConnection();
         });
     };
@@ -858,7 +938,11 @@ async function initialize() {
         const answer = await target.Popup.show.confirm('Delete remote memory', all ? 'Delete ALL owned SillyMemory collections, including every story and branch? Local chats remain.' : 'Delete this chat’s remote memory? Other chats and branches remain. Your local chat is preserved.');
         if (answer !== target.POPUP_RESULT.AFFIRMATIVE) return;
         if (!sameChat()) throw new ConnectionError('Chat changed while the popup was open. Select it and retry deletion.');
-        if (all) { state.ready = false; persist(); }
+        if (all) {
+            const next = { ...state, ready: false, activationGeneration: uuid() };
+            persist(next); // Failed persistence must stop before remote deletion.
+            state = next;
+        }
         if (!all && supportsChat(context()) && !savedSnapshot()) await setChatMemory(false);
         invalidate(); clearTimeout(timer);
         for (const e of engines.values()) e.invalidate();

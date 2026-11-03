@@ -43,6 +43,10 @@
     <p>Recall older conversations while you chat.<br><strong>Powered by LambdaDB</strong></p>
     <details data-sm="connection" class="sm-section sm-connection" open>
       <summary>Connection <span data-sm="connection-state">Not connected</span></summary>
+      <button type="button" data-sm="app-connect" class="menu_button">Connect to LambdaDB</button>
+      <small>Create a free account or choose an existing project in LambdaDB. No credit card required. Connection preparation uses temporary inference allowance; chat memory stays off until you enable it.</small>
+      <div data-sm="app-waiting" hidden><p>Approve the connection in the LambdaDB window. If it did not open, <a data-sm="app-link" target="_blank" rel="noopener noreferrer">open the approval page</a>.</p><button type="button" data-sm="app-cancel" class="menu_button">Cancel connection</button></div>
+      <p>Or enter project connection details manually:</p>
       <label>Regional HTTPS endpoint <input data-sm="endpoint" class="text_pole" type="url" placeholder="Regional base URL from your project"></label>
       <label>Project name <input data-sm="project" class="text_pole" autocomplete="off"></label>
       <label>Project API key <input data-sm="key" class="text_pole" type="password" autocomplete="off" spellcheck="false"></label>

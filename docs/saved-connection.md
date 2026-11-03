@@ -38,7 +38,14 @@ These views do not change stored connection or memory settings.
 
 After reload, acquire the account's existing exclusive browser lock, restore the
 key and verify it. Only then restore the previous enabled state if chat memory was
-prepared. Disabled stays disabled. No selected character means synchronization
+prepared and the chat's activation binding matches this browser's persisted
+activation generation and exact endpoint/project. Legacy ON flags without that
+binding remain inactive until explicitly enabled. Bulk remote-memory deletion
+persists a fresh generation before remote mutation; old chat/branch/checkpoint
+bindings cannot reactivate during preparation or reconnection. A failed deletion
+does not restore the old generation. Losing browser state also creates a fresh
+generation. This guard does not coordinate clients on other browsers/devices.
+Disabled stays disabled. No selected character means synchronization
 waits for the user to open a supported chat; the extension does not select a chat
 or modify native auto-load preferences. The existing source/branch reconciliation
 checks still guard writes and generation.

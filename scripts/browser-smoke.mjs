@@ -639,6 +639,17 @@ try {
     await waitStatus('Connected.');
     check('remote deletion leaves reconnection available but preserves disabled memory', await field('key').inputValue() === '' && !await field('enabled').isChecked());
     check('explicit user budget survives reload without default replacement', await field('budget').inputValue() === '512');
+    if (!faultMode) {
+        // Keep a stale native ON flag: preparing again must not revive uploads.
+        await page.evaluate(async () => { const ctx = SillyTavern.getContext(); ctx.chatMetadata.sillymemoryEnabled = true; await ctx.saveChat(); });
+        const memoryWrites = () => calls.filter(call => call.path.endsWith('/upsert') && !call.path.includes('/smtest_')).length;
+        const writesBeforePreparation = memoryWrites();
+        await expandMemorySettings(page);
+        await field('provision').click(); await waitStatus('Connected. Chat memory is ready.');
+        check('preparation after bulk deletion cannot revive a stale native ON preference',
+            !await field('enabled').isChecked() && collections.size === 0
+            && memoryWrites() === writesBeforePreparation);
+    }
     await page.evaluate(() => localStorage.removeItem(`sillymemory:state:${SillyTavern.getContext().extensionSettings.sillymemory.owner}`));
     await page.reload(); await page.locator('#sillymemory').waitFor({ state: 'attached', timeout: 45000 });
     await page.waitForFunction(() => !document.querySelector('#sillymemory [data-sm=connect]').disabled);
@@ -652,9 +663,64 @@ try {
     await page.waitForFunction(() => !document.querySelector('#sillymemory [data-sm=connect]').disabled);
     check('Forget key removes persistence and reload makes no credential request', calls.length === beforeForgottenReload && await page.evaluate(() => !Object.keys(localStorage).some(k => k.startsWith('sillymemory:credential:'))) && !await field('enabled').isChecked());
 
+    if (!faultMode) {
+        const appCalls = []; let appOutcome = 'region_requested';
+        const connectionId = '44444444-4444-4444-8444-444444444444', projectId = '22222222-2222-4222-8222-222222222222';
+        const issuer = 'https://auth.lambdadb.ai/';
+        const cors = { 'Access-Control-Allow-Origin': url, 'Access-Control-Allow-Headers': 'Authorization, Content-Type, Accept', 'Access-Control-Allow-Methods': 'GET,POST,OPTIONS' };
+        // Synthetic LambdaDB account API and issuer. Approval redirects straight to
+        // the extension's callback page, which reports the code to the initiating tab.
+        await page.context().route(/^https:\/\/(api|auth)\.lambdadb\.ai\//, async route => {
+            const req = route.request(), target = new URL(req.url()), key = `${req.method()} ${target.host} ${target.pathname}`;
+            if (req.method() === 'OPTIONS') return route.fulfill({ status: 204, headers: cors });
+            appCalls.push({ key, body: req.postData(), headers: req.headers() });
+            const json = (value, status = 200) => route.fulfill({ status, headers: cors, json: value });
+            if (key === 'GET api.lambdadb.ai /.well-known/oauth-protected-resource') return json({ resource: 'https://api.lambdadb.ai', authorization_servers: [issuer], lambdadb_console_url: 'https://app.lambdadb.ai' });
+            if (key === 'GET auth.lambdadb.ai /.well-known/openid-configuration') return json({ issuer, authorization_endpoint: `${issuer}oauth2/auth`, token_endpoint: `${issuer}oauth2/token`, registration_endpoint: `${issuer}oauth2/register`, revocation_endpoint: `${issuer}oauth2/revoke` });
+            if (key === 'POST auth.lambdadb.ai /oauth2/register') return json({ client_id: 'synthetic-installation' }, 201);
+            if (key === 'POST api.lambdadb.ai /project-connections') return json({ connection_id: connectionId, expires_at: new Date(Date.now() + 900000).toISOString() }, 201);
+            if (key === 'GET auth.lambdadb.ai /oauth2/auth') {
+                const callback = new URL(target.searchParams.get('redirect_uri'));
+                callback.searchParams.set('code', 'synthetic-code'); callback.searchParams.set('state', target.searchParams.get('state'));
+                return route.fulfill({ status: 302, headers: { Location: callback.href } });
+            }
+            if (key === 'POST auth.lambdadb.ai /oauth2/token') return json({ access_token: 'synthetic-setup-token', token_type: 'bearer', expires_in: 900, scope: appOutcome === 'ready' ? 'connection:read connection:issue' : 'connection:read' });
+            if (key === `GET api.lambdadb.ai /project-connections/${connectionId}`) return json({ connection_id: connectionId, status: appOutcome, ...(appOutcome === 'ready' ? { project_id: projectId } : {}) });
+            if (key === `POST api.lambdadb.ai /project-connections/${connectionId}/key`) return json({ connection_id: connectionId, endpoint, project_id: projectId, project_name: 'synthetic', key_id: 'synthetic-app-key', api_key: 'synthetic-session-key' }, 201);
+            if (key === 'POST auth.lambdadb.ai /oauth2/revoke') return route.fulfill({ status: 200, headers: cors, body: '' });
+            return json({ error: 'not_found' }, 404);
+        });
+        await expandMemorySettings(page);
+        await field('app-connect').click(); await waitStatus('Region requested.');
+        const claims = () => appCalls.filter(c => c.key.endsWith('/key')).length;
+        check('app region request ends waiting without issuing a key or connecting', !await field('app-waiting').isVisible() && claims() === 0 && !await field('enabled').isChecked());
+        check('app setup token is revoked after a region request', appCalls.at(-1).key === 'POST auth.lambdadb.ai /oauth2/revoke');
+        appOutcome = 'ready';
+        const canceledVerification = faults.arm('connection', 'hold');
+        await field('app-connect').click();
+        await canceledVerification.entered;
+        await field('app-cancel').click();
+        canceledVerification.release();
+        await waitStatus('Connection canceled.');
+        check('canceling after redemption prevents a delayed connection check from saving or preparing the key',
+            !await field('enabled').isChecked() && collections.size === 0
+            && await page.evaluate(() => !Object.keys(localStorage).some(k => k.startsWith('sillymemory:credential:'))));
+        await field('app-connect').click(); await waitStatus('Connected. Chat memory is ready.');
+        check('app approval automatically saves and prepares the exact project without activating chat memory', await field('project').inputValue() === 'synthetic' && await field('key').inputValue() === '' && !await field('enabled').isChecked() && collections.size === 0
+            && claims() === 2);
+        check('app installation is registered once and reused', appCalls.filter(c => c.key.endsWith('/oauth2/register')).length === 1);
+        check('app authorization uses S256 PKCE and the exact extension callback',
+            appCalls.filter(c => c.key.endsWith('/oauth2/token')).every(c => new URLSearchParams(c.body).get('redirect_uri') === `${url}/scripts/extensions/third-party/sillymemory/oauth-callback.html` && new URLSearchParams(c.body).get('code_verifier')?.length >= 43));
+        check('app requests never forward the host cookies, CSRF or a project key, and only setup calls carry the setup token',
+            appCalls.every(c => !c.headers.cookie && !c.headers['x-csrf-token'] && !c.headers['x-api-key']
+                && (!c.headers.authorization || (c.headers.authorization === 'Bearer synthetic-setup-token' && c.key.includes('/project-connections/')))));
+        await openMemoryConnection(page);
+        await field('forget').click(); await waitStatus('Saved key removed');
+        for (const popup of page.context().pages()) if (popup !== page) await popup.close();
+    }
     if (faultMode) check('fault run has no uncaught browser page errors', errors.length === 0);
     const sourceSha256 = {};
-    for (const file of ['index.js', 'manifest.json', 'settings.html', 'style.css', 'src/chunking.js', 'src/client.js', 'src/credentials.js', 'src/commit.js', 'src/chat-collections.js', 'src/checkpoints.js', 'src/gate.js', 'src/memory.js', 'src/time.js', 'src/context.js', 'scripts/native-chat-scenarios.mjs', 'scripts/per-chat-memory-scenarios.mjs', 'scripts/setup-recovery-scenarios.mjs', 'scripts/native-reply-scenarios.mjs', 'src/delivery.js', 'src/token-usage.js', 'src/status.js', 'scripts/browser-smoke.mjs', 'scripts/settings-panel.mjs', 'scripts/emulator-cors.mjs', 'scripts/fault-scenarios.mjs', 'scripts/recovery-scenarios.mjs']) {
+    for (const file of ['index.js', 'manifest.json', 'settings.html', 'style.css', 'src/chunking.js', 'src/client.js', 'src/credentials.js', 'src/activation.js', 'src/app-connect.js', 'oauth-callback.html', 'oauth-callback.js', 'src/commit.js', 'src/chat-collections.js', 'src/checkpoints.js', 'src/gate.js', 'src/memory.js', 'src/time.js', 'src/context.js', 'scripts/native-chat-scenarios.mjs', 'scripts/per-chat-memory-scenarios.mjs', 'scripts/setup-recovery-scenarios.mjs', 'scripts/native-reply-scenarios.mjs', 'src/delivery.js', 'src/token-usage.js', 'src/status.js', 'scripts/browser-smoke.mjs', 'scripts/settings-panel.mjs', 'scripts/emulator-cors.mjs', 'scripts/fault-scenarios.mjs', 'scripts/recovery-scenarios.mjs']) {
         sourceSha256[file] = createHash('sha256').update(await readFile(path.join(root, file))).digest('hex');
     }
     await writeFile(path.join(artifacts, artifactName), JSON.stringify({ passed: true, faultResults, nativeChatResults, nativeReplyResults, sourceSha256, time: new Date().toISOString(), sillyTavern: revision, node: process.version, browser: browser.version(), upstream: 'Local HTTPS LambdaDB emulator; no live managed embeddings', checks, pageErrors: errors, requestCount: calls.length, preflights, proxyRequests, remainingCollections: collections.size }, null, 2));
