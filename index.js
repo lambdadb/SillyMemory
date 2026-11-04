@@ -657,7 +657,14 @@ async function initialize() {
         const hasMemory = Boolean(state.testCollection || state.chatCollections.length);
         if (connectionVerified) { status('This project is already connected. Clean up owned memory before connecting another project.'); return; }
         const popup = window.open('about:blank', '_blank');
-        if (popup) { popup.opener = null; popup.document.title = 'Connect to LambdaDB'; }
+        if (popup) {
+            popup.opener = null;
+            // Discovery, registration and connection setup run before the window can
+            // navigate; say so instead of showing an empty page.
+            popup.document.title = 'Connect to LambdaDB';
+            popup.document.body.style.cssText = 'font: 16px system-ui, sans-serif; margin: 3em; color: #333';
+            popup.document.body.textContent = 'Opening LambdaDB sign-in…';
+        }
         appController = new AbortController();
         const controller = appController, requestOwner = owner;
         element('app-waiting').hidden = false;
@@ -693,7 +700,11 @@ async function initialize() {
             } catch (error) {
                 if (controller.signal.aborted) status('Connection canceled. Existing project data is retained.');
                 else throw error;
-            } finally { element('app-waiting').hidden = true; appController = undefined; }
+            } finally {
+                element('app-waiting').hidden = true; appController = undefined;
+                // The callback page closes itself; a failure or cancel before it must not leave a blank window.
+                if (popup && !popup.closed) popup.close();
+            }
         });
     };
     element('connect').onclick = () => {
