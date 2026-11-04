@@ -664,7 +664,7 @@ try {
     check('Forget key removes persistence and reload makes no credential request', calls.length === beforeForgottenReload && await page.evaluate(() => !Object.keys(localStorage).some(k => k.startsWith('sillymemory:credential:'))) && !await field('enabled').isChecked());
 
     if (!faultMode) {
-        const appCalls = []; let appOutcome = 'region_requested', offered = false;
+        const appCalls = []; let appOutcome = 'region_requested', offered = false, discoveryGate;
         const connectionId = '44444444-4444-4444-8444-444444444444', projectId = '22222222-2222-4222-8222-222222222222';
         const issuer = 'https://auth.lambdadb.ai/';
         const cors = { 'Access-Control-Allow-Origin': url, 'Access-Control-Allow-Headers': 'Authorization, Content-Type, Accept', 'Access-Control-Allow-Methods': 'GET,POST,OPTIONS' };
@@ -676,6 +676,7 @@ try {
             appCalls.push({ key, body: req.postData(), headers: req.headers() });
             const json = (value, status = 200) => route.fulfill({ status, headers: cors, json: value });
             if (key === 'GET api.lambdadb.ai /.well-known/oauth-protected-resource' && !offered) return json({ error: 'not_found' }, 404);
+            if (key === 'GET api.lambdadb.ai /.well-known/oauth-protected-resource') await discoveryGate?.promise;
             if (key === 'GET api.lambdadb.ai /.well-known/oauth-protected-resource') return json({ resource: 'https://api.lambdadb.ai', authorization_servers: [issuer], lambdadb_console_url: 'https://app.lambdadb.ai' });
             if (key === 'GET auth.lambdadb.ai /.well-known/openid-configuration') return json({ issuer, authorization_endpoint: `${issuer}oauth2/auth`, token_endpoint: `${issuer}oauth2/token`, registration_endpoint: `${issuer}oauth2/register`, revocation_endpoint: `${issuer}oauth2/revoke` });
             if (key === 'POST auth.lambdadb.ai /oauth2/register') return json({ client_id: 'synthetic-installation' }, 201);
@@ -697,7 +698,15 @@ try {
         check('a server without Connect reports manual setup and closes the blank approval window',
             page.context().pages().length === 1 && !appCalls.some(c => c.key.endsWith('/oauth2/register')));
         offered = true;
-        await field('app-connect').click(); await waitStatus('Region requested.');
+        let release; discoveryGate = { promise: new Promise(resolve => { release = resolve; }) };
+        const opened = page.context().waitForEvent('page');
+        await field('app-connect').click();
+        const approvalWindow = await opened;
+        await approvalWindow.waitForFunction(() => document.body?.textContent.includes('Opening LambdaDB sign-in'), undefined, { timeout: 10000 }).catch(() => {});
+        check('the approval window explains itself while Connect prepares authorization',
+            await approvalWindow.title() === 'Connect to LambdaDB' && await approvalWindow.evaluate(() => document.body.textContent) === 'Opening LambdaDB sign-in…');
+        discoveryGate = undefined; release();
+        await waitStatus('Region requested.');
         const claims = () => appCalls.filter(c => c.key.endsWith('/key')).length;
         check('app region request ends waiting without issuing a key or connecting', !await field('app-waiting').isVisible() && claims() === 0 && !await field('enabled').isChecked());
         check('app setup token is revoked after a region request', appCalls.at(-1).key === 'POST auth.lambdadb.ai /oauth2/revoke');
