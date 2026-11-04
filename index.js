@@ -693,7 +693,11 @@ async function initialize() {
             } catch (error) {
                 if (controller.signal.aborted) status('Connection canceled. Existing project data is retained.');
                 else throw error;
-            } finally { element('app-waiting').hidden = true; appController = undefined; }
+            } finally {
+                element('app-waiting').hidden = true; appController = undefined;
+                // The callback page closes itself; a failure or cancel before it must not leave a blank window.
+                if (popup && !popup.closed) popup.close();
+            }
         });
     };
     element('connect').onclick = () => {

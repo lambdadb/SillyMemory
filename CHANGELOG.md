@@ -13,8 +13,9 @@ boundary; publication is confirmed by the corresponding Git tag and GitHub Relea
   popup with S256 PKCE, and one project key is issued and saved after the same
   connection verification as manual setup. The setup token is revoked, chat
   memory stays off, and an uncertain earlier attempt is recovered for the same
-  project. Requires SillyTavern on HTTPS or localhost and a LambdaDB environment
-  with browser connections enabled.
+  project. A failure or cancel closes the approval window. Requires SillyTavern
+  on HTTPS or localhost and a LambdaDB environment with browser connections
+  enabled.
 
 ### Changed
 
