@@ -4,6 +4,23 @@ Versions describe the extension, independently of the SillyTavern host version.
 An `Unreleased` entry is a development candidate. A dated entry records a release
 boundary; publication is confirmed by the corresponding Git tag and GitHub Release.
 
+## [Unreleased]
+
+### Added
+
+- **Connect to LambdaDB** in Connection settings, using LambdaDB OAuth: this
+  installation registers once with its exact callback page, approval runs in a
+  popup with S256 PKCE, and one project key is issued and saved after the same
+  connection verification as manual setup. The setup token is revoked, chat
+  memory stays off, and an uncertain earlier attempt is recovered for the same
+  project. Requires SillyTavern on HTTPS or localhost and a LambdaDB environment
+  with browser connections enabled.
+
+### Changed
+
+- After **Delete all**, chat memory ON flags from before the deletion stay
+  inactive until deliberately enabled again in this browser.
+
 ## [0.7.3] - 2026-10-28
 
 ### Changed
