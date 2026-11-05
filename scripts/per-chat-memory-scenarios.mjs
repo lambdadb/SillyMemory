@@ -22,7 +22,7 @@ export async function runPerChatMemoryScenarios({ page, field, waitStatus, check
         if (!response.ok) throw new Error('Could not create synthetic chat');
     }, other);
     const beforeOff = calls.length;
-    await open(other); await waitStatus('Memory disabled');
+    await open(other); await waitStatus('Memory is off');
     const native = await prompt();
     check('a new chat defaults off without remote reads or uploads despite another enabled chat', !await field('enabled').isChecked() && !native.injection && !native.aborted && calls.length === beforeOff);
     await field('enabled').check(); await waitStatus('synchronized');
@@ -31,12 +31,12 @@ export async function runPerChatMemoryScenarios({ page, field, waitStatus, check
     await open(original); await waitStatus('synchronized');
     check('turning the second chat off leaves the first chat enabled and LambdaDB connected', await field('enabled').isChecked() && (await field('connection-state').textContent()).startsWith('Connected'));
     await field('enabled').uncheck();
-    await open(other); await waitStatus('Memory disabled');
+    await open(other); await waitStatus('Memory is off');
     await openChatMemory(page);
     const beforeFailedSave = writes();
     await page.route('**/api/chats/save', route => route.fulfill({ status: 503, json: { error: true } }), { times: 1 });
     await page.locator('#sillymemory-chat [data-sm-chat="toggle"]').click();
-    await waitStatus('preference could not be saved');
+    await waitStatus('on/off could not be saved');
     check('a failed native preference save rolls activation back before any memory uploads', !await field('enabled').isChecked() && writes() === beforeFailedSave && (await read(other))[0].chat_metadata.sillymemoryEnabled === false);
     let entered, release;
     const reached = new Promise(resolve => { entered = resolve; });
@@ -53,7 +53,7 @@ export async function runPerChatMemoryScenarios({ page, field, waitStatus, check
     await openChatMemory(page); await screenshot?.('per-chat-memory-on');
     await field('enabled').uncheck();
     await screenshot?.('per-chat-memory-off');
-    await open(original); await waitStatus('Memory disabled');
+    await open(original); await waitStatus('Memory is off');
     check('both saved off preferences remain independent when reopening either chat', !await field('enabled').isChecked() && (await read(other))[0].chat_metadata.sillymemoryEnabled === false);
     await field('enabled').check(); await waitStatus('synchronized');
     if (drawerWasOpen) await page.locator('#sillymemory-chat [data-sm-chat="settings"]').click();

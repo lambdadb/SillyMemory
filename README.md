@@ -96,7 +96,7 @@ Projects can be created only in open regions; request another region in the
 LambdaDB Console.
 
 Manual connection below remains available. Existing memory prevents switching to
-another project until owned cleanup is confirmed. After Delete all, previous chat
+another project until its memory is deleted. After Delete all, previous chat
 ON flags remain inactive until deliberately enabled again in this browser.
 
 ## Install
@@ -119,10 +119,10 @@ ON flags remain inactive until deliberately enabled again in this browser.
    | Project name | Your LambdaDB project name. |
    | Project API key | Your LambdaDB project key, not your chat model's key. |
 
-4. Click **Connect and prepare**. This verifies and saves the key in this browser,
-   tests temporary data using your LambdaDB inference allowance and verifies cleanup.
-   Your chat is not uploaded or activated by setup. If preparation is interrupted,
-   use **Clean up test data** when shown, then **Finish preparation**.
+4. Click **Connect and test**. This saves the key in this browser and runs a short
+   setup test with temporary data, using a small part of your LambdaDB usage. Your
+   chat is not uploaded and memory stays off. If the test is interrupted, use
+   **Clean up test data** when shown, then **Run setup test**.
 5. Open an existing saved character chat or a new one. Turn off built-in Vector
    Storage chat vectorization and other extensions that rewrite chat history.
    Expand **Memory** above the composer and click **Turn memory on in this chat**.
@@ -130,7 +130,7 @@ ON flags remain inactive until deliberately enabled again in this browser.
 
 Connection settings collapse after verification. The memory switch and status
 remain above the composer; **Advanced** contains limits, diagnostics, prompt
-inspection, remote cleanup and optional **Frozen memory snapshots**.
+inspection, deleting memory and optional **Frozen memory snapshots**.
 
 No npm commands, manual CORS allowlist, proxy setting, or SillyTavern server restart
 are needed.
@@ -165,8 +165,8 @@ Edits, swipes and deletions are reconciled against the current chat.
 Original message text is preserved.
 
 - Open **Memory** above the message composer for current status and recovery
-  actions. **Ready** means the chat can use memory; **Last prompt verified** means
-  the final host prompt passed the delivery check. It does not guarantee answer
+  actions. **Ready** means the chat can use memory; **Memory added** means
+  SillyMemory found its memory in SillyTavern's final prompt. It does not guarantee answer
   correctness. **Chat history** opens SillyTavern's existing chat list so you can
   return to the original conversation. **SillyMemory settings** opens the native extension drawer.
 - Once connected and prepared, use **Turn memory on / off** in the same panel
@@ -182,7 +182,7 @@ Original message text is preserved.
 - Open **Last prompt** in the Memory panel to preview up to three selected source
   passages from the last prompt, with speaker and message positions. **View full
   memory** shows the full final-prompt memory in the same panel. Check the delivery status
-  for whether the final host prompt was verified. Previews stay in this tab and
+  for whether SillyTavern's final prompt was checked. Previews stay in this tab and
   clear when changing chats, changing source messages, disabling memory or
   preparing another reply; normal reply completion keeps the last selection.
 - The expanded panel shows the last prepared input estimate from SillyTavern's
@@ -197,7 +197,7 @@ Original message text is preserved.
 - Click **Turn memory off in this chat** to return to ordinary SillyTavern history handling.
   Continue the same chat: the original messages are preserved, and the next
   generation uses the host’s existing context limits and settings without
-  SillyMemory retrieval. Saved remote memory is kept; other extensions’ settings
+  SillyMemory retrieval. Saved memory is kept; other extensions’ settings
   are not changed.
 - Reload reconnects using the saved key and restores the selected chat’s saved on/off state
   after verification. **Connection → Forget key** removes the saved key and disables memory.
@@ -212,9 +212,9 @@ out-of-path passages and indexing missing or changed text. If the source memory
 is unavailable or the parent link cannot be verified, preparation can rebuild
 from local history and consume embedding/write allowance.
 
-Native **Save checkpoint** saves the chat transcript; it does not freeze remote
+Native **Save checkpoint** saves the chat transcript; it does not freeze
 memory at save time. **Advanced → Frozen memory snapshots** additionally binds a
-saved transcript to verified remote memory, with separate save/resume controls.
+saved transcript to its checked memory, with separate save/resume controls.
 Saving or resuming preserves the saved memory on/off preference; an enabled
 writable chat synchronizes automatically after success. See the
 [snapshot guide](docs/checkpoints.md) and [native workflow validation](docs/native-chat-workflow.md).
@@ -224,9 +224,9 @@ writable chat synchronizes automatically after success. See the
 | What you see | What to do |
 | --- | --- |
 | Connection or authentication failure | Use **Reconnect** in the chat panel when a saved key is available. Otherwise open **Connection** settings to check the regional endpoint/project/key and connect. Check browser connectivity to LambdaDB for network errors. |
-| Failed connection test | Use **Clean up test data** beside the status, then use **Finish preparation**. The diagnostic cleanup control also remains under **Advanced**. Keep pending cleanup records until it succeeds. |
+| Failed connection test | Use **Clean up test data** beside the status, then use **Run setup test**. The diagnostic cleanup control also remains under **Advanced**. Keep pending cleanup records until it succeeds. |
 | Synchronization failure | Follow the status message; wait before retrying a temporary service error, then use **Retry synchronization** in the chat's Memory panel. **This chat's memory → Sync now** in the same panel remains available for manual synchronization. |
-| Generation stopped during memory preparation | Read the last-prompt status, resolve the error, then use **Retry reply** above the composer for an unchanged pending user input, or the native **Regenerate** action. The shortcut uses native regeneration and makes a new model request; it never retries automatically. Sync alone does not resume a stopped generation. Disable memory if you want to continue with native history. |
+| Reply stopped while adding memory | Read the last-prompt status, resolve the error, then use **Retry reply** above the composer for an unchanged pending user input, or the native **Regenerate** action. The shortcut uses native regeneration and makes a new model request; it never retries automatically. Sync alone does not resume a stopped generation. Disable memory if you want to continue with native history. |
 | Query exceeds 8 KiB | Shorten the latest messages, or disable memory for that generation. Queries are not silently truncated. |
 
 ## Data, usage, and cleanup
@@ -236,7 +236,7 @@ your browser to LambdaDB. Text and queries are also processed by its managed
 embedding/reranking providers. Storage, writes, searches and inference consume
 plan allowance; see [LambdaDB pricing](https://lambdadb.ai/pricing). The extension
 itself is open source, but connected services are not unlimited free resources.
-Turning memory off keeps remote data; on Pay as You Go, retained data continues
+Turning memory off keeps saved memory; on Pay as You Go, retained data continues
 to consume storage usage until deleted.
 
 The verified API key is saved in a dedicated browser credential record scoped to
@@ -245,10 +245,10 @@ it or use **Forget key**. Other extensions running on the same page can access
 browser storage; this is not an isolated secret vault.
 
 Before uninstalling or changing connection settings, open **Advanced** and use
-**Delete all owned remote memory** and clean up any pending test collection. **Delete this chat's
+**Delete all memory** and clean up any pending test data. **Delete this chat's
 memory**, under **This chat's memory** in that chat's Memory panel, removes only that chat's writable branch; sibling branches remain.
 These controls keep local SillyTavern chats. Deleting a native chat or uninstalling
-the extension does **not** automatically remove its remote data. Snapshot retention
+the extension does **not** automatically remove its memory. Snapshot retention
 and provider backups are separate from deletion of current records. See
 [storage and recovery](docs/versioned-memory.md) and [saved connections](docs/saved-connection.md).
 
@@ -272,7 +272,7 @@ Install from `main` for the public version; `develop` and topic branches are for
 development. In **Extensions → Manage extensions**, use SillyMemory's **Update**
 button and reload. Updates follow the installed Git branch, not the newest release
 tag. Automatic updates are disabled. Normal updates preserve settings and ownership;
-do not delete remote memory just to update.
+do not delete memory just to update.
 
 When updating from 0.6.0, open each desired chat and choose **Turn memory on in
 this chat**. The previous global switch is replaced by explicit per-chat choices;

@@ -35,7 +35,7 @@ export async function runSetupRecoveryScenarios({ page, field, check, calls, wai
     page.on('request', observe);
     try {
         await openChatMemory(page);
-        await open('SillyMemory independent setting'); await waitStatus('Memory disabled');
+        await open('SillyMemory independent setting'); await waitStatus('Memory is off');
         await page.evaluate(() => new Promise(resolve => requestAnimationFrame(resolve)));
         check('closed extension settings do not refresh snapshot lists when chats change', inventoryReads === 0);
         await page.locator('#sillymemory-chat [data-sm-chat="settings"]').click();
@@ -90,6 +90,6 @@ export async function runSetupRecoveryScenarios({ page, field, check, calls, wai
     check('a late automatic list cannot restore another story after a chat switch', (await list.textContent()).includes('No saved checkpoints') && !await field('enabled').isChecked());
     await open(nativeChats.source); await waitStatus('synchronized');
     if (!sourceWasOn) await field('enabled').uncheck();
-    await open(original); await waitStatus('Memory disabled'); await settled();
+    await open(original); await waitStatus('Memory is off'); await settled();
     await expandMemorySettings(page);
 }

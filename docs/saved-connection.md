@@ -3,7 +3,7 @@
 ## Product decision
 
 Keep one UI extension and direct browser HTTPS/CORS. The user enters a project
-key once and chooses **Connect and prepare**. Prepared connections use the
+key once and chooses **Connect and test**. Prepared connections use the
 **Save and connect** label when edited. That action explicitly stores the key
 in this browser; there are no retention modes or extra server plugins. It replaces
 the previous session-only policy for the unreleased 0.4.0 candidate, not any
@@ -19,11 +19,11 @@ remain in the client's private field; the password input is cleared on submissio
 A single authenticated `GET /projects/{project}/collections?size=1` validates the
 connection before save or activation. It does not create resources or invoke
 managed embeddings, reranking or the answer model. It proves the bounded read
-works, not every write permission. The initial explicit **Connect and prepare**
+works, not every write permission. The initial explicit **Connect and test**
 action then runs the required synthetic transport test (unless it already passed
 in this session) and verifies cleanup before marking memory ready. The UI discloses
 temporary inference usage and separate per-chat activation before the action.
-Setup never uploads or activates a chat. **Finish preparation** remains available
+Setup never uploads or activates a chat. **Run setup test** remains available
 after interrupted setup and verified pending-test cleanup.
 The manual test and pending-test cleanup controls remain under **Advanced**.
 Pending test data also exposes a cleanup action beside the status. A failed

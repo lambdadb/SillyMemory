@@ -28,6 +28,15 @@ boundary; publication is confirmed by the corresponding Git tag and GitHub Relea
   delivery line, last-prompt inspector and chat history button are removed.
 - **Connect to LambdaDB** on an already connected browser without saved memory
   points to **Forget key** instead of memory cleanup.
+- Interface text uses plain words: "memory" instead of "remote" or "owned"
+  memory, **Run setup test** and **Run connection test** instead of preparation
+  and synthetic upsert, "SillyTavern" instead of host or native, and plain
+  last-prompt results such as **Memory added**. **How memory works** is
+  rewritten in three sentences. Deleting one chat's memory now says that memory
+  is also turned off in that chat. When memory is off, the chat panel shows the
+  off status once instead of twice.
+- In the chat Memory panel, **Turn memory on in this chat** is a filled,
+  full-width button; **Turn memory off** stays an ordinary button.
 - After **Delete all**, chat memory ON flags from before the deletion stay
   inactive until deliberately enabled again in this browser.
 

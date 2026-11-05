@@ -287,7 +287,7 @@ try {
                     // If it fails, retain the pending record instead of racing deletion.
                     await openSettings();
                     await answerMemoryPopup(page, () => field('delete').click());
-                    await waitStatus('no longer accessible');
+                    await waitStatus('memory was deleted');
                     assert(true, 'settings deletion drains writes and removes owned memory');
                 }
                 await page.evaluate(async ({ credentials, collections }) => {

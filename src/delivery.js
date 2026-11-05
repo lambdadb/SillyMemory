@@ -42,14 +42,14 @@ export function inspectPrompt(expected, prompt) {
 }
 
 export function deliverySummary(result, stopOnLoss) {
-    if (!result) return 'Final prompt verification unavailable for this completion format. Prepared memory is not confirmed.';
+    if (!result) return 'SillyMemory cannot check the final prompt for this chat format, so the added memory is not confirmed.';
     const count = (group, outcome) => result[group].filter(m => m.outcome === outcome).length;
     const memoryLost = count('memory', 'missing'), inputLost = count('input', 'missing');
     const uncertain = count('memory', 'unverified') + count('input', 'unverified');
     const guidanceLost = (result.guidance || []).some(m => m.outcome === 'missing');
-    const totals = `Final host prompt: ${count('memory', 'included')}/${result.memory.length} memory excerpts and ${count('input', 'included')}/${result.input.length} input messages verified.`;
-    if (memoryLost || inputLost || guidanceLost) return `${stopOnLoss ? 'Generation stopped' : 'Warning'}: ${memoryLost} memory excerpts and ${inputLost} input messages are missing or changed.${guidanceLost ? ' Memory guidance is missing or changed.' : ''} ${totals} Increase context, reduce reserved output, then generate again. Disable Stop on missing context to proceed with a warning.${uncertain ? ` ${uncertain} transformed messages could not be verified.` : ''}`;
-    return `${totals}${uncertain ? ` ${uncertain} transformed messages could not be verified; they are not counted as missing.` : ''} Provider receipt is not checked.`;
+    const totals = `Last prompt: ${count('memory', 'included')} of ${result.memory.length} memory blocks and ${count('input', 'included')} of ${result.input.length} recent messages included.`;
+    if (memoryLost || inputLost || guidanceLost) return `${stopOnLoss ? 'Reply stopped' : 'Warning'}: ${memoryLost} memory blocks and ${inputLost} recent messages were left out or changed.${guidanceLost ? ' Memory guidance was left out or changed.' : ''} ${totals} Increase the context size or reduce the reply length, then generate again. Turn off Stop on missing context to continue with a warning.${uncertain ? ` ${uncertain} reformatted messages could not be checked.` : ''}`;
+    return `${totals}${uncertain ? ` ${uncertain} reformatted messages could not be checked; they are not counted as missing.` : ''}`;
 }
 
 export class PromptDelivery {
