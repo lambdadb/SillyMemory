@@ -154,7 +154,7 @@ async function generate(name, type = 'normal', streaming = false) {
     if (generations.length !== start + 1) throw new Error('Expected exactly one final model request');
     const result = await page.evaluate(() => {
         const c = SillyTavern.getContext();
-        return { last: c.chat.at(-1)?.mes, isUser: c.chat.at(-1)?.is_user, chatLength: c.chat.length, inspection: document.querySelector('[data-sm="inspection"]').textContent, chatId: c.getCurrentChatId() };
+        return { last: c.chat.at(-1)?.mes, isUser: c.chat.at(-1)?.is_user, chatLength: c.chat.length, inspection: document.querySelector('[data-sm-chat="inspection"]').textContent, chatId: c.getCurrentChatId() };
     });
     const request = generations.at(-1);
     request.answer = result.last; request.generationElapsedMs = generationElapsedMs;

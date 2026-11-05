@@ -47,7 +47,7 @@ is created. Rename/delete cancellation returns an explicit incomplete result,
 clears the preparing notice and does not schedule synchronization. Completed
 actions and failed actions retain their existing follow-up/error behavior.
 
-**Chat history** in the Memory panel and **Open chat history** in settings open
+**Chat history** in the Memory panel opens
 the existing native list. They do not create another chat manager. The basic
 panel directs users to native checkpoints and branches; advanced snapshots retain
 their distinct verified-memory semantics.
@@ -76,8 +76,8 @@ passages admitted to the memory budget, rather than all search candidates or
 model-generated summaries. It lists up to three passages in source order, with
 role, speaker, message and passage positions, and the first 180 Unicode code
 points per excerpt followed by an ellipsis when clipped. These are display limits
-only. **View full memory** opens the
-existing final-prompt inspector, including any omitted or unverifiable excerpts.
+only. **View full memory** shows the
+existing final-prompt inspection in the Memory panel, including any omitted or unverifiable excerpts.
 An empty selection is explicit; selection itself does not claim delivery or
 answer correctness.
 

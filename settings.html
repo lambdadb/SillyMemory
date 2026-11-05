@@ -6,33 +6,46 @@
         <p data-sm-chat="status">Connect SillyMemory to get started.</p>
         <progress data-sm-chat="progress" aria-label="Memory operation progress" hidden></progress>
         <p data-sm-chat="delivery">No prompt checked in this chat.</p>
-        <section data-sm-chat="tokens" class="sm-chat-memory" aria-labelledby="sm-chat-tokens-heading" hidden>
-          <strong id="sm-chat-tokens-heading">Last prompt · estimated tokens</strong>
-          <dl class="sm-token-counts">
-            <dt>Prepared input</dt><dd data-sm-chat="token-input"></dd>
-            <dt>Prepared memory</dt><dd data-sm-chat="token-memory"></dd>
-          </dl>
-          <small>SillyTavern's final text-prompt estimate; excludes reserved output. Not provider receipt or billing.</small>
-          <p data-sm-chat="token-reference" hidden></p>
-          <small data-sm-chat="token-reference-help" hidden>Raw dialogue text before host formatting/trimming; includes memory guidance on the right. Excludes character/system settings. This is not a native memory-off full-prompt or billing comparison.</small>
-          <button type="button" data-sm-chat="token-compare" class="menu_button">Compare dialogue text</button>
-        </section>
-        <section data-sm-chat="memory" class="sm-chat-memory" aria-labelledby="sm-chat-memory-heading" hidden>
-          <strong id="sm-chat-memory-heading">Memory selected for the last prompt</strong>
-          <p data-sm-chat="memory-summary"></p>
-          <ul data-sm-chat="memory-list"></ul>
-          <button type="button" data-sm-chat="inspect" class="menu_button">View full memory</button>
-        </section>
-        <div class="sm-chat-actions">
-          <button type="button" data-sm-chat="history" class="menu_button">Chat history</button>
+        <div class="sm-chat-actions" data-sm-chat="recovery">
           <button type="button" data-sm-chat="resume" class="menu_button" hidden>Resume snapshot</button>
-          <button type="button" data-sm-chat="settings" class="menu_button">SillyMemory settings</button>
           <button type="button" data-sm-chat="vectors" class="menu_button" hidden>Open Vector Storage</button>
           <button type="button" data-sm-chat="reconnect" class="menu_button" hidden>Reconnect</button>
           <button type="button" data-sm-chat="cleanup" class="menu_button" hidden>Clean up test data</button>
           <button type="button" data-sm-chat="sync" class="menu_button" hidden>Retry synchronization</button>
           <button type="button" data-sm-chat="retry" class="menu_button" hidden>Retry reply</button>
-          <button type="button" data-sm-chat="toggle" class="menu_button" aria-pressed="false" hidden>Turn memory on in this chat</button>
+        </div>
+        <button type="button" data-sm-chat="toggle" class="menu_button sm-chat-toggle" aria-pressed="false" hidden>Turn memory on in this chat</button>
+        <details data-sm-chat="last-prompt" class="sm-chat-section" hidden>
+          <summary>Last prompt</summary>
+          <section data-sm-chat="tokens" class="sm-chat-memory" aria-labelledby="sm-chat-tokens-heading" hidden>
+            <strong id="sm-chat-tokens-heading">Estimated tokens</strong>
+            <dl class="sm-token-counts">
+              <dt>Prepared input</dt><dd data-sm-chat="token-input"></dd>
+              <dt>Prepared memory</dt><dd data-sm-chat="token-memory"></dd>
+            </dl>
+            <small>SillyTavern's final text-prompt estimate; excludes reserved output. Not provider receipt or billing.</small>
+            <p data-sm-chat="token-reference" hidden></p>
+            <small data-sm-chat="token-reference-help" hidden>Raw dialogue text before host formatting/trimming; includes memory guidance on the right. Excludes character/system settings. This is not a native memory-off full-prompt or billing comparison.</small>
+            <button type="button" data-sm-chat="token-compare" class="menu_button">Compare dialogue text</button>
+          </section>
+          <section data-sm-chat="memory" class="sm-chat-memory" aria-labelledby="sm-chat-memory-heading" hidden>
+            <strong id="sm-chat-memory-heading">Memory selected</strong>
+            <p data-sm-chat="memory-summary"></p>
+            <ul data-sm-chat="memory-list"></ul>
+            <button type="button" data-sm-chat="inspect" class="menu_button" aria-expanded="false">View full memory</button>
+            <pre data-sm-chat="inspection" tabindex="-1" hidden>No memory prepared.</pre>
+          </section>
+        </details>
+        <details data-sm-chat="manage" class="sm-chat-section" hidden>
+          <summary>This chat's memory</summary>
+          <div class="sm-chat-actions">
+            <button type="button" data-sm-chat="sync-now" class="menu_button">Sync now</button>
+            <button type="button" data-sm-chat="delete" class="menu_button sm-chat-danger">Delete this chat's memory</button>
+          </div>
+        </details>
+        <div class="sm-chat-links">
+          <button type="button" data-sm-chat="history" class="sm-chat-link">Chat history</button>
+          <button type="button" data-sm-chat="settings" class="sm-chat-link">SillyMemory settings</button>
         </div>
         <small>On/off is saved with this chat. Other chats and the LambdaDB connection are unchanged. Saved memory is kept when off.</small>
       </div>
@@ -68,14 +81,11 @@
       <progress data-sm="progress" aria-label="Memory operation progress" hidden></progress>
       <div class="sm-actions" data-sm="recovery-actions" hidden>
         <button data-sm="recover-cleanup" class="menu_button" hidden>Clean up test data</button>
-        <button data-sm="retry-sync" class="menu_button" hidden>Retry synchronization</button>
       </div>
-      <p data-sm="delivery" role="status">No prompt checked in this chat.</p>
     </div>
     <section aria-labelledby="sm-chats-heading">
       <h4 id="sm-chats-heading">Chats and checkpoints</h4>
       <p>Use SillyTavern’s Save checkpoint, Create Branch and Back to parent chat controls as usual. Memory follows the chat you open. Opening a saved path prepares its memory without changing your enabled preference.</p>
-      <button data-sm="history" class="menu_button">Open chat history</button>
     </section>
     <details data-sm="advanced" class="sm-section">
       <summary>Advanced <span>Limits, diagnostics and remote data</span></summary>
@@ -86,8 +96,7 @@
       <p>Stop generation if the final host prompt omits or changes prepared memory or the retained input dialogue. Turn off to proceed with a warning. Custom macros and continuation prefixes may be unverifiable.</p>
       <h4>Diagnostics</h4>
       <p>Connects directly to LambdaDB from this browser. No SillyTavern proxy setting or restart is needed.</p>
-      <div class="sm-actions"><button data-sm="gate" class="menu_button">Test synthetic upsert / query / delete</button><button data-sm="cleanup" class="menu_button">Clean up test collection</button><button data-sm="sync" class="menu_button">Sync this chat</button></div>
-      <details><summary>Memory in the last prompt</summary><pre data-sm="inspection">No memory prepared.</pre></details>
+      <div class="sm-actions"><button data-sm="gate" class="menu_button">Test synthetic upsert / query / delete</button><button data-sm="cleanup" class="menu_button">Clean up test collection</button></div>
       <details data-sm="checkpoints" class="sm-section">
         <summary>Frozen memory snapshots <span>Optional verified transcript and remote memory saves</span></summary>
         <p>Use SillyTavern’s normal checkpoint and branch controls for everyday chat. These optional snapshots also preserve verified remote memory. Snapshots preserve the source chat’s on/off choice; resumed chats can change it independently. Editing a saved snapshot invalidates it.</p>
@@ -99,8 +108,8 @@
         <p>Deleting a checkpoint removes only that saved transcript and memory branch. To rename or delete the currently open checkpoint, open another story path first.</p>
       </details>
       <h4>Remote data</h4>
-      <p>These actions delete remote memory and keep local chat files. Native chat deletion does not remove remote memory. All-owned cleanup removes every story's memory, including checkpoints.</p>
-      <div class="sm-actions"><button data-sm="delete-chat" class="menu_button">Delete this chat’s remote memory</button><button data-sm="delete" class="menu_button">Delete all owned remote memory</button></div>
+      <p>This action deletes remote memory and keeps local chat files. Native chat deletion does not remove remote memory. All-owned cleanup removes every story's memory, including checkpoints. To delete one chat's memory, open This chat's memory in that chat's Memory panel.</p>
+      <div class="sm-actions"><button data-sm="delete" class="menu_button">Delete all owned remote memory</button></div>
       <h4>How memory works</h4>
       <p>Each story has its own collection. Native branches reuse committed memory in isolated LambdaDB branches. Completed eligible messages are indexed when they leave the recent-five window, keeping adjacent input/reply pairs together. Initial indexing consumes managed embedding usage.</p>
       <p>Search uses only the current eligible message; recent dialogue stays in the prompt. The model answers naturally and receives guidance for unclear context and missing evidence. SillyMemory does not force a response format or accumulate unresolved requests.</p>

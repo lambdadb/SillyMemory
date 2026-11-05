@@ -260,14 +260,14 @@ try {
             const c = SillyTavern.getContext();
             if (type === 'normal') document.querySelector('#send_textarea').value = question;
             let generationError, preparedInspection;
-            const inspectPrepared = (_data, dryRun) => { if (!dryRun) preparedInspection = document.querySelector('[data-sm="inspection"]').textContent; };
+            const inspectPrepared = (_data, dryRun) => { if (!dryRun) preparedInspection = document.querySelector('[data-sm-chat="inspection"]').textContent; };
             c.eventSource.makeFirst(c.eventTypes.GENERATE_AFTER_DATA, inspectPrepared);
             try { await c.generate(type); } catch (error) { generationError = String(error?.name || error); }
             finally { c.eventSource.removeListener(c.eventTypes.GENERATE_AFTER_DATA, inspectPrepared); }
             return { generationError, preparedInspection, draft: document.querySelector('#send_textarea').value, answer: c.chat.at(-1)?.mes, isUser: c.chat.at(-1)?.is_user,
                 chat: c.chat.map(m => m.mes),
-                delivery: document.querySelector('[data-sm="delivery"]').textContent,
-                inspection: document.querySelector('[data-sm="inspection"]').textContent,
+                delivery: document.querySelector('[data-sm-chat="delivery"]').textContent,
+                inspection: document.querySelector('[data-sm-chat="inspection"]').textContent,
                 generating: (await import('/script.js')).is_send_press,
                 generatingUI: document.body.dataset.generating || null };
         }, { question: spec.collision ? 'OK' : plan.question, type: spec.type });
@@ -356,7 +356,7 @@ try {
         }
         if (spec.id === 'disabled') assert.doesNotMatch(observation.delivery, /Generation stopped|verified/);
         if (spec.id === 'pressure-stopped') {
-            await field('delivery').scrollIntoViewIfNeeded();
+            await page.locator('#sillymemory-chat').scrollIntoViewIfNeeded();
             await page.screenshot({ path: `${output}.png` });
             const recoveryStart = generations.length;
             // Simulate the user's explicit setting change and retry in the SAME chat.
@@ -366,7 +366,7 @@ try {
                 oai_settings.openai_max_context = 4096;
                 const c = SillyTavern.getContext(), before = c.chat.map(m => m.mes);
                 await c.generate('regenerate');
-                return { before, after: c.chat.map(m => m.mes), delivery: document.querySelector('[data-sm="delivery"]').textContent };
+                return { before, after: c.chat.map(m => m.mes), delivery: document.querySelector('[data-sm-chat="delivery"]').textContent };
             });
             assert.equal(generations.length, recoveryStart + 1);
             assert.deepEqual(recovered.after.slice(0, -1), recovered.before);
@@ -403,7 +403,7 @@ try {
     const rejected = await page.evaluate(async () => {
         document.querySelector('#send_textarea').value = 'NEWER QUESTION';
         await SillyTavern.getContext().generate('normal');
-        return { finalEvents: deliveryRace.finalEvents, status: document.querySelector('[data-sm="delivery"]').textContent };
+        return { finalEvents: deliveryRace.finalEvents, status: document.querySelector('[data-sm-chat="delivery"]').textContent };
     });
     assert.equal(rejected.finalEvents, 1, 'Overlapping ready prompt never reaches final event');
     assert.match(rejected.status, /Another prompt is awaiting/);
@@ -411,10 +411,10 @@ try {
     assert.equal(generations.length, raceStart, 'Neither the stale nor rejected request reaches completion endpoint');
     const race = await page.evaluate(async () => {
         const c = SillyTavern.getContext();
-        const canceled = document.querySelector('[data-sm="delivery"]').textContent;
+        const canceled = document.querySelector('[data-sm-chat="delivery"]').textContent;
         await c.generate('regenerate');
         c.eventSource.removeListener(c.eventTypes.GENERATE_AFTER_DATA, deliveryRace.hold);
-        return { canceled, finalEvents: deliveryRace.finalEvents, recovered: document.querySelector('[data-sm="delivery"]').textContent, answer: c.chat.at(-1).mes };
+        return { canceled, finalEvents: deliveryRace.finalEvents, recovered: document.querySelector('[data-sm-chat="delivery"]').textContent, answer: c.chat.at(-1).mes };
     });
     assert.match(race.canceled, /chat or memory settings changed/);
     assert.equal(race.finalEvents, 2);
@@ -445,7 +445,7 @@ try {
         const c = SillyTavern.getContext();
         document.querySelector('#send_textarea').value = question;
         await c.generate('normal');
-        return { chat: c.chat.map(m => m.mes), delivery: document.querySelector('[data-sm="delivery"]').textContent };
+        return { chat: c.chat.map(m => m.mes), delivery: document.querySelector('[data-sm-chat="delivery"]').textContent };
     }, packingQuestion);
     assert.equal(generations.length, packingStart + 1);
     const packingRequest = generations.at(-1), excerpts = packingRequest.messages.filter(m => m.content.startsWith('[Recalled conversation excerpts]'));
@@ -480,7 +480,7 @@ try {
     const assembled = await page.evaluate(async () => {
         const c = SillyTavern.getContext(); document.querySelector('#send_textarea').value = 'Where are the cedar maps?';
         await c.generate('normal');
-        return { source: c.chat[0].mes, delivery: document.querySelector('[data-sm="delivery"]').textContent };
+        return { source: c.chat[0].mes, delivery: document.querySelector('[data-sm-chat="delivery"]').textContent };
     });
     assert.equal(generations.length, assemblyStart + 1);
     const assemblyRequest = generations.at(-1), joined = assemblyRequest.messages.find(m => m.content.includes('message 1, passages 1-'));
@@ -498,7 +498,7 @@ try {
     assert.equal(await field('stopOnLoss').isChecked(), false, 'Warning preference survives reload');
     await page.waitForFunction(() => !document.querySelector('#sillymemory [data-sm=connect]').disabled);
     assert.equal(await field('key').inputValue(), '', 'Reload restores the key without exposing it in the input');
-    assert.equal(await field('delivery').innerText(), 'No prompt checked in this chat.', 'No stale final prompt after reload');
+    assert.equal(await page.locator('#sillymemory-chat [data-sm-chat="delivery"]').textContent(), 'No prompt checked in this chat.', 'No stale final prompt after reload');
     await page.locator('#extensions-settings-button .drawer-toggle').click();
     if (!await page.locator('#sillymemory .inline-drawer-content').isVisible()) await page.locator('#sillymemory .inline-drawer-toggle').click();
     await expandMemorySettings(page);
@@ -516,7 +516,7 @@ try {
     Object.assign(report, { passed: true, node: process.version, browser: browser.version(), requests, remainingCollections: collections.size, forgottenKeyAbsentFromStorage: true });
 } catch (error) {
     Object.assign(report, { passed: false, failure: error.message, errors, remainingCollections: collections.size });
-    console.error('Delivery status:', await page?.locator('[data-sm="delivery"]').innerText().catch(() => 'unavailable'));
+    console.error('Delivery status:', await page?.locator('#sillymemory-chat [data-sm-chat="delivery"]').textContent().catch(() => 'unavailable'));
     throw error;
 } finally {
     report.generations = generations;

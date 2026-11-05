@@ -1,4 +1,4 @@
-import { answerMemoryPopup, memoryControl, expandMemorySettings } from './settings-panel.mjs';
+import { answerMemoryPopup, chatMemoryAction, memoryControl, expandMemorySettings } from './settings-panel.mjs';
 // Bounded real UI + direct browser CORS + managed LambdaDB lifecycle acceptance.
 // No generation calls; at most four small collections, or two with --large-history (1,100 submitted documents).
 import assert from 'node:assert/strict';
@@ -88,7 +88,9 @@ try {
     }
     page.on('response', r => { if (new URL(r.url()).origin === new URL(credentials.endpoint).origin) report.responses.push({ stage, status: r.status(), method: r.request().method(), resource: new URL(r.url()).pathname.split('/').slice(5).join('/') || 'collection' }); });
     await page.goto(url); await page.getByText('Welcome to SillyTavern!', { exact: true }).waitFor(); await page.getByText('Save', { exact: true }).last().click();
-    const field = name => name === 'enabled' ? memoryControl(page) : page.locator(`#sillymemory [data-sm="${name}"]`);
+    const field = name => name === 'enabled' ? memoryControl(page)
+        : name === 'sync' ? chatMemoryAction(page, 'sync-now') : name === 'delete-chat' ? chatMemoryAction(page, 'delete')
+        : page.locator(`#sillymemory [data-sm="${name}"]`);
     const status = async text => page.waitForFunction(text => document.querySelector('[data-sm="status"]')?.textContent.includes(text), text, { timeout: 180000 });
     panel = async () => {
         await page.locator('#sillymemory').waitFor({ state: 'attached', timeout: 45000 });

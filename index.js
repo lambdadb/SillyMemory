@@ -24,6 +24,7 @@ let statusView, collections, identityKey;
 let preparation = Promise.resolve();
 let checkpointRevision = 0;
 let chatStatus, stoppedRequest, deliveryNotice, sessionUnavailable;
+let deliveryText = 'No prompt checked in this chat.', inspectionText = 'No memory prepared.';
 let snapshotOperation;
 let retrying = false, sourceRevision = 0;
 let hostGenerating = () => false;
@@ -64,15 +65,26 @@ function rememberStoppedRequest(message, type) {
     renderChatStatus();
 }
 function showDelivery(text, notice) {
-    element('delivery').textContent = text;
+    deliveryText = text;
     deliveryNotice = notice;
     renderChatStatus();
+}
+function setInspection(text) {
+    inspectionText = text;
+    if (chatStatus) chatElement('inspection').textContent = text;
+}
+// The Last prompt section exists only while it has something to show.
+function renderLastPrompt() {
+    if (!chatStatus) return;
+    chatElement('last-prompt').hidden = chatElement('tokens').hidden && chatElement('memory').hidden;
 }
 function showMemoryPreview(passages) {
     if (!chatStatus) return;
     const preview = chatElement('memory'), list = chatElement('memory-list');
     list.replaceChildren();
     preview.hidden = !passages;
+    chatElement('inspection').hidden = true; chatElement('inspect').setAttribute('aria-expanded', 'false');
+    renderLastPrompt();
     if (!passages) return;
     chatElement('memory-summary').textContent = passages.length
         ? `${passages.length} source passage${passages.length === 1 ? '' : 's'} selected. Delivery status is shown above.`
@@ -96,6 +108,7 @@ function renderTokenUsage() {
     if (!chatStatus) return;
     const usage = tokenUsage;
     chatElement('tokens').hidden = !usage?.finished;
+    renderLastPrompt();
     if (!usage?.finished) return;
     chatElement('token-input').textContent = `${tokenLabel(usage.input)}${usage.input === undefined ? '' : ' tokens'}`;
     chatElement('token-memory').textContent = `${tokenLabel(usage.memory)}${usage.memory === undefined ? '' : ' tokens'}${usage.enabled ? '' : ' · memory off'}`;
@@ -155,7 +168,7 @@ function renderChatStatus() {
     chatStatus.dataset.kind = kind;
     chatElement('label').textContent = `Memory · ${label}`;
     chatElement('status').textContent = sessionUnavailable || (snapshotOperation ? element('status').textContent : blocker?.message || stopped?.message || element('status').textContent);
-    chatElement('delivery').textContent = element('delivery').textContent;
+    chatElement('delivery').textContent = deliveryText;
     chatElement('delivery').hidden = chatElement('delivery').textContent === chatElement('status').textContent;
     const progress = chatElement('progress'), value = snapshotOperation ? {} : !blocker && !stopped && statusView.progress;
     progress.hidden = !value;
@@ -173,7 +186,14 @@ function renderChatStatus() {
     chatElement('toggle').hidden = !connected || !state.ready || Boolean(state.testCollection) || !supportsChat(context()) || Boolean(savedSnapshot());
     chatElement('toggle').textContent = memoryEnabled() ? 'Turn memory off in this chat' : 'Turn memory on in this chat';
     chatElement('toggle').setAttribute('aria-pressed', String(connected && memoryEnabled()));
-    for (const name of ['cleanup', 'sync', 'retry', 'toggle', 'resume']) chatElement(name).disabled = !canAct || retrying;
+    const recovery = chatElement('recovery');
+    recovery.hidden = [...recovery.children].every(button => button.hidden);
+    // This chat's memory: actions on the open chat's own memory, apart from recovery.
+    const manageable = connected && state.ready && !state.testCollection && supportsChat(context());
+    chatElement('sync-now').hidden = !memoryEnabled() || Boolean(savedSnapshot());
+    chatElement('delete').hidden = !context().chatMetadata?.sillymemory?.id;
+    chatElement('manage').hidden = !manageable || (chatElement('sync-now').hidden && chatElement('delete').hidden);
+    for (const name of ['cleanup', 'sync', 'retry', 'toggle', 'resume', 'sync-now', 'delete']) chatElement(name).disabled = !canAct || retrying;
 }
 function toggleMemory() {
     if (!sessionReady || !connectionVerified || !client || busy || retrying || hostGenerating()) return;
@@ -194,7 +214,7 @@ async function setChatMemory(enabled) {
     status(enabled ? 'Saving memory activation for this chat…' : 'Memory disabled for this chat. Saving this chat’s preference…');
     if (!enabled) {
         showDelivery('Memory disabled for this chat. No pending prompt verification.');
-        element('inspection').textContent = 'No memory prepared.';
+        setInspection('No memory prepared.');
     }
     renderSettings();
     const { saveChatConditional } = await import('/script.js');
@@ -234,7 +254,7 @@ async function setChatMemory(enabled) {
     } else {
         status('Memory disabled for this chat. SillyTavern uses its usual chat history. Remote data is retained until deleted.');
         showDelivery('Memory disabled for this chat. No pending prompt verification.');
-        element('inspection').textContent = 'No memory prepared.';
+        setInspection('No memory prepared.');
     }
 }
 async function openChatHistory() {
@@ -254,13 +274,12 @@ async function openMemorySettings(vectors = false) {
     target.scrollIntoView({ block: 'nearest' });
     target.tabIndex = -1; target.focus({ preventScroll: true });
 }
-async function openMemoryInspection() {
-    await openMemorySettings();
-    element('advanced').open = true;
-    const inspection = element('inspection');
-    inspection.closest('details').open = true;
-    inspection.scrollIntoView({ block: 'nearest' });
-    inspection.tabIndex = -1; inspection.focus({ preventScroll: true });
+function toggleMemoryInspection() {
+    const inspection = chatElement('inspection'), show = inspection.hidden;
+    inspection.textContent = inspectionText;
+    inspection.hidden = !show;
+    chatElement('inspect').setAttribute('aria-expanded', String(show));
+    if (show) { inspection.scrollIntoView({ block: 'nearest' }); inspection.focus({ preventScroll: true }); }
 }
 async function retryReply() {
     const request = currentStoppedRequest();
@@ -299,11 +318,9 @@ function renderSettings() {
         : 'Connection ready. Turn memory on separately in each chat’s Memory panel.';
     element('mode-help').textContent = 'On/off is saved with each chat. When off, SillyTavern uses its usual chat history and saved remote memory is kept.';
     element('recover-cleanup').hidden = !cleanup;
-    element('retry-sync').hidden = !retrySync || !connected || !memoryEnabled() || cleanup;
-    element('recovery-actions').hidden = element('recover-cleanup').hidden && element('retry-sync').hidden;
+    element('recovery-actions').hidden = !cleanup;
     root.querySelectorAll('button, input').forEach(x => { x.disabled = busy || !sessionReady; });
     if (element('app-cancel')) element('app-cancel').disabled = false;
-    element('history').disabled = busy || !sessionReady || hostGenerating() || !canBrowseChats();
     renderChatStatus();
 }
 function clearInjection() {
@@ -403,7 +420,7 @@ function fail(error, operation, generation = false, type) {
         status(failureText(error)); return;
     }
     clearInjection();
-    if (root) element('inspection').textContent = 'No memory injected: operation failed.';
+    if (root) setInspection('No memory injected: operation failed.');
     if (operation) operation.fail(error, generation ? 'Generation stopped. ' : '', generation); else status(failureText(error, { sync: false }), { error: true });
 }
 async function action(job) {
@@ -503,7 +520,7 @@ globalThis.sillymemory_intercept = async (chat, contextSize, abort, type) => {
         for (let i = chat.length - 1; i >= 0; i--) {
             if (eligible.has(chat[i].index)) chat.splice(i, 1, ...(recalled.get(chat[i].index) || []));
         }
-        element('inspection').textContent = `${preparedTokens} / ${config.budget} tokens\n\n${quoteMemoryText(result.text)}`;
+        setInspection(`${preparedTokens} / ${config.budget} tokens\n\n${quoteMemoryText(result.text)}`);
         if (requestTokens && tokenUsage === requestTokens) Object.assign(requestTokens, { after: dialogueSnapshot(chat), memory: preparedTokens, guidance: requestGuidance });
         showMemoryPreview(result.passages);
         operation.finish(`Prepared ${result.passages.length} source passages in ${preparedMessages.length} memory excerpts (${preparedTokens} tokens); awaiting final prompt verification.`);
@@ -560,14 +577,14 @@ async function initialize() {
     if (composer) {
         composer.before(element('chat-status-template').content.cloneNode(true));
         chatStatus = document.getElementById('sillymemory-chat');
-        for (const [name, action] of [['settings', () => openMemorySettings()], ['vectors', () => openMemorySettings(true)], ['history', openChatHistory], ['inspect', openMemoryInspection]]) {
+        for (const [name, action] of [['settings', () => openMemorySettings()], ['vectors', () => openMemorySettings(true)], ['history', openChatHistory]]) {
             chatElement(name).onclick = event => {
                 event.stopPropagation();
                 return action().catch(() => status('Could not open the requested panel. Use SillyTavern’s native menus.', { error: true }));
             };
         }
-        for (const [name, handler] of [['cleanup', () => element('recover-cleanup').click()],
-            ['sync', () => element('retry-sync').click()], ['retry', retryReply],
+        for (const [name, handler] of [['cleanup', () => cleanupTestData()], ['sync', sync], ['sync-now', sync],
+            ['delete', () => action(() => deleteMemory(false))], ['inspect', toggleMemoryInspection], ['retry', retryReply],
             ['reconnect', reconnect], ['toggle', toggleMemory], ['token-compare', compareTokenUsage], ['resume', () => element('checkpoint-resume').click()]]) {
             chatElement(name).onclick = event => { event.stopPropagation(); return handler(); };
         }
@@ -580,7 +597,6 @@ async function initialize() {
         if (progress?.total > 0) { bar.max = progress.total; bar.value = progress.completed; }
         else bar.removeAttribute('value');
     });
-    element('history').onclick = () => openChatHistory().catch(() => status('Could not open chat history. Use Manage chat files beside the chat input.', { error: true }));
     for (const name of ['endpoint', 'project', 'budget']) element(name).value = state[name];
     element('stopOnLoss').checked = state.stopOnLoss !== false;
     element('stopOnLoss').onchange = () => { state.stopOnLoss = element('stopOnLoss').checked; persist(); };
@@ -655,7 +671,11 @@ async function initialize() {
     element('app-connect').onclick = () => {
         if (!sessionReady || busy || hostGenerating()) return;
         const hasMemory = Boolean(state.testCollection || state.chatCollections.length);
-        if (connectionVerified) { status('This project is already connected. Clean up owned memory before connecting another project.'); return; }
+        if (connectionVerified) {
+            status(hasMemory ? 'This project is already connected. Clean up owned memory before connecting another project.'
+                : 'This project is already connected. Forget the saved key to connect another project.');
+            return;
+        }
         const popup = window.open('about:blank', '_blank');
         if (popup) {
             popup.opener = null;
@@ -737,7 +757,7 @@ async function initialize() {
         await drain(); client?.forget(); client = undefined; makeCollections();
         stoppedRequest = undefined;
         showDelivery('Key forgotten. No pending prompt verification.');
-        element('inspection').textContent = 'No memory prepared.';
+        setInspection('No memory prepared.');
         element('key').value = ''; gatePassed = false; status('Saved key removed. Memory disabled. Enter your key to reconnect.');
     });
     async function testConnection() {
@@ -749,13 +769,15 @@ async function initialize() {
         delete state.testCollection; persist();
     }
     element('gate').onclick = () => action(testConnection);
-    element('cleanup').onclick = () => action(async () => {
-        if (!client) throw new ConnectionError('Enter your API key first.');
-        if (state.testCollection) await client.deleteOwnedCollection(state.testCollection, owner);
-        delete state.testCollection; persist(); status('No pending owned test collection remains.');
-    });
-    element('recover-cleanup').onclick = () => element('cleanup').click();
-    element('retry-sync').onclick = () => element('sync').click();
+    function cleanupTestData() {
+        return action(async () => {
+            if (!client) throw new ConnectionError('Enter your API key first.');
+            if (state.testCollection) await client.deleteOwnedCollection(state.testCollection, owner);
+            delete state.testCollection; persist(); status('No pending owned test collection remains.');
+        });
+    }
+    element('cleanup').onclick = cleanupTestData;
+    element('recover-cleanup').onclick = cleanupTestData;
     async function prepareConnection() {
         if (!client) throw new ConnectionError('Connect your project before preparing chat memory.');
         if (!gatePassed) await testConnection();
@@ -938,7 +960,6 @@ async function initialize() {
         state.budget = options({ ...state, budget: element('budget').value }).budget;
         element('budget').value = state.budget; persist(); schedule();
     };
-    element('sync').onclick = sync;
     async function deleteMemory(all) {
         if (!client || !collections) throw new ConnectionError('Reconnect before deleting remote memory.');
         if (!all && (!capture(context()) || !context().chatMetadata.sillymemory?.id)) throw new ConnectionError('This chat has no saved memory identity.');
@@ -972,11 +993,10 @@ async function initialize() {
         engine = undefined;
         stoppedRequest = undefined;
         showDelivery('Owned memory deleted. No pending prompt verification.');
-        element('inspection').textContent = 'No memory prepared.';
+        setInspection('No memory prepared.');
         status('Owned remote memory is no longer accessible for the selected scope. Local chats remain. Prepare/enable memory to rebuild.');
     }
     element('delete').onclick = () => action(() => deleteMemory(true));
-    element('delete-chat').onclick = () => action(() => deleteMemory(false));
     const events = ctx.eventTypes;
     ctx.eventSource.on(events.CHAT_COMPLETION_PROMPT_READY, data => {
         if (data.dryRun || !tokenUsage || tokenUsage.finished || tokenUsage.model !== tokenizerKey()) return;
@@ -995,7 +1015,7 @@ async function initialize() {
             clearTokenUsage();
             ctx.stopGeneration();
             showDelivery('Generation stopped because the chat or memory settings changed during prompt preparation. Generate again.', { label: 'Reply stopped', kind: 'error' });
-            element('inspection').textContent = 'No current memory verified.';
+            setInspection('No current memory verified.');
             return;
         }
         const stop = state.stopOnLoss !== false;
@@ -1011,7 +1031,7 @@ async function initialize() {
         if (finished.result) {
             const included = finished.result.memory.filter(m => m.outcome === 'included');
             const omitted = finished.result.memory.filter(m => m.outcome !== 'included');
-            element('inspection').textContent = `Memory excerpts in final host prompt (${included.length}/${finished.result.memory.length}):\n\n${included.map(m => m.content).join('\n\n') || 'None.'}${omitted.length ? `\n\nNot verified in final prompt:\n\n${omitted.map(m => m.content).join('\n\n')}` : ''}`;
+            setInspection(`Memory excerpts in final host prompt (${included.length}/${finished.result.memory.length}):\n\n${included.map(m => m.content).join('\n\n') || 'None.'}${omitted.length ? `\n\nNot verified in final prompt:\n\n${omitted.map(m => m.content).join('\n\n')}` : ''}`);
         }
     });
     ctx.eventSource.on(events.GENERATION_STARTED, (type, _options, dryRun) => {
@@ -1031,7 +1051,7 @@ async function initialize() {
             if (name === 'CHAT_CHANGED' || name === 'CHAT_RENAMED') {
                 identityKey = undefined;
                 listSequence++; element('checkpoint-list').textContent = 'Refresh to view checkpoints for this story.';
-                element('inspection').textContent = 'No memory injected in this chat.';
+                setInspection('No memory injected in this chat.');
                 showDelivery('No prompt checked in this chat.');
                 autoRefreshCheckpoints();
             }
