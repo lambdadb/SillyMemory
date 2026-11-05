@@ -74,8 +74,8 @@ history into the story branch. There is no storage-mode selection or conversion.
 family collection can remain; **Delete all memory** discovers and
 removes entire owned story families and their branches. Local chats
 are preserved. Deleting a native chat or uninstalling the extension does not
-remove remote memory automatically. Snapshot retention/backups remain provider
-policies; branch disappearance is not proof of physical erasure.
+remove remote memory automatically. LambdaDB's own retention and backups remain
+provider policies; branch disappearance is not proof of physical erasure.
 
 Reload verifies the saved browser key before restoring the enabled preference.
 Concurrent writers on multiple

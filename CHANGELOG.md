@@ -4,7 +4,7 @@ Versions describe the extension, independently of the SillyTavern host version.
 An `Unreleased` entry is a development candidate. A dated entry records a release
 boundary; publication is confirmed by the corresponding Git tag and GitHub Release.
 
-## [Unreleased]
+## [0.8.0] - Unreleased
 
 ### Added
 
@@ -15,8 +15,8 @@ boundary; publication is confirmed by the corresponding Git tag and GitHub Relea
   memory stays off, and an uncertain earlier attempt is recovered for the same
   project. The approval window says it is opening LambdaDB sign-in until it
   navigates, and a failure or cancel closes it. Requires SillyTavern
-  on HTTPS or localhost and a LambdaDB environment with browser connections
-  enabled.
+  on HTTPS or localhost. Connect is now the first step of the README; manual
+  key entry remains available.
 
 ### Changed
 
@@ -48,7 +48,8 @@ boundary; publication is confirmed by the corresponding Git tag and GitHub Relea
 - Frozen memory snapshots: the Advanced snapshot section (save, list, rename,
   delete, resume) and the chat panel's Resume snapshot button. SillyTavern's
   native Save checkpoint and Create Branch keep working as before, and
-  SillyMemory prepares memory for whichever chat you open.
+  SillyMemory prepares memory for whichever chat you open. There is no
+  migration for chats that were saved as snapshots.
 
 ## [0.7.3] - 2026-10-28
 

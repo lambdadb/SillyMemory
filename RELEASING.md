@@ -122,7 +122,7 @@ normally leave the optional branch/tag field empty, selecting default `main`.
 They update through **Manage extensions → SillyMemory → Update**, then reload.
 Automatic updates are disabled in the manifest. Reload verifies the saved browser
 key and uses each chat's saved on/off choice. Chats without an explicit choice
-start off; users updating from 0.6.0 enable memory separately in each desired chat. Forget key removes that credential and disables memory. Browser-storage
+start off; users updating from 0.6.0 enable memory separately in each desired chat. Disconnect (while connected) or Forget key removes that credential and disables memory. Browser-storage
 loss or rejected authentication requires a new key; see [reconnection](docs/saved-connection.md).
 
 For a problem, first disable memory to preserve ordinary chat operation. Back up
