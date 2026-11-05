@@ -1,8 +1,8 @@
-import { answerMemoryPopup, expandMemorySettings, openChatMemory } from './settings-panel.mjs';
+import { expandMemorySettings, openChatMemory } from './settings-panel.mjs';
 // Native chat/checkpoint/branch actions on a disposable host and local emulator.
 import assert from 'node:assert/strict';
 
-export async function runNativeChatScenarios({ page, field, waitStatus, check, faults, collections, calls, prompt, screenshot }) {
+export async function runNativeChatScenarios({ page, field, waitStatus, check, collections, screenshot }) {
     if (!await field('enabled').isChecked()) { await field('enabled').check(); await waitStatus('synchronized'); }
     const selected = () => page.evaluate(() => {
         const c = SillyTavern.getContext();
@@ -28,38 +28,6 @@ export async function runNativeChatScenarios({ page, field, waitStatus, check, f
     });
     await waitStatus('synchronized');
     await expandMemorySettings(page);
-    for (const outcome of ['success', 'failure']) {
-        let release, entered;
-        const held = new Promise(resolve => { release = resolve; });
-        const reached = new Promise(resolve => { entered = resolve; });
-        await page.route('**/api/characters/chats', async route => {
-            entered(); await held;
-            if (outcome === 'failure') await route.fulfill({ status: 400, json: { error: true } });
-            else await route.continue();
-        }, { times: 1 });
-        const writes = () => calls.filter(call => call.path.endsWith('/docs/upsert')).length;
-        const before = writes();
-        await page.evaluate(async outcome => {
-            const c = SillyTavern.getContext(); c.chat[0].mes += ` Deferred source ${outcome}.`;
-            await c.saveChat(); await c.eventSource.emit(c.eventTypes.MESSAGE_UPDATED, 0);
-            document.querySelector('#sillymemory [data-sm="checkpoint-refresh"]').click();
-        }, outcome);
-        await reached;
-        try {
-            await page.waitForTimeout(900); // Cross two 400 ms debounce ticks while busy.
-            check(`pending sync waits through a slow ${outcome} action without writing`, await field('checkpoint-refresh').isDisabled() && writes() === before && (await field('status').textContent()).includes('Getting older messages ready'));
-        } finally { release(); }
-        await page.waitForFunction(() => !document.querySelector('#sillymemory [data-sm="checkpoint-refresh"]').disabled);
-        if (outcome === 'success') {
-            await waitStatus('synchronized');
-            check('pending sync resumes after a slow action completes', writes() > before && remote((await selected()).memory).some(doc => doc.text.includes('Deferred source success.')));
-        } else {
-            await waitStatus('Could not read the saved checkpoint');
-            await page.waitForTimeout(600);
-            check('a failed action supersedes deferred sync and keeps its failure visible', writes() === before && (await field('status').textContent()).includes('Could not read the saved checkpoint') && await field('progress').isHidden());
-            await field('sync').click(); await waitStatus('synchronized');
-        }
-    }
     const source = await selected();
     const sourceDocuments = structuredClone(remote(source.memory));
     await openChatMemory(page);
@@ -79,6 +47,12 @@ export async function runNativeChatScenarios({ page, field, waitStatus, check, f
     assert.deepEqual(remote(source.memory), sourceDocuments, 'A native branch must not mutate its source memory');
     assert.deepEqual((await saved(source.file)).slice(1).map(m => m.mes), source.messages);
     check('native checkpoint and branch keep their source transcript intact', (await saved(source.file)).length === 13 && (await saved(checkpoint.file)).length === 13);
+    // Snapshot fixtures used to cover native Back to parent; keep it on an ordinary branch.
+    await openChatMemory(page);
+    await page.locator('#options_button').click(); await page.locator('#option_back_to_main').click();
+    await page.waitForFunction(file => SillyTavern.getContext().getCurrentChatId() === file, checkpoint.file);
+    await waitStatus('synchronized');
+    check('native Back to parent chat returns from a branch to its checkpoint with memory on', (await selected()).file === checkpoint.file && await field('enabled').isChecked());
     await open(source.file);
     await page.locator('#sillymemory-chat [data-sm-chat="settings"]').click();
     await field('enabled').uncheck();
@@ -88,59 +62,6 @@ export async function runNativeChatScenarios({ page, field, waitStatus, check, f
     await open(source.file);
     check('enabling an off native branch leaves its parent off and an earlier checkpoint on', !await field('enabled').isChecked() && (await saved('Native checkpoint fixture'))[0].chat_metadata.sillymemoryEnabled === true);
     await field('enabled').check(); await waitStatus('synchronized');
-    await expandMemorySettings(page);
-    const writes = () => calls.filter(call => call.path.endsWith('/docs/upsert')).length;
-    const beforeSnapshot = writes();
-    const held = faults.arm('create-branch', 'hold');
-    await field('checkpoint-save').click(); await held.entered;
-    try {
-        check('saving a frozen memory snapshot preserves the enabled preference', await field('enabled').isChecked());
-        check('snapshot progress is visible in the chat header', (await page.locator('#sillymemory-chat [data-sm-chat="label"]').innerText()).includes('Saving snapshot'));
-        check('snapshot operations disable and revalidate chat memory switching', await page.evaluate(async () => {
-            const button = document.querySelector('#sillymemory-chat [data-sm-chat="toggle"]');
-            const disabled = button.disabled;
-            await button.onclick(new MouseEvent('click'));
-            return disabled && document.querySelector('#sillymemory-chat [data-sm-chat="toggle"]').getAttribute('aria-pressed') === 'true';
-        }));
-        await openChatMemory(page);
-        await page.evaluate(() => toastr.clear());
-        await screenshot('snapshot-saving.png');
-        const blocked = await prompt();
-        check('generation during snapshot preparation stops explicitly instead of falling back to native history', blocked.aborted && !blocked.injection);
-    } finally { held.release(); }
-    await page.waitForFunction(() => !document.querySelector('#sillymemory [data-sm="checkpoint-save"]').disabled);
-    await waitStatus('synchronized');
-    check('successful snapshot saving returns to the original chat with memory on', (await selected()).file === source.file && await field('enabled').isChecked());
-    await expandMemorySettings(page);
-    const rows = field('checkpoint-list').locator('.sm-checkpoint');
-    const snapshotFile = await rows.first().getAttribute('data-file');
-    const frozenMemory = (await saved(snapshotFile))[0].chat_metadata.sillymemory;
-    const frozenDocuments = structuredClone(remote(frozenMemory));
-    check('frozen snapshot copies the full JSONL and inherits only older memory without new upserts',
-        (await saved(snapshotFile)).length === 13 && frozenDocuments.length === 6 && frozenDocuments.every(d => d.message < 6) && writes() === beforeSnapshot);
-    check('a frozen snapshot is saved without replacing the native checkpoint', snapshotFile?.startsWith('SillyMemory checkpoint ') && (await saved(checkpoint.file)).length === 13);
-    await rows.first().getByRole('button', { name: 'Resume', exact: true }).click();
-    await page.waitForFunction(() => !document.querySelector('#sillymemory [data-sm="checkpoint-resume"]').disabled);
-    await waitStatus('synchronized');
-    const resumed = await selected();
-    check('snapshot Resume opens a new chat and automatically prepares enabled memory', resumed.file.startsWith('SillyMemory resume ') && resumed.messages.length === 12 && await field('enabled').isChecked());
-    assert.deepEqual(remote(resumed.memory), frozenDocuments, 'Resume reuses the older memory partition');
-    check('snapshot resume keeps recent messages in JSONL without uploading them', writes() === beforeSnapshot);
-    await page.evaluate(async file => { await SillyTavern.getContext().openCharacterChat(file); }, snapshotFile);
-    await page.waitForFunction(() => document.querySelector('#sillymemory-chat [data-sm-chat="label"]').textContent.includes('Saved snapshot'));
-    const beforeBranch = calls.length;
-    await page.evaluate(async () => { await (await import('/scripts/bookmarks.js')).branchChat(7); });
-    await waitStatus('synchronized');
-    const fromSnapshot = await selected();
-    check('native Branch from a frozen snapshot becomes writable without inheriting its read-only marker', !fromSnapshot.memory.checkpoint && fromSnapshot.memory.story === source.memory.story && fromSnapshot.messages.length === 8 && await field('enabled').isChecked() && calls.length > beforeBranch);
-    assert.deepEqual(remote(frozenMemory), frozenDocuments, 'Branching must not modify the frozen snapshot');
-    await openChatMemory(page);
-    await page.locator('#options_button').click(); await page.locator('#option_back_to_main').click();
-    await page.waitForFunction(file => SillyTavern.getContext().getCurrentChatId() === file, snapshotFile);
-    check('native Back to parent chat returns to the preserved snapshot', (await selected()).file === snapshotFile && await field('enabled').isChecked());
-    await page.locator('#options_button').click(); await page.locator('#option_back_to_main').click();
-    await waitStatus('synchronized');
-    check('the snapshot native parent link returns to the original conversation', (await selected()).file === source.file && await field('enabled').isChecked());
     await openChatMemory(page);
     await page.locator('#sillymemory-chat [data-sm-chat="history"]').click();
     const sourceRow = page.locator(`#select_chat_div .select_chat_block[file_name=${JSON.stringify(source.file)}]`);
@@ -153,62 +74,6 @@ export async function runNativeChatScenarios({ page, field, waitStatus, check, f
     await waitStatus('synchronized');
     check('the native history list returns to the original conversation with memory on', (await selected()).file === source.file && await field('enabled').isChecked());
     await screenshot('native-original-chat.png');
-    await expandMemorySettings(page);
-    const beforeFailedSave = calls.length;
-    const rejectSnapshot = async route => {
-        if (route.request().postDataJSON().file_name?.startsWith('SillyMemory checkpoint ')) await route.fulfill({ status: 400, json: { error: true } });
-        else await route.continue();
-    };
-    await page.route('**/api/chats/save', rejectSnapshot);
-    await field('checkpoint-save').click(); await waitStatus('Checkpoint chat save failed');
-    await page.waitForFunction(() => !document.querySelector('#sillymemory [data-sm="checkpoint-save"]').disabled);
-    await page.unroute('**/api/chats/save', rejectSnapshot);
-    check('a rejected snapshot save keeps memory on, reports the failure and makes no remote writes', await field('enabled').isChecked() && calls.length === beforeFailedSave && (await selected()).file === source.file);
-    await field('enabled').uncheck();
-    await field('checkpoint-save').click();
-    await page.waitForFunction(() => !document.querySelector('#sillymemory [data-sm="checkpoint-save"]').disabled);
-    check('snapshot save preserves an explicitly disabled memory preference', !await field('enabled').isChecked());
-    await field('checkpoint-refresh').click();
-    await page.waitForFunction(() => !document.querySelector('#sillymemory [data-sm="checkpoint-refresh"]').disabled);
-    let offSnapshot;
-    for (const file of await rows.evaluateAll(items => items.map(item => item.dataset.file))) {
-        if ((await saved(file))[0].chat_metadata.sillymemoryEnabled === false) { offSnapshot = file; break; }
-    }
-    assert.ok(offSnapshot, 'A saved off snapshot must exist');
-    await open(offSnapshot); await openChatMemory(page);
-    const beforeFrozenToggle = JSON.stringify(await saved(offSnapshot));
-    await page.locator('#sillymemory-chat [data-sm-chat="toggle"]').evaluate(button => button.onclick(new MouseEvent('click')));
-    check('an off frozen snapshot offers Resume without allowing an integrity-changing toggle', await page.locator('#sillymemory-chat [data-sm-chat="toggle"]').isHidden() && await page.locator('#sillymemory-chat [data-sm-chat="resume"]').getAttribute('hidden') === null && JSON.stringify(await saved(offSnapshot)) === beforeFrozenToggle);
-    await page.locator('#sillymemory-chat [data-sm-chat="resume"]').click();
-    await page.waitForFunction(() => !document.querySelector('#sillymemory [data-sm="checkpoint-resume"]').disabled);
-    check('snapshot Resume inherits its saved disabled preference', !await field('enabled').isChecked());
-    await expandMemorySettings(page);
-    for (const enabled of [false, true]) {
-        if (enabled) { await field('enabled').check(); await waitStatus('synchronized'); }
-        for (const name of ['Rename', 'Delete checkpoint']) {
-            const before = calls.length;
-            await answerMemoryPopup(page, () => rows.filter({ has: page.locator(`button:text-is("${name}")`) }).first().getByRole('button', { name, exact: true }).click(), { accept: false });
-            await page.waitForFunction(() => !document.querySelector('#sillymemory [data-sm="checkpoint-save"]').disabled);
-            await waitStatus('Memory snapshot operation canceled.');
-            // Successful snapshot actions schedule sync after 400 ms; cancellation must not.
-            await page.waitForTimeout(600);
-            check(`${name} cancellation with memory ${enabled ? 'on' : 'off'} clears preparation without remote work`, await field('enabled').isChecked() === enabled && calls.length === before && !(await field('status').textContent()).includes('Preparing memory snapshot operation'));
-        }
-    }
-    await field('enabled').uncheck();
-    await page.evaluate(async file => { await SillyTavern.getContext().openCharacterChat(file); }, offSnapshot);
-    await page.evaluate(async () => { await (await import('/scripts/bookmarks.js')).branchChat(7); });
-    const disabledFork = await selected();
-    const offFrozenMemory = (await saved(offSnapshot))[0].chat_metadata.sillymemory;
-    const offFrozenDocuments = structuredClone(remote(offFrozenMemory));
-    check('a disabled native snapshot fork retains its inherited marker until identity normalization', !await field('enabled').isChecked() && Boolean(disabledFork.memory.checkpoint) && await page.evaluate(() => SillyTavern.getContext().chatMetadata.sillymemory.integrity !== SillyTavern.getContext().chatMetadata.integrity));
-    await expandMemorySettings(page);
-    await field('checkpoint-save').click();
-    await page.waitForFunction(() => !document.querySelector('#sillymemory [data-sm="checkpoint-save"]').disabled);
-    await waitStatus('Checkpoint saved:');
-    const normalizedFork = await selected();
-    check('saving a snapshot from a disabled native fork normalizes the writable source without enabling memory', !await field('enabled').isChecked() && normalizedFork.file === disabledFork.file && !normalizedFork.memory.checkpoint && normalizedFork.memory.id !== offFrozenMemory.id && normalizedFork.memory.story === offFrozenMemory.story && normalizedFork.memory.source === offFrozenMemory.id);
-    check('the disabled fork snapshot action preserves the frozen parent transcript and remote memory', JSON.stringify(remote(offFrozenMemory)) === JSON.stringify(offFrozenDocuments) && JSON.stringify((await saved(offSnapshot)).slice(1).map(message => message.mes)) === JSON.stringify(source.messages));
     // Later harness scenarios replace this disposable transcript themselves.
-    return { source: source.file, nativeCheckpoint: checkpoint.file, branch: branch.file, snapshot: snapshotFile, resumed: resumed.file, sourceMessages: source.messages.length, initialFile: original.file };
+    return { source: source.file, nativeCheckpoint: checkpoint.file, branch: branch.file, sourceMessages: source.messages.length, initialFile: original.file };
 }

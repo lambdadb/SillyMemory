@@ -131,7 +131,7 @@ ON flags remain inactive until deliberately enabled again in this browser.
 
 Connection settings collapse after verification. The memory switch and status
 remain above the composer; **Advanced** contains limits, diagnostics, prompt
-inspection, deleting memory and optional **Frozen memory snapshots**.
+inspection and deleting memory.
 
 No npm commands, manual CORS allowlist, proxy setting, or SillyTavern server restart
 are needed.
@@ -213,12 +213,9 @@ out-of-path passages and indexing missing or changed text. If the source memory
 is unavailable or the parent link cannot be verified, preparation can rebuild
 from local history and consume embedding/write allowance.
 
-Native **Save checkpoint** saves the chat transcript; it does not freeze
-memory at save time. **Advanced → Frozen memory snapshots** additionally binds a
-saved transcript to its checked memory, with separate save/resume controls.
-Saving or resuming preserves the saved memory on/off preference; an enabled
-writable chat synchronizes automatically after success. See the
-[snapshot guide](docs/checkpoints.md) and [native workflow validation](docs/native-chat-workflow.md).
+Native **Save checkpoint** saves the chat transcript; it does not freeze memory
+at save time. Opening the checkpoint later prepares its memory from that saved
+transcript. See [native workflow validation](docs/native-chat-workflow.md).
 
 ## If something goes wrong
 

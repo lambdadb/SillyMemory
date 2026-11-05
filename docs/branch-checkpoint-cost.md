@@ -1,5 +1,11 @@
 # Branch and checkpoint operating cost
 
+Update (2026-11-05): the frozen memory snapshot feature that the LambdaDB arm
+saves and resumes was removed, together with the `scripts/branch-checkpoint-cost.mjs`
+runner and its support module.
+Reproduce from revision `df3da19d2d5ee9a31a9125d3119d1646ae9895b4`, the last one
+that contains them; the commands in this report apply to that revision.
+
 ## Product question
 
 Does reusing inherited memory reduce actual waiting time and indexing work when a

@@ -174,8 +174,8 @@ it does not establish storage migration from an older published release.
 A candidate-branch installation is not a main deployment. Reports/screenshots
 stay under ignored `artifacts/`; retain concise results and exact source hashes.
 
-Use `scripts/chat-collections-live.mjs --checkpoint-manager` for bounded current
-story/branch/checkpoint acceptance with real managed embeddings. See
+Use `scripts/chat-collections-live.mjs` for bounded current story/branch
+acceptance with real managed embeddings. See
 [default story memory](docs/default-story-memory.md) for the current acceptance
 scope and retained evidence. The previous 0.2.0 upgrade/rollback adapter is
 archived; it is no longer a compatibility requirement.

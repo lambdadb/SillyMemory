@@ -3,7 +3,7 @@
 The current development candidate uses this layout for every chat. The
 [default-storage decision](default-story-memory.md) removes the pre-release
 opt-in and compatibility paths. Native checkpoints and branches use the ordinary
-chat workflow; optional frozen memory snapshots are explicitly saved/resumed under Advanced.
+chat workflow. (The optional frozen memory snapshots were removed on 2026-11-05.)
 The dated validation sections below preserve the original PR #53 results.
 
 ## Decision and acceptance boundary

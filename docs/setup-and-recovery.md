@@ -1,5 +1,8 @@
 # Setup and recovery UX
 
+Update (2026-11-05): the frozen memory snapshot feature was removed. The snapshot
+list and snapshot popup items below are historical.
+
 ## Decision and completion criteria
 
 Complete four bounded UI improvements together: reconnect using the scoped saved

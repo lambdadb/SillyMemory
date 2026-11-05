@@ -1,4 +1,10 @@
-# Frozen memory snapshots (advanced)
+# Frozen memory snapshots (removed)
+
+> **Removed on 2026-11-05.** SillyMemory no longer saves, lists or resumes frozen
+> memory snapshots. Use SillyTavern's native **Save checkpoint**, **Create Branch**
+> and **Back to parent chat**; SillyMemory follows the chat you open and prepares
+> its memory (see [native chat workflow](native-chat-workflow.md)). This page is
+> kept unchanged below as the historical record of the feature and its validation.
 
 For ordinary use, keep SillyTavern's native **Save checkpoint**, **Create Branch**,
 **Back to parent chat** and **Manage chat files** workflow. SillyMemory follows

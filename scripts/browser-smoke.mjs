@@ -154,7 +154,7 @@ try {
         : page.locator(`#sillymemory [data-sm="${name}"]`);
     const status = () => field('status').innerText();
     const waitStatus = async text => { await page.waitForFunction(text => document.querySelector('#sillymemory [data-sm="status"]')?.textContent.includes(text), text, { timeout: 30000 }); };
-    check('fresh setup shows connection before preparation or activation', await field('connect').isVisible() && !await field('provision').isVisible() && !await field('enabled').isVisible() && !await field('budget').isVisible() && !await field('checkpoint-save').isVisible());
+    check('fresh setup shows connection before preparation or activation', await field('connect').isVisible() && !await field('provision').isVisible() && !await field('enabled').isVisible() && !await field('budget').isVisible());
     check('chat activation is not exposed before connection and preparation', await chatField('toggle').getAttribute('hidden') !== null);
     const advancedSummary = field('advanced').locator(':scope > summary');
     await advancedSummary.focus(); await page.keyboard.press('Enter');
@@ -348,10 +348,11 @@ try {
     await page.evaluate(async () => {
         const c = SillyTavern.getContext();
         c.extensionSettings.vectors.enabled_chats = true;
-        c.chatMetadata.sillymemory.checkpoint = true;
+        // Snapshot metadata left by a removed feature must not block an ordinary chat.
+        c.chatMetadata.sillymemory.checkpoint = { state: 'ready', snapshot: null };
         await c.eventSource.emit(c.eventTypes.SETTINGS_UPDATED);
     });
-    check('snapshot recovery takes priority over an unrelated vector setting', (await chatField('label').innerText()).includes('Saved snapshot') && !await chatField('vectors').isVisible());
+    check('leftover snapshot metadata leaves an ordinary chat that reports the vector conflict', (await chatField('label').innerText()).includes('Vector Storage conflict') && await chatField('vectors').isVisible());
     await page.evaluate(() => { delete SillyTavern.getContext().chatMetadata.sillymemory.checkpoint; });
     const unsupportedSource = await page.evaluate(async () => {
         const c = SillyTavern.getContext(), original = structuredClone(c.chat);
@@ -573,42 +574,6 @@ try {
         });
         check('retry saves the full default story identity and synchronizes', persisted && await field('versioned').count() === 0);
     }
-    if (!faultMode) {
-        // Native chat-list entry must enforce the same identity checks as manager rows.
-        const originalFile = await page.evaluate(() => SillyTavern.getContext().getCurrentChatId());
-        for (const state of ['ready', 'pending']) {
-            await page.evaluate(async state => {
-                const c = SillyTavern.getContext();
-                const { checkpointDigest } = await import('/scripts/extensions/third-party/sillymemory/src/checkpoints.js');
-                const rows = [{ chat_metadata: { integrity: 'duplicate-native', sillymemory: {
-                    id: 'd'.repeat(32), story: 'e'.repeat(32), version: 1, integrity: 'duplicate-native',
-                    checkpoint: { state, snapshot: null, createdAt: '2026-01-01T00:00:00Z' },
-                } } }, { mes: 'Synthetic duplicate checkpoint.', name: 'Mira', is_user: false }];
-                rows[0].chat_metadata.sillymemory.checkpoint.hash = await checkpointDigest(rows);
-                for (const name of ['Duplicate checkpoint A', 'Duplicate checkpoint B']) {
-                    const response = await fetch('/api/chats/save', { method: 'POST', headers: c.getRequestHeaders(), body: JSON.stringify({ avatar_url: c.characters[c.characterId].avatar, file_name: name, force: false, chat: rows }) });
-                    if (!response.ok) throw new Error('Duplicate checkpoint fixture save failed');
-                }
-                await c.openCharacterChat('Duplicate checkpoint A');
-            }, state);
-            const before = calls.length;
-            await field('checkpoint-refresh').click();
-            await page.waitForFunction(() => !document.querySelector('[data-sm="checkpoint-refresh"]').disabled);
-            check(`${state} duplicate checkpoints are blocked in the manager`, (await field('checkpoint-list').innerText()).match(/Duplicate snapshot/g)?.length === 2 && await field('checkpoint-list').locator('button').count() === 0);
-            for (const button of ['checkpoint-save', 'checkpoint-resume']) {
-                await field(button).click();
-                await page.waitForFunction(button => !document.querySelector(`[data-sm="${button}"]`).disabled, button);
-                check(`${state} duplicate native checkpoint ${button} is rejected before remote access`, (await status()).includes('duplicated') && calls.length === before);
-            }
-        }
-        await page.evaluate(async originalFile => {
-            const c = SillyTavern.getContext(); await c.openCharacterChat(originalFile);
-            for (const name of ['Duplicate checkpoint A', 'Duplicate checkpoint B']) {
-                const response = await fetch('/api/chats/delete', { method: 'POST', headers: c.getRequestHeaders(), body: JSON.stringify({ avatar_url: c.characters[c.characterId].avatar, chatfile: `${name}.jsonl` }) });
-                if (!response.ok) throw new Error('Duplicate fixture cleanup failed');
-            }
-        }, originalFile);
-    }
     if (!faultMode) await runPerChatMemoryScenarios({ page, field, waitStatus, check, calls, prompt,
         screenshot: name => page.screenshot({ path: path.join(artifacts, `${name}.png`) }) });
     if (!faultMode) nativeChatResults = await runNativeChatScenarios({ page, field, waitStatus, check, faults, collections, calls, prompt,
@@ -745,7 +710,7 @@ try {
     }
     if (faultMode) check('fault run has no uncaught browser page errors', errors.length === 0);
     const sourceSha256 = {};
-    for (const file of ['index.js', 'manifest.json', 'settings.html', 'style.css', 'src/chunking.js', 'src/client.js', 'src/credentials.js', 'src/activation.js', 'src/app-connect.js', 'oauth-callback.html', 'oauth-callback.js', 'src/commit.js', 'src/chat-collections.js', 'src/checkpoints.js', 'src/gate.js', 'src/memory.js', 'src/time.js', 'src/context.js', 'scripts/native-chat-scenarios.mjs', 'scripts/per-chat-memory-scenarios.mjs', 'scripts/setup-recovery-scenarios.mjs', 'scripts/native-reply-scenarios.mjs', 'src/delivery.js', 'src/token-usage.js', 'src/status.js', 'scripts/browser-smoke.mjs', 'scripts/settings-panel.mjs', 'scripts/emulator-cors.mjs', 'scripts/fault-scenarios.mjs', 'scripts/recovery-scenarios.mjs']) {
+    for (const file of ['index.js', 'manifest.json', 'settings.html', 'style.css', 'src/chunking.js', 'src/client.js', 'src/credentials.js', 'src/activation.js', 'src/app-connect.js', 'oauth-callback.html', 'oauth-callback.js', 'src/commit.js', 'src/chat-collections.js', 'src/gate.js', 'src/memory.js', 'src/time.js', 'src/context.js', 'scripts/native-chat-scenarios.mjs', 'scripts/per-chat-memory-scenarios.mjs', 'scripts/setup-recovery-scenarios.mjs', 'scripts/native-reply-scenarios.mjs', 'src/delivery.js', 'src/token-usage.js', 'src/status.js', 'scripts/browser-smoke.mjs', 'scripts/settings-panel.mjs', 'scripts/emulator-cors.mjs', 'scripts/fault-scenarios.mjs', 'scripts/recovery-scenarios.mjs']) {
         sourceSha256[file] = createHash('sha256').update(await readFile(path.join(root, file))).digest('hex');
     }
     await writeFile(path.join(artifacts, artifactName), JSON.stringify({ passed: true, faultResults, nativeChatResults, nativeReplyResults, sourceSha256, time: new Date().toISOString(), sillyTavern: revision, node: process.version, browser: browser.version(), upstream: 'Local HTTPS LambdaDB emulator; no live managed embeddings', checks, pageErrors: errors, requestCount: calls.length, preflights, proxyRequests, remainingCollections: collections.size }, null, 2));

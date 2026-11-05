@@ -43,6 +43,14 @@ boundary; publication is confirmed by the corresponding Git tag and GitHub Relea
 - After **Delete all**, chat memory ON flags from before the deletion stay
   inactive until deliberately enabled again in this browser.
 
+### Removed
+
+- Frozen memory snapshots: the Advanced snapshot section (save, list, rename,
+  delete, resume) and the chat panel's Resume snapshot button. SillyTavern's
+  native Save checkpoint and Create Branch keep working as before, and
+  SillyMemory prepares memory for whichever chat you open. A chat saved as a
+  snapshot earlier now opens as an ordinary chat.
+
 ## [0.7.3] - 2026-10-28
 
 ### Changed
