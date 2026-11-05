@@ -121,7 +121,7 @@ reports that it was preserved and clears the completed target's intent. Open tha
 chat to continue it, or explicitly retry to create another path. This differs
 from automatic retry of an unchanged target, which reuses the same path.
 
-**Delete this chat's remote memory** on a selected checkpoint removes its frozen
+**Delete this chat's memory** (in the Memory panel) on a selected checkpoint removes its frozen
 branch, making that checkpoint unavailable for resume. Existing resumed paths
 remain independent. **Delete all owned remote memory** removes checkpoints and
 paths together with the whole story collection. Both keep native local chat files.
@@ -193,7 +193,7 @@ cannot be renamed or deleted through this list; open another story path first.
 Canceling or escaping a popup leaves data unchanged. Every asynchronous popup
 revalidates its captured chat target before renaming or deleting anything.
 
-This differs from **Delete this chat's remote memory**, which keeps its native
+This differs from **Delete this chat's memory**, which keeps its native
 file, and all-owned cleanup, which removes all owned remote story collections but
 keeps every native chat. Native deletion is irreversible; no full-story local
 file deletion is provided.

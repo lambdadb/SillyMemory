@@ -1,5 +1,5 @@
 import { runSetupRecoveryScenarios } from './setup-recovery-scenarios.mjs';
-import { answerMemoryPopup, memoryControl, expandMemorySettings, openMemoryConnection, openChatMemory } from './settings-panel.mjs';
+import { answerMemoryPopup, chatMemoryAction, memoryControl, expandMemorySettings, openMemoryConnection, openChatMemory } from './settings-panel.mjs';
 import { runPerChatMemoryScenarios } from './per-chat-memory-scenarios.mjs';
 import { runNativeReplyScenarios } from './native-reply-scenarios.mjs';
 import { runNativeChatScenarios } from './native-chat-scenarios.mjs';
@@ -143,13 +143,15 @@ try {
     const savedSettings = JSON.parse(await readFile(path.join(work, 'data/default-user/settings.json'), 'utf8'));
     check('owner identity is durable before first remote request', /^[a-f0-9]{32}$/.test(savedSettings.extension_settings?.sillymemory?.owner));
     // Open settings through the chat-facing controls without navigating drawers.
-    await chatStatus.locator('summary').focus(); await page.keyboard.press('Enter');
+    await chatStatus.locator(':scope > summary').focus(); await page.keyboard.press('Enter');
     check('chat recovery details open with the keyboard', await chatField('settings').isVisible());
     await chatField('settings').click();
     await page.locator('#sillymemory [data-sm="connect"]').waitFor({ state: 'visible' });
     await page.waitForFunction(() => !jQuery('#sillymemory .inline-drawer-content').is(':animated'));
     check('chat settings action opens the native drawer and SillyMemory controls', await page.locator('#sillymemory [data-sm="connect"]').isVisible());
-    const field = name => name === 'enabled' ? memoryControl(page) : page.locator(`#sillymemory [data-sm="${name}"]`);
+    const field = name => name === 'enabled' ? memoryControl(page)
+        : name === 'sync' ? chatMemoryAction(page, 'sync-now') : name === 'delete-chat' ? chatMemoryAction(page, 'delete')
+        : page.locator(`#sillymemory [data-sm="${name}"]`);
     const status = () => field('status').innerText();
     const waitStatus = async text => { await page.waitForFunction(text => document.querySelector('#sillymemory [data-sm="status"]')?.textContent.includes(text), text, { timeout: 30000 }); };
     check('fresh setup shows connection before preparation or activation', await field('connect').isVisible() && !await field('provision').isVisible() && !await field('enabled').isVisible() && !await field('budget').isVisible() && !await field('checkpoint-save').isVisible());
@@ -158,7 +160,7 @@ try {
     await advancedSummary.focus(); await page.keyboard.press('Enter');
     check('Advanced opens with the keyboard', await field('budget').isVisible());
     await page.keyboard.press('Enter');
-    check('closing Advanced leaves status and delivery feedback visible', !await field('budget').isVisible() && await field('status').isVisible() && await field('delivery').isVisible());
+    check('closing Advanced leaves status feedback visible', !await field('budget').isVisible() && await field('status').isVisible());
     await page.locator('#sillymemory').evaluate(el => el.scrollIntoView({ block: 'start' }));
     await page.screenshot({ path: path.join(artifacts, 'settings-basic.png') });
     await page.setViewportSize({ width: 390, height: 844 });
@@ -317,7 +319,7 @@ try {
         // uncertain-write journal that changes the existing no-write controls.
         await page.route('**/projects/synthetic/collections/*', route => route.fulfill({ status: 400, json: { message: 'Synthetic ownership check failure' } }), { times: 1 });
         await field('sync').click(); await waitStatus('Invalid request');
-        check('failed synchronization exposes an explicit retry beside status', await field('retry-sync').isVisible());
+        check('failed synchronization exposes an explicit retry in the chat Memory panel', await chatField('sync').isVisible());
         check('chat status exposes synchronization failure outside the settings panel', (await chatField('label').innerText()).includes('Needs attention'));
         await openChatMemory(page);
         await chatField('sync').click(); await waitStatus('synchronized');
@@ -383,7 +385,7 @@ try {
         const { runGenerationInterceptors } = await import('/scripts/extensions.js');
         aborted = await runGenerationInterceptors(chat, 4096, 'normal');
         const rendered = chat.filter(m => m.mes.startsWith('[Recalled conversation excerpts]')).map(m => m.mes).join('\n');
-        const result = { before, after: JSON.stringify(c.chat), chat, aborted, rendered, guidance: c.extensionPrompts.sillymemory?.value || '', preparation: document.querySelector('[data-sm="status"]').textContent, renderedTokens: await c.getTokenCountAsync(rendered), macroValue: c.chatMetadata.variables?.sillymemory_test, injection: rendered, inspection: document.querySelector('[data-sm="inspection"]').textContent };
+        const result = { before, after: JSON.stringify(c.chat), chat, aborted, rendered, guidance: c.extensionPrompts.sillymemory?.value || '', preparation: document.querySelector('[data-sm="status"]').textContent, renderedTokens: await c.getTokenCountAsync(rendered), macroValue: c.chatMetadata.variables?.sillymemory_test, injection: rendered, inspection: document.querySelector('[data-sm-chat="inspection"]').textContent };
         // This suite calls only the interceptor dispatcher. Emulate its completion
         // boundary to release prompt ownership; full packing/dispatch is tested
         // by prompt-delivery-smoke.mjs, not by this synthetic final event.
@@ -538,8 +540,8 @@ try {
             && !JSON.stringify({ ...sessionStorage }).includes('synthetic-session-key');
     }) && !secrets.includes('wrong-synthetic-key'));
     await field('enabled').check(); await waitStatus('synchronized'); await prompt();
-    await page.locator('#sillymemory details:has(> [data-sm=inspection]) > summary').click();
-    await field('inspection').scrollIntoViewIfNeeded();
+    await expandMemorySettings(page);
+    await field('advanced').scrollIntoViewIfNeeded();
     if (!faultMode) await page.screenshot({ path: path.join(artifacts, 'settings.png') });
     if (!faultMode) {
         // The host can swallow save errors. No remote access may precede

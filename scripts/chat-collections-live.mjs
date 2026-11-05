@@ -1,4 +1,4 @@
-import { answerMemoryPopup, memoryControl, expandMemorySettings } from './settings-panel.mjs';
+import { answerMemoryPopup, chatMemoryAction, memoryControl, expandMemorySettings } from './settings-panel.mjs';
 // Bounded real UI + direct browser CORS + managed LambdaDB lifecycle acceptance.
 // No generation calls; at most four small collections, or two with --large-history (1,100 submitted documents).
 import assert from 'node:assert/strict';
@@ -88,7 +88,9 @@ try {
     }
     page.on('response', r => { if (new URL(r.url()).origin === new URL(credentials.endpoint).origin) report.responses.push({ stage, status: r.status(), method: r.request().method(), resource: new URL(r.url()).pathname.split('/').slice(5).join('/') || 'collection' }); });
     await page.goto(url); await page.getByText('Welcome to SillyTavern!', { exact: true }).waitFor(); await page.getByText('Save', { exact: true }).last().click();
-    const field = name => name === 'enabled' ? memoryControl(page) : page.locator(`#sillymemory [data-sm="${name}"]`);
+    const field = name => name === 'enabled' ? memoryControl(page)
+        : name === 'sync' ? chatMemoryAction(page, 'sync-now') : name === 'delete-chat' ? chatMemoryAction(page, 'delete')
+        : page.locator(`#sillymemory [data-sm="${name}"]`);
     const status = async text => page.waitForFunction(text => document.querySelector('[data-sm="status"]')?.textContent.includes(text), text, { timeout: 180000 });
     panel = async () => {
         await page.locator('#sillymemory').waitFor({ state: 'attached', timeout: 45000 });
@@ -210,7 +212,7 @@ try {
     check('managed queryText through UI interceptor retrieves synthetic source', !recall.aborted && recall.archives === 1 && recall.text.includes('stone tower') && recall.last.includes('turn 9'));
     check('live recalled archive preserves role and sent label without duplicating rerank context',
         recall.text.includes('user "User"') && recall.text.includes('sent: 2024-02-29T12:34:56.123Z') && !recall.text.includes('Message sent at'));
-    stage = 'single deletion'; await panel(); await answerMemoryPopup(page, () => field('delete-chat').click()); await status('no longer accessible');
+    stage = 'single deletion'; await panel(); await answerMemoryPopup(page, () => field('delete-chat').click()); await panel(); await status('no longer accessible');
     check('individual deletion confirmed absent before fallback cleanup', await absent(copy));
     check('deleting current copy preserves parent and branch', (await inspect(parent)).length === 4 && (await inspect(branch)).length === 4);
     stage = 'reload'; await page.reload(); await page.locator('#sillymemory').waitFor({ state: 'attached' });
@@ -227,7 +229,7 @@ try {
         await status('synchronized'); const earlier = await identity(), rows = await inspect(earlier);
         check('earlier native fork removes future and protected-recent remote chunks', earlier.collection === parent.collection && rows.length === 2 && rows.every(d => d.message < 2));
         check('earlier native fork submits no unchanged inherited documents', !report.upserts.some(r => r.stage === 'earlier branch'));
-        await panel(); await answerMemoryPopup(page, () => field('delete-chat').click()); await status('no longer accessible');
+        await panel(); await answerMemoryPopup(page, () => field('delete-chat').click()); await panel(); await status('no longer accessible');
         check('current branch deletion preserves sibling and parent', await absent(earlier) && (await inspect(parent)).length === 4 && (await inspect(branch)).length === 4);
     }
     if (checkpoints) {
@@ -347,7 +349,7 @@ try {
             await field('checkpoint-save').click(); await status('Checkpoint saved:');
             const missingFile = (await files()).find(x => x.chat_metadata?.sillymemory?.checkpoint?.name === 'Missing remote example').file_name.replace(/\.jsonl$/, '');
             await page.evaluate(async name => SillyTavern.getContext().openCharacterChat(name), missingFile);
-            await answerMemoryPopup(page, () => field('delete-chat').click()); await status('no longer accessible');
+            await answerMemoryPopup(page, () => field('delete-chat').click()); await panel(); await status('no longer accessible');
             await page.evaluate(async name => SillyTavern.getContext().openCharacterChat(name), renamed.file);
             await refreshList();
             check('manager reports missing branch without allowing resume', (await checkpointRow('Missing remote example').innerText()).includes('Remote memory missing') && await checkpointRow('Missing remote example').getByRole('button', { name: 'Resume', exact: true }).count() === 0);

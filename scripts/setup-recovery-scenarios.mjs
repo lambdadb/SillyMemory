@@ -56,6 +56,8 @@ export async function runSetupRecoveryScenarios({ page, field, check, calls, wai
     check('native input popup renames the selected snapshot without changing chat activation', (await row.textContent()).includes('Renamed UX snapshot') && await field('enabled').isChecked());
     for (const control of ['delete-chat', 'delete']) {
         const changes = writes();
+        // Deleting all memory is a settings action; one chat's deletion is in its Memory panel.
+        if (control === 'delete') await expandMemorySettings(page);
         await answerMemoryPopup(page, () => field(control).click(), { accept: false });
         check(`${control} native confirmation cancellation leaves remote data and chat preference intact`, writes() === changes && await field('enabled').isChecked());
     }
@@ -69,6 +71,8 @@ export async function runSetupRecoveryScenarios({ page, field, check, calls, wai
     await popup.locator('.popup-button-ok').click(); await popup.waitFor({ state: 'hidden' });
     await waitStatus('Chat changed while the popup was open');
     check('confirming after a programmatic chat switch cannot delete the newly selected chat', writes() === beforeStalePopup && !await field('enabled').isChecked());
+    // One chat's deletion is in its Memory panel; return to the snapshot list in settings.
+    await expandMemorySettings(page);
     await open(nativeChats.source); await waitStatus('synchronized'); await settled();
     await field('checkpoints').locator(':scope > summary').click();
     let enteredLate, releaseLate;

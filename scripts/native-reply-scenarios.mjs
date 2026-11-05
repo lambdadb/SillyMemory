@@ -86,9 +86,11 @@ export async function runNativeReplyScenarios({ page, field, waitStatus, check, 
     await page.setViewportSize({ width: 390, height: 844 });
     await screenshot?.('chat-memory-preview-narrow');
     await page.setViewportSize({ width: 1440, height: 1100 });
+    await openChatMemory(page);
     await preview.locator('[data-sm-chat="inspect"]').click();
-    await field('inspection').waitFor({ state: 'visible' });
-    check('full memory action opens the final prompt inspector directly', await field('advanced').evaluate(el => el.open) && (await field('inspection').innerText()).includes('Memory excerpts in final host prompt') && (await field('inspection').innerText()).includes('I visited the city museum on Friday.'));
+    const inspection = page.locator('#sillymemory-chat [data-sm-chat="inspection"]');
+    await inspection.waitFor({ state: 'visible' });
+    check('full memory action shows the final prompt memory in the chat panel', (await inspection.innerText()).includes('Memory excerpts in final host prompt') && (await inspection.innerText()).includes('I visited the city museum on Friday.'));
     check('no schema-support setting or schema request is added', await field('clarification').count() === 0 && !requests.at(-1).response_format && !requests.at(-1).json_schema);
     check('natural memory guidance reaches native generation', requests.at(-1).messages.some(m => m.role === 'system' && hasAdoptedGuidance(m.content)));
     await generate('Check the optional token reference.', 'A diagnostic fixture reply.');
@@ -153,7 +155,7 @@ export async function runNativeReplyScenarios({ page, field, waitStatus, check, 
     await waitStatus('synchronized');
     check('native generation aborts before dispatch on search failure', requests.length === completedBeforeFailure);
     check('a stopped native reply has no stale selected-memory preview', await preview.getAttribute('hidden') !== null && await preview.locator('li').count() === 0);
-    const failureGuidance = await field('delivery').textContent();
+    const failureGuidance = await page.locator('#sillymemory-chat [data-sm-chat="delivery"]').textContent();
     check('generation failure stays visible with the correct recovery action after background synchronization', failureGuidance.includes('Generation stopped: memory preparation failed.') && failureGuidance.includes('HTTP 503') && failureGuidance.includes('regenerate to retry this request') && !failureGuidance.includes('Sync this chat'));
     const chatStatus = page.locator('#sillymemory-chat');
     check('chat status retains a stopped reply after background synchronization completes', (await chatStatus.locator('[data-sm-chat="label"]').innerText()).includes('Reply stopped') && (await chatStatus.locator('[data-sm-chat="status"]').innerText()).includes('HTTP 503'));
@@ -229,7 +231,7 @@ export async function runNativeReplyScenarios({ page, field, waitStatus, check, 
     });
     check('text completion dispatches without a required reply schema', textRequests.length === 1 && !textRequests[0].json_schema && textResult.answer === 'A plain text completion.');
     check('text completion contains natural guidance and preserves source', hasAdoptedGuidance(textRequests[0].prompt) && JSON.stringify(textResult.before) === JSON.stringify(textResult.source));
-    check('flattened text prompt verification is explicitly unavailable', (await field('delivery').textContent()).includes('verification unavailable'));
+    check('flattened text prompt verification is explicitly unavailable', (await page.locator('#sillymemory-chat [data-sm-chat="delivery"]').textContent()).includes('verification unavailable'));
     check('unsupported text completion does not fabricate a host input count or offer remote token comparisons', (await tokenPanel.locator('[data-sm-chat="token-input"]').textContent()) === 'Unavailable' && await tokenCompare.isHidden());
     const previousBudget = await field('budget').inputValue();
     await field('budget').fill('768'); await field('budget').dispatchEvent('change');

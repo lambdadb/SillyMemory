@@ -70,7 +70,7 @@ history into the story branch. There is no storage-mode selection or conversion.
   local transcript before token-budgeted injection. Retrieval, chunking, token
   limits, recent-message protection and managed embedding provider are unchanged.
 
-**Delete this chat's remote memory** deletes only its writable branch. The empty
+**Delete this chat's memory** deletes only its writable branch. The empty
 family collection can remain; **Delete all owned remote memory** discovers and
 removes entire owned story families and their branches. Local chats
 are preserved. Deleting a native chat or uninstalling the extension does not

@@ -147,9 +147,9 @@ dialogue stays directly in the answer context. Longer histories take more time
 and embedding/write allowance to prepare. Later synchronization reuses unchanged
 indexed passages and reconciles changes.
 
-Once the status is **Ready**, ask about a detail from earlier in that chat. Expand
-**Memory** to inspect selected source passages, or choose **View full memory** to
-inspect the last prepared prompt's memory.
+Once the status is **Ready**, ask about a detail from earlier in that chat. Open
+**Last prompt** in the chat's Memory panel to inspect selected source passages, or
+choose **View full memory** to show the last prepared prompt's memory there.
 
 Memory belongs to the selected chat and its linked conversation paths. Unrelated
 chats, including separate stories with the same character, are not automatically
@@ -179,9 +179,9 @@ Original message text is preserved.
 - SillyMemory connects directly to LambdaDB and does not depend on built-in Vector
   Storage. Its chat vectorization must be off to avoid conflicting history injection;
   the chat status links to its settings without changing them.
-- Expand **Memory** to preview up to three selected source passages from the
-  last prompt, with speaker and message positions. **View full memory** opens
-  **Advanced → Memory in the last prompt** directly. Check the delivery status
+- Open **Last prompt** in the Memory panel to preview up to three selected source
+  passages from the last prompt, with speaker and message positions. **View full
+  memory** shows the full final-prompt memory in the same panel. Check the delivery status
   for whether the final host prompt was verified. Previews stay in this tab and
   clear when changing chats, changing source messages, disabling memory or
   preparing another reply; normal reply completion keeps the last selection.
@@ -225,7 +225,7 @@ writable chat synchronizes automatically after success. See the
 | --- | --- |
 | Connection or authentication failure | Use **Reconnect** in the chat panel when a saved key is available. Otherwise open **Connection** settings to check the regional endpoint/project/key and connect. Check browser connectivity to LambdaDB for network errors. |
 | Failed connection test | Use **Clean up test data** beside the status, then use **Finish preparation**. The diagnostic cleanup control also remains under **Advanced**. Keep pending cleanup records until it succeeds. |
-| Synchronization failure | Follow the status message; wait before retrying a temporary service error, then use **Retry synchronization** beside the status. **Advanced → Sync this chat** remains available for manual synchronization. |
+| Synchronization failure | Follow the status message; wait before retrying a temporary service error, then use **Retry synchronization** in the chat's Memory panel. **This chat's memory → Sync now** in the same panel remains available for manual synchronization. |
 | Generation stopped during memory preparation | Read the last-prompt status, resolve the error, then use **Retry reply** above the composer for an unchanged pending user input, or the native **Regenerate** action. The shortcut uses native regeneration and makes a new model request; it never retries automatically. Sync alone does not resume a stopped generation. Disable memory if you want to continue with native history. |
 | Query exceeds 8 KiB | Shorten the latest messages, or disable memory for that generation. Queries are not silently truncated. |
 
@@ -245,8 +245,8 @@ it or use **Forget key**. Other extensions running on the same page can access
 browser storage; this is not an isolated secret vault.
 
 Before uninstalling or changing connection settings, open **Advanced** and use
-**Delete all owned remote memory** and clean up any pending test collection. **Delete this chat’s remote
-memory** removes only that chat's writable branch; sibling branches remain.
+**Delete all owned remote memory** and clean up any pending test collection. **Delete this chat's
+memory**, under **This chat's memory** in that chat's Memory panel, removes only that chat's writable branch; sibling branches remain.
 These controls keep local SillyTavern chats. Deleting a native chat or uninstalling
 the extension does **not** automatically remove its remote data. Snapshot retention
 and provider backups are separate from deletion of current records. See
