@@ -689,7 +689,6 @@ async function initialize() {
                     beforeIssue: recover,
                 });
                 if (!valid()) throw new ConnectionError('Connection canceled because the account changed.');
-                if (!connected) return;
                 if (hasMemory && (connected.endpoint !== state.endpoint || connected.project !== state.project)) throw new ConnectionError('Clean up owned memory before changing the connection.');
                 await connect(connected, connected.key, false, valid);
                 element('app-waiting').hidden = true;

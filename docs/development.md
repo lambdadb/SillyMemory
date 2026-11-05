@@ -27,7 +27,7 @@ bindings. The maintained `npm run test:browser` suite uses pinned ST with a loca
 HTTPS data emulator and a synthetic LambdaDB API and issuer. The popup follows a
 synthetic approval redirect into the real callback page. The suite covers:
 
-- requested-region completion without a key, with setup-token revocation
+- an approval without key issuance ending without a key, with setup-token revocation
 - canceling a delayed connection verification
 - verified credential adoption with chat memory off
 - a single installation registration with S256 PKCE and the exact callback

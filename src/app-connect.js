@@ -177,10 +177,8 @@ export async function connectWithLambdaDB({ signal, popup, apiOrigin = 'https://
         const status = await request(`${apiOrigin}/project-connections/${connectionId}`, { signal, token });
         const view = status.value;
         if (status.status !== 200 || view.connection_id !== connectionId) throw new ConnectionError('Connection status could not be confirmed. Start Connect again for the same project.');
-        if (view.status === 'region_requested' || !scopes.includes('connection:issue')) {
-            onStatus('Region requested. Not connected yet. When the project is ready, start Connect again and select it.');
-            return null;
-        }
+        if (!scopes.includes('connection:issue'))
+            throw new ConnectionError('Connection approval did not allow a project key. Start Connect again.');
         if (view.status !== 'ready' || !uuid(view.project_id) || (projectId && view.project_id !== projectId))
             throw new ConnectionError('Connection did not complete. Start Connect again for the existing project.');
         if (!valid()) throw new ConnectionError('Connection canceled because the account changed.');

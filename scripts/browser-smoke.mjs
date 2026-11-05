@@ -664,7 +664,7 @@ try {
     check('Forget key removes persistence and reload makes no credential request', calls.length === beforeForgottenReload && await page.evaluate(() => !Object.keys(localStorage).some(k => k.startsWith('sillymemory:credential:'))) && !await field('enabled').isChecked());
 
     if (!faultMode) {
-        const appCalls = []; let appOutcome = 'region_requested', offered = false, discoveryGate;
+        const appCalls = []; let appOutcome = 'read-only', offered = false, discoveryGate;
         const connectionId = '44444444-4444-4444-8444-444444444444', projectId = '22222222-2222-4222-8222-222222222222';
         const issuer = 'https://auth.lambdadb.ai/';
         const cors = { 'Access-Control-Allow-Origin': url, 'Access-Control-Allow-Headers': 'Authorization, Content-Type, Accept', 'Access-Control-Allow-Methods': 'GET,POST,OPTIONS' };
@@ -687,7 +687,7 @@ try {
                 return route.fulfill({ status: 302, headers: { Location: callback.href } });
             }
             if (key === 'POST auth.lambdadb.ai /oauth2/token') return json({ access_token: 'synthetic-setup-token', token_type: 'bearer', expires_in: 900, scope: appOutcome === 'ready' ? 'connection:read connection:issue' : 'connection:read' });
-            if (key === `GET api.lambdadb.ai /project-connections/${connectionId}`) return json({ connection_id: connectionId, status: appOutcome, ...(appOutcome === 'ready' ? { project_id: projectId } : {}) });
+            if (key === `GET api.lambdadb.ai /project-connections/${connectionId}`) return json({ connection_id: connectionId, status: 'ready', project_id: projectId });
             if (key === `POST api.lambdadb.ai /project-connections/${connectionId}/key`) return json({ connection_id: connectionId, endpoint, project_id: projectId, project_name: 'synthetic', key_id: 'synthetic-app-key', api_key: 'synthetic-session-key' }, 201);
             if (key === 'POST auth.lambdadb.ai /oauth2/revoke') return route.fulfill({ status: 200, headers: cors, body: '' });
             return json({ error: 'not_found' }, 404);
@@ -706,10 +706,10 @@ try {
         check('the approval window explains itself while Connect prepares authorization',
             await approvalWindow.title() === 'Connect to LambdaDB' && await approvalWindow.evaluate(() => document.body.textContent) === 'Opening LambdaDB sign-in…');
         discoveryGate = undefined; release();
-        await waitStatus('Region requested.');
+        await waitStatus('did not allow a project key');
         const claims = () => appCalls.filter(c => c.key.endsWith('/key')).length;
-        check('app region request ends waiting without issuing a key or connecting', !await field('app-waiting').isVisible() && claims() === 0 && !await field('enabled').isChecked());
-        check('app setup token is revoked after a region request', appCalls.at(-1).key === 'POST auth.lambdadb.ai /oauth2/revoke');
+        check('an approval without key issuance ends waiting without issuing a key or connecting', !await field('app-waiting').isVisible() && claims() === 0 && !await field('enabled').isChecked());
+        check('app setup token is revoked after an approval without key issuance', appCalls.at(-1).key === 'POST auth.lambdadb.ai /oauth2/revoke');
         appOutcome = 'ready';
         const canceledVerification = faults.arm('connection', 'hold');
         await field('app-connect').click();

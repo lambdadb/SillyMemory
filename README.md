@@ -92,9 +92,8 @@ Choose the button, sign up or log in in the LambdaDB window, select or create a
 project, and explicitly approve its access. The window returns to a small
 SillyMemory page that you can close. SillyMemory fills in the connection and prepares
 it automatically. It does not activate or upload a chat; turn memory on separately.
-For a requested region, account setup ends without a connection. Organization owners
-receive the existing readiness email; start Connect again and select that project
-once ready. Pending region projects consume the existing project allowance.
+Projects can be created only in open regions; request another region in the
+LambdaDB Console.
 
 Manual connection below remains available. Existing memory prevents switching to
 another project until owned cleanup is confirmed. After Delete all, previous chat
