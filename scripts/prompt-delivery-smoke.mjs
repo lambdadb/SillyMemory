@@ -297,7 +297,7 @@ try {
             assert.equal(observation.generationError, undefined);
             assert.ok((spec.type === 'impersonate' ? observation.draft : observation.answer).endsWith('LOCAL_FIXTURE_OK'));
             if (spec.enabled) {
-                assert.match(observation.delivery, spec.stopOnLoss ? /^(Memory was added to the last prompt|No related memory was found for the last prompt)/ : /^Warning:/);
+                assert.match(observation.delivery, spec.stopOnLoss ? /^(Memory was added to the last prompt|No memory was added to the last prompt)/ : /^Warning:/);
                 const hasGuidance = sent[0].messages.some(m => m.role === 'system' && m.content.includes(MEMORY_GUIDANCE));
                 if (spec.guidanceLost) {
                     assert.equal(spec.stopOnLoss, false, 'Only explicit warning mode may dispatch without guidance');
@@ -323,12 +323,12 @@ try {
         if (spec.type === 'normal') assert.deepEqual(observation.chat.slice(0, 12), chat.map(m => m.mes), 'Original chat text preserved');
         if (!spec.blocked && (spec.noHits || spec.id === 'nothing-fits')) {
             assert.equal(sent[0].messages.filter(m => m.content.startsWith('[Recalled conversation excerpts]')).length, 0, 'Empty selection sends no excerpts and does not restore full history');
-            assert.match(observation.delivery, /No related memory was found for the last prompt; your 5 recent messages were kept/);
+            assert.match(observation.delivery, /No memory was added to the last prompt; your 5 recent messages were kept/);
             const guidanceTokens = await page.evaluate(text => SillyTavern.getContext().getTokenCountAsync(text), MEMORY_GUIDANCE);
             assert.equal(Number(observation.preparedInspection.split(' / ')[0]), guidanceTokens, 'Empty-selection inspection includes the guidance token cost');
         }
         if (spec.id === 'included') {
-            assert.match(observation.delivery, /Memory was added to the last prompt, and your 5 recent messages were kept/);
+            assert.match(observation.delivery, /Memory was added to the last prompt; your 5 recent messages were kept/);
             assert.equal(sent[0].messages.filter(m => m.content.startsWith('[Recalled conversation excerpts]')).length, 1);
         }
         if (spec.id === 'pressure-warning') {
@@ -336,7 +336,7 @@ try {
             assert.equal(sent[0].messages.filter(m => m.content.startsWith('[Recalled conversation excerpts]')).length, 0);
         }
         if (spec.id === 'recovered-context') {
-            assert.match(observation.delivery, /Memory was added to the last prompt, and your 5 recent messages were kept/);
+            assert.match(observation.delivery, /Memory was added to the last prompt; your 5 recent messages were kept/);
             const recoveredExcerpts = sent[0].messages.filter(m => m.content.startsWith('[Recalled conversation excerpts]'));
             assert.equal(recoveredExcerpts.length, 1);
             for (let index = 0; index < 6; index++) assert(recoveredExcerpts.some(m => m.content.includes(`OLD_${index}:`)), 'Six ranked older sources fit after removing follow-up obligations');
@@ -347,6 +347,7 @@ try {
         }
         if (spec.id === 'continue') {
             assert.match(observation.delivery, /could not be checked/);
+            assert.doesNotMatch(observation.delivery, /recent messages were kept/, 'Unchecked messages are not claimed as kept');
             assert(sent[0].messages.some(m => m.role === 'assistant' && m.content.trim() === chat[11].mes.trim()), 'Native partial answer reaches the completion endpoint');
             assert(observation.answer.startsWith(chat[11].mes.trim()), 'Continue appends to the original partial answer');
         }
@@ -371,7 +372,7 @@ try {
             assert.equal(generations.length, recoveryStart + 1);
             assert.deepEqual(recovered.after.slice(0, -1), recovered.before);
             assert.equal(recovered.after.at(-1), 'LOCAL_FIXTURE_OK');
-            assert.match(recovered.delivery, /Memory was added to the last prompt, and your 5 recent messages were kept/);
+            assert.match(recovered.delivery, /Memory was added to the last prompt; your 5 recent messages were kept/);
             assert.equal(generations.at(-1).messages.filter(m => m.content.startsWith('[Recalled conversation excerpts]')).length, 1);
             rows.at(-1).manualRecovery = { ...recovered, request: generations.at(-1) };
         }
@@ -420,7 +421,7 @@ try {
     assert.equal(race.finalEvents, 2);
     assert.equal(generations.length, raceStart + 1);
     assert.equal(race.answer, 'LOCAL_FIXTURE_OK');
-    assert.match(race.recovered, /^(Memory was added to the last prompt|No related memory was found for the last prompt)/);
+    assert.match(race.recovered, /^(Memory was added to the last prompt|No memory was added to the last prompt)/);
     report.overlap = { ...rejected, ...race, rejectedCompletionRequests: 0, recoveryCompletionRequests: 1 };
     console.log('VERIFY repeated-passage-packing');
     await field('enabled').uncheck();
@@ -451,7 +452,7 @@ try {
     const packingRequest = generations.at(-1), excerpts = packingRequest.messages.filter(m => m.content.startsWith('[Recalled conversation excerpts]'));
     // Every selected repeated source retains all of its coordinates.
     assert.equal(excerpts.length, 1);
-    assert.match(packed.delivery, /Memory was added to the last prompt, and your 5 recent messages were kept/);
+    assert.match(packed.delivery, /Memory was added to the last prompt; your 5 recent messages were kept/);
     for (const index of [0, 1, 2, 3]) {
         const original = packingSource[index];
         assert(excerpts.some(m => m.role === 'user' && m.content.includes(`excerpt: ${original.role} `) && `\n${m.content}\n`.includes(`\n${original.text}\n`)), 'Full quoted source and original speaker label reached the completion endpoint');
@@ -490,7 +491,7 @@ try {
     assert(assemblyRequest.messages.some(m => m.role === 'system' && m.content.includes(SENT_GUIDANCE)), 'Date interpretation is delivered as system guidance');
     assert(!joined.content.includes(SENT_GUIDANCE), 'Quoted source does not carry instructions');
     assert.equal(assembled.source, assemblyChat[0].mes, 'Assembly does not alter stored history');
-    assert.match(assembled.delivery, /^(Memory was added to the last prompt|No related memory was found for the last prompt)/); assert(!assembled.delivery.includes('left out or changed'));
+    assert.match(assembled.delivery, /^(Memory was added to the last prompt|No memory was added to the last prompt)/); assert(!assembled.delivery.includes('left out or changed'));
     report.assembly = { evidence: 'Actual host assembled prompt dispatched to a local completion fixture; LambdaDB emulated',
         configuredBudget: 1600, sourceUnchanged: true, delivery: assembled.delivery, request: assemblyRequest };
     await field('stopOnLoss').uncheck();

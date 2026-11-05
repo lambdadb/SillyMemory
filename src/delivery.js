@@ -47,7 +47,6 @@ export function deliverySummary(result, stopOnLoss) {
     const memoryLost = count('memory', 'missing'), inputLost = count('input', 'missing');
     const uncertain = count('memory', 'unverified') + count('input', 'unverified');
     const guidanceLost = (result.guidance || []).some(m => m.outcome === 'missing');
-    const recent = result.input.length === 1 ? 'your recent message' : `your ${result.input.length} recent messages`;
     if (memoryLost || inputLost || guidanceLost) {
         // Counts matter only when something is missing.
         const lost = [
@@ -57,10 +56,16 @@ export function deliverySummary(result, stopOnLoss) {
         ].filter(Boolean).join(' ');
         return `${stopOnLoss ? 'Reply stopped' : 'Warning'}: ${lost} Increase the context size or reduce the reply length, then generate again. Turn off Stop on missing context to continue with a warning.${uncertain ? ` ${uncertain} reformatted messages could not be checked.` : ''}`;
     }
-    const added = result.memory.length
-        ? `Memory was added to the last prompt, and ${recent} ${result.input.length === 1 ? 'was' : 'were'} kept.`
-        : `No related memory was found for the last prompt; ${recent} ${result.input.length === 1 ? 'was' : 'were'} kept.`;
-    return `${added}${uncertain ? ` ${uncertain} reformatted messages could not be checked; they are not counted as missing.` : ''}`;
+    // Claim only what was confirmed: reformatted messages can be absent yet unverifiable.
+    const memoryUnchecked = count('memory', 'unverified');
+    const memoryPart = !result.memory.length ? 'No memory was added to the last prompt'
+        : memoryUnchecked ? 'Memory was added to the last prompt, but part of it could not be checked'
+            : 'Memory was added to the last prompt';
+    const recentTotal = result.input.length, recentUnchecked = count('input', 'unverified');
+    const recentPart = recentUnchecked
+        ? `${count('input', 'included')} of your ${recentTotal} recent messages were confirmed and ${recentUnchecked} could not be checked`
+        : recentTotal === 1 ? 'your recent message was kept' : `your ${recentTotal} recent messages were kept`;
+    return `${memoryPart}; ${recentPart}.`;
 }
 
 export class PromptDelivery {
