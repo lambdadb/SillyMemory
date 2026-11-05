@@ -456,7 +456,9 @@ try {
         return { original, text };
     });
     const assembled = await prompt();
-    const preparedCounts = /Found (\d+) related passages in (\d+) memory blocks/.exec(assembled.preparation);
+    const passageCount = /Found (\d+) related passages/.exec(assembled.preparation);
+    const memoryMessages = assembled.chat.filter(m => m.mes.startsWith('[Recalled conversation excerpts]')).length;
+    const preparedCounts = passageCount && [passageCount[0], passageCount[1], String(memoryMessages)];
     const assembledMessage = assembled.chat.find(m => m.mes.startsWith('[Recalled conversation excerpts]') && m.mes.includes('message 1, passages 1-'));
     check('real host dispatcher assembles same-message chunks with their source and one shared header',
         !assembled.aborted && preparedCounts && Number(preparedCounts[1]) > Number(preparedCounts[2]) && assembledMessage?.mes.includes('passages 1-') && assembledMessage.mes.includes(assemblySource.text)

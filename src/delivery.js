@@ -47,9 +47,20 @@ export function deliverySummary(result, stopOnLoss) {
     const memoryLost = count('memory', 'missing'), inputLost = count('input', 'missing');
     const uncertain = count('memory', 'unverified') + count('input', 'unverified');
     const guidanceLost = (result.guidance || []).some(m => m.outcome === 'missing');
-    const totals = `Last prompt: ${count('memory', 'included')} of ${result.memory.length} memory blocks and ${count('input', 'included')} of ${result.input.length} recent messages included.`;
-    if (memoryLost || inputLost || guidanceLost) return `${stopOnLoss ? 'Reply stopped' : 'Warning'}: ${memoryLost} memory blocks and ${inputLost} recent messages were left out or changed.${guidanceLost ? ' Memory guidance was left out or changed.' : ''} ${totals} Increase the context size or reduce the reply length, then generate again. Turn off Stop on missing context to continue with a warning.${uncertain ? ` ${uncertain} reformatted messages could not be checked.` : ''}`;
-    return `${totals}${uncertain ? ` ${uncertain} reformatted messages could not be checked; they are not counted as missing.` : ''}`;
+    const recent = result.input.length === 1 ? 'your recent message' : `your ${result.input.length} recent messages`;
+    if (memoryLost || inputLost || guidanceLost) {
+        // Counts matter only when something is missing.
+        const lost = [
+            memoryLost && `Some memory was left out or changed (${count('memory', 'included')} of ${result.memory.length} added).`,
+            inputLost && `Some recent messages were left out or changed (${count('input', 'included')} of ${result.input.length} kept).`,
+            guidanceLost && 'Memory guidance was left out or changed.',
+        ].filter(Boolean).join(' ');
+        return `${stopOnLoss ? 'Reply stopped' : 'Warning'}: ${lost} Increase the context size or reduce the reply length, then generate again. Turn off Stop on missing context to continue with a warning.${uncertain ? ` ${uncertain} reformatted messages could not be checked.` : ''}`;
+    }
+    const added = result.memory.length
+        ? `Memory was added to the last prompt, and ${recent} ${result.input.length === 1 ? 'was' : 'were'} kept.`
+        : `No related memory was found for the last prompt; ${recent} ${result.input.length === 1 ? 'was' : 'were'} kept.`;
+    return `${added}${uncertain ? ` ${uncertain} reformatted messages could not be checked; they are not counted as missing.` : ''}`;
 }
 
 export class PromptDelivery {

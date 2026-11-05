@@ -11,7 +11,7 @@ test('final prompt includes full content with the original native role, not just
     const result = inspectPrompt(input, [{ role: 'assistant', content: 'Mira: [Past conversation excerpt] fact' }, { role: 'user', content: 'question' }]);
     assert.equal(result.memory[0].outcome, 'included');
     assert.equal(result.input[0].outcome, 'included');
-    assert.match(deliverySummary(result, true), /1 of 1 memory blocks and 1 of 1 recent/);
+    assert.match(deliverySummary(result, true), /^Memory was added to the last prompt, and your recent message was kept\.$/);
     const partial = inspectPrompt(input, [{ role: 'assistant', content: '[Past conversation excerpt]' }, { role: 'assistant', content: 'question' }]);
     assert.ok([...partial.memory, ...partial.input].every(m => m.outcome === 'missing'));
     assert.match(deliverySummary(partial, true), /Reply stopped/);
@@ -99,9 +99,9 @@ test('delivery counts assembled excerpts rather than their underlying source pas
     assert.equal(passages.length, 2); assert.equal(messages.length, 1);
     const input = expected(messages, [source('Question?', true, 1)]);
     const complete = [{ role: 'user', content: messages[0].mes }, { role: 'user', content: 'Question?' }];
-    assert.match(deliverySummary(inspectPrompt(input, complete), true), /1 of 1 memory blocks and 1 of 1 recent messages included/);
+    assert.match(deliverySummary(inspectPrompt(input, complete), true), /^Memory was added to the last prompt, and your recent message was kept\.$/);
     const missingPart = [{ role: 'user', content: messages[0].mes.replace('second', '') }, complete[1]];
-    assert.match(deliverySummary(inspectPrompt(input, missingPart), true), /Reply stopped: 1 memory blocks/);
+    assert.match(deliverySummary(inspectPrompt(input, missingPart), true), /^Reply stopped: Some memory was left out or changed \(0 of 1 added\)\. Increase/);
 });
 
 

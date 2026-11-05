@@ -523,7 +523,7 @@ globalThis.sillymemory_intercept = async (chat, contextSize, abort, type) => {
         setInspection(`${preparedTokens} / ${config.budget} tokens\n\n${quoteMemoryText(result.text)}`);
         if (requestTokens && tokenUsage === requestTokens) Object.assign(requestTokens, { after: dialogueSnapshot(chat), memory: preparedTokens, guidance: requestGuidance });
         showMemoryPreview(result.passages);
-        operation.finish(`Found ${result.passages.length} related passages in ${preparedMessages.length} memory blocks (${preparedTokens} tokens) for this reply.`);
+        operation.finish(`Found ${result.passages.length} related passages (${preparedTokens} tokens) for this reply.`);
     } catch (e) {
         if (!instance) { if (operation.current()) fail(e, operation, true, type); abandoned = true; abort(true); return; }
         if (!valid()) { operation.finish('Memory operation canceled because the prompt changed. Generate again.'); abandoned = true; abort(true); return; }
