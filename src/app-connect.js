@@ -135,13 +135,13 @@ function callback(state, signal, openChannel) {
 }
 
 /**
- * Connects one project. Recovery identity is saved before authorization and
- * again with the approved project before the key is claimed, so an uncertain
- * delivery can be recovered for the same project instead of replaced.
- * Returns null when a region was requested instead of a ready project.
+ * Connects one project. Recovery identity is saved with the approved project
+ * just before the key is claimed, so an uncertain delivery can be recovered for
+ * the same project instead of replaced. An attempt that ends before the claim
+ * has no key to recover and leaves nothing behind.
  */
 export async function connectWithLambdaDB({ signal, popup, apiOrigin = 'https://api.lambdadb.ai', callback: callbackTo, clients,
-    projectId, projectName, recoveryId, valid = () => true, onStatus = () => {}, beforeAuthorize, beforeIssue,
+    projectId, projectName, recoveryId, valid = () => true, onStatus = () => {}, beforeIssue,
     openChannel = name => new BroadcastChannel(name) }) {
     const provider = await discover(apiOrigin, signal);
     let clientId = await client(provider, callbackTo, clients, signal);
@@ -154,7 +154,6 @@ export async function connectWithLambdaDB({ signal, popup, apiOrigin = 'https://
     }
     const connectionId = created.value.connection_id;
     if (created.status !== 201 || !uuid(connectionId)) throw new ConnectionError('LambdaDB Connect could not start. Retry, or use manual setup with a project key.');
-    beforeAuthorize({ connectionId, ...(projectId ? { projectId } : {}) });
 
     const verifier = random(), state = random();
     const challenge = base64url(new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(verifier))));
