@@ -2,7 +2,7 @@ import { expandMemorySettings, openChatMemory } from './settings-panel.mjs';
 // Native chat/checkpoint/branch actions on a disposable host and local emulator.
 import assert from 'node:assert/strict';
 
-export async function runNativeChatScenarios({ page, field, waitStatus, check, collections, screenshot }) {
+export async function runNativeChatScenarios({ page, field, waitStatus, check, faults, collections, calls, screenshot }) {
     if (!await field('enabled').isChecked()) { await field('enabled').check(); await waitStatus('synchronized'); }
     const selected = () => page.evaluate(() => {
         const c = SillyTavern.getContext();
@@ -28,6 +28,34 @@ export async function runNativeChatScenarios({ page, field, waitStatus, check, c
     });
     await waitStatus('synchronized');
     await expandMemorySettings(page);
+    // A pending sync waits while another action is busy; a failed action then stays visible.
+    // Hold the connection test's collection creation to keep that global action busy.
+    const writes = () => calls.filter(call => call.path.endsWith('/docs/upsert')).length;
+    for (const outcome of ['success', 'failure']) {
+        const held = faults.arm('create', outcome === 'success' ? 'hold' : 'hold-before');
+        const before = writes();
+        await page.evaluate(async outcome => {
+            const c = SillyTavern.getContext(); c.chat[0].mes += ` Deferred source ${outcome}.`;
+            await c.saveChat(); await c.eventSource.emit(c.eventTypes.MESSAGE_UPDATED, 0);
+        }, outcome);
+        await field('gate').click(); await held.entered;
+        try {
+            await page.waitForTimeout(900); // Cross two 400 ms debounce ticks while busy.
+            check(`pending sync waits through a slow ${outcome} action without writing`, await field('gate').isDisabled() && writes() === before);
+        } finally { held.release(); }
+        await page.waitForFunction(() => !document.querySelector('#sillymemory [data-sm="gate"]').disabled);
+        if (outcome === 'success') {
+            // The action reports its own result, which supersedes the deferred sync; sync explicitly.
+            await waitStatus('Connection test passed');
+            await field('sync').click(); await waitStatus('synchronized');
+            check('the deferred edit synchronizes after the busy action completes', remote((await selected()).memory).some(doc => doc.text.includes('Deferred source success.')));
+        } else {
+            await page.waitForTimeout(600);
+            check('a failed action supersedes deferred sync and keeps its failure visible', writes() === before && (await field('status').textContent()).includes('Wait, then') && await field('progress').isHidden());
+            await field('cleanup').click(); await waitStatus('Test data deleted');
+            await field('sync').click(); await waitStatus('synchronized');
+        }
+    }
     const source = await selected();
     const sourceDocuments = structuredClone(remote(source.memory));
     await openChatMemory(page);

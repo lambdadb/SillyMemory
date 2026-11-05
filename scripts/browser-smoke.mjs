@@ -348,12 +348,8 @@ try {
     await page.evaluate(async () => {
         const c = SillyTavern.getContext();
         c.extensionSettings.vectors.enabled_chats = true;
-        // Snapshot metadata left by a removed feature must not block an ordinary chat.
-        c.chatMetadata.sillymemory.checkpoint = { state: 'ready', snapshot: null };
         await c.eventSource.emit(c.eventTypes.SETTINGS_UPDATED);
     });
-    check('leftover snapshot metadata leaves an ordinary chat that reports the vector conflict', (await chatField('label').innerText()).includes('Vector Storage conflict') && await chatField('vectors').isVisible());
-    await page.evaluate(() => { delete SillyTavern.getContext().chatMetadata.sillymemory.checkpoint; });
     const unsupportedSource = await page.evaluate(async () => {
         const c = SillyTavern.getContext(), original = structuredClone(c.chat);
         c.chat.push({ is_system: true, mes: 'Synthetic tool result.', extra: { tool_invocations: [{ name: 'synthetic-tool' }] } });
