@@ -382,7 +382,7 @@ async function sync() {
 function schedule() {
     if (!sessionReady) return; // Preserve the lock-conflict explanation.
     invalidate(); clearTimeout(timer);
-    if (!client) { status('Enter your project API key in Connection settings to connect.'); return; }
+    if (!client) { status('Not connected. Use Connect to LambdaDB or enter your project API key in Connection settings.'); return; }
     if (!memoryEnabled()) { status('Memory is off. SillyTavern uses its usual chat history, and saved memory is kept.'); return; }
     if (!state.ready || !capture(context())) { status('Select a supported character chat and connect to a memory collection.'); return; }
     retrySync = false;

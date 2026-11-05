@@ -37,7 +37,7 @@ export class LambdaClient {
     constructor(config, key, { fetcher = (...args) => globalThis.fetch(...args), timeoutMs = 15000 } = {}) {
         this.config = connectionConfig(config);
         this.#key = key.trim();
-        if (!this.#key) throw new ConnectionError('Enter your project API key and save and connect.');
+        if (!this.#key) throw new ConnectionError('Not connected. Use Connect to LambdaDB or enter your project API key in Connection settings.');
         this.timeoutMs = timeoutMs;
         const base = `${this.config.endpoint}/projects/${encodeURIComponent(this.config.project)}/`;
         this.#sdk = new LambdaDBClient({
@@ -47,7 +47,7 @@ export class LambdaClient {
             // Explicitly suppress the SDK's environment-controlled debug logger.
             debugLogger: { log() {}, group() {}, groupEnd() {} },
             httpClient: new HTTPClient({ fetcher: async request => {
-                if (!this.#key) throw new ConnectionError('Enter your project API key and save and connect.');
+                if (!this.#key) throw new ConnectionError('Not connected. Use Connect to LambdaDB or enter your project API key in Connection settings.');
                 if (!request.url.startsWith(base)) throw new ConnectionError('Unexpected memory service URL.');
                 const body = request.body ? await request.text() : undefined;
                 request.signal.throwIfAborted();
@@ -72,7 +72,7 @@ export class LambdaClient {
     }
     forget() { this.#key = ''; this.#session.abort(); }
     async call(operation, signal) {
-        if (!this.#key) throw new ConnectionError('Enter your project API key and save and connect.');
+        if (!this.#key) throw new ConnectionError('Not connected. Use Connect to LambdaDB or enter your project API key in Connection settings.');
         const timeout = AbortSignal.timeout(this.timeoutMs);
         const combined = AbortSignal.any([this.#session.signal, timeout, ...(signal ? [signal] : [])]);
         try {
