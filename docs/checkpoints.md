@@ -1,4 +1,10 @@
-# Frozen memory snapshots (advanced)
+# Frozen memory snapshots (removed)
+
+> **Removed on 2026-11-05.** SillyMemory no longer saves, lists or resumes frozen
+> memory snapshots. Use SillyTavern's native **Save checkpoint**, **Create Branch**
+> and **Back to parent chat**; SillyMemory follows the chat you open and prepares
+> its memory (see [native chat workflow](native-chat-workflow.md)). This page is
+> kept unchanged below as the historical record of the feature and its validation.
 
 For ordinary use, keep SillyTavern's native **Save checkpoint**, **Create Branch**,
 **Back to parent chat** and **Manage chat files** workflow. SillyMemory follows
@@ -121,9 +127,9 @@ reports that it was preserved and clears the completed target's intent. Open tha
 chat to continue it, or explicitly retry to create another path. This differs
 from automatic retry of an unchanged target, which reuses the same path.
 
-**Delete this chat's remote memory** on a selected checkpoint removes its frozen
+**Delete this chat's memory** (in the Memory panel) on a selected checkpoint removes its frozen
 branch, making that checkpoint unavailable for resume. Existing resumed paths
-remain independent. **Delete all owned remote memory** removes checkpoints and
+remain independent. **Delete all memory** removes checkpoints and
 paths together with the whole story collection. Both keep native local chat files.
 Deleting a native chat or uninstalling the extension does not remove its remote
 branch; use the deletion controls before removing local data. Provider backup and
@@ -166,12 +172,12 @@ change its identity, transcript hash, native filename or memory branch.
 - **Ready**: the saved transcript and remote snapshot agree. **Resume** opens a
   new path without selecting the checkpoint in the native chat list first.
 - **Pending**: **Finish / retry** completes the original snapshot and settings.
-- **Transcript modified** or **Remote memory changed**: resume is unavailable.
-- **Remote memory missing**: the branch or collection is absent. It cannot be
+- **Transcript modified** or **Memory changed**: resume is unavailable.
+- **Memory missing**: the branch or collection is absent. It cannot be
   silently recreated as the original ready checkpoint.
-- **Remote state unverified**: reconnect and refresh. Authentication/network
+- **Memory not checked**: reconnect and refresh. Authentication/network
   failures are not reported as missing data.
-- **Duplicate identity**: actions are blocked until the native copies are resolved.
+- **Duplicate snapshot**: actions are blocked until the native copies are resolved.
 
 Matching automatic reads share an in-flight request. Manual refresh and successful
 management actions force a fresh read. Hidden settings do not trigger automatic
@@ -193,7 +199,7 @@ cannot be renamed or deleted through this list; open another story path first.
 Canceling or escaping a popup leaves data unchanged. Every asynchronous popup
 revalidates its captured chat target before renaming or deleting anything.
 
-This differs from **Delete this chat's remote memory**, which keeps its native
+This differs from **Delete this chat's memory**, which keeps its native
 file, and all-owned cleanup, which removes all owned remote story collections but
 keeps every native chat. Native deletion is irreversible; no full-story local
 file deletion is provided.

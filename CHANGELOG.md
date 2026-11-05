@@ -4,6 +4,58 @@ Versions describe the extension, independently of the SillyTavern host version.
 An `Unreleased` entry is a development candidate. A dated entry records a release
 boundary; publication is confirmed by the corresponding Git tag and GitHub Release.
 
+## [0.8.0] - 2026-11-06
+
+### Added
+
+- **Connect to LambdaDB** in Connection settings, using LambdaDB OAuth: this
+  installation registers once with its exact callback page, approval runs in a
+  popup with S256 PKCE, and one project key is issued and saved after the same
+  connection verification as manual setup. The setup token is revoked, chat
+  memory stays off, and an uncertain earlier attempt is recovered for the same
+  project. The approval window says it is opening LambdaDB sign-in until it
+  navigates, and a failure or cancel closes it. Requires SillyTavern
+  on HTTPS or localhost. Connect is now the first step of the README; manual
+  key entry remains available.
+
+### Changed
+
+- The chat Memory panel puts the on/off button first, keeps recovery actions
+  next to the status, and collapses **Last prompt** (token estimates, selected
+  memory and **View full memory**, now shown in the panel) and **This chat's
+  memory** (**Sync now** and **Delete this chat's memory**, moved from
+  **Advanced**). Settings keep only actions for every chat; the duplicate retry,
+  delivery line, last-prompt inspector and chat history button are removed.
+- Once connected, the Connection section shows "Connected to <project>
+  (<host>)" with one **Disconnect** button instead of **Connect to LambdaDB** and
+  the manual form, so connecting again is no longer offered while connected.
+  With saved memory it notes that the memory must be deleted before using
+  another project. To change a key, disconnect and connect again.
+- Interface text uses plain words: "memory" instead of "remote" or "owned"
+  memory, **Run setup test** and **Run connection test** instead of preparation
+  and synthetic upsert, "SillyTavern" instead of host or native, and plain
+  last-prompt results such as **Memory added**. **How memory works** is
+  rewritten in three sentences. Deleting one chat's memory now says that memory
+  is also turned off in that chat. When memory is off, the chat panel shows the
+  off status once instead of twice. The not-connected messages in settings and
+  the client name **Connect to LambdaDB** first.
+- In the chat Memory panel, **Turn memory on in this chat** is a filled,
+  full-width button; **Turn memory off** stays an ordinary button.
+- A chat is treated as on only when its saved flag was set by this browser's
+  current connection. ON flags from before **Delete all** stay inactive until
+  **Turn memory on in this chat** is chosen again, and memory is then rebuilt
+  from the local chat because Delete all removed it. After updating from
+  0.7.x, chats that were on also start off and must be turned on again; in
+  that case their saved memory is kept and reused.
+
+### Removed
+
+- Frozen memory snapshots: the Advanced snapshot section (save, list, rename,
+  delete, resume) and the chat panel's Resume snapshot button. SillyTavern's
+  native Save checkpoint and Create Branch keep working as before, and
+  SillyMemory prepares memory for whichever chat you open. There is no
+  migration for chats that were saved as snapshots.
+
 ## [0.7.3] - 2026-10-28
 
 ### Changed

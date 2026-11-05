@@ -3,29 +3,29 @@ import { ConnectionError } from './client.js';
 export function progressText(value) {
     const count = `${value.completed} / ${value.total}`;
     switch (value.phase) {
-        case 'preparing': return 'Preparing older messages for synchronization…';
-        case 'queued': return 'Waiting for an earlier memory write to finish…';
-        case 'committing': return 'Preparing memory branch; waiting for inherited writes to commit…';
-        case 'checking': return 'Checking memory collection ownership…';
-        case 'deleting': return `Removing outdated memory: ${count} chunks confirmed.`;
-        case 'uploading': return `Uploading memory: ${count} chunks confirmed.`;
-        case 'searching': return `Searching memory: ${count} queries completed.`;
-        case 'budgeting': return 'Selecting current passages within the token budget…';
+        case 'preparing': return 'Getting older messages ready to save…';
+        case 'queued': return 'Finishing an earlier memory save…';
+        case 'committing': return 'Preparing the branch’s memory; finishing saves from the original chat…';
+        case 'checking': return 'Checking this chat’s memory…';
+        case 'deleting': return `Removing outdated memory: ${count} passages done.`;
+        case 'uploading': return `Saving memory: ${count} passages done.`;
+        case 'searching': return `Searching memory: ${count} searches done.`;
+        case 'budgeting': return 'Choosing memory that fits the token budget…';
         default: return 'Working on memory…';
     }
 }
 
 export function failureText(error, { sync = true, generation = false } = {}) {
-    const retry = generation ? 'regenerate to retry this request' : sync ? 'click Sync this chat' : 'retry this action';
-    if (!(error instanceof ConnectionError)) return `Memory operation failed. Check browser storage${sync ? ' and token counting' : ''}, then ${retry}. Local chat preserved.`;
+    const retry = generation ? 'regenerate to retry this request' : sync ? 'click Sync now in the Memory panel' : 'retry this action';
+    if (!(error instanceof ConnectionError)) return `Memory operation failed. Check browser storage${sync ? ' and token counting' : ''}, then ${retry}. Your local chat is kept.`;
     let next = '';
-    if (error.status === 401) next = 'Replace your project key in Connection settings, then reconnect. Memory is disabled; an invalid submitted key is not saved.';
-    else if (error.status === 403 || error.status === 400) next = `Check connection settings and permissions, reconnect${sync ? ' and enable memory' : ''}, then ${retry}.`;
+    if (error.status === 401) next = 'Replace your project key in Connection settings, then reconnect. Memory is off; an invalid key is not saved.';
+    else if (error.status === 403 || error.status === 400) next = `Check connection settings and permissions, reconnect${sync ? ' and turn memory on' : ''}, then ${retry}.`;
     else if (error.code === 'timeout') next = `Wait, then ${retry}. A timed-out write may still have reached the service.`;
     else if (error.status === 429 || error.status >= 500) next = `Wait, then ${retry}.`;
     else if (error.code === 'network') next = `Check the connection, then ${retry}.`;
     if (generation && (!next || error.status === 401)) next += `${next ? ' ' : ''}After recovery, ${retry}.`;
-    return `${error.message}${next ? ` ${next}` : ''} Local chat preserved.`;
+    return `${error.message}${next ? ` ${next}` : ''} Your local chat is kept.`;
 }
 
 // Per-operation display ownership is separate from prompt validity: a newer

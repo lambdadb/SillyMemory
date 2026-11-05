@@ -8,8 +8,6 @@
 
 #sillymemory progress { width: 100%; accent-color: var(--SmartThemeQuoteColor, #8ab4f8); }
 
-#sillymemory .sm-checkpoint { border-top: 1px solid var(--SmartThemeBorderColor); padding: 0.6rem 0; overflow-wrap: anywhere; }
-#sillymemory .sm-checkpoint p { margin: 0.3rem 0; }
 
 #sillymemory h4 { margin: 0.8rem 0 0.4rem; font-size: 1em; }
 #sillymemory section > small { display: block; }
@@ -27,9 +25,9 @@
 #sillymemory [data-sm="connection-state"] { overflow-wrap: anywhere; }
 
 #sillymemory-chat { white-space: normal; margin: 0 0 0.25rem; border: 1px solid var(--SmartThemeBorderColor); border-radius: 8px; background: var(--SmartThemeBlurTintColor); overflow-wrap: anywhere; }
-#sillymemory-chat summary { display: flex; align-items: center; gap: 0.5rem; padding: 0.3rem 0.6rem; cursor: pointer; font-size: 0.85em; }
-#sillymemory-chat summary::after { content: "▸"; margin-left: auto; }
-#sillymemory-chat[open] summary::after { content: "▾"; }
+#sillymemory-chat > summary { display: flex; align-items: center; gap: 0.5rem; padding: 0.3rem 0.6rem; cursor: pointer; font-size: 0.85em; }
+#sillymemory-chat > summary::after { content: "▸"; margin-left: auto; }
+#sillymemory-chat[open] > summary::after { content: "▾"; }
 #sillymemory-chat summary:focus-visible { outline: 2px solid var(--SmartThemeQuoteColor); outline-offset: -2px; border-radius: 8px; }
 #sillymemory-chat .sm-chat-dot { flex: 0 0 0.5rem; height: 0.5rem; border-radius: 50%; background: currentColor; opacity: 0.55; }
 #sillymemory-chat[data-kind="working"] .sm-chat-dot { background: #f6ad55; opacity: 1; }
@@ -46,6 +44,19 @@
 #sillymemory-chat .sm-token-counts { display: grid; grid-template-columns: 1fr auto; gap: 0.25rem 0.6rem; margin: 0.4rem 0; }
 #sillymemory-chat .sm-token-counts dd { margin: 0; text-align: right; }
 #sillymemory-chat [data-sm-chat="token-compare"] { margin-top: 0.4rem; }
-#sillymemory-chat .sm-chat-actions { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+#sillymemory-chat .sm-chat-actions { display: flex; flex-wrap: wrap; gap: 0.4rem; margin: 0.4rem 0; }
+#sillymemory-chat .sm-chat-toggle { display: block; margin: 0.4rem 0; }
+/* Off is the state to act on, so it is the one primary button; on stays an ordinary button. */
+#sillymemory-chat .sm-chat-toggle[aria-pressed="false"] { width: 100%; text-align: center; background: var(--SmartThemeQuoteColor); border-color: var(--SmartThemeQuoteColor); color: #111; font-weight: bold; opacity: 1; }
+#sillymemory-chat .sm-chat-toggle[aria-pressed="false"]:hover { filter: brightness(1.1); }
+#sillymemory-chat .sm-chat-toggle:disabled { opacity: 0.5; filter: grayscale(0.6); cursor: not-allowed; }
+#sillymemory-chat .sm-chat-section { border-top: 1px solid var(--SmartThemeBorderColor); margin-top: 0.5rem; padding-top: 0.3rem; }
+#sillymemory-chat .sm-chat-section > summary { cursor: pointer; font-weight: bold; padding: 0.2rem 0; }
+#sillymemory-chat .sm-chat-section .sm-chat-memory:first-of-type { border-top: 0; margin-top: 0.2rem; padding-top: 0; }
+#sillymemory-chat .sm-chat-danger { border-color: #f08080; color: #f08080; }
+#sillymemory-chat pre { white-space: pre-wrap; overflow-wrap: anywhere; max-height: 16rem; overflow: auto; margin: 0.5rem 0 0; }
+#sillymemory-chat .sm-chat-links { display: flex; flex-wrap: wrap; gap: 0.8rem; margin: 0.6rem 0 0.2rem; }
+#sillymemory-chat .sm-chat-link { background: none; border: 0; padding: 0; cursor: pointer; color: var(--SmartThemeQuoteColor, #8ab4f8); text-decoration: underline; text-underline-offset: 2px; font: inherit; }
+#sillymemory-chat .sm-chat-link:disabled { opacity: 0.5; cursor: default; }
 #sillymemory-chat button { width: auto; margin: 0; }
 #sillymemory-chat [hidden] { display: none !important; }

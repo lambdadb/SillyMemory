@@ -58,7 +58,7 @@ export async function runNativeReplyScenarios({ page, field, waitStatus, check, 
     await generate('Where was it?', 'Which visit do you mean?');
     check('native generation disables and revalidates chat memory switching', generationToggle?.disabled && generationToggle.enabled);
     await waitStatus('synchronized');
-    check('chat status claims verification only after the final native prompt check', (await page.locator('#sillymemory-chat [data-sm-chat="label"]').innerText()).includes('Last prompt verified'));
+    check('chat status claims verification only after the final native prompt check', (await page.locator('#sillymemory-chat [data-sm-chat="label"]').innerText()).includes('Memory added'));
     const preview = page.locator('#sillymemory-chat [data-sm-chat="memory"]');
     check('selected memory preview survives native reply completion and background sync', await preview.getAttribute('hidden') === null && (await preview.textContent()).includes('I visited the city museum on Friday.') && (await preview.textContent()).includes('message 1, passage 1'));
     await openChatMemory(page);
@@ -69,7 +69,7 @@ export async function runNativeReplyScenarios({ page, field, waitStatus, check, 
     check('prepared input reuses the native host count and memory includes its existing guidance budget', numeric(await tokenPanel.locator('[data-sm-chat="token-input"]').textContent()) === generationToggle.nativeTokens && numeric(await tokenPanel.locator('[data-sm-chat="token-memory"]').textContent()) > 0 && await tokenReference.isHidden());
     const readsBeforeComparison = tokenRequests.length, requestsBeforeComparison = requests.length, remoteBeforeComparison = calls.length;
     await tokenCompare.click(); await tokenReference.waitFor({ state: 'visible' });
-    check('dialogue comparison uses at most two local tokenizer reads without generation or memory requests', tokenRequests.length - readsBeforeComparison <= 2 && requests.length === requestsBeforeComparison && calls.length === remoteBeforeComparison && (await tokenReference.textContent()).includes('→') && (await tokenPanel.locator('[data-sm-chat="token-reference-help"]').textContent()).includes('not a native memory-off full-prompt'));
+    check('dialogue comparison uses at most two local tokenizer reads without generation or memory requests', tokenRequests.length - readsBeforeComparison <= 2 && requests.length === requestsBeforeComparison && calls.length === remoteBeforeComparison && (await tokenReference.textContent()).includes('→') && (await tokenPanel.locator('[data-sm-chat="token-reference-help"]').textContent()).includes('not a full-prompt'));
     const completedTokenText = await tokenPanel.textContent();
     await page.evaluate(async () => {
         const c = SillyTavern.getContext(), chat = c.chat.map((message, index) => ({ ...message, index }));
@@ -86,9 +86,11 @@ export async function runNativeReplyScenarios({ page, field, waitStatus, check, 
     await page.setViewportSize({ width: 390, height: 844 });
     await screenshot?.('chat-memory-preview-narrow');
     await page.setViewportSize({ width: 1440, height: 1100 });
+    await openChatMemory(page);
     await preview.locator('[data-sm-chat="inspect"]').click();
-    await field('inspection').waitFor({ state: 'visible' });
-    check('full memory action opens the final prompt inspector directly', await field('advanced').evaluate(el => el.open) && (await field('inspection').innerText()).includes('Memory excerpts in final host prompt') && (await field('inspection').innerText()).includes('I visited the city museum on Friday.'));
+    const inspection = page.locator('#sillymemory-chat [data-sm-chat="inspection"]');
+    await inspection.waitFor({ state: 'visible' });
+    check('full memory action shows the final prompt memory in the chat panel', (await inspection.innerText()).includes('Memory in the last prompt') && (await inspection.innerText()).includes('I visited the city museum on Friday.'));
     check('no schema-support setting or schema request is added', await field('clarification').count() === 0 && !requests.at(-1).response_format && !requests.at(-1).json_schema);
     check('natural memory guidance reaches native generation', requests.at(-1).messages.some(m => m.role === 'system' && hasAdoptedGuidance(m.content)));
     await generate('Check the optional token reference.', 'A diagnostic fixture reply.');
@@ -153,8 +155,8 @@ export async function runNativeReplyScenarios({ page, field, waitStatus, check, 
     await waitStatus('synchronized');
     check('native generation aborts before dispatch on search failure', requests.length === completedBeforeFailure);
     check('a stopped native reply has no stale selected-memory preview', await preview.getAttribute('hidden') !== null && await preview.locator('li').count() === 0);
-    const failureGuidance = await field('delivery').textContent();
-    check('generation failure stays visible with the correct recovery action after background synchronization', failureGuidance.includes('Generation stopped: memory preparation failed.') && failureGuidance.includes('HTTP 503') && failureGuidance.includes('regenerate to retry this request') && !failureGuidance.includes('Sync this chat'));
+    const failureGuidance = await page.locator('#sillymemory-chat [data-sm-chat="delivery"]').textContent();
+    check('generation failure stays visible with the correct recovery action after background synchronization', failureGuidance.includes('Reply stopped: memory could not be added.') && failureGuidance.includes('HTTP 503') && failureGuidance.includes('regenerate to retry this request') && !failureGuidance.includes('Sync now'));
     const chatStatus = page.locator('#sillymemory-chat');
     check('chat status retains a stopped reply after background synchronization completes', (await chatStatus.locator('[data-sm-chat="label"]').innerText()).includes('Reply stopped') && (await chatStatus.locator('[data-sm-chat="status"]').innerText()).includes('HTTP 503'));
     check('failed native generation preserves source and the pending user input', await page.evaluate(source => {
@@ -194,14 +196,15 @@ export async function runNativeReplyScenarios({ page, field, waitStatus, check, 
     await openChatMemory(page);
     const toggle = page.locator('#sillymemory-chat [data-sm-chat="toggle"]');
     await toggle.click(); const reads = calls.filter(c => c.body?.query?.bayesian).length;
-    check('chat deactivation exposes Turn memory on in the same place and persists off', !await field('enabled').isChecked() && (await toggle.textContent()) === 'Turn memory on in this chat' && await page.evaluate(() => SillyTavern.getContext().chatMetadata.sillymemoryEnabled === false) && await chatStatus.locator('[data-sm-chat="progress"]').isHidden() && (await chatStatus.locator('[data-sm-chat="delivery"]').textContent()).includes('Memory disabled for this chat'));
+    await page.waitForFunction(() => document.querySelector('#sillymemory-chat [data-sm-chat="status"]')?.textContent.includes('Memory is off for this chat'));
+    check('chat deactivation exposes Turn memory on in the same place and persists off', !await field('enabled').isChecked() && (await toggle.textContent()) === 'Turn memory on in this chat' && await page.evaluate(() => SillyTavern.getContext().chatMetadata.sillymemoryEnabled === false) && await chatStatus.locator('[data-sm-chat="progress"]').isHidden() && (await chatStatus.locator('[data-sm-chat="status"]').textContent()).includes('Memory is off for this chat') && await chatStatus.locator('[data-sm-chat="delivery"]').isHidden());
     await screenshot?.('chat-memory-off');
     check('turning memory off removes the previous selected content', await preview.getAttribute('hidden') !== null && await preview.locator('li').count() === 0);
     await generate('A native request with memory disabled.', 'A normal native response.');
     check('disabled memory uses native output without retrieval or rewriting', calls.filter(c => c.body?.query?.bayesian).length === reads && !requests.at(-1).response_format);
     check('native memory-off replies still expose their host input estimate with zero prepared memory', numeric(await tokenPanel.locator('[data-sm-chat="token-input"]').textContent()) > 0 && (await tokenPanel.locator('[data-sm-chat="token-memory"]').textContent()).includes('~0 tokens · memory off') && await tokenCompare.isHidden());
     await toggle.click(); await waitStatus('synchronized');
-    check('chat reactivation restores memory without opening settings or retaining an off notice', await field('enabled').isChecked() && (await toggle.textContent()) === 'Turn memory off in this chat' && !(await page.locator('#sillymemory-chat [data-sm-chat="delivery"]').textContent()).includes('Memory disabled') && await page.evaluate(() => !document.querySelector('#extensions-settings-button .drawer-content').classList.contains('openDrawer')));
+    check('chat reactivation restores memory without opening settings or retaining an off notice', await field('enabled').isChecked() && (await toggle.textContent()) === 'Turn memory off in this chat' && !(await page.locator('#sillymemory-chat [data-sm-chat="status"]').textContent()).includes('Memory is off') && await page.evaluate(() => !document.querySelector('#extensions-settings-button .drawer-content').classList.contains('openDrawer')));
     await page.locator('#sillymemory-chat [data-sm-chat="settings"]').click(); await field('next-step').waitFor({ state: 'visible' });
     // Native text completions do not require a chat reply schema. Their flattened
     // prompt cannot be role-verified by the current final-delivery checker.
@@ -229,7 +232,7 @@ export async function runNativeReplyScenarios({ page, field, waitStatus, check, 
     });
     check('text completion dispatches without a required reply schema', textRequests.length === 1 && !textRequests[0].json_schema && textResult.answer === 'A plain text completion.');
     check('text completion contains natural guidance and preserves source', hasAdoptedGuidance(textRequests[0].prompt) && JSON.stringify(textResult.before) === JSON.stringify(textResult.source));
-    check('flattened text prompt verification is explicitly unavailable', (await field('delivery').textContent()).includes('verification unavailable'));
+    check('flattened text prompt verification is explicitly unavailable', (await page.locator('#sillymemory-chat [data-sm-chat="delivery"]').textContent()).includes('cannot check the final prompt'));
     check('unsupported text completion does not fabricate a host input count or offer remote token comparisons', (await tokenPanel.locator('[data-sm-chat="token-input"]').textContent()) === 'Unavailable' && await tokenCompare.isHidden());
     const previousBudget = await field('budget').inputValue();
     await field('budget').fill('768'); await field('budget').dispatchEvent('change');
@@ -246,7 +249,7 @@ export async function runNativeReplyScenarios({ page, field, waitStatus, check, 
     await generate('Recall a fact from the older archive.', 'A native long-history fixture reply.');
     await waitStatus('synchronized'); await openChatMemory(page);
     await tokenCompare.click(); await tokenReference.waitFor({ state: 'visible' });
-    check('a long-history reference shows measured text reduction without claiming native full-prompt savings', (await tokenReference.textContent()).includes('less)') && (await tokenPanel.locator('[data-sm-chat="token-reference-help"]').textContent()).includes('before host formatting/trimming'));
+    check('a long-history reference shows measured text reduction without claiming native full-prompt savings', (await tokenReference.textContent()).includes('less)') && (await tokenPanel.locator('[data-sm-chat="token-reference-help"]').textContent()).includes('before SillyTavern formats or trims it'));
     const afterLongComparison = tokenRequests.length;
     await tokenCompare.evaluate(button => button.onclick(new MouseEvent('click')));
     check('a completed reference cannot start duplicate diagnostic counting', tokenRequests.length === afterLongComparison && await tokenCompare.isHidden());

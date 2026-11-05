@@ -9,8 +9,7 @@ and streaming unchanged; add no model or memory-service requests for diagnostics
 
 The on/off preference is stored in each native chat’s `sillymemoryEnabled` metadata
 flag. New chats default off. Native checkpoints and branches copy the flag, then
-remain independent; resumed remote snapshots inherit their saved flag. Frozen
-snapshots cannot be toggled in place because their metadata is integrity-checked.
+remain independent.
 The panel explains the scope, and extension settings manage the shared LambdaDB
 connection and preparation. Disabling one chat retains its saved memory and the
 connection; it stops that chat’s normal synchronization and injection. The former

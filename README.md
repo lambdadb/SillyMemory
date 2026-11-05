@@ -2,281 +2,169 @@
 
 Long-term memory for SillyTavern. **Powered by LambdaDB.**
 
-SillyMemory retrieves relevant original passages from the current chat's older
-messages while keeping recent dialogue in context. It works with existing saved
-chats and uses LambdaDB for managed embeddings, hybrid search, reranking and
-memory branching. You can inspect the passages selected for each answer. No
-separate embedding-provider key, server plugin, or build step is needed.
+SillyMemory keeps your recent dialogue in the prompt and brings back relevant
+older passages from the same chat, so long conversations stay coherent without
+sending the whole history on every request. Original messages are never
+rewritten. You can see which passages were used for each reply.
 
-**Experimental pre-release.** Start with a test chat; broader model/browser
-compatibility and answer quality are still being evaluated. Install from `main`;
-see [release notes](docs/releases/0.7.3.md) and
-[GitHub Releases](https://github.com/lambdadb/SillyMemory/releases) for version details.
+**Experimental pre-release.** Start with a test chat. See
+[GitHub Releases](https://github.com/lambdadb/SillyMemory/releases) and the
+[CHANGELOG](CHANGELOG.md) for version details.
 
 ## Demo
 
 [<img src="docs/assets/demo-poster.jpg" alt="Watch the SillyMemory demo (2:05)" width="640">](https://github.com/user-attachments/assets/8a34772d-b27f-4709-89c0-caee45c7fcf6)
 
-[Watch the demo (2:05, no audio)](https://github.com/user-attachments/assets/8a34772d-b27f-4709-89c0-caee45c7fcf6)
-to see memory recall, source inspection, input token comparison, checkpoints and
-separate conversation branches in SillyTavern.
+[Watch the demo (2:05, no audio)](https://github.com/user-attachments/assets/8a34772d-b27f-4709-89c0-caee45c7fcf6):
+memory recall, source inspection, input token comparison and separate
+conversation branches. The recording uses real UI with synthetic dialogue and
+scripted replies; token figures are host estimates, not billing.
 
-The recording uses real UI with synthetic dialogue and scripted retrieval/replies.
-Token figures are host input estimates, not billing or typical savings.
+## Quick start
 
-## Why use SillyMemory?
+You need **SillyTavern 1.19.0** opened on `localhost` or over HTTPS, with Git on
+its host and a working chat model connection. Chromium is the tested browser.
 
-Long chats need a way to keep earlier details available without sending the whole
-transcript on every request. We evaluated these alternatives:
+### 1. Install the extension
 
-| Approach | How it handles older dialogue |
-| --- | --- |
-| Plain SillyTavern history | Sends history within the configured context limit; a larger window can retain more history and increase answer input. |
-| Built-in Vector Storage | Retrieves matching chunks from older messages. In our tested configuration, answer input still filled the 32K context window. |
-| Built-in Summarize | Uses an LLM to maintain a summary alongside native history, adding summary-processing work. |
-| Separate 400-character segment-summary experiment | Uses an LLM to create compact summaries and select older summaries. This reduces answer input but adds processing work and can omit details; it is not a built-in SillyTavern option. |
-| **SillyMemory** | Retrieves original passages into a bounded memory budget alongside recent dialogue, without generative LLM calls to maintain memories. Linked conversation branches reuse indexed history. |
+In SillyTavern, open **Extensions → Install extension**, paste the repository
+URL and confirm the third-party extension prompt:
 
-In the recorded 500-question LongMemEval-S evaluation, SillyMemory scored
-**96.0%**, versus **95.2%** for full history under the same Jev grading rules, with
-**95.35% lower mean answer input token usage**. The full-history reference received
-the complete source transcript. The summary methods were evaluated on a shared
-50-question subset; compare them using that subset, not the 500-question scores.
-See the [comparison report](docs/longmemeval-public-evaluation.md) for all configurations,
-matched-cohort results and memory-processing costs. These results describe the
-tested English configurations, not a guarantee for every model or roleplay chat.
+```text
+https://github.com/lambdadb/SillyMemory
+```
 
-Retrieving relevant past messages can help the model use details outside its
-recent context while keeping answer input small. For those 500 cases, our
+Leave the branch field empty to follow `main`. Reload the page afterwards.
+
+### 2. Connect to LambdaDB
+
+Open **Extensions → SillyMemory** and click **Connect to LambdaDB**. Sign up or
+log in in the window that opens, choose or create a project, and approve the
+connection. The window closes by itself.
+
+SillyMemory then runs a short setup test with temporary data and shows
+**Connected to \<project\>**. Your chat is not uploaded, and memory stays off
+until you turn it on in a chat.
+
+LambdaDB's [Free plan](https://lambdadb.ai/pricing) needs no credit card. Your
+chat model provider's charges are separate.
+
+### 3. Turn memory on in a chat
+
+1. Open a plain-text, single-character chat, new or existing.
+2. If you use the built-in **Vector Storage** extension, turn off its chat
+   vectorization. SillyMemory pauses while it is on.
+3. Expand **Memory** above the message composer and click
+   **Turn memory on in this chat**.
+4. Wait until the status shows **Ready**, then chat as usual.
+
+On first activation SillyMemory indexes the chat's older messages; a long
+history takes longer and uses more of your LambdaDB allowance. After that,
+every reply retrieves relevant passages automatically. Open **Last prompt** in
+the Memory panel to see the passages that were selected, or **View full
+memory** for everything that was added to the prompt.
+
+## How it works
+
+- The latest five messages always stay in the prompt. Older messages are saved
+  as memory in your LambdaDB project. Before each reply, SillyMemory searches
+  that memory with the current message and adds related passages within a
+  **memory token budget** (default 4,096 tokens, at most one quarter of the
+  context size; change it under **Advanced**).
+- Memory is per chat. **Turn memory off in this chat** returns that chat to
+  ordinary SillyTavern history handling; the saved memory is kept. New chats
+  start with memory off.
+- Edits, swipes and deletions are reconciled on the next sync. Group chats,
+  files, tool messages, Data Bank and World Info are not indexed.
+- SillyTavern's **Save checkpoint**, **Create Branch** and **Back to parent
+  chat** work as usual. Memory follows whichever chat you open, and linked
+  branches reuse the history they share.
+- After a reload SillyMemory reconnects with the saved key and restores each
+  chat's on/off choice.
+
+In the recorded 500-question LongMemEval-S evaluation, SillyMemory answered
+**96.0%** correctly versus **95.2%** for full history, with **95.35% less**
+mean answer input, and our
 [published cost estimate](https://lambdadb.ai/blog/ai-memory-fewer-tokens-without-graphs#the-cost-of-remembering)
-was **about 91–93% lower than full history**, including memory preparation,
-retrieval, answer generation and LambdaDB usage. It uses standard rates without
-cache adjustments or free allowances, models reranking and two hours of storage,
-and excludes application hosting and benchmark judging.
-
-## Before you start
-
-- **SillyTavern 1.19.0** with Git installed on its host, served on localhost or
-  HTTPS. Chromium is the tested browser; other host versions/browsers are unverified.
-- A **plain-text, single-character chat**. Group chats, attachments and tool
-  conversations are outside the supported path; see [current limits](#current-limits).
-- A working chat model connection in SillyTavern. SillyMemory uses your existing
-  model settings and native replies/streaming; it does not provide a chat model.
-  Live reply/streaming validation covers OpenAI `gpt-6.1-sol`; other generation
-  models and providers remain unverified.
-- A **LambdaDB project** and its regional HTTPS endpoint, project name and project
-  API key. The key needs collection, document and branch access.
-
-You can start with [LambdaDB's Free plan](https://lambdadb.ai/pricing), with no
-credit card required. Initial indexing and ongoing searches consume the included
-allowances. On Free, further usage is restricted when a plan limit is reached;
-see [plan behavior](https://docs.lambdadb.ai/guides/costs/understanding-costs#plans).
-Your chat model provider's charges are separate.
-
-[Create an account](https://app.lambdadb.ai/) and follow the
-[LambdaDB quickstart](https://docs.lambdadb.ai/guides/get-started/quickstart)
-to create a project, open its **API Keys** tab and create a key. Save the full key
-when shown, and keep the regional base URL and project name ready for installation.
-Older chat text and retrieval queries are processed by LambdaDB and its managed
-inference providers; this is a cloud-connected extension, not a local-only memory
-store. See [data, usage, and cleanup](#data-usage-and-cleanup).
-
-## Install
-
-1. In SillyTavern, open **Extensions → Install extension** and paste:
-
-   ```text
-   https://github.com/lambdadb/SillyMemory
-   ```
-
-   Leave the branch/tag field empty to follow `main`. Choose **Install just for
-   me** (or **Install** for a non-admin account) and confirm the third-party
-   extension prompt. Do not install a second copy.
-2. Reload the page and open **Extensions → SillyMemory**.
-3. Fill in the connection fields from your LambdaDB project:
-
-   | Field | Value |
-   | --- | --- |
-   | Regional HTTPS endpoint | The regional base URL, such as `https://<regional-host>`, without `/projects/...`. |
-   | Project name | Your LambdaDB project name. |
-   | Project API key | Your LambdaDB project key, not your chat model's key. |
-
-4. Click **Connect and prepare**. This verifies and saves the key in this browser,
-   tests temporary data using your LambdaDB inference allowance and verifies cleanup.
-   Your chat is not uploaded or activated by setup. If preparation is interrupted,
-   use **Clean up test data** when shown, then **Finish preparation**.
-5. Open an existing saved character chat or a new one. Turn off built-in Vector
-   Storage chat vectorization and other extensions that rewrite chat history.
-   Expand **Memory** above the composer and click **Turn memory on in this chat**.
-   Wait for synchronization to finish before sending a message.
-
-Connection settings collapse after verification. The memory switch and status
-remain above the composer; **Advanced** contains limits, diagnostics, prompt
-inspection, remote cleanup and optional **Frozen memory snapshots**.
-
-No npm commands, manual CORS allowlist, proxy setting, or SillyTavern server restart
-are needed.
-
-## Try it with an existing chat
-
-You do not need to start over. **SillyMemory does not rewrite your saved message
-text or delete older messages.** It saves memory identifiers and the on/off
-preference in chat metadata. Turning memory off returns the same chat to ordinary
-SillyTavern history handling, within your model's context limit.
-
-On first activation, SillyMemory indexes the saved chat's older messages; recent
-dialogue stays directly in the answer context. Longer histories take more time
-and embedding/write allowance to prepare. Later synchronization reuses unchanged
-indexed passages and reconciles changes.
-
-Once the status is **Ready**, ask about a detail from earlier in that chat. Expand
-**Memory** to inspect selected source passages, or choose **View full memory** to
-inspect the last prepared prompt's memory.
-
-Memory belongs to the selected chat and its linked conversation paths. Unrelated
-chats, including separate stories with the same character, are not automatically
-combined into one memory.
-
-## Use and behavior
-
-Chat normally. SillyMemory indexes older completed messages and retrieves relevant
-passages before each reply. It retains at least five recent nonempty text messages,
-keeping an adjacent user/reply pair together. Search uses the current message;
-recent dialogue also stays in the generation prompt alongside retrieved memory.
-Edits, swipes and deletions are reconciled against the current chat.
-Original message text is preserved.
-
-- Open **Memory** above the message composer for current status and recovery
-  actions. **Ready** means the chat can use memory; **Last prompt verified** means
-  the final host prompt passed the delivery check. It does not guarantee answer
-  correctness. **Chat history** opens SillyTavern's existing chat list so you can
-  return to the original conversation. **SillyMemory settings** opens the native extension drawer.
-- Once connected and prepared, use **Turn memory on / off** in the same panel
-  without reopening settings. Switching is disabled during generation or a
-  manual memory operation; initial connection and preparation stay in settings.
-  This preference is saved in the selected chat’s native metadata. New chats start
-  off; native checkpoints and branches inherit the source preference and can then
-  be changed independently. Extension settings manage the shared LambdaDB
-  connection, preparation and advanced options, without a global memory switch.
-- SillyMemory connects directly to LambdaDB and does not depend on built-in Vector
-  Storage. Its chat vectorization must be off to avoid conflicting history injection;
-  the chat status links to its settings without changing them.
-- Expand **Memory** to preview up to three selected source passages from the
-  last prompt, with speaker and message positions. **View full memory** opens
-  **Advanced → Memory in the last prompt** directly. Check the delivery status
-  for whether the final host prompt was verified. Previews stay in this tab and
-  clear when changing chats, changing source messages, disabling memory or
-  preparing another reply; normal reply completion keeps the last selection.
-- The expanded panel shows the last prepared input estimate from SillyTavern's
-  existing Chat Completions counter, plus the prepared memory size. **Compare
-  dialogue text** optionally measures raw dialogue before/after memory using the
-  local tokenizer. This reference precedes host formatting/context trimming and
-  excludes character/system settings; its percentage is not full-prompt or billing
-  savings. See [token display semantics](docs/prompt-token-display.md).
-- Under **Advanced**, the default **Memory token budget** is 4,096 tokens, capped
-  at one quarter of the host context. Recent messages and character instructions also need room;
-  SillyTavern can still trim the final prompt to its context limit.
-- Click **Turn memory off in this chat** to return to ordinary SillyTavern history handling.
-  Continue the same chat: the original messages are preserved, and the next
-  generation uses the host’s existing context limits and settings without
-  SillyMemory retrieval. Saved remote memory is kept; other extensions’ settings
-  are not changed.
-- Reload reconnects using the saved key and restores the selected chat’s saved on/off state
-  after verification. **Connection → Forget key** removes the saved key and disables memory.
-
-## Branches and checkpoints
-
-Use SillyTavern's **Create Branch**, **Save checkpoint**, **Back to parent chat**
-and **Manage chat files** controls as usual. Linked paths reuse unchanged indexed
-history through LambdaDB data versioning; later changes stay separate. On opening
-a path with memory enabled, SillyMemory reconciles its saved transcript, removing
-out-of-path passages and indexing missing or changed text. If the source memory
-is unavailable or the parent link cannot be verified, preparation can rebuild
-from local history and consume embedding/write allowance.
-
-Native **Save checkpoint** saves the chat transcript; it does not freeze remote
-memory at save time. **Advanced → Frozen memory snapshots** additionally binds a
-saved transcript to verified remote memory, with separate save/resume controls.
-Saving or resuming preserves the saved memory on/off preference; an enabled
-writable chat synchronizes automatically after success. See the
-[snapshot guide](docs/checkpoints.md) and [native workflow validation](docs/native-chat-workflow.md).
+was about 91–93% lower than full history. Unlike summarization, SillyMemory
+makes no generative LLM calls to maintain memory. See the
+[comparison report](docs/longmemeval-public-evaluation.md) for the tested
+configurations and their limits; these results describe English benchmark chats,
+not a guarantee for every model or roleplay.
 
 ## If something goes wrong
 
 | What you see | What to do |
 | --- | --- |
-| Connection or authentication failure | Use **Reconnect** in the chat panel when a saved key is available. Otherwise open **Connection** settings to check the regional endpoint/project/key and connect. Check browser connectivity to LambdaDB for network errors. |
-| Failed connection test | Use **Clean up test data** beside the status, then use **Finish preparation**. The diagnostic cleanup control also remains under **Advanced**. Keep pending cleanup records until it succeeds. |
-| Synchronization failure | Follow the status message; wait before retrying a temporary service error, then use **Retry synchronization** beside the status. **Advanced → Sync this chat** remains available for manual synchronization. |
-| Generation stopped during memory preparation | Read the last-prompt status, resolve the error, then use **Retry reply** above the composer for an unchanged pending user input, or the native **Regenerate** action. The shortcut uses native regeneration and makes a new model request; it never retries automatically. Sync alone does not resume a stopped generation. Disable memory if you want to continue with native history. |
-| Query exceeds 8 KiB | Shorten the latest messages, or disable memory for that generation. Queries are not silently truncated. |
+| Connection or authentication failure | Click **Reconnect** in the Memory panel. If it keeps failing, open **SillyMemory settings → Connection**, use **Disconnect** or **Forget key**, then connect again. |
+| Setup test failed | Click **Clean up test data**, then **Run setup test** in settings. |
+| Synchronization failure | Follow the status message, then click **Retry synchronization** in the Memory panel. **This chat's memory → Sync now** re-runs a sync at any time. |
+| Reply stopped while adding memory | Read the status, fix the cause, then click **Retry reply** or use SillyTavern's **Regenerate**. Nothing is retried automatically. |
+| Query exceeds 8 KiB | Shorten the latest messages, or turn memory off for that reply. |
 
-## Data, usage, and cleanup
+## Data, usage and deletion
 
-Older chat excerpts, speaker/time metadata and retrieval queries go directly from
-your browser to LambdaDB. Text and queries are also processed by its managed
-embedding/reranking providers. Storage, writes, searches and inference consume
-plan allowance; see [LambdaDB pricing](https://lambdadb.ai/pricing). The extension
-itself is open source, but connected services are not unlimited free resources.
-Turning memory off keeps remote data; on Pay as You Go, retained data continues
-to consume storage usage until deleted.
+Older chat text, timestamps and search queries go directly from your browser to
+your LambdaDB project, where LambdaDB's embedding and reranking providers process
+them. Storage, writes, searches and inference count toward your
+[LambdaDB plan](https://lambdadb.ai/pricing). Turning memory off keeps the saved
+memory, so on Pay as You Go it continues to use storage until deleted.
 
-The verified API key is saved in a dedicated browser credential record scoped to
-the SillyTavern account and exact endpoint/project. Reopen **Connection** to change
-it or use **Forget key**. Other extensions running on the same page can access
-browser storage; this is not an isolated secret vault.
+- **Delete this chat's memory** is under **This chat's memory** in that chat's
+  Memory panel. It removes only that chat's memory and turns memory off there.
+- **Delete all memory** is under **Advanced** in settings. Use it before
+  uninstalling the extension; deleting a chat in SillyTavern or removing the
+  extension does not delete its memory.
+- **Disconnect** (in **Connection**) removes the project key from this browser
+  and turns memory off; the memory itself is kept. To switch projects, delete
+  all memory first.
 
-Before uninstalling or changing connection settings, open **Advanced** and use
-**Delete all owned remote memory** and clean up any pending test collection. **Delete this chat’s remote
-memory** removes only that chat's writable branch; sibling branches remain.
-These controls keep local SillyTavern chats. Deleting a native chat or uninstalling
-the extension does **not** automatically remove its remote data. Snapshot retention
-and provider backups are separate from deletion of current records. See
-[storage and recovery](docs/versioned-memory.md) and [saved connections](docs/saved-connection.md).
+The project key is saved in browser storage scoped to your SillyTavern account.
+Other extensions on the same page can read browser storage; it is not an
+isolated vault. See [saved connections](docs/saved-connection.md) and
+[storage and recovery](docs/versioned-memory.md) for details.
+
+## Manual connection
+
+If you prefer not to use Connect, create a project in the
+[LambdaDB Console](https://app.lambdadb.ai/), create a project API key on its
+**API Keys** tab, and enter the regional HTTPS endpoint, project name and key
+under **Connection** in SillyMemory settings. Click **Connect and test**. The
+rest of the flow is the same.
 
 ## Current limits
 
-- Experimental: successful retrieval does not guarantee a correct answer.
-- Live reply/streaming validation covers OpenAI `gpt-6.1-sol` on the supported
-  host and Chromium; other generation models and providers remain unverified.
-- Plain-text, single-character chats are the supported path. Group chats, files,
-  and tool conversations are outside this release. Data Bank and World Info are
-  not indexed as memory sources.
-- Use one active SillyMemory tab per browser profile. Concurrent writers from
-  different devices are unsupported.
-- Final prompt delivery is checked for Chat Completion. Other completion formats
-  can report verification unavailable. Long clarification exchanges may outgrow
-  the recent-message window.
+- Experimental: retrieved memory does not guarantee a correct answer.
+- Plain-text, single-character chats only. Group chats, files and tool
+  conversations are outside the supported path.
+- Live reply and streaming checks cover OpenAI `gpt-6.1-sol` on SillyTavern
+  1.19.0 and Chromium; other models, providers and browsers are unverified.
+- Prompt delivery is checked for Chat Completion; other formats may report
+  verification unavailable.
+- Use one SillyMemory tab per browser profile. Editing the same memory from two
+  devices at once is unsupported.
 
-## Version and updates
+## Updating
 
-Install from `main` for the public version; `develop` and topic branches are for
-development. In **Extensions → Manage extensions**, use SillyMemory's **Update**
-button and reload. Updates follow the installed Git branch, not the newest release
-tag. Automatic updates are disabled. Normal updates preserve settings and ownership;
-do not delete remote memory just to update.
+In **Extensions → Manage extensions**, use SillyMemory's **Update** button and
+reload. Updates follow the installed Git branch (`main` by default), not the
+newest release tag. Settings and memory are preserved; do not delete memory
+just to update.
 
-When updating from 0.6.0, open each desired chat and choose **Turn memory on in
-this chat**. The previous global switch is replaced by explicit per-chat choices;
-chats without a saved choice start off.
+- From 0.7.x: chats that had memory on come up off; open each one and choose
+  **Turn memory on in this chat** again (saved memory is reused). The optional
+  **Frozen memory snapshots** feature was removed; use SillyTavern's native
+  checkpoints and branches instead. Chats that were saved as snapshots have no
+  migration path.
+- From 0.6.0: open each chat and choose **Turn memory on in this chat**; the
+  global switch was replaced by per-chat choices.
 
-See [release notes](docs/releases/0.7.3.md), [CHANGELOG](CHANGELOG.md),
-[installation validation](docs/releases/0.7.3-validation.md) and
-[live reply validation](docs/native-reply-validation.md) for measured scope and limitations.
-
-## Development and verification
+## Development
 
 See [CONTRIBUTING](CONTRIBUTING.md) for development and validation commands,
-[architecture](docs/architecture.md) for implementation details, and the
-[development and evaluation reference](docs/development.md) for test entry points
-and historical results. [Evidence retention](docs/evidence-retention.md) tracks
-preserved runs. Historical scores describe their recorded settings, not a current
-accuracy guarantee.
-
-## Benchmarks
-
-See [benchmark/](benchmark/) for the evaluated LongMemEval-S and BEAM settings,
-recorded results, and reproduction commands.
+[architecture](docs/architecture.md) for implementation details, the
+[development reference](docs/development.md) for test entry points, and
+[benchmark/](benchmark/) for the LongMemEval-S and BEAM settings and results.
 
 ## License
 

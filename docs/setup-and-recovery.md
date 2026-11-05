@@ -1,5 +1,8 @@
 # Setup and recovery UX
 
+Update (2026-11-05): the frozen memory snapshot feature was removed. The snapshot
+list and snapshot popup items below are historical.
+
 ## Decision and completion criteria
 
 Complete four bounded UI improvements together: reconnect using the scoped saved
@@ -16,10 +19,10 @@ no paid provider, quality evaluation or new storage/retrieval policy is required
   It does not consume unsaved form values or change any chat's on/off choice.
   Missing/rejected keys leave Connection settings as the recovery path. Automatic
   reload and chat reconnection do not repeat an unprepared transport test.
-- Explicit Connect and prepare validates/saves the key, runs the existing temporary
+- Explicit Connect and test validates/saves the key, runs the existing temporary
   transport test when needed, confirms cleanup and marks the connection prepared.
   Cost/transmission guidance appears before the action. No chat is activated or
-  uploaded by setup. An interrupted test exposes cleanup and Finish preparation.
+  uploaded by setup. An interrupted test exposes cleanup and Run setup test.
 - Opening Advanced > Frozen memory snapshots, switching the selected chat while
   it is open, or reconnecting refreshes availability. Matching in-flight reads are
   shared, and late results for an old chat/story/client cannot replace the list.

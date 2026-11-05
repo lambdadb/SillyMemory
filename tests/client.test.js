@@ -39,7 +39,7 @@ test('direct CORS preserves auth/body and query scope without host credentials',
     assert.deepEqual(body.rerank, { provider: 'typesafe', model: 'jev-1.13.0', queryText: 'compass', fields: ['role', 'conversationTimeContext', 'text'], candidateSize: 200, onFailure: 'error' });
     assert.equal(body.consistentRead, true); assert.deepEqual(body.ref, { kind: 'branch', name: 'main' });
     assert.ok(!JSON.stringify(client).includes('secret-test-only'));
-    client.forget(); await assert.rejects(client.get('test'), /Enter your project API key/);
+    client.forget(); await assert.rejects(client.get('test'), /Not connected\. Use Connect to LambdaDB/);
 });
 test('reject unsafe config and no key; response errors never leak body', async () => {
     for (const endpoint of ['http://bad.test', 'https://key@bad.test', 'https://bad.test/path', 'https://bad.test/?key=secret']) assert.throws(() => connectionConfig({ ...config, endpoint }));
@@ -166,7 +166,7 @@ test('forget cancels an in-flight SDK request and prevents later authentication'
     } });
     const pending = client.get('test'); await ready; client.forget();
     await assert.rejects(pending, error => error.code === 'canceled');
-    await assert.rejects(client.get('test'), /Enter your project API key/);
+    await assert.rejects(client.get('test'), /Not connected\. Use Connect to LambdaDB/);
     assert.equal(calls, 1); assert(!JSON.stringify(client).includes('test-key'));
 });
 

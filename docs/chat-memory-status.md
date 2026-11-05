@@ -16,7 +16,7 @@ excerpt inspection remains in Advanced settings.
 ## State and action boundaries
 
 - Ready describes a supported, enabled chat. It does not assert that memory has
-  reached a prompt. Last prompt verified appears only after the final host prompt
+  reached a prompt. Memory added appears only after SillyTavern's final prompt
   check; partial/unavailable verification and missing excerpts have distinct states.
   Delivery verification is not an answer-quality guarantee.
 - Connect, setup, temporary test cleanup, unsupported chats, saved checkpoints and

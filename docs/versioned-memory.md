@@ -3,7 +3,7 @@
 The current development candidate uses this layout for every chat. The
 [default-storage decision](default-story-memory.md) removes the pre-release
 opt-in and compatibility paths. Native checkpoints and branches use the ordinary
-chat workflow; optional frozen memory snapshots are explicitly saved/resumed under Advanced.
+chat workflow. (The optional frozen memory snapshots were removed on 2026-11-05.)
 The dated validation sections below preserve the original PR #53 results.
 
 ## Decision and acceptance boundary
@@ -70,12 +70,12 @@ history into the story branch. There is no storage-mode selection or conversion.
   local transcript before token-budgeted injection. Retrieval, chunking, token
   limits, recent-message protection and managed embedding provider are unchanged.
 
-**Delete this chat's remote memory** deletes only its writable branch. The empty
-family collection can remain; **Delete all owned remote memory** discovers and
+**Delete this chat's memory** deletes only its writable branch. The empty
+family collection can remain; **Delete all memory** discovers and
 removes entire owned story families and their branches. Local chats
 are preserved. Deleting a native chat or uninstalling the extension does not
-remove remote memory automatically. Snapshot retention/backups remain provider
-policies; branch disappearance is not proof of physical erasure.
+remove remote memory automatically. LambdaDB's own retention and backups remain
+provider policies; branch disappearance is not proof of physical erasure.
 
 Reload verifies the saved browser key before restoring the enabled preference.
 Concurrent writers on multiple

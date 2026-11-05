@@ -52,9 +52,8 @@ Read [CONTRIBUTING.md](CONTRIBUTING.md) before changing this repository.
   user/assistant pair: normal user input retains five, a completed reply can retain
   six. Upload the whole displaced pair together using existing 50-document batches;
   do not introduce a five-message write queue. Query 1 remains independent of this
-  alignment. Checkpoints preserve the full native JSONL transcript and freeze the
-  same older-history memory partition;
-  recent messages are not uploaded solely to save a checkpoint.
+  alignment. Native checkpoints and branches follow the opened chat; there is no
+  separate frozen memory snapshot.
 - Preserve native model/API response formats and streaming. Do not impose a reply
   JSON schema, classify request status, accumulate clarification spans, or decode
   native replies. Supply natural memory guidance for ambiguous requests and

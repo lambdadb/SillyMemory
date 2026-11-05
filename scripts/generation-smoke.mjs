@@ -154,7 +154,7 @@ async function generate(name, type = 'normal', streaming = false) {
     if (generations.length !== start + 1) throw new Error('Expected exactly one final model request');
     const result = await page.evaluate(() => {
         const c = SillyTavern.getContext();
-        return { last: c.chat.at(-1)?.mes, isUser: c.chat.at(-1)?.is_user, chatLength: c.chat.length, inspection: document.querySelector('[data-sm="inspection"]').textContent, chatId: c.getCurrentChatId() };
+        return { last: c.chat.at(-1)?.mes, isUser: c.chat.at(-1)?.is_user, chatLength: c.chat.length, inspection: document.querySelector('[data-sm-chat="inspection"]').textContent, chatId: c.getCurrentChatId() };
     });
     const request = generations.at(-1);
     request.answer = result.last; request.generationElapsedMs = generationElapsedMs;
@@ -264,7 +264,7 @@ try {
     const disabled = await generate('disabled-again');
     assert(!disabled.prompt.includes('Past conversation excerpt'), 'disable removes injected memory from final request');
     stage = 'secret audit';
-    await openSettings(); await field('forget').click(); await waitStatus('Saved key removed');
+    await openSettings(); await field('disconnect').click(); await waitStatus('Saved key removed');
     const serialized = await page.evaluate(async () => { const c = SillyTavern.getContext(); const r = await fetch('/api/settings/get', {method:'POST', headers:c.getRequestHeaders(), body:'{}'}); return JSON.stringify({local:{...localStorage},session:{...sessionStorage},settings:await r.json()}); });
     assert((!credentials.key || !serialized.includes(credentials.key)) && (!env.LLM_API_KEY || !serialized.includes(env.LLM_API_KEY)), 'Forget key removes the project key; generation keys never enter browser or native settings');
 } catch (e) {
@@ -287,7 +287,7 @@ try {
                     // If it fails, retain the pending record instead of racing deletion.
                     await openSettings();
                     await answerMemoryPopup(page, () => field('delete').click());
-                    await waitStatus('no longer accessible');
+                    await waitStatus('memory was deleted');
                     assert(true, 'settings deletion drains writes and removes owned memory');
                 }
                 await page.evaluate(async ({ credentials, collections }) => {
@@ -303,7 +303,7 @@ try {
         } catch { console.log('Cleanup incomplete; keep pending resource record.'); }
     }
     const sourceSha256 = {};
-    for (const file of ['index.js', 'settings.html', 'src/chunking.js', 'src/chat-collections.js', 'src/checkpoints.js', 'src/client.js', 'src/credentials.js', 'src/gate.js', 'src/memory.js', 'src/time.js', 'src/context.js', 'src/status.js', 'src/delivery.js', 'vendor/lambdadb.js', 'package-lock.json', 'scripts/generation-smoke.mjs', 'scripts/settings-panel.mjs', 'scripts/provider-spacing.mjs', 'scripts/generation-cleanup.mjs']) sourceSha256[file] = createHash('sha256').update(await readFile(path.join(root, file))).digest('hex');
+    for (const file of ['index.js', 'settings.html', 'src/chunking.js', 'src/chat-collections.js', 'src/client.js', 'src/credentials.js', 'src/gate.js', 'src/memory.js', 'src/time.js', 'src/context.js', 'src/status.js', 'src/delivery.js', 'vendor/lambdadb.js', 'package-lock.json', 'scripts/generation-smoke.mjs', 'scripts/settings-panel.mjs', 'scripts/provider-spacing.mjs', 'scripts/generation-cleanup.mjs']) sourceSha256[file] = createHash('sha256').update(await readFile(path.join(root, file))).digest('hex');
     if (liveModel && !failure) {
         try { assert(summarizeProviderSpacing(generations, PROVIDER_SPACING).verified, 'actual provider starts respect the 15-second interval'); }
         catch (error) { failure = { stage: 'provider spacing', reason: error.message }; }

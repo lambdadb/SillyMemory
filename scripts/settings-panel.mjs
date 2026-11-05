@@ -17,7 +17,7 @@ export async function expandMemorySettings(page) {
         await page.locator('#sillymemory .inline-drawer-toggle').click();
     }
     await openMemoryConnection(page);
-    for (const name of ['advanced', 'checkpoints']) {
+    for (const name of ['advanced']) {
         const section = page.locator(`#sillymemory details[data-sm="${name}"]`);
         if (await section.count() && await section.getAttribute('open') === null) {
             await section.locator(':scope > summary').click();
@@ -34,8 +34,31 @@ export async function openChatMemory(page) {
         await drawer.waitFor({ state: 'hidden' });
     }
     const view = page.locator('#sillymemory-chat');
-    if (await view.getAttribute('open') === null) await view.locator('summary').click();
+    if (await view.getAttribute('open') === null) await view.locator(':scope > summary').click();
+    // Older revisions show the last prompt directly; newer ones collapse it.
+    const lastPrompt = view.locator('details[data-sm-chat="last-prompt"]');
+    if (await lastPrompt.count() && await lastPrompt.getAttribute('open') === null) {
+        await lastPrompt.evaluate(element => { element.open = true; });
+    }
     return view;
+}
+
+// Sync and delete for one chat live in that chat's Memory panel under This
+// chat's memory. Existing runners keep their settings names for these actions;
+// click the chat control as a user would and restore the settings drawer the
+// next step expects. Deletion leaves its confirmation popup to the caller.
+export function chatMemoryAction(page, name) {
+    const button = page.locator(`#sillymemory-chat [data-sm-chat="${name}"]`);
+    const click = async () => {
+        const drawer = page.locator('#extensions-settings-button .drawer-content');
+        const wasOpen = await drawer.evaluate(el => el.classList.contains('openDrawer'));
+        const view = await openChatMemory(page);
+        const section = view.locator('details[data-sm-chat="manage"]');
+        if (await section.getAttribute('open') === null) await section.locator(':scope > summary').click();
+        await button.click();
+        if (wasOpen && name !== 'delete') await page.locator('#extensions-settings-button .drawer-toggle').click();
+    };
+    return { click, isVisible: () => button.isVisible() };
 }
 
 // Existing runners express memory state as check/uncheck. Exercise the real

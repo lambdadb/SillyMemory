@@ -2,8 +2,13 @@
 
 ## Product decision
 
-Keep one UI extension and direct browser HTTPS/CORS. The user enters a project
-key once and chooses **Connect and prepare**. Prepared connections use the
+Keep one UI extension and direct browser HTTPS/CORS. The default path is
+**Connect to LambdaDB**: LambdaDB OAuth issues one project key, which is then
+verified and saved exactly like a manually entered key (see
+[development](development.md#browser-account-connection) for the protocol).
+While connected, the Connection section shows the project and a single
+**Disconnect** action; the manual form is shown only while not connected.
+Alternatively, the user enters a project key once and chooses **Connect and test**. Prepared connections use the
 **Save and connect** label when edited. That action explicitly stores the key
 in this browser; there are no retention modes or extra server plugins. It replaces
 the previous session-only policy for the unreleased 0.4.0 candidate, not any
@@ -19,11 +24,11 @@ remain in the client's private field; the password input is cleared on submissio
 A single authenticated `GET /projects/{project}/collections?size=1` validates the
 connection before save or activation. It does not create resources or invoke
 managed embeddings, reranking or the answer model. It proves the bounded read
-works, not every write permission. The initial explicit **Connect and prepare**
+works, not every write permission. The initial explicit **Connect and test**
 action then runs the required synthetic transport test (unless it already passed
 in this session) and verifies cleanup before marking memory ready. The UI discloses
 temporary inference usage and separate per-chat activation before the action.
-Setup never uploads or activates a chat. **Finish preparation** remains available
+Setup never uploads or activates a chat. **Run setup test** remains available
 after interrupted setup and verified pending-test cleanup.
 The manual test and pending-test cleanup controls remain under **Advanced**.
 Pending test data also exposes a cleanup action beside the status. A failed
@@ -38,7 +43,14 @@ These views do not change stored connection or memory settings.
 
 After reload, acquire the account's existing exclusive browser lock, restore the
 key and verify it. Only then restore the previous enabled state if chat memory was
-prepared. Disabled stays disabled. No selected character means synchronization
+prepared and the chat's activation binding matches this browser's persisted
+activation generation and exact endpoint/project. Legacy ON flags without that
+binding remain inactive until explicitly enabled. Bulk remote-memory deletion
+persists a fresh generation before remote mutation; old chat/branch/checkpoint
+bindings cannot reactivate during preparation or reconnection. A failed deletion
+does not restore the old generation. Losing browser state also creates a fresh
+generation. This guard does not coordinate clients on other browsers/devices.
+Disabled stays disabled. No selected character means synchronization
 waits for the user to open a supported chat; the extension does not select a chat
 or modify native auto-load preferences. The existing source/branch reconciliation
 checks still guard writes and generation.
@@ -57,7 +69,8 @@ checks still guard writes and generation.
   settings can also retry the exact selected connection. Automatic reload and
   chat Reconnect do not start an unprepared transport test; initial preparation
   requires the explicit setup action. No automatic retry loop.
-- **Forget key** clears the input and runtime key, cancels requests, removes the
+- **Disconnect** (shown while connected) and **Forget key** (shown while not
+  connected, for a saved key that could not be confirmed) clear the input and runtime key, cancels requests, removes the
   account credential even if ordinary connection settings were lost, disables
   memory and drains pending work. It retains remote
   memory and owned cleanup journals. A storage-removal failure is visible and is

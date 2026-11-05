@@ -5,6 +5,39 @@ Use [CONTRIBUTING](../CONTRIBUTING.md) for branch, PR and evidence-retention rul
 The current runtime and synthetic regressions are maintained here; retired
 experiments are recovered at their producing revisions, not run through current CI.
 
+## Browser account connection
+
+**Connect to LambdaDB** uses LambdaDB OAuth. It discovers the issuer from
+the account API origin (RFC 9728), registers this installation once with its exact
+`oauth-callback.html` URL (RFC 7591), and saves only that public client ID. Each
+Connect creates a project connection and opens the approval in a popup with S256
+PKCE. The callback page clears its query and
+reports the code to the initiating tab on a per-attempt `BroadcastChannel`. The
+tab exchanges the code, saves the connection ID and approved project for
+recovery, and claims the project key once. It then revokes the setup token, and
+verifies and saves the project in this browser. An attempt that reached the key
+claim without a confirmed result is passed as `recovery_id` for the same project;
+an attempt that ended earlier, such as an expired approval, has no key and is not
+recovered. Manual key setup remains
+available. To try another LambdaDB environment, set
+`localStorage['sillymemory:api-origin']` to its HTTPS account API origin, for
+example `https://api-dev.lambdadb.ai`. Setup does not activate a chat; see the
+[README](../README.md#2-connect-to-lambdadb) for usage and
+[saved connections](saved-connection.md) for credential and deletion behavior.
+
+`npm test` covers the OAuth connection protocol, recovery ordering and activation
+bindings. The maintained `npm run test:browser` suite uses pinned ST with a local
+HTTPS data emulator and a synthetic LambdaDB API and issuer. The popup follows a
+synthetic approval redirect into the real callback page. The suite covers:
+
+- an approval without key issuance ending without a key, with setup-token revocation
+- canceling a delayed connection verification
+- verified credential adoption with chat memory off
+- a single installation registration with S256 PKCE and the exact callback
+- excluding host credentials from account requests
+
+These fixtures do not establish live signup, provisioning or email delivery.
+
 ## Local setup
 
 Use Node.js 20.12+ and SillyTavern 1.19.0 at
@@ -37,8 +70,8 @@ ST_SOURCE=/absolute/path/to/pinned/SillyTavern node scripts/prompt-delivery-smok
 
 These use real Chromium and the pinned host with synthetic data, local LambdaDB
 and completion fixtures, and disposable profiles. They make no paid service calls.
-The browser harness checks connection, per-chat memory, checkpoints and native
-reply behavior. Fault/recovery modes check cancellation, uncertain writes,
+The browser harness checks connection, per-chat memory, native checkpoints and
+branches, and native reply behavior. Fault/recovery modes check cancellation, uncertain writes,
 reloads and cleanup. The prompt-delivery harness checks final archive/input
 preservation, context pressure, repeated citations and same-message assembly.
 Reports and screenshots go to ignored `artifacts/`; model fixtures do not grade
@@ -53,7 +86,6 @@ file outside this worktree. Never commit it or personal chat data.
 
 ```sh
 ST_SOURCE=/absolute/path/to/pinned/SillyTavern SM_ENV_FILE=/path/to/evaluation.env npm run test:collections:live
-ST_SOURCE=/absolute/path/to/pinned/SillyTavern SM_ENV_FILE=/path/to/evaluation.env npm run test:live:faults
 ST_SOURCE=/absolute/path/to/pinned/SillyTavern SM_ENV_FILE=/path/to/evaluation.env npm run test:generation
 ```
 

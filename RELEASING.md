@@ -6,10 +6,10 @@ Release or highest version tag. Keep `main` at reviewed release boundaries.
 `develop` integrates ongoing work. Merge `develop` into `main` with a merge
 commit to preserve long-lived branch ancestry.
 
-The prepared release boundary is **0.7.3 (experimental)**, dated **2026-10-28**.
+The prepared release boundary is **0.8.0 (experimental)**, dated **2026-11-06**.
 A dated preparation entry is not main promotion or publication.
-See the [release notes](docs/releases/0.7.3.md),
-[acceptance record](docs/releases/0.7.3-validation.md) and
+See the [release notes](docs/releases/0.8.0.md),
+[acceptance record](docs/releases/0.8.0-validation.md) and
 [GitHub Releases](https://github.com/lambdadb/SillyMemory/releases).
 Preparation does not authorize a main merge, tag or Release publication.
 Never recreate or move a published version tag. Main promotion, tag push and GitHub
@@ -93,19 +93,19 @@ After approval, in a clean checkout synchronized with the reviewed remote main:
 git fetch origin --tags
 git switch main
 git merge --ff-only origin/main
-npm run check:release -- --tag v0.7.3
+npm run check:release -- --tag v0.8.0
 # Confirm HEAD is the approved main commit before creating the tag.
-git tag -a v0.7.3 -m 'SillyMemory 0.7.3 (experimental)'
-git push origin refs/tags/v0.7.3
+git tag -a v0.8.0 -m 'SillyMemory 0.8.0 (experimental)'
+git push origin refs/tags/v0.8.0
 ```
 
 Use the actual approved version in these commands. The tag CI checks metadata,
 the dated changelog, tests and whether the tagged commit is contained in
 `origin/main`. Wait for it to pass before publishing the GitHub Release at that
-existing tag. Mark the experimental 0.7.3 release as **pre-release**, describing it as
+existing tag. Mark the experimental 0.8.0 release as **pre-release**, describing it as
 experimental and linking the installation guide. Use a reviewed release-notes
-file with `gh release create v0.7.3 --verify-tag --prerelease --title
-'SillyMemory 0.7.3 (experimental)' --notes-file docs/releases/0.7.3.md`.
+file with `gh release create v0.8.0 --verify-tag --prerelease --title
+'SillyMemory 0.8.0 (experimental)' --notes-file docs/releases/0.8.0.md`.
 
 Tags and Releases are not published automatically. CI detects mistakes after a
 push; it is not a server-side prohibition on changing branches or tags. Branch
@@ -122,7 +122,7 @@ normally leave the optional branch/tag field empty, selecting default `main`.
 They update through **Manage extensions → SillyMemory → Update**, then reload.
 Automatic updates are disabled in the manifest. Reload verifies the saved browser
 key and uses each chat's saved on/off choice. Chats without an explicit choice
-start off; users updating from 0.6.0 enable memory separately in each desired chat. Forget key removes that credential and disables memory. Browser-storage
+start off; users updating from 0.6.0 enable memory separately in each desired chat. Disconnect (while connected) or Forget key removes that credential and disables memory. Browser-storage
 loss or rejected authentication requires a new key; see [reconnection](docs/saved-connection.md).
 
 For a problem, first disable memory to preserve ordinary chat operation. Back up
@@ -174,8 +174,8 @@ it does not establish storage migration from an older published release.
 A candidate-branch installation is not a main deployment. Reports/screenshots
 stay under ignored `artifacts/`; retain concise results and exact source hashes.
 
-Use `scripts/chat-collections-live.mjs --checkpoint-manager` for bounded current
-story/branch/checkpoint acceptance with real managed embeddings. See
+Use `scripts/chat-collections-live.mjs` for bounded current story/branch
+acceptance with real managed embeddings. See
 [default story memory](docs/default-story-memory.md) for the current acceptance
 scope and retained evidence. The previous 0.2.0 upgrade/rollback adapter is
 archived; it is no longer a compatibility requirement.

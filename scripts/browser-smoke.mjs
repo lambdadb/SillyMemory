@@ -1,5 +1,5 @@
 import { runSetupRecoveryScenarios } from './setup-recovery-scenarios.mjs';
-import { answerMemoryPopup, memoryControl, expandMemorySettings, openMemoryConnection, openChatMemory } from './settings-panel.mjs';
+import { answerMemoryPopup, chatMemoryAction, memoryControl, expandMemorySettings, openMemoryConnection, openChatMemory } from './settings-panel.mjs';
 import { runPerChatMemoryScenarios } from './per-chat-memory-scenarios.mjs';
 import { runNativeReplyScenarios } from './native-reply-scenarios.mjs';
 import { runNativeChatScenarios } from './native-chat-scenarios.mjs';
@@ -143,22 +143,24 @@ try {
     const savedSettings = JSON.parse(await readFile(path.join(work, 'data/default-user/settings.json'), 'utf8'));
     check('owner identity is durable before first remote request', /^[a-f0-9]{32}$/.test(savedSettings.extension_settings?.sillymemory?.owner));
     // Open settings through the chat-facing controls without navigating drawers.
-    await chatStatus.locator('summary').focus(); await page.keyboard.press('Enter');
+    await chatStatus.locator(':scope > summary').focus(); await page.keyboard.press('Enter');
     check('chat recovery details open with the keyboard', await chatField('settings').isVisible());
     await chatField('settings').click();
     await page.locator('#sillymemory [data-sm="connect"]').waitFor({ state: 'visible' });
     await page.waitForFunction(() => !jQuery('#sillymemory .inline-drawer-content').is(':animated'));
     check('chat settings action opens the native drawer and SillyMemory controls', await page.locator('#sillymemory [data-sm="connect"]').isVisible());
-    const field = name => name === 'enabled' ? memoryControl(page) : page.locator(`#sillymemory [data-sm="${name}"]`);
+    const field = name => name === 'enabled' ? memoryControl(page)
+        : name === 'sync' ? chatMemoryAction(page, 'sync-now') : name === 'delete-chat' ? chatMemoryAction(page, 'delete')
+        : page.locator(`#sillymemory [data-sm="${name}"]`);
     const status = () => field('status').innerText();
     const waitStatus = async text => { await page.waitForFunction(text => document.querySelector('#sillymemory [data-sm="status"]')?.textContent.includes(text), text, { timeout: 30000 }); };
-    check('fresh setup shows connection before preparation or activation', await field('connect').isVisible() && !await field('provision').isVisible() && !await field('enabled').isVisible() && !await field('budget').isVisible() && !await field('checkpoint-save').isVisible());
+    check('fresh setup shows connection before preparation or activation', await field('connect').isVisible() && !await field('provision').isVisible() && !await field('enabled').isVisible() && !await field('budget').isVisible());
     check('chat activation is not exposed before connection and preparation', await chatField('toggle').getAttribute('hidden') !== null);
     const advancedSummary = field('advanced').locator(':scope > summary');
     await advancedSummary.focus(); await page.keyboard.press('Enter');
     check('Advanced opens with the keyboard', await field('budget').isVisible());
     await page.keyboard.press('Enter');
-    check('closing Advanced leaves status and delivery feedback visible', !await field('budget').isVisible() && await field('status').isVisible() && await field('delivery').isVisible());
+    check('closing Advanced leaves status feedback visible', !await field('budget').isVisible() && await field('status').isVisible());
     await page.locator('#sillymemory').evaluate(el => el.scrollIntoView({ block: 'start' }));
     await page.screenshot({ path: path.join(artifacts, 'settings-basic.png') });
     await page.setViewportSize({ width: 390, height: 844 });
@@ -180,8 +182,14 @@ try {
     await field('key').fill('synthetic-session-key'); await field('connect').click(); await waitStatus('Connected.');
     await waitStatus('Chat memory is ready');
     check('one explicit connection prepares and cleans up temporary data without activating a chat', !await field('endpoint').isVisible() && !await field('provision').isVisible() && !await field('enabled').isChecked() && collections.size === 0 && calls.some(c => c.path.endsWith('/docs/upsert')));
-    check('setup discloses temporary inference usage and separate chat activation before connecting', (await field('connection').textContent()).includes('inference allowance') && (await field('connection').textContent()).includes('Turn memory on separately'));
+    check('setup discloses temporary inference usage and separate chat activation before connecting', (await field('connection').textContent()).includes('LambdaDB usage') && (await field('connection').textContent()).includes('Turn memory on separately'));
     await openMemoryConnection(page);
+    check('a connected project shows Disconnect instead of the connect controls', !await field('app-connect').isVisible() && !await field('key').isVisible()
+        && await field('disconnect').isVisible() && (await field('connected-summary').textContent()).startsWith('Connected to synthetic ('));
+    // The manual form returns while a saved key cannot be confirmed; a failed explicit connect must keep that key.
+    faults.arm('connection', 'http', 503);
+    await page.reload(); await page.locator('#sillymemory').waitFor({ state: 'attached', timeout: 45000 }); await waitStatus('HTTP 503');
+    await expandMemorySettings(page);
     const storedBeforeFailure = await page.evaluate(() => {
         const owner = SillyTavern.getContext().extensionSettings.sillymemory.owner;
         return [localStorage.getItem(`sillymemory:state:${owner}`), localStorage.getItem(`sillymemory:credential:${owner}`)];
@@ -199,8 +207,6 @@ try {
             return localStorage.getItem(`sillymemory:state:${owner}`) === before[0] && localStorage.getItem(`sillymemory:credential:${owner}`) === before[1];
         }, storedBeforeFailure));
     } finally { await page.evaluate(() => globalThis.restoreCredentialStorage()); }
-    await field('connect').click(); await waitStatus('Connected.');
-    await openMemoryConnection(page);
     await field('project').fill('other-project'); await field('key').fill('wrong-synthetic-key'); await field('connect').click(); await waitStatus('Authentication failed');
     check('a rejected explicit key for another project preserves the prior validated credential', await page.evaluate(() => {
         const name = Object.keys(localStorage).find(k => k.startsWith('sillymemory:credential:'));
@@ -208,7 +214,7 @@ try {
     }) && collections.size === 0);
     await field('project').fill('synthetic'); await field('connect').click(); await waitStatus('Connected.');
     await expandMemorySettings(page);
-    await answerMemoryPopup(page, () => field('delete').click()); await waitStatus('no longer accessible');
+    await answerMemoryPopup(page, () => field('delete').click()); await waitStatus('memory was deleted');
     await field('advanced').locator(':scope > summary').click();
     await field('connection').locator(':scope > summary').click();
     if (!faultMode) {
@@ -217,7 +223,7 @@ try {
         check('failed setup cleanup cannot mark memory ready or enable it', collections.size === 1 && !await field('enabled').isChecked() && await page.evaluate(() => !JSON.parse(localStorage.getItem(`sillymemory:state:${SillyTavern.getContext().extensionSettings.sillymemory.owner}`)).ready));
         check('pending cleanup is actionable without opening Advanced', await field('recover-cleanup').isVisible() && !await field('cleanup').isVisible() && !await field('provision').isVisible() && collections.size === 1);
         check('chat activation cannot bypass pending test cleanup', await chatField('toggle').getAttribute('hidden') !== null);
-        await field('recover-cleanup').click(); await waitStatus('No pending');
+        await field('recover-cleanup').click(); await waitStatus('Test data deleted');
         check('cleanup restores preparation and removes the recovery action', await field('provision').isVisible() && !await field('recover-cleanup').isVisible());
     }
     const gateUploads = calls.filter(c => c.path.endsWith('/docs/upsert')).length;
@@ -242,7 +248,7 @@ try {
         if (!response.ok) throw new Error('Could not create synthetic character');
     });
     await page.reload(); await page.locator('#sillymemory').waitFor({ state: 'attached', timeout: 45000 });
-    await waitStatus('Connected. Memory remains disabled.');
+    await waitStatus('Connected. Memory stays off');
     check('reload reconnects without refilling the visible key input and preserves disabled memory', await field('key').inputValue() === '' && !await field('enabled').isChecked());
     await page.locator('#rightNavHolder .drawer-toggle').click();
     await page.locator('.character_select').filter({ hasText: 'SillyMemory Synthetic' }).click();
@@ -304,20 +310,20 @@ try {
     await page.locator('#extensions-settings-button .drawer-toggle').click();
     if (!await page.locator('#sillymemory .inline-drawer-content').isVisible()) await page.locator('#sillymemory .inline-drawer-toggle').click();
     await expandMemorySettings(page);
-    await field('key').fill('synthetic-session-key'); await field('connect').click(); await waitStatus('Connected. Memory remains disabled.');
+    await field('key').fill('synthetic-session-key'); await field('connect').click(); await waitStatus('Connected. Memory stays off');
     await page.evaluate(async () => { const c = SillyTavern.getContext(); await c.selectCharacterById(c.characters.findIndex(x => x.name === 'SillyMemory Synthetic')); });
     await waitStatus('synchronized'); await field('enabled').uncheck();
     await page.evaluate(async () => { const c = SillyTavern.getContext(); await c.selectCharacterById(c.characters.findIndex(x => x.name === 'SillyMemory Synthetic')); });
     await openChatMemory(page);
     await chatField('toggle').click(); await waitStatus('synchronized');
-    check('chat activation persists the same enabled preference without reopening settings', await field('enabled').isChecked() && (await chatField('toggle').textContent()) === 'Turn memory off in this chat' && (await chatField('delivery').textContent()).includes('Memory enabled for this chat. No prompt checked') && await page.evaluate(() => SillyTavern.getContext().chatMetadata.sillymemoryEnabled === true && !document.querySelector('#extensions-settings-button .drawer-content').classList.contains('openDrawer')));
+    check('chat activation persists the same enabled preference without reopening settings', await field('enabled').isChecked() && (await chatField('toggle').textContent()) === 'Turn memory off in this chat' && (await chatField('delivery').textContent()) === '' && await chatField('delivery').isHidden() && await page.evaluate(() => SillyTavern.getContext().chatMetadata.sillymemoryEnabled === true && !document.querySelector('#extensions-settings-button .drawer-content').classList.contains('openDrawer')));
     await chatField('settings').click(); await field('next-step').waitFor({ state: 'visible' });
     if (!faultMode) {
         // Fail a read-only ownership check so this UI case does not leave an
         // uncertain-write journal that changes the existing no-write controls.
         await page.route('**/projects/synthetic/collections/*', route => route.fulfill({ status: 400, json: { message: 'Synthetic ownership check failure' } }), { times: 1 });
         await field('sync').click(); await waitStatus('Invalid request');
-        check('failed synchronization exposes an explicit retry beside status', await field('retry-sync').isVisible());
+        check('failed synchronization exposes an explicit retry in the chat Memory panel', await chatField('sync').isVisible());
         check('chat status exposes synchronization failure outside the settings panel', (await chatField('label').innerText()).includes('Needs attention'));
         await openChatMemory(page);
         await chatField('sync').click(); await waitStatus('synchronized');
@@ -342,11 +348,8 @@ try {
     await page.evaluate(async () => {
         const c = SillyTavern.getContext();
         c.extensionSettings.vectors.enabled_chats = true;
-        c.chatMetadata.sillymemory.checkpoint = true;
         await c.eventSource.emit(c.eventTypes.SETTINGS_UPDATED);
     });
-    check('snapshot recovery takes priority over an unrelated vector setting', (await chatField('label').innerText()).includes('Saved snapshot') && !await chatField('vectors').isVisible());
-    await page.evaluate(() => { delete SillyTavern.getContext().chatMetadata.sillymemory.checkpoint; });
     const unsupportedSource = await page.evaluate(async () => {
         const c = SillyTavern.getContext(), original = structuredClone(c.chat);
         c.chat.push({ is_system: true, mes: 'Synthetic tool result.', extra: { tool_invocations: [{ name: 'synthetic-tool' }] } });
@@ -359,7 +362,7 @@ try {
         await c.eventSource.emit(c.eventTypes.MESSAGE_UPDATED, 0);
     }, unsupportedSource);
     await waitStatus('synchronized');
-    check('a supported synchronized chat reports readiness without claiming prompt delivery', (await chatField('label').innerText()).includes('Ready') && (await chatField('delivery').innerText()).includes('No prompt checked'));
+    check('a supported synchronized chat reports readiness without claiming prompt delivery', (await chatField('label').innerText()).includes('Ready') && await chatField('delivery').isHidden());
     await openChatMemory(page);
     await chatStatus.scrollIntoViewIfNeeded();
     await page.screenshot({ path: path.join(artifacts, 'chat-memory-ready.png') });
@@ -383,7 +386,7 @@ try {
         const { runGenerationInterceptors } = await import('/scripts/extensions.js');
         aborted = await runGenerationInterceptors(chat, 4096, 'normal');
         const rendered = chat.filter(m => m.mes.startsWith('[Recalled conversation excerpts]')).map(m => m.mes).join('\n');
-        const result = { before, after: JSON.stringify(c.chat), chat, aborted, rendered, guidance: c.extensionPrompts.sillymemory?.value || '', preparation: document.querySelector('[data-sm="status"]').textContent, renderedTokens: await c.getTokenCountAsync(rendered), macroValue: c.chatMetadata.variables?.sillymemory_test, injection: rendered, inspection: document.querySelector('[data-sm="inspection"]').textContent };
+        const result = { before, after: JSON.stringify(c.chat), chat, aborted, rendered, guidance: c.extensionPrompts.sillymemory?.value || '', preparation: document.querySelector('[data-sm="status"]').textContent, renderedTokens: await c.getTokenCountAsync(rendered), macroValue: c.chatMetadata.variables?.sillymemory_test, injection: rendered, inspection: document.querySelector('[data-sm-chat="inspection"]').textContent };
         // This suite calls only the interceptor dispatcher. Emulate its completion
         // boundary to release prompt ownership; full packing/dispatch is tested
         // by prompt-delivery-smoke.mjs, not by this synthetic final event.
@@ -398,7 +401,7 @@ try {
     const archive = [...collections.values()][0].branches.get(await page.evaluate(() => `chat_${SillyTavern.getContext().chatMetadata.sillymemory.id}`));
     check('ordinary native synchronization archives one complete pair outside the retained recent exchanges',
         JSON.stringify([...archive.values()].map(doc => doc.message).sort((a, b) => a - b)) === '[0,1]');
-    check('a tight allocation succeeds without partially injecting a dated source', !result.aborted && !result.injection && /Prepared 0 source passages/.test(result.preparation) && /\d+ \/ 250 tokens/.test(result.inspection));
+    check('a tight allocation succeeds without partially injecting a dated source', !result.aborted && !result.injection && /Found 0 related passages/.test(result.preparation) && /\d+ \/ 250 tokens/.test(result.inspection));
     check('empty selection explains that no older memory was selected', (await chatField('memory-summary').textContent()).includes('No older memory selected') && await chatField('memory-list').locator('li').count() === 0 && await chatField('inspect').getAttribute('hidden') !== null);
     check('small memory stays inside its budget with sent guidance', result.renderedTokens <= 250);
     // The longer macro-bearing source can be skipped at 250 once the shared
@@ -408,7 +411,7 @@ try {
     const macroResult = await prompt();
     check('native recalled excerpts keep macros literal within budget', macroResult.rendered.includes('｛｛char｝｝') && macroResult.rendered.includes('＜USER＞') && macroResult.macroValue === undefined && macroResult.renderedTokens <= 400);
     check('memory preview shows selected source text and coordinates as plain text', (await chatField('memory-list').textContent()).includes('Synthetic passage 0') && (await chatField('memory-list').textContent()).includes('User · User · message 1, passage 1') && (await chatField('memory-list').textContent()).includes('<USER>') && await chatField('memory-list').locator('user').count() === 0);
-    check('memory preview excludes candidates omitted from the prompt', await chatField('memory-list').locator('li').count() === Number(/Prepared (\d+) source passages/.exec(macroResult.preparation)[1]));
+    check('memory preview excludes candidates omitted from the prompt', await chatField('memory-list').locator('li').count() === Number(/Found (\d+) related passages/.exec(macroResult.preparation)[1]));
     await field('budget').fill('400'); await field('budget').dispatchEvent('change');
     check('a completed reply retains six messages without splitting a pair and leaves persisted source unchanged', JSON.stringify(result.chat.filter(m => !m.mes.startsWith('[Recalled conversation excerpts]')).map(m => m.index)) === '[2,3,4,5,6,7]' && result.chat.at(-1).mes.includes('passage 7') && result.before === result.after);
     // Ineligible active inputs still preserve recent dialogue. The actual native
@@ -454,7 +457,9 @@ try {
         return { original, text };
     });
     const assembled = await prompt();
-    const preparedCounts = /Prepared (\d+) source passages in (\d+) memory excerpts/.exec(assembled.preparation);
+    const passageCount = /Found (\d+) related passages/.exec(assembled.preparation);
+    const memoryMessages = assembled.chat.filter(m => m.mes.startsWith('[Recalled conversation excerpts]')).length;
+    const preparedCounts = passageCount && [passageCount[0], passageCount[1], String(memoryMessages)];
     const assembledMessage = assembled.chat.find(m => m.mes.startsWith('[Recalled conversation excerpts]') && m.mes.includes('message 1, passages 1-'));
     check('real host dispatcher assembles same-message chunks with their source and one shared header',
         !assembled.aborted && preparedCounts && Number(preparedCounts[1]) > Number(preparedCounts[2]) && assembledMessage?.mes.includes('passages 1-') && assembledMessage.mes.includes(assemblySource.text)
@@ -498,7 +503,7 @@ try {
         const beforeCopy = await page.evaluate(() => SillyTavern.getContext().chatMetadata.sillymemory.id);
         await field('enabled').uncheck();
         await page.evaluate(async () => { const c = SillyTavern.getContext(), { saveChat } = await import('/script.js'); await saveChat({ chatName: 'Synthetic copied' }); await c.openCharacterChat('Synthetic copied'); });
-        await answerMemoryPopup(page, () => field('delete-chat').click()); await waitStatus('no longer accessible');
+        await answerMemoryPopup(page, () => field('delete-chat').click()); await waitStatus('memory was deleted');
         check('deleting an unactivated copy cannot delete its parent', collections.size === 1);
         const uncertainCreate = faults.arm('create', 'hold'); await field('enabled').check();
         await uncertainCreate.entered; await waitStatus('timed out'); uncertainCreate.release();
@@ -509,7 +514,7 @@ try {
         faults.arm('delete-branch', 'http', 503);
         await answerMemoryPopup(page, () => field('delete-chat').click()); await waitStatus('HTTP 503');
         check('failed individual deletion keeps remote collection for retry', collections.size === 2);
-        await answerMemoryPopup(page, () => field('delete-chat').click()); await waitStatus('no longer accessible');
+        await answerMemoryPopup(page, () => field('delete-chat').click()); await waitStatus('memory was deleted');
         check('individual deletion preserves the story collections and sibling branches', collections.size === 2 && [...collections.values()][1].branches.size === 1);
         await field('enabled').check(); await waitStatus('synchronized');
     }
@@ -538,8 +543,8 @@ try {
             && !JSON.stringify({ ...sessionStorage }).includes('synthetic-session-key');
     }) && !secrets.includes('wrong-synthetic-key'));
     await field('enabled').check(); await waitStatus('synchronized'); await prompt();
-    await page.locator('#sillymemory details:has(> [data-sm=inspection]) > summary').click();
-    await field('inspection').scrollIntoViewIfNeeded();
+    await expandMemorySettings(page);
+    await field('advanced').scrollIntoViewIfNeeded();
     if (!faultMode) await page.screenshot({ path: path.join(artifacts, 'settings.png') });
     if (!faultMode) {
         // The host can swallow save errors. No remote access may precede
@@ -564,42 +569,6 @@ try {
             return memory.version === 1 && memory.story === memory.id && JSON.stringify(rows[0].chat_metadata.sillymemory) === JSON.stringify(memory);
         });
         check('retry saves the full default story identity and synchronizes', persisted && await field('versioned').count() === 0);
-    }
-    if (!faultMode) {
-        // Native chat-list entry must enforce the same identity checks as manager rows.
-        const originalFile = await page.evaluate(() => SillyTavern.getContext().getCurrentChatId());
-        for (const state of ['ready', 'pending']) {
-            await page.evaluate(async state => {
-                const c = SillyTavern.getContext();
-                const { checkpointDigest } = await import('/scripts/extensions/third-party/sillymemory/src/checkpoints.js');
-                const rows = [{ chat_metadata: { integrity: 'duplicate-native', sillymemory: {
-                    id: 'd'.repeat(32), story: 'e'.repeat(32), version: 1, integrity: 'duplicate-native',
-                    checkpoint: { state, snapshot: null, createdAt: '2026-01-01T00:00:00Z' },
-                } } }, { mes: 'Synthetic duplicate checkpoint.', name: 'Mira', is_user: false }];
-                rows[0].chat_metadata.sillymemory.checkpoint.hash = await checkpointDigest(rows);
-                for (const name of ['Duplicate checkpoint A', 'Duplicate checkpoint B']) {
-                    const response = await fetch('/api/chats/save', { method: 'POST', headers: c.getRequestHeaders(), body: JSON.stringify({ avatar_url: c.characters[c.characterId].avatar, file_name: name, force: false, chat: rows }) });
-                    if (!response.ok) throw new Error('Duplicate checkpoint fixture save failed');
-                }
-                await c.openCharacterChat('Duplicate checkpoint A');
-            }, state);
-            const before = calls.length;
-            await field('checkpoint-refresh').click();
-            await page.waitForFunction(() => !document.querySelector('[data-sm="checkpoint-refresh"]').disabled);
-            check(`${state} duplicate checkpoints are blocked in the manager`, (await field('checkpoint-list').innerText()).match(/Duplicate identity/g)?.length === 2 && await field('checkpoint-list').locator('button').count() === 0);
-            for (const button of ['checkpoint-save', 'checkpoint-resume']) {
-                await field(button).click();
-                await page.waitForFunction(button => !document.querySelector(`[data-sm="${button}"]`).disabled, button);
-                check(`${state} duplicate native checkpoint ${button} is rejected before remote access`, (await status()).includes('duplicated') && calls.length === before);
-            }
-        }
-        await page.evaluate(async originalFile => {
-            const c = SillyTavern.getContext(); await c.openCharacterChat(originalFile);
-            for (const name of ['Duplicate checkpoint A', 'Duplicate checkpoint B']) {
-                const response = await fetch('/api/chats/delete', { method: 'POST', headers: c.getRequestHeaders(), body: JSON.stringify({ avatar_url: c.characters[c.characterId].avatar, chatfile: `${name}.jsonl` }) });
-                if (!response.ok) throw new Error('Duplicate fixture cleanup failed');
-            }
-        }, originalFile);
     }
     if (!faultMode) await runPerChatMemoryScenarios({ page, field, waitStatus, check, calls, prompt,
         screenshot: name => page.screenshot({ path: path.join(artifacts, `${name}.png`) }) });
@@ -632,13 +601,24 @@ try {
     if (!faultMode) nativeReplyResults = await runNativeReplyScenarios({ page, field, waitStatus, check, calls,
         screenshot: name => page.screenshot({ path: path.join(artifacts, `${name}.png`) }) });
     if (faultMode) { staleHits = []; faultResults = await runFaultScenarios({ page, field, waitStatus, prompt, check, faults, collections, calls, restartHost: recoveryMode ? async () => { const exited = new Promise(resolve => server.once('exit', resolve)); server.kill('SIGKILL'); await exited; await start(false); } : undefined, screenshot: name => page.screenshot({ path: path.join(artifacts, `${name}${artifactTag ? `-${artifactTag}` : ''}.png`) }) }); }
-    else { await answerMemoryPopup(page, () => field('delete').click()); await waitStatus('no longer accessible'); }
+    else { await answerMemoryPopup(page, () => field('delete').click()); await waitStatus('memory was deleted'); }
     check('owned remote deletion leaves no collections', collections.size === 0);
     await field('budget').fill('512'); await field('budget').dispatchEvent('change');
     await page.reload(); await page.locator('#sillymemory').waitFor({ state: 'attached', timeout: 45000 });
     await waitStatus('Connected.');
     check('remote deletion leaves reconnection available but preserves disabled memory', await field('key').inputValue() === '' && !await field('enabled').isChecked());
     check('explicit user budget survives reload without default replacement', await field('budget').inputValue() === '512');
+    if (!faultMode) {
+        // Keep a stale native ON flag: preparing again must not revive uploads.
+        await page.evaluate(async () => { const ctx = SillyTavern.getContext(); ctx.chatMetadata.sillymemoryEnabled = true; await ctx.saveChat(); });
+        const memoryWrites = () => calls.filter(call => call.path.endsWith('/upsert') && !call.path.includes('/smtest_')).length;
+        const writesBeforePreparation = memoryWrites();
+        await expandMemorySettings(page);
+        await field('provision').click(); await waitStatus('Connected. Chat memory is ready.');
+        check('preparation after bulk deletion cannot revive a stale native ON preference',
+            !await field('enabled').isChecked() && collections.size === 0
+            && memoryWrites() === writesBeforePreparation);
+    }
     await page.evaluate(() => localStorage.removeItem(`sillymemory:state:${SillyTavern.getContext().extensionSettings.sillymemory.owner}`));
     await page.reload(); await page.locator('#sillymemory').waitFor({ state: 'attached', timeout: 45000 });
     await page.waitForFunction(() => !document.querySelector('#sillymemory [data-sm=connect]').disabled);
@@ -652,9 +632,81 @@ try {
     await page.waitForFunction(() => !document.querySelector('#sillymemory [data-sm=connect]').disabled);
     check('Forget key removes persistence and reload makes no credential request', calls.length === beforeForgottenReload && await page.evaluate(() => !Object.keys(localStorage).some(k => k.startsWith('sillymemory:credential:'))) && !await field('enabled').isChecked());
 
+    if (!faultMode) {
+        const appCalls = []; let appOutcome = 'read-only', offered = false, discoveryGate;
+        const connectionId = '44444444-4444-4444-8444-444444444444', projectId = '22222222-2222-4222-8222-222222222222';
+        const issuer = 'https://auth.lambdadb.ai/';
+        const cors = { 'Access-Control-Allow-Origin': url, 'Access-Control-Allow-Headers': 'Authorization, Content-Type, Accept', 'Access-Control-Allow-Methods': 'GET,POST,OPTIONS' };
+        // Synthetic LambdaDB account API and issuer. Approval redirects straight to
+        // the extension's callback page, which reports the code to the initiating tab.
+        await page.context().route(/^https:\/\/(api|auth)\.lambdadb\.ai\//, async route => {
+            const req = route.request(), target = new URL(req.url()), key = `${req.method()} ${target.host} ${target.pathname}`;
+            if (req.method() === 'OPTIONS') return route.fulfill({ status: 204, headers: cors });
+            appCalls.push({ key, body: req.postData(), headers: req.headers() });
+            const json = (value, status = 200) => route.fulfill({ status, headers: cors, json: value });
+            if (key === 'GET api.lambdadb.ai /.well-known/oauth-protected-resource' && !offered) return json({ error: 'not_found' }, 404);
+            if (key === 'GET api.lambdadb.ai /.well-known/oauth-protected-resource') await discoveryGate?.promise;
+            if (key === 'GET api.lambdadb.ai /.well-known/oauth-protected-resource') return json({ resource: 'https://api.lambdadb.ai', authorization_servers: [issuer], lambdadb_console_url: 'https://app.lambdadb.ai' });
+            if (key === 'GET auth.lambdadb.ai /.well-known/openid-configuration') return json({ issuer, authorization_endpoint: `${issuer}oauth2/auth`, token_endpoint: `${issuer}oauth2/token`, registration_endpoint: `${issuer}oauth2/register`, revocation_endpoint: `${issuer}oauth2/revoke` });
+            if (key === 'POST auth.lambdadb.ai /oauth2/register') return json({ client_id: 'synthetic-installation' }, 201);
+            if (key === 'POST api.lambdadb.ai /project-connections') return json({ connection_id: connectionId, expires_at: new Date(Date.now() + 900000).toISOString() }, 201);
+            if (key === 'GET auth.lambdadb.ai /oauth2/auth') {
+                const callback = new URL(target.searchParams.get('redirect_uri'));
+                callback.searchParams.set('code', 'synthetic-code'); callback.searchParams.set('state', target.searchParams.get('state'));
+                return route.fulfill({ status: 302, headers: { Location: callback.href } });
+            }
+            if (key === 'POST auth.lambdadb.ai /oauth2/token') return json({ access_token: 'synthetic-setup-token', token_type: 'bearer', expires_in: 900, scope: appOutcome === 'ready' ? 'connection:read connection:issue' : 'connection:read' });
+            if (key === `GET api.lambdadb.ai /project-connections/${connectionId}`) return json({ connection_id: connectionId, status: 'ready', project_id: projectId });
+            if (key === `POST api.lambdadb.ai /project-connections/${connectionId}/key`) return json({ connection_id: connectionId, endpoint, project_id: projectId, project_name: 'synthetic', key_id: 'synthetic-app-key', api_key: 'synthetic-session-key' }, 201);
+            if (key === 'POST auth.lambdadb.ai /oauth2/revoke') return route.fulfill({ status: 200, headers: cors, body: '' });
+            return json({ error: 'not_found' }, 404);
+        });
+        await expandMemorySettings(page);
+        await field('app-connect').click(); await waitStatus('does not offer Connect yet');
+        for (let i = 0; i < 50 && page.context().pages().length > 1; i++) await page.waitForTimeout(100);
+        check('a server without Connect reports manual setup and closes the blank approval window',
+            page.context().pages().length === 1 && !appCalls.some(c => c.key.endsWith('/oauth2/register')));
+        offered = true;
+        let release; discoveryGate = { promise: new Promise(resolve => { release = resolve; }) };
+        const opened = page.context().waitForEvent('page');
+        await field('app-connect').click();
+        const approvalWindow = await opened;
+        await approvalWindow.waitForFunction(() => document.body?.textContent.includes('Opening LambdaDB sign-in'), undefined, { timeout: 10000 }).catch(() => {});
+        check('the approval window explains itself while Connect prepares authorization',
+            await approvalWindow.title() === 'Connect to LambdaDB' && await approvalWindow.evaluate(() => document.body.textContent) === 'Opening LambdaDB sign-in…');
+        discoveryGate = undefined; release();
+        await waitStatus('did not allow a project key');
+        const claims = () => appCalls.filter(c => c.key.endsWith('/key')).length;
+        check('an approval without key issuance ends waiting without issuing a key or connecting', !await field('app-waiting').isVisible() && claims() === 0 && !await field('enabled').isChecked());
+        check('app setup token is revoked after an approval without key issuance', appCalls.at(-1).key === 'POST auth.lambdadb.ai /oauth2/revoke');
+        appOutcome = 'ready';
+        const canceledVerification = faults.arm('connection', 'hold');
+        await field('app-connect').click();
+        await canceledVerification.entered;
+        await field('app-cancel').click();
+        canceledVerification.release();
+        await waitStatus('Connection canceled.');
+        check('canceling after redemption prevents a delayed connection check from saving or preparing the key',
+            !await field('enabled').isChecked() && collections.size === 0
+            && await page.evaluate(() => !Object.keys(localStorage).some(k => k.startsWith('sillymemory:credential:'))));
+        await field('app-connect').click(); await waitStatus('Connected. Chat memory is ready.');
+        check('app approval automatically saves and prepares the exact project without activating chat memory', await field('project').inputValue() === 'synthetic' && await field('key').inputValue() === '' && !await field('enabled').isChecked() && collections.size === 0
+            && claims() === 2);
+        check('app installation is registered once and reused', appCalls.filter(c => c.key.endsWith('/oauth2/register')).length === 1);
+        check('app authorization uses S256 PKCE and the exact extension callback',
+            appCalls.filter(c => c.key.endsWith('/oauth2/token')).every(c => new URLSearchParams(c.body).get('redirect_uri') === `${url}/scripts/extensions/third-party/sillymemory/oauth-callback.html` && new URLSearchParams(c.body).get('code_verifier')?.length >= 43));
+        check('app requests never forward the host cookies, CSRF or a project key, and only setup calls carry the setup token',
+            appCalls.every(c => !c.headers.cookie && !c.headers['x-csrf-token'] && !c.headers['x-api-key']
+                && (!c.headers.authorization || (c.headers.authorization === 'Bearer synthetic-setup-token' && c.key.includes('/project-connections/')))));
+        await openMemoryConnection(page);
+        check('after Connect the section offers Disconnect instead of Connect to LambdaDB', !await field('app-connect').isVisible() && await field('disconnect').isVisible());
+        await field('disconnect').click(); await waitStatus('Saved key removed');
+        check('Disconnect returns the section to the not-connected form', await field('app-connect').isVisible() && await field('key').isVisible() && !await field('disconnect').isVisible());
+        for (const popup of page.context().pages()) if (popup !== page) await popup.close();
+    }
     if (faultMode) check('fault run has no uncaught browser page errors', errors.length === 0);
     const sourceSha256 = {};
-    for (const file of ['index.js', 'manifest.json', 'settings.html', 'style.css', 'src/chunking.js', 'src/client.js', 'src/credentials.js', 'src/commit.js', 'src/chat-collections.js', 'src/checkpoints.js', 'src/gate.js', 'src/memory.js', 'src/time.js', 'src/context.js', 'scripts/native-chat-scenarios.mjs', 'scripts/per-chat-memory-scenarios.mjs', 'scripts/setup-recovery-scenarios.mjs', 'scripts/native-reply-scenarios.mjs', 'src/delivery.js', 'src/token-usage.js', 'src/status.js', 'scripts/browser-smoke.mjs', 'scripts/settings-panel.mjs', 'scripts/emulator-cors.mjs', 'scripts/fault-scenarios.mjs', 'scripts/recovery-scenarios.mjs']) {
+    for (const file of ['index.js', 'manifest.json', 'settings.html', 'style.css', 'src/chunking.js', 'src/client.js', 'src/credentials.js', 'src/activation.js', 'src/app-connect.js', 'oauth-callback.html', 'oauth-callback.js', 'src/commit.js', 'src/chat-collections.js', 'src/gate.js', 'src/memory.js', 'src/time.js', 'src/context.js', 'scripts/native-chat-scenarios.mjs', 'scripts/per-chat-memory-scenarios.mjs', 'scripts/setup-recovery-scenarios.mjs', 'scripts/native-reply-scenarios.mjs', 'src/delivery.js', 'src/token-usage.js', 'src/status.js', 'scripts/browser-smoke.mjs', 'scripts/settings-panel.mjs', 'scripts/emulator-cors.mjs', 'scripts/fault-scenarios.mjs', 'scripts/recovery-scenarios.mjs']) {
         sourceSha256[file] = createHash('sha256').update(await readFile(path.join(root, file))).digest('hex');
     }
     await writeFile(path.join(artifacts, artifactName), JSON.stringify({ passed: true, faultResults, nativeChatResults, nativeReplyResults, sourceSha256, time: new Date().toISOString(), sillyTavern: revision, node: process.version, browser: browser.version(), upstream: 'Local HTTPS LambdaDB emulator; no live managed embeddings', checks, pageErrors: errors, requestCount: calls.length, preflights, proxyRequests, remainingCollections: collections.size }, null, 2));
