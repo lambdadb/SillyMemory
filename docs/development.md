@@ -7,7 +7,7 @@ experiments are recovered at their producing revisions, not run through current 
 
 ## Browser account connection
 
-The development connection flow uses LambdaDB OAuth. It discovers the issuer from
+**Connect to LambdaDB** uses LambdaDB OAuth. It discovers the issuer from
 the account API origin (RFC 9728), registers this installation once with its exact
 `oauth-callback.html` URL (RFC 7591), and saves only that public client ID. Each
 Connect creates a project connection and opens the approval in a popup with S256
@@ -22,7 +22,7 @@ recovered. Manual key setup remains
 available. To try another LambdaDB environment, set
 `localStorage['sillymemory:api-origin']` to its HTTPS account API origin, for
 example `https://api-dev.lambdadb.ai`. Setup does not activate a chat; see the
-[README](../README.md#browser-account-connection-development) for usage and
+[README](../README.md#2-connect-to-lambdadb) for usage and
 [saved connections](saved-connection.md) for credential and deletion behavior.
 
 `npm test` covers the OAuth connection protocol, recovery ordering and activation

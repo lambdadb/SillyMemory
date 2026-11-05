@@ -2,8 +2,13 @@
 
 ## Product decision
 
-Keep one UI extension and direct browser HTTPS/CORS. The user enters a project
-key once and chooses **Connect and test**. Prepared connections use the
+Keep one UI extension and direct browser HTTPS/CORS. The default path is
+**Connect to LambdaDB**: LambdaDB OAuth issues one project key, which is then
+verified and saved exactly like a manually entered key (see
+[development](development.md#browser-account-connection) for the protocol).
+While connected, the Connection section shows the project and a single
+**Disconnect** action; the manual form is shown only while not connected.
+Alternatively, the user enters a project key once and chooses **Connect and test**. Prepared connections use the
 **Save and connect** label when edited. That action explicitly stores the key
 in this browser; there are no retention modes or extra server plugins. It replaces
 the previous session-only policy for the unreleased 0.4.0 candidate, not any
