@@ -151,9 +151,11 @@ reload. Updates follow the installed Git branch (`main` by default), not the
 newest release tag. Settings and memory are preserved; do not delete memory
 just to update.
 
-- From 0.7.x: the optional **Frozen memory snapshots** feature was removed. Use
-  SillyTavern's native checkpoints and branches instead. Chats that were saved
-  as snapshots have no migration path.
+- From 0.7.x: chats that had memory on come up off; open each one and choose
+  **Turn memory on in this chat** again (saved memory is reused). The optional
+  **Frozen memory snapshots** feature was removed; use SillyTavern's native
+  checkpoints and branches instead. Chats that were saved as snapshots have no
+  migration path.
 - From 0.6.0: open each chat and choose **Turn memory on in this chat**; the
   global switch was replaced by per-chat choices.
 

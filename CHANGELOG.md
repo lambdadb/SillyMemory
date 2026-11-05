@@ -4,7 +4,7 @@ Versions describe the extension, independently of the SillyTavern host version.
 An `Unreleased` entry is a development candidate. A dated entry records a release
 boundary; publication is confirmed by the corresponding Git tag and GitHub Release.
 
-## [0.8.0] - Unreleased
+## [0.8.0] - 2026-11-06
 
 ### Added
 
@@ -37,11 +37,16 @@ boundary; publication is confirmed by the corresponding Git tag and GitHub Relea
   last-prompt results such as **Memory added**. **How memory works** is
   rewritten in three sentences. Deleting one chat's memory now says that memory
   is also turned off in that chat. When memory is off, the chat panel shows the
-  off status once instead of twice.
+  off status once instead of twice. The not-connected messages in settings and
+  the client name **Connect to LambdaDB** first.
 - In the chat Memory panel, **Turn memory on in this chat** is a filled,
   full-width button; **Turn memory off** stays an ordinary button.
-- After **Delete all**, chat memory ON flags from before the deletion stay
-  inactive until deliberately enabled again in this browser.
+- A chat is treated as on only when its saved flag was set by this browser's
+  current connection. ON flags from before **Delete all** stay inactive until
+  **Turn memory on in this chat** is chosen again, and memory is then rebuilt
+  from the local chat because Delete all removed it. After updating from
+  0.7.x, chats that were on also start off and must be turned on again; in
+  that case their saved memory is kept and reused.
 
 ### Removed
 
