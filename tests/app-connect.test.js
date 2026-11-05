@@ -97,15 +97,12 @@ test('a saved installation is reused, and a removed registration is replaced onc
     assert.equal(reused.filter(c => c.key === 'POST /oauth2/register').length, 0);
 });
 
-test('a region request ends without a key claim and still discards the setup token', async t => {
+test('an approval without key issuance fails without a key claim and still discards the setup token', async t => {
     const calls = fixture(t, {
         'POST /oauth2/token': () => [200, { access_token: 'setup-token', token_type: 'bearer', scope: 'connection:read' }],
-        [`GET /project-connections/${connection}`]: () => [200, { connection_id: connection, status: 'region_requested' }],
+        [`GET /project-connections/${connection}`]: () => [200, { connection_id: connection, status: 'ready', project_id: project }],
     });
-    let message;
-    const result = await connectWithLambdaDB(options({ beforeIssue() { assert.fail('a region request cannot issue a key'); }, onStatus: text => { message = text; } }));
-    assert.equal(result, null);
-    assert.match(message, /Region requested/);
+    await assert.rejects(connectWithLambdaDB(options({ beforeIssue() { assert.fail('a read-only approval cannot issue a key'); } })), /did not allow a project key/);
     assert.equal(calls.filter(c => c.key.endsWith('/key')).length, 0);
     assert.equal(calls.at(-1).key, 'POST /oauth2/revoke');
 });
