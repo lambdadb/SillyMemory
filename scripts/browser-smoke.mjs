@@ -184,6 +184,12 @@ try {
     check('one explicit connection prepares and cleans up temporary data without activating a chat', !await field('endpoint').isVisible() && !await field('provision').isVisible() && !await field('enabled').isChecked() && collections.size === 0 && calls.some(c => c.path.endsWith('/docs/upsert')));
     check('setup discloses temporary inference usage and separate chat activation before connecting', (await field('connection').textContent()).includes('LambdaDB usage') && (await field('connection').textContent()).includes('Turn memory on separately'));
     await openMemoryConnection(page);
+    check('a connected project shows Disconnect instead of the connect controls', !await field('app-connect').isVisible() && !await field('key').isVisible()
+        && await field('disconnect').isVisible() && (await field('connected-summary').textContent()).startsWith('Connected to synthetic ('));
+    // The manual form returns while a saved key cannot be confirmed; a failed explicit connect must keep that key.
+    faults.arm('connection', 'http', 503);
+    await page.reload(); await page.locator('#sillymemory').waitFor({ state: 'attached', timeout: 45000 }); await waitStatus('HTTP 503');
+    await expandMemorySettings(page);
     const storedBeforeFailure = await page.evaluate(() => {
         const owner = SillyTavern.getContext().extensionSettings.sillymemory.owner;
         return [localStorage.getItem(`sillymemory:state:${owner}`), localStorage.getItem(`sillymemory:credential:${owner}`)];
@@ -201,8 +207,6 @@ try {
             return localStorage.getItem(`sillymemory:state:${owner}`) === before[0] && localStorage.getItem(`sillymemory:credential:${owner}`) === before[1];
         }, storedBeforeFailure));
     } finally { await page.evaluate(() => globalThis.restoreCredentialStorage()); }
-    await field('connect').click(); await waitStatus('Connected.');
-    await openMemoryConnection(page);
     await field('project').fill('other-project'); await field('key').fill('wrong-synthetic-key'); await field('connect').click(); await waitStatus('Authentication failed');
     check('a rejected explicit key for another project preserves the prior validated credential', await page.evaluate(() => {
         const name = Object.keys(localStorage).find(k => k.startsWith('sillymemory:credential:'));
@@ -734,7 +738,9 @@ try {
             appCalls.every(c => !c.headers.cookie && !c.headers['x-csrf-token'] && !c.headers['x-api-key']
                 && (!c.headers.authorization || (c.headers.authorization === 'Bearer synthetic-setup-token' && c.key.includes('/project-connections/')))));
         await openMemoryConnection(page);
-        await field('forget').click(); await waitStatus('Saved key removed');
+        check('after Connect the section offers Disconnect instead of Connect to LambdaDB', !await field('app-connect').isVisible() && await field('disconnect').isVisible());
+        await field('disconnect').click(); await waitStatus('Saved key removed');
+        check('Disconnect returns the section to the not-connected form', await field('app-connect').isVisible() && await field('key').isVisible() && !await field('disconnect').isVisible());
         for (const popup of page.context().pages()) if (popup !== page) await popup.close();
     }
     if (faultMode) check('fault run has no uncaught browser page errors', errors.length === 0);

@@ -503,11 +503,12 @@ try {
     await page.locator('#extensions-settings-button .drawer-toggle').click();
     if (!await page.locator('#sillymemory .inline-drawer-content').isVisible()) await page.locator('#sillymemory .inline-drawer-toggle').click();
     await expandMemorySettings(page);
-    await field('key').fill('synthetic-session-key'); await field('connect').click();
+    // Reload reconnects with the saved key; a connected project offers Disconnect, not the manual form.
+    await page.waitForFunction(() => document.querySelector('#sillymemory [data-sm=connection-state]').textContent.startsWith('Connected'));
     await answerMemoryPopup(page, () => field('delete').click()); await waitStatus('memory was deleted');
     assert.equal(collections.size, 0);
     await openMemoryConnection(page);
-    await field('forget').click(); await waitStatus('Saved key removed');
+    await field('disconnect').click(); await waitStatus('Saved key removed');
     const stored = await page.evaluate(() => JSON.stringify({ local: { ...localStorage }, session: { ...sessionStorage }, settings: SillyTavern.getContext().extensionSettings }));
     assert.ok(!stored.includes('synthetic-session-key'));
     assert.ok(!(await readFile(profilePath, 'utf8')).includes('synthetic-session-key'));

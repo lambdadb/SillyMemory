@@ -64,7 +64,8 @@ checks still guard writes and generation.
   settings can also retry the exact selected connection. Automatic reload and
   chat Reconnect do not start an unprepared transport test; initial preparation
   requires the explicit setup action. No automatic retry loop.
-- **Forget key** clears the input and runtime key, cancels requests, removes the
+- **Disconnect** (shown while connected) and **Forget key** (shown while not
+  connected, for a saved key that could not be confirmed) clear the input and runtime key, cancels requests, removes the
   account credential even if ordinary connection settings were lost, disables
   memory and drains pending work. It retains remote
   memory and owned cleanup journals. A storage-removal failure is visible and is

@@ -95,8 +95,9 @@ it automatically. It does not activate or upload a chat; turn memory on separate
 Projects can be created only in open regions; request another region in the
 LambdaDB Console.
 
-Manual connection below remains available. Existing memory prevents switching to
-another project until its memory is deleted. After Delete all, previous chat
+Manual connection below remains available while not connected. Once connected,
+the Connection section shows the project with a single **Disconnect** button.
+Existing memory prevents switching to another project until its memory is deleted. After Delete all, previous chat
 ON flags remain inactive until deliberately enabled again in this browser.
 
 ## Install
@@ -200,7 +201,7 @@ Original message text is preserved.
   SillyMemory retrieval. Saved memory is kept; other extensions’ settings
   are not changed.
 - Reload reconnects using the saved key and restores the selected chat’s saved on/off state
-  after verification. **Connection → Forget key** removes the saved key and disables memory.
+  after verification. **Connection → Disconnect** removes the saved key and disables memory.
 
 ## Branches and checkpoints
 
@@ -240,8 +241,9 @@ Turning memory off keeps saved memory; on Pay as You Go, retained data continues
 to consume storage usage until deleted.
 
 The verified API key is saved in a dedicated browser credential record scoped to
-the SillyTavern account and exact endpoint/project. Reopen **Connection** to change
-it or use **Forget key**. Other extensions running on the same page can access
+the SillyTavern account and exact endpoint/project. To change it, use
+**Connection → Disconnect**, then connect again; **Forget key** removes a saved key
+that could not be confirmed. Other extensions running on the same page can access
 browser storage; this is not an isolated secret vault.
 
 Before uninstalling or changing connection settings, open **Advanced** and use

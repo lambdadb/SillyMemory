@@ -298,6 +298,9 @@ async function retryReply() {
         status('Could not retry this reply. Check the chat, then use SillyTavern’s Regenerate action.', { error: true });
     } finally { retrying = false; renderChatStatus(); }
 }
+function endpointHost(endpoint) {
+    try { return new URL(endpoint).host; } catch { return endpoint; }
+}
 function renderSettings() {
     if (!root || !state) return;
     const connected = Boolean(sessionReady && connectionVerified && client);
@@ -307,7 +310,14 @@ function renderSettings() {
         connection.open = !connected;
         shownConnection = connected;
     }
-    element('connection-state').textContent = connected ? `Connected · ${state.project}` : 'Not connected';
+    element('connection-state').textContent = connected ? 'Connected' : 'Not connected';
+    // Connecting controls apply only while not connected; a connected project offers Disconnect instead.
+    element('connect-form').hidden = connected;
+    element('connected').hidden = !connected;
+    if (connected) {
+        element('connected-summary').textContent = `Connected to ${state.project} (${endpointHost(state.endpoint)})`;
+        element('disconnect-help').hidden = !(state.testCollection || state.chatCollections.length);
+    }
     const cleanup = Boolean(connected && state.testCollection);
     element('connect').textContent = state.ready || state.testCollection ? 'Save and connect' : 'Connect and test';
     element('prepare-controls').hidden = !connected || state.ready || cleanup;
@@ -673,7 +683,7 @@ async function initialize() {
         const hasMemory = Boolean(state.testCollection || state.chatCollections.length);
         if (connectionVerified) {
             status(hasMemory ? 'This project is already connected. Delete this project’s memory before connecting another project.'
-                : 'This project is already connected. Forget the saved key to connect another project.');
+                : 'This project is already connected. Disconnect to connect another project.');
             return;
         }
         const popup = window.open('about:blank', '_blank');
@@ -747,7 +757,8 @@ async function initialize() {
             await connect(state, key, true);
         });
     }
-    element('forget').onclick = () => action(async () => {
+    // Forget key while not connected; Disconnect while connected. Both remove the saved key.
+    element('forget').onclick = element('disconnect').onclick = () => action(async () => {
         connectionVerified = false;
         invalidate();
         element('key').value = ''; client?.forget(); connectingClient?.forget();

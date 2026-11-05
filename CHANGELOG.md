@@ -26,8 +26,11 @@ boundary; publication is confirmed by the corresponding Git tag and GitHub Relea
   memory** (**Sync now** and **Delete this chat's memory**, moved from
   **Advanced**). Settings keep only actions for every chat; the duplicate retry,
   delivery line, last-prompt inspector and chat history button are removed.
-- **Connect to LambdaDB** on an already connected browser without saved memory
-  points to **Forget key** instead of memory cleanup.
+- Once connected, the Connection section shows "Connected to <project>
+  (<host>)" with one **Disconnect** button instead of **Connect to LambdaDB** and
+  the manual form, so connecting again is no longer offered while connected.
+  With saved memory it notes that the memory must be deleted before using
+  another project. To change a key, disconnect and connect again.
 - Interface text uses plain words: "memory" instead of "remote" or "owned"
   memory, **Run setup test** and **Run connection test** instead of preparation
   and synthetic upsert, "SillyTavern" instead of host or native, and plain
