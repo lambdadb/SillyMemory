@@ -4,9 +4,9 @@
 
 Use SillyTavern's own chat history, **Save checkpoint**, **Create Branch** and
 **Back to parent chat** as the ordinary workflow. Opening a saved path prepares
-that transcript's memory when the user has enabled it. Keep the additional
-verified transcript/remote-memory snapshot feature under **Advanced → Frozen
-memory snapshots**, with its existing storage and integrity checks.
+that transcript's memory when the user has enabled it. Update (2026-11-05): the
+separate frozen memory snapshot feature was removed; the snapshot results below
+are historical.
 
 Completion requires native checkpoints, earlier-message/alternate-swipe branches,
 return navigation, snapshot save/resume, explicit memory-off preferences and

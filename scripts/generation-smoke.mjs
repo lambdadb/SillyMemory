@@ -303,7 +303,7 @@ try {
         } catch { console.log('Cleanup incomplete; keep pending resource record.'); }
     }
     const sourceSha256 = {};
-    for (const file of ['index.js', 'settings.html', 'src/chunking.js', 'src/chat-collections.js', 'src/checkpoints.js', 'src/client.js', 'src/credentials.js', 'src/gate.js', 'src/memory.js', 'src/time.js', 'src/context.js', 'src/status.js', 'src/delivery.js', 'vendor/lambdadb.js', 'package-lock.json', 'scripts/generation-smoke.mjs', 'scripts/settings-panel.mjs', 'scripts/provider-spacing.mjs', 'scripts/generation-cleanup.mjs']) sourceSha256[file] = createHash('sha256').update(await readFile(path.join(root, file))).digest('hex');
+    for (const file of ['index.js', 'settings.html', 'src/chunking.js', 'src/chat-collections.js', 'src/client.js', 'src/credentials.js', 'src/gate.js', 'src/memory.js', 'src/time.js', 'src/context.js', 'src/status.js', 'src/delivery.js', 'vendor/lambdadb.js', 'package-lock.json', 'scripts/generation-smoke.mjs', 'scripts/settings-panel.mjs', 'scripts/provider-spacing.mjs', 'scripts/generation-cleanup.mjs']) sourceSha256[file] = createHash('sha256').update(await readFile(path.join(root, file))).digest('hex');
     if (liveModel && !failure) {
         try { assert(summarizeProviderSpacing(generations, PROVIDER_SPACING).verified, 'actual provider starts respect the 15-second interval'); }
         catch (error) { failure = { stage: 'provider spacing', reason: error.message }; }

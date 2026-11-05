@@ -70,8 +70,8 @@ ST_SOURCE=/absolute/path/to/pinned/SillyTavern node scripts/prompt-delivery-smok
 
 These use real Chromium and the pinned host with synthetic data, local LambdaDB
 and completion fixtures, and disposable profiles. They make no paid service calls.
-The browser harness checks connection, per-chat memory, checkpoints and native
-reply behavior. Fault/recovery modes check cancellation, uncertain writes,
+The browser harness checks connection, per-chat memory, native checkpoints and
+branches, and native reply behavior. Fault/recovery modes check cancellation, uncertain writes,
 reloads and cleanup. The prompt-delivery harness checks final archive/input
 preservation, context pressure, repeated citations and same-message assembly.
 Reports and screenshots go to ignored `artifacts/`; model fixtures do not grade
@@ -86,7 +86,6 @@ file outside this worktree. Never commit it or personal chat data.
 
 ```sh
 ST_SOURCE=/absolute/path/to/pinned/SillyTavern SM_ENV_FILE=/path/to/evaluation.env npm run test:collections:live
-ST_SOURCE=/absolute/path/to/pinned/SillyTavern SM_ENV_FILE=/path/to/evaluation.env npm run test:live:faults
 ST_SOURCE=/absolute/path/to/pinned/SillyTavern SM_ENV_FILE=/path/to/evaluation.env npm run test:generation
 ```
 

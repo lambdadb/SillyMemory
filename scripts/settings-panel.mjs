@@ -17,7 +17,7 @@ export async function expandMemorySettings(page) {
         await page.locator('#sillymemory .inline-drawer-toggle').click();
     }
     await openMemoryConnection(page);
-    for (const name of ['advanced', 'checkpoints']) {
+    for (const name of ['advanced']) {
         const section = page.locator(`#sillymemory details[data-sm="${name}"]`);
         if (await section.count() && await section.getAttribute('open') === null) {
             await section.locator(':scope > summary').click();
