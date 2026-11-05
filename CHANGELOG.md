@@ -42,9 +42,11 @@ boundary; publication is confirmed by the corresponding Git tag and GitHub Relea
 - In the chat Memory panel, **Turn memory on in this chat** is a filled,
   full-width button; **Turn memory off** stays an ordinary button.
 - A chat is treated as on only when its saved flag was set by this browser's
-  current connection. After **Delete all**, and after updating from 0.7.x,
-  chats that were on stay inactive until **Turn memory on in this chat** is
-  chosen again; their saved memory is kept and reused.
+  current connection. ON flags from before **Delete all** stay inactive until
+  **Turn memory on in this chat** is chosen again, and memory is then rebuilt
+  from the local chat because Delete all removed it. After updating from
+  0.7.x, chats that were on also start off and must be turned on again; in
+  that case their saved memory is kept and reused.
 
 ### Removed
 
