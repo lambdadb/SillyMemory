@@ -310,7 +310,7 @@ function renderSettings() {
         connection.open = !connected;
         shownConnection = connected;
     }
-    element('connection-state').textContent = connected ? `Connected · ${state.project}` : 'Not connected';
+    element('connection-state').textContent = connected ? 'Connected' : 'Not connected';
     // Connecting controls apply only while not connected; a connected project offers Disconnect instead.
     element('connect-form').hidden = connected;
     element('connected').hidden = !connected;
