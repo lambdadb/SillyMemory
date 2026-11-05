@@ -76,7 +76,7 @@ export async function runFaultScenarios({ page, field, waitStatus, prompt, check
         await page.locator('#sillymemory').waitFor({ state: 'attached', timeout: 45000 });
         await page.waitForFunction(() => !document.querySelector('#sillymemory [data-sm=connect]').disabled);
         check('fault reload reconnects without key re-entry', await field('key').inputValue() === '' && await page.evaluate(() => Object.keys(localStorage).some(k => k.startsWith('sillymemory:credential:'))));
-        check('reload discards transient progress and previous failure status', await field('progress').isHidden() && !(await field('status').innerText()).includes('chunks confirmed'));
+        check('reload discards transient progress and previous failure status', await field('progress').isHidden() && !(await field('status').innerText()).includes('passages done'));
         if (await page.evaluate(() => SillyTavern.getContext().characterId === undefined)) {
             await page.locator('#rightNavHolder .drawer-toggle').click();
             await page.locator('.character_select').filter({ hasText: 'SillyMemory Synthetic' }).click();
@@ -154,18 +154,18 @@ export async function runFaultScenarios({ page, field, waitStatus, prompt, check
     check('unacknowledged first upload shows zero of 120 chunks', (await field('status').innerText()).includes('0 / 120') && await field('progress').isVisible() && await field('progress').evaluate(e => e.value === 0 && e.max === 120));
     const failedBatch = faults.arm('upsert', 'http', 503); firstBatch.release();
     await entered(failedBatch); await waitStatus('HTTP 503');
-    check('failed second batch keeps 50 of 120 and offers explicit retry', /50 \/ 120.*HTTP 503.*Sync this chat/.test(await field('status').innerText()) && await field('progress').isHidden());
+    check('failed second batch keeps 50 of 120 and offers explicit retry', /50 \/ 120.*HTTP 503.*Sync now/.test(await field('status').innerText()) && await field('progress').isHidden());
     await field('status').scrollIntoViewIfNeeded(); await screenshot?.('sync-failure');
     const uploadsBefore = calls.filter(c => c.path.endsWith('/docs/upsert')).length;
     await sync();
     const retried = calls.filter(c => c.path.endsWith('/docs/upsert')).slice(uploadsBefore);
-    check('manual retry skips confirmed chunks and completes the current source', JSON.stringify(retried.map(c => c.body.docs.length)) === '[50,20]' && retried.every(c => c.body.docs.every(d => !firstIds.has(d.id))) && await remoteMatches() && (await field('status').innerText()).includes('120 archived conversation chunks') && await field('progress').isHidden());
+    check('manual retry skips confirmed chunks and completes the current source', JSON.stringify(retried.map(c => c.body.docs.length)) === '[50,20]' && retried.every(c => c.body.docs.every(d => !firstIds.has(d.id))) && await remoteMatches() && (await field('status').innerText()).includes('120 saved passages') && await field('progress').isHidden());
 
     const queuedWrite = faults.arm('upsert', 'hold');
     await edit('Progress fixture changed: compass moved to an oak chest.'); await entered(queuedWrite);
     check('upload progress includes chunks already confirmed in this session', (await field('status').innerText()).includes('119 / 120'));
     await field('progress').scrollIntoViewIfNeeded(); await screenshot?.('sync-progress');
-    await field('sync').click(); await waitStatus('earlier memory write');
+    await field('sync').click(); await waitStatus('earlier memory save');
     const queuedCalls = calls.filter(c => c.path.endsWith('/docs/upsert')).length;
     queuedWrite.release(); await waitStatus('synchronized');
     check('overlapping manual sync waits without duplicating the confirmed write', calls.filter(c => c.path.endsWith('/docs/upsert')).length === queuedCalls && await remoteMatches() && await field('progress').isHidden());
@@ -199,7 +199,7 @@ export async function runFaultScenarios({ page, field, waitStatus, prompt, check
         if (operation === 'disable') await field('enabled').uncheck();
         delayed.release(); const canceled = await pending;
         check(`held query during ${operation} aborts the old generation and cannot inject`, canceled.aborted && !canceled.injection && canceled.chat.length === 8);
-        if (operation === 'disable') check('disabled state cannot be overwritten by late query progress', (await field('status').innerText()).includes('Memory disabled') && await field('progress').isHidden());
+        if (operation === 'disable') check('disabled state cannot be overwritten by late query progress', (await field('status').innerText()).includes('Memory is off') && await field('progress').isHidden());
         if (operation === 'disable') { await field('enabled').check(); }
         await waitStatus('synchronized');
         const fresh = await prompt();
@@ -248,7 +248,7 @@ export async function runFaultScenarios({ page, field, waitStatus, prompt, check
     await answerMemoryPopup(page, () => field('delete').click());
     await page.waitForFunction(() => document.querySelector('[data-sm="delete"]').disabled && document.querySelector('#sillymemory-chat [data-sm-chat="toggle"]').getAttribute('aria-pressed') === 'false');
     check('owned collection deletion waits for the outstanding write', collections.size > 0 && calls.filter(c => c.method === 'DELETE').length === deletesBefore);
-    inFlight.release(); await waitStatus('no longer accessible');
+    inFlight.release(); await waitStatus('memory was deleted');
     check('drained collection deletion leaves no remote data or journal', collections.size === 0 && await page.evaluate(() => !Object.keys(localStorage).some(k => k.startsWith('sillymemory:journal:'))));
     return { timings, recovery, injectedFaults: faults.observations };
 }

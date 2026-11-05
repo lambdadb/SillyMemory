@@ -10,7 +10,7 @@ export async function runNativeChatScenarios({ page, field, waitStatus, check, f
     });
     const open = async file => {
         await page.evaluate(async file => { await SillyTavern.getContext().openCharacterChat(file); }, file);
-        await waitStatus(await field('enabled').isChecked() ? 'synchronized' : 'Memory disabled');
+        await waitStatus(await field('enabled').isChecked() ? 'synchronized' : 'Memory is off');
     };
     const saved = async file => page.evaluate(async file => {
         const c = SillyTavern.getContext();
@@ -47,7 +47,7 @@ export async function runNativeChatScenarios({ page, field, waitStatus, check, f
         await reached;
         try {
             await page.waitForTimeout(900); // Cross two 400 ms debounce ticks while busy.
-            check(`pending sync waits through a slow ${outcome} action without writing`, await field('checkpoint-refresh').isDisabled() && writes() === before && (await field('status').textContent()).includes('Preparing older messages'));
+            check(`pending sync waits through a slow ${outcome} action without writing`, await field('checkpoint-refresh').isDisabled() && writes() === before && (await field('status').textContent()).includes('Getting older messages ready'));
         } finally { release(); }
         await page.waitForFunction(() => !document.querySelector('#sillymemory [data-sm="checkpoint-refresh"]').disabled);
         if (outcome === 'success') {

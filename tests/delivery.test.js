@@ -11,10 +11,10 @@ test('final prompt includes full content with the original native role, not just
     const result = inspectPrompt(input, [{ role: 'assistant', content: 'Mira: [Past conversation excerpt] fact' }, { role: 'user', content: 'question' }]);
     assert.equal(result.memory[0].outcome, 'included');
     assert.equal(result.input[0].outcome, 'included');
-    assert.match(deliverySummary(result, true), /1\/1 memory excerpts and 1\/1 input/);
+    assert.match(deliverySummary(result, true), /^Memory was added to the last prompt; your recent message was kept\.$/);
     const partial = inspectPrompt(input, [{ role: 'assistant', content: '[Past conversation excerpt]' }, { role: 'assistant', content: 'question' }]);
     assert.ok([...partial.memory, ...partial.input].every(m => m.outcome === 'missing'));
-    assert.match(deliverySummary(partial, true), /Generation stopped/);
+    assert.match(deliverySummary(partial, true), /Reply stopped/);
     assert.match(deliverySummary(partial, false), /^Warning/);
 });
 
@@ -28,14 +28,20 @@ test('known name macros are expanded without executing arbitrary macros twice', 
     const input = expectedMessages([source('{{user}} asked {{char}}.'), source('{{random::one::two}}')], { user: 'User', character: 'Mira' });
     const result = inspectPrompt({ memory: [], input }, [{ role: 'assistant', content: 'User asked Mira.' }]);
     assert.deepEqual(result.input.map(m => m.outcome), ['included', 'unverified']);
-    assert.match(deliverySummary(result, true), /could not be verified/);
-    assert.doesNotMatch(deliverySummary(result, true), /Generation stopped/);
+    // An unverifiable message is reported as unchecked, never as kept.
+    assert.equal(deliverySummary(result, true), 'No memory was added to the last prompt; 1 of your 2 recent messages were confirmed and 1 could not be checked.');
 });
 
 test('continuation prefix is explicitly unverified rather than falsely lost', () => {
     const input = expectedMessages([source('question', true), source('partial answer')], { continuation: true });
     const result = inspectPrompt({ memory: [], input }, [{ role: 'user', content: 'question' }]);
     assert.deepEqual(result.input.map(m => m.outcome), ['included', 'unverified']);
+    assert.doesNotMatch(deliverySummary(result, true), /were kept/);
+});
+
+test('an empty memory selection does not claim that nothing related was found', () => {
+    const result = inspectPrompt(expected([], [source('question', true)]), [{ role: 'user', content: 'question' }]);
+    assert.equal(deliverySummary(result, true), 'No memory was added to the last prompt; your recent message was kept.');
 });
 
 test('pending delivery ignores dry runs, rejects stale snapshots and consumes once', () => {
@@ -61,7 +67,7 @@ test('overlap cannot replace a ready prompt and unsupported formats stay unverif
     tracker.begin(expected([source('new')]), () => true);
     const result = tracker.finish('text completion');
     assert.equal(result.result, null); assert.equal(result.lost, false);
-    assert.match(deliverySummary(null, true), /unavailable/);
+    assert.match(deliverySummary(null, true), /cannot check the final prompt/);
 });
 
 
@@ -99,9 +105,9 @@ test('delivery counts assembled excerpts rather than their underlying source pas
     assert.equal(passages.length, 2); assert.equal(messages.length, 1);
     const input = expected(messages, [source('Question?', true, 1)]);
     const complete = [{ role: 'user', content: messages[0].mes }, { role: 'user', content: 'Question?' }];
-    assert.match(deliverySummary(inspectPrompt(input, complete), true), /1\/1 memory excerpts and 1\/1 input messages verified/);
+    assert.match(deliverySummary(inspectPrompt(input, complete), true), /^Memory was added to the last prompt; your recent message was kept\.$/);
     const missingPart = [{ role: 'user', content: messages[0].mes.replace('second', '') }, complete[1]];
-    assert.match(deliverySummary(inspectPrompt(input, missingPart), true), /Generation stopped: 1 memory excerpts/);
+    assert.match(deliverySummary(inspectPrompt(input, missingPart), true), /^Reply stopped: Some memory was left out or changed \(0 of 1 added\)\. Increase/);
 });
 
 
@@ -109,7 +115,7 @@ test('natural memory guidance must be delivered as system context even when no m
     const input = { ...expected([], [source('Where was that?', true)]), guidance: [{ role: 'system', content: 'Ask for clarification instead of guessing.', verifiable: true }] };
     const tracker = new PromptDelivery(); tracker.begin(input, () => true);
     const result = tracker.finish([{ role: 'user', content: 'Where was that?' }]);
-    assert.equal(result.lost, true); assert.match(deliverySummary(result.result, true), /Memory guidance is missing/);
+    assert.equal(result.lost, true); assert.match(deliverySummary(result.result, true), /Memory guidance was left out/);
     tracker.begin(input, () => true);
     assert.equal(tracker.finish([{ role: 'system', content: 'Ask for clarification instead of guessing.' }, { role: 'user', content: 'Where was that?' }]).lost, false);
 });

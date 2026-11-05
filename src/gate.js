@@ -18,18 +18,18 @@ export async function runTransportGate(client, owner, collection, report = () =>
     const doc = { id, owner, scope, revision: '1', text: 'Synthetic story: Mira hid the blue compass beneath the cedar tree.' };
     let passed = false;
     try {
-        report('Creating dedicated synthetic test collection…');
+        report('Creating temporary test data…');
         await client.create(collection, owner);
         await poll(async () => { await client.upsert(collection, [doc]); return true; });
-        report('Checking managed queryText retrieval directly from this browser…');
+        report('Checking that this browser can search LambdaDB…');
         await poll(async () => (await client.search(collection, owner, scope, 'Where is the blue compass?')).some(x => x.id === id && x.text === doc.text));
         await client.deleteIds(collection, [id]);
         await poll(async () => !(await client.query(collection, scopeFilter(owner, scope))).some(x => x.id === id));
         passed = true;
     } finally {
-        report('Deleting the owned test collection and checking disappearance…');
+        report('Deleting the test data and checking that it is gone…');
         await client.deleteOwnedCollection(collection, owner);
     }
-    if (passed) report('Transport gate passed: synthetic upsert, managed query, document deletion, and collection cleanup.');
+    if (passed) report('Connection test passed: saving, searching and deleting test data all worked.');
     return passed;
 }

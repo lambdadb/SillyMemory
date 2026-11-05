@@ -48,7 +48,10 @@
 #sillymemory-chat [data-sm-chat="token-compare"] { margin-top: 0.4rem; }
 #sillymemory-chat .sm-chat-actions { display: flex; flex-wrap: wrap; gap: 0.4rem; margin: 0.4rem 0; }
 #sillymemory-chat .sm-chat-toggle { display: block; margin: 0.4rem 0; }
-#sillymemory-chat .sm-chat-toggle[aria-pressed="false"] { border-color: var(--SmartThemeQuoteColor); font-weight: bold; }
+/* Off is the state to act on, so it is the one primary button; on stays an ordinary button. */
+#sillymemory-chat .sm-chat-toggle[aria-pressed="false"] { width: 100%; text-align: center; background: var(--SmartThemeQuoteColor); border-color: var(--SmartThemeQuoteColor); color: #111; font-weight: bold; opacity: 1; }
+#sillymemory-chat .sm-chat-toggle[aria-pressed="false"]:hover { filter: brightness(1.1); }
+#sillymemory-chat .sm-chat-toggle:disabled { opacity: 0.5; filter: grayscale(0.6); cursor: not-allowed; }
 #sillymemory-chat .sm-chat-section { border-top: 1px solid var(--SmartThemeBorderColor); margin-top: 0.5rem; padding-top: 0.3rem; }
 #sillymemory-chat .sm-chat-section > summary { cursor: pointer; font-weight: bold; padding: 0.2rem 0; }
 #sillymemory-chat .sm-chat-section .sm-chat-memory:first-of-type { border-top: 0; margin-top: 0.2rem; padding-top: 0; }

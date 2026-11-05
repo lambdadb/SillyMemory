@@ -123,7 +123,7 @@ from automatic retry of an unchanged target, which reuses the same path.
 
 **Delete this chat's memory** (in the Memory panel) on a selected checkpoint removes its frozen
 branch, making that checkpoint unavailable for resume. Existing resumed paths
-remain independent. **Delete all owned remote memory** removes checkpoints and
+remain independent. **Delete all memory** removes checkpoints and
 paths together with the whole story collection. Both keep native local chat files.
 Deleting a native chat or uninstalling the extension does not remove its remote
 branch; use the deletion controls before removing local data. Provider backup and
@@ -166,12 +166,12 @@ change its identity, transcript hash, native filename or memory branch.
 - **Ready**: the saved transcript and remote snapshot agree. **Resume** opens a
   new path without selecting the checkpoint in the native chat list first.
 - **Pending**: **Finish / retry** completes the original snapshot and settings.
-- **Transcript modified** or **Remote memory changed**: resume is unavailable.
-- **Remote memory missing**: the branch or collection is absent. It cannot be
+- **Transcript modified** or **Memory changed**: resume is unavailable.
+- **Memory missing**: the branch or collection is absent. It cannot be
   silently recreated as the original ready checkpoint.
-- **Remote state unverified**: reconnect and refresh. Authentication/network
+- **Memory not checked**: reconnect and refresh. Authentication/network
   failures are not reported as missing data.
-- **Duplicate identity**: actions are blocked until the native copies are resolved.
+- **Duplicate snapshot**: actions are blocked until the native copies are resolved.
 
 Matching automatic reads share an in-flight request. Manual refresh and successful
 management actions force a fresh read. Hidden settings do not trigger automatic

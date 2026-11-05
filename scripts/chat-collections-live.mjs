@@ -212,7 +212,7 @@ try {
     check('managed queryText through UI interceptor retrieves synthetic source', !recall.aborted && recall.archives === 1 && recall.text.includes('stone tower') && recall.last.includes('turn 9'));
     check('live recalled archive preserves role and sent label without duplicating rerank context',
         recall.text.includes('user "User"') && recall.text.includes('sent: 2024-02-29T12:34:56.123Z') && !recall.text.includes('Message sent at'));
-    stage = 'single deletion'; await panel(); await answerMemoryPopup(page, () => field('delete-chat').click()); await panel(); await status('no longer accessible');
+    stage = 'single deletion'; await panel(); await answerMemoryPopup(page, () => field('delete-chat').click()); await panel(); await status('memory was deleted');
     check('individual deletion confirmed absent before fallback cleanup', await absent(copy));
     check('deleting current copy preserves parent and branch', (await inspect(parent)).length === 4 && (await inspect(branch)).length === 4);
     stage = 'reload'; await page.reload(); await page.locator('#sillymemory').waitFor({ state: 'attached' });
@@ -229,7 +229,7 @@ try {
         await status('synchronized'); const earlier = await identity(), rows = await inspect(earlier);
         check('earlier native fork removes future and protected-recent remote chunks', earlier.collection === parent.collection && rows.length === 2 && rows.every(d => d.message < 2));
         check('earlier native fork submits no unchanged inherited documents', !report.upserts.some(r => r.stage === 'earlier branch'));
-        await panel(); await answerMemoryPopup(page, () => field('delete-chat').click()); await panel(); await status('no longer accessible');
+        await panel(); await answerMemoryPopup(page, () => field('delete-chat').click()); await panel(); await status('memory was deleted');
         check('current branch deletion preserves sibling and parent', await absent(earlier) && (await inspect(parent)).length === 4 && (await inspect(branch)).length === 4);
     }
     if (checkpoints) {
@@ -349,10 +349,10 @@ try {
             await field('checkpoint-save').click(); await status('Checkpoint saved:');
             const missingFile = (await files()).find(x => x.chat_metadata?.sillymemory?.checkpoint?.name === 'Missing remote example').file_name.replace(/\.jsonl$/, '');
             await page.evaluate(async name => SillyTavern.getContext().openCharacterChat(name), missingFile);
-            await answerMemoryPopup(page, () => field('delete-chat').click()); await panel(); await status('no longer accessible');
+            await answerMemoryPopup(page, () => field('delete-chat').click()); await panel(); await status('memory was deleted');
             await page.evaluate(async name => SillyTavern.getContext().openCharacterChat(name), renamed.file);
             await refreshList();
-            check('manager reports missing branch without allowing resume', (await checkpointRow('Missing remote example').innerText()).includes('Remote memory missing') && await checkpointRow('Missing remote example').getByRole('button', { name: 'Resume', exact: true }).count() === 0);
+            check('manager reports missing branch without allowing resume', (await checkpointRow('Missing remote example').innerText()).includes('Memory missing') && await checkpointRow('Missing remote example').getByRole('button', { name: 'Resume', exact: true }).count() === 0);
             await answerMemoryPopup(page, () => checkpointRow('Missing remote example').getByRole('button', { name: 'Delete checkpoint', exact: true }).click()); await status('Checkpoint transcript and memory branch deleted');
             check('manager removes local checkpoint after already completed remote deletion', !(await readChat(missingFile)).length);
         }
@@ -360,7 +360,7 @@ try {
     stage = 'discovery cleanup';
     // Lose only the local registry: remote ownership discovery must still find both.
     await page.evaluate(() => { const c = SillyTavern.getContext(), key = `sillymemory:state:${c.extensionSettings.sillymemory.owner}`; const s = JSON.parse(localStorage.getItem(key)); s.chatCollections = []; localStorage.setItem(key, JSON.stringify(s)); });
-    await page.reload(); await connect(); await panel(); await answerMemoryPopup(page, () => field('delete').click()); await status('no longer accessible');
+    await page.reload(); await connect(); await panel(); await answerMemoryPopup(page, () => field('delete').click()); await status('memory was deleted');
     check('all-owned cleanup discovers collections after local registry loss', await absent(parent) && await absent(branch) && await absent(copy));
     check('credentials absent from persistent profile', !(await readFile(profilePath, 'utf8')).includes(credentials.key));
     check('direct lifecycle uses no host proxy or browser automation errors', report.proxyRequests === 0 && report.pageErrors.length === 0);
@@ -374,7 +374,7 @@ finally {
             if (pending.length) {
                 await connect(); await panel();
                 await answerMemoryPopup(page, () => page.locator('[data-sm="delete"]').click());
-                await page.waitForFunction(() => document.querySelector('[data-sm="status"]')?.textContent.includes('no longer accessible'), null, { timeout: 180000 });
+                await page.waitForFunction(() => document.querySelector('[data-sm="status"]')?.textContent.includes('memory was deleted'), null, { timeout: 180000 });
             }
             await page.evaluate(() => document.querySelector('[data-sm="forget"]').onclick());
             await page.waitForFunction(() => document.querySelector('[data-sm="status"]')?.textContent.includes('Saved key removed'));
