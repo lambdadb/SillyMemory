@@ -685,7 +685,6 @@ async function initialize() {
                         status(message);
                         if (url) element('app-link').href = url;
                     },
-                    beforeAuthorize: recover,
                     beforeIssue: recover,
                 });
                 if (!valid()) throw new ConnectionError('Connection canceled because the account changed.');

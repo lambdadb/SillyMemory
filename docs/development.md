@@ -10,12 +10,15 @@ experiments are recovered at their producing revisions, not run through current 
 The development connection flow uses LambdaDB OAuth. It discovers the issuer from
 the account API origin (RFC 9728), registers this installation once with its exact
 `oauth-callback.html` URL (RFC 7591), and saves only that public client ID. Each
-Connect creates a project connection, saves its ID for recovery, and opens the
-approval in a popup with S256 PKCE. The callback page clears its query and
+Connect creates a project connection and opens the approval in a popup with S256
+PKCE. The callback page clears its query and
 reports the code to the initiating tab on a per-attempt `BroadcastChannel`. The
-tab exchanges the code and claims the project key once, then revokes the setup
-token, and verifies and saves the project in this browser. An uncertain earlier
-attempt is passed as `recovery_id` for the same project. Manual key setup remains
+tab exchanges the code, saves the connection ID and approved project for
+recovery, and claims the project key once. It then revokes the setup token, and
+verifies and saves the project in this browser. An attempt that reached the key
+claim without a confirmed result is passed as `recovery_id` for the same project;
+an attempt that ended earlier, such as an expired approval, has no key and is not
+recovered. Manual key setup remains
 available. To try another LambdaDB environment, set
 `localStorage['sillymemory:api-origin']` to its HTTPS account API origin, for
 example `https://api-dev.lambdadb.ai`. Setup does not activate a chat; see the

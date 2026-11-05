@@ -51,16 +51,15 @@ function browser(reply = (state) => ({ state, code: 'auth-code' })) {
     return { popup, openChannel };
 }
 const memory = (saved = null) => ({ saved, read() { return this.saved; }, write(value) { this.saved = value; } });
-const options = extra => ({ signal: new AbortController().signal, apiOrigin: api, callback, clients: memory(), beforeAuthorize() {}, beforeIssue() {}, ...browser(), ...extra });
+const options = extra => ({ signal: new AbortController().signal, apiOrigin: api, callback, clients: memory(), beforeIssue() {}, ...browser(), ...extra });
 
-test('Connect registers once, binds the connection, saves recovery before approval and issuance, and discards the setup token', async t => {
+test('Connect registers once, binds the connection, saves recovery only before issuance, and discards the setup token', async t => {
     const calls = fixture(t), clients = memory(), order = [];
     const { popup, openChannel } = browser();
     const result = await connectWithLambdaDB(options({ popup, openChannel, clients, projectId: project,
-        beforeAuthorize: r => { order.push(['authorize', r]); assert.equal(popup.opened, undefined, 'recovery must be saved before approval'); },
-        beforeIssue: r => { order.push(['issue', r]); assert.ok(!calls.some(c => c.key.endsWith('/key'))); } }));
+        beforeIssue: r => { order.push(['issue', r]); assert.ok(popup.opened); assert.ok(!calls.some(c => c.key.endsWith('/key'))); } }));
     assert.deepEqual(result, { endpoint: 'https://region.example.test', project: 'story', projectId: project, key: 'synthetic-key', keyId: 'key-1' });
-    assert.deepEqual(order, [['authorize', { connectionId: connection, projectId: project }], ['issue', { connectionId: connection, projectId: project }]]);
+    assert.deepEqual(order, [['issue', { connectionId: connection, projectId: project }]]);
     assert.deepEqual(clients.saved, { issuer, callback, clientId: 'registered-client-1' });
     const register = JSON.parse(calls.find(c => c.key === 'POST /oauth2/register').body);
     assert.deepEqual(register.redirect_uris, [callback]);
@@ -107,9 +106,10 @@ test('an approval without key issuance fails without a key claim and still disca
     assert.equal(calls.at(-1).key, 'POST /oauth2/revoke');
 });
 
-test('a denial or a message for another attempt never exchanges a code', async t => {
+test('a denial or a message for another attempt never exchanges a code or saves recovery', async t => {
     const calls = fixture(t);
-    await assert.rejects(connectWithLambdaDB(options(browser(state => ({ state, error: 'access_denied' })))), /not approved/);
+    const noRecovery = () => assert.fail('an attempt that ends before the key claim has nothing to recover');
+    await assert.rejects(connectWithLambdaDB(options({ ...browser(state => ({ state, error: 'access_denied' })), beforeIssue: noRecovery })), /not approved/);
     assert.equal(calls.filter(c => c.key === 'POST /oauth2/token').length, 0);
     const controller = new AbortController();
     const pending = connectWithLambdaDB(options({ ...browser(() => ({ state: 'another-attempt', code: 'stolen' })), signal: controller.signal }));
