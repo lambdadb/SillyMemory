@@ -264,7 +264,7 @@ try {
     const disabled = await generate('disabled-again');
     assert(!disabled.prompt.includes('Past conversation excerpt'), 'disable removes injected memory from final request');
     stage = 'secret audit';
-    await openSettings(); await field('forget').click(); await waitStatus('Saved key removed');
+    await openSettings(); await field('disconnect').click(); await waitStatus('Saved key removed');
     const serialized = await page.evaluate(async () => { const c = SillyTavern.getContext(); const r = await fetch('/api/settings/get', {method:'POST', headers:c.getRequestHeaders(), body:'{}'}); return JSON.stringify({local:{...localStorage},session:{...sessionStorage},settings:await r.json()}); });
     assert((!credentials.key || !serialized.includes(credentials.key)) && (!env.LLM_API_KEY || !serialized.includes(env.LLM_API_KEY)), 'Forget key removes the project key; generation keys never enter browser or native settings');
 } catch (e) {
