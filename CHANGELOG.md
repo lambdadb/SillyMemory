@@ -4,6 +4,17 @@ Versions describe the extension, independently of the SillyTavern host version.
 An `Unreleased` entry is a development candidate. A dated entry records a release
 boundary; publication is confirmed by the corresponding Git tag and GitHub Release.
 
+## [Unreleased]
+
+### Changed
+
+- Documentation only: the LambdaDB request limit is now described from the
+  service source instead of as unconfirmed. It is a per-project token bucket of
+  `rate_limit` requests per second (5 by default), refilled at that rate, and a
+  rejection carries `Retry-After` in whole seconds, which the retry honours; the
+  1 s and 2 s fallback waits apply only when the header is absent. README,
+  architecture and the upsert batch note say where to see and raise the limit.
+
 ## [0.8.1] - 2026-11-06
 
 ### Changed

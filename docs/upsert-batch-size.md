@@ -38,8 +38,9 @@ request body limit is about 5.75 MiB, so even 800 documents use under a fifth of
 it; time, not size, bounds the batch.
 
 Limitations: one project and region, one time of day, synthetic English text,
-no plan-quota or congestion data, no measurement of indexing visibility after
-acceptance.
+no congestion data, no measurement of indexing visibility after acceptance. The
+project rate limit (5 requests per second by default, a per-project token bucket)
+was not reached: 200-document requests take about 1.2 s each, well under it.
 
 ## Reproduction and evidence
 
