@@ -66,6 +66,29 @@ test('create conflict requires fresh ownership and chat verification; deletion r
     await assert.rejects(manager.ensure(snapshot), /Ownership/);
     await assert.rejects(manager.delete({ collection: 'whole-story' }), /Denied/); assert.equal(forgot, false);
 });
+test('created collections and branches are verified from their 201 bodies; conflicts and bodiless responses read again', async () => {
+    const entry = await chatCollection(snapshot, owner);
+    const tags = { application: 'sillymemory', owner, chat: entry.scope };
+    let reads = 0, verified = 0, lists = 0;
+    const client = { assertOwned: async () => { reads++; throw missing(); }, verifyOwned: (result, o, scope) => { verified++; assert.deepEqual(result.collection.tags, { ...tags, owner: o, chat: scope }); },
+        create: async (name, o, scope) => ({ collection: { collectionName: name, tags: { application: 'sillymemory', owner: o, chat: scope } } }),
+        branches: async () => { lists++; return []; }, createBranch: async (name, branch) => ({ branch: { name: branch } }) };
+    assert.equal((await new ChatCollections(client, owner, () => {}, () => {}).ensure(snapshot)).branch, entry.branch);
+    assert.deepEqual([reads, verified, lists], [1, 1, 1]);
+    reads = 0; lists = 0;
+    const conflict = { ...client, assertOwned: async () => { if (!reads++) throw missing(); }, verifyOwned: () => { throw new Error('No create body to verify.'); },
+        create: async () => { throw new ConnectionError('Conflict', 409); }, branches: async () => ++lists === 1 ? [] : [{ name: entry.branch }], createBranch: async () => { throw new ConnectionError('Conflict', 409); } };
+    assert.equal((await new ChatCollections(conflict, owner, () => {}, () => {}).ensure(snapshot)).branch, entry.branch);
+    assert.deepEqual([reads, lists], [2, 2]);
+    reads = 0; lists = 0;
+    const bodiless = { ...conflict, create: async () => {}, createBranch: async () => {} };
+    assert.equal((await new ChatCollections(bodiless, owner, () => {}, () => {}).ensure(snapshot)).branch, entry.branch);
+    assert.deepEqual([reads, lists], [2, 2]);
+    const real = new LambdaClient({ endpoint: 'https://example.test', project: 'test' }, 'synthetic');
+    assert.throws(() => real.verifyOwned({ collection: { tags: { ...tags, owner: 'other' } } }, owner, entry.scope), /Ownership/);
+    assert.throws(() => real.verifyOwned({ collection: { tags: { ...tags, chat: 'foreign' } } }, owner, entry.scope), /Ownership/);
+    real.verifyOwned({ collection: { tags } }, owner, entry.scope);
+});
 test('cleanup discovers only owned memory names across opaque pagination and rejects cycles', async () => {
     const client = new LambdaClient({ endpoint: 'https://example.test', project: 'test' }, 'synthetic');
     const name = (await chatCollection(snapshot, owner)).collection;

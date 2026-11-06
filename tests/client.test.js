@@ -149,14 +149,59 @@ test('SDK validates responses and never exposes malformed payloads or response b
     }
 });
 
-test('SDK retries stay disabled for reads and writes, including ambiguous failures', async () => {
-    for (const status of [429, 503]) {
-        let count = 0;
-        const client = new LambdaClient(config, 'test-key', { fetcher: async () => { count++; return new Response('private', { status }); } });
-        await assert.rejects(client.get('test'), error => error.status === status);
-        await assert.rejects(client.upsert('test', [{ id: 'one' }]), error => error.status === status);
-        assert.equal(count, 2);
+test('SDK retries stay disabled for ambiguous failures such as HTTP 503', async () => {
+    let count = 0;
+    const client = new LambdaClient(config, 'test-key', { fetcher: async () => { count++; return new Response('private', { status: 503 }); } });
+    await assert.rejects(client.get('test'), error => error.status === 503);
+    await assert.rejects(client.upsert('test', [{ id: 'one' }]), error => error.status === 503);
+    assert.equal(count, 2);
+});
+
+const limited = (retryAfter = '0') => new Response('private', { status: 429, headers: { 'Retry-After': retryAfter } });
+test('HTTP 429 retries reads and writes at most twice, then fails with the same status and no body', async () => {
+    let count = 0;
+    const client = new LambdaClient(config, 'test-key', { fetcher: async () => { count++; return limited(); } });
+    await assert.rejects(client.get('test'), error => error.status === 429 && !JSON.stringify(error).includes('private'));
+    await assert.rejects(client.upsert('test', [{ id: 'one' }]), error => error.status === 429);
+    assert.equal(count, 6);
+    count = 0;
+    const recovering = new LambdaClient(config, 'test-key', { fetcher: async () => ++count < 3 ? limited() : Response.json({ collection: collectionResponse() }) });
+    assert.equal((await recovering.get('test')).collection.collectionName, 'test');
+    assert.equal(count, 3);
+});
+
+test('a 429 retry waits for Retry-After or a short backoff, and is not attempted past the call deadline', async () => {
+    const ok = () => Response.json({ collection: collectionResponse() });
+    for (const [name, response] of [['Retry-After seconds', () => limited('1')], ['default backoff', () => new Response(null, { status: 429 })]]) {
+        let count = 0; const started = performance.now();
+        const client = new LambdaClient(config, 'test-key', { fetcher: async () => ++count === 1 ? response() : ok() });
+        await client.get('test');
+        assert.equal(count, 2); assert(performance.now() - started >= 900, name);
     }
+    let count = 0;
+    const dated = new LambdaClient(config, 'test-key', { fetcher: async () => ++count === 1 ? limited(new Date(Date.now() - 60000).toUTCString()) : ok() });
+    await dated.get('test'); assert.equal(count, 2);
+    for (const response of [() => limited('30'), () => new Response(null, { status: 429 })]) {
+        count = 0;
+        const short = new LambdaClient(config, 'test-key', { timeoutMs: 500, fetcher: async () => { count++; return response(); } });
+        await assert.rejects(short.get('test'), error => error.status === 429 && error.code !== 'timeout');
+        assert.equal(count, 1);
+    }
+});
+
+test('cancellation or forget during a 429 wait stops the retry with the canceled code', async () => {
+    let count = 0; const controller = new AbortController();
+    const fetcher = async () => { count++; return limited('5'); };
+    const client = new LambdaClient(config, 'test-key', { fetcher });
+    const pending = client.get('test', controller.signal);
+    await new Promise(resolve => setTimeout(resolve, 50)); controller.abort();
+    await assert.rejects(pending, error => error.code === 'canceled');
+    assert.equal(count, 1);
+    const session = new LambdaClient(config, 'test-key', { fetcher });
+    const held = session.get('test');
+    await new Promise(resolve => setTimeout(resolve, 50)); session.forget();
+    await assert.rejects(held, error => error.code === 'canceled');
+    assert.equal(count, 2);
 });
 
 test('forget cancels an in-flight SDK request and prevents later authentication', async () => {

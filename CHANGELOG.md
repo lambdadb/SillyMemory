@@ -4,6 +4,22 @@ Versions describe the extension, independently of the SillyTavern host version.
 An `Unreleased` entry is a development candidate. A dated entry records a release
 boundary; publication is confirmed by the corresponding Git tag and GitHub Release.
 
+## [Unreleased]
+
+### Fixed
+
+- Turning memory on in a new chat sent seven LambdaDB requests in well under a
+  second and could stop at **Needs attention** when the last collection read
+  returned HTTP 429. A request LambdaDB rejects with 429 is now retried at most
+  twice, after `Retry-After` when readable or after 1 s then 2 s, inside the same
+  15-second deadline and cancellation; 5xx, timeouts and network failures are
+  still not retried. Creating a chat's memory now verifies the created collection
+  and branch from their 201 responses and does not read the collection again in
+  the sync that follows, so a new chat sends four requests instead of seven and
+  a repeat sync two instead of three. Conflicts still require a fresh read.
+- Synchronization failure messages now name the visible **Retry synchronization**
+  button instead of **Sync now**, which is inside **This chat's memory**.
+
 ## [0.8.0] - 2026-11-06
 
 ### Added

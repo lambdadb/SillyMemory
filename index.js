@@ -375,7 +375,7 @@ async function sync() {
         const prepared = await prepareMemory(current, operation.update); if (!prepared) return;
         const { snapshot, instance } = prepared;
         const valid = () => current() && validSnapshot(snapshot, instance);
-        const result = await instance.sync(snapshot, { ...options(state), archiveBefore: archiveBoundary(snapshot) }, valid, operation.update);
+        const result = await instance.sync(snapshot, { ...options(state), archiveBefore: archiveBoundary(snapshot), ownershipVerified: true }, valid, operation.update);
         if (result) operation.finish(`This chat's memory is synchronized: ${result.docs.length} saved passages. Recent messages stay in the chat as they are, and related memory is added when you send a message.`);
     } catch (e) { if (operation.current()) fail(e, operation); }
 }
