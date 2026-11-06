@@ -1,4 +1,9 @@
-import { ConnectionError } from './client.js';
+import { ConnectionError, sameAnalyzers } from './client.js';
+
+// A story keeps the analyzers it was created with; report a changed setting without blocking.
+export function analyzerNotice(actual, configured) {
+    return sameAnalyzers(actual, configured) ? '' : `This story's memory is indexed with: ${actual.join(', ')}. Rebuild to apply the current setting: ${configured.join(', ')}.`;
+}
 
 export function progressText(value) {
     const count = `${value.completed} / ${value.total}`;

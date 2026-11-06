@@ -6,7 +6,9 @@
         <p data-sm-chat="status">Connect SillyMemory to get started.</p>
         <progress data-sm-chat="progress" aria-label="Memory operation progress" hidden></progress>
         <p data-sm-chat="delivery">No memory used in this chat yet.</p>
+        <p data-sm-chat="analyzers" hidden></p>
         <div class="sm-chat-actions" data-sm-chat="recovery">
+          <button type="button" data-sm-chat="rebuild" class="menu_button" hidden>Rebuild story memory</button>
           <button type="button" data-sm-chat="vectors" class="menu_button" hidden>Open Vector Storage</button>
           <button type="button" data-sm-chat="reconnect" class="menu_button" hidden>Reconnect</button>
           <button type="button" data-sm-chat="cleanup" class="menu_button" hidden>Clean up test data</button>
@@ -81,6 +83,8 @@
       </div>
       <p data-sm="mode-help">When off, SillyTavern uses its usual chat history. Saved memory is kept.</p>
       <small data-sm="usage-help" hidden>Memory sends older messages, their SillyTavern timestamps and search queries to LambdaDB, whose embedding and reranking providers process them to find related memory. This counts toward your LambdaDB usage. Turn off other memory or chat vectorization extensions; they would add overlapping history to the prompt. Use one active SillyMemory tab per browser profile.</small>
+      <label>Text search languages <select data-sm="analyzers" class="text_pole" multiple size="6"></select></label>
+      <small>Applies to story memory created after the change. Pick only the languages you actually chat in: each analyzer indexes the text again, which raises index cost and does not guarantee better relevance. A story that was created with a different setting shows <strong>Rebuild story memory</strong> in its Memory panel.</small>
     </section>
     <div class="sm-status">
       <p data-sm="status" role="status">Connect to LambdaDB or enter your project API key to begin.</p>

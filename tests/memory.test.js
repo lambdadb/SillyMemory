@@ -250,6 +250,9 @@ test('settings are clamped and capture refuses group/no character chats', () => 
     assert.equal(options({ budget: NaN }).budget, 4096);
     assert.equal(options({ budget: 999999, recent: 0 }).budget, 4096);
     assert.equal(Object.hasOwn(options({ recent: 100 }), 'recent'), false);
+    assert.deepEqual(options().analyzers, ['english']);
+    assert.deepEqual(options({ analyzers: ['Korean', 'english', 'korean'] }).analyzers, ['korean', 'english']);
+    for (const analyzers of [[], undefined, 'korean', ['klingon']]) assert.deepEqual(options({ analyzers }).analyzers, ['english']);
     assert.equal(capture({ groupId: 'group' }), null);
     assert.equal(capture({ characterId: undefined }), null);
     const context = { characterId: 0, characters: [{ avatar: 'test.png' }], getCurrentChatId: () => 'chat', chat: [] };

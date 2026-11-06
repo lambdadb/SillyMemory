@@ -71,6 +71,12 @@ memory** for everything that was added to the prompt.
   that memory with the current message and adds related passages within a
   **memory token budget** (default 4,096 tokens, at most one quarter of the
   context size; change it under **Advanced**).
+- **Text search languages** in settings chooses the LambdaDB text analyzers
+  (default `english`) for story memory created after the change. Pick only the
+  languages you chat in; each analyzer indexes the text again. A story created
+  with a different setting shows **Rebuild story memory** in its Memory panel,
+  which deletes that story's memory for every branch and uploads it again from
+  your local chats.
 - Memory is per chat. **Turn memory off in this chat** returns that chat to
   ordinary SillyTavern history handling; the saved memory is kept. New chats
   start with memory off.

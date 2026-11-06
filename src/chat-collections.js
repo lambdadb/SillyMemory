@@ -1,5 +1,5 @@
 import { clearCommit, recordCommitted, waitForCommit } from './commit.js';
-import { ConnectionError } from './client.js';
+import { ConnectionError, collectionAnalyzers } from './client.js';
 import { poll } from './gate.js';
 import { digest, documents, options } from './memory.js';
 
@@ -62,17 +62,20 @@ export class ChatCollections {
         const entry = await chatCollection(snapshot, this.owner);
         if (!valid()) return null;
         this.remember(entry); // Persist intent before even a possibly ambiguous create.
-        try { await this.client.assertOwned(entry.collection, this.owner, undefined, entry.scope); }
+        let collection;
+        try { collection = await this.client.assertOwned(entry.collection, this.owner, undefined, entry.scope); }
         catch (error) {
             if (error.status !== 404) throw error;
             if (!valid()) return null;
             let created;
-            try { created = await this.client.create(entry.collection, this.owner, entry.scope); }
+            try { created = await this.client.create(entry.collection, this.owner, entry.scope, config.analyzers); }
             catch (error) { if (error.status !== 409) throw error; }
             // A 201 body describes the new collection; a conflict or lost response needs a fresh read.
-            if (created?.collection) this.client.verifyOwned(created, this.owner, entry.scope);
-            else await this.client.assertOwned(entry.collection, this.owner, undefined, entry.scope);
+            if (created?.collection) collection = this.client.verifyOwned(created, this.owner, entry.scope);
+            else collection = await this.client.assertOwned(entry.collection, this.owner, undefined, entry.scope);
         }
+        // The analyzers actually indexed; the setting only applies when a collection is created.
+        const analyzers = collectionAnalyzers(collection);
         {
             const branches = await this.client.branches(entry.collection);
             if (!valid()) return null;
@@ -105,7 +108,7 @@ export class ChatCollections {
                 if (created) recordCommitted(this.client, entry.collection, entry.branch);
             }
         }
-        return valid() ? entry : null;
+        return valid() ? { ...entry, analyzers } : null;
     }
     async delete(entry) {
         clearCommit(this.client, entry.collection, entry.branch);
