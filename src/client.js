@@ -16,8 +16,22 @@ export function connectionConfig(input) {
     return { endpoint: url.origin, project: input.project };
 }
 
-export const schema = Object.freeze({
-    text: { type: 'text', analyzers: ['english'] },
+// Text analyzers the pinned SDK accepts; language analyzers first, generic ones last.
+export const ANALYZERS = Object.freeze(['english', 'arabic', 'armenian', 'basque', 'bengali', 'brazilian', 'bulgarian', 'catalan', 'chinese', 'cjk', 'czech', 'danish', 'dutch', 'estonian', 'finnish', 'french', 'galician', 'german', 'greek', 'hindi', 'hungarian', 'indonesian', 'irish', 'italian', 'japanese', 'korean', 'latvian', 'lithuanian', 'nepali', 'norwegian', 'persian', 'portuguese', 'romanian', 'russian', 'serbian', 'sorani', 'spanish', 'swedish', 'tamil', 'telugu', 'thai', 'turkish',
+    'standard', 'simple', 'whitespace', 'stop', 'keyword', 'pattern', 'fingerprint']);
+export function analyzerList(value) {
+    if (!Array.isArray(value)) throw new ConnectionError('Choose at least one text analyzer.');
+    const names = [...new Set(value.map(x => String(x).trim().toLowerCase()))];
+    if (!names.length) throw new ConnectionError('Choose at least one text analyzer.');
+    for (const name of names) if (!ANALYZERS.includes(name)) throw new ConnectionError(`Unsupported text analyzer: ${name}.`);
+    return names;
+}
+export const sameAnalyzers = (a, b) => a.length === b.length && a.every(x => b.includes(x));
+// The analyzer list is fixed when a collection is created; LambdaDB does not change it later.
+export const collectionAnalyzers = result => Array.isArray(result?.collection?.indexConfigs?.text?.analyzers) ? result.collection.indexConfigs.text.analyzers : ['standard'];
+
+export const schema = (analyzers = ['english']) => Object.freeze({
+    text: { type: 'text', analyzers: analyzerList(analyzers) },
     embedding: { type: 'vector', managedEmbedding: true, embedding: { provider: 'openai', model: 'text-embedding-3-small', sourceField: 'text' } },
     conversationTimestamp: { type: 'datetime' }, timestampSource: { type: 'keyword' },
     role: { type: 'keyword' }, conversationTimeContext: { type: 'keyword' },
@@ -109,15 +123,17 @@ export class LambdaClient {
         if (!/^[a-zA-Z0-9_-]{3,52}$/.test(collection)) throw new ConnectionError('Invalid collection name.');
         return `/collections/${collection}${suffix}`;
     }
-    create(collection, owner, scope) {
+    create(collection, owner, scope, analyzers) {
         this.path(collection);
-        return this.call((sdk, opts) => sdk.createCollection({ collectionName: collection, indexConfigs: schema, description: 'SillyMemory owned memory', tags: { application: 'sillymemory', owner, ...(scope ? { chat: scope } : {}) }, snapshotRetentionInDays: 1 }, opts));
+        const indexConfigs = schema(analyzers);
+        return this.call((sdk, opts) => sdk.createCollection({ collectionName: collection, indexConfigs, description: 'SillyMemory owned memory', tags: { application: 'sillymemory', owner, ...(scope ? { chat: scope } : {}) }, snapshotRetentionInDays: 1 }, opts));
     }
     get(collection, signal) { this.path(collection); return this.call((sdk, opts) => sdk.collection(collection).get(opts), signal); }
     verifyOwned(result, owner, scope) {
         if (result.collection?.tags?.application !== 'sillymemory' || result.collection?.tags?.owner !== owner || (scope && result.collection?.tags?.chat !== scope)) throw new ConnectionError('Ownership check failed. No remote data was deleted or written.');
+        return result;
     }
-    async assertOwned(collection, owner, signal, scope) { this.verifyOwned(await this.get(collection, signal), owner, scope); }
+    async assertOwned(collection, owner, signal, scope) { return this.verifyOwned(await this.get(collection, signal), owner, scope); }
     upsert(collection, docs, signal, branch = 'main') { this.path(collection); this.branchName(branch); return this.call((sdk, opts) => sdk.collection(collection).docs.upsert({ docs, branch }, opts), signal); }
     deleteIds(collection, ids, signal, branch = 'main') { this.path(collection); this.branchName(branch); return this.call((sdk, opts) => sdk.collection(collection).docs.delete({ ids, branch }, opts), signal); }
     branchName(name) {

@@ -49,7 +49,7 @@ input and excluded from retrieval.
 See the [current default policy](conversation-memory-defaults.md).
 
 
-Bayesian fusion combines managed embedding `knn.queryText` with English-analyzed
+Bayesian fusion combines managed embedding `knn.queryText` with analyzed
 `text` using the same query and `skipSyntax: true`; both legs use the owner/scope
 prefilter, extended with the indexed `long` message-position range below the
 earliest retained recent boundary. The same boundary also limits local accepted documents,
@@ -57,6 +57,13 @@ so an out-of-bound response cannot consume budget or duplicate a retained turn. 
 size=50. Unconfirmed applied metadata, mismatched provider/model identity or failure
 rejects injection. Queries above 8,192 UTF-8 bytes fail explicitly before any service
 call; they are never silently truncated.
+
+The `text` analyzers come from the **Text search languages** setting (default
+`english`) when a story collection is created; LambdaDB does not change an existing
+field's analyzers. Preparation reads the collection's actual
+`indexConfigs.text.analyzers` from the ownership check it already performs and, when
+the set differs from the current setting, shows a notice with **Rebuild story memory**
+in the chat panel without blocking synchronization or generation.
 
 Remote hits are ranking signals: only exact current IDs, ownership, scope, revision,
 source text and conversation-time metadata are accepted; injection uses the locally
@@ -93,7 +100,7 @@ The pinned host scans `coreChat` for World Info after interceptors. Recalled exc
 
 ## Ownership and deletion
 
-Production and synthetic test collections have `application=sillymemory` and the random owner metadata tag. Sync and deletion check these tags. Deletion never adopts a mismatched collection. Full deletion first disables further work, invalidates reads, drains writes, deletes the selected owned branch or all discovered owned story collections, and verifies API absence. Branch deletion preserves siblings; family deletion removes every branch. Tags are ownership safeguards against accidental selection, not an authorization boundary against another holder of the project API key.
+Production and synthetic test collections have `application=sillymemory` and the random owner metadata tag. Sync and deletion check these tags. Deletion never adopts a mismatched collection. Full deletion first disables further work, invalidates reads, drains writes, deletes the selected owned branch or all discovered owned story collections, and verifies API absence. Branch deletion preserves siblings; family deletion removes every branch. **Rebuild story memory** deletes the open story's single collection after the same ownership check, clears that collection's journals and engines, then synchronizes the open chat again so the collection is recreated with the current analyzers; other branches upload again when they are opened. Tags are ownership safeguards against accidental selection, not an authorization boundary against another holder of the project API key.
 
 After confirmed collection deletion, local cleanup snapshots all matching journal
 keys before removing them. It preserves other namespaces and host settings;

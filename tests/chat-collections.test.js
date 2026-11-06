@@ -89,6 +89,21 @@ test('created collections and branches are verified from their 201 bodies; confl
     assert.throws(() => real.verifyOwned({ collection: { tags: { ...tags, chat: 'foreign' } } }, owner, entry.scope), /Ownership/);
     real.verifyOwned({ collection: { tags } }, owner, entry.scope);
 });
+test('ensure reports the analyzers a story was created with and creates new stories from the setting', async () => {
+    const entry = await chatCollection(snapshot, owner);
+    const tags = { application: 'sillymemory', owner, chat: entry.scope };
+    const existing = analyzers => ({ assertOwned: async () => ({ collection: { tags, ...(analyzers ? { indexConfigs: { text: { type: 'text', analyzers } } } : {}) } }), branches: async () => [{ name: entry.branch }] });
+    const config = { analyzers: ['english', 'korean'] };
+    assert.deepEqual((await new ChatCollections(existing(['korean', 'english']), owner, () => {}, () => {}).ensure(snapshot, undefined, config)).analyzers, ['korean', 'english']);
+    assert.deepEqual((await new ChatCollections(existing(undefined), owner, () => {}, () => {}).ensure(snapshot, undefined, config)).analyzers, ['standard']);
+    const remembered = []; let requested;
+    const fresh = { assertOwned: async () => { throw missing(); }, verifyOwned: result => result,
+        create: async (name, o, scope, analyzers) => { requested = analyzers; return { collection: { collectionName: name, tags: { application: 'sillymemory', owner: o, chat: scope }, indexConfigs: { text: { type: 'text', analyzers } } } }; },
+        branches: async () => [], createBranch: async (name, branch) => ({ branch: { name: branch } }) };
+    const created = await new ChatCollections(fresh, owner, e => remembered.push(e), () => {}).ensure(snapshot, undefined, config);
+    assert.deepEqual([requested, created.analyzers], [config.analyzers, config.analyzers]);
+    assert.equal(Object.hasOwn(remembered[0], 'analyzers'), false, 'persisted intent keeps its stored shape');
+});
 test('cleanup discovers only owned memory names across opaque pagination and rejects cycles', async () => {
     const client = new LambdaClient({ endpoint: 'https://example.test', project: 'test' }, 'synthetic');
     const name = (await chatCollection(snapshot, owner)).collection;

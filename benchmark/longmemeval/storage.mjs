@@ -45,8 +45,8 @@ export function verifyRecall(record, prepared, config, countTokens, binding, rec
 }
 
 export async function memoryPhase({ phase, root, lock, binding, config, env, prepare, countTokens }) {
-    assert.equal(schema.embedding.embedding.model, config.retrieval.embedding);
-    assert.equal(schema.embedding.embedding.sourceField, 'text');
+    assert.equal(schema().embedding.embedding.model, config.retrieval.embedding);
+    assert.equal(schema().embedding.embedding.sourceField, 'text');
     for (const key of ['LAMBDADB_BASE_URL', 'LAMBDADB_PROJECT_NAME', 'LAMBDADB_PROJECT_API_KEY']) assert(env[key]?.trim(), `Missing ${key}`);
     const connection = sha256(JSON.stringify([env.LAMBDADB_BASE_URL, env.LAMBDADB_PROJECT_NAME]));
     const secrets = Object.entries(env).filter(([key, value]) => /KEY|TOKEN|SECRET|PASSWORD/i.test(key) && value.length >= 8).map(([, value]) => value);

@@ -2,11 +2,13 @@ import { beginWrites, clearCommit, recordWrite, sameDocument } from './commit.js
 import { queryAnchor, retentionAnchor, retentionStart } from './context.js';
 import { chunkSpans, CHUNKING_POLICY } from './chunking.js';
 import { hostTimestamp, conversationTime, conversationTimeLabel } from './time.js';
+import { analyzerList } from './client.js';
 
-export const DEFAULTS = Object.freeze({ budget: 4096, chunkChars: 800 });
+export const DEFAULTS = Object.freeze({ budget: 4096, chunkChars: 800, analyzers: Object.freeze(['english']) });
 export function options(value = {}) {
     const integer = (x, fallback, min, max) => Number.isInteger(Number(x)) ? Math.min(max, Math.max(min, Number(x))) : fallback;
-    return { budget: integer(value.budget, DEFAULTS.budget, 64, 4096), chunkChars: integer(value.chunkChars, 800, 200, 2000) };
+    let analyzers; try { analyzers = analyzerList(value.analyzers); } catch { analyzers = [...DEFAULTS.analyzers]; }
+    return { budget: integer(value.budget, DEFAULTS.budget, 64, 4096), chunkChars: integer(value.chunkChars, 800, 200, 2000), analyzers };
 }
 export async function digest(value) {
     const bytes = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(value));

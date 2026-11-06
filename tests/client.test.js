@@ -1,8 +1,9 @@
 import { collectionResponse, documentResponse, rerankedResponse, accepted } from './helpers/lambdadb-responses.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { LambdaClient, connectionConfig, scopeFilter } from '../src/client.js';
+import { LambdaClient, connectionConfig, scopeFilter, ANALYZERS, analyzerList, sameAnalyzers, collectionAnalyzers } from '../src/client.js';
 import { runTransportGate } from '../src/gate.js';
+import { readFileSync } from 'node:fs';
 const config = { endpoint: 'https://region.example.test', project: 'synthetic' };
 const owner = 'a'.repeat(32), scope = 'b'.repeat(64);
 test('collection indexes expose source context to reranking without changing embedding input', async () => {
@@ -16,6 +17,27 @@ test('collection indexes expose source context to reranking without changing emb
         return Response.json({ collection: collectionResponse() }, { status: 201 });
     } });
     await client.create('synthetic_context', owner, scope);
+});
+test('text analyzers are normalized before a create request and match the pinned SDK', async () => {
+    const sdk = readFileSync(new URL('../vendor/lambdadb.js', import.meta.url), 'utf8').match(/\{Standard:"standard"(?:,[A-Za-z]+:"[a-z]+")+\}/g);
+    assert.equal(sdk.length, 1);
+    assert.deepEqual([...ANALYZERS].sort(), Object.values(JSON.parse(sdk[0].replace(/([A-Za-z]+):/g, '"$1":'))).sort());
+    assert.deepEqual(analyzerList([' Korean', 'english', 'korean']), ['korean', 'english']);
+    for (const value of [[], undefined, 'english', ['english', 'klingon']]) assert.throws(() => analyzerList(value), /text analyzer/);
+    assert.equal(sameAnalyzers(['korean', 'english'], ['english', 'korean']), true);
+    assert.equal(sameAnalyzers(['english'], ['english', 'korean']), false);
+    assert.deepEqual(collectionAnalyzers({ collection: collectionResponse() }), ['standard']);
+    assert.deepEqual(collectionAnalyzers({ collection: collectionResponse({ indexConfigs: { text: { type: 'text', analyzers: ['english', 'korean'] } } }) }), ['english', 'korean']);
+    let requests = 0;
+    const client = new LambdaClient(config, 'synthetic', { fetcher: async (_url, init) => {
+        requests++;
+        assert.deepEqual(JSON.parse(init.body).indexConfigs.text, { type: 'text', analyzers: ['korean', 'english'] });
+        return Response.json({ collection: collectionResponse() }, { status: 201 });
+    } });
+    assert.throws(() => client.create('synthetic_context', owner, scope, ['english', 'klingon']), /Unsupported text analyzer: klingon/);
+    assert.equal(requests, 0);
+    await client.create('synthetic_context', owner, scope, ['Korean', 'english', 'korean']);
+    assert.equal(requests, 1);
 });
 test('direct CORS preserves auth/body and query scope without host credentials', async () => {
     const calls = [];

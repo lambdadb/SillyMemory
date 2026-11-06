@@ -6,6 +6,17 @@ boundary; publication is confirmed by the corresponding Git tag and GitHub Relea
 
 ## [Unreleased]
 
+### Added
+
+- **Text search languages** in SillyMemory settings offers checkboxes for the LambdaDB text
+  analyzers for story memory created after the change (default `english`, the
+  previous fixed value). Each selected analyzer indexes the text again, so pick
+  only the languages you chat in. LambdaDB keeps a collection's analyzers fixed,
+  so a story created with a different setting shows a notice and **Rebuild story
+  memory** in its Memory panel; rebuilding deletes that story's memory for every
+  branch and uploads the open chat again, while other branches upload again when
+  opened. Search quality in languages other than English was not evaluated.
+
 ### Changed
 
 - Documentation only: the LambdaDB request limit is now described from the

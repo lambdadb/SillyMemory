@@ -1,11 +1,11 @@
-import { LambdaClient, ConnectionError, connectionConfig } from './src/client.js';
+import { LambdaClient, ConnectionError, connectionConfig, ANALYZERS } from './src/client.js';
 import { SavedKey } from './src/credentials.js';
 import { callbackUrl, connectWithLambdaDB } from './src/app-connect.js';
 import { activationBinding, chatActivated } from './src/activation.js';
 import { ChatCollections, chatCollection, ensureChatIdentity } from './src/chat-collections.js';
 import { runTransportGate } from './src/gate.js';
 import { MemoryEngine, Journal, capture, supportsChat, fingerprint, options, DEFAULTS, memoryBoundary, archiveBoundary } from './src/memory.js';
-import { OperationStatus, failureText } from './src/status.js';
+import { OperationStatus, failureText, analyzerNotice } from './src/status.js';
 import { PromptDelivery, expectedMessages, deliverySummary } from './src/delivery.js';
 import { MEMORY_GUIDANCE, retentionAnchor, quoteMemoryText, quoteMemoryMessages } from './src/context.js';
 import { hostPromptTokens, dialogueSnapshot, compareDialogue, comparisonLabel, tokenLabel } from './src/token-usage.js';
@@ -21,7 +21,7 @@ let promptSequence = 0;
 let retrievalSequence = 0, retrievalOperation;
 let statusView, collections, identityKey;
 let preparation = Promise.resolve();
-let chatStatus, stoppedRequest, deliveryNotice, sessionUnavailable;
+let chatStatus, stoppedRequest, deliveryNotice, sessionUnavailable, storyAnalyzers;
 let deliveryText = '', inspectionText = 'No memory added yet.';
 let retrying = false, sourceRevision = 0;
 let hostGenerating = () => false;
@@ -173,6 +173,11 @@ function renderChatStatus() {
     chatElement('cleanup').hidden = !connected || !state.testCollection;
     chatElement('sync').hidden = !retrySync || !memoryEnabled() || Boolean(blocker) || !state.ready || Boolean(state.testCollection);
     chatElement('retry').hidden = !stopped?.source || !['normal', 'regenerate'].includes(stopped.type) || !context().chat.at(-1)?.is_user || !memoryEnabled() || !state.ready || Boolean(blocker) || Boolean(state.testCollection);
+    // The open story keeps its created analyzers; a changed setting is information, not a failure.
+    const notice = memoryEnabled() && !blocker && state.ready && !state.testCollection && storyAnalyzers?.target === requestTarget() ? analyzerNotice(storyAnalyzers.analyzers, options(state).analyzers) : '';
+    chatElement('analyzers').textContent = notice;
+    chatElement('analyzers').hidden = !notice;
+    chatElement('rebuild').hidden = !notice;
     chatElement('toggle').hidden = !connected || !state.ready || Boolean(state.testCollection) || !supportsChat(context());
     chatElement('toggle').textContent = memoryEnabled() ? 'Turn memory off in this chat' : 'Turn memory on in this chat';
     chatElement('toggle').setAttribute('aria-pressed', String(connected && memoryEnabled()));
@@ -182,7 +187,7 @@ function renderChatStatus() {
     const manageable = connected && state.ready && !state.testCollection && supportsChat(context());
     chatElement('delete').hidden = !context().chatMetadata?.sillymemory?.id;
     chatElement('manage').hidden = !manageable || chatElement('delete').hidden;
-    for (const name of ['cleanup', 'sync', 'retry', 'toggle', 'delete']) chatElement(name).disabled = !canAct || retrying;
+    for (const name of ['cleanup', 'sync', 'retry', 'toggle', 'delete', 'rebuild']) chatElement(name).disabled = !canAct || retrying;
 }
 function toggleMemory() {
     if (!sessionReady || !connectionVerified || !client || busy || retrying || hostGenerating()) return;
@@ -352,6 +357,7 @@ function prepareMemory(valid, progress = () => {}) {
         const snapshot = capture(context());
         const entry = await collections.ensure(snapshot, valid, options(state), progress);
         if (!entry || !valid()) return null;
+        storyAnalyzers = { target: requestTarget(), analyzers: entry.analyzers };
         if (!engines.has(entryKey(entry))) engines.set(entryKey(entry), new MemoryEngine({ client, owner, ...entry,
             journal: new Journal(localStorage, `${owner}:${entry.collection}:${entry.branch}`) }));
         engine = engines.get(entryKey(entry));
@@ -596,7 +602,7 @@ async function initialize() {
             };
         }
         for (const [name, handler] of [['cleanup', () => cleanupTestData()], ['sync', sync],
-            ['delete', () => action(() => deleteMemory(false))], ['inspect', toggleMemoryInspection], ['retry', retryReply],
+            ['delete', () => action(() => deleteMemory(false))], ['rebuild', rebuildMemory], ['inspect', toggleMemoryInspection], ['retry', retryReply],
             ['reconnect', reconnect], ['toggle', toggleMemory], ['token-compare', compareTokenUsage]]) {
             chatElement(name).onclick = event => { event.stopPropagation(); return handler(); };
         }
@@ -610,6 +616,26 @@ async function initialize() {
         else bar.removeAttribute('value');
     });
     for (const name of ['endpoint', 'project', 'budget']) element(name).value = state[name];
+    const analyzerGroup = element('analyzers'), analyzerSummary = element('analyzers-summary');
+    analyzerGroup.replaceChildren(...ANALYZERS.map(name => {
+        const label = document.createElement('label');
+        label.append(Object.assign(document.createElement('input'), { type: 'checkbox', value: name }), name);
+        return label;
+    }));
+    const analyzerBoxes = [...analyzerGroup.querySelectorAll('input')];
+    const renderAnalyzers = (message = '') => {
+        const chosen = options(state).analyzers;
+        for (const box of analyzerBoxes) box.checked = chosen.includes(box.value);
+        analyzerSummary.textContent = `${message}Selected: ${chosen.join(', ')}`;
+    };
+    renderAnalyzers();
+    analyzerGroup.onchange = () => {
+        const checked = analyzerBoxes.filter(box => box.checked).map(box => box.value);
+        // Keep the last language instead of silently falling back to the default.
+        if (!checked.length) { renderAnalyzers('Choose at least one language. '); return; }
+        state.analyzers = options({ ...state, analyzers: checked }).analyzers;
+        renderAnalyzers(); persist(); renderChatStatus();
+    };
     element('stopOnLoss').checked = state.stopOnLoss !== false;
     element('stopOnLoss').onchange = () => { state.stopOnLoss = element('stopOnLoss').checked; persist(); };
     renderSettings();
@@ -838,6 +864,39 @@ async function initialize() {
         status(all ? 'All memory was deleted. Your local chats are kept. Turn memory on in a chat to start again.' : 'This chat’s memory was deleted. Turn memory on to start again.');
     }
     element('delete').onclick = () => action(() => deleteMemory(true));
+    // Rebuild recreates one story's collection with the current analyzers; sync re-uploads from the local chat.
+    async function rebuildStory() {
+        if (!client || !collections) throw new ConnectionError('Reconnect before rebuilding memory.');
+        if (!capture(context()) || !context().chatMetadata.sillymemory?.id) throw new ConnectionError('This chat has no saved memory yet.');
+        const target = context(), file = target.getCurrentChatId(), avatar = target.characters[target.characterId]?.avatar;
+        const sameChat = () => context().getCurrentChatId() === file && context().characters[context().characterId]?.avatar === avatar;
+        const answer = await target.Popup.show.confirm('Rebuild story memory', `Rebuild the memory of every branch of this story with the current text search languages (${options(state).analyzers.join(', ')})? Your local chats are kept. This chat uploads its memory again now; other branches upload again when you open them.`);
+        if (answer !== target.POPUP_RESULT.AFFIRMATIVE) return false;
+        if (!sameChat()) throw new ConnectionError('Chat changed while the popup was open. Select it and retry.');
+        invalidate(); clearTimeout(timer);
+        for (const e of engines.values()) e.invalidate();
+        status('Rebuilding memory: finishing earlier saves…');
+        await drain();
+        const { saveChat } = await import('/script.js');
+        if (!sameChat() || !await ensureChatIdentity(target, saveChat, sameChat)) throw new ConnectionError('Chat changed before rebuilding. Select it and retry.');
+        const entry = await chatCollection(capture(target), owner);
+        // Evict cached engines first: an uncertain deletion must not leave remote state
+        // that describes the deleted collection, or the recreated one would skip uploads.
+        for (const [key, instance] of engines) if (instance.collection === entry.collection) engines.delete(key);
+        engine = undefined; storyAnalyzers = undefined;
+        await collections.delete({ ...entry, branch: undefined });
+        new Journal(localStorage, `${owner}:${entry.collection}`).clear();
+        stoppedRequest = undefined;
+        showDelivery('');
+        setInspection('No memory added yet.');
+        status('This story’s memory was deleted. Saving this chat’s memory again with the current text search languages…');
+        return true;
+    }
+    async function rebuildMemory() {
+        let rebuilt = false;
+        await action(async () => { rebuilt = await rebuildStory(); });
+        if (rebuilt) schedule();
+    }
     const events = ctx.eventTypes;
     ctx.eventSource.on(events.CHAT_COMPLETION_PROMPT_READY, data => {
         if (data.dryRun || !tokenUsage || tokenUsage.finished || tokenUsage.model !== tokenizerKey()) return;
