@@ -476,6 +476,7 @@ globalThis.sillymemory_intercept = async (chat, contextSize, abort, type) => {
         const prepared = await prepareMemory(() => sequence === promptSequence && sessionReady && memoryEnabled() && sameSource() && JSON.stringify(chat) === promptBefore);
         if (!prepared) { abandoned = true; abort(true); return; }
         ({ snapshot, instance } = prepared);
+        config.ownershipVerified = true; // ensure() verified ownership in this preparation.
         const requestGuidance = MEMORY_GUIDANCE;
         // Retain recent native dialogue without classifying or rewriting replies.
         const retainedEnd = retentionAnchor(snapshot.messages, type);

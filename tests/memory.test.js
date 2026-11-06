@@ -560,4 +560,6 @@ test('sync reads ownership unless the caller verified it while preparing this sy
     await s.engine.sync(snap, config); assert.equal(checks, 1);
     await s.engine.sync(snap, { ...config, ownershipVerified: true }); assert.equal(checks, 1);
     await s.engine.sync(snap, config); assert.equal(checks, 2);
+    await s.engine.retrieve(snap, { ...config, ownershipVerified: true }, text => text.length); assert.equal(checks, 2);
+    await s.engine.retrieve(snap, config, text => text.length); assert.equal(checks, 3);
 });

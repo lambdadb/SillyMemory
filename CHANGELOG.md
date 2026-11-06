@@ -14,9 +14,9 @@ boundary; publication is confirmed by the corresponding Git tag and GitHub Relea
   twice, after `Retry-After` when readable or after 1 s then 2 s, inside the same
   15-second deadline and cancellation; 5xx, timeouts and network failures are
   still not retried. Creating a chat's memory now verifies the created collection
-  and branch from their 201 responses and does not read the collection again in
-  the sync that follows, so a new chat sends four requests instead of seven and
-  a repeat sync two instead of three. Conflicts still require a fresh read.
+  and branch from their 201 responses, and the manual sync or generation that
+  follows in the same preparation does not read the collection again, so a new
+  chat sends four requests instead of seven and a repeat sync two instead of three. Conflicts still require a fresh read.
 - Synchronization failure messages now name the visible **Retry synchronization**
   button instead of **Sync now**, which is inside **This chat's memory**.
 
