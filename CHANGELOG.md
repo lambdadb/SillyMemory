@@ -4,7 +4,7 @@ Versions describe the extension, independently of the SillyTavern host version.
 An `Unreleased` entry is a development candidate. A dated entry records a release
 boundary; publication is confirmed by the corresponding Git tag and GitHub Release.
 
-## [Unreleased]
+## [0.8.1] - Unreleased
 
 ### Changed
 
@@ -37,6 +37,20 @@ boundary; publication is confirmed by the corresponding Git tag and GitHub Relea
 - A message sent while memory is being turned on, or during another memory
   action, now waits for that action and then prepares the reply instead of
   stopping with "Wait for the current memory operation to finish".
+
+### Compatibility
+
+- Supported host is unchanged: SillyTavern 1.19.0 at
+  `06bde939fb1e9c4c8d8641d810f0a916b5bce127` with Chromium. There is no
+  settings or data migration; existing chats, saved on/off choices, the saved
+  key and saved memory are unaffected. Collection schema, ownership tags,
+  chunking, search policy and token budgets are those of 0.8.0. Only the
+  manifest version changes for the extension manager.
+- Limitations: the LambdaDB request-limit value and unit, and whether 429
+  responses carry a readable `Retry-After`, are unconfirmed, so the retry uses
+  fixed 1 s and 2 s waits when the header is absent. The 200-document batch
+  evidence comes from one project at one time of day with synthetic English
+  text; see [upsert batch size](docs/upsert-batch-size.md).
 
 ## [0.8.0] - 2026-11-06
 
