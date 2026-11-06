@@ -45,7 +45,8 @@ is no LambdaDB snapshot/fork integration or shared prefix storage in this change
 
 The client persists collection intent before requesting creation. An uncertain
 create response is retried at the same name, and an existing name is adopted only
-after ownership/scope verification. Separate engines/journals preserve per-chat
+after ownership/scope verification. A 201 create body is verified in place; a
+409 conflict or a bodiless response is followed by a fresh ownership read. Separate engines/journals preserve per-chat
 write ordering. Deleted/edited/swiped source is reconciled before retrieval.
 
 ## Deletion and recovery

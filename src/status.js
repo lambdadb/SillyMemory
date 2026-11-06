@@ -16,7 +16,7 @@ export function progressText(value) {
 }
 
 export function failureText(error, { sync = true, generation = false } = {}) {
-    const retry = generation ? 'regenerate to retry this request' : sync ? 'click Sync now in the Memory panel' : 'retry this action';
+    const retry = generation ? 'regenerate to retry this request' : sync ? 'click Retry synchronization in the Memory panel' : 'retry this action';
     if (!(error instanceof ConnectionError)) return `Memory operation failed. Check browser storage${sync ? ' and token counting' : ''}, then ${retry}. Your local chat is kept.`;
     let next = '';
     if (error.status === 401) next = 'Replace your project key in Connection settings, then reconnect. Memory is off; an invalid key is not saved.';

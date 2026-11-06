@@ -66,9 +66,12 @@ export class ChatCollections {
         catch (error) {
             if (error.status !== 404) throw error;
             if (!valid()) return null;
-            try { await this.client.create(entry.collection, this.owner, entry.scope); }
+            let created;
+            try { created = await this.client.create(entry.collection, this.owner, entry.scope); }
             catch (error) { if (error.status !== 409) throw error; }
-            await this.client.assertOwned(entry.collection, this.owner, undefined, entry.scope);
+            // A 201 body describes the new collection; a conflict or lost response needs a fresh read.
+            if (created?.collection) this.client.verifyOwned(created, this.owner, entry.scope);
+            else await this.client.assertOwned(entry.collection, this.owner, undefined, entry.scope);
         }
         {
             const branches = await this.client.branches(entry.collection);
@@ -94,10 +97,11 @@ export class ChatCollections {
                 }
                 if (!valid()) return null;
                 clearCommit(this.client, entry.collection, entry.branch);
-                let created = false;
-                try { await this.client.createBranch(entry.collection, entry.branch, source); created = true; }
+                let created = false, confirmed = false;
+                try { confirmed = (await this.client.createBranch(entry.collection, entry.branch, source))?.branch?.name === entry.branch; created = true; }
                 catch (error) { if (error.status !== 409) throw error; }
-                if (!(await this.client.branches(entry.collection)).some(b => b.name === entry.branch)) throw new ConnectionError('Memory branch creation is not confirmed. Retry synchronization.');
+                // A 201 body names the new branch; a conflict or other response needs a fresh list.
+                if (!confirmed && !(await this.client.branches(entry.collection)).some(b => b.name === entry.branch)) throw new ConnectionError('Memory branch creation is not confirmed. Retry synchronization.');
                 if (created) recordCommitted(this.client, entry.collection, entry.branch);
             }
         }

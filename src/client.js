@@ -57,7 +57,7 @@ export class LambdaClient {
                     mode: 'cors', credentials: 'omit', redirect: 'error',
                     headers: { 'Content-Type': 'application/json', 'x-api-key': this.#key },
                 });
-                if (!response.ok) throw httpError(response.status);
+                if (!response.ok) throw httpError(response);
                 // The SDK can leave a rejected metadata promise if body reading
                 // fails after headers. Finish the JSON transport under the same
                 // deadline here; SDK parsing/validation still owns the payload.
@@ -73,17 +73,28 @@ export class LambdaClient {
     forget() { this.#key = ''; this.#session.abort(); }
     async call(operation, signal) {
         if (!this.#key) throw new ConnectionError('Not connected. Use Connect to LambdaDB or enter your project API key in Connection settings.');
-        const timeout = AbortSignal.timeout(this.timeoutMs);
+        const deadline = Date.now() + this.timeoutMs, timeout = AbortSignal.timeout(this.timeoutMs);
         const combined = AbortSignal.any([this.#session.signal, timeout, ...(signal ? [signal] : [])]);
         try {
             combined.throwIfAborted();
-            return await operation(this.#sdk, { signal: combined, retries: { strategy: 'none' } });
+            for (let attempt = 1; ; attempt++) {
+                try { return await operation(this.#sdk, { signal: combined, retries: { strategy: 'none' } }); }
+                catch (error) {
+                    // HTTP 429 rejects a request unprocessed, so reads and writes retry alike:
+                    // at most twice, inside this call's deadline. Other failures stay explicit.
+                    const limited = unwrap(error);
+                    if (limited?.status !== 429 || attempt >= 3) throw error;
+                    const delay = limited.retryAfterMs ?? attempt * 1000;
+                    if (delay > deadline - Date.now()) throw error;
+                    await sleep(delay, combined);
+                }
+            }
         } catch (error) {
             if (signal?.aborted || this.#session.signal.aborted) throw new ConnectionError('Memory request canceled.', 0, 'canceled');
             if (timeout.aborted) throw new ConnectionError('Memory request timed out.', 0, 'timeout');
             // SDK errors may wrap transport errors. Never expose raw causes/bodies.
-            let cause = error;
-            for (let i = 0; cause && i < 8; i++, cause = cause.cause) if (cause instanceof ConnectionError) throw cause;
+            const cause = unwrap(error);
+            if (cause) throw cause;
             if (['ResponseValidationError', 'SDKValidationError', 'InvalidRequestError'].includes(error?.name)) {
                 throw new ConnectionError('Memory service request or response failed validation. No state was adopted.', 0, 'validation');
             }
@@ -103,10 +114,10 @@ export class LambdaClient {
         return this.call((sdk, opts) => sdk.createCollection({ collectionName: collection, indexConfigs: schema, description: 'SillyMemory owned memory', tags: { application: 'sillymemory', owner, ...(scope ? { chat: scope } : {}) }, snapshotRetentionInDays: 1 }, opts));
     }
     get(collection, signal) { this.path(collection); return this.call((sdk, opts) => sdk.collection(collection).get(opts), signal); }
-    async assertOwned(collection, owner, signal, scope) {
-        const result = await this.get(collection, signal);
+    verifyOwned(result, owner, scope) {
         if (result.collection?.tags?.application !== 'sillymemory' || result.collection?.tags?.owner !== owner || (scope && result.collection?.tags?.chat !== scope)) throw new ConnectionError('Ownership check failed. No remote data was deleted or written.');
     }
+    async assertOwned(collection, owner, signal, scope) { this.verifyOwned(await this.get(collection, signal), owner, scope); }
     upsert(collection, docs, signal, branch = 'main') { this.path(collection); this.branchName(branch); return this.call((sdk, opts) => sdk.collection(collection).docs.upsert({ docs, branch }, opts), signal); }
     deleteIds(collection, ids, signal, branch = 'main') { this.path(collection); this.branchName(branch); return this.call((sdk, opts) => sdk.collection(collection).docs.delete({ ids, branch }, opts), signal); }
     branchName(name) {
@@ -208,7 +219,18 @@ export class LambdaClient {
     }
 }
 
-function httpError(status) {
+function unwrap(error) {
+    for (let cause = error, i = 0; cause && i < 8; i++, cause = cause.cause) if (cause instanceof ConnectionError) return cause;
+}
+function sleep(ms, signal) {
+    return new Promise((resolve, reject) => {
+        const abort = () => { clearTimeout(timer); reject(signal.reason); };
+        const timer = setTimeout(() => { signal.removeEventListener('abort', abort); resolve(); }, ms);
+        signal.addEventListener('abort', abort, { once: true });
+    });
+}
+function httpError(response) {
+    const status = response.status;
     const messages = {
         400: 'Invalid request or authentication failure. Check configuration and re-enter your project key.',
         401: 'Authentication failed. Re-enter your project API key.',
@@ -217,5 +239,12 @@ function httpError(status) {
         409: 'Collection already exists. Do not adopt an unrelated collection.',
         429: 'LambdaDB is busy or over its request limit. Retry later.',
     };
-    return new ConnectionError(messages[status] || `Memory service returned HTTP ${status}.`, status);
+    const error = new ConnectionError(messages[status] || `Memory service returned HTTP ${status}.`, status);
+    if (status === 429) {
+        // Retry-After may be delay seconds or an HTTP date; CORS may hide it entirely.
+        const header = response.headers.get('retry-after')?.trim();
+        const ms = header === undefined ? NaN : /^\d+$/.test(header) ? Number(header) * 1000 : Date.parse(header) - Date.now();
+        if (Number.isFinite(ms)) error.retryAfterMs = Math.max(0, ms);
+    }
+    return error;
 }

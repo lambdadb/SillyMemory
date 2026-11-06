@@ -553,3 +553,13 @@ test('native authored JSON remains eligible literal source without reply decodin
     assert.equal(captured.messages[1].user, false);
     assert.equal(JSON.stringify(chat), original);
 });
+
+test('sync reads ownership unless the caller verified it while preparing this sync', async () => {
+    const s = setup(), snap = snapshot(); let checks = 0;
+    s.client.assertOwned = async () => { checks++; };
+    await s.engine.sync(snap, config); assert.equal(checks, 1);
+    await s.engine.sync(snap, { ...config, ownershipVerified: true }); assert.equal(checks, 1);
+    await s.engine.sync(snap, config); assert.equal(checks, 2);
+    await s.engine.retrieve(snap, { ...config, ownershipVerified: true }, text => text.length); assert.equal(checks, 2);
+    await s.engine.retrieve(snap, config, text => text.length); assert.equal(checks, 3);
+});
