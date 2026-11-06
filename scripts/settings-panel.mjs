@@ -61,6 +61,18 @@ export function chatMemoryAction(page, name) {
     return { click, isVisible: () => button.isVisible() };
 }
 
+// Synchronization has no standalone button: it runs on every chat event, and
+// Retry synchronization appears only after a failure (browser-smoke clicks that
+// button directly). Runners re-run synchronization the way a source edit does,
+// through the host event, which schedules the same synchronization.
+export function chatMemorySync(page) {
+    const click = () => page.evaluate(async () => {
+        const c = SillyTavern.getContext();
+        await c.eventSource.emit(c.eventTypes.MESSAGE_UPDATED, Math.max(0, c.chat.length - 1));
+    });
+    return { click, isVisible: () => page.locator('#sillymemory-chat [data-sm-chat="sync"]').isVisible() };
+}
+
 // Existing runners express memory state as check/uncheck. Exercise the real
 // chat button while preserving the settings drawer used by their next step.
 export function memoryControl(page) {

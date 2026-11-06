@@ -13,7 +13,7 @@ import { hostPromptTokens, dialogueSnapshot, compareDialogue, comparisonLabel, t
 const context = () => SillyTavern.getContext();
 const memoryEnabled = () => connectionVerified && state?.ready && chatActivated(context().chatMetadata, state);
 const uuid = () => crypto.randomUUID().replaceAll('-', '');
-let client, engine, root, state, stateKey, owner, timer, busy = false, gatePassed = false;
+let client, engine, root, state, stateKey, owner, timer, busy = false, pendingAction = Promise.resolve(), gatePassed = false;
 let sessionReady = false;
 let connectionVerified = false, shownConnection, retrySync = false;
 let savedKey, connectingClient;
@@ -152,6 +152,8 @@ function renderChatStatus() {
         if (stopped) { label = 'Reply stopped'; kind = 'error'; }
         else if (statusView.error) { label = 'Needs attention'; kind = 'error'; }
         else if (statusView.progress) { label = statusView.progress.phase === 'searching' || statusView.progress.phase === 'budgeting' ? 'Adding memory' : 'Updating'; kind = 'working'; }
+        // An action such as turning memory on is still saving; synchronization follows it.
+        else if (busy) { label = 'Updating'; kind = 'working'; }
         else { label = deliveryNotice?.label || 'Ready'; kind = deliveryNotice?.kind || 'ready'; }
     }
     chatStatus.dataset.kind = kind;
@@ -178,10 +180,9 @@ function renderChatStatus() {
     recovery.hidden = [...recovery.children].every(button => button.hidden);
     // This chat's memory: actions on the open chat's own memory, apart from recovery.
     const manageable = connected && state.ready && !state.testCollection && supportsChat(context());
-    chatElement('sync-now').hidden = !memoryEnabled();
     chatElement('delete').hidden = !context().chatMetadata?.sillymemory?.id;
-    chatElement('manage').hidden = !manageable || (chatElement('sync-now').hidden && chatElement('delete').hidden);
-    for (const name of ['cleanup', 'sync', 'retry', 'toggle', 'sync-now', 'delete']) chatElement(name).disabled = !canAct || retrying;
+    chatElement('manage').hidden = !manageable || chatElement('delete').hidden;
+    for (const name of ['cleanup', 'sync', 'retry', 'toggle', 'delete']) chatElement(name).disabled = !canAct || retrying;
 }
 function toggleMemory() {
     if (!sessionReady || !connectionVerified || !client || busy || retrying || hostGenerating()) return;
@@ -421,8 +422,10 @@ function fail(error, operation, generation = false, type) {
 async function action(job) {
     if (busy) return;
     busy = true; renderSettings();
-    try { await job(); } catch (e) { fail(e); }
-    finally { busy = false; renderSettings(); }
+    let settle; pendingAction = new Promise(resolve => { settle = resolve; });
+    let outcome = {};
+    try { await job(); } catch (e) { outcome = { error: e }; fail(e); }
+    finally { busy = false; settle(outcome); renderSettings(); }
 }
 
 // Called with SillyTavern's ephemeral coreChat array. Never mutate source messages.
@@ -441,16 +444,29 @@ globalThis.sillymemory_intercept = async (chat, contextSize, abort, type) => {
     }
     showMemoryPreview();
     clearTokenUsage();
+    if (busy) {
+        // A memory action, such as turning memory on, may still be saving. Wait
+        // for it and prepare this reply afterwards instead of stopping the reply.
+        const target = requestTarget(), wanted = memoryEnabled();
+        const { error } = await pendingAction;
+        if (requestTarget() !== target) {
+            promptSource = undefined;
+            fail(new ConnectionError('The chat changed while memory was being prepared. Generate again.'), undefined, true, type);
+            abort(true); return;
+        }
+        // A failed action that left memory off, such as an activation whose save
+        // was rolled back, is a preparation failure, not a request for native history.
+        if (error && wanted && !memoryEnabled()) {
+            promptSource = undefined;
+            fail(error, undefined, true, type);
+            abort(true); return;
+        }
+    }
     invalidate();
     const requestTokens = beginTokenUsage(chat);
     const sequence = promptSequence;
     const retrieval = ++retrievalSequence;
     if (!sessionReady || !memoryEnabled() || !state.ready || !client) return;
-    if (busy) {
-        promptSource = undefined;
-        fail(new ConnectionError('Wait for the current memory operation to finish, then regenerate.'), undefined, true, type);
-        abort(true); return;
-    }
     if (context().extensionSettings.vectors?.enabled_chats) {
         status('Disable built-in Vector Storage chat vectorization before using SillyMemory.'); return;
     }
@@ -579,7 +595,7 @@ async function initialize() {
                 return action().catch(() => status('Could not open the requested panel. Use SillyTavern’s own menus.', { error: true }));
             };
         }
-        for (const [name, handler] of [['cleanup', () => cleanupTestData()], ['sync', sync], ['sync-now', sync],
+        for (const [name, handler] of [['cleanup', () => cleanupTestData()], ['sync', sync],
             ['delete', () => action(() => deleteMemory(false))], ['inspect', toggleMemoryInspection], ['retry', retryReply],
             ['reconnect', reconnect], ['toggle', toggleMemory], ['token-compare', compareTokenUsage]]) {
             chatElement(name).onclick = event => { event.stopPropagation(); return handler(); };
