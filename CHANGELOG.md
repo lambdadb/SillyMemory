@@ -4,7 +4,7 @@ Versions describe the extension, independently of the SillyTavern host version.
 An `Unreleased` entry is a development candidate. A dated entry records a release
 boundary; publication is confirmed by the corresponding Git tag and GitHub Release.
 
-## [Unreleased]
+## [0.9.0] - 2026-11-06
 
 ### Added
 
@@ -25,6 +25,28 @@ boundary; publication is confirmed by the corresponding Git tag and GitHub Relea
   rejection carries `Retry-After` in whole seconds, which the retry honours; the
   1 s and 2 s fallback waits apply only when the header is absent. README,
   architecture and the upsert batch note say where to see and raise the limit.
+
+### Compatibility
+
+- Supported host is unchanged: SillyTavern 1.19.0 at
+  `06bde939fb1e9c4c8d8641d810f0a916b5bce127` with Chromium. There is no
+  settings or data migration; existing chats, saved on/off choices, the saved
+  key and saved memory are unaffected. A browser state without the new setting
+  reads as `english`, the value every existing story collection was created
+  with, so nothing changes until a user edits **Text search languages**.
+- The setting applies only to story collections created after the change.
+  LambdaDB does not change the analyzers of an existing text field, so a story
+  created with another set keeps it; the chat panel reports the difference and
+  offers **Rebuild story memory**. Rebuild is explicit: it deletes that story's
+  collection in LambdaDB, which holds the memory of every branch and checkpoint
+  of the story, then uploads the open chat again, and other branches upload
+  again when opened. Local chats are kept. The remote deletion is not undone by
+  a rollback.
+- Limitations: search quality in languages other than English was not
+  evaluated, no live LambdaDB run used a non-`english` analyzer set, and the
+  mismatch notice and rebuild were not exercised end to end in a browser. The
+  49-entry analyzer list has no search box. Only the manifest version changes
+  for the extension manager beyond the merged changes above.
 
 ## [0.8.1] - 2026-11-06
 
