@@ -98,7 +98,7 @@ not a guarantee for every model or roleplay.
 | --- | --- |
 | Connection or authentication failure | Click **Reconnect** in the Memory panel. If it keeps failing, open **SillyMemory settings → Connection**, use **Disconnect** or **Forget key**, then connect again. |
 | Setup test failed | Click **Clean up test data**, then **Run setup test** in settings. |
-| Synchronization failure | Follow the status message, then click **Retry synchronization** in the Memory panel. **This chat's memory → Sync now** re-runs a sync at any time. |
+| Synchronization failure | Follow the status message, then click **Retry synchronization** in the Memory panel. Synchronization also runs again on the next message, edit or chat change. |
 | Reply stopped while adding memory | Read the status, fix the cause, then click **Retry reply** or use SillyTavern's **Regenerate**. Only a request LambdaDB rejected with HTTP 429 is retried automatically, at most twice within the same 15-second request deadline. |
 | Query exceeds 8 KiB | Shorten the latest messages, or turn memory off for that reply. |
 

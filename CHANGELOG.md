@@ -6,6 +6,12 @@ boundary; publication is confirmed by the corresponding Git tag and GitHub Relea
 
 ## [Unreleased]
 
+### Changed
+
+- **Sync now** is removed from **This chat's memory**. It ran the same
+  synchronization as **Retry synchronization**, which still appears after a
+  failure; synchronization also runs on every message, edit and chat change.
+
 ### Fixed
 
 - Turning memory on in a new chat sent seven LambdaDB requests in well under a
@@ -19,6 +25,12 @@ boundary; publication is confirmed by the corresponding Git tag and GitHub Relea
   chat sends four requests instead of seven and a repeat sync two instead of three. Conflicts still require a fresh read.
 - Synchronization failure messages now name the visible **Retry synchronization**
   button instead of **Sync now**, which is inside **This chat's memory**.
+- The chat Memory panel no longer reports **Ready** while **Turn memory on in
+  this chat** is still saving; it reports **Updating** until the first
+  synchronization completes.
+- A message sent while memory is being turned on, or during another memory
+  action, now waits for that action and then prepares the reply instead of
+  stopping with "Wait for the current memory operation to finish".
 
 ## [0.8.0] - 2026-11-06
 

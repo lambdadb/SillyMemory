@@ -1,5 +1,5 @@
 import { runSetupRecoveryScenarios } from './setup-recovery-scenarios.mjs';
-import { answerMemoryPopup, chatMemoryAction, memoryControl, expandMemorySettings, openMemoryConnection, openChatMemory } from './settings-panel.mjs';
+import { answerMemoryPopup, chatMemoryAction, chatMemorySync, memoryControl, expandMemorySettings, openMemoryConnection, openChatMemory } from './settings-panel.mjs';
 import { runPerChatMemoryScenarios } from './per-chat-memory-scenarios.mjs';
 import { runNativeReplyScenarios } from './native-reply-scenarios.mjs';
 import { runNativeChatScenarios } from './native-chat-scenarios.mjs';
@@ -150,7 +150,7 @@ try {
     await page.waitForFunction(() => !jQuery('#sillymemory .inline-drawer-content').is(':animated'));
     check('chat settings action opens the native drawer and SillyMemory controls', await page.locator('#sillymemory [data-sm="connect"]').isVisible());
     const field = name => name === 'enabled' ? memoryControl(page)
-        : name === 'sync' ? chatMemoryAction(page, 'sync-now') : name === 'delete-chat' ? chatMemoryAction(page, 'delete')
+        : name === 'sync' ? chatMemorySync(page) : name === 'delete-chat' ? chatMemoryAction(page, 'delete')
         : page.locator(`#sillymemory [data-sm="${name}"]`);
     const status = () => field('status').innerText();
     const waitStatus = async text => { await page.waitForFunction(text => document.querySelector('#sillymemory [data-sm="status"]')?.textContent.includes(text), text, { timeout: 30000 }); };
@@ -315,7 +315,14 @@ try {
     await waitStatus('synchronized'); await field('enabled').uncheck();
     await page.evaluate(async () => { const c = SillyTavern.getContext(); await c.selectCharacterById(c.characters.findIndex(x => x.name === 'SillyMemory Synthetic')); });
     await openChatMemory(page);
+    await page.evaluate(() => {
+        const label = document.querySelector('#sillymemory-chat [data-sm-chat="label"]'), status = document.querySelector('#sillymemory [data-sm="status"]');
+        globalThis.__smActivationLabels = [];
+        new MutationObserver(() => globalThis.__smActivationLabels.push([label.textContent, status.textContent])).observe(label, { childList: true, characterData: true, subtree: true });
+    });
     await chatField('toggle').click(); await waitStatus('synchronized');
+    const activationLabels = await page.evaluate(() => globalThis.__smActivationLabels);
+    check('activation reports Updating and never Ready before synchronization completes', activationLabels.some(([label]) => label.includes('Updating')) && activationLabels.every(([label, status]) => !label.includes('Ready') || status.includes('synchronized')));
     check('chat activation persists the same enabled preference without reopening settings', await field('enabled').isChecked() && (await chatField('toggle').textContent()) === 'Turn memory off in this chat' && (await chatField('delivery').textContent()) === '' && await chatField('delivery').isHidden() && await page.evaluate(() => SillyTavern.getContext().chatMetadata.sillymemoryEnabled === true && !document.querySelector('#extensions-settings-button .drawer-content').classList.contains('openDrawer')));
     await chatField('settings').click(); await field('next-step').waitFor({ state: 'visible' });
     if (!faultMode) {
@@ -542,7 +549,12 @@ try {
             && !JSON.stringify(SillyTavern.getContext().extensionSettings).includes('synthetic-session-key')
             && !JSON.stringify({ ...sessionStorage }).includes('synthetic-session-key');
     }) && !secrets.includes('wrong-synthetic-key'));
-    await field('enabled').check(); await waitStatus('synchronized'); await prompt();
+    // A message sent while memory is still being turned on waits for the
+    // activation instead of stopping the reply.
+    await openChatMemory(page); await chatField('toggle').click();
+    const duringActivation = await prompt();
+    await page.waitForFunction(() => !document.querySelector('#sillymemory [data-sm="connect"]').disabled);
+    check('a reply requested during activation waits for it and uses memory', !duringActivation.aborted && Boolean(duringActivation.injection) && /Found \d+ related passages/.test(duringActivation.preparation));
     await expandMemorySettings(page);
     await field('advanced').scrollIntoViewIfNeeded();
     if (!faultMode) await page.screenshot({ path: path.join(artifacts, 'settings.png') });
