@@ -83,7 +83,9 @@
       </div>
       <p data-sm="mode-help">When off, SillyTavern uses its usual chat history. Saved memory is kept.</p>
       <small data-sm="usage-help" hidden>Memory sends older messages, their SillyTavern timestamps and search queries to LambdaDB, whose embedding and reranking providers process them to find related memory. This counts toward your LambdaDB usage. Turn off other memory or chat vectorization extensions; they would add overlapping history to the prompt. Use one active SillyMemory tab per browser profile.</small>
-      <label>Text search languages <select data-sm="analyzers" class="text_pole" multiple size="6"></select></label>
+      <p id="sm-analyzers-label" class="sm-group-label">Text search languages</p>
+      <p data-sm="analyzers-summary" class="sm-analyzers-summary"></p>
+      <div data-sm="analyzers" class="sm-analyzers" role="group" aria-labelledby="sm-analyzers-label"></div>
       <small>Applies to story memory created after the change. Pick only the languages you actually chat in: each analyzer indexes the text again, which raises index cost and does not guarantee better relevance. A story that was created with a different setting shows <strong>Rebuild story memory</strong> in its Memory panel.</small>
     </section>
     <div class="sm-status">

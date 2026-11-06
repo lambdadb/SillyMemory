@@ -8,7 +8,7 @@ boundary; publication is confirmed by the corresponding Git tag and GitHub Relea
 
 ### Added
 
-- **Text search languages** in SillyMemory settings selects the LambdaDB text
+- **Text search languages** in SillyMemory settings offers checkboxes for the LambdaDB text
   analyzers for story memory created after the change (default `english`, the
   previous fixed value). Each selected analyzer indexes the text again, so pick
   only the languages you chat in. LambdaDB keeps a collection's analyzers fixed,

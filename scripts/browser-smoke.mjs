@@ -238,6 +238,12 @@ try {
     await page.locator('#sillymemory .inline-drawer-toggle').scrollIntoViewIfNeeded();
     if (!faultMode) await page.screenshot({ path: path.join(artifacts, 'setup.png') });
     await expandMemorySettings(page);
+    const analyzerBox = name => page.locator(`#sillymemory [data-sm="analyzers"] input[value="${name}"]`);
+    check('text search languages render as a checkbox group with english checked', await page.locator('#sillymemory [data-sm="analyzers"] input[type="checkbox"]').count() === 49 && await analyzerBox('english').isChecked() && !await analyzerBox('korean').isChecked() && await field('analyzers-summary').textContent() === 'Selected: english');
+    await analyzerBox('english').click();
+    check('the last text search language stays checked with an inline message', await analyzerBox('english').isChecked() && await field('analyzers-summary').textContent() === 'Choose at least one language. Selected: english');
+    await analyzerBox('korean').click();
+    check('checking a second text search language updates the summary', await analyzerBox('korean').isChecked() && await field('analyzers-summary').textContent() === 'Selected: english, korean');
     await page.locator('#sillymemory').screenshot({ path: path.join(artifacts, 'settings-expanded.png') });
     await field('budget').fill('250'); await field('budget').dispatchEvent('change');
     // Create a synthetic character through SillyTavern's own API, then load it.
@@ -250,6 +256,10 @@ try {
     await page.reload(); await page.locator('#sillymemory').waitFor({ state: 'attached', timeout: 45000 });
     await waitStatus('Connected. Memory stays off');
     check('reload reconnects without refilling the visible key input and preserves disabled memory', await field('key').inputValue() === '' && !await field('enabled').isChecked());
+    check('text search languages persist across reload', await analyzerBox('korean').isChecked() && await field('analyzers-summary').textContent() === 'Selected: english, korean');
+    // Restore the default before any story memory is created below.
+    await page.evaluate(() => document.querySelector('#sillymemory [data-sm="analyzers"] input[value="korean"]').click());
+    check('unchecking a text search language restores the default summary', await field('analyzers-summary').textContent() === 'Selected: english');
     await page.locator('#rightNavHolder .drawer-toggle').click();
     await page.locator('.character_select').filter({ hasText: 'SillyMemory Synthetic' }).click();
     await page.waitForFunction(() => SillyTavern.getContext().characterId !== undefined);

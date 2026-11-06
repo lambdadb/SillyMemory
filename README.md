@@ -71,7 +71,7 @@ memory** for everything that was added to the prompt.
   that memory with the current message and adds related passages within a
   **memory token budget** (default 4,096 tokens, at most one quarter of the
   context size; change it under **Advanced**).
-- **Text search languages** in settings chooses the LambdaDB text analyzers
+- **Text search languages** in settings offers checkboxes for the LambdaDB text analyzers
   (default `english`) for story memory created after the change. Pick only the
   languages you chat in; each analyzer indexes the text again. A story created
   with a different setting shows **Rebuild story memory** in its Memory panel,

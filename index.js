@@ -323,7 +323,7 @@ function renderSettings() {
     element('mode-help').textContent = 'On/off is saved with each chat. When off, SillyTavern uses its usual chat history and saved memory is kept.';
     element('recover-cleanup').hidden = !cleanup;
     element('recovery-actions').hidden = !cleanup;
-    root.querySelectorAll('button, input, select').forEach(x => { x.disabled = busy || !sessionReady; });
+    root.querySelectorAll('button, input').forEach(x => { x.disabled = busy || !sessionReady; });
     if (element('app-cancel')) element('app-cancel').disabled = false;
     renderChatStatus();
 }
@@ -616,12 +616,24 @@ async function initialize() {
         else bar.removeAttribute('value');
     });
     for (const name of ['endpoint', 'project', 'budget']) element(name).value = state[name];
-    const analyzerSelect = element('analyzers');
-    analyzerSelect.replaceChildren(...ANALYZERS.map(name => Object.assign(document.createElement('option'), { value: name, textContent: name })));
-    const renderAnalyzers = () => { for (const option of analyzerSelect.options) option.selected = options(state).analyzers.includes(option.value); };
+    const analyzerGroup = element('analyzers'), analyzerSummary = element('analyzers-summary');
+    analyzerGroup.replaceChildren(...ANALYZERS.map(name => {
+        const label = document.createElement('label');
+        label.append(Object.assign(document.createElement('input'), { type: 'checkbox', value: name }), name);
+        return label;
+    }));
+    const analyzerBoxes = [...analyzerGroup.querySelectorAll('input')];
+    const renderAnalyzers = (message = '') => {
+        const chosen = options(state).analyzers;
+        for (const box of analyzerBoxes) box.checked = chosen.includes(box.value);
+        analyzerSummary.textContent = `${message}Selected: ${chosen.join(', ')}`;
+    };
     renderAnalyzers();
-    analyzerSelect.onchange = () => {
-        state.analyzers = options({ ...state, analyzers: [...analyzerSelect.selectedOptions].map(option => option.value) }).analyzers;
+    analyzerGroup.onchange = () => {
+        const checked = analyzerBoxes.filter(box => box.checked).map(box => box.value);
+        // Keep the last language instead of silently falling back to the default.
+        if (!checked.length) { renderAnalyzers('Choose at least one language. '); return; }
+        state.analyzers = options({ ...state, analyzers: checked }).analyzers;
         renderAnalyzers(); persist(); renderChatStatus();
     };
     element('stopOnLoss').checked = state.stopOnLoss !== false;
@@ -630,12 +642,12 @@ async function initialize() {
     if (!navigator.locks) { sessionUnavailable = 'This browser needs Web Locks support (localhost or HTTPS) to use SillyMemory safely.'; status(sessionUnavailable); return; }
     // One live instance per account/browser, preventing cross-tab write/delete races.
     navigator.locks.request(`sillymemory-session:${owner}`, { ifAvailable: true }, async lock => {
-        if (!lock) { sessionUnavailable = 'SillyMemory is already open in another tab. Close that tab and reload this one.'; status(sessionUnavailable); root.querySelectorAll('button,input,select').forEach(x => { x.disabled = true; }); return; }
+        if (!lock) { sessionUnavailable = 'SillyMemory is already open in another tab. Close that tab and reload this one.'; status(sessionUnavailable); root.querySelectorAll('button,input').forEach(x => { x.disabled = true; }); return; }
         sessionReady = true;
         const closed = new Promise(resolve => addEventListener('pagehide', () => {
             sessionReady = false; connectingClient?.forget(); client?.forget(); invalidate(); resolve();
         }, { once: true }));
-        root.querySelectorAll('button,input,select').forEach(x => { x.disabled = false; });
+        root.querySelectorAll('button,input').forEach(x => { x.disabled = false; });
         await action(async () => {
             if (!state.endpoint || !state.project) return;
             const key = savedKey.read(state);
