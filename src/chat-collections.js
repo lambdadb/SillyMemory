@@ -1,5 +1,5 @@
 import { clearCommit, recordCommitted, waitForCommit } from './commit.js';
-import { ConnectionError, collectionAnalyzers } from './client.js';
+import { ConnectionError, analyzerList, collectionAnalyzers } from './client.js';
 import { poll } from './gate.js';
 import { digest, documents, options } from './memory.js';
 
@@ -62,7 +62,7 @@ export class ChatCollections {
         const entry = await chatCollection(snapshot, this.owner);
         if (!valid()) return null;
         this.remember(entry); // Persist intent before even a possibly ambiguous create.
-        let collection;
+        let collection, analyzers;
         try { collection = await this.client.assertOwned(entry.collection, this.owner, undefined, entry.scope); }
         catch (error) {
             if (error.status !== 404) throw error;
@@ -71,11 +71,14 @@ export class ChatCollections {
             try { created = await this.client.create(entry.collection, this.owner, entry.scope, config.analyzers); }
             catch (error) { if (error.status !== 409) throw error; }
             // A 201 body describes the new collection; a conflict or lost response needs a fresh read.
-            if (created?.collection) collection = this.client.verifyOwned(created, this.owner, entry.scope);
-            else collection = await this.client.assertOwned(entry.collection, this.owner, undefined, entry.scope);
+            if (created?.collection) {
+                collection = this.client.verifyOwned(created, this.owner, entry.scope);
+                // The service's 201 body omits indexConfigs; it accepted exactly the requested schema.
+                if (!created.collection.indexConfigs) analyzers = analyzerList(config.analyzers);
+            } else collection = await this.client.assertOwned(entry.collection, this.owner, undefined, entry.scope);
         }
         // The analyzers actually indexed; the setting only applies when a collection is created.
-        const analyzers = collectionAnalyzers(collection);
+        analyzers ??= collectionAnalyzers(collection);
         {
             const branches = await this.client.branches(entry.collection);
             if (!valid()) return null;

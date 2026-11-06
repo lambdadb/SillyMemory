@@ -61,7 +61,9 @@ call; they are never silently truncated.
 The `text` analyzers come from the **Text search languages** setting (default
 `english`) when a story collection is created; LambdaDB does not change an existing
 field's analyzers. Preparation reads the collection's actual
-`indexConfigs.text.analyzers` from the ownership check it already performs and, when
+`indexConfigs.text.analyzers` from the ownership check it already performs (a
+collection it has just created reports the requested analyzers, because the
+service's 201 body omits index configuration) and, when
 the set differs from the current setting, shows a notice with **Rebuild story memory**
 in the chat panel without blocking synchronization or generation.
 
