@@ -4,7 +4,7 @@ Versions describe the extension, independently of the SillyTavern host version.
 An `Unreleased` entry is a development candidate. A dated entry records a release
 boundary; publication is confirmed by the corresponding Git tag and GitHub Release.
 
-## [Unreleased]
+## [0.9.1] - 2026-11-06
 
 ### Fixed
 
@@ -18,6 +18,18 @@ boundary; publication is confirmed by the corresponding Git tag and GitHub Relea
   collections with `english`+`korean` and `english`, verifies the reported
   analyzers, the notice and the rebuild path, then deletes them; pending
   identities are persisted so an interrupted run can be cleaned up by rerunning.
+
+### Compatibility
+
+- Supported host is unchanged: SillyTavern 1.19.0 at
+  `06bde939fb1e9c4c8d8641d810f0a916b5bce127` with Chromium. There is no
+  settings or data migration; existing story collections, the **Text search
+  languages** setting, saved on/off choices, the saved key and saved memory are
+  unaffected. The false notice disappears after the update and reload. The
+  defect wrote and deleted nothing in LambdaDB by itself, because **Rebuild
+  story memory** is an explicit, confirmed action; a rebuild a user confirmed
+  on 0.9.0 recreated the collection with the configured analyzers as designed.
+  Only the manifest version changes for the extension manager beyond the fix.
 
 ## [0.9.0] - 2026-11-06
 
