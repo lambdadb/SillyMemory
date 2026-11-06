@@ -238,7 +238,8 @@ export class MemoryEngine {
             if (!current()) return null;
             report({ phase: 'checking' });
             if (this.scope && prepared.scope !== this.scope) throw new Error('Chat collection scope changed.');
-            await this.client.assertOwned(this.collection, this.owner, undefined, this.scope);
+            // The caller may have just verified ownership through ChatCollections.ensure.
+            if (!config.ownershipVerified) await this.client.assertOwned(this.collection, this.owner, undefined, this.scope);
             if (!current()) return null;
             const { scope, docs } = prepared;
             const ids = docs.map(d => d.id); const desired = new Set(ids);
@@ -290,9 +291,9 @@ export class MemoryEngine {
             }
             const confirmed = docs.length - pending.length;
             report({ phase: 'uploading', completed: confirmed, total: docs.length });
-            for (let i = 0; i < pending.length; i += 50) {
+            for (let i = 0; i < pending.length; i += 200) {
                 if (!current()) return null;
-                const batch = pending.slice(i, i + 50);
+                const batch = pending.slice(i, i + 200);
                 await this.client.upsert(this.collection, batch, undefined, this.branch);
                 batch.forEach(d => this.acknowledged.add(d.id));
                 report({ phase: 'uploading', completed: confirmed + i + batch.length, total: docs.length });

@@ -26,7 +26,7 @@ test('partial failure retains the last confirmed count, hides progress and gives
     const operation = view.start();
     operation.update({ phase: 'uploading', completed: 50, total: 120 });
     operation.fail(new ConnectionError('Memory request timed out.', 0, 'timeout'));
-    assert.match(rendered.at(-1)[0], /50 \/ 120.*timed out.*Sync now.*may still have reached/);
+    assert.match(rendered.at(-1)[0], /50 \/ 120.*timed out.*Retry synchronization.*may still have reached/);
     assert.equal(rendered.at(-1)[1], null);
     assert.equal(view.progress, null);
     assert.equal(view.error, true);
@@ -41,8 +41,8 @@ test('failure guidance separates reconnect, rate limiting, network and unknown e
     assert.match(failureText(new ConnectionError('Authentication failed.', 401)), /Connection settings/);
     assert.match(failureText(new ConnectionError('Authentication failed.', 401)), /[Mm]emory is off/);
     const setupFailure = failureText(new ConnectionError('Authentication failed.', 401), { sync: false });
-    assert.match(setupFailure, /Connection settings/); assert(!setupFailure.includes('Sync now'));
-    assert.match(failureText(new ConnectionError('Rate limited.', 429)), /Wait.*Sync now/);
+    assert.match(setupFailure, /Connection settings/); assert(!setupFailure.includes('Retry synchronization'));
+    assert.match(failureText(new ConnectionError('Rate limited.', 429)), /Wait.*Retry synchronization/);
     assert.match(failureText(new ConnectionError('Memory service returned HTTP 503.', 503)), /HTTP 503.*Wait/);
     assert.match(failureText(new ConnectionError('Network failed.', 0, 'network')), /Check the connection/);
     assert(!failureText(new Error('private chat and key')).includes('private'));
@@ -61,7 +61,7 @@ test('generation failure prefix distinguishes stopped generation from background
     view.start().fail(new ConnectionError('Unavailable.', 503), 'Reply stopped. ', true);
     assert.match(rendered.at(-1), /^Reply stopped\./);
     assert.match(rendered.at(-1), /Wait, then regenerate to retry this request/);
-    assert(!rendered.at(-1).includes('Sync now'));
+    assert(!rendered.at(-1).includes('Retry synchronization'));
 
     assert.match(rendered.at(-1), /Your local chat is kept/);
     view.start().fail(new ConnectionError('Unavailable.', 503));
@@ -78,10 +78,10 @@ test('generation recovery targets the pending input across failure categories', 
     for (const error of failures) {
         const text = failureText(error, { generation: true });
         assert.match(text, /regenerate to retry this request/);
-        assert(!text.includes('Sync now'));
+        assert(!text.includes('Retry synchronization'));
         assert(!text.includes('private'));
     }
     assert.match(failureText(failures[0], { generation: true }), /Connection settings.*Memory is off/);
     assert.match(failureText(failures[4], { generation: true }), /timed-out write may still have reached/);
-    assert.match(failureText(failures[3]), /Wait, then click Sync now/);
+    assert.match(failureText(failures[3]), /Wait, then click Retry synchronization/);
 });

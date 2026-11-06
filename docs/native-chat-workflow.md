@@ -145,7 +145,7 @@ ST_SOURCE=/path/to/disposable/pinned/host ST_TEST_PORT=18131 \
 The browser suite exercises native checkpoint saving, selected-swipe and earlier
 branches, source/frozen-memory preservation, parent navigation, native history,
 snapshot save/resume with enabled and disabled preferences, rejected local saves,
-and the busy-generation interceptor guard. Existing generation checks use
+and a reply that waits for a busy memory action instead of stopping. Existing generation checks use
 controlled native completion responses, including streaming; these are not live
 OpenAI results. Recovery uses deliberately injected local-emulator failures.
 

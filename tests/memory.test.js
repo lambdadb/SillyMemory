@@ -314,20 +314,20 @@ test('a failed single search aborts its read scope and exposes no partial memory
 
 test('progress counts only acknowledged batches and retry skips earlier successful uploads', async () => {
     const s = setup(), snap = snapshot();
-    snap.messages = Array.from({ length: 121 }, (_, index) => ({ ...snap.messages[0], index, text: `Synthetic chunk ${index}` }));
+    snap.messages = Array.from({ length: 421 }, (_, index) => ({ ...snap.messages[0], index, text: `Synthetic chunk ${index}` }));
     const original = s.client.upsert, events = [];
     let calls = 0;
     s.client.upsert = async (...args) => { await original(...args); if (++calls === 2) throw new Error('response lost'); };
     await assert.rejects(s.engine.sync(snap, config, () => true, e => events.push(e)), /response lost/);
     assert.deepEqual(events.filter(e => e.phase === 'uploading'), [
-        { phase: 'uploading', completed: 0, total: 120 }, { phase: 'uploading', completed: 50, total: 120 },
+        { phase: 'uploading', completed: 0, total: 420 }, { phase: 'uploading', completed: 200, total: 420 },
     ]);
     const accepted = new Set(s.writes.flat().map(d => d.id));
     const retried = [];
     await s.engine.sync(snap, config, () => true, e => retried.push(e));
-    assert.deepEqual(retried.filter(e => e.phase === 'uploading').map(e => e.completed), [100, 120]);
+    assert.deepEqual(retried.filter(e => e.phase === 'uploading').map(e => e.completed), [400, 420]);
     assert(s.writes.slice(2).every(batch => batch.every(d => !accepted.has(d.id))));
-    assert.equal(s.remote.size, 120);
+    assert.equal(s.remote.size, 420);
     assert.deepEqual(new Set(s.engine.journal.read((await documents(snap, owner, config)).scope)), new Set(s.remote.keys()));
     assert(!JSON.stringify(events).includes('Synthetic chunk'));
 });
@@ -390,7 +390,7 @@ test('journal cleanup tolerates storage key reordering during removal and preser
 
 test('canceling retrieval during synchronization preserves all source writes and starts no query', async () => {
     const s = setup(), snap = snapshot();
-    snap.messages = Array.from({ length: 121 }, (_, index) => ({ ...snap.messages[0], index, text: `Quiet overlap fixture ${index}` }));
+    snap.messages = Array.from({ length: 421 }, (_, index) => ({ ...snap.messages[0], index, text: `Quiet overlap fixture ${index}` }));
     let release, started, searches = 0;
     const writing = new Promise(resolve => { started = resolve; });
     const write = s.client.upsert;
@@ -403,9 +403,9 @@ test('canceling retrieval during synchronization preserves all source writes and
     const pending = s.engine.retrieve(snap, config, text => text.length / 4);
     await writing; s.engine.cancelReads(); release();
     assert.equal(await pending, null);
-    assert.deepEqual(s.writes.map(batch => batch.length), [50, 50, 20]);
-    assert.equal(s.remote.size, 120); assert.equal(searches, 0);
-    assert.equal(s.engine.journal.read((await documents(snap, owner, config)).scope).length, 120);
+    assert.deepEqual(s.writes.map(batch => batch.length), [200, 200, 20]);
+    assert.equal(s.remote.size, 420); assert.equal(searches, 0);
+    assert.equal(s.engine.journal.read((await documents(snap, owner, config)).scope).length, 420);
     assert((await s.engine.retrieve(snap, config, text => text.length / 4)).text);
 });
 
@@ -552,4 +552,14 @@ test('native authored JSON remains eligible literal source without reply decodin
     assert.equal(captured.messages[1].eligible, true);
     assert.equal(captured.messages[1].user, false);
     assert.equal(JSON.stringify(chat), original);
+});
+
+test('sync reads ownership unless the caller verified it while preparing this sync', async () => {
+    const s = setup(), snap = snapshot(); let checks = 0;
+    s.client.assertOwned = async () => { checks++; };
+    await s.engine.sync(snap, config); assert.equal(checks, 1);
+    await s.engine.sync(snap, { ...config, ownershipVerified: true }); assert.equal(checks, 1);
+    await s.engine.sync(snap, config); assert.equal(checks, 2);
+    await s.engine.retrieve(snap, { ...config, ownershipVerified: true }, text => text.length); assert.equal(checks, 2);
+    await s.engine.retrieve(snap, config, text => text.length); assert.equal(checks, 3);
 });

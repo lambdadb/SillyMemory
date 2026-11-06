@@ -146,40 +146,49 @@ export async function runFaultScenarios({ page, field, waitStatus, prompt, check
     const firstBatch = faults.arm('upsert', 'hold');
     await page.evaluate(async () => {
         const c = SillyTavern.getContext();
-        c.chat.splice(0, c.chat.length, ...Array.from({ length: 125 }, (_, i) => ({ name: i % 2 ? 'Mira' : 'User', is_user: !(i % 2), is_system: false, send_date: Date.now(), extra: {}, mes: `Progress fixture ${i}: a compass in a wooden box.` })));
+        c.chat.splice(0, c.chat.length, ...Array.from({ length: 425 }, (_, i) => ({ name: i % 2 ? 'Mira' : 'User', is_user: !(i % 2), is_system: false, send_date: Date.now(), extra: {}, mes: `Progress fixture ${i}: a compass in a wooden box.` })));
         await c.saveChat(); await c.eventSource.emit(c.eventTypes.MESSAGE_UPDATED, 0);
     });
     await entered(firstBatch);
     const firstIds = new Set(calls.filter(c => c.path.endsWith('/docs/upsert')).at(-1).body.docs.map(d => d.id));
-    check('unacknowledged first upload shows zero of 120 chunks', (await field('status').innerText()).includes('0 / 120') && await field('progress').isVisible() && await field('progress').evaluate(e => e.value === 0 && e.max === 120));
+    check('unacknowledged first upload shows zero of 420 chunks', (await field('status').innerText()).includes('0 / 420') && await field('progress').isVisible() && await field('progress').evaluate(e => e.value === 0 && e.max === 420));
     const failedBatch = faults.arm('upsert', 'http', 503); firstBatch.release();
     await entered(failedBatch); await waitStatus('HTTP 503');
-    check('failed second batch keeps 50 of 120 and offers explicit retry', /50 \/ 120.*HTTP 503.*Sync now/.test(await field('status').innerText()) && await field('progress').isHidden());
+    check('failed second batch keeps 200 of 420 and offers explicit retry', /200 \/ 420.*HTTP 503.*Retry synchronization/.test(await field('status').innerText()) && await field('progress').isHidden());
     await field('status').scrollIntoViewIfNeeded(); await screenshot?.('sync-failure');
     const uploadsBefore = calls.filter(c => c.path.endsWith('/docs/upsert')).length;
     await sync();
     const retried = calls.filter(c => c.path.endsWith('/docs/upsert')).slice(uploadsBefore);
-    check('manual retry skips confirmed chunks and completes the current source', JSON.stringify(retried.map(c => c.body.docs.length)) === '[50,20]' && retried.every(c => c.body.docs.every(d => !firstIds.has(d.id))) && await remoteMatches() && (await field('status').innerText()).includes('120 saved passages') && await field('progress').isHidden());
+    check('manual retry skips confirmed chunks and completes the current source', JSON.stringify(retried.map(c => c.body.docs.length)) === '[200,20]' && retried.every(c => c.body.docs.every(d => !firstIds.has(d.id))) && await remoteMatches() && (await field('status').innerText()).includes('420 saved passages') && await field('progress').isHidden());
 
     const queuedWrite = faults.arm('upsert', 'hold');
     await edit('Progress fixture changed: compass moved to an oak chest.'); await entered(queuedWrite);
-    check('upload progress includes chunks already confirmed in this session', (await field('status').innerText()).includes('119 / 120'));
+    check('upload progress includes chunks already confirmed in this session', (await field('status').innerText()).includes('419 / 420'));
     await field('progress').scrollIntoViewIfNeeded(); await screenshot?.('sync-progress');
     await field('sync').click(); await waitStatus('earlier memory save');
     const queuedCalls = calls.filter(c => c.path.endsWith('/docs/upsert')).length;
     queuedWrite.release(); await waitStatus('synchronized');
     check('overlapping manual sync waits without duplicating the confirmed write', calls.filter(c => c.path.endsWith('/docs/upsert')).length === queuedCalls && await remoteMatches() && await field('progress').isHidden());
     await seed();
-    for (const status of [429, 503]) {
+    const queryTexts = before => calls.filter(c => c.path.endsWith('/query')).slice(before).map(c => (c.body.query.bayesian?.[0]?.knn || c.body.query.knn).queryText);
+    {
         assert((await prompt()).injection);
         const before = calls.filter(c => c.path.endsWith('/query')).length;
-        const failure = faults.arm('query', 'http', status);
+        const failure = faults.arm('query', 'http', 429);
         const result = await prompt(); await entered(failure);
-        check(`HTTP ${status} stops generation, clears previous memory and preserves source`, !result.injection && result.before === result.after && result.chat.length === 8 && result.aborted);
-        check(`HTTP ${status} explains how to retry and clears progress`, (await field('status').innerText()).includes('regenerate to retry this request') && await field('progress').isHidden());
-        const queries = calls.filter(c => c.path.endsWith('/query')).slice(before).map(c => (c.body.query.bayesian?.[0]?.knn || c.body.query.knn).queryText);
-        check(`HTTP ${status} does not immediately retry retrieval`, queries.length >= 1 && queries.length <= 2 && new Set(queries).size === queries.length);
-        check(`HTTP ${status} recovers on the next generation`, Boolean((await prompt()).injection));
+        const queries = queryTexts(before);
+        check('HTTP 429 retries the identical retrieval once after a short wait and generates with memory', Boolean(result.injection) && !result.aborted && queries.length === 2 && queries[0] === queries[1]);
+    }
+    {
+        assert((await prompt()).injection);
+        const before = calls.filter(c => c.path.endsWith('/query')).length;
+        const failure = faults.arm('query', 'http', 503);
+        const result = await prompt(); await entered(failure);
+        check('HTTP 503 stops generation, clears previous memory and preserves source', !result.injection && result.before === result.after && result.chat.length === 8 && result.aborted);
+        check('HTTP 503 explains how to retry and clears progress', (await field('status').innerText()).includes('regenerate to retry this request') && await field('progress').isHidden());
+        const queries = queryTexts(before);
+        check('HTTP 503 does not immediately retry retrieval', queries.length >= 1 && queries.length <= 2 && new Set(queries).size === queries.length);
+        check('HTTP 503 recovers on the next generation', Boolean((await prompt()).injection));
     }
     const stalled = faults.arm('query', 'hold');
     const started = performance.now(), timingOut = prompt(); await entered(stalled);

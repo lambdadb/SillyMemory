@@ -4,6 +4,54 @@ Versions describe the extension, independently of the SillyTavern host version.
 An `Unreleased` entry is a development candidate. A dated entry records a release
 boundary; publication is confirmed by the corresponding Git tag and GitHub Release.
 
+## [0.8.1] - 2026-11-06
+
+### Changed
+
+- **Sync now** is removed from **This chat's memory**. It ran the same
+  synchronization as **Retry synchronization**, which still appears after a
+  failure; synchronization also runs on every message, edit and chat change.
+- Upserts send up to 200 documents per request instead of 50. In a live
+  measurement with the production schema, one request took about 0.45 s plus
+  5.5 ms per document, so 50-document batches reached 71–94 documents per
+  second and 200-document batches 151–173, and the first indexing of a long
+  chat takes about half the time. Ordinary chatting still sends one request per
+  displaced message pair. See [upsert batch size](docs/upsert-batch-size.md).
+
+### Fixed
+
+- Turning memory on in a new chat sent seven LambdaDB requests in well under a
+  second and could stop at **Needs attention** when the last collection read
+  returned HTTP 429. A request LambdaDB rejects with 429 is now retried at most
+  twice, after `Retry-After` when readable or after 1 s then 2 s, inside the same
+  15-second deadline and cancellation; 5xx, timeouts and network failures are
+  still not retried. Creating a chat's memory now verifies the created collection
+  and branch from their 201 responses, and the manual sync or generation that
+  follows in the same preparation does not read the collection again, so a new
+  chat sends four requests instead of seven and a repeat sync two instead of three. Conflicts still require a fresh read.
+- Synchronization failure messages now name the visible **Retry synchronization**
+  button instead of **Sync now**, which is inside **This chat's memory**.
+- The chat Memory panel no longer reports **Ready** while **Turn memory on in
+  this chat** is still saving; it reports **Updating** until the first
+  synchronization completes.
+- A message sent while memory is being turned on, or during another memory
+  action, now waits for that action and then prepares the reply instead of
+  stopping with "Wait for the current memory operation to finish".
+
+### Compatibility
+
+- Supported host is unchanged: SillyTavern 1.19.0 at
+  `06bde939fb1e9c4c8d8641d810f0a916b5bce127` with Chromium. There is no
+  settings or data migration; existing chats, saved on/off choices, the saved
+  key and saved memory are unaffected. Collection schema, ownership tags,
+  chunking, search policy and token budgets are those of 0.8.0. Only the
+  manifest version changes for the extension manager.
+- Limitations: the LambdaDB request-limit value and unit, and whether 429
+  responses carry a readable `Retry-After`, are unconfirmed, so the retry uses
+  fixed 1 s and 2 s waits when the header is absent. The 200-document batch
+  evidence comes from one project at one time of day with synthetic English
+  text; see [upsert batch size](docs/upsert-batch-size.md).
+
 ## [0.8.0] - 2026-11-06
 
 ### Added

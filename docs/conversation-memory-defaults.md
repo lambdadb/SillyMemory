@@ -56,7 +56,7 @@ the prompt does not need separate field names or a date-reference dictionary.
 Completed eligible messages are archived only after they leave the recent-five
 window, aligned to keep an adjacent plain-text input/reply pair together. Normal
 user input retains five; a completed reply can retain six. Displaced pairs share
-an upsert with separate per-message chunks, subject to the existing 50-document
+an upsert with separate per-message chunks, subject to the existing 200-document
 batch. No five-message queue. A trailing user input waits for its answer.
 Checkpoints preserve the full native JSONL transcript and freeze the same older
 memory partition. Recent messages enter memory only when they leave the retained
