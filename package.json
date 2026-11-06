@@ -16,6 +16,7 @@
     "test:generation": "node scripts/generation-smoke.mjs",
     "test:generation:live": "node scripts/generation-smoke.mjs --live-model",
     "test:recovery": "node scripts/browser-smoke.mjs --recovery",
+    "benchmark:upsert-batch": "node scripts/upsert-batch-benchmark.mjs",
     "build:sdk": "node scripts/build-sdk.mjs",
     "check:sdk": "node scripts/build-sdk.mjs --check"
   },
