@@ -880,10 +880,12 @@ async function initialize() {
         const { saveChat } = await import('/script.js');
         if (!sameChat() || !await ensureChatIdentity(target, saveChat, sameChat)) throw new ConnectionError('Chat changed before rebuilding. Select it and retry.');
         const entry = await chatCollection(capture(target), owner);
-        await collections.delete({ ...entry, branch: undefined });
-        new Journal(localStorage, `${owner}:${entry.collection}`).clear();
+        // Evict cached engines first: an uncertain deletion must not leave remote state
+        // that describes the deleted collection, or the recreated one would skip uploads.
         for (const [key, instance] of engines) if (instance.collection === entry.collection) engines.delete(key);
         engine = undefined; storyAnalyzers = undefined;
+        await collections.delete({ ...entry, branch: undefined });
+        new Journal(localStorage, `${owner}:${entry.collection}`).clear();
         stoppedRequest = undefined;
         showDelivery('');
         setInspection('No memory added yet.');
