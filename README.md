@@ -71,6 +71,12 @@ memory** for everything that was added to the prompt.
   that memory with the current message and adds related passages within a
   **memory token budget** (default 4,096 tokens, at most one quarter of the
   context size; change it under **Advanced**).
+- **Text search languages** in settings offers checkboxes for the LambdaDB text analyzers
+  (default `english`) for story memory created after the change. Pick only the
+  languages you chat in; each analyzer indexes the text again. A story created
+  with a different setting shows **Rebuild story memory** in its Memory panel,
+  which deletes that story's memory for every branch and uploads it again from
+  your local chats.
 - Memory is per chat. **Turn memory off in this chat** returns that chat to
   ordinary SillyTavern history handling; the saved memory is kept. New chats
   start with memory off.
@@ -100,6 +106,7 @@ not a guarantee for every model or roleplay.
 | Setup test failed | Click **Clean up test data**, then **Run setup test** in settings. |
 | Synchronization failure | Follow the status message, then click **Retry synchronization** in the Memory panel. Synchronization also runs again on the next message, edit or chat change. |
 | Reply stopped while adding memory | Read the status, fix the cause, then click **Retry reply** or use SillyTavern's **Regenerate**. Only a request LambdaDB rejected with HTTP 429 is retried automatically, at most twice within the same 15-second request deadline. |
+| LambdaDB is busy or over its request limit (HTTP 429) | Each LambdaDB project has a request budget of `rate_limit` requests per second (5 by default), refilled at that rate. The extension waits as long as the response's `Retry-After` header says (one second for the default limit) and retries twice, so this status normally clears itself; if it persists, check the project's `rate_limit` in the LambdaDB console project overview and raise it through a support request. |
 | Query exceeds 8 KiB | Shorten the latest messages, or turn memory off for that reply. |
 
 ## Data, usage and deletion
@@ -143,6 +150,9 @@ rest of the flow is the same.
   verification unavailable.
 - Use one SillyMemory tab per browser profile. Editing the same memory from two
   devices at once is unsupported.
+- Requests share the LambdaDB project's rate limit (5 requests per second by
+  default). Turning memory on in a chat with a long history can briefly exceed
+  it; the automatic 429 retry absorbs this with one-second waits.
 
 ## Updating
 

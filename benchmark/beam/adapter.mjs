@@ -326,7 +326,7 @@ async function main() {
                 console.log(`INGEST ${conversation.id}: ${docs.length} chunks`);
                 try {
                     await operation(() => client.call((sdk, opts) => sdk.createCollection({ collectionName: collection,
-                        indexConfigs: { ...schema, beamTimeMicros: { type: 'long' } },
+                        indexConfigs: { ...schema(), beamTimeMicros: { type: 'long' } },
                         description: 'SillyMemory BEAM public-protocol comparison',
                         tags: { application: 'sillymemory', owner, chat: scope }, snapshotRetentionInDays: 1 }, opts)));
                     await operation(() => client.assertOwned(collection, owner, undefined, scope));

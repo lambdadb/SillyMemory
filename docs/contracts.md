@@ -24,7 +24,7 @@ The current pin is `0.9.0`, supporting 200 rerank candidates.
 | Endpoint and authentication | Regional HTTPS origin + `/projects/{project}`, with `x-api-key` |
 | Connection check | Authenticated list of one collection before adopting a saved/restored key; no collection creation or inference |
 | Storage | Owned collection per story; separate `chat_<ID>` branch per writable chat |
-| Embeddings | Native `text-embedding-3-small` from verbatim `text`; English lexical analyzer |
+| Embeddings | Native `text-embedding-3-small` from verbatim `text`; lexical analyzers from the **Text search languages** setting (default `english`), fixed when the story collection is created |
 | Writes | Explicit selected branch; source documents carry owner, story scope, revision and source coordinates |
 | Search | Bayesian vector/lexical fusion, k200, owner/scope/message-boundary filters, consistent reads |
 | Reranking | Native Jev 1.13.0, 200 candidates, 50 returned; confirmed provider/model/status required |

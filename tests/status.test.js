@@ -1,7 +1,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { OperationStatus, failureText } from '../src/status.js';
+import { OperationStatus, failureText, analyzerNotice } from '../src/status.js';
 import { ConnectionError } from '../src/client.js';
+
+test('a changed analyzer setting is reported for a story only when the indexed set differs', () => {
+    assert.equal(analyzerNotice(['english'], ['english']), '');
+    assert.equal(analyzerNotice(['korean', 'english'], ['english', 'korean']), '');
+    assert.equal(analyzerNotice(['english'], ['english', 'korean']), "This story's memory is indexed with: english. Rebuild to apply the current setting: english, korean.");
+    assert.match(analyzerNotice(['standard'], ['english']), /indexed with: standard\. Rebuild/);
+});
 
 test('newer sync, terminal states and source invalidation reject stale progress and errors', () => {
     const rendered = [], view = new OperationStatus((...args) => rendered.push(args));
