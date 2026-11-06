@@ -568,6 +568,14 @@ try {
             await saveChat({ chatName: 'Fresh default identity' }); await c.openCharacterChat('Fresh default identity');
         });
         const before = calls.length;
+        // A reply requested while activation itself fails is stopped explicitly,
+        // with the activation error, rather than sent with native history.
+        await page.route('**/api/chats/save', route => route.fulfill({ status: 503, contentType: 'application/json', body: '{}' }));
+        await openChatMemory(page); await chatField('toggle').click();
+        const duringFailedActivation = await prompt();
+        await waitStatus('could not be saved');
+        await page.unroute('**/api/chats/save');
+        check('a reply requested during a failed activation is stopped with the activation error and leaves memory off', duringFailedActivation.aborted && !duringFailedActivation.injection && duringFailedActivation.preparation.includes('could not be saved') && !await field('enabled').isChecked() && calls.length === before);
         await page.route('**/api/chats/save', route => route.request().postDataJSON().chat?.[0]?.chat_metadata?.sillymemory
             ? route.fulfill({ status: 503, contentType: 'application/json', body: '{}' }) : route.continue());
         await field('enabled').check(); await waitStatus('not saved');

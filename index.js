@@ -423,8 +423,9 @@ async function action(job) {
     if (busy) return;
     busy = true; renderSettings();
     let settle; pendingAction = new Promise(resolve => { settle = resolve; });
-    try { await job(); } catch (e) { fail(e); }
-    finally { busy = false; settle(); renderSettings(); }
+    let outcome = {};
+    try { await job(); } catch (e) { outcome = { error: e }; fail(e); }
+    finally { busy = false; settle(outcome); renderSettings(); }
 }
 
 // Called with SillyTavern's ephemeral coreChat array. Never mutate source messages.
@@ -446,11 +447,18 @@ globalThis.sillymemory_intercept = async (chat, contextSize, abort, type) => {
     if (busy) {
         // A memory action, such as turning memory on, may still be saving. Wait
         // for it and prepare this reply afterwards instead of stopping the reply.
-        const target = requestTarget();
-        await pendingAction;
+        const target = requestTarget(), wanted = memoryEnabled();
+        const { error } = await pendingAction;
         if (requestTarget() !== target) {
             promptSource = undefined;
             fail(new ConnectionError('The chat changed while memory was being prepared. Generate again.'), undefined, true, type);
+            abort(true); return;
+        }
+        // A failed action that left memory off, such as an activation whose save
+        // was rolled back, is a preparation failure, not a request for native history.
+        if (error && wanted && !memoryEnabled()) {
+            promptSource = undefined;
+            fail(error, undefined, true, type);
             abort(true); return;
         }
     }
