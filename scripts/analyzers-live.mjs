@@ -36,7 +36,12 @@ async function remove(owner, entry) {
 let pending = { ...target, owner: hex(), entries: [] };
 try {
     const earlier = JSON.parse(await readFile(pendingPath, 'utf8'));
-    if (earlier.endpoint === target.endpoint && earlier.project === target.project && earlier.entries.length) {
+    if (earlier.entries.length) {
+        if (earlier.endpoint !== target.endpoint || earlier.project !== target.project) {
+            // Never overwrite another target's unresolved cleanup record.
+            console.log(`${pendingPath} holds ${earlier.entries.length} pending collection(s) for a different endpoint/project. Rerun with that target's credentials to clean them up first.`);
+            client.forget(); process.exit(1);
+        }
         console.log(`Retrying cleanup of ${earlier.entries.length} pending collection(s) from an earlier run…`);
         for (const entry of earlier.entries) check(`earlier run: ${entry.collection.slice(0, 16)}… deleted`, await remove(earlier.owner, entry));
         if (results.some(r => !r.ok)) { console.log('Pending cleanup still incomplete; not creating new collections.'); client.forget(); process.exit(1); }
