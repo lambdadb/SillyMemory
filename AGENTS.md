@@ -50,7 +50,7 @@ Read [CONTRIBUTING.md](CONTRIBUTING.md) before changing this repository.
   memory and native system/character settings. Exclude full retained turns from
   memory selection. Align the recent boundary to an adjacent eligible
   user/assistant pair: normal user input retains five, a completed reply can retain
-  six. Upload the whole displaced pair together using existing 50-document batches;
+  six. Upload the whole displaced pair together using existing 200-document batches;
   do not introduce a five-message write queue. Query 1 remains independent of this
   alignment. Native checkpoints and branches follow the opened chat; there is no
   separate frozen memory snapshot.

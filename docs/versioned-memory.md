@@ -62,7 +62,7 @@ history into the story branch. There is no storage-mode selection or conversion.
 - Fork the committed source branch. On first use, reload or an uncertain request,
   list committed documents and fetch expected IDs consistently. Adopt only exact
   field matches; delete obsolete/future/protected-recent chunks, then upsert only
-  missing or changed documents in the existing batches of 50. A lost response can
+  missing or changed documents in the existing batches of 200. A lost response can
   be recovered without blindly repeating a successful write. If the source branch
   no longer exists, rebuild from local history through an empty root branch.
 - Search uses `knn.queryText`, `consistentRead: true` and an explicit branch ref,

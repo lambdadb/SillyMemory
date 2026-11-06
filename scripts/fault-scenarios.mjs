@@ -146,24 +146,24 @@ export async function runFaultScenarios({ page, field, waitStatus, prompt, check
     const firstBatch = faults.arm('upsert', 'hold');
     await page.evaluate(async () => {
         const c = SillyTavern.getContext();
-        c.chat.splice(0, c.chat.length, ...Array.from({ length: 125 }, (_, i) => ({ name: i % 2 ? 'Mira' : 'User', is_user: !(i % 2), is_system: false, send_date: Date.now(), extra: {}, mes: `Progress fixture ${i}: a compass in a wooden box.` })));
+        c.chat.splice(0, c.chat.length, ...Array.from({ length: 425 }, (_, i) => ({ name: i % 2 ? 'Mira' : 'User', is_user: !(i % 2), is_system: false, send_date: Date.now(), extra: {}, mes: `Progress fixture ${i}: a compass in a wooden box.` })));
         await c.saveChat(); await c.eventSource.emit(c.eventTypes.MESSAGE_UPDATED, 0);
     });
     await entered(firstBatch);
     const firstIds = new Set(calls.filter(c => c.path.endsWith('/docs/upsert')).at(-1).body.docs.map(d => d.id));
-    check('unacknowledged first upload shows zero of 120 chunks', (await field('status').innerText()).includes('0 / 120') && await field('progress').isVisible() && await field('progress').evaluate(e => e.value === 0 && e.max === 120));
+    check('unacknowledged first upload shows zero of 420 chunks', (await field('status').innerText()).includes('0 / 420') && await field('progress').isVisible() && await field('progress').evaluate(e => e.value === 0 && e.max === 420));
     const failedBatch = faults.arm('upsert', 'http', 503); firstBatch.release();
     await entered(failedBatch); await waitStatus('HTTP 503');
-    check('failed second batch keeps 50 of 120 and offers explicit retry', /50 \/ 120.*HTTP 503.*Retry synchronization/.test(await field('status').innerText()) && await field('progress').isHidden());
+    check('failed second batch keeps 200 of 420 and offers explicit retry', /200 \/ 420.*HTTP 503.*Retry synchronization/.test(await field('status').innerText()) && await field('progress').isHidden());
     await field('status').scrollIntoViewIfNeeded(); await screenshot?.('sync-failure');
     const uploadsBefore = calls.filter(c => c.path.endsWith('/docs/upsert')).length;
     await sync();
     const retried = calls.filter(c => c.path.endsWith('/docs/upsert')).slice(uploadsBefore);
-    check('manual retry skips confirmed chunks and completes the current source', JSON.stringify(retried.map(c => c.body.docs.length)) === '[50,20]' && retried.every(c => c.body.docs.every(d => !firstIds.has(d.id))) && await remoteMatches() && (await field('status').innerText()).includes('120 saved passages') && await field('progress').isHidden());
+    check('manual retry skips confirmed chunks and completes the current source', JSON.stringify(retried.map(c => c.body.docs.length)) === '[200,20]' && retried.every(c => c.body.docs.every(d => !firstIds.has(d.id))) && await remoteMatches() && (await field('status').innerText()).includes('420 saved passages') && await field('progress').isHidden());
 
     const queuedWrite = faults.arm('upsert', 'hold');
     await edit('Progress fixture changed: compass moved to an oak chest.'); await entered(queuedWrite);
-    check('upload progress includes chunks already confirmed in this session', (await field('status').innerText()).includes('119 / 120'));
+    check('upload progress includes chunks already confirmed in this session', (await field('status').innerText()).includes('419 / 420'));
     await field('progress').scrollIntoViewIfNeeded(); await screenshot?.('sync-progress');
     await field('sync').click(); await waitStatus('earlier memory save');
     const queuedCalls = calls.filter(c => c.path.endsWith('/docs/upsert')).length;

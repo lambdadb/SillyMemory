@@ -11,6 +11,12 @@ boundary; publication is confirmed by the corresponding Git tag and GitHub Relea
 - **Sync now** is removed from **This chat's memory**. It ran the same
   synchronization as **Retry synchronization**, which still appears after a
   failure; synchronization also runs on every message, edit and chat change.
+- Upserts send up to 200 documents per request instead of 50. In a live
+  measurement with the production schema, one request took about 0.45 s plus
+  5.5 ms per document, so 50-document batches reached 71–94 documents per
+  second and 200-document batches 151–173, and the first indexing of a long
+  chat takes about half the time. Ordinary chatting still sends one request per
+  displaced message pair. See [upsert batch size](docs/upsert-batch-size.md).
 
 ### Fixed
 
