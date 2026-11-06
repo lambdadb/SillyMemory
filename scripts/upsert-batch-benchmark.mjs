@@ -66,9 +66,9 @@ try {
             catch (e) { run.requests.push({ docs: batch.length, ms: Math.round(performance.now() - t), error: describe(e) }); if (e?.status === 413) break; }
         }
         run.totalMs = Math.round(performance.now() - total);
-        const ok = run.requests.filter(r => !r.error).map(r => r.ms);
-        run.summary = { requests: run.requests.length, failed: run.requests.length - ok.length, minMs: Math.min(...ok), maxMs: Math.max(...ok),
-            meanMs: Math.round(ok.reduce((a, b) => a + b, 0) / Math.max(1, ok.length)), docsPerSecond: ok.length ? Math.round(ok.length * size / (run.totalMs / 1000)) : 0 };
+        const succeeded = run.requests.filter(r => !r.error), ok = succeeded.map(r => r.ms), uploaded = succeeded.reduce((a, r) => a + r.docs, 0);
+        run.summary = { requests: run.requests.length, failed: run.requests.length - ok.length, uploaded, minMs: Math.min(...ok), maxMs: Math.max(...ok),
+            meanMs: Math.round(ok.reduce((a, b) => a + b, 0) / Math.max(1, ok.length)), docsPerSecond: uploaded ? Math.round(uploaded / (run.totalMs / 1000)) : 0 };
         console.log(JSON.stringify({ size, ...run.summary, bytesPerRequest: run.bytesPerRequest, errors: run.requests.filter(r => r.error).map(r => r.error) }));
         await new Promise(resolve => setTimeout(resolve, 2000));
     }
