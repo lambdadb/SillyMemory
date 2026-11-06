@@ -98,7 +98,8 @@ test('ensure reports the analyzers a story was created with and creates new stor
     assert.deepEqual((await new ChatCollections(existing(undefined), owner, () => {}, () => {}).ensure(snapshot, undefined, config)).analyzers, ['standard']);
     const remembered = []; let requested;
     const fresh = { assertOwned: async () => { throw missing(); }, verifyOwned: result => result,
-        create: async (name, o, scope, analyzers) => { requested = analyzers; return { collection: { collectionName: name, tags: { application: 'sillymemory', owner: o, chat: scope }, indexConfigs: { text: { type: 'text', analyzers } } } }; },
+        // The live service's 201 body carries no indexConfigs; the requested analyzers are the created ones.
+        create: async (name, o, scope, analyzers) => { requested = analyzers; return { collection: { collectionName: name, tags: { application: 'sillymemory', owner: o, chat: scope } } }; },
         branches: async () => [], createBranch: async (name, branch) => ({ branch: { name: branch } }) };
     const created = await new ChatCollections(fresh, owner, e => remembered.push(e), () => {}).ensure(snapshot, undefined, config);
     assert.deepEqual([requested, created.analyzers], [config.analyzers, config.analyzers]);

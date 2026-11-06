@@ -4,6 +4,20 @@ Versions describe the extension, independently of the SillyTavern host version.
 An `Unreleased` entry is a development candidate. A dated entry records a release
 boundary; publication is confirmed by the corresponding Git tag and GitHub Release.
 
+## [Unreleased]
+
+### Fixed
+
+- A story whose collection was just created showed "This story's memory is
+  indexed with: standard" with **Rebuild story memory** until the next
+  synchronization. LambdaDB's collection-creation response carries no index
+  configuration, so the extension treated the new collection as having the
+  default `standard` analyzer; it now reports the analyzers it requested, which
+  the service confirmed by creating the collection. Found by a bounded live
+  check (`npm run test:analyzers:live`) that creates two story collections with
+  `english`+`korean` and `english`, verifies the notice and rebuild path and a
+  Korean lexical match, then deletes them.
+
 ## [0.9.0] - 2026-11-06
 
 ### Added
