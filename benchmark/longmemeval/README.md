@@ -9,6 +9,9 @@ offline verification, and all owned collections were confirmed absent.
 The [evaluation report](../../docs/longmemeval-public-evaluation.md) compares
 alternative answers under the same Jev protocol and reports tokens, cost estimates
 and measurement boundaries.
+The [retrieval attribution](../../docs/longmemeval-retrieval-attribution.md)
+maps the annotated evidence of the completed run to returned and delivered chunks
+offline with [attribute.mjs](attribute.mjs).
 
 [results.json](results.json) includes recorded token usage, available timings and
 resource counts. Unavailable measurements and billed cost are `null`.

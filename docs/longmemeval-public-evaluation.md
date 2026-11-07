@@ -17,10 +17,14 @@ four-answer aggregate difference does not establish general superiority or
 held-out gains. The supported finding is high measured answer quality with much
 smaller final-answer inputs under these disclosed configurations.
 
-Source-span annotation coverage and necessary-fact recall were not measured at
-retrieval or final-prompt delivery. The verifier checks source and request
-integrity, not evidence sufficiency. The 20 Jev-incorrect answers therefore have
-no measured attribution to retrieval, memory assembly, generation or judging.
+[Annotation coverage was attributed offline on 2026-11-01](longmemeval-retrieval-attribution.md):
+888 of 894 annotated evidence messages were complete in the returned list and 880
+in the final prompt, and all 53 annotated messages behind the 19 annotated
+incorrect answers were delivered complete, so no loss of annotated messages was
+observed at retrieval or packing. This is annotation coverage, not a sufficiency
+audit: unannotated turns and exact fact spans were not assessed, so the cause of
+each incorrect answer remains unattributed. Necessary-fact recall is unmeasured;
+the verifier checks source and request integrity, not evidence sufficiency.
 
 ## Comparison protocol
 

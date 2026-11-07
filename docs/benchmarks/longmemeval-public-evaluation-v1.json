@@ -544,14 +544,34 @@
   },
   "evidenceCoverage": {
     "retrievedEvidence": {
-      "sourceSpanAnnotationCoverage": null,
+      "sourceSpanAnnotationCoverage": {
+        "unit": "annotated has_answer message, final reranked list",
+        "complete": 888,
+        "partial": 3,
+        "missing": 3,
+        "annotatedMessages": 894
+      },
       "necessaryFactRecall": null
     },
     "finalPromptDelivery": {
-      "sourceSpanAnnotationCoverage": null,
+      "sourceSpanAnnotationCoverage": {
+        "unit": "annotated has_answer message, packed prompt",
+        "complete": 880,
+        "partial": 3,
+        "missing": 11,
+        "annotatedMessages": 894
+      },
       "necessaryFactRecall": null
     },
-    "incorrectAnswerStageAttribution": null,
-    "boundary": "Not measured. Offline verification establishes source and request integrity, not evidence sufficiency or the cause of the 20 Jev-incorrect answers."
+    "incorrectAnswerStageAttribution": {
+      "delivered-complete": 19,
+      "unannotated": 1,
+      "retrieval-loss": 0,
+      "budget-loss": 0,
+      "delivered-partial": 0
+    },
+    "attributedAt": "2026-11-01",
+    "source": "../longmemeval-retrieval-attribution.md",
+    "boundary": "Offline attribution of the retained run with benchmark/longmemeval/attribute.mjs. Annotation coverage of whole has_answer turns only: delivered-complete means no loss of annotated messages was observed, not that every necessary fact was delivered. Necessary-fact recall is not measured and candidate recall is not separable from reranking."
   }
 }
