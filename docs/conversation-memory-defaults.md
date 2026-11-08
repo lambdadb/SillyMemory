@@ -54,8 +54,13 @@ the prompt does not need separate field names or a date-reference dictionary.
 ### Current native dialogue policy
 
 Completed eligible messages are archived only after they leave the recent-five
-window, aligned to keep an adjacent plain-text input/reply pair together. Normal
-user input retains five; a completed reply can retain six. Displaced pairs share
+window, aligned to keep a turn bundle together: a plain-text input and every
+message up to the next input, such as several group member replies. Normal user
+input retains five; a completed single reply can retain six. Messages before the
+first input keep the plain message boundary. The rule is the same in character
+and group chats: alternating chats keep the previous pair boundary, and a
+character chat with several replies after one input keeps or archives that whole
+bundle. Displaced bundles share
 an upsert with separate per-message chunks, subject to the existing 200-document
 batch. No five-message queue. A trailing user input waits for its answer.
 Checkpoints preserve the full native JSONL transcript and freeze the same older
@@ -64,7 +69,8 @@ window on a writable path.
 
 One role-labelled Query 1 includes only the eligible generation anchor. Recent
 dialogue remains in the generation prompt but is not appended to the search query.
-Regenerate/swipe exclude replacement replies; Continue/Impersonate retain
+Regenerate excludes every reply after the latest input; swipe excludes only
+the swiped reply, so earlier replies after the latest input stay retained. Continue/Impersonate retain
 their native active-message behavior. Both search legs and local selection exclude
 retained full positions. Query and memory limits remain unchanged; queries above
 8,192 UTF-8 bytes fail explicitly. Each generation uses only its current memory.

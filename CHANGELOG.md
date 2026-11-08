@@ -4,6 +4,40 @@ Versions describe the extension, independently of the SillyTavern host version.
 An `Unreleased` entry is a development candidate. A dated entry records a release
 boundary; publication is confirmed by the corresponding Git tag and GitHub Release.
 
+## [Unreleased]
+
+### Added
+
+- Group chats. Memory can be turned on in a SillyTavern group chat with the same
+  storage, retrieval and failure handling as a character chat. Each group chat
+  starts its own story; its checkpoints and branches reuse the shared history,
+  and adding or removing members keeps the story. Each responding member's
+  reply searches memory with the latest user message, so one message answered
+  by three members makes three searches. Group-chat answer quality is not
+  evaluated.
+
+### Changed
+
+- The recent window now keeps a whole turn, a user message and every reply up
+  to the next user message, instead of one user/assistant pair. Ordinary
+  alternating chats keep exactly the previous boundary. A character chat with
+  several replies after one message, for example after sending an empty
+  message to get another reply, now keeps all of them in the prompt until the
+  turn leaves the window. No settings or data migration is needed.
+- Swipe excludes only the reply being swiped. Earlier replies after the latest
+  user message, such as another group member's reply in the same round, stay in
+  the prompt; alternating chats are unaffected. Regenerate is unchanged.
+- In a group chat, a memory preparation failure stops the whole round, so no
+  later member replies without memory. **Retry** stays available.
+
+### Known limits
+
+- Group Auto-mode without user input keeps every reply since the last user
+  message in the prompt. A long run can outgrow the context: with **Stop on
+  missing context** on (default) the reply stops; with it off SillyTavern drops
+  the oldest messages, including that user message, which is then in neither
+  the prompt nor memory. Sending a new message restores normal behavior.
+
 ## [0.9.1] - 2026-11-06
 
 ### Fixed

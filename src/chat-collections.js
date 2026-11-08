@@ -1,7 +1,7 @@
 import { clearCommit, recordCommitted, waitForCommit } from './commit.js';
 import { ConnectionError, analyzerList, collectionAnalyzers } from './client.js';
 import { poll } from './gate.js';
-import { digest, documents, options } from './memory.js';
+import { chatOwner, digest, documents, options } from './memory.js';
 
 const idPattern = /^[a-f0-9]{32}$/;
 export const ownedMemoryName = name => /^smstory_[a-f0-9]{40}$/.test(name);
@@ -11,17 +11,46 @@ export async function chatCollection(snapshot, owner) {
     return { collection: `smstory_${scope.slice(0, 40)}`, scope, branch: `chat_${snapshot.chat}`, ...(snapshot.memory.source ? { source: `chat_${snapshot.memory.source}` } : {}) };
 }
 
-// Native branches change integrity but can inherit extension metadata. Imports
-// can copy both, so also check the host inventory before accepting an ID.
-export async function ensureChatIdentity(ctx, saveChat, valid = () => true, fetcher = fetch) {
-    const avatar = ctx.characters[ctx.characterId]?.avatar, file = ctx.getCurrentChatId();
-    if (ctx.groupId || !avatar || !file) throw new ConnectionError('Select a supported character chat.');
-    const request = async (url, body) => {
-        const response = await fetcher(url, { method: 'POST', headers: ctx.getRequestHeaders(), body: JSON.stringify(body) });
+// Saved chats of the open chat's owner. A character chat is read under its
+// avatar. A group chat is read by its ID; the group's chat list with each
+// file's metadata header forms the inventory. read() returns null on failure.
+export function hostChats(ctx, fetcher = fetch) {
+    const post = (url, body) => fetcher(url, { method: 'POST', headers: ctx.getRequestHeaders(), body: JSON.stringify(body) });
+    const json = async (url, body) => {
+        const response = await post(url, body);
         if (!response.ok) throw new ConnectionError('Could not verify chat identity on the SillyTavern server.');
         return response.json();
     };
-    const inventory = await request('/api/characters/chats', { avatar_url: avatar, metadata: true });
+    const read = (url, body) => post(url, body).then(response => response.ok ? response.json() : null);
+    if (ctx.groupId) {
+        const group = ctx.groups?.find(g => g.id === ctx.groupId);
+        return {
+            read: file => read('/api/chats/group/get', { id: file }),
+            async inventory() {
+                if (!Array.isArray(group?.chats)) return null;
+                const chats = [];
+                for (const id of group.chats) {
+                    const rows = await json('/api/chats/group/get', { id });
+                    chats.push({ file_name: `${id}.jsonl`, chat_metadata: Array.isArray(rows) ? rows[0]?.chat_metadata : undefined });
+                }
+                return chats;
+            },
+        };
+    }
+    const avatar = chatOwner(ctx);
+    return {
+        read: file => read('/api/chats/get', { avatar_url: avatar, file_name: file }),
+        inventory: () => json('/api/characters/chats', { avatar_url: avatar, metadata: true }),
+    };
+}
+
+// Native branches change integrity but can inherit extension metadata. Imports
+// can copy both, so also check the host inventory before accepting an ID.
+export async function ensureChatIdentity(ctx, saveChat, valid = () => true, fetcher = fetch) {
+    const file = ctx.getCurrentChatId();
+    if (!chatOwner(ctx) || !file) throw new ConnectionError('Select a supported chat.');
+    const chats = hostChats(ctx, fetcher);
+    const inventory = await chats.inventory();
     if (!Array.isArray(inventory)) throw new ConnectionError('Could not read the chat inventory. Save the chat and retry.');
     if (!valid()) return false;
     const memory = ctx.chatMetadata.sillymemory;
@@ -43,12 +72,14 @@ export async function ensureChatIdentity(ctx, saveChat, valid = () => true, fetc
     }
     const saved = inventory.find(chat => chat.file_name === `${file}.jsonl`)?.chat_metadata;
     if (changed || JSON.stringify(saved?.sillymemory) !== JSON.stringify(ctx.chatMetadata.sillymemory) || saved?.integrity !== ctx.chatMetadata.integrity) {
-        // saveChat captures filename, metadata, avatar and chat before its first
-        // await. Unlike the debounced metadata helper it cannot switch targets.
+        // saveChat and saveGroupChat capture the target file, metadata and chat
+        // before their first await. Unlike the debounced metadata helper they
+        // cannot switch targets.
         await saveChat();
         if (!valid()) return false;
     }
-    const stored = await request('/api/chats/get', { avatar_url: avatar, file_name: file });
+    const stored = await chats.read(file);
+    if (stored === null) throw new ConnectionError('Could not verify chat identity on the SillyTavern server.');
     if (!valid()) return false;
     if (JSON.stringify(stored?.[0]?.chat_metadata?.sillymemory) !== JSON.stringify(ctx.chatMetadata.sillymemory) || stored?.[0]?.chat_metadata?.integrity !== ctx.chatMetadata.integrity) throw new ConnectionError('Chat identity was not saved. Save the chat and retry.');
     return true;

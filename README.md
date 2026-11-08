@@ -51,7 +51,7 @@ chat model provider's charges are separate.
 
 ### 3. Turn memory on in a chat
 
-1. Open a plain-text, single-character chat, new or existing.
+1. Open a plain-text character or group chat, new or existing.
 2. If you use the built-in **Vector Storage** extension, turn off its chat
    vectorization. SillyMemory pauses while it is on.
 3. Expand **Memory** above the message composer and click
@@ -66,7 +66,9 @@ memory** for everything that was added to the prompt.
 
 ## How it works
 
-- The latest five messages always stay in the prompt. Older messages are saved
+- The latest five messages always stay in the prompt, together with the rest of
+  the turn they start in: a user message and every reply that follows it, such
+  as each group member's reply. Older messages are saved
   as memory in your LambdaDB project. Before each reply, SillyMemory searches
   that memory with the current message and adds related passages within a
   **memory token budget** (default 4,096 tokens, at most one quarter of the
@@ -80,8 +82,12 @@ memory** for everything that was added to the prompt.
 - Memory is per chat. **Turn memory off in this chat** returns that chat to
   ordinary SillyTavern history handling; the saved memory is kept. New chats
   start with memory off.
-- Edits, swipes and deletions are reconciled on the next sync. Group chats,
-  files, tool messages, Data Bank and World Info are not indexed.
+- Edits, swipes and deletions are reconciled on the next sync. Files, tool
+  messages, Data Bank and World Info are not indexed.
+- In a group chat, memory belongs to the group chat, not to a member. Each
+  member's reply searches memory with your latest message, so one message
+  answered by three members makes three searches. Adding or removing members
+  keeps the chat's memory.
 - SillyTavern's **Save checkpoint**, **Create Branch** and **Back to parent
   chat** work as usual. Memory follows whichever chat you open, and linked
   branches reuse the history they share.
@@ -142,8 +148,15 @@ rest of the flow is the same.
 ## Current limits
 
 - Experimental: retrieved memory does not guarantee a correct answer.
-- Plain-text, single-character chats only. Group chats, files and tool
-  conversations are outside the supported path.
+- Plain-text character and group chats only. Files and tool conversations are
+  outside the supported path.
+- Group-chat answer quality is not evaluated; the recorded benchmark results
+  cover single-character dialogue only.
+- Group Auto-mode without your input keeps every reply since your last message
+  in the prompt. A long run can outgrow the context: with **Stop on missing
+  context** on (the default) the reply stops; with it off SillyTavern drops the
+  oldest messages, including your last message, which is then in neither the
+  prompt nor memory. Sending a new message restores normal behavior.
 - Live reply and streaming checks cover OpenAI `gpt-6.1-sol` on SillyTavern
   1.19.0 and Chromium; other models, providers and browsers are unverified.
 - Prompt delivery is checked for Chat Completion; other formats may report

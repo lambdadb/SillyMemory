@@ -2,9 +2,9 @@ import { LambdaClient, ConnectionError, connectionConfig, ANALYZERS } from './sr
 import { SavedKey } from './src/credentials.js';
 import { callbackUrl, connectWithLambdaDB } from './src/app-connect.js';
 import { activationBinding, chatActivated } from './src/activation.js';
-import { ChatCollections, chatCollection, ensureChatIdentity } from './src/chat-collections.js';
+import { ChatCollections, chatCollection, ensureChatIdentity, hostChats } from './src/chat-collections.js';
 import { runTransportGate } from './src/gate.js';
-import { MemoryEngine, Journal, capture, supportsChat, fingerprint, options, DEFAULTS, memoryBoundary, archiveBoundary } from './src/memory.js';
+import { MemoryEngine, Journal, capture, chatOwner, supportsChat, fingerprint, options, DEFAULTS, memoryBoundary, archiveBoundary } from './src/memory.js';
 import { OperationStatus, failureText, analyzerNotice } from './src/status.js';
 import { PromptDelivery, expectedMessages, deliverySummary } from './src/delivery.js';
 import { MEMORY_GUIDANCE, retentionAnchor, quoteMemoryText, quoteMemoryMessages } from './src/context.js';
@@ -39,13 +39,13 @@ function canBrowseChats() {
 }
 function chatBlocker() {
     const ctx = context();
-    if (!supportsChat(ctx)) return { label: 'Unavailable in this chat', message: 'Select a saved, single-character text chat to use SillyMemory. Group chats and tool conversations are not supported.' };
+    if (!supportsChat(ctx)) return { label: 'Unavailable in this chat', message: 'Select a saved character or group text chat to use SillyMemory. Tool conversations are not supported.' };
     if (ctx.extensionSettings.vectors?.enabled_chats) return { action: 'vectors', label: 'Vector Storage conflict', message: 'SillyMemory is paused while Vector Storage chat vectorization is on. Turn that off to use SillyMemory.' };
     return null;
 }
 function requestTarget() {
     const ctx = context();
-    return JSON.stringify([ctx.characters[ctx.characterId]?.avatar, ctx.getCurrentChatId()]);
+    return JSON.stringify([chatOwner(ctx), ctx.getCurrentChatId()]);
 }
 function currentStoppedRequest() {
     return stoppedRequest && stoppedRequest.revision === sourceRevision && stoppedRequest.target === requestTarget() ? stoppedRequest : null;
@@ -225,9 +225,7 @@ async function setChatMemory(enabled) {
         if (!current()) return;
         // The native save reports failures through toasts, so confirm the saved
         // flag before enabling uploads. Read only the captured chat target.
-        const response = await fetch('/api/chats/get', { method: 'POST', headers: ctx.getRequestHeaders(),
-            body: JSON.stringify({ avatar_url: ctx.characters[ctx.characterId]?.avatar, file_name: ctx.getCurrentChatId() }) });
-        const rows = response.ok ? await response.json() : null;
+        const rows = await hostChats(ctx).read(ctx.getCurrentChatId());
         if (!current()) return;
         if (rows?.[0]?.chat_metadata?.sillymemoryEnabled !== enabled) throw new ConnectionError('Memory on/off could not be saved for this chat. Check the SillyTavern connection and retry.');
         if (enabled && !chatActivated(rows?.[0]?.chat_metadata, state)) throw new ConnectionError('Memory could not be turned on for this chat. Try again.');
@@ -345,11 +343,11 @@ function makeCollections() {
 function prepareMemory(valid, progress = () => {}) {
     const task = preparation.catch(() => {}).then(async () => {
         if (!valid() || !collections) return null;
-        const ctx = context(), file = ctx.getCurrentChatId(), avatar = ctx.characters[ctx.characterId]?.avatar;
-        if (!capture(ctx)) throw new ConnectionError('Select a supported character chat.');
-        const key = () => JSON.stringify([avatar, file, ctx.chatMetadata.sillymemory, ctx.chatMetadata.integrity]);
+        const ctx = context(), file = ctx.getCurrentChatId(), chatKey = chatOwner(ctx);
+        if (!capture(ctx)) throw new ConnectionError('Select a supported chat.');
+        const key = () => JSON.stringify([chatKey, file, ctx.chatMetadata.sillymemory, ctx.chatMetadata.integrity]);
         if (identityKey !== key()) {
-            const { saveChat } = await import('/script.js');
+            const saveChat = await nativeSave(ctx);
             if (!valid() || !await ensureChatIdentity(ctx, saveChat, valid)) return null;
             identityKey = key();
         }
@@ -364,6 +362,13 @@ function prepareMemory(valid, progress = () => {}) {
         return { snapshot, instance: engine };
     });
     preparation = task; return task;
+}
+// The native save for the open chat. Both capture their target chat, metadata
+// and messages before their first await, so a later chat switch cannot redirect them.
+async function nativeSave(ctx) {
+    if (!ctx.groupId) return (await import('/script.js')).saveChat;
+    const { saveGroupChat } = await import('/scripts/group-chats.js');
+    return () => saveGroupChat(ctx.groupId, false);
 }
 async function drain() {
     await preparation.catch(() => {});
@@ -391,7 +396,7 @@ function schedule() {
     invalidate(); clearTimeout(timer);
     if (!client) { status('Not connected. Use Connect to LambdaDB or enter your project API key in Connection settings.'); return; }
     if (!memoryEnabled()) { status('Memory is off. SillyTavern uses its usual chat history, and saved memory is kept.'); return; }
-    if (!state.ready || !capture(context())) { status('Select a supported character chat and connect to a memory collection.'); return; }
+    if (!state.ready || !capture(context())) { status('Select a supported chat and connect to a memory collection.'); return; }
     retrySync = false;
     const operation = statusView.start();
     operation.update({ phase: 'preparing' });
@@ -436,11 +441,14 @@ async function action(job) {
 
 // Called with SillyTavern's ephemeral coreChat array. Never mutate source messages.
 globalThis.sillymemory_intercept = async (chat, contextSize, abort, type) => {
+    // In a group the host runs the next member after an aborted interceptor. Stop
+    // the whole round through the host stop, as the missing-context check does.
+    const stopReply = () => { abort(true); if (context().groupId) context().stopGeneration(); };
     if (delivery.awaitingPrompt) {
         // No final event will be emitted for this rejected interceptor. Keep the
         // previous slot until its own non-dry-run final event has been consumed.
         showDelivery('SillyMemory is still checking the previous prompt. Wait and generate again. If it does not finish, reload the page.', { label: 'Please wait', kind: 'warning' });
-        abort(true); return;
+        stopReply(); return;
     }
     // Quiet prompts cancel older reads/injection while preserving source sync.
     if (type === 'quiet') {
@@ -458,14 +466,14 @@ globalThis.sillymemory_intercept = async (chat, contextSize, abort, type) => {
         if (requestTarget() !== target) {
             promptSource = undefined;
             fail(new ConnectionError('The chat changed while memory was being prepared. Generate again.'), undefined, true, type);
-            abort(true); return;
+            stopReply(); return;
         }
         // A failed action that left memory off, such as an activation whose save
         // was rolled back, is a preparation failure, not a request for native history.
         if (error && wanted && !memoryEnabled()) {
             promptSource = undefined;
             fail(error, undefined, true, type);
-            abort(true); return;
+            stopReply(); return;
         }
     }
     invalidate();
@@ -476,7 +484,7 @@ globalThis.sillymemory_intercept = async (chat, contextSize, abort, type) => {
     if (context().extensionSettings.vectors?.enabled_chats) {
         status('Disable built-in Vector Storage chat vectorization before using SillyMemory.'); return;
     }
-    let snapshot = capture(context()); if (!snapshot) { status('Select a supported character chat to use memory.'); return; }
+    let snapshot = capture(context()); if (!snapshot) { status('Select a supported chat to use memory.'); return; }
     promptType = type;
     showDelivery('Adding memory to this reply…');
     clearTimeout(timer); // Retrieval below replaces the pending synchronization.
@@ -496,7 +504,7 @@ globalThis.sillymemory_intercept = async (chat, contextSize, abort, type) => {
     let preparedMessages = [], guidance = [], abandoned = false;
     try {
         const prepared = await prepareMemory(() => sequence === promptSequence && sessionReady && memoryEnabled() && sameSource() && JSON.stringify(chat) === promptBefore);
-        if (!prepared) { abandoned = true; abort(true); return; }
+        if (!prepared) { abandoned = true; stopReply(); return; }
         ({ snapshot, instance } = prepared);
         config.ownershipVerified = true; // ensure() verified ownership in this preparation.
         const requestGuidance = MEMORY_GUIDANCE;
@@ -510,9 +518,9 @@ globalThis.sillymemory_intercept = async (chat, contextSize, abort, type) => {
         config.budget = Math.min(config.budget, Math.max(0, Math.floor(contextSize / 4)));
         const countMemory = text => context().getTokenCountAsync([requestGuidance, quoteMemoryText(text)].filter(Boolean).join('\n'));
         const result = await instance.retrieve(snapshot, config, countMemory, unchangedPrompt, operation.update, type);
-        if (!valid()) { operation.finish('Memory operation canceled because the prompt changed. Generate again.'); abandoned = true; abort(true); return; }
+        if (!valid()) { operation.finish('Memory operation canceled because the prompt changed. Generate again.'); abandoned = true; stopReply(); return; }
         const guidanceTokens = await countMemory('');
-        if (!valid()) { abandoned = true; abort(true); return; }
+        if (!valid()) { abandoned = true; stopReply(); return; }
         if (!Number.isFinite(guidanceTokens) || guidanceTokens < 0 || guidanceTokens > config.budget) throw new Error('Memory guidance does not fit the token budget.');
         context().setExtensionPrompt('sillymemory', requestGuidance, 1, 0, false, 0);
         guidance = [{ role: 'system', content: requestGuidance, verifiable: true }];
@@ -543,13 +551,13 @@ globalThis.sillymemory_intercept = async (chat, contextSize, abort, type) => {
         showMemoryPreview(result.passages);
         operation.finish(`Found ${result.passages.length} related passages (${preparedTokens} tokens) for this reply.`);
     } catch (e) {
-        if (!instance) { if (operation.current()) fail(e, operation, true, type); abandoned = true; abort(true); return; }
-        if (!valid()) { operation.finish('Memory operation canceled because the prompt changed. Generate again.'); abandoned = true; abort(true); return; }
+        if (!instance) { if (operation.current()) fail(e, operation, true, type); abandoned = true; stopReply(); return; }
+        if (!valid()) { operation.finish('Memory operation canceled because the prompt changed. Generate again.'); abandoned = true; stopReply(); return; }
         guidance = [];
         if (operation.current()) fail(e, operation, true, type);
         // Keep memory-on preparation failures explicit; native fallback is
         // available by disabling memory, without silently changing this request.
-        abandoned = true; abort(true); return;
+        abandoned = true; stopReply(); return;
     } finally {
         // Reserve only after retrieval: superseded in-flight reads still abort
         // through the existing validity check and never claim a final event.
@@ -678,7 +686,7 @@ async function initialize() {
             state = nextState;
             client = candidateClient; connectionVerified = true; makeCollections(); gatePassed = false;
             if (memoryEnabled()) schedule();
-            else status(state.ready ? 'Connected. Memory stays off until you turn it on in a chat.' : 'Connected. Run the setup test, then turn memory on in a saved character chat.');
+            else status(state.ready ? 'Connected. Memory stays off until you turn it on in a chat.' : 'Connected. Run the setup test, then turn memory on in a saved chat.');
         } catch (error) {
             connectionVerified = false;
             candidateClient.forget();
@@ -820,7 +828,7 @@ async function initialize() {
         if (!client) throw new ConnectionError('Connect your project before running the setup test.');
         if (!gatePassed) await testConnection();
         state.ready = true; persist();
-        status('Connected. Chat memory is ready. Turn memory on separately in each saved character chat.');
+        status('Connected. Chat memory is ready. Turn memory on separately in each saved chat.');
     }
     element('provision').onclick = () => action(prepareConnection);
     element('budget').onchange = () => {
@@ -830,8 +838,8 @@ async function initialize() {
     async function deleteMemory(all) {
         if (!client || !collections) throw new ConnectionError('Reconnect before deleting memory.');
         if (!all && (!capture(context()) || !context().chatMetadata.sillymemory?.id)) throw new ConnectionError('This chat has no saved memory yet.');
-        const target = context(), file = target.getCurrentChatId(), avatar = target.characters[target.characterId]?.avatar;
-        const sameChat = () => context().getCurrentChatId() === file && context().characters[context().characterId]?.avatar === avatar;
+        const target = context(), file = target.getCurrentChatId(), chatKey = chatOwner(target);
+        const sameChat = () => context().getCurrentChatId() === file && chatOwner(context()) === chatKey;
         const answer = await target.Popup.show.confirm('Delete memory', all ? 'Delete all memory for every story and branch? Your local chats are kept.' : 'Delete this chat’s memory and turn memory off in this chat? Your local chat, other chats and branches are kept.');
         if (answer !== target.POPUP_RESULT.AFFIRMATIVE) return;
         if (!sameChat()) throw new ConnectionError('Chat changed while the popup was open. Select it and retry deletion.');
@@ -847,7 +855,7 @@ async function initialize() {
         await drain();
         let selected;
         if (!all) {
-            const { saveChat } = await import('/script.js');
+            const saveChat = await nativeSave(target);
             if (!sameChat() || !await ensureChatIdentity(target, saveChat, sameChat)) throw new ConnectionError('Chat changed before deletion. Select it and retry.');
             selected = await chatCollection(capture(target), owner);
         }
@@ -868,8 +876,8 @@ async function initialize() {
     async function rebuildStory() {
         if (!client || !collections) throw new ConnectionError('Reconnect before rebuilding memory.');
         if (!capture(context()) || !context().chatMetadata.sillymemory?.id) throw new ConnectionError('This chat has no saved memory yet.');
-        const target = context(), file = target.getCurrentChatId(), avatar = target.characters[target.characterId]?.avatar;
-        const sameChat = () => context().getCurrentChatId() === file && context().characters[context().characterId]?.avatar === avatar;
+        const target = context(), file = target.getCurrentChatId(), chatKey = chatOwner(target);
+        const sameChat = () => context().getCurrentChatId() === file && chatOwner(context()) === chatKey;
         const answer = await target.Popup.show.confirm('Rebuild story memory', `Rebuild the memory of every branch of this story with the current text search languages (${options(state).analyzers.join(', ')})? Your local chats are kept. This chat uploads its memory again now; other branches upload again when you open them.`);
         if (answer !== target.POPUP_RESULT.AFFIRMATIVE) return false;
         if (!sameChat()) throw new ConnectionError('Chat changed while the popup was open. Select it and retry.');
@@ -877,7 +885,7 @@ async function initialize() {
         for (const e of engines.values()) e.invalidate();
         status('Rebuilding memory: finishing earlier saves…');
         await drain();
-        const { saveChat } = await import('/script.js');
+        const saveChat = await nativeSave(target);
         if (!sameChat() || !await ensureChatIdentity(target, saveChat, sameChat)) throw new ConnectionError('Chat changed before rebuilding. Select it and retry.');
         const entry = await chatCollection(capture(target), owner);
         // Evict cached engines first: an uncertain deletion must not leave remote state

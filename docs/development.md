@@ -71,7 +71,8 @@ ST_SOURCE=/absolute/path/to/pinned/SillyTavern node scripts/prompt-delivery-smok
 These use real Chromium and the pinned host with synthetic data, local LambdaDB
 and completion fixtures, and disposable profiles. They make no paid service calls.
 The browser harness checks connection, per-chat memory, native checkpoints and
-branches, and native reply behavior. Fault/recovery modes check cancellation, uncertain writes,
+branches, native reply behavior and group chats (member turns, Regenerate,
+swipe, Continue, group checkpoints and branches, reload). Fault/recovery modes check cancellation, uncertain writes,
 reloads and cleanup. The prompt-delivery harness checks final archive/input
 preservation, context pressure, repeated citations and same-message assembly.
 Reports and screenshots go to ignored `artifacts/`; model fixtures do not grade
@@ -93,7 +94,11 @@ These contact LambdaDB and consume managed-service allowance; run only within an
 authorized bound. Collection checks create at most four small synthetic collections
 and verify owned deletion. The generation smoke uses a local deterministic model
 by default while exercising actual host generation and live memory. It covers
-edits, swipes, streaming, branches, deletion and retrieval-failure aborts.
+edits, swipes, streaming, branches, deletion and retrieval-failure aborts, and a
+two-member group chat: an archived bundle retrieved in each member turn, a group
+swipe, a group branch forked from its parent and branch-memory deletion. A run
+creates at most three collections (the connection test, one character story and
+one group story) and deletes them before removing its pending record.
 Pending cleanup records under `artifacts/` must survive until cleanup succeeds.
 
 `npm run test:generation:live` additionally requires `LLM_BASE_URL`, `LLM_MODEL`

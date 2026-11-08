@@ -1,4 +1,4 @@
-import { answerMemoryPopup, memoryControl, expandMemorySettings } from './settings-panel.mjs';
+import { answerMemoryPopup, chatMemoryAction, memoryControl, expandMemorySettings } from './settings-panel.mjs';
 // Full SillyTavern Generate/UI path + live LambdaDB. Model is deterministic by
 // default; --live-model requires explicitly supplied compatible-model settings.
 import { chromium } from '@playwright/test';
@@ -108,7 +108,10 @@ const bridge = createServer(async (req, res) => {
         }
         const text = JSON.stringify(body.messages);
         // Deliberately deterministic; this tests transport, not model intelligence.
-        const answer = text.includes('in the stone tower') ? 'The blue compass is in the stone tower.' : text.includes('beneath the cedar tree') ? 'The blue compass is beneath the cedar tree.' : 'UNKNOWN';
+        // Group members answer with their card marker so replies of one round differ.
+        const member = text.includes('MEMBER_CARD_ANA') ? 'Ana' : text.includes('MEMBER_CARD_BEN') ? 'Ben' : '';
+        const answer = member ? `${member} answers: ${text.includes('in the north harbor') ? 'the red lantern hangs in the north harbor.' : 'UNKNOWN'}`
+            : text.includes('in the stone tower') ? 'The blue compass is in the stone tower.' : text.includes('beneath the cedar tree') ? 'The blue compass is beneath the cedar tree.' : 'UNKNOWN';
         if (body.stream) {
             res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache' });
             for (const content of answer.match(/.{1,12}/g) || []) { res.write(`data: ${JSON.stringify({ id: 'fixture', choices: [{ index: 0, delta: { content }, finish_reason: null }] })}\n\n`); await new Promise(r => setTimeout(r, 20)); }
@@ -121,6 +124,8 @@ await new Promise(r => bridge.listen(0, '127.0.0.1', r));
 const port = Number(process.env.ST_GENERATION_PORT || 18128), url = `http://127.0.0.1:${port}`;
 const bridgeUrl = `http://127.0.0.1:${bridge.address().port}/v1`;
 let events = [];
+const remoteRequests = [];
+let groupResult;
 const field = name => name === 'enabled' ? memoryControl(page) : page.locator(`#sillymemory [data-sm="${name}"]`);
 const waitStatus = text => page.waitForFunction(text => document.querySelector('[data-sm="status"]')?.textContent.includes(text), text, { timeout: 90000 });
 async function openSettings() {
@@ -176,6 +181,104 @@ async function generate(name, type = 'normal', streaming = false) {
     }
     return { ...result, request, prompt: JSON.stringify(request.messages) };
 }
+// Two-member group on live LambdaDB: archive a bundle, retrieve it in each member
+// turn, swipe, branch, and delete one branch's memory. Synthetic text only.
+async function runGroupScenario() {
+    stage = 'group setup';
+    const groupId = await page.evaluate(async () => {
+        const c = SillyTavern.getContext();
+        for (const [name, card] of [['SillyMemory E2E Ana', 'MEMBER_CARD_ANA'], ['SillyMemory E2E Ben', 'MEMBER_CARD_BEN']]) {
+            const data = new FormData(); data.set('ch_name', name); data.set('description', `${card}. A synthetic group member. Answer only from the supplied conversation.`); data.set('first_mes', `${name} joins the synthetic group.`);
+            const r = await fetch('/api/characters/create', { method: 'POST', headers: c.getRequestHeaders({ omitContentType: true }), body: data }); if (!r.ok) throw new Error('Group member creation failed');
+        }
+        await c.getCharacters();
+        const members = ['SillyMemory E2E Ana', 'SillyMemory E2E Ben'].map(name => SillyTavern.getContext().characters.find(x => x.name === name).avatar);
+        const r = await fetch('/api/groups/create', { method: 'POST', headers: c.getRequestHeaders(), body: JSON.stringify({ name: 'SillyMemory E2E Group', members, activation_strategy: 1, disabled_members: [] }) });
+        if (!r.ok) throw new Error('Group creation failed');
+        const group = await r.json(), groups = await import('/scripts/group-chats.js');
+        await groups.getGroups(); await groups.openGroupById(group.id);
+        return group.id;
+    });
+    await page.waitForFunction(() => SillyTavern.getContext().chat.length === 2);
+    await openSettings(); await field('enabled').check(); await waitStatus('synchronized');
+    const memory = () => page.evaluate(() => { const c = SillyTavern.getContext(); return { ...c.chatMetadata.sillymemory, file: c.getCurrentChatId(), length: c.chat.length }; });
+    const parent = await memory();
+    assert(parent.story === parent.id && await page.evaluate(() => SillyTavern.getContext().characterId === undefined), 'group: memory turns on between member turns with a new group story');
+    stage = 'group seed';
+    await page.evaluate(async () => {
+        const c = SillyTavern.getContext(), greetings = c.chat.slice(0, 2);
+        const rounds = [['Remember this: the red lantern hangs in the north harbor.', 'Ana notes the harbor.', 'Ben repeats the harbor.'],
+            ...[1, 2, 3].map(i => [`GROUP_FILLER_${i}: we counted empty crates.`, `Ana counts crate ${i}.`, `Ben stacks crate ${i}.`])];
+        c.chat.splice(0, c.chat.length, ...greetings, ...rounds.flatMap(([user, ana, ben]) => [
+            { name: 'User', is_user: true, mes: user, extra: {}, send_date: Date.now() },
+            { name: 'SillyMemory E2E Ana', is_user: false, mes: ana, extra: {}, send_date: Date.now() },
+            { name: 'SillyMemory E2E Ben', is_user: false, mes: ben, extra: {}, send_date: Date.now() }]));
+        await c.saveChat(); await c.reloadCurrentChat();
+    });
+    await waitStatus('synchronized');
+    assert(remoteRequests.some(r => r.stage === 'group seed' && r.resource.endsWith('docs/upsert') && r.branch === `chat_${parent.id}` && r.messages.join() === '0,1,2,3,4,5,6,7'),
+        'group: synchronization archives whole bundles before the recent window');
+    await page.evaluate(() => {
+        const original = globalThis.sillymemory_intercept; globalThis.groupTurns = [];
+        globalThis.sillymemory_intercept = async (...args) => {
+            const c = SillyTavern.getContext(), started = performance.now(), turn = { member: c.name2, type: args[3] };
+            await original(...args); turn.ms = Math.round(performance.now() - started); globalThis.groupTurns.push(turn);
+        };
+    });
+    const round = async (name, type, question) => {
+        stage = name; const start = generations.length, requestStart = remoteRequests.length, turnStart = await page.evaluate(() => groupTurns.length);
+        const started = performance.now();
+        await page.evaluate(async ({ type, question }) => {
+            if (type === 'swipe') { await (await import('/script.js')).swipe_right(); return; }
+            document.querySelector('#send_textarea').value = question; await SillyTavern.getContext().generate(type);
+        }, { type, question });
+        await page.waitForFunction(() => !document.body.dataset.generating && SillyTavern.getContext().characterId === undefined);
+        await waitStatus('synchronized');
+        return { requests: generations.slice(start), remote: remoteRequests.slice(requestStart), turns: (await page.evaluate(() => groupTurns)).slice(turnStart), elapsedMs: Math.round(performance.now() - started),
+            chat: await page.evaluate(() => SillyTavern.getContext().chat.map(m => ({ name: m.name, mes: m.mes }))) };
+    };
+    const asked = await round('group-round', 'normal', 'Where does the red lantern hang? Answer from the conversation.');
+    const recalled = request => JSON.stringify(request.messages).includes('Past conversation excerpt') && JSON.stringify(request.messages).includes('in the north harbor');
+    assert(asked.requests.length === 2 && asked.turns.map(t => t.member).join() === 'SillyMemory E2E Ana,SillyMemory E2E Ben' && asked.requests.every(recalled),
+        'group: each member turn retrieves the archived bundle from live memory');
+    assert(asked.remote.filter(r => r.resource.endsWith('query')).length === 2, 'group: one live search per responding member');
+    assert(asked.remote.some(r => r.resource.endsWith('docs/upsert') && r.messages.join() === '8,9,10'), 'group: the displaced bundle is uploaded together');
+    assert(asked.chat.at(-2).mes.startsWith('Ana answers: the red lantern') && asked.chat.at(-1).mes.startsWith('Ben answers: the red lantern'), 'group: both members reply with the recalled fact');
+    const swiped = await round('group-swipe', 'swipe');
+    const swipeMessages = JSON.stringify(swiped.requests[0]?.messages || []);
+    assert(swiped.requests.length === 1 && swiped.turns.map(t => `${t.member}:${t.type}`).join() === 'SillyMemory E2E Ben:swipe' && swipeMessages.includes(asked.chat.at(-2).mes) && recalled(swiped.requests[0]),
+        'group: swipe regenerates one member, keeps the earlier member reply and uses live memory');
+    stage = 'group branch';
+    const branchFrom = asked.chat.length - 1;
+    await page.evaluate(async index => { await (await import('/scripts/bookmarks.js')).branchChat(index); }, branchFrom);
+    await waitStatus('synchronized');
+    const branch = await memory();
+    const forks = remoteRequests.filter(r => r.stage === 'group branch' && r.method === 'POST' && r.resource.endsWith('branches'));
+    assert(branch.id !== parent.id && branch.story === parent.story && branch.source === parent.id && forks.some(r => r.branchName === `chat_${branch.id}` && r.sourceName === `chat_${parent.id}`)
+        && !remoteRequests.some(r => r.stage === 'group branch' && r.resource.endsWith('docs/upsert')), 'group: a native branch forks the parent memory without uploading it again');
+    const inBranch = await round('group-branch-round', 'normal', 'Where does the red lantern hang? Answer from the conversation.');
+    assert(inBranch.requests.length === 2 && inBranch.requests.every(recalled), 'group: branch member turns retrieve inherited memory');
+    stage = 'group branch deletion';
+    const collection = await page.evaluate(async () => {
+        const c = SillyTavern.getContext(), { capture } = await import('/scripts/extensions/third-party/sillymemory/src/memory.js');
+        const { chatCollection } = await import('/scripts/extensions/third-party/sillymemory/src/chat-collections.js');
+        return (await chatCollection(capture(c), c.extensionSettings.sillymemory.owner)).collection;
+    });
+    await answerMemoryPopup(page, () => chatMemoryAction(page, 'delete').click());
+    await waitStatus('memory was deleted');
+    const branches = await page.evaluate(async ({ credentials, collection }) => {
+        const { LambdaClient } = await import('/scripts/extensions/third-party/sillymemory/src/client.js');
+        const client = new LambdaClient(credentials, credentials.key);
+        try { return (await client.branches(collection)).map(b => b.name); } finally { client.forget(); }
+    }, { credentials, collection });
+    assert(!branches.includes(`chat_${branch.id}`) && branches.includes(`chat_${parent.id}`), 'group: deleting branch memory removes only that branch on the live service');
+    // The whole group collection is deleted with all memory during cleanup.
+    const turns = await page.evaluate(() => groupTurns);
+    return { groupId: Boolean(groupId), collectionCreated: pending.collections.some(c => c.name === collection), collection, turns,
+        searches: remoteRequests.filter(r => r.stage.startsWith('group') && r.resource.endsWith('query')).map(r => ({ stage: r.stage, ms: r.ms })),
+        roundMs: { normal: asked.elapsedMs, swipe: swiped.elapsedMs, branch: inBranch.elapsedMs },
+        requestCounts: Object.fromEntries(['group setup', 'group seed', 'group-round', 'group-swipe', 'group branch', 'group-branch-round', 'group branch deletion'].map(name => [name, remoteRequests.filter(r => r.stage === name).length])) };
+}
 try {
     const configPath = path.join(work, 'config.yaml'); await writeFile(configPath, await readFile(path.join(source, 'default/config.yaml')));
     server = spawn(process.execPath, ['server.js', '--configPath', configPath, '--dataRoot', path.join(work, 'data'), '--port', String(port), '--listen', 'false', '--browserLaunchEnabled', 'false', '--corsProxy', 'false'], { cwd: source, stdio: 'ignore' });
@@ -192,6 +295,15 @@ try {
         }
         if (failRetrieval && target.pathname.endsWith('/query')) return route.fulfill({ headers: { 'Access-Control-Allow-Origin': new URL(page.url()).origin }, status: 503, contentType: 'application/json', body: '{"message":"Injected test failure"}' });
         await route.continue();
+    });
+    page.on('requestfinished', request => {
+        const target = new URL(request.url());
+        if (target.origin !== new URL(credentials.endpoint).origin || request.method() === 'OPTIONS') return;
+        const resource = target.pathname.split('/').slice(5).join('/') || 'collection';
+        const body = request.method() === 'POST' ? request.postDataJSON() : undefined;
+        remoteRequests.push({ stage, method: request.method(), resource, ms: Math.round(request.timing().responseEnd),
+            ...(resource.endsWith('docs/upsert') ? { branch: body.branch, messages: [...new Set(body.docs.map(d => d.message))].sort((a, b) => a - b) } : {}),
+            ...(resource === 'branches' && body ? { branchName: body.branchName, sourceName: body.source?.name } : {}) });
     });
     await page.goto(url); await page.getByText('Welcome to SillyTavern!', { exact: true }).waitFor(); await page.getByText('Save', { exact: true }).last().click();
     await page.locator('#sillymemory').waitFor({ state: 'attached', timeout: 45000 });
@@ -263,6 +375,7 @@ try {
     await openSettings(); await field('enabled').uncheck();
     const disabled = await generate('disabled-again');
     assert(!disabled.prompt.includes('Past conversation excerpt'), 'disable removes injected memory from final request');
+    groupResult = await runGroupScenario();
     stage = 'secret audit';
     await openSettings(); await field('disconnect').click(); await waitStatus('Saved key removed');
     const serialized = await page.evaluate(async () => { const c = SillyTavern.getContext(); const r = await fetch('/api/settings/get', {method:'POST', headers:c.getRequestHeaders(), body:'{}'}); return JSON.stringify({local:{...localStorage},session:{...sessionStorage},settings:await r.json()}); });
@@ -283,6 +396,13 @@ try {
                     return Boolean(JSON.parse(localStorage.getItem(`sillymemory:state:${owner}`) || '{}').ready);
                 });
                 if (hasMemory) {
+                    // Earlier steps end disconnected; deletion needs the project connection.
+                    await openSettings();
+                    await page.waitForFunction(() => !document.querySelector('#sillymemory [data-sm="connect"]')?.disabled, null, { timeout: 60000 });
+                    if (!await field('disconnect').isVisible()) {
+                        await page.evaluate(({ endpoint, project, key }) => { for (const [name, value] of Object.entries({ endpoint, project, key })) document.querySelector(`[data-sm="${name}"]`).value = value; }, credentials);
+                        await field('connect').click(); await waitStatus('Connected.');
+                    }
                     // The shipped deletion path invalidates retrieval and drains writes.
                     // If it fails, retain the pending record instead of racing deletion.
                     await openSettings();
@@ -308,7 +428,7 @@ try {
         try { assert(summarizeProviderSpacing(generations, PROVIDER_SPACING).verified, 'actual provider starts respect the 15-second interval'); }
         catch (error) { failure = { stage: 'provider spacing', reason: error.message }; }
     }
-    const report = { time: new Date().toISOString(), sillyTavern: revision, lambdaDB: 'live', generator: liveModel ? 'live compatible model' : 'deterministic test fixture, not a real LLM', model, generationIntervalMs, maxOutputTokens, reasoningEffort, excludedParameters, hostContextTokens, providerCalls, providerSpacing: PROVIDER_SPACING, checks, failure, events, generations, cleanupComplete, sourceSha256, passed: !failure && cleanupComplete };
+    const report = { time: new Date().toISOString(), sillyTavern: revision, lambdaDB: 'live', generator: liveModel ? 'live compatible model' : 'deterministic test fixture, not a real LLM', model, generationIntervalMs, maxOutputTokens, reasoningEffort, excludedParameters, hostContextTokens, providerCalls, providerSpacing: PROVIDER_SPACING, checks, failure, events, generations, cleanupComplete, group: groupResult, remoteRequests: remoteRequests.map(({ stage, method, resource, ms }) => ({ stage, method, resource, ms })), sourceSha256, passed: !failure && cleanupComplete };
     let output = JSON.stringify(report,null,2);
     for (const value of [credentials.key,env.LLM_API_KEY,credentials.endpoint,credentials.project,env.LLM_BASE_URL].filter(Boolean)) output=output.replaceAll(value,'[REDACTED]');
     await writeFile(reportPath,output);

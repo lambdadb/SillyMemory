@@ -14,14 +14,19 @@ export async function digest(value) {
     const bytes = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(value));
     return Array.from(new Uint8Array(bytes), x => x.toString(16).padStart(2, '0')).join('');
 }
+// The chat owner key names the host chat namespace: the character avatar for a
+// character chat and `group:<id>` for a group chat. A group's key does not
+// depend on the member generating, so it stays valid between member turns.
+export function chatOwner(context) {
+    if (context.groupId) return `group:${context.groupId}`;
+    return context.characterId === undefined ? undefined : context.characters?.[context.characterId]?.avatar || undefined;
+}
 export function supportsChat(context) {
-    if (context.groupId || context.characterId === undefined || !context.getCurrentChatId()) return false;
-    if (context.chat.some(m => m.is_system && m.extra?.tool_invocations?.length)) return false;
-    return Boolean(context.characters[context.characterId]?.avatar);
+    if (!chatOwner(context) || !context.getCurrentChatId()) return false;
+    return !context.chat.some(m => m.is_system && m.extra?.tool_invocations?.length);
 }
 export function capture(context) {
     if (!supportsChat(context)) return null;
-    const avatar = context.characters[context.characterId].avatar;
     const messages = context.chat.filter(x => !x.is_system).map((m, index) => {
         const recordedAt = hostTimestamp(m.send_date);
         return {
@@ -32,7 +37,7 @@ export function capture(context) {
         };
     });
     const metadata = context.chatMetadata?.sillymemory;
-    return { character: avatar, chat: metadata?.id, messages, memory: { story: metadata?.story, source: metadata?.source } };
+    return { character: chatOwner(context), chat: metadata?.id, messages, memory: { story: metadata?.story, source: metadata?.source } };
 }
 export function fingerprint(snapshot) { return JSON.stringify(snapshot); }
 export function retrievalQueries(snapshot, type = 'normal') {
@@ -51,12 +56,15 @@ export function archiveBoundary(snapshot, type = 'normal') {
     const anchor = retentionAnchor(snapshot.messages, type);
     if (anchor < 0) return 0;
     const start = retentionStart(snapshot.messages, anchor);
-    const first = snapshot.messages[start], previous = snapshot.messages[start - 1];
-    // Keep an adjacent eligible input/reply together. A normal new user input
-    // already aligns the five-message window; after its reply this retains six,
-    // avoiding a second small write until that whole pair leaves the window.
-    return first.eligible !== false && first.text.trim() && !first.user
-        && previous?.user && previous.eligible !== false && previous.text.trim() ? start - 1 : start;
+    // Keep a turn bundle, a user input and every reply up to the next input,
+    // together: a boundary inside a bundle moves back to its input. A normal new
+    // input already aligns the five-message window; after one reply this retains
+    // six, and group member replies keep their whole bundle. Messages before the
+    // first input, such as greetings, and an ineligible or blank input have no
+    // indexed input to align to and keep the plain message boundary.
+    const user = snapshot.messages.slice(0, start + 1).findLastIndex(m => m.user);
+    const input = snapshot.messages[user];
+    return user >= 0 && input.eligible !== false && input.text.trim() ? user : start;
 }
 export function memoryBoundary(snapshot, type = 'normal') {
     // Normal/regenerate/swipe keep only their question; Continue keeps the

@@ -1,0 +1,191 @@
+# Group chat support (design)
+
+Status: implemented (unreleased). Host behavior below was verified with the
+emulated browser harness; see [Implementation notes](#implementation-notes).
+
+## Product decision and boundary
+
+Allow SillyMemory in SillyTavern group chats with the same storage, retrieval
+and failure-safety model as single-character chats. The first version is the
+smallest change that keeps the native group workflow (member activation order,
+Auto-mode, Regenerate, swipe, Continue, checkpoints and branches) working and
+fails explicitly when memory cannot be delivered.
+
+Answer quality in group chats is not evaluated. Existing LongMemEval results
+cover single-character dialogue only; do not claim group-chat quality until a
+separate evaluation exists. Tool conversations, files, Data Bank and World Info
+remain outside the indexed path, as for single-character chats.
+
+## Host behavior (SillyTavern 1.19.0, `06bde939`)
+
+Found by source inspection and exercised by `npm run test:browser`
+(`scripts/group-chat-scenarios.mjs`) on the pinned host.
+
+| Behavior | Source |
+| --- | --- |
+| Group chat files store `chat_metadata` in their first line, like character chats. | `public/scripts/group-chats.js` `saveGroupChat` |
+| Group chats carry an `integrity` slug, created on load when missing and checked by `/api/chats/group/save`. | `group-chats.js` `getGroupChat`; `src/endpoints/chats.js` `/group/save` |
+| Checkpoints and branches save `{ main_chat, integrity: <new uuid> }` through `saveGroupBookmarkChat`, the same fork model used for character chats. | `public/scripts/bookmarks.js` `createBranch`, `createNewBookmark` |
+| `/api/chats/group/get { id }` returns the full file including the metadata header. `/api/chats/group/info` does not return metadata. | `chats.js` |
+| `getCurrentChatId()` returns the group's `chat_id`; `getContext().groupId` is the selected group. | `public/script.js`, `public/scripts/st-context.js` |
+| `characterId`/`name2` are set only while a member's turn is generating and are `undefined`/empty between turns. | `group-chats.js` `generateGroupWrapper` |
+| One user input runs `Generate` (and therefore the generate interceptor) once per activated member, sequentially. | `generateGroupWrapper` |
+| Group Regenerate deletes the last generation's replies and then generates with type `normal`. Swipe and Continue regenerate only the member that wrote the message. | `group-chats.js` `regenerateGroup`, `generateGroupWrapper` |
+| A fresh group chat starts with each member's first message, consecutive assistant messages without a user message. | `getGroupChat` |
+
+## Chat identity and storage
+
+Keep one collection per story and one branch per chat path.
+
+```
+collection = smstory_<SHA-256(owner, chat owner key, story ID)[0:40]>
+branch     = chat_<chat ID>
+```
+
+- The chat owner key is the character avatar for character chats and
+  `group:<groupId>` for group chats. The prefix separates the two namespaces.
+- A new independent group chat starts a new story and therefore a new
+  collection. Its checkpoints and branches are branches of that collection and
+  fork from the parent branch exactly as for character chats.
+- Adding or removing group members does not change the story identity.
+- Replace direct `characters[characterId].avatar` reads used for identity
+  (`supportsChat`, `requestTarget`, `sameChat`, chat-collection resolution,
+  saved on/off verification) with one helper that returns the chat owner key
+  and the matching host chat API. These reads must work between member turns,
+  when `characterId` is undefined.
+- Saved metadata verification reads group chats with `/api/chats/group/get`.
+- Duplicate detection and parent lookup need group chat metadata. Read the
+  group's `chats` list with `/api/chats/group/get` per chat. Group chat counts
+  are expected to be small; measure this during validation and revisit if
+  activation becomes slow.
+
+## Recent dialogue window
+
+Generalize the existing pair alignment to a turn bundle.
+
+- A bundle is a user message plus every following message up to the next user
+  message.
+- Keep at least five recent eligible messages including the active input, as
+  today. When the boundary falls inside a bundle, move it back to the bundle's
+  user message. The previous rule moved back by exactly one message. The bundle
+  rule applies to character and group chats alike: alternating chats give the
+  same result as before, and a character chat with several replies after one
+  user message (for example after an empty send) now keeps or archives that
+  whole bundle, as a group does.
+- Small bundles leave several bundles in the prompt; once the current bundle
+  alone has five or more messages, only that bundle remains and earlier bundles
+  are archived.
+- A displaced bundle is uploaded as a whole using the existing 200-document
+  batches.
+- Messages before the first user message (fresh group greetings) have no user
+  message to align to and use the existing message boundary. An ineligible
+  (attachment) or blank user message is not indexed either, so a bundle that
+  starts with one also keeps the plain message boundary, as the pair rule did.
+
+### Long Auto-mode limitation
+
+Auto-mode without user input keeps extending the current bundle, so the whole
+run since the last user message stays in the prompt. History before that user
+message is archived and retrieved normally. When the current bundle no longer
+fits the context, prompt delivery verification reports missing recent messages:
+with **Stop on missing context** on (default) the reply stops; with it off the
+host trims the oldest messages, including the triggering user message, which is
+then in neither the prompt nor memory. Sending a new user message starts a new
+bundle and restores normal behavior. Document this as a current limit.
+
+If monitoring shows this happens in practice, consider keeping the triggering
+user bundle plus recent generation rounds (two retained spans) instead.
+Generation-round bundles (`extra.gen_id`) alone were rejected because a long
+Auto-mode run would silently archive the user message that started it.
+
+## Retrieval per member turn
+
+Each member turn runs the existing preparation: synchronize, search with the
+latest eligible user message as the query, select memory within the budget and
+verify delivery. No cross-turn result reuse in the first version.
+
+Within one user turn the query is identical and new replies stay in the recent
+window, so results are normally identical across members. They can differ only
+when the current bundle reaches five messages mid-round and the previous bundle
+is archived. The cost is one search per responding member; turns are sequential,
+so the default project rate limit is not expected to be exceeded. Measure the
+added latency and request count before considering reuse.
+
+## Prompt construction
+
+- Label recalled and retained messages with their stored speaker names instead
+  of `name2`, which changes per member turn.
+- Memory guidance remains the same; it addresses the member currently
+  generating through the host's own prompt.
+- Delivery verification runs per member turn with that turn's expected memory
+  and retained input.
+
+## Policy text to update with the implementation
+
+AGENTS.md and architecture.md describe the recent boundary as an adjacent
+user/assistant pair. Update them to the bundle rule in the same change.
+
+## Validation
+
+- Unit tests: bundle boundary with multiple replies per user message, fresh
+  greetings before the first user message, single-character results unchanged.
+- Host tests: enable memory in a group chat, member turns between which
+  `characterId` is undefined, Regenerate/swipe/Continue, checkpoint and branch
+  fork reuse, reload restoring the on/off choice.
+- Report the per-member search count and latency observed in host tests.
+- No group-chat answer-quality evaluation in this change.
+
+## Out of scope
+
+- Cross-turn retrieval reuse.
+- Retained spans for long Auto-mode.
+- Per-member memory or member-specific retrieval.
+- Group-chat quality evaluation.
+
+## Implementation notes
+
+- The chat owner key is `chatOwner()` in `src/memory.js`. Host chat reads and
+  the group inventory are `hostChats()` in `src/chat-collections.js`. Identity
+  saves use `saveGroupChat(groupId, false)` for groups because the host's
+  `saveChat` throws in a group; both capture their target before the first await.
+- Retention for swipe is `retentionAnchor()` in `src/context.js`.
+- Bundle alignment is `archiveBoundary()` in `src/memory.js`. Unit tests compare
+  it with the previous pair rule over every alternating chat of up to ten
+  messages with eligible, ineligible and blank messages.
+- Host test observations (local emulator, two members, list activation):
+  - Turning memory on read `/api/chats/group/get` three times (inventory of one
+    chat, identity read-back, on/off read-back) and took about 1.1 s.
+  - One user message made two searches and two completions, one per member,
+    with the same Query 1. The interceptor took 15-23 ms per member turn against
+    the local emulator; this is not a live-service latency measurement.
+  - Regenerate ran both members with type `normal`; swipe and Continue ran only
+    the member that wrote the last message.
+  - Swipe excludes only the swiped final reply. The host removes it from
+    `coreChat` (`Generate`: `if (type === 'swipe') coreChat.pop()`) while the
+    source chat still holds it. A group swipe of the second member's reply
+    keeps the first member's reply of the same round in the prompt and in the
+    delivery check. Regenerate is unchanged: it still retains only through the
+    latest user message, the existing rule that a retained answer must not
+    steer its replacement (prompt-delivery case
+    `replacement-with-assistant-suffix`). In a character chat the host deletes
+    only the last reply before interceptors run; group Regenerate deletes the
+    whole round and generates with type `normal`, so the rule does not apply.
+  - A memory preparation failure in a group stops the whole round through the
+    host stop (`stopGeneration()`), the mechanism the missing-context stop
+    uses: the group loop aborts before the next member. With a persistent
+    failure, and with a failure only on the first member, no member replies,
+    the input stays last and the chat shows **Reply stopped** with Retry.
+    Like the native Stop button, the stopped group generation rejects with the
+    host's abort error.
+- Live LambdaDB (`npm run test:generation`, deterministic local model, two
+  members): synchronization archived the greetings and first two bundles in one
+  upsert; each member turn searched once and recalled the archived fact; the
+  displaced bundle was uploaded together; swipe ran one member and kept the
+  earlier member reply; a native branch forked the parent branch without
+  uploading documents again and its member turns recalled the inherited fact;
+  deleting the branch's memory removed only that branch. Live searches took
+  about 0.42-0.51 s and member-turn preparation 0.53-1.03 s; a two-member round
+  took about 2.4 s. The branch's first preparation polled about 50 consistent
+  fetches while confirming that the parent's documents were committed. All
+  three created collections were deleted and verified absent. No real model was
+  used and answer quality was not evaluated.

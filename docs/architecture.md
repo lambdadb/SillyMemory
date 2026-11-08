@@ -8,9 +8,9 @@ There is no server plugin. Runtime modules have no external dependencies. Playwr
 
 ## Identity and source authority
 
-The current SillyTavern chat is authoritative. The owner is a random per-account identity kept in extension settings; its initial save is awaited and read back before the UI permits remote operations. Browser-local configuration and journals are keyed by that owner. Scope is SHA-256 of owner, character avatar filename, and the saved story ID. Every story has one owned collection; each chat path has its own writable branch. Native metadata is persisted and read back before remote use. Verified native forks inherit the story scope; independent copies start new stories. The source revision hashes message position, speaker, role, selected swipe, full text and normalized conversation-time metadata. A chunk ID contains scope, revision, chunking policy, ordinal and source offsets. Insertion/deletion can renumber subsequent messages and require reindexing; content is never deduplicated across scopes.
+The current SillyTavern chat is authoritative. The owner is a random per-account identity kept in extension settings; its initial save is awaited and read back before the UI permits remote operations. Browser-local configuration and journals are keyed by that owner. Scope is SHA-256 of owner, the chat owner key and the saved story ID. The chat owner key is the character avatar filename for a character chat and `group:<groupId>` for a group chat; it does not depend on the member currently generating, so identity, request targets and saved on/off verification work between member turns. Group chats are read with `/api/chats/group/get`, and their inventory for duplicate and parent detection is the group's chat list read the same way. Every story has one owned collection; each chat path has its own writable branch. Native metadata is persisted and read back before remote use. Verified native forks inherit the story scope; independent copies start new stories. The source revision hashes message position, speaker, role, selected swipe, full text and normalized conversation-time metadata. A chunk ID contains scope, revision, chunking policy, ordinal and source offsets. Insertion/deletion can renumber subsequent messages and require reindexing; content is never deduplicated across scopes.
 
-Ordinary synchronization indexes completed eligible text only before the recent-five boundary, rounded back by one message if it splits an adjacent eligible user/assistant pair. A trailing user input remains pending. New source that crosses that boundary is uploaded immediately; the displaced pair shares existing batches of at most 50 documents, while document/chunk identities stay separate. A five-message write queue is not used. Chunks are up to 800 Unicode code points by default. They retain message/chunk provenance and available host time/source metadata, separately from embedding text. The current implementation selects whole chunks and does not perform neighbor expansion. Renaming a chat preserves its saved identity. Changing the character avatar identity is not a continuity guarantee.
+Ordinary synchronization indexes completed eligible text only before the recent-five boundary, rounded back to the input of the turn bundle it splits. A bundle is an eligible user input and every following message up to the next input; messages before the first input, and an ineligible or blank input, keep the plain boundary. The rule is the same for character and group chats: alternating chats keep the previous one-message pair alignment, and a character chat with several replies after one input keeps or archives that whole bundle. A trailing user input remains pending. New source that crosses that boundary is uploaded immediately; the displaced bundle shares existing batches of at most 50 documents, while document/chunk identities stay separate. A five-message write queue is not used. Chunks are up to 800 Unicode code points by default. They retain message/chunk provenance and available host time/source metadata, separately from embedding text. The current implementation selects whole chunks and does not perform neighbor expansion. Renaming a chat preserves its saved identity. Changing the character avatar identity is not a continuity guarantee. Group membership changes do not change a group chat's story.
 
 ## Write ordering and recovery
 
@@ -35,14 +35,20 @@ remains in the generation prompt but is not appended to the search query.
 Regenerate/swipe exclude the answer being replaced; continuation anchors on the
 eligible message being extended; Impersonate anchors on the latest eligible response.
 No query rewriting model or second search is used.
+In a group chat the host runs generation once per responding member, and each
+member turn runs this whole preparation, search and delivery check; no result is
+reused across member turns. Recalled excerpts keep their stored speaker names.
 Storage archives completed source before the recent-five boundary. Generation
 retains at least five recent eligible messages through the active anchor,
-including a paired user when the window would start at its adjacent assistant reply, together
+extended back to the input of the turn bundle the window would start inside, together
 with selected memory alongside native settings.
 Generation retention uses the actual native position, independently of query
 eligibility. Continue/Impersonate retain through the final source position;
-regenerate/swipe exclude replies after the latest user position, including
-ineligible/blank inputs. The existing query boundary remains an additional retrieval
+Regenerate retains through the latest user position, so no reply after it
+steers its replacement; swipe excludes only the swiped final reply, which the
+pinned host also removes from its prompt, so earlier replies after the latest
+input, such as another group member's in the same round, stay retained. A blank
+or ineligible latest input still counts. The existing query boundary remains an additional retrieval
 constraint.
 Answers following a replacement question are removed from ephemeral generation
 input and excluded from retrieval.
@@ -95,7 +101,7 @@ follow-up questions remain optional. Do not treat absent retrieval as proof of a
 Final delivery validates this instruction alongside excerpts and every verifiable
 retained recent turn. Long raw turns can exceed host context even when the
 memory allocation fits; the default loss guard stops that generation.
-Failed preparation clears it and stops generation; disabling memory restores native full-history behavior. This does not detect
+Failed preparation clears it and stops generation; in a group chat it also stops the remaining member turns through the host stop, as the missing-context stop does; disabling memory restores native full-history behavior. This does not detect
 answer correctness or ensure that every model follows the instruction.
 
 The pinned host scans `coreChat` for World Info after interceptors. Recalled excerpts can therefore participate in its ordinary history scan. World Info, other prompt rewriters, non-chat-completion providers and different host revisions are unverified. See the [speaker results](https://github.com/lambdadb/SillyMemory/blob/e858fbaff040e60ee0de2ed9264cdd10bc37d722/docs/speaker-attribution-results.md) for the bounded OpenAI validation and remaining actor-attribution failure.
