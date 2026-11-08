@@ -243,7 +243,10 @@ async function runGroupScenario() {
         'group: each member turn retrieves the archived bundle from live memory');
     assert(asked.remote.filter(r => r.resource.endsWith('query')).length === 2, 'group: one live search per responding member');
     assert(asked.remote.some(r => r.resource.endsWith('docs/upsert') && r.messages.join() === '8,9,10'), 'group: the displaced bundle is uploaded together');
-    assert(asked.chat.at(-2).mes.startsWith('Ana answers: the red lantern') && asked.chat.at(-1).mes.startsWith('Ben answers: the red lantern'), 'group: both members reply with the recalled fact');
+    // The fixture marks each member's reply; a live model only has to state the source fact.
+    const replied = (message, member) => liveModel ? message.name === `SillyMemory E2E ${member}` && message.mes.toLowerCase().includes('north harbor')
+        : message.mes.startsWith(`${member} answers: the red lantern`);
+    assert(replied(asked.chat.at(-2), 'Ana') && replied(asked.chat.at(-1), 'Ben'), 'group: both members reply with the recalled fact');
     const swiped = await round('group-swipe', 'swipe');
     const swipeMessages = JSON.stringify(swiped.requests[0]?.messages || []);
     assert(swiped.requests.length === 1 && swiped.turns.map(t => `${t.member}:${t.type}`).join() === 'SillyMemory E2E Ben:swipe' && swipeMessages.includes(asked.chat.at(-2).mes) && recalled(swiped.requests[0]),

@@ -98,7 +98,8 @@ edits, swipes, streaming, branches, deletion and retrieval-failure aborts, and a
 two-member group chat: an archived bundle retrieved in each member turn, a group
 swipe, a group branch forked from its parent and branch-memory deletion. A run
 creates at most three collections (the connection test, one character story and
-one group story) and deletes them before removing its pending record.
+one group story) and deletes them before removing its pending record. With
+`--live-model` the group scenario adds five model calls under the same spacing.
 Pending cleanup records under `artifacts/` must survive until cleanup succeeds.
 
 `npm run test:generation:live` additionally requires `LLM_BASE_URL`, `LLM_MODEL`
