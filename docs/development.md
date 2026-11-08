@@ -72,7 +72,8 @@ These use real Chromium and the pinned host with synthetic data, local LambdaDB
 and completion fixtures, and disposable profiles. They make no paid service calls.
 The browser harness checks connection, per-chat memory, native checkpoints and
 branches, native reply behavior and group chats (member turns, Regenerate,
-swipe, Continue, group checkpoints and branches, reload). Fault/recovery modes check cancellation, uncertain writes,
+swipe, Continue, group checkpoints and branches, reload, stopped rounds, Auto
+Mode stops and the group inventory read time). Fault/recovery modes check cancellation, uncertain writes,
 reloads and cleanup. The prompt-delivery harness checks final archive/input
 preservation, context pressure, repeated citations and same-message assembly.
 Reports and screenshots go to ignored `artifacts/`; model fixtures do not grade

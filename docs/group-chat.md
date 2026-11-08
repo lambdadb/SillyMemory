@@ -87,11 +87,20 @@ Generalize the existing pair alignment to a turn bundle.
 Auto-mode without user input keeps extending the current bundle, so the whole
 run since the last user message stays in the prompt. History before that user
 message is archived and retrieved normally. When the current bundle no longer
-fits the context, prompt delivery verification reports missing recent messages:
-with **Stop on missing context** on (default) the reply stops; with it off the
-host trims the oldest messages, including the triggering user message, which is
-then in neither the prompt nor memory. Sending a new user message starts a new
-bundle and restores normal behavior. Document this as a current limit.
+fits the context, prompt delivery verification reports missing memory or recent
+messages: with **Stop on missing context** on (default) the reply stops and the
+host's stop listener turns Auto Mode off; with it off the host trims the oldest
+messages, including the triggering user message, which is then in neither the
+prompt nor memory. Document this as a current limit.
+
+The design first assumed that a new user message restores normal behavior. The
+host test shows it does not: the new input's five-message window starts inside
+the long run, so the bundle rule keeps the whole run, and the reply stops again
+at the same context. The run leaves the window only once five newer messages
+exist. With **Stop on missing context** off, two more user messages in a
+two-member group were enough to archive the run, after which stopping worked
+normally again; increasing the context size also recovers. A product change
+(for example the two-span retention below) needs a separate decision.
 
 If monitoring shows this happens in practice, consider keeping the triggering
 user bundle plus recent generation rounds (two retained spans) instead.
@@ -177,6 +186,28 @@ user/assistant pair. Update them to the bundle rule in the same change.
     the input stays last and the chat shows **Reply stopped** with Retry.
     Like the native Stop button, the stopped group generation rejects with the
     host's abort error.
+  - A stop after an earlier member replied leaves that reply as the last
+    message, so **Retry reply** is hidden. The stopped message in a group says
+    that Regenerate redoes the whole round and points to the member list's
+    **Trigger a message from this character** button (`data-action="speak"`,
+    `Generate('normal', { force_chid })`) for only the missing reply. Character
+    chats keep the previous text.
+  - Auto Mode: a preparation failure and a missing-context stop both emit
+    `GENERATION_STOPPED`; the listener the host registers when Auto Mode is
+    switched on aborts the run and turns Auto Mode off, and no further round
+    runs (checked over three one-second intervals). The stopped message then
+    says that Auto Mode was turned off. The host keeps its aborted controller
+    for later Auto Mode rounds (`Generate` reuses it when a signal is passed),
+    so re-enabling Auto Mode right after any stop, including the native Stop
+    button, runs rounds that generate nothing while each member turn still
+    prepares memory. An ordinary send replaces the controller, so the message
+    says to send a message before turning Auto Mode on again.
+  - Inventory cost: with 20 group chats and 20 character chats of 500
+    synthetic messages each (about 100 KB per file), reading the group
+    inventory took a median 28 ms against 5 ms for the character inventory;
+    opening a memory-enabled group chat through identity verification and
+    synchronization took about 0.5 s. This is local loopback; the reads are
+    unchanged.
 - Live LambdaDB (`npm run test:generation`, deterministic local model, two
   members): synchronization archived the greetings and first two bundles in one
   upsert; each member turn searched once and recalled the archived fact; the

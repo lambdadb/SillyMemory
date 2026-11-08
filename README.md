@@ -111,7 +111,7 @@ not a guarantee for every model or roleplay.
 | Connection or authentication failure | Click **Reconnect** in the Memory panel. If it keeps failing, open **SillyMemory settings → Connection**, use **Disconnect** or **Forget key**, then connect again. |
 | Setup test failed | Click **Clean up test data**, then **Run setup test** in settings. |
 | Synchronization failure | Follow the status message, then click **Retry synchronization** in the Memory panel. Synchronization also runs again on the next message, edit or chat change. |
-| Reply stopped while adding memory | Read the status, fix the cause, then click **Retry reply** or use SillyTavern's **Regenerate**. Only a request LambdaDB rejected with HTTP 429 is retried automatically, at most twice within the same 15-second request deadline. |
+| Reply stopped while adding memory | Read the status, fix the cause, then click **Retry reply** or use SillyTavern's **Regenerate**. In a group, Regenerate redoes the whole round; to get only a missing member's reply, use **Trigger a message from this character** next to that member in the group panel. If Auto Mode was on, it is turned off: send a message before turning it on again. Only a request LambdaDB rejected with HTTP 429 is retried automatically, at most twice within the same 15-second request deadline. |
 | LambdaDB is busy or over its request limit (HTTP 429) | Each LambdaDB project has a request budget of `rate_limit` requests per second (5 by default), refilled at that rate. The extension waits as long as the response's `Retry-After` header says (one second for the default limit) and retries twice, so this status normally clears itself; if it persists, check the project's `rate_limit` in the LambdaDB console project overview and raise it through a support request. |
 | Query exceeds 8 KiB | Shorten the latest messages, or turn memory off for that reply. |
 
@@ -152,11 +152,14 @@ rest of the flow is the same.
   outside the supported path.
 - Group-chat answer quality is not evaluated; the recorded benchmark results
   cover single-character dialogue only.
-- Group Auto-mode without your input keeps every reply since your last message
+- Group Auto Mode without your input keeps every reply since your last message
   in the prompt. A long run can outgrow the context: with **Stop on missing
-  context** on (the default) the reply stops; with it off SillyTavern drops the
-  oldest messages, including your last message, which is then in neither the
-  prompt nor memory. Sending a new message restores normal behavior.
+  context** on (the default) the reply stops and Auto Mode turns off. A new
+  message alone does not fix this, because the run stays in the prompt until
+  five newer messages exist. Increase the context size, or turn **Stop on
+  missing context** off until then (two of your messages with two members):
+  SillyTavern drops the oldest messages meanwhile, including your last message
+  before the run, which is then in neither the prompt nor memory.
 - Live reply and streaming checks cover OpenAI `gpt-6.1-sol` on SillyTavern
   1.19.0 and Chromium; other models, providers and browsers are unverified.
 - Prompt delivery is checked for Chat Completion; other formats may report

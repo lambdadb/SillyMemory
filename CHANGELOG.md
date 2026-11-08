@@ -28,15 +28,21 @@ boundary; publication is confirmed by the corresponding Git tag and GitHub Relea
   user message, such as another group member's reply in the same round, stay in
   the prompt; alternating chats are unaffected. Regenerate is unchanged.
 - In a group chat, a memory preparation failure stops the whole round, so no
-  later member replies without memory. **Retry** stays available.
+  later member replies without memory. **Retry** stays available. A stopped
+  group reply explains that Regenerate redoes the whole round and points to
+  **Trigger a message from this character** for a missing member reply; when
+  Auto Mode was on it says that Auto Mode was turned off and to send a message
+  before turning it on again.
 
 ### Known limits
 
-- Group Auto-mode without user input keeps every reply since the last user
+- Group Auto Mode without user input keeps every reply since the last user
   message in the prompt. A long run can outgrow the context: with **Stop on
-  missing context** on (default) the reply stops; with it off SillyTavern drops
-  the oldest messages, including that user message, which is then in neither
-  the prompt nor memory. Sending a new message restores normal behavior.
+  missing context** on (default) the reply stops and Auto Mode turns off. A new
+  message does not recover by itself, because the run stays in the prompt until
+  five newer messages exist; increase the context size, or turn **Stop on
+  missing context** off until then (SillyTavern drops the oldest messages
+  meanwhile, including the user message before the run).
 
 ## [0.9.1] - 2026-11-06
 

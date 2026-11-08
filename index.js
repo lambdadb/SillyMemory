@@ -26,7 +26,7 @@ let deliveryText = '', inspectionText = 'No memory added yet.';
 let retrying = false, sourceRevision = 0;
 let hostGenerating = () => false;
 let promptType, promptSource;
-let hostOpenAI, hostTokenizers, tokenUsage;
+let hostOpenAI, hostTokenizers, hostGroups, tokenUsage;
 const engines = new Map();
 const entryKey = entry => `${entry.collection}:${entry.branch}`;
 const delivery = new PromptDelivery();
@@ -407,6 +407,16 @@ function schedule() {
     };
     timer = setTimeout(run, 400);
 }
+// A stopped group round needs group-specific recovery. Read before the host stop:
+// stopping a round also turns Auto Mode off through the host's stop listener.
+function groupStopNote() {
+    const ctx = context();
+    if (!ctx.groupId) return '';
+    const notes = [];
+    if (hostGroups?.is_group_automode_enabled) notes.push('Auto Mode was turned off. After fixing the cause, send a message, then turn Auto Mode on again in the group settings.');
+    if (ctx.chat.length && !ctx.chat.at(-1).is_user) notes.push('In a group, Regenerate redoes the whole round, including replies already given. To get only a missing reply, use Trigger a message from this character next to that member in the group panel.');
+    return notes.length ? ` ${notes.join(' ')}` : '';
+}
 function fail(error, operation, generation = false, type) {
     showMemoryPreview();
     clearTokenUsage();
@@ -414,7 +424,7 @@ function fail(error, operation, generation = false, type) {
     // Native generation-ended sync can replace operation progress immediately.
     // Keep the failed generation visible independently of background progress.
     if (root && generation) {
-        const message = `Reply stopped: memory could not be added. ${failureText(error, { generation: true })}`;
+        const message = `Reply stopped: memory could not be added. ${failureText(error, { generation: true })}${groupStopNote()}`;
         showDelivery(message, { label: 'Reply stopped', kind: 'error' });
         rememberStoppedRequest(message, type);
     }
@@ -598,7 +608,7 @@ async function initialize() {
     document.querySelector('#extensions_settings2').insertAdjacentHTML('beforeend', html);
     root = document.querySelector('#sillymemory');
     hostGenerating = (await import('/script.js')).isGenerating;
-    [hostOpenAI, hostTokenizers] = await Promise.all([import('/scripts/openai.js'), import('/scripts/tokenizers.js')]);
+    [hostOpenAI, hostTokenizers, hostGroups] = await Promise.all([import('/scripts/openai.js'), import('/scripts/tokenizers.js'), import('/scripts/group-chats.js')]);
     const composer = document.getElementById('send_form');
     if (composer) {
         composer.before(element('chat-status-template').content.cloneNode(true));
@@ -927,9 +937,10 @@ async function initialize() {
             return;
         }
         const stop = state.stopOnLoss !== false;
+        const note = finished.lost && stop ? groupStopNote() : '';
         // The host catches listener exceptions; use its cancellation API instead.
         if (finished.lost && stop) ctx.stopGeneration();
-        const text = deliverySummary(finished.result, stop);
+        const text = deliverySummary(finished.result, stop) + note;
         const uncertain = !finished.result || [...finished.result.memory, ...finished.result.input].some(m => m.outcome === 'unverified');
         const notice = finished.lost ? { label: stop ? 'Reply stopped' : 'Prompt warning', kind: stop ? 'error' : 'warning' }
             : uncertain ? { label: finished.result ? 'Memory partly checked' : 'Memory not checked', kind: 'warning' }

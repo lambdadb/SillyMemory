@@ -5,12 +5,14 @@ import { expandMemorySettings, openChatMemory } from './settings-panel.mjs';
 
 export async function runGroupChatScenarios({ page, field, waitStatus, check, calls, collections, screenshot }) {
     const completions = [];
+    let longReplies = false;
     await page.route('**/api/backends/chat-completions/status', route => route.fulfill({ json: { data: [{ id: 'group-reply-fixture' }] } }));
     await page.route('**/api/backends/chat-completions/generate', async route => {
         const body = route.request().postDataJSON();
         const member = await page.evaluate(() => SillyTavern.getContext().name2);
         completions.push({ member, messages: body.messages });
-        await route.fulfill({ json: { model: body.model, choices: [{ message: { role: 'assistant', content: `${member} reply ${completions.length}.` }, finish_reason: 'stop' }] } });
+        const content = `${member} reply ${completions.length}.` + (longReplies ? ` ${'The harbor fog rolls over the quiet docks. '.repeat(60)}` : '');
+        await route.fulfill({ json: { model: body.model, choices: [{ message: { role: 'assistant', content }, finish_reason: 'stop' }] } });
     });
     const groupReads = [];
     const observeReads = request => { if (new URL(request.url()).pathname === '/api/chats/group/get') groupReads.push(Date.now()); };
@@ -165,6 +167,65 @@ export async function runGroupChatScenarios({ page, field, waitStatus, check, ca
     check('a memory failure for the first member does not let a later member reply', stoppedRound(firstFailed, 'Who lit the lamp?')
         && await page.locator('#sillymemory-chat [data-sm-chat="retry"]').isVisible());
     const failure = { stopped: failed.stopped, turns: failed.turns.map(t => t.member), firstOnlyTurns: firstFailed.turns.map(t => t.member), label: failed.label };
+    const deliveryText = () => page.locator('#sillymemory-chat [data-sm-chat="delivery"]').textContent();
+
+    // A stop after an earlier member replied: group Regenerate would redo the whole round.
+    let queries = 0;
+    await page.route('**/projects/synthetic/collections/*/query', route => ++queries === 2 ? searchFailure(route) : route.continue());
+    const midRound = await round('normal', 'What did Bob count?');
+    await page.unroute('**/projects/synthetic/collections/*/query');
+    const midText = await deliveryText();
+    await openChatMemory(page);
+    check('a mid-round stop keeps the earlier reply and points to the per-member trigger instead of Regenerate', midRound.completions.map(c => c.member).join() === 'Group Alice'
+        && midRound.state.messages.at(-1).name === 'Group Alice' && midText.includes('Regenerate redoes the whole round') && midText.includes('Trigger a message from this character')
+        && !midText.includes('Auto Mode') && await page.locator('#sillymemory-chat [data-sm-chat="retry"]').isHidden());
+
+    // Auto Mode: a SillyMemory stop turns it off through the host's stop listener.
+    const autoMode = () => page.evaluate(async () => (await import('/scripts/group-chats.js')).is_group_automode_enabled);
+    const idle = () => page.waitForFunction(() => !document.body.dataset.generating && SillyTavern.getContext().characterId === undefined);
+    const runAuto = async () => {
+        const turnBefore = await page.evaluate(() => __smGroupTurns.length), completionBefore = completions.length, started = Date.now();
+        await page.evaluate(() => { jQuery('#rm_group_automode_delay').val(1).trigger('input'); jQuery('#rm_group_automode').prop('checked', true).trigger('input'); });
+        let stoppedAfterMs;
+        for (let i = 0; i < 240 && stoppedAfterMs === undefined; i++) { if (!await autoMode()) stoppedAfterMs = Date.now() - started; else await page.waitForTimeout(250); }
+        await idle();
+        const turnsAtStop = (await page.evaluate(() => __smGroupTurns.length)) - turnBefore, completionsAtStop = completions.length - completionBefore;
+        await page.waitForTimeout(3000); // Three Auto Mode intervals.
+        return { stoppedAfterMs, turnsAtStop, completionsAtStop, text: await deliveryText(), label: await page.locator('#sillymemory-chat [data-sm-chat="label"]').textContent(),
+            laterTurns: (await page.evaluate(() => __smGroupTurns.length)) - turnBefore - turnsAtStop, laterCompletions: completions.length - completionBefore - completionsAtStop, stillOff: !await autoMode() };
+    };
+    await page.route('**/projects/synthetic/collections/*/query', searchFailure);
+    const autoFailure = await runAuto();
+    await page.unroute('**/projects/synthetic/collections/*/query');
+    check('a memory failure in Auto Mode stops the round and turns Auto Mode off without further rounds', autoFailure.stoppedAfterMs !== undefined && autoFailure.turnsAtStop === 1
+        && autoFailure.completionsAtStop === 0 && autoFailure.laterTurns === 0 && autoFailure.stillOff && autoFailure.text.includes('Auto Mode was turned off'));
+    // The host keeps its aborted controller for later Auto Mode rounds until an ordinary
+    // send replaces it, so the stopped message says to send a message before resuming.
+    const resume = await round('normal', 'The fog is back, everyone.');
+    check('after an Auto Mode stop an ordinary message gets every member reply again', resume.completions.length === 2 && !resume.label.includes('Reply stopped'));
+    // A long Auto Mode run keeps its whole bundle until it outgrows a small context.
+    const hostContext = await page.evaluate(async () => { const { oai_settings } = await import('/scripts/openai.js'); const previous = oai_settings.openai_max_context; oai_settings.openai_max_context = 3000; return previous; });
+    longReplies = true;
+    const autoLong = await runAuto();
+    longReplies = false;
+    check('a long Auto Mode run stops with the missing-context check and turns Auto Mode off', autoLong.stoppedAfterMs !== undefined && autoLong.completionsAtStop >= 2
+        && autoLong.text.startsWith('Reply stopped: Some') && autoLong.text.includes('left out') && autoLong.text.includes('Auto Mode was turned off') && autoLong.laterTurns === 0 && autoLong.stillOff);
+    const runStart = (await state()).messages.findLastIndex(m => m.user);
+    const afterRun = await round('normal', 'Back to the harbor, everyone.');
+    const resumed = { stopped: afterRun.label.includes('Reply stopped'), completions: afterRun.completions.length, text: await deliveryText(),
+        archivedRun: remote(before.memory).some(d => d.message > runStart) };
+    // The new input's five-message window starts inside the long run, so the whole run stays recent.
+    check('a new message after a long Auto Mode run still keeps the run and stops at the same context', resumed.stopped && resumed.completions === 0 && !resumed.archivedRun);
+    // Warning mode lets replies continue while the host drops the oldest messages; once
+    // five newer messages exist, the run leaves the window and is archived.
+    const setStopOnLoss = value => page.evaluate(value => { const box = document.querySelector('#sillymemory [data-sm="stopOnLoss"]'); if (box.checked !== value) box.click(); }, value);
+    await setStopOnLoss(false);
+    const warned = [await round('normal', 'Second message after the run.'), await round('normal', 'Third message after the run.')];
+    await setStopOnLoss(true);
+    const recovered = await round('normal', 'Fourth message after the run.');
+    check('with Stop on missing context off the run is archived after five newer messages and stopping works again', warned.every(r => r.completions.length === 2)
+        && remote(before.memory).some(d => d.message > runStart) && recovered.completions.length === 2 && !recovered.label.includes('Reply stopped'));
+    await page.evaluate(async previous => { (await import('/scripts/openai.js')).oai_settings.openai_max_context = previous; }, hostContext);
 
     // Native checkpoint and branch in a group fork the group story memory.
     const source = await state();
@@ -216,6 +277,35 @@ export async function runGroupChatScenarios({ page, field, waitStatus, check, ca
     await waitStatus('Memory is off');
     check('reload keeps memory off in the group branch', !await field('enabled').isChecked());
 
+    // Inventory cost: 20 group chats against 20 character chats of 500 synthetic messages each.
+    const inventory = await page.evaluate(async groupId => {
+        const c = SillyTavern.getContext(), { hostChats } = await import('/scripts/extensions/third-party/sillymemory/src/chat-collections.js');
+        const transcript = n => [{ chat_metadata: { integrity: crypto.randomUUID() }, user_name: 'unused', character_name: 'unused' }, ...Array.from({ length: 500 }, (_, i) => ({
+            name: i % 3 ? 'Group Alice' : 'User', is_user: i % 3 === 0, extra: {}, send_date: Date.now(), mes: `Inventory ${n}-${i}. ${'The harbor fog rolls over the quiet docks. '.repeat(4)}` }))];
+        const post = (url, body) => fetch(url, { method: 'POST', headers: c.getRequestHeaders(), body: JSON.stringify(body) }).then(r => { if (!r.ok) throw new Error(`Fixture write failed: ${url}`); });
+        const group = c.groups.find(g => g.id === groupId);
+        for (let n = group.chats.length; n < 20; n++) { const id = `Inventory group chat ${n}`; await post('/api/chats/group/save', { id, chat: transcript(n) }); group.chats.push(id); }
+        await (await import('/scripts/group-chats.js')).editGroup(groupId, true, false);
+        const data = new FormData(); data.set('ch_name', 'Inventory Fixture'); data.set('first_mes', 'Inventory fixture.');
+        if (!(await fetch('/api/characters/create', { method: 'POST', headers: c.getRequestHeaders({ omitContentType: true }), body: data })).ok) throw new Error('Fixture character failed');
+        await c.getCharacters();
+        const characters = SillyTavern.getContext().characters, characterId = characters.findIndex(x => x.name === 'Inventory Fixture');
+        for (let n = 0; n < 20; n++) await post('/api/chats/save', { avatar_url: characters[characterId].avatar, file_name: `Inventory character chat ${n}`, chat: transcript(n) });
+        const time = async ctx => {
+            const runs = [];
+            for (let i = 0; i < 3; i++) { const started = performance.now(); const chats = await hostChats(ctx).inventory(); runs.push({ ms: Math.round(performance.now() - started), chats: chats.length }); }
+            return { medianMs: runs.map(r => r.ms).sort((a, b) => a - b)[1], chats: runs[0].chats, runs: runs.map(r => r.ms) };
+        };
+        return { group: await time({ groupId, groups: SillyTavern.getContext().groups, getRequestHeaders: c.getRequestHeaders }),
+            character: await time({ characterId, characters, getRequestHeaders: c.getRequestHeaders }) };
+    }, groupId);
+    const openStarted = Date.now();
+    await page.evaluate(async ({ groupId, file }) => { await SillyTavern.getContext().openGroupChat(groupId, file); }, { groupId, file: source.file });
+    await waitStatus('synchronized');
+    inventory.openWithMemoryMs = Date.now() - openStarted;
+    check('group chat inventory reads every chat in the group list', inventory.group.chats === 20 && inventory.character.chats === 20);
+    console.log(`MEASURE group inventory ${JSON.stringify(inventory)}`);
+
     await page.unroute('**/api/backends/chat-completions/generate'); await page.unroute('**/api/backends/chat-completions/status');
     // Later harness steps continue in the original character chat.
     await page.evaluate(async ({ character, file }) => {
@@ -230,6 +320,6 @@ export async function runGroupChatScenarios({ page, field, waitStatus, check, ca
     return {
         activation: { ms: activationMs, groupChatReads: activationReads },
         memberTurns, searchesPerUserTurn: normal.searches.length, completionsPerUserTurn: normal.completions.length,
-        preparationFailure: failure,
+        preparationFailure: failure, autoFailure, autoLong, afterAutoRun: resumed, inventory,
     };
 }
