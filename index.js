@@ -410,11 +410,15 @@ function schedule() {
 }
 // A stopped group round needs group-specific recovery. Read before the host stop:
 // stopping a round also turns Auto Mode off through the host's stop listener.
-function groupStopNote() {
+// A missing-context stop in Auto Mode comes from the run outgrowing the context:
+// a new message moves its earlier rounds into memory, so Auto Mode can resume.
+const AUTO_MODE_STOPPED = 'Auto Mode was turned off; turn it on again in the group settings after fixing the cause.';
+const AUTO_MODE_CONTEXT = 'Auto Mode was turned off. Send a message first: the earlier Auto Mode replies then move into memory. Then turn Auto Mode on again in the group settings.';
+function groupStopNote({ contextLoss = false } = {}) {
     const ctx = context();
     if (!ctx.groupId) return '';
     const notes = [];
-    if (hostGroups?.is_group_automode_enabled) notes.push('Auto Mode was turned off; turn it on again in the group settings after fixing the cause.');
+    if (hostGroups?.is_group_automode_enabled) notes.push(contextLoss ? AUTO_MODE_CONTEXT : AUTO_MODE_STOPPED);
     if (ctx.chat.length && !ctx.chat.at(-1).is_user) notes.push('In a group, Regenerate redoes the whole round, including replies already given. To get only a missing reply, use Trigger a message from this character next to that member in the group panel.');
     return notes.length ? ` ${notes.join(' ')}` : '';
 }
@@ -947,7 +951,7 @@ async function initialize() {
             return;
         }
         const stop = state.stopOnLoss !== false;
-        const note = finished.lost && stop ? groupStopNote() : '';
+        const note = finished.lost && stop ? groupStopNote({ contextLoss: true }) : '';
         // The host catches listener exceptions; use its cancellation API instead.
         if (finished.lost && stop) { if (context().groupId) stopGroupRound(); else ctx.stopGeneration(); }
         const text = deliverySummary(finished.result, stop) + note;

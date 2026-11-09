@@ -212,7 +212,13 @@ user/assistant pair. Update them to the bundle rule in the same change.
     `GENERATION_STOPPED`; the listener the host registers when Auto Mode is
     switched on aborts the run and turns Auto Mode off, and no further round
     runs (checked over three one-second intervals). The stopped message then
-    says that Auto Mode was turned off.
+    says that Auto Mode was turned off. After a preparation failure it says to
+    turn Auto Mode on again after fixing the cause. After a missing-context
+    stop, the usual cause in Auto Mode is the run outgrowing the context, so it
+    says to send a message first, which moves the earlier Auto Mode replies
+    into memory, then to turn Auto Mode on again (host test: an 11-reply run
+    recovers after one message). The shared delivery text that suggests a
+    larger context or shorter reply is unchanged.
   - Stale generation controller. `Generate` keeps the host's private
     `abortController` when the caller passes a signal (`script.js` 4302) and
     sends with it (`sendGenerationRequest`, 6118; streaming refuses an aborted
@@ -247,6 +253,12 @@ user/assistant pair. Update them to the bundle rule in the same change.
   - Known host limitation: after the native **Stop** button the same aborted
     controller stays for Auto Mode rounds until an ordinary send. SillyMemory
     does not replace it there because it did not stop that generation.
+    Reproduced on a vanilla pinned host without SillyMemory and with an
+    emulated backend: after Stop, re-enabled Auto Mode started two member
+    turns in 12 s, each rejecting at once with the stale abort reason
+    ("Clicked stop button"), with no completion request and no reply while
+    Auto Mode stayed on; an ordinary message then got both replies, and Auto
+    Mode worked again afterwards.
   - Inventory cost: with 20 group chats and 20 character chats of 500
     synthetic messages each (about 100 KB per file), reading the group
     inventory took a median 28 ms against 5 ms for the character inventory;

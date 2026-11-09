@@ -34,7 +34,9 @@ boundary; publication is confirmed by the corresponding Git tag and GitHub Relea
   later member replies without memory. **Retry** stays available. A stopped
   group reply explains that Regenerate redoes the whole round and points to
   **Trigger a message from this character** for a missing member reply; when
-  Auto Mode was on it says that Auto Mode was turned off. After stopping a
+  Auto Mode was on it says that Auto Mode was turned off, and after a
+  missing-context stop that a message first moves the earlier Auto Mode
+  replies into memory. After stopping a
   group round, SillyMemory replaces the host's aborted generation controller,
   so Auto Mode can be turned on again right away.
 

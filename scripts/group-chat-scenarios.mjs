@@ -200,7 +200,8 @@ export async function runGroupChatScenarios({ page, field, waitStatus, check, ca
     const autoFailure = await runAuto();
     await page.unroute('**/projects/synthetic/collections/*/query');
     check('a memory failure in Auto Mode stops the round and turns Auto Mode off without further rounds', autoFailure.stoppedAfterMs !== undefined && autoFailure.turnsAtStop === 1
-        && autoFailure.completionsAtStop === 0 && autoFailure.laterTurns === 0 && autoFailure.stillOff && autoFailure.text.includes('Auto Mode was turned off'));
+        && autoFailure.completionsAtStop === 0 && autoFailure.laterTurns === 0 && autoFailure.stillOff
+        && autoFailure.text.includes('Auto Mode was turned off; turn it on again in the group settings after fixing the cause.') && !autoFailure.text.includes('Send a message first'));
     // Rounds that pass their own signal, as Auto Mode does, reuse the host's controller.
     // SillyMemory replaces the one it aborted after the stopped round, so turning Auto
     // Mode on again right away, without a message, generates with memory.
@@ -224,7 +225,7 @@ export async function runGroupChatScenarios({ page, field, waitStatus, check, ca
     // The stopped turn sends no completion, although its controller is replaced afterwards.
     check('a long Auto Mode run stops with the missing-context check and turns Auto Mode off', autoLong.stoppedAfterMs !== undefined && autoLong.completionsAtStop >= 6
         && autoLong.completionsAtStop === autoLong.turnsAtStop - 1 && autoLong.laterCompletions === 0
-        && autoLong.text.startsWith('Reply stopped: Some') && autoLong.text.includes('left out') && autoLong.text.includes('Auto Mode was turned off') && autoLong.laterTurns === 0 && autoLong.stillOff);
+        && autoLong.text.startsWith('Reply stopped: Some') && autoLong.text.includes('left out') && autoLong.text.includes('Auto Mode was turned off. Send a message first: the earlier Auto Mode replies then move into memory. Then turn Auto Mode on again in the group settings.') && autoLong.laterTurns === 0 && autoLong.stillOff);
     // A new input splits the older run at generation rounds: the last rounds stay with
     // the input, earlier rounds are archived, and the same small context fits again.
     const runStart = (await state()).messages.findLastIndex(m => m.user);
