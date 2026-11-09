@@ -4,6 +4,9 @@
 //   node precompute.mjs --provider local|e5|openai --dataset FILE --out DIR [--env-file FILE]
 // Local shards: --start S --end E --suffix .sN --threads T embed rows [S, E) into
 // OUT/<provider><suffix>.f32; concatenate shards in row order afterwards (merge-shards.mjs).
+// Diagnostics: --dtype fp32 --name e5-fp32 --questions IDS.json embeds only the texts of
+// the listed questions into OUT/<name>*.f32 (a distinct name is required, so the q8
+// files are never overwritten).
 import assert from 'node:assert/strict';
 import { appendFile, readFile, writeFile, stat } from 'node:fs/promises';
 import { parseEnv, parseArgs } from 'node:util';
@@ -13,12 +16,20 @@ import { LOCAL_DIMENSIONS, OPENAI_DIMENSIONS, localEmbedder, openaiEmbed } from 
 
 const { values: args } = parseArgs({ options: { provider: { type: 'string' }, dataset: { type: 'string' },
     out: { type: 'string' }, 'env-file': { type: 'string' }, 'max-usd': { type: 'string', default: '3' },
-    start: { type: 'string', default: '0' }, end: { type: 'string' }, suffix: { type: 'string', default: '' }, threads: { type: 'string' } } });
+    start: { type: 'string', default: '0' }, end: { type: 'string' }, suffix: { type: 'string', default: '' }, threads: { type: 'string' },
+    dtype: { type: 'string', default: 'q8' }, name: { type: 'string' }, questions: { type: 'string' } } });
 const here = path.dirname(new URL(import.meta.url).pathname);
 const config = JSON.parse(await readFile(path.join(here, '../longmemeval/config.json')));
 const bytes = await readFile(args.dataset);
 assert.equal(sha256(bytes), config.dataset.sha256);
-const rows = JSON.parse(bytes).sort((a, b) => a.question_id < b.question_id ? -1 : 1);
+let rows = JSON.parse(bytes).sort((a, b) => a.question_id < b.question_id ? -1 : 1);
+const name = args.name ?? args.provider;
+assert(name === args.provider ? args.dtype === 'q8' && !args.questions : name !== 'e5' && name !== 'local' && name !== 'openai',
+    'A non-default dtype or question subset needs a distinct --name');
+if (args.questions) {
+    const wanted = new Set(JSON.parse(await readFile(args.questions)));
+    rows = rows.filter(r => wanted.has(r.question_id)); assert.equal(rows.length, wanted.size, 'Unknown question id');
+}
 const queries = new Set(), texts = new Map();
 for (const row of rows) {
     const p = await prepareCase(row, config, '0'.repeat(64));
@@ -30,18 +41,19 @@ const keys = [...texts.keys()];
 const provider = args.provider, local = provider !== 'openai';
 const dims = local ? LOCAL_DIMENSIONS : OPENAI_DIMENSIONS;
 const suffix = args.suffix, first = Number(args.start), last = args.end ? Number(args.end) : keys.length;
-const data = path.join(args.out, `${provider}${suffix}.f32`), indexFile = path.join(args.out, `${provider}-index.json`);
-const progressFile = path.join(args.out, `${provider}${suffix}-progress.json`);
+const data = path.join(args.out, `${name}${suffix}.f32`), indexFile = path.join(args.out, `${name}-index.json`);
+const progressFile = path.join(args.out, `${name}${suffix}-progress.json`);
 let done = 0;
 try { done = (await stat(data)).size / (4 * dims); } catch {}
 const offset0 = done;
 assert(Number.isInteger(done));
 const progress = done ? JSON.parse(await readFile(progressFile)) : { rows: 0, tokens: 0, milliseconds: 0, requests: 0 };
 assert.equal(progress.rows, done, 'Progress record differs from vector file');
-console.error(`${provider}${suffix}: ${keys.length} unique texts (${queries.size} queries); rows [${first}, ${last}); resuming at +${done}`);
+console.error(`${name}${suffix}: ${keys.length} unique texts (${queries.size} queries); rows [${first}, ${last}); resuming at +${done}`);
 let embed;
 const started = performance.now();
-if (local) embed = await localEmbedder({ cacheDir: path.join(args.out, 'model-cache'), provider, threads: args.threads && Number(args.threads) });
+if (local) embed = await localEmbedder({ cacheDir: path.join(args.out, 'model-cache'), provider,
+    threads: args.threads && Number(args.threads), dtype: args.dtype });
 const loadMs = performance.now() - started;
 const env = local ? null : parseEnv(await readFile(args['env-file'], 'utf8'));
 const batch = local ? 32 : 256, maxUsd = Number(args['max-usd']);
@@ -75,8 +87,8 @@ for (let i = first + offset0; i < last;) {
     progress.requests += results.length; progress.milliseconds += performance.now() - t;
     await writeFile(progressFile, JSON.stringify(progress));
     if (!local) assert(progress.tokens * 0.02 / 1e6 <= maxUsd, 'Embedding spend cap reached');
-    if (progress.requests % 50 < group.length) console.error(`${provider}${suffix}: ${progress.rows}/${last - first} ${(progress.milliseconds / 1000).toFixed(0)}s tokens=${progress.tokens}`);
+    if (progress.requests % 50 < group.length) console.error(`${name}${suffix}: ${progress.rows}/${last - first} ${(progress.milliseconds / 1000).toFixed(0)}s tokens=${progress.tokens}`);
 }
 if (!suffix) await writeFile(indexFile, JSON.stringify(keys));
-await writeFile(progressFile, JSON.stringify({ ...progress, complete: true, loadMilliseconds: loadMs }));
-console.error(`${provider}: complete`, progress);
+await writeFile(progressFile, JSON.stringify({ ...progress, complete: true, loadMilliseconds: loadMs, ...(local ? { dtype: args.dtype } : {}) }));
+console.error(`${name}${suffix}: complete`, progress);

@@ -13,11 +13,12 @@ export const LOCAL_MODELS = Object.freeze({
 });
 export const LOCAL_DTYPE = 'q8', LOCAL_DIMENSIONS = 384;
 
-export async function localEmbedder({ cacheDir, provider = 'local', threads } = {}) {
+// dtype: q8 by default; fp32 is a diagnostic for quantization loss.
+export async function localEmbedder({ cacheDir, provider = 'local', threads, dtype = LOCAL_DTYPE } = {}) {
     const spec = LOCAL_MODELS[provider];
     const { pipeline, env } = await import('@huggingface/transformers');
     if (cacheDir) env.cacheDir = cacheDir;
-    const extractor = await pipeline('feature-extraction', spec.model, { dtype: LOCAL_DTYPE, device: 'cpu',
+    const extractor = await pipeline('feature-extraction', spec.model, { dtype, device: 'cpu',
         ...(threads ? { session_options: { intraOpNumThreads: threads, interOpNumThreads: 1 } } : {}) });
     return async (texts, { query = false } = {}) => {
         const input = texts.map(t => (query ? spec.queryPrefix : spec.passagePrefix) + t);

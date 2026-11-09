@@ -170,8 +170,8 @@ Observations (measured):
   small (K). Versus B, 16 questions gained complete messages and 78 lost them.
   A spot check found no pipeline error: re-embedding rows from the prefix and from
   each shard boundary matched the stored vectors (cosine ≥ 0.9995), and query rows
-  carry the `query: ` prefix (1.0). Only the q8 weights were tested; fp32 was not,
-  so quantization loss is not separated from model quality.
+  carry the `query: ` prefix (1.0). A q8-versus-fp32 diagnostic (below) found no
+  quantization effect on coverage.
 - Client OpenAI vectors equal the managed ones. On 300 sampled chunks, the
   native-versus-client cosine had a median of 1.0000, p5 0.999996 and minimum
   0.9982. K and F returned identical results.
@@ -188,6 +188,46 @@ first-evidence rank equal on 500/500). This holds for per-chat ranges of about
 1,000 chunks. It is not evidence about ANN behaviour on much larger collections,
 and it applies only to dense-only arms; sparse, BM25 and rerank arms used the
 live server.
+
+### q8 versus fp32 for arm M
+
+To separate quantization loss from model quality, the 91,507 unique texts of a
+100-question subset (every 5th question in dataset file order: 27 multi-session,
+27 temporal, 15 knowledge-update, 14 single-session-user, 11 single-session-assistant,
+6 preference) were re-embedded with the fp32 `model.onnx`
+(`precompute.mjs --dtype fp32 --name e5-fp32 --questions ...`) and ranked by the same
+local exact KNN (`dtype-compare.mjs`). Retrieval only: no generation, judge, API or
+LambdaDB calls. The recomputed q8 top 50 matched the stored M results on 100/100
+questions.
+
+| Subset (100 Qs, 176 indexed annotated messages) | Returned any | Returned complete | Returned all-complete Qs | Delivered any | Delivered complete | Delivered all-complete Qs |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| M q8 | 92.05% | 90.91% | 82 | 89.77% | 88.07% | 78 |
+| M fp32 | 92.61% | 91.48% | 84 | 89.20% | 87.50% | 77 |
+| E (bge-small-en q8) | 93.75% | 93.18% | 85 | 89.77% | 89.20% | 79 |
+| K (OpenAI small) | 96.59% | 95.45% | 89 | 95.45% | 94.32% | 87 |
+| B (server hybrid) | 96.02% | 94.32% | 87 | 93.18% | 92.05% | 84 |
+
+- fp32 versus q8 cosine: chunks median 0.9990, p5 0.9988, min 0.9961 (91,407
+  texts); queries median 0.9991, min 0.9986.
+- fp32 versus q8 top-50 overlap: @10 0.936, @50 0.943 (min 0.88); no question had
+  an identical top-50 order; first-evidence rank equal on 76/100. The reordering is
+  among near-tied candidates: coverage changed on 4 questions (returned complete
+  +1 message net, delivered −1), and delivered all-complete differs on one question,
+  where fp32 is worse.
+- Truncation: 1 of 91,407 prefixed passages exceeds 512 e5 tokens (515); queries are
+  at most 89. The pipeline uses the model-card `query: `/`passage: ` prefixes,
+  attention-masked mean pooling and L2 normalization (checked in the transformers.js
+  4.3.1 source; truncation comes from the tokenizer's `model_max_length` 512).
+- fp32 throughput: 693 s wall for 91,507 texts in 3 processes × 5 intra-op threads
+  (~132 texts/s combined), close to the q8 run (~140 texts/s).
+
+**Conclusion (inference).** q8 quantization does not explain M's weak retrieval;
+fp32 coverage is equal within one message. The gap is attributed to the model
+itself on this English benchmark. A full-500 fp32/fp16 rerun is not warranted by
+this result. Caveat: this subset is easier than the full set for M (88.07% versus
+84.45% delivered complete), and its M–E gap is smaller (1.1 versus 5.6 points), so
+the subset measures the paired q8/fp32 difference, not the size of M's deficit.
 
 ## Answers (Jev 1.13.0 Noul, Yes ≥ 0.50)
 
@@ -220,7 +260,7 @@ location or the sparse leg. M (85.4%) is clearly below
 the other text-private arms. That matches its retrieval loss: 60 of its 73 wrong
 answers had evidence missing or partial at delivery. This is English-only
 evidence. **It does not establish multilingual quality for any model, including
-M.** It shows that M, as tested (q8), costs about 6 points on English
+M.** It shows that M (q8; fp32 retrieval was equal on a 100-question subset) costs about 6 points on English
 LongMemEval relative to K. No local multilingual model is validated as a
 product candidate by this run.
 
