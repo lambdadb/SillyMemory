@@ -212,12 +212,41 @@ user/assistant pair. Update them to the bundle rule in the same change.
     `GENERATION_STOPPED`; the listener the host registers when Auto Mode is
     switched on aborts the run and turns Auto Mode off, and no further round
     runs (checked over three one-second intervals). The stopped message then
-    says that Auto Mode was turned off. The host keeps its aborted controller
-    for later Auto Mode rounds (`Generate` reuses it when a signal is passed),
-    so re-enabling Auto Mode right after any stop, including the native Stop
-    button, runs rounds that generate nothing while each member turn still
-    prepares memory. An ordinary send replaces the controller, so the message
-    says to send a message before turning Auto Mode on again.
+    says that Auto Mode was turned off.
+  - Stale generation controller. `Generate` keeps the host's private
+    `abortController` when the caller passes a signal (`script.js` 4302) and
+    sends with it (`sendGenerationRequest`, 6118; streaming refuses an aborted
+    one, 6148). Auto Mode rounds pass their own signal (`group-chats.js` 1412,
+    1063), so after any stop they reused the aborted controller and generated
+    nothing, while each member turn still synchronized and searched memory
+    (observed: 61 member turns in about 60 s with no completion). The
+    interceptor cannot read that private controller, and the only renewal is a
+    call without a signal (an ordinary send) or the exported
+    `setExternalAbortController` (`script.js` 7114).
+  - Options. (A) Mirror the private controller state from public events and
+    skip memory for presumed no-op turns: rejected, because it infers private
+    host state and misjudges cases such as a Regenerate with no active member.
+    (B) After SillyMemory itself stops a group round, replace the aborted
+    controller: adopted. (C) Keep the behavior and advise sending a message.
+  - Adopted (B). SillyMemory calls `stopGeneration()`, then installs a fresh
+    controller through `setExternalAbortController` on `GROUP_WRAPPER_FINISHED`
+    (`group-chats.js` 1088). That event comes from the wrapper's `finally`
+    after every member `Generate` of the round has settled (the loop awaits
+    each one, 1063; `Generate` awaits its request, `script.js` 5453), so no
+    request of the stopped round can read the new controller. The round keeps
+    its own reference to the aborted signal: a user round's wrapper receives
+    `abortController.signal` by value (`script.js` 4353) and checks it before
+    each member (`throwIfAborted`, `group-chats.js` 946), and an Auto Mode round
+    checks its own controller, which the host's stop listener aborts
+    (`stopAutoModeGeneration`, 2405). Character chats need no renewal: their UI
+    generations pass no signal and always get a new controller (4302).
+    Host test: a SillyMemory stop turns Auto Mode off; turning it on again
+    right away ran two member turns with two searches and two completions;
+    the stopped turn of a long run sent no completion. A control run without
+    the replacement failed that check.
+  - Known host limitation: after the native **Stop** button the same aborted
+    controller stays for Auto Mode rounds until an ordinary send. SillyMemory
+    does not replace it there because it did not stop that generation.
   - Inventory cost: with 20 group chats and 20 character chats of 500
     synthetic messages each (about 100 KB per file), reading the group
     inventory took a median 28 ms against 5 ms for the character inventory;

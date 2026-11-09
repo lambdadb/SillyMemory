@@ -201,8 +201,18 @@ export async function runGroupChatScenarios({ page, field, waitStatus, check, ca
     await page.unroute('**/projects/synthetic/collections/*/query');
     check('a memory failure in Auto Mode stops the round and turns Auto Mode off without further rounds', autoFailure.stoppedAfterMs !== undefined && autoFailure.turnsAtStop === 1
         && autoFailure.completionsAtStop === 0 && autoFailure.laterTurns === 0 && autoFailure.stillOff && autoFailure.text.includes('Auto Mode was turned off'));
-    // The host keeps its aborted controller for later Auto Mode rounds until an ordinary
-    // send replaces it, so the stopped message says to send a message before resuming.
+    // Rounds that pass their own signal, as Auto Mode does, reuse the host's controller.
+    // SillyMemory replaces the one it aborted after the stopped round, so turning Auto
+    // Mode on again right away, without a message, generates with memory.
+    const restartTurns = await page.evaluate(() => __smGroupTurns.length), restartCompletions = completions.length, restartSearches = searches().length;
+    await page.evaluate(() => jQuery('#rm_group_automode').prop('checked', true).trigger('input'));
+    for (let i = 0; i < 120 && completions.length - restartCompletions < 2; i++) await page.waitForTimeout(250);
+    await page.evaluate(() => jQuery('#rm_group_automode').prop('checked', false).trigger('input'));
+    await idle(); await waitStatus('synchronized');
+    const restarted = { turns: (await page.evaluate(() => __smGroupTurns.length)) - restartTurns, completions: completions.length - restartCompletions,
+        searches: searches().length - restartSearches, label: await page.locator('#sillymemory-chat [data-sm-chat="label"]').textContent() };
+    check('Auto Mode turned on again right after a SillyMemory stop generates every member turn with memory', restarted.completions >= 2
+        && restarted.completions === restarted.turns && restarted.searches === restarted.turns && !restarted.label.includes('Reply stopped'));
     const resume = await round('normal', 'The fog is back, everyone.');
     check('after an Auto Mode stop an ordinary message gets every member reply again', resume.completions.length === 2 && !resume.label.includes('Reply stopped'));
     // A long Auto Mode run keeps its whole bundle until it outgrows a small context.
@@ -211,7 +221,9 @@ export async function runGroupChatScenarios({ page, field, waitStatus, check, ca
     const firstRunReply = completions.length + 1;
     const autoLong = await runAuto();
     longReplies = false;
+    // The stopped turn sends no completion, although its controller is replaced afterwards.
     check('a long Auto Mode run stops with the missing-context check and turns Auto Mode off', autoLong.stoppedAfterMs !== undefined && autoLong.completionsAtStop >= 6
+        && autoLong.completionsAtStop === autoLong.turnsAtStop - 1 && autoLong.laterCompletions === 0
         && autoLong.text.startsWith('Reply stopped: Some') && autoLong.text.includes('left out') && autoLong.text.includes('Auto Mode was turned off') && autoLong.laterTurns === 0 && autoLong.stillOff);
     // A new input splits the older run at generation rounds: the last rounds stay with
     // the input, earlier rounds are archived, and the same small context fits again.
@@ -320,6 +332,6 @@ export async function runGroupChatScenarios({ page, field, waitStatus, check, ca
     return {
         activation: { ms: activationMs, groupChatReads: activationReads },
         memberTurns, searchesPerUserTurn: normal.searches.length, completionsPerUserTurn: normal.completions.length,
-        preparationFailure: failure, autoFailure, autoLong, afterAutoRun: resumed, inventory,
+        preparationFailure: failure, autoFailure, autoRestart: restarted, autoLong, afterAutoRun: resumed, inventory,
     };
 }

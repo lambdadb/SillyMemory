@@ -34,8 +34,9 @@ boundary; publication is confirmed by the corresponding Git tag and GitHub Relea
   later member replies without memory. **Retry** stays available. A stopped
   group reply explains that Regenerate redoes the whole round and points to
   **Trigger a message from this character** for a missing member reply; when
-  Auto Mode was on it says that Auto Mode was turned off and to send a message
-  before turning it on again.
+  Auto Mode was on it says that Auto Mode was turned off. After stopping a
+  group round, SillyMemory replaces the host's aborted generation controller,
+  so Auto Mode can be turned on again right away.
 
 ### Known limits
 
@@ -44,6 +45,9 @@ boundary; publication is confirmed by the corresponding Git tag and GitHub Relea
   missing context** on (default) the reply stops and Auto Mode turns off.
   Sending a message continues: earlier rounds of the run move into memory and
   only the last rounds stay in the prompt.
+- After SillyTavern's own **Stop** button, Auto Mode rounds generate nothing
+  until a message is sent (a SillyTavern limitation); each such round still
+  prepares memory.
 
 ## [0.9.1] - 2026-11-06
 

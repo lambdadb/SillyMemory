@@ -27,6 +27,7 @@ let retrying = false, sourceRevision = 0;
 let hostGenerating = () => false;
 let promptType, promptSource;
 let hostOpenAI, hostTokenizers, hostGroups, tokenUsage;
+let renewAbortController = () => {}, renewAfterRound = false;
 const engines = new Map();
 const entryKey = entry => `${entry.collection}:${entry.branch}`;
 const delivery = new PromptDelivery();
@@ -413,9 +414,16 @@ function groupStopNote() {
     const ctx = context();
     if (!ctx.groupId) return '';
     const notes = [];
-    if (hostGroups?.is_group_automode_enabled) notes.push('Auto Mode was turned off. After fixing the cause, send a message, then turn Auto Mode on again in the group settings.');
+    if (hostGroups?.is_group_automode_enabled) notes.push('Auto Mode was turned off; turn it on again in the group settings after fixing the cause.');
     if (ctx.chat.length && !ctx.chat.at(-1).is_user) notes.push('In a group, Regenerate redoes the whole round, including replies already given. To get only a missing reply, use Trigger a message from this character next to that member in the group panel.');
     return notes.length ? ` ${notes.join(' ')}` : '';
+}
+// Stop a group round through the host stop. The host keeps that aborted controller
+// for later rounds that pass their own signal, such as Auto Mode, so replace it
+// once the stopped round has finished; the round holds its own aborted signal.
+function stopGroupRound() {
+    context().stopGeneration();
+    renewAfterRound = true;
 }
 function fail(error, operation, generation = false, type) {
     showMemoryPreview();
@@ -453,7 +461,7 @@ async function action(job) {
 globalThis.sillymemory_intercept = async (chat, contextSize, abort, type) => {
     // In a group the host runs the next member after an aborted interceptor. Stop
     // the whole round through the host stop, as the missing-context check does.
-    const stopReply = () => { abort(true); if (context().groupId) context().stopGeneration(); };
+    const stopReply = () => { abort(true); if (context().groupId) stopGroupRound(); };
     if (delivery.awaitingPrompt) {
         // No final event will be emitted for this rejected interceptor. Keep the
         // previous slot until its own non-dry-run final event has been consumed.
@@ -607,7 +615,9 @@ async function initialize() {
     const html = await ctx.renderExtensionTemplateAsync(folder, 'settings');
     document.querySelector('#extensions_settings2').insertAdjacentHTML('beforeend', html);
     root = document.querySelector('#sillymemory');
-    hostGenerating = (await import('/script.js')).isGenerating;
+    const hostScript = await import('/script.js');
+    hostGenerating = hostScript.isGenerating;
+    renewAbortController = () => hostScript.setExternalAbortController(new AbortController());
     [hostOpenAI, hostTokenizers, hostGroups] = await Promise.all([import('/scripts/openai.js'), import('/scripts/tokenizers.js'), import('/scripts/group-chats.js')]);
     const composer = document.getElementById('send_form');
     if (composer) {
@@ -939,7 +949,7 @@ async function initialize() {
         const stop = state.stopOnLoss !== false;
         const note = finished.lost && stop ? groupStopNote() : '';
         // The host catches listener exceptions; use its cancellation API instead.
-        if (finished.lost && stop) ctx.stopGeneration();
+        if (finished.lost && stop) { if (context().groupId) stopGroupRound(); else ctx.stopGeneration(); }
         const text = deliverySummary(finished.result, stop) + note;
         const uncertain = !finished.result || [...finished.result.memory, ...finished.result.input].some(m => m.outcome === 'unverified');
         const notice = finished.lost ? { label: stop ? 'Reply stopped' : 'Prompt warning', kind: stop ? 'error' : 'warning' }
@@ -952,6 +962,11 @@ async function initialize() {
             const omitted = finished.result.memory.filter(m => m.outcome !== 'included');
             setInspection(`Memory in the last prompt (${included.length} of ${finished.result.memory.length}):\n\n${included.map(m => m.content).join('\n\n') || 'None.'}${omitted.length ? `\n\nNot found in the last prompt:\n\n${omitted.map(m => m.content).join('\n\n')}` : ''}`);
         }
+    });
+    // Every member Generate of the round has settled when the wrapper finishes.
+    ctx.eventSource.on(events.GROUP_WRAPPER_FINISHED, () => {
+        if (!renewAfterRound) return;
+        renewAfterRound = false; renewAbortController();
     });
     ctx.eventSource.on(events.GENERATION_STARTED, (type, _options, dryRun) => {
         if (dryRun || type === 'quiet') return;
