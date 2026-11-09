@@ -1,7 +1,7 @@
 import { chunkSpans } from '../src/chunking.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { capture, supportsChat, documents, selectPackedMemory, MemoryEngine, Journal, options, literal, retrievalQueries, memoryBoundary, archiveBoundary } from '../src/memory.js';
+import { capture, chatOwner, supportsChat, documents, selectPackedMemory, MemoryEngine, Journal, options, literal, retrievalQueries, memoryBoundary, archiveBoundary } from '../src/memory.js';
 const owner = 'a'.repeat(32);
 const config = { recent: 2, budget: 400, chunkChars: 200 };
 const snapshot = (chat = 'chat', character = 'alice.png') => ({ chat, character, memory: { story: chat }, messages: Array.from({ length: 6 }, (_, index) => ({ index, text: `Synthetic message ${index}: the blue compass is under the tree.`, name: index % 2 ? 'Alice' : 'User', user: !(index % 2), swipe: 0, eligible: true })) });
@@ -244,7 +244,7 @@ test('deletion drains pending writes and clears local journal', async () => {
     const deleting = s.engine.deleteAll(); release(); await syncing; await deleting;
     assert.equal(s.remote.size, 0); assert.equal(s.storage.length, 0);
 });
-test('settings are clamped and capture refuses group/no character chats', () => {
+test('settings are clamped and capture refuses chats without a character, group or tool-free source', () => {
     assert.equal(options().budget, 4096);
     assert.equal(options({ budget: 800 }).budget, 800);
     assert.equal(options({ budget: NaN }).budget, 4096);
@@ -253,8 +253,8 @@ test('settings are clamped and capture refuses group/no character chats', () => 
     assert.deepEqual(options().analyzers, ['english']);
     assert.deepEqual(options({ analyzers: ['Korean', 'english', 'korean'] }).analyzers, ['korean', 'english']);
     for (const analyzers of [[], undefined, 'korean', ['klingon']]) assert.deepEqual(options({ analyzers }).analyzers, ['english']);
-    assert.equal(capture({ groupId: 'group' }), null);
     assert.equal(capture({ characterId: undefined }), null);
+    assert.equal(capture({ characterId: undefined, characters: [], getCurrentChatId: () => 'chat', chat: [] }), null);
     const context = { characterId: 0, characters: [{ avatar: 'test.png' }], getCurrentChatId: () => 'chat', chat: [] };
     assert.equal(supportsChat(context), true);
     assert.deepEqual(capture(context).messages, []);
@@ -565,4 +565,24 @@ test('sync reads ownership unless the caller verified it while preparing this sy
     await s.engine.sync(snap, config); assert.equal(checks, 2);
     await s.engine.retrieve(snap, { ...config, ownershipVerified: true }, text => text.length); assert.equal(checks, 2);
     await s.engine.retrieve(snap, config, text => text.length); assert.equal(checks, 3);
+});
+
+test('group chats keep one owner key and snapshot between and during member turns', async () => {
+    const chat = [{ mes: 'Greeting', name: 'Alice', is_user: false }, { mes: 'Hello both', name: 'User', is_user: true }, { mes: 'Hi', name: 'Bob', is_user: false }];
+    const group = characterId => ({ groupId: '1700000000000', characterId, characters: [{ avatar: 'Alice.png' }, { avatar: 'Bob.png' }],
+        getCurrentChatId: () => 'Group chat', chat, chatMetadata: { sillymemory: { id: 'b'.repeat(32), story: 'b'.repeat(32) } } });
+    assert.equal(chatOwner(group(undefined)), 'group:1700000000000');
+    assert.equal(supportsChat(group(undefined)), true, 'between member turns characterId is undefined');
+    assert.deepEqual(capture(group(0)), capture(group(undefined)));
+    assert.deepEqual(capture(group(1)), capture(group(undefined)));
+    assert.deepEqual(capture(group(undefined)).messages.map(m => m.name), ['Alice', 'User', 'Bob']);
+    assert.equal(chatOwner({ characterId: 0, characters: [{ avatar: 'Alice.png' }] }), 'Alice.png');
+    assert.equal(chatOwner({ characterId: 0, characters: [{}] }), undefined);
+    // A group story and a character story with the same story ID use different scopes.
+    const groupDocs = await documents(capture(group(undefined)), owner, config);
+    const characterDocs = await documents({ ...capture(group(undefined)), character: 'Alice.png' }, owner, config);
+    assert.notEqual(groupDocs.scope, characterDocs.scope);
+    assert.deepEqual(groupDocs.docs.map(d => d.speaker), ['Alice', 'User', 'Bob']);
+    const tool = group(undefined); tool.chat = [...chat, { is_system: true, extra: { tool_invocations: [{}] } }];
+    assert.equal(supportsChat(tool), false);
 });

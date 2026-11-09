@@ -14,14 +14,19 @@ export async function digest(value) {
     const bytes = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(value));
     return Array.from(new Uint8Array(bytes), x => x.toString(16).padStart(2, '0')).join('');
 }
+// The chat owner key names the host chat namespace: the character avatar for a
+// character chat and `group:<id>` for a group chat. A group's key does not
+// depend on the member generating, so it stays valid between member turns.
+export function chatOwner(context) {
+    if (context.groupId) return `group:${context.groupId}`;
+    return context.characterId === undefined ? undefined : context.characters?.[context.characterId]?.avatar || undefined;
+}
 export function supportsChat(context) {
-    if (context.groupId || context.characterId === undefined || !context.getCurrentChatId()) return false;
-    if (context.chat.some(m => m.is_system && m.extra?.tool_invocations?.length)) return false;
-    return Boolean(context.characters[context.characterId]?.avatar);
+    if (!chatOwner(context) || !context.getCurrentChatId()) return false;
+    return !context.chat.some(m => m.is_system && m.extra?.tool_invocations?.length);
 }
 export function capture(context) {
     if (!supportsChat(context)) return null;
-    const avatar = context.characters[context.characterId].avatar;
     const messages = context.chat.filter(x => !x.is_system).map((m, index) => {
         const recordedAt = hostTimestamp(m.send_date);
         return {
@@ -29,10 +34,13 @@ export function capture(context) {
             user: Boolean(m.is_user), swipe: m.swipe_id ?? 0,
             eligible: !m.extra?.file && !m.extra?.media?.length && !m.extra?.tool_invocations?.length,
             ...(recordedAt ? { recordedAt } : {}),
+            // The host's group generation ID marks replies of one round. It aligns the
+            // recent boundary only; it never enters document revisions or fields.
+            ...(m.extra?.gen_id !== undefined ? { round: m.extra.gen_id } : {}),
         };
     });
     const metadata = context.chatMetadata?.sillymemory;
-    return { character: avatar, chat: metadata?.id, messages, memory: { story: metadata?.story, source: metadata?.source } };
+    return { character: chatOwner(context), chat: metadata?.id, messages, memory: { story: metadata?.story, source: metadata?.source } };
 }
 export function fingerprint(snapshot) { return JSON.stringify(snapshot); }
 export function retrievalQueries(snapshot, type = 'normal') {
@@ -50,13 +58,24 @@ export function completedMessages(snapshot) {
 export function archiveBoundary(snapshot, type = 'normal') {
     const anchor = retentionAnchor(snapshot.messages, type);
     if (anchor < 0) return 0;
-    const start = retentionStart(snapshot.messages, anchor);
-    const first = snapshot.messages[start], previous = snapshot.messages[start - 1];
-    // Keep an adjacent eligible input/reply together. A normal new user input
-    // already aligns the five-message window; after its reply this retains six,
-    // avoiding a second small write until that whole pair leaves the window.
-    return first.eligible !== false && first.text.trim() && !first.user
-        && previous?.user && previous.eligible !== false && previous.text.trim() ? start - 1 : start;
+    const messages = snapshot.messages, start = retentionStart(messages, anchor);
+    // A turn bundle is a user input and every reply up to the next input. Messages
+    // before the first input, such as greetings, and an ineligible or blank input
+    // have no indexed input to align to and keep the plain message boundary.
+    const user = messages.slice(0, start + 1).findLastIndex(m => m.user);
+    const input = messages[user];
+    if (user < 0 || input.eligible === false || !input.text.trim()) return start;
+    // The current bundle, holding the active input, stays whole: a new input keeps
+    // five messages, its first reply six, and group member replies stay together.
+    if (user === start || user === messages.slice(0, anchor + 1).findLastIndex(m => m.user)) return user;
+    // An older bundle splits at generation rounds, replies sharing the host's group
+    // generation ID, so a long Auto Mode run cannot keep itself in the window after
+    // a new input. Replies without an ID are rounds of their own. A round directly
+    // after its input keeps that input, as the previous adjacent-pair rule did.
+    let first = start;
+    const round = messages[start].round;
+    while (round !== undefined && first - 1 > user && messages[first - 1].round === round) first--;
+    return first === user + 1 ? user : first;
 }
 export function memoryBoundary(snapshot, type = 'normal') {
     // Normal/regenerate/swipe keep only their question; Continue keeps the

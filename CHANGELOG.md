@@ -4,6 +4,53 @@ Versions describe the extension, independently of the SillyTavern host version.
 An `Unreleased` entry is a development candidate. A dated entry records a release
 boundary; publication is confirmed by the corresponding Git tag and GitHub Release.
 
+## [Unreleased]
+
+### Added
+
+- Group chats. Memory can be turned on in a SillyTavern group chat with the same
+  storage, retrieval and failure handling as a character chat. Each group chat
+  starts its own story; its checkpoints and branches reuse the shared history,
+  and adding or removing members keeps the story. Each responding member's
+  reply searches memory with the latest user message, so one message answered
+  by three members makes three searches. Group-chat answer quality is not
+  evaluated.
+
+### Changed
+
+- The recent window now keeps the current turn whole, a user message and
+  every reply up to the next user message, instead of one user/assistant pair.
+  Older turns split at group generation rounds, so a long Auto Mode run leaves
+  the window round by round after the next user message. Ordinary alternating
+  chats keep exactly the previous boundary. A character chat with several
+  replies after one message, for example after sending an empty message to get
+  another reply, keeps them while that turn is current and splits them per
+  reply once it is older, as before. Stored memory documents are unchanged; no
+  settings or data migration is needed.
+- Swipe excludes only the reply being swiped. Earlier replies after the latest
+  user message, such as another group member's reply in the same round, stay in
+  the prompt; alternating chats are unaffected. Regenerate is unchanged.
+- In a group chat, a memory preparation failure stops the whole round, so no
+  later member replies without memory. **Retry** stays available. A stopped
+  group reply explains that Regenerate redoes the whole round and points to
+  **Trigger a message from this character** for a missing member reply; when
+  Auto Mode was on it says that Auto Mode was turned off, and after a
+  missing-context stop that a message first moves the earlier Auto Mode
+  replies into memory. After stopping a
+  group round, SillyMemory replaces the host's aborted generation controller,
+  so Auto Mode can be turned on again right away.
+
+### Known limits
+
+- Group Auto Mode without user input keeps every reply since the last user
+  message in the prompt. A long run can outgrow the context: with **Stop on
+  missing context** on (default) the reply stops and Auto Mode turns off.
+  Sending a message continues: earlier rounds of the run move into memory and
+  only the last rounds stay in the prompt.
+- After SillyTavern's own **Stop** button, Auto Mode rounds generate nothing
+  until a message is sent (a SillyTavern limitation); each such round still
+  prepares memory.
+
 ## [0.9.1] - 2026-11-06
 
 ### Fixed
