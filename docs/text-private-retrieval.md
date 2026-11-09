@@ -25,6 +25,13 @@ which text-private mode cannot use. The only multilingual local model tested (M)
 lost about 6 more points on English, so the first version should not default to
 it.
 
+**Update (November 10, retrieval only):** three larger local multilingual models
+served through Ollama reach K's retrieval level on the full English set. Delivered
+complete was 95.64% for Qwen3-Embedding-0.6B, 95.41% for EmbeddingGemma 300M and
+94.97% for BGE-M3, against 95.30% for K. All three pass the pre-registered ≥ 93.30%
+criterion. Answers were not generated or judged, and multilingual quality is not
+measured. See [Local multilingual candidates](#local-multilingual-candidates-retrieval-only).
+
 ## Product question
 
 Some users object to raw chat text being stored in LambdaDB. A text-private mode
@@ -229,6 +236,154 @@ this result. Caveat: this subset is easier than the full set for M (88.07% versu
 84.45% delivered complete), and its M–E gap is smaller (1.1 versus 5.6 points), so
 the subset measures the paired q8/fp32 difference, not the size of M's deficit.
 
+## Local multilingual candidates (retrieval only)
+
+Evaluated November 9–10, 2026. The question was whether a larger local multilingual
+model served through Ollama, the product's local path, reaches K-level retrieval. The
+candidates were EmbeddingGemma 300M, BGE-M3 (dense output only) and
+Qwen3-Embedding-0.6B. English-only models were out of scope. Retrieval and delivery
+were measured only, with no generation, judge, paid API or LambdaDB calls. Each model
+uses its full output dimension, with no MRL truncation. Ranking is the validated local
+exact KNN described above.
+
+**Pre-registered criteria** (fixed before any results):
+
+- Subset screen: on the 100-question subset used for the q8/fp32 diagnostic,
+  delivered complete must be no more than 2 points below K (≥ 92.32%; K = 94.32%).
+- Full 500: delivered complete must be ≥ 93.30% (K's 95.30% minus 2).
+
+Passing the subset screen is not validation, because the subset is easier than the
+full set.
+
+| Model | Ollama tag (weights) | Dim | Query prompt | Passage prompt | Pooling | Source |
+| --- | --- | ---: | --- | --- | --- | --- |
+| EmbeddingGemma 300M | `embeddinggemma` (BF16 GGUF, 622 MB) | 768 | `task: search result \| query: ` | `title: none \| text: ` | Mean pooling + dense projections (in the model) | Model card "Prompt Instructions" and usage example (`onnx-community/embeddinggemma-300m-ONNX`, a mirror of the gated `google/embeddinggemma-300m` card) |
+| BGE-M3 | `bge-m3` (F16 GGUF, 1,158 MB) | 1024 | none | none | CLS | `BAAI/bge-m3` card (no query instruction, `dense_vecs`) and the `Xenova/bge-m3` usage (`pooling: 'cls'`) |
+| Qwen3-Embedding-0.6B | `qwen3-embedding:0.6b` (Q8_0 GGUF, 639 MB) | 1024 | `Instruct: Given a web search query, retrieve relevant passages that answer the query\nQuery:` | none | Last token (EOS `<\|endoftext\|>` appended) | `Qwen/Qwen3-Embedding-0.6B` card and `config_sentence_transformers.json` (`prompts.query`), with `padding_side='left'` and last-token pooling |
+
+**Runtime.** The harness calls Ollama's OpenAI-compatible `/v1/embeddings` (Ollama
+0.40.15, `--runtime ollama` in `precompute.mjs`), as the product would. Ollama's
+template for all three models is `{{ .Prompt }}` (`/api/show`), so it adds no
+prompt, and the prefixes are applied client-side. Its GGUF metadata sets the
+expected pooling: mean for Gemma, CLS for BGE-M3 and last token for Qwen3, with
+BOS/EOS added. The returned vectors were already unit-length (norms 1 ± 1e-6). The
+client re-normalizes them anyway.
+
+**Parity with the reference implementation.** As a reference, the ONNX ports
+(`onnx-community/embeddinggemma-300m-ONNX`, `Xenova/bge-m3`,
+`onnx-community/Qwen3-Embedding-0.6B-ONNX`) run in transformers.js 4.3.1 on the CPU.
+In fp32, the ONNX ports reproduce each model card's example similarities: Gemma and
+Qwen3 to 4–6 decimals, and BGE-M3 within 0.001 of BAAI's official example. The
+Ollama outputs were then compared with ONNX fp32 on the first 2,000 hash-ordered
+unique subset passages plus the 100 subset queries:
+
+| Cosine to ONNX fp32 | Passages median / p5 / min | Queries median / min |
+| --- | --- | --- |
+| Gemma, Ollama BF16 | 0.99999 / 0.99999 / 0.985 | 0.99999 / 0.99998 |
+| BGE-M3, Ollama F16 | 0.99998 / 0.9993 / 0.995 | 0.99999 / 0.9997 |
+| Qwen3, Ollama Q8_0 | 0.9996 / 0.9995 / 0.9990 | 0.9997 / 0.9995 |
+| Gemma, ONNX q8 | 0.992 / 0.989 / 0.980 | 0.993 / 0.989 |
+| BGE-M3, ONNX q8 | 0.992 / 0.989 / 0.985 | 0.992 / 0.989 |
+| **Qwen3, ONNX q8 (`model_quantized.onnx`)** | **0.816 / 0.741 / 0.594** | **0.837 / 0.726** |
+
+For Gemma, all 91,507 subset texts were also embedded with ONNX fp32. Only 257 had a
+cosine to Ollama below 0.999, mostly long numeric-table chunks. Delivered coverage was
+identical on every question, and top-50 overlap was 0.997. Ollama therefore
+reproduces the reference models, and its results are treated as the product-path
+measurement. The transformers.js q8 port of Qwen3 is badly degraded. It must not be
+used: the throughput rule below had initially selected it.
+
+**Throughput and dtype choice** (measured on this Apple M5 Pro, not a claim about user
+hardware). ONNX on CPU used 3 processes × 5 intra-op threads for 90 s probes, with
+batches of 32 texts. The pre-registered rule was fp32 unless the subset would take
+more than about 75 minutes. That selected fp32 for Gemma (55.9 texts/s, about 28
+minutes) and BGE-M3 (22.7 texts/s, about 69 minutes). Qwen3 fp32 ran at 13.8 texts/s
+(about 114 minutes), so the rule selected q8 (21.9 texts/s). Before that run started,
+Ollama with Metal GPU (installed with Steven's approval) became available as the
+product path, and the ONNX subset runs for BGE-M3 and Qwen3 were dropped. The broken Qwen3 q8 port was never used for a
+result. Only the Gemma fp32 ONNX subset run was completed: 2,204 s wall, partly
+overlapping the Ollama runs.
+
+Ollama ran one model at a time, with one request in flight and batches of 64
+length-sorted texts:
+
+| Model | Subset (91,507 texts) wall | Texts/s | Full (376,026 texts) wall | Texts/s |
+| --- | ---: | ---: | ---: | ---: |
+| embeddinggemma | 1,005 s | 91 | 3,307 s | 114 |
+| bge-m3 | 1,604 s | 57 | 5,752 s | 65 |
+| qwen3-embedding:0.6b | 1,570 s | 58 | 6,124 s | 61 |
+
+The subset wall times partly overlapped CPU work (the Gemma ONNX run and the parity
+checks). No input was truncated. Over all 500 questions, the longest prefixed passages
+were 805 (Gemma), 704 (BGE-M3) and 797 (Qwen3) tokens, against limits of 2,048 / 8,192 /
+8,192. Queries were at most 110 tokens.
+
+### Subset screen (100 questions, 176 indexed annotated messages)
+
+| Arm | Returned any | Returned complete | Returned all-complete Qs | Delivered any | Delivered complete | Delivered all-complete Qs |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| K (OpenAI small; reproduced locally, identical top 50 on 100/100) | 96.59% | 95.45% | 89 | 95.45% | **94.32%** | 87 |
+| **Qwen3-Embedding-0.6B (Ollama Q8_0)** | 97.16% | 96.59% | 91 | 96.59% | **96.02%** | 90 |
+| **EmbeddingGemma (Ollama BF16)** | 97.16% | 95.45% | 89 | 96.02% | **94.32%** | 87 |
+| EmbeddingGemma (ONNX fp32) | 97.16% | 95.45% | 89 | 96.02% | 94.32% | 87 |
+| **BGE-M3 (Ollama F16)** | 96.02% | 96.02% | 90 | 93.75% | **93.18%** | 87 |
+| B (server hybrid, stores text) | 96.02% | 94.32% | 87 | 93.18% | 92.05% | 84 |
+| E (bge-small-en, English-only) | 93.75% | 93.18% | 85 | 89.77% | 89.20% | 79 |
+| M (multilingual-e5-small q8) | 92.05% | 90.91% | 82 | 89.77% | 88.07% | 78 |
+
+Paired with K on delivered complete messages per question (model better / worse):
+Qwen3 4/1, Gemma 1/1, BGE-M3 3/5. **All three pass the subset screen** (≥ 92.32%).
+BGE-M3 returns more complete messages than K, but it delivers fewer within the
+4,096-token budget. That is consistent with its evidence ranking lower in the top 50
+(inference).
+
+### Full 500 (retrieval only)
+
+All three models passed the subset screen, so each was run on all 500 questions
+(375,526 unique chunks + 500 queries) through Ollama, then ranked by the same local
+exact KNN. The analysis used the same denominator of 894 indexed annotated messages
+in 478 questions.
+
+| Arm | Returned any | Returned complete | Returned all-complete Qs | Delivered any | Delivered complete | Delivered all-complete Qs |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| A (stores text, Jev rerank; same day) | 99.55% | 99.22% | 471 | 98.55% | 98.10% | 461 |
+| **Qwen3-Embedding-0.6B (Ollama Q8_0)** | 97.54% | 97.09% | 455 | 96.31% | **95.64%** | 446 |
+| **EmbeddingGemma (Ollama BF16)** | 98.21% | 97.43% | 457 | 96.31% | **95.41%** | 442 |
+| K (OpenAI small, dense KNN) | 97.65% | 96.98% | 452 | 95.97% | **95.30%** | 439 |
+| **BGE-M3 (Ollama F16)** | 96.87% | 96.42% | 449 | 95.64% | **94.97%** | 440 |
+| B (stores text, server hybrid) | 96.53% | 95.64% | 441 | 94.18% | 93.40% | 425 |
+| E (bge-small-en, English-only) | 94.07% | 93.18% | 426 | 90.94% | 90.04% | 403 |
+| M (multilingual-e5-small q8) | 88.26% | 87.36% | 390 | 85.68% | 84.45% | 372 |
+
+Paired with K on delivered complete messages per question (model better / worse):
+Qwen3 15/11, Gemma 12/11, BGE-M3 17/20. All three hit an answer session in the
+returned 50 for 500/500 questions.
+
+**Outcome against the pre-registered criteria.** All three models pass the full-500
+retrieval criterion (≥ 93.30% delivered complete). Qwen3 (95.64%) and Gemma (95.41%)
+are at K's level (95.30%), and BGE-M3 (94.97%) is 0.33 points below it. The
+per-question paired differences with K are balanced (11–20 questions each way), so
+the three models and K are not distinguishable on this retrieval metric (inference).
+All three are far above M (84.45%).
+
+**Interpretation and boundaries.**
+
+- This is retrieval and delivery coverage only. No answers were generated or judged
+  for these models. The earlier K/B/D results show that comparable delivered coverage
+  gave comparable answers (455–458/500), but that is not a measurement for these
+  models.
+- English LongMemEval-S only. **No multilingual quality claim follows from these
+  results**, for these models or for M.
+- The measurement is of model quality as served by Ollama 0.40.15's default tags
+  (BF16 / F16 / Q8_0), with parity to the ONNX fp32 reference shown above. It is
+  not a measurement of other GGUF quantizations, and the throughput figures are not
+  claims about user hardware. Ollama ran on this machine's Metal GPU; browser
+  (WASM/WebGPU) embedding was not measured.
+- Vector size affects LambdaDB upload volume. By the payload model under Resources, 768
+  floats (Gemma) cost about half of K's 1,536, and 1,024 floats (BGE-M3, Qwen3)
+  about two thirds. This is an estimate from dimension count, not a measured
+  upload.
+
 ## Answers (Jev 1.13.0 Noul, Yes ≥ 0.50)
 
 The generator is `gpt-6.1-sol` (reasoning low), using the original task-specific
@@ -315,12 +470,13 @@ Experiment spend (modeled from usage at the frozen rate card in
 - The local-KNN substitution for M is validated only for per-chat ranges of
   about 1,000 chunks.
 - Not measured: browser (WASM) embedding speed, mobile devices, and
-  multilingual retrieval quality.
+  multilingual retrieval quality. The Ollama candidates were measured for
+  retrieval only, with no answers or judge, on one machine's GPU.
 
 ## Evidence
 
 Detailed outputs are stored under the ignored, local-only
 `artifacts/text-private-retrieval-v1/` directory, with `SHA256SUMS` and a `README`.
 They are unavailable in a fresh clone. Reusable code is in
-`benchmark/text-private/`; the regression test is
+`benchmark/text-private/` (`screen.mjs` runs the local-model retrieval screen); the regression test is
 `tests/text-private-retrieval.test.js`.

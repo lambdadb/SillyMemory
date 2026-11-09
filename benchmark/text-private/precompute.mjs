@@ -6,18 +6,23 @@
 // OUT/<provider><suffix>.f32; concatenate shards in row order afterwards (merge-shards.mjs).
 // Diagnostics: --dtype fp32 --name e5-fp32 --questions IDS.json embeds only the texts of
 // the listed questions into OUT/<name>*.f32 (a distinct name is required, so the q8
-// files are never overwritten).
+// files are never overwritten). --order length embeds texts sorted by length (less
+// padding); --groups N interleaves the length order into N contiguous groups of similar
+// length mix, so N equal --start/--end shards take similar time. The index records the
+// row order, and every shard writes the same index. --runtime ollama embeds a local
+// provider (gemma, bgem3, qwen3) through Ollama's /v1/embeddings instead of ONNX.
 import assert from 'node:assert/strict';
 import { appendFile, readFile, writeFile, stat } from 'node:fs/promises';
 import { parseEnv, parseArgs } from 'node:util';
 import path from 'node:path';
 import { prepareCase, recallQuery, sha256 } from '../longmemeval/protocol.mjs';
-import { LOCAL_DIMENSIONS, OPENAI_DIMENSIONS, localEmbedder, openaiEmbed } from './embed.mjs';
+import { LOCAL_MODELS, OLLAMA_MODELS, OPENAI_DIMENSIONS, localEmbedder, ollamaEmbedder, openaiEmbed } from './embed.mjs';
 
 const { values: args } = parseArgs({ options: { provider: { type: 'string' }, dataset: { type: 'string' },
     out: { type: 'string' }, 'env-file': { type: 'string' }, 'max-usd': { type: 'string', default: '3' },
     start: { type: 'string', default: '0' }, end: { type: 'string' }, suffix: { type: 'string', default: '' }, threads: { type: 'string' },
-    dtype: { type: 'string', default: 'q8' }, name: { type: 'string' }, questions: { type: 'string' } } });
+    dtype: { type: 'string', default: 'q8' }, name: { type: 'string' }, questions: { type: 'string' }, order: { type: 'string', default: 'hash' }, groups: { type: 'string', default: '1' },
+    runtime: { type: 'string', default: 'onnx' }, 'ollama-url': { type: 'string', default: 'http://localhost:11434/v1' }, batch: { type: 'string' } } });
 const here = path.dirname(new URL(import.meta.url).pathname);
 const config = JSON.parse(await readFile(path.join(here, '../longmemeval/config.json')));
 const bytes = await readFile(args.dataset);
@@ -37,9 +42,14 @@ for (const row of rows) {
     queries.add(q); texts.set(sha256(q), q);
     for (const d of p.docs) texts.set(sha256(d.text), d.text);
 }
-const keys = [...texts.keys()];
+let keys = [...texts.keys()];
+if (args.order === 'length') {
+    keys.sort((a, b) => texts.get(a).length - texts.get(b).length || (a < b ? -1 : 1));
+    const groups = Number(args.groups);
+    keys = Array.from({ length: groups }, (_, g) => keys.filter((_, i) => i % groups === g)).flat();
+} else assert.equal(args.order, 'hash');
 const provider = args.provider, local = provider !== 'openai';
-const dims = local ? LOCAL_DIMENSIONS : OPENAI_DIMENSIONS;
+const dims = local ? LOCAL_MODELS[provider].dimensions : OPENAI_DIMENSIONS;
 const suffix = args.suffix, first = Number(args.start), last = args.end ? Number(args.end) : keys.length;
 const data = path.join(args.out, `${name}${suffix}.f32`), indexFile = path.join(args.out, `${name}-index.json`);
 const progressFile = path.join(args.out, `${name}${suffix}-progress.json`);
@@ -52,11 +62,13 @@ assert.equal(progress.rows, done, 'Progress record differs from vector file');
 console.error(`${name}${suffix}: ${keys.length} unique texts (${queries.size} queries); rows [${first}, ${last}); resuming at +${done}`);
 let embed;
 const started = performance.now();
-if (local) embed = await localEmbedder({ cacheDir: path.join(args.out, 'model-cache'), provider,
+const norms = [];
+if (local && args.runtime === 'ollama') embed = ollamaEmbedder({ provider, baseUrl: args['ollama-url'], norms });
+else if (local) embed = await localEmbedder({ cacheDir: path.join(args.out, 'model-cache'), provider,
     threads: args.threads && Number(args.threads), dtype: args.dtype });
 const loadMs = performance.now() - started;
 const env = local ? null : parseEnv(await readFile(args['env-file'], 'utf8'));
-const batch = local ? 32 : 256, maxUsd = Number(args['max-usd']);
+const batch = args.batch ? Number(args.batch) : local ? 32 : 256, maxUsd = Number(args['max-usd']);
 for (let i = first + offset0; i < last;) {
     const group = [];
     for (let j = 0; j < (local ? 1 : 4) && i < last; j++, i += batch) group.push(keys.slice(i, Math.min(i + batch, last)));
@@ -89,6 +101,7 @@ for (let i = first + offset0; i < last;) {
     if (!local) assert(progress.tokens * 0.02 / 1e6 <= maxUsd, 'Embedding spend cap reached');
     if (progress.requests % 50 < group.length) console.error(`${name}${suffix}: ${progress.rows}/${last - first} ${(progress.milliseconds / 1000).toFixed(0)}s tokens=${progress.tokens}`);
 }
-if (!suffix) await writeFile(indexFile, JSON.stringify(keys));
-await writeFile(progressFile, JSON.stringify({ ...progress, complete: true, loadMilliseconds: loadMs, ...(local ? { dtype: args.dtype } : {}) }));
+if (!suffix || args.order === 'length') await writeFile(indexFile, JSON.stringify(keys));
+await writeFile(progressFile, JSON.stringify({ ...progress, complete: true, loadMilliseconds: loadMs, ...(local ? args.runtime === 'ollama' ? { runtime: 'ollama', model: OLLAMA_MODELS[provider] } : { dtype: args.dtype, runtime: 'onnx' } : {}),
+    ...(norms.length ? { returnedNorms: { n: norms.length, min: norms.reduce((m, x) => Math.min(m, x)), max: norms.reduce((m, x) => Math.max(m, x)) } } : {}) }));
 console.error(`${name}${suffix}: complete`, progress);
