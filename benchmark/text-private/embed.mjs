@@ -3,19 +3,27 @@
 // by default. Remote: OpenAI text-embedding-3-small called by the client.
 import assert from 'node:assert/strict';
 
-export const LOCAL_MODEL = 'Xenova/bge-small-en-v1.5', LOCAL_DTYPE = 'q8', LOCAL_DIMENSIONS = 384;
-// Model-card retrieval instruction for short queries; passages are embedded as-is.
-export const LOCAL_QUERY_PREFIX = 'Represent this sentence for searching relevant passages: ';
+// Local models load the q8 ONNX weights the browser WASM backend uses by default.
+// bge-small-en-v1.5 is English-only (diagnostic); multilingual-e5-small is the
+// multilingual product candidate. Prefixes and pooling follow each model card.
+export const LOCAL_MODELS = Object.freeze({
+    local: { model: 'Xenova/bge-small-en-v1.5', pooling: 'cls', dimensions: 384,
+        queryPrefix: 'Represent this sentence for searching relevant passages: ', passagePrefix: '' },
+    e5: { model: 'Xenova/multilingual-e5-small', pooling: 'mean', dimensions: 384, queryPrefix: 'query: ', passagePrefix: 'passage: ' },
+});
+export const LOCAL_DTYPE = 'q8', LOCAL_DIMENSIONS = 384;
 
-export async function localEmbedder({ cacheDir } = {}) {
+export async function localEmbedder({ cacheDir, provider = 'local', threads } = {}) {
+    const spec = LOCAL_MODELS[provider];
     const { pipeline, env } = await import('@huggingface/transformers');
     if (cacheDir) env.cacheDir = cacheDir;
-    const extractor = await pipeline('feature-extraction', LOCAL_MODEL, { dtype: LOCAL_DTYPE, device: 'cpu' });
+    const extractor = await pipeline('feature-extraction', spec.model, { dtype: LOCAL_DTYPE, device: 'cpu',
+        ...(threads ? { session_options: { intraOpNumThreads: threads, interOpNumThreads: 1 } } : {}) });
     return async (texts, { query = false } = {}) => {
-        const input = query ? texts.map(t => LOCAL_QUERY_PREFIX + t) : texts;
-        // bge uses CLS pooling with L2 normalization; inputs beyond 512 tokens are truncated.
-        const output = await extractor(input, { pooling: 'cls', normalize: true, truncation: true, max_length: 512 });
-        const [n, d] = output.dims; assert.equal(n, texts.length); assert.equal(d, LOCAL_DIMENSIONS);
+        const input = texts.map(t => (query ? spec.queryPrefix : spec.passagePrefix) + t);
+        // L2-normalized pooled output; inputs beyond 512 tokens are truncated.
+        const output = await extractor(input, { pooling: spec.pooling, normalize: true, truncation: true, max_length: 512 });
+        const [n, d] = output.dims; assert.equal(n, texts.length); assert.equal(d, spec.dimensions);
         return Array.from({ length: n }, (_, i) => Array.from(output.data.subarray(i * d, (i + 1) * d)));
     };
 }

@@ -1,7 +1,9 @@
 // Embed every unique LongMemEval chunk text and retrieval query once, in sorted
 // question order, into OUT/<provider>.f32 with OUT/<provider>-index.json
 // (sha256(text) -> row). Resumable; rows are appended in index order.
-//   node precompute.mjs --provider local|openai --dataset FILE --out DIR [--env-file FILE]
+//   node precompute.mjs --provider local|e5|openai --dataset FILE --out DIR [--env-file FILE]
+// Local shards: --start S --end E --suffix .sN --threads T embed rows [S, E) into
+// OUT/<provider><suffix>.f32; concatenate shards in row order afterwards (merge-shards.mjs).
 import assert from 'node:assert/strict';
 import { appendFile, readFile, writeFile, stat } from 'node:fs/promises';
 import { parseEnv, parseArgs } from 'node:util';
@@ -10,7 +12,8 @@ import { prepareCase, recallQuery, sha256 } from '../longmemeval/protocol.mjs';
 import { LOCAL_DIMENSIONS, OPENAI_DIMENSIONS, localEmbedder, openaiEmbed } from './embed.mjs';
 
 const { values: args } = parseArgs({ options: { provider: { type: 'string' }, dataset: { type: 'string' },
-    out: { type: 'string' }, 'env-file': { type: 'string' }, 'max-usd': { type: 'string', default: '3' } } });
+    out: { type: 'string' }, 'env-file': { type: 'string' }, 'max-usd': { type: 'string', default: '3' },
+    start: { type: 'string', default: '0' }, end: { type: 'string' }, suffix: { type: 'string', default: '' }, threads: { type: 'string' } } });
 const here = path.dirname(new URL(import.meta.url).pathname);
 const config = JSON.parse(await readFile(path.join(here, '../longmemeval/config.json')));
 const bytes = await readFile(args.dataset);
@@ -24,25 +27,27 @@ for (const row of rows) {
     for (const d of p.docs) texts.set(sha256(d.text), d.text);
 }
 const keys = [...texts.keys()];
-const provider = args.provider, local = provider === 'local';
+const provider = args.provider, local = provider !== 'openai';
 const dims = local ? LOCAL_DIMENSIONS : OPENAI_DIMENSIONS;
-const data = path.join(args.out, `${provider}.f32`), indexFile = path.join(args.out, `${provider}-index.json`);
-const progressFile = path.join(args.out, `${provider}-progress.json`);
+const suffix = args.suffix, first = Number(args.start), last = args.end ? Number(args.end) : keys.length;
+const data = path.join(args.out, `${provider}${suffix}.f32`), indexFile = path.join(args.out, `${provider}-index.json`);
+const progressFile = path.join(args.out, `${provider}${suffix}-progress.json`);
 let done = 0;
 try { done = (await stat(data)).size / (4 * dims); } catch {}
+const offset0 = done;
 assert(Number.isInteger(done));
 const progress = done ? JSON.parse(await readFile(progressFile)) : { rows: 0, tokens: 0, milliseconds: 0, requests: 0 };
 assert.equal(progress.rows, done, 'Progress record differs from vector file');
-console.error(`${provider}: ${keys.length} unique texts (${queries.size} queries); resuming at ${done}`);
+console.error(`${provider}${suffix}: ${keys.length} unique texts (${queries.size} queries); rows [${first}, ${last}); resuming at +${done}`);
 let embed;
 const started = performance.now();
-if (local) embed = await localEmbedder({ cacheDir: path.join(args.out, 'model-cache') });
+if (local) embed = await localEmbedder({ cacheDir: path.join(args.out, 'model-cache'), provider, threads: args.threads && Number(args.threads) });
 const loadMs = performance.now() - started;
 const env = local ? null : parseEnv(await readFile(args['env-file'], 'utf8'));
 const batch = local ? 32 : 256, maxUsd = Number(args['max-usd']);
-for (let i = done; i < keys.length;) {
+for (let i = first + offset0; i < last;) {
     const group = [];
-    for (let j = 0; j < (local ? 1 : 4) && i < keys.length; j++, i += batch) group.push(keys.slice(i, i + batch));
+    for (let j = 0; j < (local ? 1 : 4) && i < last; j++, i += batch) group.push(keys.slice(i, Math.min(i + batch, last)));
     const t = performance.now();
     const results = await Promise.all(group.map(async ks => {
         const input = ks.map(k => texts.get(k));
@@ -70,8 +75,8 @@ for (let i = done; i < keys.length;) {
     progress.requests += results.length; progress.milliseconds += performance.now() - t;
     await writeFile(progressFile, JSON.stringify(progress));
     if (!local) assert(progress.tokens * 0.02 / 1e6 <= maxUsd, 'Embedding spend cap reached');
-    if (progress.requests % 50 < group.length) console.error(`${provider}: ${progress.rows}/${keys.length} ${(progress.milliseconds / 1000).toFixed(0)}s tokens=${progress.tokens}`);
+    if (progress.requests % 50 < group.length) console.error(`${provider}${suffix}: ${progress.rows}/${last - first} ${(progress.milliseconds / 1000).toFixed(0)}s tokens=${progress.tokens}`);
 }
-await writeFile(indexFile, JSON.stringify(keys));
+if (!suffix) await writeFile(indexFile, JSON.stringify(keys));
 await writeFile(progressFile, JSON.stringify({ ...progress, complete: true, loadMilliseconds: loadMs }));
 console.error(`${provider}: complete`, progress);

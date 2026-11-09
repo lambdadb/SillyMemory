@@ -36,6 +36,7 @@ def main():
         parser.add_argument("--" + name, required=True)
     parser.add_argument("--prior-usd", type=float, default=0.0)
     parser.add_argument("--cap-usd", type=float, default=100.0)
+    parser.add_argument("--shard", default="0/1", help="i/n: score ids at sorted index %% n == i; rerun 0/1 afterwards to summarize from receipts")
     args = parser.parse_args()
     config = lme.read_json(lme.HERE / "config.json")
     assert lme.digest(lme.HERE / "judge-rules.json") == config["rulesSha256"]
@@ -54,7 +55,10 @@ def main():
                                      "cachedTokens": 0, "cacheWriteTokens": 0, "judgeInputTokens": 0}
     # Worst case per question: ~6k input at the cache-write rate, 4,096 output tokens, ~1k judge tokens.
     worst = (6000 * GEN["cache_write"] + 4096 * GEN["output"] + 1000 * JUDGE_INPUT) / 1e6
-    for id in sorted(rows):
+    shard, shards = map(int, args.shard.split("/"))
+    for n, id in enumerate(sorted(rows)):
+        if n % shards != shard:
+            continue
         row = rows[id]
         assert args.prior_usd + spent + worst <= args.cap_usd, f"Spend cap would be exceeded at {id}"
         answer = receipts.get("answer", id, requests[id])
@@ -75,6 +79,9 @@ def main():
     summary = {"arm": args.arm, "questions": len(scores), "correct": correct, "accuracy": correct / len(scores),
                "requestsSha256": binding, "generator": config["generator"], "judge": config["judge"], "usage": usage,
                "modeledUsd": spent}
+    if shards > 1:
+        print(json.dumps({"shard": args.shard, "spentUsd": spent}))
+        return
     lme.write_json(root / "scores.json", scores)
     lme.write_json(root / "summary.json", summary)
     print(json.dumps(summary, indent=2))

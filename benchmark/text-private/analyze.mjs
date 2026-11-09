@@ -22,8 +22,10 @@ const countTokens = text => encoder.encode(text, [], []).length;
 const readJSON = async file => JSON.parse(await readFile(file));
 const historicalLock = await readJSON(path.join(args.historical, 'lock.json'));
 const owners = { native: (await readJSON(path.join(args.stage3, 'native/state.json'))).owner,
-    private: (await readJSON(path.join(args.stage3, 'private/state.json'))).owner, historical: historicalLock.owner };
-const ARMS = { 'A-historical': 'historical', A: 'native', B: 'native', F: 'native', L: 'native', C: 'private', D: 'private', E: 'private', K: 'private', S: 'private' };
+    private: (await readJSON(path.join(args.stage3, 'private/state.json'))).owner,
+    // M: local exact KNN (knn-local.mjs), validated identical to live LambdaDB K and E.
+    e5: (await readJSON(path.join(args.stage3, 'e5/state.json'))).owner, historical: historicalLock.owner };
+const ARMS = { 'A-historical': 'historical', A: 'native', B: 'native', F: 'native', L: 'native', C: 'private', D: 'private', E: 'private', K: 'private', S: 'private', M: 'e5' };
 const wanted = new Set(args.requests.split(',').filter(Boolean));
 const perArm = Object.fromEntries(Object.keys(ARMS).map(a => [a, { returned: [], delivered: [], memoryTokens: [], selected: [], recentEvidence: 0, fallback: 0, ids: {} }]));
 const requests = Object.fromEntries([...wanted].map(a => [a, {}]));
@@ -35,9 +37,11 @@ for (const row of rows) {
         historical: await readJSON(path.join(args.historical, 'recall', `${id}.json`)),
         native: await readJSON(path.join(args.stage3, 'native/recall', `${id}.json`)),
         private: await readJSON(path.join(args.stage3, 'private/recall', `${id}.json`)),
+        e5: await readJSON(path.join(args.stage3, 'e5/recall', `${id}.json`)),
     };
     assert.equal(records.native.sourceSha256, sha256(JSON.stringify(prepared.native)));
     assert.equal(records.private.sourceSha256, sha256(JSON.stringify(prepared.private)));
+    assert.equal(records.e5.sourceSha256, sha256(JSON.stringify(prepared.e5)));
     for (const [arm, layout] of Object.entries(ARMS)) {
         const p = prepared[layout], ev = evidence(row, p), out = perArm[arm];
         let ids;
