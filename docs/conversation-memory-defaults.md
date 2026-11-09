@@ -54,13 +54,15 @@ the prompt does not need separate field names or a date-reference dictionary.
 ### Current native dialogue policy
 
 Completed eligible messages are archived only after they leave the recent-five
-window, aligned to keep a turn bundle together: a plain-text input and every
-message up to the next input, such as several group member replies. Normal user
-input retains five; a completed single reply can retain six. Messages before the
-first input keep the plain message boundary. The rule is the same in character
-and group chats: alternating chats keep the previous pair boundary, and a
-character chat with several replies after one input keeps or archives that whole
-bundle. Displaced bundles share
+window, aligned to turn bundles: a plain-text input and every message up to the
+next input, such as several group member replies. The current bundle stays
+whole: normal user input retains five; a completed single reply can retain six.
+An older bundle splits at generation rounds (replies sharing the host's group
+generation ID; a reply without one is its own round), keeping its input with the
+round that directly answers it. Messages before the first input keep the plain
+message boundary. Alternating chats keep the previous pair boundary; a character
+chat with several replies after one input keeps them while current and splits
+them per reply once older. Displaced messages share
 an upsert with separate per-message chunks, subject to the existing 200-document
 batch. No five-message queue. A trailing user input waits for its answer.
 Checkpoints preserve the full native JSONL transcript and freeze the same older

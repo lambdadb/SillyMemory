@@ -66,12 +66,21 @@ Generalize the existing pair alignment to a turn bundle.
 - A bundle is a user message plus every following message up to the next user
   message.
 - Keep at least five recent eligible messages including the active input, as
-  today. When the boundary falls inside a bundle, move it back to the bundle's
-  user message. The previous rule moved back by exactly one message. The bundle
-  rule applies to character and group chats alike: alternating chats give the
-  same result as before, and a character chat with several replies after one
-  user message (for example after an empty send) now keeps or archives that
-  whole bundle, as a group does.
+  today. When the boundary falls inside the current bundle (the one holding
+  the latest user message), move it back to that user message. The previous
+  rule moved back by exactly one message.
+- When the boundary falls inside an older bundle, move it back to the start of
+  the generation round containing the boundary message, and to the bundle's
+  user message when that round directly follows it. A generation round is the
+  consecutive replies sharing the host's `extra.gen_id`, which the host sets
+  only in groups (`script.js` `saveReply`); greetings get their own random ID
+  (`getFirstCharacterMessage` in `group-chats.js`). A reply without an ID, as in
+  character chats or legacy group files, is a round of its own.
+- Alternating chats and normal group rounds give the same result as the pure
+  bundle rule. A character chat with several replies after one user message
+  (for example after an empty send) keeps them while the bundle is current and
+  splits them per reply once it is older, which is the pre-change pair result.
+  The generation ID aligns the boundary only; stored documents are unchanged.
 - Small bundles leave several bundles in the prompt; once the current bundle
   alone has five or more messages, only that bundle remains and earlier bundles
   are archived.
@@ -93,19 +102,21 @@ host's stop listener turns Auto Mode off; with it off the host trims the oldest
 messages, including the triggering user message, which is then in neither the
 prompt nor memory. Document this as a current limit.
 
-The design first assumed that a new user message restores normal behavior. The
-host test shows it does not: the new input's five-message window starts inside
-the long run, so the bundle rule keeps the whole run, and the reply stops again
-at the same context. The run leaves the window only once five newer messages
-exist. With **Stop on missing context** off, two more user messages in a
-two-member group were enough to archive the run, after which stopping worked
-normally again; increasing the context size also recovers. A product change
-(for example the two-span retention below) needs a separate decision.
+The first implementation applied the bundle rule to every bundle. The host test
+showed that a new user message then did not recover: its five-message window
+started inside the long run, the rule kept the whole run, and the reply stopped
+again at the same context until five newer messages existed. Older bundles
+therefore split at generation rounds (adopted for this change): after the stop,
+one new user message keeps only the last rounds of the run with it, archives the
+earlier rounds in one batch, and fits the same context again (host test: an
+11-reply run, then two replies with five recent messages kept).
 
-If monitoring shows this happens in practice, consider keeping the triggering
-user bundle plus recent generation rounds (two retained spans) instead.
-Generation-round bundles (`extra.gen_id`) alone were rejected because a long
-Auto-mode run would silently archive the user message that started it.
+Splitting the current bundle by generation round was rejected because a long
+Auto-mode run would then silently archive the user message that started it. The
+adopted rule splits only older bundles, after a new user message arrives, and
+archives a bundle's user message together with the round that directly answers
+it. If long runs inside the current bundle prove common, consider keeping the
+triggering user bundle plus recent generation rounds (two retained spans).
 
 ## Retrieval per member turn
 
@@ -160,7 +171,12 @@ user/assistant pair. Update them to the bundle rule in the same change.
 - Retention for swipe is `retentionAnchor()` in `src/context.js`.
 - Bundle alignment is `archiveBoundary()` in `src/memory.js`. Unit tests compare
   it with the previous pair rule over every alternating chat of up to ten
-  messages with eligible, ineligible and blank messages.
+  messages with eligible, ineligible and blank messages, and cover long Auto
+  Mode runs, older bundles answered by one round, legacy replies without a
+  generation ID, greetings and swipe/regenerate. `capture()` records the
+  generation ID as `round`; document revisions, IDs and fields are unchanged
+  (unit test), and the ID only changes with a new reply, so it adds no
+  synchronization beyond a real chat change.
 - Host test observations (local emulator, two members, list activation):
   - Turning memory on read `/api/chats/group/get` three times (inventory of one
     chat, identity read-back, on/off read-back) and took about 1.1 s.

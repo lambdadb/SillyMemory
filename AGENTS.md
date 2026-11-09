@@ -48,13 +48,16 @@ Read [CONTRIBUTING.md](CONTRIBUTING.md) before changing this repository.
   retrieval query. Always retain at
   least five recent eligible messages including the active input, alongside selected
   memory and native system/character settings. Exclude full retained turns from
-  memory selection. Align the recent boundary to a turn bundle, an eligible user
-  input and every following message up to the next input: a boundary inside a
-  bundle moves back to its input, so normal user input retains five and a completed
-  single reply can retain six. This rule applies to character and group chats
-  alike: alternating chats keep the previous pair boundary, and a character chat
-  with several replies after one input keeps or archives that whole bundle.
-  Messages before the first input keep the plain boundary. Regenerate retains
+  memory selection. Align the recent boundary to turn bundles, an eligible user
+  input and every following message up to the next input. A boundary inside the
+  current bundle (the latest input's) moves back to its input, so normal user
+  input retains five and a completed single reply can retain six. A boundary
+  inside an older bundle moves back to the start of its generation round
+  (replies sharing the host's group `extra.gen_id`; a reply without one is its
+  own round), and to the input when that round directly follows it. Alternating
+  chats keep the previous pair boundary; a character chat with several replies
+  after one input keeps them while current and splits per reply when older. Messages
+  before the first input keep the plain boundary. Regenerate retains
   only through the latest input; swipe excludes only the swiped reply, so earlier
   replies after the latest input, such as another group member's, stay retained. Upload the whole displaced bundle together using existing 200-document
   batches; do not introduce a five-message write queue. Query 1 remains independent of this

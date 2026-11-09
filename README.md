@@ -66,9 +66,9 @@ memory** for everything that was added to the prompt.
 
 ## How it works
 
-- The latest five messages always stay in the prompt, together with the rest of
-  the turn they start in: a user message and every reply that follows it, such
-  as each group member's reply. Older messages are saved
+- The latest five messages always stay in the prompt, without splitting your
+  latest message from its replies or a group's round of member replies. Older
+  messages are saved
   as memory in your LambdaDB project. Before each reply, SillyMemory searches
   that memory with the current message and adds related passages within a
   **memory token budget** (default 4,096 tokens, at most one quarter of the
@@ -154,12 +154,9 @@ rest of the flow is the same.
   cover single-character dialogue only.
 - Group Auto Mode without your input keeps every reply since your last message
   in the prompt. A long run can outgrow the context: with **Stop on missing
-  context** on (the default) the reply stops and Auto Mode turns off. A new
-  message alone does not fix this, because the run stays in the prompt until
-  five newer messages exist. Increase the context size, or turn **Stop on
-  missing context** off until then (two of your messages with two members):
-  SillyTavern drops the oldest messages meanwhile, including your last message
-  before the run, which is then in neither the prompt nor memory.
+  context** on (the default) the reply stops and Auto Mode turns off. Send a
+  message to continue: the earlier rounds of the run then move into memory and
+  only the last rounds stay in the prompt.
 - Live reply and streaming checks cover OpenAI `gpt-6.1-sol` on SillyTavern
   1.19.0 and Chromium; other models, providers and browsers are unverified.
 - Prompt delivery is checked for Chat Completion; other formats may report

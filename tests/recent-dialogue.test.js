@@ -67,9 +67,11 @@ test('a boundary inside a turn bundle moves back to its eligible input', () => {
     assert.equal(archiveBoundary({ messages: source }), 2);
     source[2].eligible = false;
     assert.equal(archiveBoundary({ messages: source }), 3, 'an ineligible input has no indexed input to align to');
-    // Consecutive replies belong to the bundle of the preceding input.
+    // Consecutive character replies after an older input split per reply, as before.
     source[2].eligible = true; source[2].user = false;
-    assert.equal(archiveBoundary({ messages: source }), 0);
+    assert.equal(archiveBoundary({ messages: source }), 3);
+    // In the current bundle they stay together with their input.
+    assert.equal(archiveBoundary({ messages: [messages[0], ...messages.slice(1, 6).map(m => ({ ...m, user: false }))] }), 0);
     source[2].user = true; source[2].text = '';
     assert.equal(archiveBoundary({ messages: source }), 3, 'a blank input has no indexed input to align to');
     const greeting = [{ user: false, text: 'Greeting', eligible: true }];
@@ -118,11 +120,11 @@ test('alternating single-character chats keep the previous pair boundary', () =>
     }
 });
 
-const turn = (user, text, name = user ? 'User' : 'Member') => ({ user, text, name, eligible: true });
+const turn = (user, text, name = user ? 'User' : 'Member', round) => ({ user, text, name, eligible: true, ...(round !== undefined ? { round } : {}) });
 test('group bundles with several replies archive whole bundles', () => {
     // Two members answer each input.
     const source = [];
-    for (let round = 0; round < 4; round++) source.push(turn(true, `Input ${round}`), turn(false, `A ${round}`, 'Alice'), turn(false, `B ${round}`, 'Bob'));
+    for (let round = 0; round < 4; round++) source.push(turn(true, `Input ${round}`), turn(false, `A ${round}`, 'Alice', round), turn(false, `B ${round}`, 'Bob', round));
     const at = length => archiveBoundary({ messages: source.slice(0, length) });
     // New input: the five-message window starts inside the previous bundle.
     assert.equal(at(10), 3, 'a new input keeps the whole bundle its window starts in');
@@ -184,4 +186,57 @@ test('alternating swipe and regenerate keep the previous latest-input retention'
         if (!chat.at(-1).user) assert.equal(retentionAnchor(chat, 'swipe'), previous(chat, 'swipe'));
         if (chat.at(-1).user) assert.equal(retentionAnchor(chat, 'regenerate'), previous(chat, 'regenerate'));
     }
+});
+
+// Auto Mode: one input, then rounds of two member replies, each round with its own ID.
+function autoRun(rounds) {
+    const source = [turn(true, 'Start the run')];
+    for (let round = 0; round < rounds; round++) source.push(turn(false, `A ${round}`, 'Alice', round), turn(false, `B ${round}`, 'Bob', round));
+    return source;
+}
+test('a long Auto Mode run stays whole while current and splits by round once a new input arrives', () => {
+    const run = autoRun(5); // Input at 0, rounds at 1-2, 3-4, 5-6, 7-8, 9-10.
+    assert.equal(archiveBoundary({ messages: run }), 0, 'the current bundle keeps the whole run');
+    const next = [...run, turn(true, 'A new input')];
+    assert.equal(archiveBoundary({ messages: next }), 7, 'the last two rounds and the new input stay; earlier rounds are archived');
+    assert.equal(next.length - 7, 5);
+    // The first member's reply moves the window into the last round; its round start is kept.
+    const replied = [...next, turn(false, 'A new', 'Alice', 9)];
+    assert.equal(archiveBoundary({ messages: replied }), 7, 'a window starting mid-round keeps that whole round');
+    const answered = [...replied, turn(false, 'B new', 'Bob', 9)];
+    assert.equal(archiveBoundary({ messages: answered }), 9);
+    // Swipe excludes the swiped reply; Regenerate retains through the input.
+    assert.equal(archiveBoundary({ messages: answered }, 'swipe'), 7);
+    assert.equal(archiveBoundary({ messages: answered }, 'regenerate'), 7);
+});
+
+test('an older bundle keeps its input when the window starts in the first round answering it', () => {
+    const source = [turn(true, 'Old input'), ...['A', 'B', 'C', 'D'].map(name => turn(false, `${name} reply`, name, 1)), turn(true, 'New input'), turn(false, 'A new', 'A', 2)];
+    assert.equal(archiveBoundary({ messages: source }), 0, 'one round answering its input stays with it');
+    // Replies without a generation ID are rounds of their own, as in legacy or character chats.
+    const legacy = source.map(({ round, ...message }) => message);
+    assert.equal(archiveBoundary({ messages: legacy }), 2, 'legacy replies split per reply, the previous pair rule');
+    assert.equal(archiveBoundary({ messages: legacy.slice(0, 7).toSpliced(4, 1) }), 0, 'a window starting at the first reply keeps its input');
+    // Ineligible or blank older inputs keep the plain boundary.
+    const blank = structuredClone(source); blank[0].text = ' ';
+    assert.equal(archiveBoundary({ messages: blank }), 2);
+});
+
+test('greetings with their own generation IDs keep the plain boundary before the first input', () => {
+    const greetings = ['Alice', 'Bob', 'Carol', 'Dave', 'Eve', 'Finn'].map((name, i) => turn(false, `${name} greeting`, name, 1000 + i));
+    assert.equal(archiveBoundary({ messages: greetings }), 1);
+    assert.equal(archiveBoundary({ messages: [...greetings, turn(true, 'First input')] }), 2);
+    assert.equal(archiveBoundary({ messages: [...greetings, turn(true, 'First input'), turn(false, 'A', 'Alice', 7), turn(false, 'B', 'Bob', 7)] }), 4);
+});
+
+test('generation IDs align the boundary but never change stored documents', async () => {
+    const chat = [{ mes: 'Hello', name: 'User', is_user: true }, { mes: 'Hi', name: 'Alice', is_user: false, extra: { gen_id: 42 } }];
+    const context = extra => ({ groupId: '1', characters: [], getCurrentChatId: () => 'chat', chat: chat.map((m, i) => i ? { ...m, extra: extra ? m.extra : {} } : m),
+        chatMetadata: { sillymemory: { id: 'b'.repeat(32), story: 'b'.repeat(32) } } });
+    const { capture } = await import('../src/memory.js');
+    const withRound = capture(context(true)), without = capture(context(false));
+    assert.equal(withRound.messages[1].round, 42);
+    assert.equal(Object.hasOwn(without.messages[1], 'round'), false);
+    const stored = async snapshot => JSON.stringify((await documents(snapshot, 'owner', { chunkChars: 800 })).docs);
+    assert.equal(await stored(withRound), await stored(without));
 });

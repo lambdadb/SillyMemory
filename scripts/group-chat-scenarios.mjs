@@ -11,7 +11,7 @@ export async function runGroupChatScenarios({ page, field, waitStatus, check, ca
         const body = route.request().postDataJSON();
         const member = await page.evaluate(() => SillyTavern.getContext().name2);
         completions.push({ member, messages: body.messages });
-        const content = `${member} reply ${completions.length}.` + (longReplies ? ` ${'The harbor fog rolls over the quiet docks. '.repeat(60)}` : '');
+        const content = `${member} reply ${completions.length}.` + (longReplies ? ` ${'The harbor fog rolls over the quiet docks. '.repeat(20)}` : '');
         await route.fulfill({ json: { model: body.model, choices: [{ message: { role: 'assistant', content }, finish_reason: 'stop' }] } });
     });
     const groupReads = [];
@@ -72,8 +72,10 @@ export async function runGroupChatScenarios({ page, field, waitStatus, check, ca
     await page.evaluate(async () => {
         const c = SillyTavern.getContext(), greetings = c.chat.slice(0, 2);
         const rounds = [['The red key is in the boathouse.', 'Alice notes the boathouse.', 'Bob checks the tide.'], ['The tide turns at dusk.', 'Alice lights a lamp.', 'Bob counts the boats.']];
-        c.chat.splice(0, c.chat.length, ...greetings, ...rounds.flatMap(([user, alice, bob]) => [
-            { name: 'User', is_user: true, mes: user, extra: {} }, { name: 'Group Alice', is_user: false, mes: alice, extra: {} }, { name: 'Group Bob', is_user: false, mes: bob, extra: {} }]));
+        // Member replies of one round share the host's group generation ID.
+        c.chat.splice(0, c.chat.length, ...greetings, ...rounds.flatMap(([user, alice, bob], round) => [
+            { name: 'User', is_user: true, mes: user, extra: {} }, { name: 'Group Alice', is_user: false, mes: alice, extra: { gen_id: 100 + round } },
+            { name: 'Group Bob', is_user: false, mes: bob, extra: { gen_id: 100 + round } }]));
         await c.saveChat(); await c.reloadCurrentChat();
     });
     await waitStatus('synchronized');
@@ -206,25 +208,23 @@ export async function runGroupChatScenarios({ page, field, waitStatus, check, ca
     // A long Auto Mode run keeps its whole bundle until it outgrows a small context.
     const hostContext = await page.evaluate(async () => { const { oai_settings } = await import('/scripts/openai.js'); const previous = oai_settings.openai_max_context; oai_settings.openai_max_context = 3000; return previous; });
     longReplies = true;
+    const firstRunReply = completions.length + 1;
     const autoLong = await runAuto();
     longReplies = false;
-    check('a long Auto Mode run stops with the missing-context check and turns Auto Mode off', autoLong.stoppedAfterMs !== undefined && autoLong.completionsAtStop >= 2
+    check('a long Auto Mode run stops with the missing-context check and turns Auto Mode off', autoLong.stoppedAfterMs !== undefined && autoLong.completionsAtStop >= 6
         && autoLong.text.startsWith('Reply stopped: Some') && autoLong.text.includes('left out') && autoLong.text.includes('Auto Mode was turned off') && autoLong.laterTurns === 0 && autoLong.stillOff);
+    // A new input splits the older run at generation rounds: the last rounds stay with
+    // the input, earlier rounds are archived, and the same small context fits again.
     const runStart = (await state()).messages.findLastIndex(m => m.user);
+    const writesBefore = upserts(before.memory).length;
     const afterRun = await round('normal', 'Back to the harbor, everyone.');
+    const lastRunReply = firstRunReply + autoLong.completionsAtStop - 1;
+    const written = upserts(before.memory).slice(writesBefore).flatMap(call => call.body.docs.map(d => d.message));
+    const anaPrompt = JSON.stringify(afterRun.completions[0]?.messages || []);
     const resumed = { stopped: afterRun.label.includes('Reply stopped'), completions: afterRun.completions.length, text: await deliveryText(),
-        archivedRun: remote(before.memory).some(d => d.message > runStart) };
-    // The new input's five-message window starts inside the long run, so the whole run stays recent.
-    check('a new message after a long Auto Mode run still keeps the run and stops at the same context', resumed.stopped && resumed.completions === 0 && !resumed.archivedRun);
-    // Warning mode lets replies continue while the host drops the oldest messages; once
-    // five newer messages exist, the run leaves the window and is archived.
-    const setStopOnLoss = value => page.evaluate(value => { const box = document.querySelector('#sillymemory [data-sm="stopOnLoss"]'); if (box.checked !== value) box.click(); }, value);
-    await setStopOnLoss(false);
-    const warned = [await round('normal', 'Second message after the run.'), await round('normal', 'Third message after the run.')];
-    await setStopOnLoss(true);
-    const recovered = await round('normal', 'Fourth message after the run.');
-    check('with Stop on missing context off the run is archived after five newer messages and stopping works again', warned.every(r => r.completions.length === 2)
-        && remote(before.memory).some(d => d.message > runStart) && recovered.completions.length === 2 && !recovered.label.includes('Reply stopped'));
+        archivedRun: remote(before.memory).some(d => d.message > runStart), writtenRunMessages: written.filter(m => m > runStart).length };
+    check('after a long Auto Mode run stops, one new message gets every member reply and archives the earlier rounds', !resumed.stopped && resumed.completions === 2
+        && resumed.archivedRun && resumed.writtenRunMessages > 0 && anaPrompt.includes(`reply ${lastRunReply}.`) && !anaPrompt.includes(`Group Alice: Group Alice reply ${firstRunReply}.`));
     await page.evaluate(async previous => { (await import('/scripts/openai.js')).oai_settings.openai_max_context = previous; }, hostContext);
 
     // Native checkpoint and branch in a group fork the group story memory.

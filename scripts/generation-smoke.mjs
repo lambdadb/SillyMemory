@@ -209,10 +209,11 @@ async function runGroupScenario() {
         const c = SillyTavern.getContext(), greetings = c.chat.slice(0, 2);
         const rounds = [['Remember this: the red lantern hangs in the north harbor.', 'Ana notes the harbor.', 'Ben repeats the harbor.'],
             ...[1, 2, 3].map(i => [`GROUP_FILLER_${i}: we counted empty crates.`, `Ana counts crate ${i}.`, `Ben stacks crate ${i}.`])];
-        c.chat.splice(0, c.chat.length, ...greetings, ...rounds.flatMap(([user, ana, ben]) => [
+        // Member replies of one round share the host's group generation ID.
+        c.chat.splice(0, c.chat.length, ...greetings, ...rounds.flatMap(([user, ana, ben], round) => [
             { name: 'User', is_user: true, mes: user, extra: {}, send_date: Date.now() },
-            { name: 'SillyMemory E2E Ana', is_user: false, mes: ana, extra: {}, send_date: Date.now() },
-            { name: 'SillyMemory E2E Ben', is_user: false, mes: ben, extra: {}, send_date: Date.now() }]));
+            { name: 'SillyMemory E2E Ana', is_user: false, mes: ana, extra: { gen_id: 100 + round }, send_date: Date.now() },
+            { name: 'SillyMemory E2E Ben', is_user: false, mes: ben, extra: { gen_id: 100 + round }, send_date: Date.now() }]));
         await c.saveChat(); await c.reloadCurrentChat();
     });
     await waitStatus('synchronized');
