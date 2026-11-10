@@ -34,13 +34,21 @@ no paid provider, quality evaluation or new storage/retrieval policy is required
 
 ## Private memory
 
-**Text-private memory** in settings applies to story memory created after the
-change. Choose a preset or custom model, the endpoint URL and an optional key,
-then **Test endpoint**: one short embedding request that records the vector
-dimension and saves the settings. A story created in the other mode, or with a
-different embedding model, prefixes or dimension, stops with an explicit error
-and shows **Rebuild story memory** in its Memory panel; changing the setting
-back also resumes it. See [text-private mode](private-memory.md).
+With **Private memory**, your chat text is not stored in LambdaDB, only vectors.
+Choose a preset or custom model, the endpoint URL and an optional key, then
+**Test endpoint**: one short embedding request that records the vector
+dimension and saves the settings. The **Private memory** switch is available
+once a test has succeeded; for an Ollama preset, settings show the
+`ollama pull` command for its model.
+
+New stories follow the setting. Turning it on pauses existing standard stories
+until you rebuild them; private stories keep working if you turn it off. A
+paused story, or a private story whose embedding model, prefixes or dimension
+differ from the tested settings, stops with an explicit error and shows only
+**Rebuild story memory** and **Turn memory off in this chat** in its Memory
+panel. Rebuilding recreates the story in the current mode; changing the setting
+back also resumes it. The Memory panel shows **Private** for a private story,
+for example `Memory · Ready · Private`. See [Private memory](private-memory.md).
 
 A local Ollama on the same computer as the browser needs no setup: its default
 origins allow `http://localhost:*` and `http://127.0.0.1:*`. To open SillyTavern

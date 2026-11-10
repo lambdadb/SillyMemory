@@ -1,10 +1,12 @@
-# Text-private memory mode
+# Private memory
 
 Status: implemented on `feat/text-private-mode` (plan steps 1–9); not yet merged
 or released. See [implementation notes](#implementation-notes) for deviations
 and [validation](#validation) for what was checked.
 Evidence and the adoption decision live in
-[text-private-retrieval](text-private-retrieval.md).
+[text-private-retrieval](text-private-retrieval.md), the experiment record,
+which keeps its original "text-private" name. The product name is
+**Private memory**.
 
 ## Product decision
 
@@ -14,9 +16,10 @@ embedding endpoint, LambdaDB stores only vectors and metadata, and retrieved
 chunks are restored from the open SillyTavern chat. LambdaDB remains required
 in every mode.
 
-Wording rule: say "raw text is not sent to or stored in LambdaDB". Do not say
-vectors are unrecoverable or that text never leaves the device. For a local
-endpoint, the UI may add that text stays on this machine.
+Wording rule: the settings line is "Your chat text is not stored in LambdaDB —
+only vectors." Longer text may say "raw text is not sent to or stored in
+LambdaDB". Do not say vectors are unrecoverable or that text never leaves the
+device. For a local endpoint, the UI may add that text stays on this machine.
 
 ## Scope
 
@@ -33,7 +36,8 @@ In the first version:
 - Any other model name is allowed and labelled "quality not validated". It uses
   no prefix by default, with optional query/document prefix fields.
 - Dense KNN only. No rerank (it needs text), no lexical or client sparse search.
-- A global setting that selects the mode for newly created story collections.
+- A global **Private memory** setting that selects the mode for newly created
+  story collections.
 
 Out of scope, follow-ups:
 
@@ -77,7 +81,7 @@ send SillyTavern cookies or CSRF headers, and there is no proxy fallback.
 
 ### Collection schema and identity
 
-A text-private story collection omits the `text` field and uses a plain vector
+A private story collection omits the `text` field and uses a plain vector
 field:
 
 ```js
@@ -100,13 +104,21 @@ five tags per collection and rejects `:`, `#` and `,` in tag values, so
 `qwen3-embedding:0.6b` cannot be a tag value and seven tags cannot be sent. One
 digest keeps the same guard within those rules.
 
-Before every sync or search, compare these tags with the current settings. On
-mismatch, stop with an explicit error and offer **Rebuild story**. The existing
-rebuild flow (#141) re-embeds every chunk from the open chat.
+Before every sync or search, check these tags. Switching is asymmetric:
 
-A story created in the default mode keeps it after the global setting changes.
-Opening it under the other mode shows the same rebuild offer. A default-mode
-story has no `memory_mode` tag.
+- **Private memory on**: an existing standard story (no `memory_mode` tag) stops
+  with an explicit error and the rebuild offer. Otherwise new chat text would
+  keep uploading to LambdaDB.
+- **Private memory off**: an existing private story keeps working in its own
+  mode with the saved, tested embedding settings and key. It still stops with the
+  rebuild offer when its `embedding` digest differs from those settings, or when
+  no tested setting is saved.
+- New stories follow the global setting.
+- **Rebuild story memory** deletes the story and recreates it in the current
+  global mode. The existing rebuild flow (#141) re-embeds or re-uploads every
+  chunk from the open chat.
+
+An unknown `memory_mode` value stops in both settings.
 
 ### Write path
 
@@ -247,20 +259,28 @@ Choices made where the design was silent, and deviations:
   harness, with at most 32 inputs per request inside each 200-document upsert
   batch and a 120-second timeout per request.
 - **Test endpoint is required.** The tested dimension is stored with the
-  endpoint settings; without it, text-private sync and generation stop with
-  an explicit error. Form edits are drafts until a test succeeds. A keyless
+  endpoint settings. The **Private memory** switch stays disabled, with a short
+  reason, until a test has succeeded; it can always be turned off. Form edits
+  are drafts until a test succeeds, so editing the form after a test keeps the
+  saved, tested settings and does not lock the switch. Without tested settings,
+  private sync and generation stop with an explicit error. A keyless
   test for a different base URL or model removes the older key record.
 - **Errors**: embedding failures use status 0 and code `embedding`, so a 401
   from an embedding provider never triggers the LambdaDB key removal path.
   Response bodies are never shown.
 - **Query size**: the 8 KiB limit is a LambdaDB `queryText` and rerank limit and
-  is not applied to the text-private query, which goes to the embedding
+  is not applied to the private query, which goes to the embedding
   endpoint. An endpoint that truncates long inputs (Ollama does by default) does
   so silently; that is a known limitation, not a detected condition.
-- **Mismatch display**: the failure status explains the mismatch and the chat
-  panel shows **Rebuild story memory**. The rebuild confirmation names the
-  current mode. Text search languages are hidden in this mode; a text-private
-  story has no text field or analyzers.
+- **Mismatch display**: the failure status explains the mismatch, and the chat
+  panel shows only **Rebuild story memory** and **Turn memory off in this
+  chat**; **Retry synchronization** and **Retry reply** are hidden because a
+  retry cannot succeed before a rebuild. The rebuild confirmation names the
+  current mode. The panel label adds **Private** for a working private story,
+  for example `Memory · Ready · Private`. Text search languages are hidden while
+  Private memory is on; a private story has no text field or analyzers.
+- **Ollama presets** show the model's pull command on one line, for example
+  `ollama pull embeddinggemma`.
 - **Setup test**: the LambdaDB connection test is unchanged. It still uses
   synthetic text with managed embedding and reranking; no chat text is sent.
 - **Revision digest**: `revision` and the document ID contain an unsalted
@@ -287,7 +307,7 @@ Unit, browser-emulator and live results are separate. All were run on
 - `npm run test:browser` (pinned SillyTavern, real Chromium, local HTTPS
   emulator): all default-mode checks pass with the new settings section present.
   The emulator has no text-private coverage.
-- `npm run test:private-memory:live` (pinned SillyTavern 1.19.0, real Chromium,
+- `npm run test:text-private:live` (pinned SillyTavern 1.19.0, real Chromium,
   live LambdaDB, local Ollama 0.40.15, deterministic model fixture): 24 checks
   pass. `embeddinggemma` stories are created, synchronized, edited, deleted and
   searched; turning the mode off and changing the model to

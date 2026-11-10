@@ -20,9 +20,9 @@ rather than inventing an HTTP status. An ambiguous write remains in the durable
 synchronization/ownership records for verified recovery; failed cleanup records
 must not be discarded.
 
-## Text-private embedding requests
+## Private memory embedding requests
 
-[Text-private mode](private-memory.md) adds direct requests from the browser
+[Private memory](private-memory.md) adds direct requests from the browser
 to the user's embedding endpoint with the same `mode: cors`,
 `credentials: omit` and `redirect: error`. They send only `Content-Type` and,
 when a key is set, `Authorization: Bearer`; never SillyTavern cookies or CSRF
@@ -34,7 +34,7 @@ There is no SillyTavern proxy or server plugin, the same as other UI-only memory
 extensions; only SillyTavern's built-in Vector Storage avoids this, because its
 server calls the provider. A provider that blocks
 browser CORS is unsupported, and **Test endpoint** reports a network error.
-In this mode raw text is not sent to or stored in LambdaDB.
+In this mode chat text is not sent to or stored in LambdaDB.
 
 ## Verification
 

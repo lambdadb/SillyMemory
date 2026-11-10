@@ -25,10 +25,10 @@ The current pin is `0.9.0`, supporting 200 rerank candidates.
 | Connection check | Authenticated list of one collection before adopting a saved/restored key; no collection creation or inference |
 | Storage | Owned collection per story; separate `chat_<ID>` branch per writable chat |
 | Embeddings | Native `text-embedding-3-small` from verbatim `text`; lexical analyzers from the **Text search languages** setting (default `english`), fixed when the story collection is created |
-| Text-private storage | No `text` field; plain `{ type: 'vector', dimensions, similarity: 'cosine' }` filled by the browser; `memory_mode` and `embedding` identity tags (at most five tags, no `:` in values) |
+| Private memory storage | No `text` field; plain `{ type: 'vector', dimensions, similarity: 'cosine' }` filled by the browser; `memory_mode` and `embedding` identity tags (at most five tags, no `:` in values) |
 | Writes | Explicit selected branch; source documents carry owner, story scope, revision and source coordinates |
 | Search | Bayesian vector/lexical fusion, k200, owner/scope/message-boundary filters, consistent reads |
-| Text-private search | One `knn` `queryVector` search, k200, size 50, the same filters and branch; no rerank |
+| Private memory search | One `knn` `queryVector` search, k200, size 50, the same filters and branch; no rerank |
 | Reranking | Native Jev 1.13.0, 200 candidates, 50 returned; confirmed provider/model/status required |
 | Results | Inline `docs[].doc`; external download responses fail closed without forwarding credentials |
 | Ownership and cleanup | Validate application, owner and story tags before mutation; verify branch deletion or collection HTTP 404 |
@@ -39,12 +39,12 @@ transport tests and standalone benchmarks can use `main`; product memory uses
 the selected chat branch. See [current defaults](conversation-memory-defaults.md),
 [storage](versioned-memory.md) and [native workflows](native-chat-workflow.md).
 
-## Embedding endpoint (text-private mode)
+## Embedding endpoint (Private memory)
 
 An OpenAI-compatible `POST {baseUrl}/embeddings` with
 `{ model, input, encoding_format: 'float' }`, reading `data[].embedding` in
 `index` order. Used for Ollama, LM Studio, llama.cpp and remote providers that
-allow browser CORS. See [text-private mode](private-memory.md).
+allow browser CORS. See [Private memory](private-memory.md).
 
 ## Browser transport and credentials
 

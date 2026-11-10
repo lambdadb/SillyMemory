@@ -12,7 +12,7 @@ Read [CONTRIBUTING.md](CONTRIBUTING.md) before changing this repository.
 - Distinguish source inspection, unit/emulator tests, live integration, and deployment.
 - Preserve the UI-extension/direct-CORS design. Save validated keys only in the
   dedicated browser credential records scoped to the native account: the LambdaDB
-  key to the exact endpoint/project, and the optional text-private embedding key
+  key to the exact endpoint/project, and the optional Private memory embedding key
   to the exact embedding base URL and model. Never put keys in ordinary settings,
   logs or artifacts.
   Never forward SillyTavern cookies/CSRF headers or add a server plugin.
