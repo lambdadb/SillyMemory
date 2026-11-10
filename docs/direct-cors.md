@@ -20,6 +20,18 @@ rather than inventing an HTTP status. An ambiguous write remains in the durable
 synchronization/ownership records for verified recovery; failed cleanup records
 must not be discarded.
 
+## Text-private embedding requests
+
+[Text-private mode](text-private-mode.md) adds direct requests from the browser
+to the user's embedding endpoint with the same `mode: cors`,
+`credentials: omit` and `redirect: error`. They send only `Content-Type` and,
+when a key is set, `Authorization: Bearer`; never SillyTavern cookies or CSRF
+headers, and there is no proxy fallback. Ollama's default origins allow
+`http://localhost:*` and `http://127.0.0.1:*`; opening SillyTavern from another
+device needs `OLLAMA_ORIGINS` on the Ollama server. A provider that blocks
+browser CORS is unsupported, and **Test endpoint** reports a network error.
+In this mode raw text is not sent to or stored in LambdaDB.
+
 ## Verification
 
 The current browser harness uses real Chromium and a local HTTPS LambdaDB

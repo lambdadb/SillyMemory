@@ -55,6 +55,18 @@ waits for the user to open a supported chat; the extension does not select a cha
 or modify native auto-load preferences. The existing source/branch reconciliation
 checks still guard writes and generation.
 
+## Embedding key (text-private mode)
+
+The optional key for a [text-private](text-private-mode.md) embedding endpoint
+uses its own `sillymemory:embedding-credential:<owner>` record with the same
+rules: format version, normalized base URL and model, and the key; restored
+only on an exact base URL and model match; replaced when the connection is
+replaced; never in ordinary settings, logs or URLs; kept until site data is
+cleared. **Test endpoint** writes the ordinary settings first and the key last,
+with the same rollback. A keyless endpoint, such as local Ollama, needs no
+record; a keyless test of a different connection removes the older record.
+**Forget embedding key** removes it. Disconnecting LambdaDB does not remove it.
+
 ## Failure and removal
 
 - HTTP 401 disables memory. A rejected restored key is removed only if its exact

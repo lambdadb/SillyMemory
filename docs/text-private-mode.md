@@ -1,6 +1,8 @@
 # Text-private memory mode
 
-Status: design accepted, implementation in progress on `feat/text-private-mode`.
+Status: implemented on `feat/text-private-mode` (plan steps 1–9); not yet merged
+or released. See [implementation notes](#implementation-notes) for deviations
+and [validation](#validation) for what was checked.
 Evidence and the adoption decision live in
 [text-private-retrieval](text-private-retrieval.md).
 
@@ -89,16 +91,22 @@ Record the embedding identity in collection tags next to the existing
 `application`/`owner`/`chat` tags:
 
 - `memory_mode: text_private`
-- `embedding_model`
-- `embedding_prefix`, a short digest of the query and document prefixes
-- `embedding_dimensions`
+- `embedding`, the first 16 hex characters of SHA-256 over the JSON array
+  `[model, queryPrefix, documentPrefix, dimensions]`
+
+The design first named four tags (`embedding_model`, `embedding_prefix`,
+`embedding_dimensions` next to `memory_mode`). The pinned SDK allows at most
+five tags per collection and rejects `:`, `#` and `,` in tag values, so
+`qwen3-embedding:0.6b` cannot be a tag value and seven tags cannot be sent. One
+digest keeps the same guard within those rules.
 
 Before every sync or search, compare these tags with the current settings. On
 mismatch, stop with an explicit error and offer **Rebuild story**. The existing
 rebuild flow (#141) re-embeds every chunk from the open chat.
 
 A story created in the default mode keeps it after the global setting changes.
-Opening it under the other mode shows the same rebuild offer.
+Opening it under the other mode shows the same rebuild offer. A default-mode
+story has no `memory_mode` tag.
 
 ### Write path
 
@@ -210,3 +218,84 @@ Each step lists its verification.
      bodies.
 9. **Docs**: update architecture, contracts, direct-cors, saved-connection and
    setup docs, and AGENTS.md (credential rule).
+
+## Implementation notes
+
+Code: `src/embedding.js` (client, presets, identity), `EmbeddingKey` in
+`src/credentials.js`, `textPrivateSchema`/`searchVector` in `src/client.js`,
+`checkStoryMode` in `src/chat-collections.js`, the optional `embedder` of
+`MemoryEngine` in `src/memory.js`, and the settings section in `settings.html`
+and `index.js`.
+
+Choices made where the design was silent, and deviations:
+
+- **Identity tags**: one `embedding` digest instead of three tags; see
+  [collection schema and identity](#collection-schema-and-identity). The base
+  URL is not part of the identity, as designed: the same model served
+  elsewhere keeps the story.
+- **Normalization**: vectors are L2-normalized before 4-decimal rounding. The
+  rounding check measured normalized experiment vectors (the harness normalized
+  Ollama output), and cosine ranking does not depend on scale, so this keeps the
+  accepted error bound for endpoints that return unnormalized vectors.
+- **Request shape**: `{ model, input, encoding_format: 'float' }`, as in the
+  harness, with at most 32 inputs per request inside each 200-document upsert
+  batch and a 120-second timeout per request.
+- **Test endpoint is required.** The tested dimension is stored with the
+  endpoint settings; without it, text-private sync and generation stop with
+  an explicit error. Form edits are drafts until a test succeeds. A keyless
+  test for a different base URL or model removes the older key record.
+- **Errors**: embedding failures use status 0 and code `embedding`, so a 401
+  from an embedding provider never triggers the LambdaDB key removal path.
+  Response bodies are never shown.
+- **Query size**: the 8 KiB limit is a LambdaDB `queryText` and rerank limit and
+  is not applied to the text-private query, which goes to the embedding
+  endpoint. An endpoint that truncates long inputs (Ollama does by default) does
+  so silently; that is a known limitation, not a detected condition.
+- **Mismatch display**: the failure status explains the mismatch and the chat
+  panel shows **Rebuild story memory**. The rebuild confirmation names the
+  current mode. Text search languages are hidden in this mode; a text-private
+  story has no text field or analyzers.
+- **Setup test**: the LambdaDB connection test is unchanged. It still uses
+  synthetic text with managed embedding and reranking; no chat text is sent.
+- **Revision digest**: `revision` and the document ID contain an unsalted
+  SHA-256 digest of the source message, as described under
+  [search and restoration](#search-and-restoration). A very short, guessable
+  message can be confirmed by brute force; this first version accepts that.
+- Speaker names, roles, message positions and conversation-time metadata are
+  stored as in the default mode.
+
+## Validation
+
+Unit, browser-emulator and live results are separate. All were run on
+2026-11-10 at the implementation commits on `feat/text-private-mode`.
+
+- `npm test`: the full suite passes, with focused tests for the embedding
+  client (fake fetch: request shape, prefixes, malformed responses, dimension
+  change, CORS/network, timeout and cancellation), the key record, schema and
+  identity tags, the mismatch guard, the write path and journal retention, dense
+  search and text-free restoration. `npm run check`, `npm run check:sdk`, `npm
+  run check:release` and the benchmark protocol tests pass.
+- Source inspection: default-mode create, branch, list, fetch, upsert and query
+  request bodies from the base revision `d5c6ffd` and this branch were compared
+  byte for byte on a synthetic chat; they are identical.
+- `npm run test:browser` (pinned SillyTavern, real Chromium, local HTTPS
+  emulator): all default-mode checks pass with the new settings section present.
+  The emulator has no text-private coverage.
+- `npm run test:text-private:live` (pinned SillyTavern 1.19.0, real Chromium,
+  live LambdaDB, local Ollama 0.40.15, deterministic model fixture): 24 checks
+  pass. `embeddinggemma` stories are created, synchronized, edited, deleted and
+  searched; turning the mode off and changing the model to
+  `qwen3-embedding:0.6b` each stop the story with the rebuild offer and stop
+  generation; **Rebuild story memory** recreates a 1,024-dimension story that
+  searches correctly. No LambdaDB request body after enabling the mode
+  contained a `text` field, `queryText`, rerank or any seeded chat phrase, and
+  no LambdaDB or embedding request carried host cookies or CSRF headers. Every
+  created collection answered HTTP 404 after cleanup. Evidence, local and
+  ignored, with SHA256SUMS: `artifacts/text-private-mode-v1/`.
+
+Not checked: the OpenAI preset against the live OpenAI API (no paid embedding
+call was made; its CORS preflight was checked as recorded above), LM Studio and
+llama.cpp, opening SillyTavern from another device with `OLLAMA_ORIGINS`,
+browsers other than Chromium, group chats and native branches in this mode
+(only the text-free fork wait is unit-tested), and answer quality beyond the recorded
+English LongMemEval-S retrieval evidence. No multilingual quality claim is made.

@@ -11,8 +11,10 @@ Read [CONTRIBUTING.md](CONTRIBUTING.md) before changing this repository.
 - Keep credentials and personal chat data out of Git, logs, PRs, and test artifacts.
 - Distinguish source inspection, unit/emulator tests, live integration, and deployment.
 - Preserve the UI-extension/direct-CORS design. Save validated keys only in the
-  dedicated browser credential record scoped to the native account and exact
-  endpoint/project; never put keys in ordinary settings, logs or artifacts.
+  dedicated browser credential records scoped to the native account: the LambdaDB
+  key to the exact endpoint/project, and the optional text-private embedding key
+  to the exact embedding base URL and model. Never put keys in ordinary settings,
+  logs or artifacts.
   Never forward SillyTavern cookies/CSRF headers or add a server plugin.
 - Use English for repository documentation and follow the user's language in conversation.
 

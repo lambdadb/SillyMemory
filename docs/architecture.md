@@ -2,7 +2,7 @@
 
 ## Boundaries
 
-`index.js` adapts the pinned SillyTavern context, events, prompt interceptor, and settings panel. `src/client.js` sends direct browser HTTPS/CORS requests; it has a private in-memory key and sanitizes errors without logging response bodies. `src/app-connect.js` runs the LambdaDB OAuth connection (discovery, one registration per installation, popup approval with PKCE, key claim and recovery); `oauth-callback.html` and `oauth-callback.js` form the callback page, which only relays the authorization result to the initiating tab. `src/gate.js` validates a synthetic lifecycle before memory collection creation. `src/status.js` formats progress and recovery guidance and ensures only the current operation owns the status display. `src/memory.js` is independent synchronization and selection logic.
+`index.js` adapts the pinned SillyTavern context, events, prompt interceptor, and settings panel. `src/client.js` sends direct browser HTTPS/CORS requests; it has a private in-memory key and sanitizes errors without logging response bodies. `src/app-connect.js` runs the LambdaDB OAuth connection (discovery, one registration per installation, popup approval with PKCE, key claim and recovery); `oauth-callback.html` and `oauth-callback.js` form the callback page, which only relays the authorization result to the initiating tab. `src/embedding.js` is the optional [text-private](text-private-mode.md) embedding client: direct browser requests to a user-chosen OpenAI-compatible endpoint, with the same private-key and sanitized-error rules. `src/gate.js` validates a synthetic lifecycle before memory collection creation. `src/status.js` formats progress and recovery guidance and ensures only the current operation owns the status display. `src/memory.js` is independent synchronization and selection logic.
 
 There is no server plugin. Runtime modules have no external dependencies. Playwright is development-only. The extension source and development tools are distributed under AGPL-3.0-only; see the root LICENSE.
 
@@ -73,9 +73,27 @@ service's 201 body omits index configuration) and, when
 the set differs from the current setting, shows a notice with **Rebuild story memory**
 in the chat panel without blocking synchronization or generation.
 
+### Text-private stories
+
+A story created while **Text-private memory** is on stores no `text` field. The
+browser embeds the document prefix plus each chunk through the configured
+endpoint before every 200-document upsert, and LambdaDB stores the vector with
+the usual metadata. Search embeds the query prefix plus the same role-labelled
+Query 1 and runs one dense `knn` `queryVector` search (k=200, size=50) with the
+same owner/scope/message-boundary filter and branch; there is no lexical leg or
+reranking. The collection's `memory_mode` and `embedding` tags record the mode
+and a digest of model, prefixes and dimension. Every preparation compares them
+with the current setting; a mismatch stops synchronization and generation and
+offers **Rebuild story memory**. An embedding failure is a preparation failure:
+generation stops, and a failed synchronization keeps the journal for retry. The
+document ID and `revision` contain an unsalted SHA-256 digest of the source
+message, so a very short, guessable message could be confirmed by brute force.
+See [text-private mode](text-private-mode.md).
+
 Remote hits are ranking signals: only exact current IDs, ownership, scope, revision,
 source text and conversation-time metadata are accepted; injection uses the locally
-reconstructed text. This prevents eventual-index lag, deleted records, malicious
+reconstructed text. A text-private hit has no text to compare; its ID and revision
+still bind it to the current local source. This prevents eventual-index lag, deleted records, malicious
 remote text changes and sibling-chat results from resurrecting stale content.
 Visit valid hits in retrieval order. For each hit, render the already accepted
 sources together with that complete passage, comparing separate excerpts with
@@ -108,7 +126,7 @@ The pinned host scans `coreChat` for World Info after interceptors. Recalled exc
 
 ## Ownership and deletion
 
-Production and synthetic test collections have `application=sillymemory` and the random owner metadata tag. Sync and deletion check these tags. Deletion never adopts a mismatched collection. Full deletion first disables further work, invalidates reads, drains writes, deletes the selected owned branch or all discovered owned story collections, and verifies API absence. Branch deletion preserves siblings; family deletion removes every branch. **Rebuild story memory** deletes the open story's single collection after the same ownership check, clears that collection's journals and engines, then synchronizes the open chat again so the collection is recreated with the current analyzers; other branches upload again when they are opened. Tags are ownership safeguards against accidental selection, not an authorization boundary against another holder of the project API key.
+Production and synthetic test collections have `application=sillymemory` and the random owner metadata tag; text-private stories add the `memory_mode` and `embedding` identity tags. Sync and deletion check these tags. Deletion never adopts a mismatched collection. Full deletion first disables further work, invalidates reads, drains writes, deletes the selected owned branch or all discovered owned story collections, and verifies API absence. Branch deletion preserves siblings; family deletion removes every branch. **Rebuild story memory** deletes the open story's single collection after the same ownership check, clears that collection's journals and engines, then synchronizes the open chat again so the collection is recreated with the current analyzers or text-private embedding settings; other branches upload again when they are opened. Tags are ownership safeguards against accidental selection, not an authorization boundary against another holder of the project API key.
 
 After confirmed collection deletion, local cleanup snapshots all matching journal
 keys before removing them. It preserves other namespaces and host settings;
