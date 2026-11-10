@@ -1,5 +1,6 @@
 import { LambdaClient, ConnectionError, connectionConfig, ANALYZERS } from './src/client.js';
-import { SavedKey } from './src/credentials.js';
+import { SavedKey, EmbeddingKey } from './src/credentials.js';
+import { EmbeddingClient, EMBEDDING_PRESETS, embeddingConfig, embeddingIdentity, embeddingPreset, localEndpoint } from './src/embedding.js';
 import { callbackUrl, connectWithLambdaDB } from './src/app-connect.js';
 import { activationBinding, chatActivated } from './src/activation.js';
 import { ChatCollections, chatCollection, ensureChatIdentity, hostChats } from './src/chat-collections.js';
@@ -16,7 +17,7 @@ const uuid = () => crypto.randomUUID().replaceAll('-', '');
 let client, engine, root, state, stateKey, owner, timer, busy = false, pendingAction = Promise.resolve(), gatePassed = false;
 let sessionReady = false;
 let connectionVerified = false, shownConnection, retrySync = false;
-let savedKey, connectingClient;
+let savedKey, embeddingKey, connectingClient, storyMismatch;
 let promptSequence = 0;
 let retrievalSequence = 0, retrievalOperation;
 let statusView, collections, identityKey;
@@ -175,10 +176,13 @@ function renderChatStatus() {
     chatElement('sync').hidden = !retrySync || !memoryEnabled() || Boolean(blocker) || !state.ready || Boolean(state.testCollection);
     chatElement('retry').hidden = !stopped?.source || !['normal', 'regenerate'].includes(stopped.type) || !context().chat.at(-1)?.is_user || !memoryEnabled() || !state.ready || Boolean(blocker) || Boolean(state.testCollection);
     // The open story keeps its created analyzers; a changed setting is information, not a failure.
-    const notice = memoryEnabled() && !blocker && state.ready && !state.testCollection && storyAnalyzers?.target === requestTarget() ? analyzerNotice(storyAnalyzers.analyzers, options(state).analyzers) : '';
+    const story = memoryEnabled() && !blocker && state.ready && !state.testCollection;
+    const notice = story && storyAnalyzers?.target === requestTarget() && storyAnalyzers.analyzers ? analyzerNotice(storyAnalyzers.analyzers, options(state).analyzers) : '';
+    // A memory mode or embedding mismatch stops work; its failure status already explains it.
+    const mismatch = story && storyMismatch === requestTarget();
     chatElement('analyzers').textContent = notice;
     chatElement('analyzers').hidden = !notice;
-    chatElement('rebuild').hidden = !notice;
+    chatElement('rebuild').hidden = !notice && !mismatch;
     chatElement('toggle').hidden = !connected || !state.ready || Boolean(state.testCollection) || !supportsChat(context());
     chatElement('toggle').textContent = memoryEnabled() ? 'Turn memory off in this chat' : 'Turn memory on in this chat';
     chatElement('toggle').setAttribute('aria-pressed', String(connected && memoryEnabled()));
@@ -315,6 +319,9 @@ function renderSettings() {
     element('connect').textContent = state.ready || state.testCollection ? 'Save and connect' : 'Connect and test';
     element('prepare-controls').hidden = !connected || state.ready || cleanup;
     element('usage-help').hidden = !connected || !state.ready;
+    element('usage-help').textContent = textPrivate() ? TEXT_PRIVATE_USAGE : DEFAULT_USAGE;
+    element('text-private-state').textContent = textPrivate() ? 'On' : 'Off';
+    element('analyzer-settings').hidden = textPrivate();
     element('next-step').textContent = !connected ? 'Connect your project above to get started.'
         : cleanup ? 'A connection test needs cleanup. Remove its temporary data before trying again.'
         : !state.ready ? 'Check your connection once before turning memory on.'
@@ -322,9 +329,20 @@ function renderSettings() {
     element('mode-help').textContent = 'On/off is saved with each chat. When off, SillyTavern uses its usual chat history and saved memory is kept.';
     element('recover-cleanup').hidden = !cleanup;
     element('recovery-actions').hidden = !cleanup;
-    root.querySelectorAll('button, input').forEach(x => { x.disabled = busy || !sessionReady; });
+    root.querySelectorAll('button, input, select, textarea').forEach(x => { x.disabled = busy || !sessionReady; });
     if (element('app-cancel')) element('app-cancel').disabled = false;
     renderChatStatus();
+}
+const DEFAULT_USAGE = 'Memory sends older messages, their SillyTavern timestamps and search queries to LambdaDB, whose embedding and reranking providers process them to find related memory. This counts toward your LambdaDB usage. Turn off other memory or chat vectorization extensions; they would add overlapping history to the prompt. Use one active SillyMemory tab per browser profile.';
+const TEXT_PRIVATE_USAGE = 'Text-private memory: raw text is not sent to or stored in LambdaDB. Older messages and search queries go to your embedding endpoint; LambdaDB stores vectors, timestamps and metadata. This counts toward your LambdaDB usage. Turn off other memory or chat vectorization extensions; they would add overlapping history to the prompt. Use one active SillyMemory tab per browser profile.';
+const textPrivate = () => state?.memoryMode === 'text_private';
+// The current setting for stories: undefined in the default mode, otherwise the
+// tested embedding identity and a client for it.
+async function storyMode() {
+    if (!textPrivate()) return undefined;
+    const settings = state.embedding;
+    const identity = await embeddingIdentity(settings || {});
+    return { identity, embedder: new EmbeddingClient(settings, embeddingKey.read(settings) || '') };
 }
 function clearInjection() {
     context().setExtensionPrompt('sillymemory', '', 1, 0, false, 0);
@@ -353,13 +371,19 @@ function prepareMemory(valid, progress = () => {}) {
             identityKey = key();
         }
         if (!valid()) return null;
-        const snapshot = capture(context());
-        const entry = await collections.ensure(snapshot, valid, options(state), progress);
+        const snapshot = capture(context()), target = requestTarget();
+        const mode = await storyMode();
+        if (!valid()) return null;
+        let entry;
+        try { entry = await collections.ensure(snapshot, valid, { ...options(state), textPrivate: mode?.identity }, progress); }
+        catch (error) { if (error.code === 'memory-mode' && requestTarget() === target) { storyMismatch = target; renderChatStatus(); } throw error; }
         if (!entry || !valid()) return null;
-        storyAnalyzers = { target: requestTarget(), analyzers: entry.analyzers };
+        if (storyMismatch === target) storyMismatch = undefined;
+        storyAnalyzers = { target, analyzers: entry.analyzers };
         if (!engines.has(entryKey(entry))) engines.set(entryKey(entry), new MemoryEngine({ client, owner, ...entry,
             journal: new Journal(localStorage, `${owner}:${entry.collection}:${entry.branch}`) }));
         engine = engines.get(entryKey(entry));
+        engine.embedder = mode?.embedder;
         return { snapshot, instance: engine };
     });
     preparation = task; return task;
@@ -609,6 +633,7 @@ async function initialize() {
     }
     stateKey = `sillymemory:state:${owner}`;
     savedKey = new SavedKey(localStorage, owner);
+    embeddingKey = new EmbeddingKey(localStorage, owner);
     state = { endpoint: '', project: '', ready: false, budget: DEFAULTS.budget, stopOnLoss: true, chatCollections: [], ...JSON.parse(localStorage.getItem(stateKey) || '{}') };
     delete state.enabled;
     if (!/^[a-f0-9]{32}$/.test(state.activationGeneration || '')) {
@@ -670,16 +695,74 @@ async function initialize() {
     };
     element('stopOnLoss').checked = state.stopOnLoss !== false;
     element('stopOnLoss').onchange = () => { state.stopOnLoss = element('stopOnLoss').checked; persist(); };
+    // Text-private settings: form edits stay drafts until Test endpoint succeeds.
+    const embeddingForm = () => {
+        const preset = EMBEDDING_PRESETS[element('embedding-preset').value];
+        return { baseUrl: element('embedding-url').value.trim(), ...(preset ? { model: preset.model, queryPrefix: preset.queryPrefix, documentPrefix: preset.documentPrefix }
+            : { model: element('embedding-model').value.trim(), queryPrefix: element('embedding-query-prefix').value, documentPrefix: element('embedding-document-prefix').value }) };
+    };
+    const renderEmbeddingForm = () => {
+        const custom = !EMBEDDING_PRESETS[element('embedding-preset').value];
+        element('embedding-custom').hidden = !custom;
+        element('embedding-quality').textContent = custom ? 'Quality not validated.' : 'Validated on English LongMemEval-S.';
+        element('embedding-local').hidden = !localEndpoint(element('embedding-url').value.trim());
+        element('embedding-ollama').hidden = !element('embedding-preset').value.startsWith('ollama-');
+        const saved = state.embedding;
+        element('embedding-summary').textContent = saved?.dimensions ? `Tested: ${saved.model} at ${saved.baseUrl}, ${saved.dimensions} dimensions.` : 'No embedding endpoint tested yet.';
+    };
+    const showEmbedding = (config = state.embedding) => {
+        const preset = embeddingPreset(config) || (config ? 'custom' : 'ollama-qwen3');
+        element('embedding-preset').value = preset;
+        element('embedding-url').value = config?.baseUrl || EMBEDDING_PRESETS[preset]?.baseUrl || '';
+        element('embedding-model').value = config?.model || '';
+        element('embedding-query-prefix').value = config?.queryPrefix || '';
+        element('embedding-document-prefix').value = config?.documentPrefix || '';
+        renderEmbeddingForm();
+    };
+    showEmbedding();
+    element('textPrivate').checked = textPrivate();
+    element('textPrivate').onchange = () => {
+        state.memoryMode = element('textPrivate').checked ? 'text_private' : 'default';
+        persist(); renderSettings();
+        if (memoryEnabled()) schedule();
+    };
+    element('embedding-preset').onchange = () => {
+        const preset = EMBEDDING_PRESETS[element('embedding-preset').value];
+        if (preset) element('embedding-url').value = preset.baseUrl;
+        else for (const name of ['embedding-model', 'embedding-query-prefix', 'embedding-document-prefix']) element(name).value = '';
+        renderEmbeddingForm();
+    };
+    element('embedding-url').oninput = renderEmbeddingForm;
+    element('embedding-test').onclick = () => action(async () => {
+        const config = embeddingConfig(embeddingForm());
+        const typed = element('embedding-key').value.trim(); element('embedding-key').value = '';
+        const saved = typed ? '' : embeddingKey.read(config) || '';
+        status('Testing the embedding endpoint…');
+        const dimensions = await new EmbeddingClient(config, typed || saved).check();
+        const next = { ...state, embedding: { ...config, dimensions } };
+        // Settings first and the key last, as for the LambdaDB key. A keyless
+        // endpoint replaces the connection, so it also replaces an older record.
+        if (typed) embeddingKey.commit(config, typed, next);
+        else { persist(next); if (!saved) embeddingKey.forget(); }
+        state = next; showEmbedding();
+        status(`Embedding endpoint works: ${dimensions}-dimension vectors. ${textPrivate() ? 'New stories use text-private memory.' : 'Turn on text-private memory to use it for new stories.'}`);
+        if (memoryEnabled()) schedule();
+    });
+    element('embedding-forget').onclick = () => action(async () => {
+        element('embedding-key').value = '';
+        embeddingKey.forget();
+        status('Embedding key removed from this browser.');
+    });
     renderSettings();
     if (!navigator.locks) { sessionUnavailable = 'This browser needs Web Locks support (localhost or HTTPS) to use SillyMemory safely.'; status(sessionUnavailable); return; }
     // One live instance per account/browser, preventing cross-tab write/delete races.
     navigator.locks.request(`sillymemory-session:${owner}`, { ifAvailable: true }, async lock => {
-        if (!lock) { sessionUnavailable = 'SillyMemory is already open in another tab. Close that tab and reload this one.'; status(sessionUnavailable); root.querySelectorAll('button,input').forEach(x => { x.disabled = true; }); return; }
+        if (!lock) { sessionUnavailable = 'SillyMemory is already open in another tab. Close that tab and reload this one.'; status(sessionUnavailable); root.querySelectorAll('button,input,select,textarea').forEach(x => { x.disabled = true; }); return; }
         sessionReady = true;
         const closed = new Promise(resolve => addEventListener('pagehide', () => {
             sessionReady = false; connectingClient?.forget(); client?.forget(); invalidate(); resolve();
         }, { once: true }));
-        root.querySelectorAll('button,input').forEach(x => { x.disabled = false; });
+        root.querySelectorAll('button,input,select,textarea').forEach(x => { x.disabled = false; });
         await action(async () => {
             if (!state.endpoint || !state.project) return;
             const key = savedKey.read(state);
@@ -902,7 +985,8 @@ async function initialize() {
         if (!capture(context()) || !context().chatMetadata.sillymemory?.id) throw new ConnectionError('This chat has no saved memory yet.');
         const target = context(), file = target.getCurrentChatId(), chatKey = chatOwner(target);
         const sameChat = () => context().getCurrentChatId() === file && chatOwner(context()) === chatKey;
-        const answer = await target.Popup.show.confirm('Rebuild story memory', `Rebuild the memory of every branch of this story with the current text search languages (${options(state).analyzers.join(', ')})? Your local chats are kept. This chat uploads its memory again now; other branches upload again when you open them.`);
+        const using = textPrivate() ? `as text-private memory with ${state.embedding?.model || 'the tested embedding model'}` : `with the current text search languages (${options(state).analyzers.join(', ')})`;
+        const answer = await target.Popup.show.confirm('Rebuild story memory', `Rebuild the memory of every branch of this story ${using}? Your local chats are kept. This chat uploads its memory again now; other branches upload again when you open them.`);
         if (answer !== target.POPUP_RESULT.AFFIRMATIVE) return false;
         if (!sameChat()) throw new ConnectionError('Chat changed while the popup was open. Select it and retry.');
         invalidate(); clearTimeout(timer);
@@ -915,13 +999,13 @@ async function initialize() {
         // Evict cached engines first: an uncertain deletion must not leave remote state
         // that describes the deleted collection, or the recreated one would skip uploads.
         for (const [key, instance] of engines) if (instance.collection === entry.collection) engines.delete(key);
-        engine = undefined; storyAnalyzers = undefined;
+        engine = undefined; storyAnalyzers = undefined; storyMismatch = undefined;
         await collections.delete({ ...entry, branch: undefined });
         new Journal(localStorage, `${owner}:${entry.collection}`).clear();
         stoppedRequest = undefined;
         showDelivery('');
         setInspection('No memory added yet.');
-        status('This story’s memory was deleted. Saving this chat’s memory again with the current text search languages…');
+        status(`This story’s memory was deleted. Saving this chat’s memory again with the current ${textPrivate() ? 'text-private embedding settings' : 'text search languages'}…`);
         return true;
     }
     async function rebuildMemory() {
@@ -993,6 +1077,6 @@ async function initialize() {
             schedule();
         });
     }
-    addEventListener('pagehide', () => { client?.forget(); element('key').value = ''; });
+    addEventListener('pagehide', () => { client?.forget(); element('key').value = ''; element('embedding-key').value = ''; });
 }
 context().eventSource.on(context().eventTypes.APP_READY, () => { setTimeout(() => initialize().catch(() => { globalThis.toastr?.error('SillyMemory could not initialize. Check browser storage access and the supported SillyTavern version.'); }), 0); });

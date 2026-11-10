@@ -83,10 +83,36 @@
       </div>
       <p data-sm="mode-help">When off, SillyTavern uses its usual chat history. Saved memory is kept.</p>
       <small data-sm="usage-help" hidden>Memory sends older messages, their SillyTavern timestamps and search queries to LambdaDB, whose embedding and reranking providers process them to find related memory. This counts toward your LambdaDB usage. Turn off other memory or chat vectorization extensions; they would add overlapping history to the prompt. Use one active SillyMemory tab per browser profile.</small>
-      <p id="sm-analyzers-label" class="sm-group-label">Text search languages</p>
-      <p data-sm="analyzers-summary" class="sm-analyzers-summary"></p>
-      <div data-sm="analyzers" class="sm-analyzers" role="group" aria-labelledby="sm-analyzers-label"></div>
-      <small>Applies to story memory created after the change. Pick only the languages you actually chat in: each analyzer indexes the text again, which raises index cost and does not guarantee better relevance. A story that was created with a different setting shows <strong>Rebuild story memory</strong> in its Memory panel.</small>
+      <div data-sm="analyzer-settings">
+        <p id="sm-analyzers-label" class="sm-group-label">Text search languages</p>
+        <p data-sm="analyzers-summary" class="sm-analyzers-summary"></p>
+        <div data-sm="analyzers" class="sm-analyzers" role="group" aria-labelledby="sm-analyzers-label"></div>
+        <small>Applies to story memory created after the change. Pick only the languages you actually chat in: each analyzer indexes the text again, which raises index cost and does not guarantee better relevance. A story that was created with a different setting shows <strong>Rebuild story memory</strong> in its Memory panel.</small>
+      </div>
+      <details data-sm="text-private" class="sm-section">
+        <summary>Text-private memory <span data-sm="text-private-state">Off</span></summary>
+        <label class="sm-toggle"><input data-sm="textPrivate" type="checkbox"> Use text-private memory for new stories</label>
+        <small>Raw text is not sent to or stored in LambdaDB. This browser turns older messages and search queries into vectors through the embedding endpoint below; LambdaDB stores only the vectors and metadata, and recalled passages come from your local chat. Search uses vectors only, without text reranking. Applies to story memory created after the change; a story created in the other mode shows <strong>Rebuild story memory</strong> in its Memory panel.</small>
+        <label>Embedding model <select data-sm="embedding-preset" class="text_pole">
+          <option value="ollama-qwen3">Ollama qwen3-embedding:0.6b (local)</option>
+          <option value="ollama-gemma">Ollama embeddinggemma (local, lighter)</option>
+          <option value="openai-small">OpenAI text-embedding-3-small</option>
+          <option value="custom">Custom model</option>
+        </select></label>
+        <small data-sm="embedding-quality"></small>
+        <label>Embedding endpoint URL <input data-sm="embedding-url" class="text_pole" type="url" placeholder="http://localhost:11434/v1"></label>
+        <div data-sm="embedding-custom" hidden>
+          <label>Model name <input data-sm="embedding-model" class="text_pole" autocomplete="off" spellcheck="false"></label>
+          <label>Query prefix (optional) <textarea data-sm="embedding-query-prefix" class="text_pole" rows="2" spellcheck="false"></textarea></label>
+          <label>Document prefix (optional) <textarea data-sm="embedding-document-prefix" class="text_pole" rows="2" spellcheck="false"></textarea></label>
+        </div>
+        <label>Embedding API key (optional) <input data-sm="embedding-key" class="text_pole" type="password" autocomplete="off" spellcheck="false"></label>
+        <small data-sm="embedding-local" hidden>Text stays on this machine.</small>
+        <small data-sm="embedding-ollama" hidden>Ollama: set <code>OLLAMA_ORIGINS</code> only if you open SillyTavern from another device.</small>
+        <div class="sm-actions"><button data-sm="embedding-test" class="menu_button">Test endpoint</button><button data-sm="embedding-forget" class="menu_button">Forget embedding key</button></div>
+        <p data-sm="embedding-summary"></p>
+        <small>Test endpoint sends one short embedding request and saves these settings. A key is saved in this browser only for this exact endpoint and model; other extensions on this page can access browser storage. Local endpoints usually need no key.</small>
+      </details>
     </section>
     <div class="sm-status">
       <p data-sm="status" role="status">Connect to LambdaDB or enter your project API key to begin.</p>
