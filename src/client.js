@@ -39,6 +39,14 @@ export const schema = (analyzers = ['english']) => Object.freeze({
     owner: { type: 'keyword' }, scope: { type: 'keyword' }, revision: { type: 'keyword' },
 });
 
+// Private stories store no text: a plain vector field the browser fills,
+// and the same metadata indexes.
+export function privateSchema(dimensions) {
+    if (!Number.isSafeInteger(dimensions) || dimensions <= 0) throw new ConnectionError('Invalid embedding dimension.');
+    const { text, embedding, ...metadata } = schema();
+    return Object.freeze({ embedding: { type: 'vector', dimensions, similarity: 'cosine' }, ...metadata });
+}
+
 export function scopeFilter(owner, scope) {
     if (![owner, scope].every(x => /^[a-f0-9]+$/.test(x))) throw new ConnectionError('Invalid memory identity.');
     return { queryString: { query: `owner:${owner} AND scope:${scope}` } };
@@ -123,10 +131,11 @@ export class LambdaClient {
         if (!/^[a-zA-Z0-9_-]{3,52}$/.test(collection)) throw new ConnectionError('Invalid collection name.');
         return `/collections/${collection}${suffix}`;
     }
-    create(collection, owner, scope, analyzers) {
+    // A given embeddingIdentity creates a private story.
+    create(collection, owner, scope, analyzers, embeddingIdentity) {
         this.path(collection);
-        const indexConfigs = schema(analyzers);
-        return this.call((sdk, opts) => sdk.createCollection({ collectionName: collection, indexConfigs, description: 'SillyMemory owned memory', tags: { application: 'sillymemory', owner, ...(scope ? { chat: scope } : {}) }, snapshotRetentionInDays: 1 }, opts));
+        const indexConfigs = embeddingIdentity ? privateSchema(embeddingIdentity.dimensions) : schema(analyzers);
+        return this.call((sdk, opts) => sdk.createCollection({ collectionName: collection, indexConfigs, description: 'SillyMemory owned memory', tags: { application: 'sillymemory', owner, ...(scope ? { chat: scope } : {}), ...embeddingIdentity?.tags }, snapshotRetentionInDays: 1 }, opts));
     }
     get(collection, signal) { this.path(collection); return this.call((sdk, opts) => sdk.collection(collection).get(opts), signal); }
     verifyOwned(result, owner, scope) {
@@ -223,16 +232,27 @@ export class LambdaClient {
         if (new TextEncoder().encode(text).length > 8192) {
             throw new ConnectionError('The current retrieval input exceeds the 8 KiB limit. Shorten the input; no search was sent.', 0, 'query-limit');
         }
-        const filter = scopeFilter(owner, scope);
-        if (before !== undefined) {
-            if (!Number.isSafeInteger(before) || before <= 0) throw new ConnectionError('Invalid memory message boundary.');
-            filter.queryString.query += ` AND message:[0 TO ${before - 1}]`;
-        }
+        const filter = boundedFilter(owner, scope, before);
         return this.query(collection, { bayesian: [
             { knn: { field: 'embedding', queryText: text, k: 200, filter } },
             { bool: [{ ...filter, occur: 'filter' }, { queryString: { query: text, defaultField: 'text', skipSyntax: true }, occur: 'must' }] },
         ] }, { signal, branch, size: 50, rerank: { provider: 'typesafe', model: 'jev-1.13.0', queryText: text, fields: ['role', 'conversationTimeContext', 'text'], candidateSize: 200, onFailure: 'error' } });
     }
+    // Private search: dense KNN only, with no text to rerank or match lexically.
+    searchVector(collection, owner, scope, queryVector, signal, branch = 'main', before) {
+        if (!Array.isArray(queryVector) || !queryVector.length || !queryVector.every(Number.isFinite)) throw new ConnectionError('Invalid query vector. No search was sent.');
+        const filter = boundedFilter(owner, scope, before);
+        return this.query(collection, { knn: { field: 'embedding', queryVector, k: 200, filter } }, { signal, branch, size: 50 });
+    }
+}
+
+function boundedFilter(owner, scope, before) {
+    const filter = scopeFilter(owner, scope);
+    if (before !== undefined) {
+        if (!Number.isSafeInteger(before) || before <= 0) throw new ConnectionError('Invalid memory message boundary.');
+        filter.queryString.query += ` AND message:[0 TO ${before - 1}]`;
+    }
+    return filter;
 }
 
 function unwrap(error) {

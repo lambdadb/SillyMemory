@@ -25,8 +25,10 @@ The current pin is `0.9.0`, supporting 200 rerank candidates.
 | Connection check | Authenticated list of one collection before adopting a saved/restored key; no collection creation or inference |
 | Storage | Owned collection per story; separate `chat_<ID>` branch per writable chat |
 | Embeddings | Native `text-embedding-3-small` from verbatim `text`; lexical analyzers from the **Text search languages** setting (default `english`), fixed when the story collection is created |
+| Private memory storage | No `text` field; plain `{ type: 'vector', dimensions, similarity: 'cosine' }` filled by the browser; `memory_mode` and `embedding` identity tags (at most five tags, no `:` in values) |
 | Writes | Explicit selected branch; source documents carry owner, story scope, revision and source coordinates |
 | Search | Bayesian vector/lexical fusion, k200, owner/scope/message-boundary filters, consistent reads |
+| Private memory search | One `knn` `queryVector` search, k200, size 50, the same filters and branch; no rerank |
 | Reranking | Native Jev 1.13.0, 200 candidates, 50 returned; confirmed provider/model/status required |
 | Results | Inline `docs[].doc`; external download responses fail closed without forwarding credentials |
 | Ownership and cleanup | Validate application, owner and story tags before mutation; verify branch deletion or collection HTTP 404 |
@@ -37,13 +39,21 @@ transport tests and standalone benchmarks can use `main`; product memory uses
 the selected chat branch. See [current defaults](conversation-memory-defaults.md),
 [storage](versioned-memory.md) and [native workflows](native-chat-workflow.md).
 
+## Embedding endpoint (Private memory)
+
+An OpenAI-compatible `POST {baseUrl}/embeddings` with
+`{ model, input, encoding_format: 'float' }`, reading `data[].embedding` in
+`index` order. Used for Ollama, LM Studio, llama.cpp and remote providers that
+allow browser CORS. See [Private memory](private-memory.md).
+
 ## Browser transport and credentials
 
 Memory requests use direct browser HTTPS/CORS with `credentials: omit`,
 `redirect: error`, and no SillyTavern cookies or CSRF headers. Host chat/settings
 requests remain same-origin. There is no server plugin or proxy fallback.
 Validated credentials are saved only in the dedicated browser record scoped to
-the native account and exact endpoint/project; see [saved connections](saved-connection.md)
+the native account and exact endpoint/project; an optional embedding key has its
+own record scoped to the exact embedding base URL and model; see [saved connections](saved-connection.md)
 and [direct CORS](direct-cors.md). Keys never belong in ordinary settings,
 reports or source control.
 

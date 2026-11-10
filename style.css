@@ -22,6 +22,7 @@
 #sillymemory .sm-section > summary { font-weight: bold; }
 #sillymemory .sm-section > summary span { display: block; font-weight: normal; font-size: 0.85em; margin-top: 0.2rem; }
 #sillymemory .sm-footer { display: block; margin-top: 0.8rem; }
+#sillymemory .sm-pull code { white-space: nowrap; user-select: all; }
 
 #sillymemory [hidden] { display: none !important; }
 #sillymemory .sm-connection { border-top: 0; }

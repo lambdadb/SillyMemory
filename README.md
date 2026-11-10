@@ -79,6 +79,17 @@ memory** for everything that was added to the prompt.
   with a different setting shows **Rebuild story memory** in its Memory panel,
   which deletes that story's memory for every branch and uploads it again from
   your local chats.
+- **Private memory** (opt-in, in settings): your chat text is not stored in
+  LambdaDB, only vectors. Your browser turns older messages and queries into vectors through
+  an embedding endpoint you choose, LambdaDB stores only vectors and metadata,
+  and recalled passages come from your local chat. Recommended models,
+  validated on English LongMemEval-S only: local Ollama `qwen3-embedding:0.6b`
+  or the lighter `embeddinggemma`, or OpenAI `text-embedding-3-small`. Other
+  models work but their quality is not validated. New stories follow the
+  setting. Turning it on pauses existing standard stories until you rebuild them
+  with **Rebuild story memory**; private stories keep working if you turn it off. Search
+  uses vectors only, without reranking. See
+  [Private memory](docs/private-memory.md).
 - Memory is per chat. **Turn memory off in this chat** returns that chat to
   ordinary SillyTavern history handling; the saved memory is kept. New chats
   start with memory off.
@@ -114,12 +125,17 @@ not a guarantee for every model or roleplay.
 | Reply stopped while adding memory | Read the status, fix the cause, then click **Retry reply** or use SillyTavern's **Regenerate**. In a group, Regenerate redoes the whole round; to get only a missing member's reply, use **Trigger a message from this character** next to that member in the group panel. If Auto Mode was on, it is turned off; turn it on again after fixing the cause. When the reply stopped because recent messages or memory were left out, send a message first: the earlier Auto Mode replies then move into memory. After SillyTavern's own **Stop** button, send a message before turning Auto Mode on again (a SillyTavern limitation). Only a request LambdaDB rejected with HTTP 429 is retried automatically, at most twice within the same 15-second request deadline. |
 | LambdaDB is busy or over its request limit (HTTP 429) | Each LambdaDB project has a request budget of `rate_limit` requests per second (5 by default), refilled at that rate. The extension waits as long as the response's `Retry-After` header says (one second for the default limit) and retries twice, so this status normally clears itself; if it persists, check the project's `rate_limit` in the LambdaDB console project overview and raise it through a support request. |
 | Query exceeds 8 KiB | Shorten the latest messages, or turn memory off for that reply. |
+| Embedding request failed (Private memory) | Check that the embedding endpoint is running and the URL and model are right, then **Test and save** in settings. Ollama allows SillyTavern on the same machine by default; for another device, see [setup and recovery](docs/setup-and-recovery.md#private-memory). |
+| Standard story paused after turning Private memory on, or private story created with a different embedding model | Click **Rebuild story memory** in the Memory panel, or change the setting back. |
 
 ## Data, usage and deletion
 
 Older chat text, timestamps and search queries go directly from your browser to
 your LambdaDB project, where LambdaDB's embedding and reranking providers process
-them. Storage, writes, searches and inference count toward your
+them. With **Private memory**, your chat text is not stored in LambdaDB, only
+vectors: older messages and queries go to your embedding endpoint (with a local
+endpoint, text stays on this machine), and LambdaDB receives vectors,
+timestamps, speaker names and other metadata. Storage, writes, searches and inference count toward your
 [LambdaDB plan](https://lambdadb.ai/pricing). Turning memory off keeps the saved
 memory, so on Pay as You Go it continues to use storage until deleted.
 
@@ -132,7 +148,7 @@ memory, so on Pay as You Go it continues to use storage until deleted.
   and turns memory off; the memory itself is kept. To switch projects, delete
   all memory first.
 
-The project key is saved in browser storage scoped to your SillyTavern account.
+The project key, and an optional embedding key, are saved in browser storage scoped to your SillyTavern account.
 Other extensions on the same page can read browser storage; it is not an
 isolated vault. See [saved connections](docs/saved-connection.md) and
 [storage and recovery](docs/versioned-memory.md) for details.

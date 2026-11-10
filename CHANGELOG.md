@@ -8,6 +8,21 @@ boundary; publication is confirmed by the corresponding Git tag and GitHub Relea
 
 ### Added
 
+- Private memory, an opt-in setting for newly created stories: your chat text
+  is not stored in LambdaDB, only vectors. The browser embeds older messages and
+  queries through a user-chosen OpenAI-compatible embedding endpoint, LambdaDB
+  stores only vectors and metadata, and recalled passages come from the local
+  chat. Search is dense vector search without reranking. Recommended models,
+  validated on English LongMemEval-S only: Ollama `qwen3-embedding:0.6b`, Ollama
+  `embeddinggemma` and OpenAI `text-embedding-3-small`; other models are
+  allowed and labelled as not validated. An optional embedding key is saved in
+  its own browser record. The switch is available after **Test and save**
+  succeeds. Turning it on pauses existing standard stories until they are rebuilt
+  with **Rebuild story memory**; private stories keep working if it is turned
+  off, while their embedding model, prefixes and dimension match the tested
+  settings, and offer an optional rebuild to standard memory.
+  Default-mode memory is unchanged.
+
 - Group chats. Memory can be turned on in a SillyTavern group chat with the same
   storage, retrieval and failure handling as a character chat. Each group chat
   starts its own story; its checkpoints and branches reuse the shared history,

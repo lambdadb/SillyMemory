@@ -1,7 +1,7 @@
 import { clearCommit, recordCommitted, waitForCommit } from './commit.js';
 import { ConnectionError, analyzerList, collectionAnalyzers } from './client.js';
 import { poll } from './gate.js';
-import { chatOwner, digest, documents, options } from './memory.js';
+import { chatOwner, digest, documents, options, withoutText } from './memory.js';
 
 const idPattern = /^[a-f0-9]{32}$/;
 export const ownedMemoryName = name => /^smstory_[a-f0-9]{40}$/.test(name);
@@ -85,6 +85,28 @@ export async function ensureChatIdentity(ctx, saveChat, valid = () => true, fetc
     return true;
 }
 
+// A story keeps the memory mode it was created with. Before any sync or search:
+// - Private memory on stops a standard story, which would keep uploading chat text.
+// - A private story keeps working when Private memory is off, with the saved,
+//   tested embedding settings; it stops when those are missing or have another identity.
+// The setting is { privateMemory, embedding }, `embedding` the tested embeddingIdentity().
+// Returns the identity a private story uses, or undefined for a standard story.
+export function checkStoryMode(result, { privateMemory = false, embedding } = {}) {
+    const mode = result?.collection?.tags?.memory_mode;
+    let message;
+    if (mode === undefined) {
+        if (!privateMemory) return undefined;
+        message = 'This story’s memory was created without Private memory and stores chat text in LambdaDB. Use Rebuild story memory to make it private, or turn Private memory off.';
+    } else if (mode !== 'private') {
+        message = 'This story’s memory uses an unsupported memory mode. Use Rebuild story memory to recreate it.';
+    } else if (!embedding) {
+        message = 'This story uses Private memory, but no tested embedding endpoint is saved. Test the embedding endpoint in SillyMemory settings, or use Rebuild story memory to recreate it in the current mode.';
+    } else if (result.collection.tags.embedding !== embedding.tags.embedding) {
+        message = 'This story’s memory was created with a different embedding model, prefixes or vector dimension. Use Rebuild story memory to apply the current settings, or restore the previous embedding settings.';
+    } else return embedding;
+    throw new ConnectionError(message, 0, 'memory-mode');
+}
+
 export class ChatCollections {
     constructor(client, owner, remember, forget) {
         Object.assign(this, { client, owner, remember, forget });
@@ -99,7 +121,8 @@ export class ChatCollections {
             if (error.status !== 404) throw error;
             if (!valid()) return null;
             let created;
-            try { created = await this.client.create(entry.collection, this.owner, entry.scope, config.analyzers); }
+            // New stories follow the global setting.
+            try { created = await this.client.create(entry.collection, this.owner, entry.scope, config.analyzers, config.privateMemory ? config.embedding : undefined); }
             catch (error) { if (error.status !== 409) throw error; }
             // A 201 body describes the new collection; a conflict or lost response needs a fresh read.
             if (created?.collection) {
@@ -108,8 +131,11 @@ export class ChatCollections {
                 if (!created.collection.indexConfigs) analyzers = analyzerList(config.analyzers);
             } else collection = await this.client.assertOwned(entry.collection, this.owner, undefined, entry.scope);
         }
+        const identity = checkStoryMode(collection, config);
         // The analyzers actually indexed; the setting only applies when a collection is created.
-        analyzers ??= collectionAnalyzers(collection);
+        // A private story has no text field and no analyzers.
+        if (identity) analyzers = undefined;
+        else analyzers ??= collectionAnalyzers(collection);
         {
             const branches = await this.client.branches(entry.collection);
             if (!valid()) return null;
@@ -117,7 +143,9 @@ export class ChatCollections {
                 const source = branches.some(b => b.name === entry.source) ? entry.source : 'main';
                 if (source !== 'main' && !await waitForCommit(this.client, entry.collection, source, valid)) {
                     progress({ phase: 'committing' });
-                    const { docs } = await documents(snapshot, this.owner, config);
+                    const { docs: local } = await documents(snapshot, this.owner, config);
+                    // A private story stores every field except the text.
+                    const docs = identity ? local.map(withoutText) : local;
                     // Wait for acknowledged, matching inherited text to commit. A
                     // consistent read alone is not proof that a fork will copy it.
                     for (let i = 0; i < docs.length; i += 100) {
@@ -142,7 +170,7 @@ export class ChatCollections {
                 if (created) recordCommitted(this.client, entry.collection, entry.branch);
             }
         }
-        return valid() ? { ...entry, analyzers } : null;
+        return valid() ? { ...entry, analyzers, privateMemory: Boolean(identity) } : null;
     }
     async delete(entry) {
         clearCommit(this.client, entry.collection, entry.branch);
