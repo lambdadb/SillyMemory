@@ -44,7 +44,7 @@ the selected chat branch. See [current defaults](conversation-memory-defaults.md
 An OpenAI-compatible `POST {baseUrl}/embeddings` with
 `{ model, input, encoding_format: 'float' }`, reading `data[].embedding` in
 `index` order. Used for Ollama, LM Studio, llama.cpp and remote providers that
-allow browser CORS. See [text-private mode](text-private-mode.md).
+allow browser CORS. See [text-private mode](private-memory.md).
 
 ## Browser transport and credentials
 

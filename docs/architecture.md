@@ -2,7 +2,7 @@
 
 ## Boundaries
 
-`index.js` adapts the pinned SillyTavern context, events, prompt interceptor, and settings panel. `src/client.js` sends direct browser HTTPS/CORS requests; it has a private in-memory key and sanitizes errors without logging response bodies. `src/app-connect.js` runs the LambdaDB OAuth connection (discovery, one registration per installation, popup approval with PKCE, key claim and recovery); `oauth-callback.html` and `oauth-callback.js` form the callback page, which only relays the authorization result to the initiating tab. `src/embedding.js` is the optional [text-private](text-private-mode.md) embedding client: direct browser requests to a user-chosen OpenAI-compatible endpoint, with the same private-key and sanitized-error rules. `src/gate.js` validates a synthetic lifecycle before memory collection creation. `src/status.js` formats progress and recovery guidance and ensures only the current operation owns the status display. `src/memory.js` is independent synchronization and selection logic.
+`index.js` adapts the pinned SillyTavern context, events, prompt interceptor, and settings panel. `src/client.js` sends direct browser HTTPS/CORS requests; it has a private in-memory key and sanitizes errors without logging response bodies. `src/app-connect.js` runs the LambdaDB OAuth connection (discovery, one registration per installation, popup approval with PKCE, key claim and recovery); `oauth-callback.html` and `oauth-callback.js` form the callback page, which only relays the authorization result to the initiating tab. `src/embedding.js` is the optional [text-private](private-memory.md) embedding client: direct browser requests to a user-chosen OpenAI-compatible endpoint, with the same private-key and sanitized-error rules. `src/gate.js` validates a synthetic lifecycle before memory collection creation. `src/status.js` formats progress and recovery guidance and ensures only the current operation owns the status display. `src/memory.js` is independent synchronization and selection logic.
 
 There is no server plugin. Runtime modules have no external dependencies. Playwright is development-only. The extension source and development tools are distributed under AGPL-3.0-only; see the root LICENSE.
 
@@ -88,7 +88,7 @@ offers **Rebuild story memory**. An embedding failure is a preparation failure:
 generation stops, and a failed synchronization keeps the journal for retry. The
 document ID and `revision` contain an unsalted SHA-256 digest of the source
 message, so a very short, guessable message could be confirmed by brute force.
-See [text-private mode](text-private-mode.md).
+See [text-private mode](private-memory.md).
 
 Remote hits are ranking signals: only exact current IDs, ownership, scope, revision,
 source text and conversation-time metadata are accepted; injection uses the locally

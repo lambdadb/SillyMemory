@@ -88,7 +88,7 @@ memory** for everything that was added to the prompt.
   models work but their quality is not validated. It applies to stories created
   after the change; **Rebuild story memory** converts an existing story. Search
   uses vectors only, without reranking. See
-  [text-private mode](docs/text-private-mode.md).
+  [text-private mode](docs/private-memory.md).
 - Memory is per chat. **Turn memory off in this chat** returns that chat to
   ordinary SillyTavern history handling; the saved memory is kept. New chats
   start with memory off.
@@ -124,7 +124,7 @@ not a guarantee for every model or roleplay.
 | Reply stopped while adding memory | Read the status, fix the cause, then click **Retry reply** or use SillyTavern's **Regenerate**. In a group, Regenerate redoes the whole round; to get only a missing member's reply, use **Trigger a message from this character** next to that member in the group panel. If Auto Mode was on, it is turned off; turn it on again after fixing the cause. When the reply stopped because recent messages or memory were left out, send a message first: the earlier Auto Mode replies then move into memory. After SillyTavern's own **Stop** button, send a message before turning Auto Mode on again (a SillyTavern limitation). Only a request LambdaDB rejected with HTTP 429 is retried automatically, at most twice within the same 15-second request deadline. |
 | LambdaDB is busy or over its request limit (HTTP 429) | Each LambdaDB project has a request budget of `rate_limit` requests per second (5 by default), refilled at that rate. The extension waits as long as the response's `Retry-After` header says (one second for the default limit) and retries twice, so this status normally clears itself; if it persists, check the project's `rate_limit` in the LambdaDB console project overview and raise it through a support request. |
 | Query exceeds 8 KiB | Shorten the latest messages, or turn memory off for that reply. |
-| Embedding request failed (text-private memory) | Check that the embedding endpoint is running and the URL and model are right, then **Test endpoint** in settings. Ollama allows SillyTavern on the same machine by default; for another device, see [setup and recovery](docs/setup-and-recovery.md#text-private-memory). |
+| Embedding request failed (text-private memory) | Check that the embedding endpoint is running and the URL and model are right, then **Test endpoint** in settings. Ollama allows SillyTavern on the same machine by default; for another device, see [setup and recovery](docs/setup-and-recovery.md#private-memory). |
 | Story created with a different memory mode or embedding model | Click **Rebuild story memory** in the Memory panel, or change the setting back. |
 
 ## Data, usage and deletion

@@ -62,7 +62,7 @@ export class SavedKey {
     }
 }
 
-// The optional text-private embedding key: its own record, scoped to the native
+// The optional private embedding key: its own record, scoped to the native
 // account owner and the exact normalized embedding base URL and model.
 export class EmbeddingKey extends SavedKey {
     id() { return `sillymemory:embedding-credential:${this.owner}`; }

@@ -319,9 +319,9 @@ function renderSettings() {
     element('connect').textContent = state.ready || state.testCollection ? 'Save and connect' : 'Connect and test';
     element('prepare-controls').hidden = !connected || state.ready || cleanup;
     element('usage-help').hidden = !connected || !state.ready;
-    element('usage-help').textContent = textPrivate() ? TEXT_PRIVATE_USAGE : DEFAULT_USAGE;
-    element('text-private-state').textContent = textPrivate() ? 'On' : 'Off';
-    element('analyzer-settings').hidden = textPrivate();
+    element('usage-help').textContent = privateMemory() ? PRIVATE_USAGE : DEFAULT_USAGE;
+    element('private-memory-state').textContent = privateMemory() ? 'On' : 'Off';
+    element('analyzer-settings').hidden = privateMemory();
     element('next-step').textContent = !connected ? 'Connect your project above to get started.'
         : cleanup ? 'A connection test needs cleanup. Remove its temporary data before trying again.'
         : !state.ready ? 'Check your connection once before turning memory on.'
@@ -334,12 +334,12 @@ function renderSettings() {
     renderChatStatus();
 }
 const DEFAULT_USAGE = 'Memory sends older messages, their SillyTavern timestamps and search queries to LambdaDB, whose embedding and reranking providers process them to find related memory. This counts toward your LambdaDB usage. Turn off other memory or chat vectorization extensions; they would add overlapping history to the prompt. Use one active SillyMemory tab per browser profile.';
-const TEXT_PRIVATE_USAGE = 'Text-private memory: raw text is not sent to or stored in LambdaDB. Older messages and search queries go to your embedding endpoint; LambdaDB stores vectors, timestamps and metadata. This counts toward your LambdaDB usage. Turn off other memory or chat vectorization extensions; they would add overlapping history to the prompt. Use one active SillyMemory tab per browser profile.';
-const textPrivate = () => state?.memoryMode === 'text_private';
+const PRIVATE_USAGE = 'Private memory: raw text is not sent to or stored in LambdaDB. Older messages and search queries go to your embedding endpoint; LambdaDB stores vectors, timestamps and metadata. This counts toward your LambdaDB usage. Turn off other memory or chat vectorization extensions; they would add overlapping history to the prompt. Use one active SillyMemory tab per browser profile.';
+const privateMemory = () => state?.memoryMode === 'private';
 // The current setting for stories: undefined in the default mode, otherwise the
 // tested embedding identity and a client for it.
 async function storyMode() {
-    if (!textPrivate()) return undefined;
+    if (!privateMemory()) return undefined;
     const settings = state.embedding;
     const identity = await embeddingIdentity(settings || {});
     return { identity, embedder: new EmbeddingClient(settings, embeddingKey.read(settings) || '') };
@@ -375,7 +375,7 @@ function prepareMemory(valid, progress = () => {}) {
         const mode = await storyMode();
         if (!valid()) return null;
         let entry;
-        try { entry = await collections.ensure(snapshot, valid, { ...options(state), textPrivate: mode?.identity }, progress); }
+        try { entry = await collections.ensure(snapshot, valid, { ...options(state), privateMemory: mode?.identity }, progress); }
         catch (error) { if (error.code === 'memory-mode' && requestTarget() === target) { storyMismatch = target; renderChatStatus(); } throw error; }
         if (!entry || !valid()) return null;
         if (storyMismatch === target) storyMismatch = undefined;
@@ -695,7 +695,7 @@ async function initialize() {
     };
     element('stopOnLoss').checked = state.stopOnLoss !== false;
     element('stopOnLoss').onchange = () => { state.stopOnLoss = element('stopOnLoss').checked; persist(); };
-    // Text-private settings: form edits stay drafts until Test endpoint succeeds.
+    // Private memory settings: form edits stay drafts until Test endpoint succeeds.
     const embeddingForm = () => {
         const preset = EMBEDDING_PRESETS[element('embedding-preset').value];
         return { baseUrl: element('embedding-url').value.trim(), ...(preset ? { model: preset.model, queryPrefix: preset.queryPrefix, documentPrefix: preset.documentPrefix }
@@ -720,9 +720,9 @@ async function initialize() {
         renderEmbeddingForm();
     };
     showEmbedding();
-    element('textPrivate').checked = textPrivate();
-    element('textPrivate').onchange = () => {
-        state.memoryMode = element('textPrivate').checked ? 'text_private' : 'default';
+    element('privateMemory').checked = privateMemory();
+    element('privateMemory').onchange = () => {
+        state.memoryMode = element('privateMemory').checked ? 'private' : 'default';
         persist(); renderSettings();
         if (memoryEnabled()) schedule();
     };
@@ -745,7 +745,7 @@ async function initialize() {
         if (typed) embeddingKey.commit(config, typed, next);
         else { persist(next); if (!saved) embeddingKey.forget(); }
         state = next; showEmbedding();
-        status(`Embedding endpoint works: ${dimensions}-dimension vectors. ${textPrivate() ? 'New stories use text-private memory.' : 'Turn on text-private memory to use it for new stories.'}`);
+        status(`Embedding endpoint works: ${dimensions}-dimension vectors. ${privateMemory() ? 'New stories use Private memory.' : 'Turn on Private memory to use it for new stories.'}`);
         if (memoryEnabled()) schedule();
     });
     element('embedding-forget').onclick = () => action(async () => {
@@ -985,7 +985,7 @@ async function initialize() {
         if (!capture(context()) || !context().chatMetadata.sillymemory?.id) throw new ConnectionError('This chat has no saved memory yet.');
         const target = context(), file = target.getCurrentChatId(), chatKey = chatOwner(target);
         const sameChat = () => context().getCurrentChatId() === file && chatOwner(context()) === chatKey;
-        const using = textPrivate() ? `as text-private memory with ${state.embedding?.model || 'the tested embedding model'}` : `with the current text search languages (${options(state).analyzers.join(', ')})`;
+        const using = privateMemory() ? `as Private memory with ${state.embedding?.model || 'the tested embedding model'}` : `with the current text search languages (${options(state).analyzers.join(', ')})`;
         const answer = await target.Popup.show.confirm('Rebuild story memory', `Rebuild the memory of every branch of this story ${using}? Your local chats are kept. This chat uploads its memory again now; other branches upload again when you open them.`);
         if (answer !== target.POPUP_RESULT.AFFIRMATIVE) return false;
         if (!sameChat()) throw new ConnectionError('Chat changed while the popup was open. Select it and retry.');
@@ -1005,7 +1005,7 @@ async function initialize() {
         stoppedRequest = undefined;
         showDelivery('');
         setInspection('No memory added yet.');
-        status(`This story’s memory was deleted. Saving this chat’s memory again with the current ${textPrivate() ? 'text-private embedding settings' : 'text search languages'}…`);
+        status(`This story’s memory was deleted. Saving this chat’s memory again with the current ${privateMemory() ? 'Private memory embedding settings' : 'text search languages'}…`);
         return true;
     }
     async function rebuildMemory() {

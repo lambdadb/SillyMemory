@@ -57,7 +57,7 @@ checks still guard writes and generation.
 
 ## Embedding key (text-private mode)
 
-The optional key for a [text-private](text-private-mode.md) embedding endpoint
+The optional key for a [text-private](private-memory.md) embedding endpoint
 uses its own `sillymemory:embedding-credential:<owner>` record with the same
 rules: format version, normalized base URL and model, and the key; restored
 only on an exact base URL and model match; replaced when the connection is

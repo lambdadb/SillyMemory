@@ -32,7 +32,7 @@ no paid provider, quality evaluation or new storage/retrieval policy is required
   popups. Only an affirmative result authorizes deletion. Cancellation is inert,
   and the captured target is revalidated after the asynchronous popup.
 
-## Text-private memory
+## Private memory
 
 **Text-private memory** in settings applies to story memory created after the
 change. Choose a preset or custom model, the endpoint URL and an optional key,
@@ -40,7 +40,7 @@ then **Test endpoint**: one short embedding request that records the vector
 dimension and saves the settings. A story created in the other mode, or with a
 different embedding model, prefixes or dimension, stops with an explicit error
 and shows **Rebuild story memory** in its Memory panel; changing the setting
-back also resumes it. See [text-private mode](text-private-mode.md).
+back also resumes it. See [text-private mode](private-memory.md).
 
 A local Ollama on the same computer as the browser needs no setup: its default
 origins allow `http://localhost:*` and `http://127.0.0.1:*`. To open SillyTavern

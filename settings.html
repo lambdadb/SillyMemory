@@ -89,9 +89,9 @@
         <div data-sm="analyzers" class="sm-analyzers" role="group" aria-labelledby="sm-analyzers-label"></div>
         <small>Applies to story memory created after the change. Pick only the languages you actually chat in: each analyzer indexes the text again, which raises index cost and does not guarantee better relevance. A story that was created with a different setting shows <strong>Rebuild story memory</strong> in its Memory panel.</small>
       </div>
-      <details data-sm="text-private" class="sm-section">
-        <summary>Text-private memory <span data-sm="text-private-state">Off</span></summary>
-        <label class="sm-toggle"><input data-sm="textPrivate" type="checkbox"> Use text-private memory for new stories</label>
+      <details data-sm="private-memory" class="sm-section">
+        <summary>Private memory <span data-sm="private-memory-state">Off</span></summary>
+        <label class="sm-toggle"><input data-sm="privateMemory" type="checkbox"> Use Private memory for new stories</label>
         <small>Raw text is not sent to or stored in LambdaDB. This browser turns older messages and search queries into vectors through the embedding endpoint below; LambdaDB stores only the vectors and metadata, and recalled passages come from your local chat. Search uses vectors only, without text reranking. Applies to story memory created after the change; a story created in the other mode shows <strong>Rebuild story memory</strong> in its Memory panel.</small>
         <label>Embedding model <select data-sm="embedding-preset" class="text_pole">
           <option value="ollama-qwen3">Ollama qwen3-embedding:0.6b (local)</option>

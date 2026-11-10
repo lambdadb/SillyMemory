@@ -1,6 +1,6 @@
 import { ConnectionError } from './client.js';
 
-// Text-private memory embeds chunks and queries in the browser through a
+// Private memory embeds chunks and queries in the browser through a
 // user-connected OpenAI-compatible endpoint. LambdaDB receives only vectors.
 // Keys stay in this client's private field; errors never include response bodies.
 
@@ -43,11 +43,11 @@ export function localEndpoint(baseUrl) {
 // embedding identity is one digest of the model, both prefixes and the dimension.
 export async function embeddingIdentity(config) {
     const dimensions = config?.dimensions;
-    if (!Number.isSafeInteger(dimensions) || dimensions <= 0) throw new ConnectionError('Text-private memory needs a tested embedding endpoint. Choose Test endpoint in SillyMemory settings.', 0, 'embedding');
+    if (!Number.isSafeInteger(dimensions) || dimensions <= 0) throw new ConnectionError('Private memory needs a tested embedding endpoint. Choose Test endpoint in SillyMemory settings.', 0, 'embedding');
     const { model, queryPrefix, documentPrefix } = embeddingConfig(config);
     const bytes = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(JSON.stringify([model, queryPrefix, documentPrefix, dimensions])));
     const embedding = Array.from(new Uint8Array(bytes).slice(0, 8), x => x.toString(16).padStart(2, '0')).join('');
-    return { dimensions, tags: { memory_mode: 'text_private', embedding } };
+    return { dimensions, tags: { memory_mode: 'private', embedding } };
 }
 
 // Unit-length vectors rounded to 4 decimal places: the stored form accepted by

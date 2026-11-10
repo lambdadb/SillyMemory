@@ -39,9 +39,9 @@ export const schema = (analyzers = ['english']) => Object.freeze({
     owner: { type: 'keyword' }, scope: { type: 'keyword' }, revision: { type: 'keyword' },
 });
 
-// Text-private stories store no text: a plain vector field the browser fills,
+// Private stories store no text: a plain vector field the browser fills,
 // and the same metadata indexes.
-export function textPrivateSchema(dimensions) {
+export function privateSchema(dimensions) {
     if (!Number.isSafeInteger(dimensions) || dimensions <= 0) throw new ConnectionError('Invalid embedding dimension.');
     const { text, embedding, ...metadata } = schema();
     return Object.freeze({ embedding: { type: 'vector', dimensions, similarity: 'cosine' }, ...metadata });
@@ -131,11 +131,11 @@ export class LambdaClient {
         if (!/^[a-zA-Z0-9_-]{3,52}$/.test(collection)) throw new ConnectionError('Invalid collection name.');
         return `/collections/${collection}${suffix}`;
     }
-    // `textPrivate` is an embeddingIdentity(): its dimension and its mode/identity tags.
-    create(collection, owner, scope, analyzers, textPrivate) {
+    // `privateMemory` is an embeddingIdentity(): its dimension and its mode/identity tags.
+    create(collection, owner, scope, analyzers, privateMemory) {
         this.path(collection);
-        const indexConfigs = textPrivate ? textPrivateSchema(textPrivate.dimensions) : schema(analyzers);
-        return this.call((sdk, opts) => sdk.createCollection({ collectionName: collection, indexConfigs, description: 'SillyMemory owned memory', tags: { application: 'sillymemory', owner, ...(scope ? { chat: scope } : {}), ...textPrivate?.tags }, snapshotRetentionInDays: 1 }, opts));
+        const indexConfigs = privateMemory ? privateSchema(privateMemory.dimensions) : schema(analyzers);
+        return this.call((sdk, opts) => sdk.createCollection({ collectionName: collection, indexConfigs, description: 'SillyMemory owned memory', tags: { application: 'sillymemory', owner, ...(scope ? { chat: scope } : {}), ...privateMemory?.tags }, snapshotRetentionInDays: 1 }, opts));
     }
     get(collection, signal) { this.path(collection); return this.call((sdk, opts) => sdk.collection(collection).get(opts), signal); }
     verifyOwned(result, owner, scope) {
@@ -238,7 +238,7 @@ export class LambdaClient {
             { bool: [{ ...filter, occur: 'filter' }, { queryString: { query: text, defaultField: 'text', skipSyntax: true }, occur: 'must' }] },
         ] }, { signal, branch, size: 50, rerank: { provider: 'typesafe', model: 'jev-1.13.0', queryText: text, fields: ['role', 'conversationTimeContext', 'text'], candidateSize: 200, onFailure: 'error' } });
     }
-    // Text-private search: dense KNN only, with no text to rerank or match lexically.
+    // Private search: dense KNN only, with no text to rerank or match lexically.
     searchVector(collection, owner, scope, queryVector, signal, branch = 'main', before) {
         if (!Array.isArray(queryVector) || !queryVector.length || !queryVector.every(Number.isFinite)) throw new ConnectionError('Invalid query vector. No search was sent.');
         const filter = boundedFilter(owner, scope, before);

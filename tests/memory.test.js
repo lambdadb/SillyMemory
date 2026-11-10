@@ -588,8 +588,8 @@ test('group chats keep one owner key and snapshot between and during member turn
     assert.equal(supportsChat(tool), false);
 });
 
-// Text-private engine: a real EmbeddingClient over a fake OpenAI-compatible endpoint.
-function textPrivate(s, { fail = () => false } = {}) {
+// Private engine: a real EmbeddingClient over a fake OpenAI-compatible endpoint.
+function privateMemory(s, { fail = () => false } = {}) {
     const inputs = [], order = [];
     const fetcher = async (_url, init) => {
         const { input } = JSON.parse(init.body);
@@ -601,13 +601,13 @@ function textPrivate(s, { fail = () => false } = {}) {
     const upsert = s.client.upsert;
     s.client.upsert = async (...args) => { order.push('upsert'); return upsert(...args); };
     s.client.searchVector = async (_c, o, scope, vector, _signal, branch, before) => { s.searches.push({ vector, branch, before }); return [...s.remote.values()].filter(d => d.owner === o && d.scope === scope && d.message < before); };
-    s.client.search = async () => { throw new Error('Text-private search must not send text.'); };
+    s.client.search = async () => { throw new Error('Private search must not send text.'); };
     s.searches = [];
     return { inputs, order };
 }
 const textFree = docs => docs.every(d => !Object.hasOwn(d, 'text') && Array.isArray(d.embedding) && d.embedding.length === 3);
-test('text-private sync embeds document-prefixed chunks before each upsert and uploads no text', async () => {
-    const s = setup(), snap = snapshot(), e = textPrivate(s);
+test('private sync embeds document-prefixed chunks before each upsert and uploads no text', async () => {
+    const s = setup(), snap = snapshot(), e = privateMemory(s);
     await s.engine.sync(snap, config);
     const local = (await documents(snap, owner, config)).docs;
     assert.ok(s.writes.length && s.writes.every(textFree));
@@ -625,11 +625,11 @@ test('text-private sync embeds document-prefixed chunks before each upsert and u
     assert.equal(s.deletes.flat().length, 1);
     assert.ok(textFree(s.writes.at(-1)) && s.writes.at(-1).length === 1 && s.writes.at(-1)[0].message === 1);
 });
-test('text-private uploads keep 200-document batches and keep the journal when embedding fails', async () => {
+test('private uploads keep 200-document batches and keep the journal when embedding fails', async () => {
     const s = setup(), big = snapshot();
     big.messages = Array.from({ length: 421 }, (_, index) => ({ index, text: `Line ${index}.`, name: index % 2 ? 'Alice' : 'User', user: !(index % 2), swipe: 0, eligible: true }));
     let broken = true;
-    const e = textPrivate(s, { fail: input => broken && input.some(t => t === 'D> Line 210.') });
+    const e = privateMemory(s, { fail: input => broken && input.some(t => t === 'D> Line 210.') });
     await assert.rejects(s.engine.sync(big, config), err => err.code === 'embedding');
     const ids = (await documents(big, owner, config)).docs.map(d => d.id);
     assert.deepEqual(s.writes.map(b => b.length), [200], 'the failed batch was not uploaded');
@@ -640,8 +640,8 @@ test('text-private uploads keep 200-document batches and keep the journal when e
     assert.ok(s.writes.every(textFree));
     assert.equal(e.inputs.length, 220, 'retry embeds only documents not already acknowledged');
 });
-test('text-private retrieval embeds the prefixed query, searches by vector below the boundary and restores local text', async () => {
-    const s = setup(), snap = snapshot(), e = textPrivate(s);
+test('private retrieval embeds the prefixed query, searches by vector below the boundary and restores local text', async () => {
+    const s = setup(), snap = snapshot(), e = privateMemory(s);
     const result = await s.engine.retrieve(snap, { ...config, retainedStart: 2 }, text => text.split(/\s+/).length);
     const query = `User: ${snap.messages[4].text}`;
     assert.equal(e.inputs.at(-1), `Q> ${query}`);
@@ -652,16 +652,16 @@ test('text-private retrieval embeds the prefixed query, searches by vector below
     assert.ok(result.passages.every(p => p.text === snap.messages[p.message].text), 'passages carry local source text');
     assert.ok(result.text.includes(snap.messages[0].text));
 });
-test('text-private restoration drops stale revisions, foreign scopes and hits beyond the boundary; default mode still compares text', async () => {
+test('private restoration drops stale revisions, foreign scopes and hits beyond the boundary; default mode still compares text', async () => {
     const a = await documents(snapshot(), owner, config);
     const stored = a.docs.map(withoutText);
     const stale = { ...stored[0], revision: 'old' }, foreign = { ...stored[1], scope: 'f'.repeat(64) };
     const edited = await documents({ ...snapshot(), messages: snapshot().messages.map(m => m.index === 2 ? { ...m, text: 'Edited.' } : m) }, owner, config);
     const old = stored[2]; // Its ID names the old revision, absent from the edited local source.
-    const result = await selectPackedMemory([stale, foreign, old, stored[3], stored[3]], edited.docs, 2000, t => t.length, { textPrivate: true });
+    const result = await selectPackedMemory([stale, foreign, old, stored[3], stored[3]], edited.docs, 2000, t => t.length, { privateMemory: true });
     assert.deepEqual(result.passages, [edited.docs[3]]);
     assert.ok(result.text.includes(edited.docs[3].text));
-    const bounded = await selectPackedMemory(stored, a.docs.filter(d => d.message < 2), 2000, t => t.length, { textPrivate: true });
+    const bounded = await selectPackedMemory(stored, a.docs.filter(d => d.message < 2), 2000, t => t.length, { privateMemory: true });
     assert.ok(bounded.passages.length && bounded.passages.every(p => p.message < 2));
     assert.equal((await selectPackedMemory(stored, a.docs, 2000, t => t.length)).passages.length, 0, 'the default mode requires matching remote text');
 });

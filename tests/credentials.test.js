@@ -118,7 +118,7 @@ test('replacing or forgetting the embedding key leaves only the current record a
     assert.ok(!JSON.stringify([...storage.data.values()]).includes('first'));
     saved.forget(); saved.forget(); assert.equal(saved.read(other), null);
     assert.equal(new SavedKey(storage, owner).read(config), 'lambdadb-key');
-    const state = { memoryMode: 'text_private', embedding: { ...other, dimensions: 3 } };
+    const state = { memoryMode: 'private', embedding: { ...other, dimensions: 3 } };
     saved.commit(other, 'third', state);
     assert.deepEqual(JSON.parse(storage.getItem(`sillymemory:state:${owner}`)), state);
     assert.equal(saved.read(other), 'third');

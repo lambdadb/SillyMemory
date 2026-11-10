@@ -217,39 +217,39 @@ test('a story is blocked before sync or search when its memory mode or embedding
     checkStoryMode(stored({}), undefined);
     checkStoryMode(stored(current.tags), current);
     const blocked = (result, setting, pattern) => assert.throws(() => checkStoryMode(result, setting), e => e instanceof ConnectionError && e.code === 'memory-mode' && pattern.test(e.message) && /Rebuild story memory/.test(e.message));
-    blocked(stored(current.tags), undefined, /text-private memory is now off/);
+    blocked(stored(current.tags), undefined, /Private memory is now off/);
     blocked(stored({}), current, /default mode/);
     blocked(stored({ memory_mode: 'other' }), current, /default mode/);
     for (const changed of [{ model: 'qwen3-embedding:0.6b' }, { queryPrefix: '' }, { documentPrefix: '' }, { dimensions: 1024 }]) {
         blocked(stored((await embeddingIdentity({ ...gemma, ...changed })).tags), current, /different embedding model, prefixes or vector dimension/);
     }
 });
-test('ensure creates text-private stories with their identity and stops on a mismatch before any branch work', async () => {
-    const entry = await chatCollection(snapshot, owner), textPrivate = await embeddingIdentity(gemma);
+test('ensure creates private stories with their identity and stops on a mismatch before any branch work', async () => {
+    const entry = await chatCollection(snapshot, owner), privateMemory = await embeddingIdentity(gemma);
     const tags = { application: 'sillymemory', owner, chat: entry.scope };
     let branchCalls = 0, requested;
     const existing = extra => ({ assertOwned: async () => ({ collection: { tags: { ...tags, ...extra }, indexConfigs: { embedding: { type: 'vector' } } } }),
         branches: async () => { branchCalls++; return [{ name: entry.branch }]; } });
-    const config = { ...options(), textPrivate };
+    const config = { ...options(), privateMemory };
     await assert.rejects(new ChatCollections(existing({}), owner, () => {}, () => {}).ensure(snapshot, undefined, config), e => e.code === 'memory-mode');
-    await assert.rejects(new ChatCollections(existing(textPrivate.tags), owner, () => {}, () => {}).ensure(snapshot, undefined, options()), e => e.code === 'memory-mode');
+    await assert.rejects(new ChatCollections(existing(privateMemory.tags), owner, () => {}, () => {}).ensure(snapshot, undefined, options()), e => e.code === 'memory-mode');
     assert.equal(branchCalls, 0);
-    const adopted = await new ChatCollections(existing(textPrivate.tags), owner, () => {}, () => {}).ensure(snapshot, undefined, config);
-    assert.equal(adopted.analyzers, undefined, 'a text-private story has no text analyzers to report');
+    const adopted = await new ChatCollections(existing(privateMemory.tags), owner, () => {}, () => {}).ensure(snapshot, undefined, config);
+    assert.equal(adopted.analyzers, undefined, 'a private story has no text analyzers to report');
     const fresh = { assertOwned: async () => { throw missing(); }, verifyOwned: result => result,
         create: async (name, o, scope, analyzers, identity) => { requested = identity; return { collection: { collectionName: name, tags: { ...tags, ...identity.tags } } }; },
         branches: async () => [], createBranch: async (name, branch) => ({ branch: { name: branch } }) };
     assert.equal((await new ChatCollections(fresh, owner, () => {}, () => {}).ensure(snapshot, undefined, config)).branch, entry.branch);
-    assert.deepEqual(requested, textPrivate);
+    assert.deepEqual(requested, privateMemory);
 });
-test('a text-private fork waits for its parent documents compared without text', async () => {
+test('a private fork waits for its parent documents compared without text', async () => {
     const parent = 'c'.repeat(32);
     const forked = { ...snapshot, memory: { story: id, source: parent }, messages: [0, 1].map(index => ({ index, text: `Synthetic line ${index}.`, name: index ? 'Mira' : 'User', user: !index, swipe: 0, eligible: true })) };
-    const entry = await chatCollection(forked, owner), textPrivate = await embeddingIdentity(gemma);
-    const config = { ...options(), textPrivate };
+    const entry = await chatCollection(forked, owner), privateMemory = await embeddingIdentity(gemma);
+    const config = { ...options(), privateMemory };
     const stored = (await documents(forked, owner, config)).docs.map(withoutText);
     const reads = [];
-    const client = { assertOwned: async () => ({ collection: { tags: { application: 'sillymemory', owner, chat: entry.scope, ...textPrivate.tags } } }),
+    const client = { assertOwned: async () => ({ collection: { tags: { application: 'sillymemory', owner, chat: entry.scope, ...privateMemory.tags } } }),
         branches: async () => [{ name: entry.source }], fetchDocs: async (_c, ids, branch, consistent = true) => { reads.push(consistent); return stored.filter(d => ids.includes(d.id)); },
         createBranch: async (_c, branch, source) => { assert.equal(source, entry.source); return { branch: { name: branch } }; } };
     const progress = [];

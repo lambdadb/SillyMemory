@@ -87,15 +87,15 @@ export async function ensureChatIdentity(ctx, saveChat, valid = () => true, fetc
 
 // A story keeps the memory mode and embedding identity it was created with.
 // Before any sync or search, a different current setting stops with a rebuild offer.
-export function checkStoryMode(result, textPrivate) {
+export function checkStoryMode(result, privateMemory) {
     const tags = result?.collection?.tags || {};
     let message;
-    if (!textPrivate) {
+    if (!privateMemory) {
         if (tags.memory_mode === undefined) return;
-        message = 'This story’s memory is text-private, but text-private memory is now off. Use Rebuild story memory to switch this story to the default mode, or turn text-private memory back on.';
-    } else if (tags.memory_mode !== 'text_private') {
-        message = 'This story’s memory was created in the default mode. Use Rebuild story memory to make it text-private, or turn text-private memory off.';
-    } else if (tags.embedding !== textPrivate.tags.embedding) {
+        message = 'This story’s memory is private, but Private memory is now off. Use Rebuild story memory to switch this story to the default mode, or turn Private memory back on.';
+    } else if (tags.memory_mode !== 'private') {
+        message = 'This story’s memory was created in the default mode. Use Rebuild story memory to make it private, or turn Private memory off.';
+    } else if (tags.embedding !== privateMemory.tags.embedding) {
         message = 'This story’s memory was created with a different embedding model, prefixes or vector dimension. Use Rebuild story memory to apply the current embedding settings, or restore the previous ones.';
     } else return;
     throw new ConnectionError(message, 0, 'memory-mode');
@@ -115,7 +115,7 @@ export class ChatCollections {
             if (error.status !== 404) throw error;
             if (!valid()) return null;
             let created;
-            try { created = await this.client.create(entry.collection, this.owner, entry.scope, config.analyzers, config.textPrivate); }
+            try { created = await this.client.create(entry.collection, this.owner, entry.scope, config.analyzers, config.privateMemory); }
             catch (error) { if (error.status !== 409) throw error; }
             // A 201 body describes the new collection; a conflict or lost response needs a fresh read.
             if (created?.collection) {
@@ -124,10 +124,10 @@ export class ChatCollections {
                 if (!created.collection.indexConfigs) analyzers = analyzerList(config.analyzers);
             } else collection = await this.client.assertOwned(entry.collection, this.owner, undefined, entry.scope);
         }
-        checkStoryMode(collection, config.textPrivate);
+        checkStoryMode(collection, config.privateMemory);
         // The analyzers actually indexed; the setting only applies when a collection is created.
-        // A text-private story has no text field and no analyzers.
-        if (config.textPrivate) analyzers = undefined;
+        // A private story has no text field and no analyzers.
+        if (config.privateMemory) analyzers = undefined;
         else analyzers ??= collectionAnalyzers(collection);
         {
             const branches = await this.client.branches(entry.collection);
@@ -137,8 +137,8 @@ export class ChatCollections {
                 if (source !== 'main' && !await waitForCommit(this.client, entry.collection, source, valid)) {
                     progress({ phase: 'committing' });
                     const { docs: local } = await documents(snapshot, this.owner, config);
-                    // A text-private story stores every field except the text.
-                    const docs = config.textPrivate ? local.map(withoutText) : local;
+                    // A private story stores every field except the text.
+                    const docs = config.privateMemory ? local.map(withoutText) : local;
                     // Wait for acknowledged, matching inherited text to commit. A
                     // consistent read alone is not proof that a fork will copy it.
                     for (let i = 0; i < docs.length; i += 100) {

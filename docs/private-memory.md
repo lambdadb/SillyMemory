@@ -90,7 +90,7 @@ Other metadata fields stay unchanged: `message`, `role`, `owner`, `scope`,
 Record the embedding identity in collection tags next to the existing
 `application`/`owner`/`chat` tags:
 
-- `memory_mode: text_private`
+- `memory_mode: private`
 - `embedding`, the first 16 hex characters of SHA-256 over the JSON array
   `[model, queryPrefix, documentPrefix, dimensions]`
 
@@ -228,7 +228,7 @@ Each step lists its verification.
 ## Implementation notes
 
 Code: `src/embedding.js` (client, presets, identity), `EmbeddingKey` in
-`src/credentials.js`, `textPrivateSchema`/`searchVector` in `src/client.js`,
+`src/credentials.js`, `privateSchema`/`searchVector` in `src/client.js`,
 `checkStoryMode` in `src/chat-collections.js`, the optional `embedder` of
 `MemoryEngine` in `src/memory.js`, and the settings section in `settings.html`
 and `index.js`.
@@ -287,7 +287,7 @@ Unit, browser-emulator and live results are separate. All were run on
 - `npm run test:browser` (pinned SillyTavern, real Chromium, local HTTPS
   emulator): all default-mode checks pass with the new settings section present.
   The emulator has no text-private coverage.
-- `npm run test:text-private:live` (pinned SillyTavern 1.19.0, real Chromium,
+- `npm run test:private-memory:live` (pinned SillyTavern 1.19.0, real Chromium,
   live LambdaDB, local Ollama 0.40.15, deterministic model fixture): 24 checks
   pass. `embeddinggemma` stories are created, synchronized, edited, deleted and
   searched; turning the mode off and changing the model to

@@ -1,5 +1,5 @@
 import { answerMemoryPopup, memoryControl, expandMemorySettings, openChatMemory } from './settings-panel.mjs';
-// Text-private memory on the real SillyTavern UI path: live LambdaDB, a local
+// Private memory on the real SillyTavern UI path: live LambdaDB, a local
 // Ollama embedding endpoint and a deterministic loopback model fixture. Checks
 // create, sync, edit, delete, search, mismatch and rebuild, and that no
 // request body to LambdaDB carries a text field or raw chat text. Synthetic data only.
@@ -13,7 +13,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-if (process.argv.length > 2) throw new Error('Usage: node scripts/text-private-live.mjs');
+if (process.argv.length > 2) throw new Error('Usage: node scripts/private-memory-live.mjs');
 const source = process.env.ST_SOURCE || '/tmp/sillymemory-st-source';
 const revision = '06bde939fb1e9c4c8d8641d810f0a916b5bce127';
 const env = parseEnv(await readFile(process.env.SM_ENV_FILE || path.join(root, '.env.local'), 'utf8'));
@@ -22,17 +22,17 @@ if (!Object.values(credentials).every(Boolean)) throw new Error('LambdaDB config
 const ollama = process.env.SM_OLLAMA_URL || 'http://localhost:11434/v1';
 if (execFileSync('git', ['-C', source, 'rev-parse', 'HEAD'], { encoding: 'utf8' }).trim() !== revision) throw new Error('Unexpected host revision.');
 if (await realpath(path.join(source, 'public/scripts/extensions/third-party/sillymemory')) !== root) throw new Error('Host extension symlink must point to this checkout.');
-const artifacts = path.resolve(process.env.SM_ARTIFACT_DIR || path.join(root, 'artifacts', 'text-private-live'));
+const artifacts = path.resolve(process.env.SM_ARTIFACT_DIR || path.join(root, 'artifacts', 'private-memory-live'));
 await mkdir(artifacts, { recursive: true });
-const reportPath = path.join(artifacts, 'text-private-live.json'), pendingPath = path.join(artifacts, 'text-private-live-pending.json');
+const reportPath = path.join(artifacts, 'private-memory-live.json'), pendingPath = path.join(artifacts, 'private-memory-live-pending.json');
 const pending = { collections: [], connectionHash: createHash('sha256').update(JSON.stringify([credentials.endpoint, credentials.project])).digest('hex') };
 await writeFile(pendingPath, JSON.stringify(pending), { flag: 'wx' });
-const work = await mkdtemp(path.join(tmpdir(), 'sillymemory-text-private-'));
+const work = await mkdtemp(path.join(tmpdir(), 'sillymemory-private-memory-'));
 const checks = [], generations = [], remote = [], embeddings = [], screenshots = [];
 let stage = 'startup', server, browser, page, failure, cleanupComplete = false, audited = false;
 const assert = (condition, name) => { if (!condition) throw new Error(name); checks.push(name); console.log(`PASS ${name}`); };
 
-// Distinctive synthetic phrases; none of them may reach LambdaDB in text-private mode.
+// Distinctive synthetic phrases; none of them may reach LambdaDB in private mode.
 const FACT = 'Remember this fact: Mira hid the silver key under the red bridge.';
 const EDITED = 'Remember this fact: Mira hid the silver key inside the clock tower.';
 const QUESTION = 'Where is the silver key? Answer with the location, or UNKNOWN if no fact is available.';
@@ -48,13 +48,13 @@ const bridge = createServer(async (req, res) => {
     res.end(JSON.stringify({ id: 'fixture', choices: [{ index: 0, message: { role: 'assistant', content: answer }, finish_reason: 'stop' }] }));
 });
 await new Promise(r => bridge.listen(0, '127.0.0.1', r));
-const port = Number(process.env.ST_TEXT_PRIVATE_PORT || 18129), url = `http://127.0.0.1:${port}`;
+const port = Number(process.env.ST_PRIVATE_MEMORY_PORT || 18129), url = `http://127.0.0.1:${port}`;
 const field = name => page.locator(`#sillymemory [data-sm="${name}"]`);
 const chatButton = name => page.locator(`#sillymemory-chat [data-sm-chat="${name}"]`);
 const waitStatus = text => page.waitForFunction(text => document.querySelector('[data-sm="status"]')?.textContent.includes(text), text, { timeout: 180000 });
 async function openSettings() {
     await expandMemorySettings(page);
-    await page.evaluate(() => { document.querySelector('#sillymemory details[data-sm="text-private"]').open = true; });
+    await page.evaluate(() => { document.querySelector('#sillymemory details[data-sm="private-memory"]').open = true; });
 }
 async function shot(name) {
     const file = `${String(screenshots.length + 1).padStart(2, '0')}-${name}.png`;
@@ -138,8 +138,8 @@ try {
     await field('connect').click(); await waitStatus('Chat memory is ready');
     assert(true, 'real settings completed the live LambdaDB connection and setup test');
 
-    stage = 'text-private setup'; const auditStart = remote.length;
-    await field('textPrivate').check();
+    stage = 'private setup'; const auditStart = remote.length;
+    await field('privateMemory').check();
     await field('embedding-preset').selectOption('ollama-gemma');
     assert(await field('embedding-url').inputValue() === 'http://localhost:11434/v1' && (await field('embedding-quality').textContent()).includes('Validated on English LongMemEval-S')
         && await field('embedding-local').isVisible() && await field('embedding-ollama').isVisible(), 'the gemma preset fills the local endpoint with its validation label and setup hints');
@@ -151,7 +151,7 @@ try {
     stage = 'create and sync'; await seed(); await memoryControl(page).check(); await waitStatus('synchronized');
     const created = remote.filter(r => r.method === 'POST' && r.resource === 'collections' && r.stage === stage).map(r => JSON.parse(r.body)).find(b => b.collectionName.startsWith('smstory_'));
     assert(created && !created.indexConfigs.text && JSON.stringify(created.indexConfigs.embedding) === JSON.stringify({ type: 'vector', dimensions: 768, similarity: 'cosine' })
-        && created.tags.memory_mode === 'text_private' && /^[a-f0-9]{16}$/.test(created.tags.embedding) && Object.keys(created.tags).length === 5, 'the story collection has no text field, a 768-d cosine vector field and identity tags');
+        && created.tags.memory_mode === 'private' && /^[a-f0-9]{16}$/.test(created.tags.embedding) && Object.keys(created.tags).length === 5, 'the story collection has no text field, a 768-d cosine vector field and identity tags');
     const upserts = r => r.resource === 'docs/upsert';
     const firstUpload = remote.filter(r => r.stage === stage && upserts(r)).flatMap(r => JSON.parse(r.body).docs);
     assert(firstUpload.length > 0 && firstUpload.every(d => !('text' in d) && d.embedding?.length === 768 && d.embedding.every(x => Math.round(x * 1e4) / 1e4 === x)), 'uploads carry 4-decimal 768-d vectors and no text field');
@@ -188,13 +188,13 @@ try {
 
     stage = 'mode off mismatch';
     await seed(); await waitStatus('synchronized');
-    await openSettings(); await field('textPrivate').uncheck();
-    await waitStatus('text-private memory is now off');
+    await openSettings(); await field('privateMemory').uncheck();
+    await waitStatus('Private memory is now off');
     await openChatMemory(page);
-    assert(await chatButton('rebuild').isVisible(), 'turning text-private off blocks the text-private story and offers Rebuild story memory');
+    assert(await chatButton('rebuild').isVisible(), 'turning private off blocks the private story and offers Rebuild story memory');
     await shot('mode-mismatch');
-    await openSettings(); await field('textPrivate').check(); await waitStatus('synchronized');
-    assert(true, 'turning text-private back on resumes the same story');
+    await openSettings(); await field('privateMemory').check(); await waitStatus('synchronized');
+    assert(true, 'turning private back on resumes the same story');
 
     stage = 'model change';
     await field('embedding-preset').selectOption('ollama-qwen3');
@@ -225,7 +225,7 @@ try {
     assert(audit.length > 0 && audit.every(r => !r.collection?.startsWith('smtest_')), 'the audited window has only story requests');
     const leaks = audit.filter(r => PHRASES.some(p => r.body.includes(p)));
     const textFields = audit.filter(r => { try { const b = r.body ? JSON.parse(r.body) : {}; return (b.docs || []).some(d => 'text' in d) || 'queryText' in (b.query?.knn || {}) || b.rerank || b.indexConfigs?.text; } catch { return true; } });
-    assert(leaks.length === 0 && textFields.length === 0, `no LambdaDB request body after enabling text-private mode carries raw chat text or a text field (${audit.length} requests)`);
+    assert(leaks.length === 0 && textFields.length === 0, `no LambdaDB request body after enabling private mode carries raw chat text or a text field (${audit.length} requests)`);
     await Promise.all([...remote, ...embeddings].map(r => r.headersRead));
     assert([...remote, ...embeddings].every(r => r.headers && !r.headers.some(h => ['cookie', 'x-csrf-token', 'unreadable'].includes(h))), 'no LambdaDB or embedding request carries host cookies or CSRF headers');
     assert(embeddings.every(e => !e.headers.includes('authorization')), 'the keyless local endpoint receives no Authorization header');
@@ -261,7 +261,7 @@ try {
         } catch { console.log('Cleanup incomplete; keep pending resource record.'); }
     }
     const sourceSha256 = {};
-    for (const file of ['index.js', 'settings.html', 'src/embedding.js', 'src/credentials.js', 'src/client.js', 'src/chat-collections.js', 'src/memory.js', 'src/status.js', 'vendor/lambdadb.js', 'scripts/text-private-live.mjs']) sourceSha256[file] = createHash('sha256').update(await readFile(path.join(root, file))).digest('hex');
+    for (const file of ['index.js', 'settings.html', 'src/embedding.js', 'src/credentials.js', 'src/client.js', 'src/chat-collections.js', 'src/memory.js', 'src/status.js', 'vendor/lambdadb.js', 'scripts/private-memory-live.mjs']) sourceSha256[file] = createHash('sha256').update(await readFile(path.join(root, file))).digest('hex');
     // Request bodies are summarized, never stored: they hold vectors and synthetic names.
     const report = { time: new Date().toISOString(), sillyTavern: revision, lambdaDB: 'live', embedding: 'local Ollama', generator: 'deterministic test fixture, not a real LLM', checks, failure, audited,
         remoteRequests: remote.map(({ stage, method, resource, body }) => ({ stage, method, resource, bytes: body.length })),

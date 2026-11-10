@@ -99,7 +99,7 @@ export async function documents(snapshot, owner, config) {
     }
     return { scope, docs };
 }
-// A text-private document stores every field except its text.
+// A private document stores every field except its text.
 export const withoutText = ({ text, ...fields }) => fields;
 // The host expands macros after interceptors. Keep recalled text literal so
 // it cannot execute variable macros or grow after token budgeting.
@@ -113,9 +113,9 @@ export function memoryMessages(passages) {
         mes: `[Past conversation excerpt: ${d.role} ${JSON.stringify(literal(d.speaker))}, message ${d.message + 1}, passage ${d.chunk + 1}${conversationTimeLabel(d)}]\n${literal(d.text)}`,
     }));
 }
-// A text-private hit carries no text: identity rests on its ID, which contains
+// A private hit carries no text: identity rests on its ID, which contains
 // the revision digest of the local source, plus scope, owner and time fields.
-export async function selectPackedMemory(hits, expected, budget, countTokens, { textPrivate = false } = {}) {
+export async function selectPackedMemory(hits, expected, budget, countTokens, { privateMemory = false } = {}) {
     const count = async text => {
         const tokens = await countTokens(text);
         if (!Number.isFinite(tokens) || tokens < 0) throw new Error('Token counting unavailable.');
@@ -137,7 +137,7 @@ export async function selectPackedMemory(hits, expected, budget, countTokens, { 
     for (const hit of hits) {
         const doc = valid.get(hit?.id);
         // The remote response is only a ranking signal. Inject current local source text.
-        if (!doc || seen.has(doc.id) || hit.scope !== doc.scope || hit.owner !== doc.owner || hit.revision !== doc.revision || (!textPrivate && hit.text !== doc.text) || hit.conversationTimestamp !== doc.conversationTimestamp || hit.timestampSource !== doc.timestampSource || hit.conversationTimeContext !== doc.conversationTimeContext) continue;
+        if (!doc || seen.has(doc.id) || hit.scope !== doc.scope || hit.owner !== doc.owner || hit.revision !== doc.revision || (!privateMemory && hit.text !== doc.text) || hit.conversationTimestamp !== doc.conversationTimestamp || hit.timestampSource !== doc.timestampSource || hit.conversationTimeContext !== doc.conversationTimeContext) continue;
         seen.add(doc.id);
         // Decide in retrieval order using the layout that would actually be
         // injected. Do not reserve space for lower-ranked unassembled hits.
@@ -238,7 +238,7 @@ export class Journal {
 }
 
 export class MemoryEngine {
-    // `embedder` (documents/query) makes this a text-private story: chunks and queries
+    // `embedder` (documents/query) makes this a private story: chunks and queries
     // are embedded in the browser and no text is uploaded.
     constructor({ client, owner, collection, scope, branch, journal, lock = job => job(), embedder }) {
         if (!branch || branch === 'main') throw new Error('A chat memory branch is required.');
@@ -369,7 +369,7 @@ export class MemoryEngine {
         } finally { reads.abort(); }
         if (!current()) return null;
         progress({ phase: 'budgeting' });
-        const result = await selectPackedMemory(results, expected, config.budget, countTokens, { textPrivate: Boolean(this.embedder) });
+        const result = await selectPackedMemory(results, expected, config.budget, countTokens, { privateMemory: Boolean(this.embedder) });
         return current() ? result : null;
     }
     async deleteAll() {

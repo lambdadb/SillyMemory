@@ -103,7 +103,7 @@ one group story) and deletes them before removing its pending record. With
 `--live-model` the group scenario adds five model calls under the same spacing.
 Pending cleanup records under `artifacts/` must survive until cleanup succeeds.
 
-`npm run test:text-private:live` checks [text-private mode](text-private-mode.md)
+`npm run test:private-memory:live` checks [text-private mode](private-memory.md)
 on the same live path with a local Ollama endpoint (`SM_OLLAMA_URL`, default
 `http://localhost:11434/v1`) serving `embeddinggemma` and `qwen3-embedding:0.6b`.
 It creates at most three collections (the connection test and one story, rebuilt

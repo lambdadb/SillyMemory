@@ -1,4 +1,4 @@
-// Unit evidence for the text-private embedding client, using a fake fetch.
+// Unit evidence for the private embedding client, using a fake fetch.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { EmbeddingClient, EMBEDDING_PRESETS, EMBEDDING_BATCH, compactVector, embeddingConfig, embeddingIdentity, embeddingPreset, localEndpoint } from '../src/embedding.js';
@@ -123,7 +123,7 @@ test('configuration normalizes the base URL, keeps prefixes exact and rejects un
 test('the embedding identity fits LambdaDB collection tag rules and changes with model, prefixes or dimension', async () => {
     const base = await embeddingIdentity({ ...ollama, dimensions: 768 });
     assert.equal(base.dimensions, 768);
-    assert.equal(base.tags.memory_mode, 'text_private');
+    assert.equal(base.tags.memory_mode, 'private');
     // The pinned SDK allows five tags and no ':', '#' or ',' in values; three tags are already used.
     assert.equal(Object.keys({ application: 'sillymemory', owner: 'o', chat: 's', ...base.tags }).length, 5);
     for (const value of Object.values(base.tags)) assert.match(value, /^[^:#,]{1,127}$/);
