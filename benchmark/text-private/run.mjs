@@ -90,6 +90,11 @@ function queriesFor(prepared, extra) {
 async function runQuestion(row) {
     const file = path.join(root, 'recall', `${row.question_id}.json`);
     try { await readFile(file); return; } catch {}
+    const prior = state.owned[row.question_id];
+    if (prior && !prior.absent404) {
+        // A previous attempt left its collection unresolved: delete it before replacing the ownership record.
+        Object.assign(prior, await db.deleteOwned(prior.collection, tagsFor(prior.scope))); await saveState();
+    }
     const prepared = await prepareCase(row, config, state.owner);
     const collection = `smtp_${randomBytes(12).toString('hex')}`, tags = tagsFor(prepared.scope);
     const entry = state.owned[row.question_id] = { collection, scope: prepared.scope, absent404: false };

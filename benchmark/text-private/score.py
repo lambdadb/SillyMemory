@@ -2,7 +2,8 @@
 
 Reuses the LongMemEval runner's receipts, judge request and verdict functions so
 every arm uses the historical protocol. Stops before a call once the modeled spend
-(this run's ledger plus --prior-usd) would exceed --cap-usd.
+(this run's ledger plus --prior-usd) would exceed --cap-usd. With --shard i/n, each
+shard may spend only 1/n of the remaining cap, so concurrent shards stay within it.
 
   python3.14 score.py --arm B --requests requests-B.json --dataset FILE --out DIR \
       --env-file FILE --prior-usd 1.0 --cap-usd 100
@@ -56,11 +57,12 @@ def main():
     # Worst case per question: ~6k input at the cache-write rate, 4,096 output tokens, ~1k judge tokens.
     worst = (6000 * GEN["cache_write"] + 4096 * GEN["output"] + 1000 * JUDGE_INPUT) / 1e6
     shard, shards = map(int, args.shard.split("/"))
+    budget = (args.cap_usd - args.prior_usd) / shards
     for n, id in enumerate(sorted(rows)):
         if n % shards != shard:
             continue
         row = rows[id]
-        assert args.prior_usd + spent + worst <= args.cap_usd, f"Spend cap would be exceeded at {id}"
+        assert spent + worst <= budget, f"Spend cap would be exceeded at {id}"
         answer = receipts.get("answer", id, requests[id])
         assert answer["model"] == config["generator"]["model"] and answer["choices"][0]["finish_reason"] == "stop"
         text = answer["choices"][0]["message"]["content"]
