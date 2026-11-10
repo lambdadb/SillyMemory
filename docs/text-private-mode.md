@@ -178,9 +178,15 @@ Evidence (local, ignored, with SHA256SUMS):
 These preflights were checked on 2026-11-10:
 
 - Ollama 0.40.15's default origins allow `http://localhost:*` and
-  `http://127.0.0.1:*` (204), and reject LAN IP and remote origins (403). Users
-  who open SillyTavern from another device must set `OLLAMA_ORIGINS`; the setup
-  hint says so in one line.
+  `http://127.0.0.1:*` (204), and reject LAN IP and remote origins (403).
+  - Same-computer use needs no setup.
+  - Opening SillyTavern from another device needs three things: the Ollama
+    computer's LAN endpoint, `OLLAMA_HOST=0.0.0.0` and `OLLAMA_ORIGINS`. The
+    setup hint points to the setup guide.
+  - Other UI-only memory extensions (Smart Memory, OpenVault,
+    SillyTavern-VectorMemory) call Ollama from the browser with the same limits.
+    Only VectFox's optional Similharity server plugin and SillyTavern's built-in
+    Vector Storage relay through the server.
 - `api.openai.com/v1/embeddings` allows arbitrary origins and the
   `authorization` header.
 - A provider that blocks browser CORS is unsupported; the endpoint check

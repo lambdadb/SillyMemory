@@ -42,6 +42,20 @@ different embedding model, prefixes or dimension, stops with an explicit error
 and shows **Rebuild story memory** in its Memory panel; changing the setting
 back also resumes it. See [text-private mode](text-private-mode.md).
 
+A local Ollama on the same computer as the browser needs no setup: its default
+origins allow `http://localhost:*` and `http://127.0.0.1:*`. To open SillyTavern
+from another device, such as a phone, the browser calls Ollama on the Ollama
+computer:
+
+1. Use that computer's LAN address as the endpoint, for example
+   `http://192.168.0.10:11434/v1`. On the phone, `localhost` is the phone.
+2. Start Ollama with `OLLAMA_HOST=0.0.0.0` so it accepts network requests.
+3. Set `OLLAMA_ORIGINS` to the SillyTavern origin you open, for example
+   `http://192.168.0.10:8000`.
+
+A SillyTavern page served over HTTPS cannot call a plain `http://` endpoint;
+browsers block it as mixed content.
+
 ## Validation boundaries
 
 Source inspection, unit checks and pinned-host/emulator checks are distinct from

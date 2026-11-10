@@ -27,8 +27,12 @@ to the user's embedding endpoint with the same `mode: cors`,
 `credentials: omit` and `redirect: error`. They send only `Content-Type` and,
 when a key is set, `Authorization: Bearer`; never SillyTavern cookies or CSRF
 headers, and there is no proxy fallback. Ollama's default origins allow
-`http://localhost:*` and `http://127.0.0.1:*`; opening SillyTavern from another
-device needs `OLLAMA_ORIGINS` on the Ollama server. A provider that blocks
+`http://localhost:*` and `http://127.0.0.1:*`, so a browser on the Ollama
+computer needs no setup. Opening SillyTavern from another device needs the
+Ollama setup in [setup and recovery](setup-and-recovery.md#text-private-memory).
+There is no SillyTavern proxy or server plugin, the same as other UI-only memory
+extensions; only SillyTavern's built-in Vector Storage avoids this, because its
+server calls the provider. A provider that blocks
 browser CORS is unsupported, and **Test endpoint** reports a network error.
 In this mode raw text is not sent to or stored in LambdaDB.
 
