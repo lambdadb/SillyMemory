@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { SavedKey } from '../src/credentials.js';
+import { SavedKey, EmbeddingKey } from '../src/credentials.js';
 const owner = 'a'.repeat(32), config = { endpoint: 'https://region.example.test', project: 'synthetic' };
 const memory = () => {
     const data = new Map();
@@ -93,4 +93,45 @@ test('unavailable rollback is reported without overwriting the previous credenti
     };
     assert.throws(() => saved.commit({ ...config, project: 'other' }, 'new', { ...config, project: 'other' }), error => error.code === 'credential-storage' && error.message.includes('rollback could not finish') && !error.message.includes('private'));
     assert.equal(saved.read(config), 'previous');
+});
+
+const embedding = { baseUrl: 'https://api.example.test/v1', model: 'text-embedding-3-small', queryPrefix: '', documentPrefix: '' };
+test('the embedding key has its own record scoped to account, exact base URL and model', () => {
+    const storage = memory(), saved = new EmbeddingKey(storage, owner);
+    new SavedKey(storage, owner).save(config, 'lambdadb-key');
+    saved.save({ ...embedding, baseUrl: 'https://api.example.test/v1/' }, ' embedding-key ');
+    assert.deepEqual([...storage.data.keys()].sort(), [`sillymemory:credential:${owner}`, `sillymemory:embedding-credential:${owner}`]);
+    assert.deepEqual(JSON.parse(storage.getItem(`sillymemory:embedding-credential:${owner}`)), { version: 1, baseUrl: embedding.baseUrl, model: embedding.model, key: 'embedding-key' });
+    // Prefixes and the dimension are not part of the key scope.
+    assert.equal(new EmbeddingKey(storage, owner).read({ ...embedding, queryPrefix: 'q: ', dimensions: 1536 }), 'embedding-key');
+    for (const [account, target] of [['b'.repeat(32), embedding], [owner, { ...embedding, baseUrl: 'https://api.example.test/v2' }],
+        [owner, { ...embedding, baseUrl: 'http://api.example.test/v1' }], [owner, { ...embedding, model: 'text-embedding-3-large' }]]) {
+        assert.equal(new EmbeddingKey(storage, account).read(target), null);
+    }
+    assert.equal(new SavedKey(storage, owner).read(config), 'lambdadb-key', 'the LambdaDB record is separate');
+});
+test('replacing or forgetting the embedding key leaves only the current record and never touches the LambdaDB key', () => {
+    const storage = memory(), saved = new EmbeddingKey(storage, owner), other = { ...embedding, model: 'other-model' };
+    new SavedKey(storage, owner).save(config, 'lambdadb-key');
+    saved.save(embedding, 'first'); saved.save(other, 'second');
+    assert.equal(saved.read(embedding), null); assert.equal(saved.read(other), 'second');
+    assert.ok(!JSON.stringify([...storage.data.values()]).includes('first'));
+    saved.forget(); saved.forget(); assert.equal(saved.read(other), null);
+    assert.equal(new SavedKey(storage, owner).read(config), 'lambdadb-key');
+    const state = { memoryMode: 'text_private', embedding: { ...other, dimensions: 3 } };
+    saved.commit(other, 'third', state);
+    assert.deepEqual(JSON.parse(storage.getItem(`sillymemory:state:${owner}`)), state);
+    assert.equal(saved.read(other), 'third');
+});
+test('blocked storage or malformed embedding records fail safely with the embedding forget action', () => {
+    const blocked = new EmbeddingKey(Object.fromEntries(['getItem', 'setItem', 'removeItem'].map(name => [name, () => { throw new Error('private-key'); }])), owner);
+    for (const operation of [() => blocked.read(embedding), () => blocked.save(embedding, 'private-key'), () => blocked.forget()]) {
+        assert.throws(operation, error => error.code === 'credential-storage' && !error.message.includes('private-key'));
+    }
+    const storage = memory(), saved = new EmbeddingKey(storage, owner);
+    storage.setItem(saved.id(), '{"version":1,"baseUrl":"https://api.example.test/v1","key":"private-key"}');
+    assert.throws(() => saved.read(embedding), error => error.code === 'credential-storage' && /Forget embedding key/.test(error.message) && !error.message.includes('private-key'));
+    const lambda = new SavedKey(storage, owner);
+    storage.setItem(lambda.id(), '{');
+    assert.throws(() => lambda.read(config), error => error.message === 'Saved key could not be read. Click Forget key, then save your key again.', 'LambdaDB messages keep their wording');
 });
