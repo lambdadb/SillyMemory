@@ -59,3 +59,15 @@ export class OperationStatus {
         };
     }
 }
+
+// Private memory can be turned on only after Test endpoint succeeded for the saved
+// settings; turning it off is always allowed. Returns why the switch is unavailable.
+export function privateMemoryLock(enabled, tested) {
+    return enabled || tested ? '' : 'Test endpoint first: Private memory needs a tested embedding endpoint.';
+}
+
+// A memory mode or embedding mismatch offers only Rebuild story memory (and turning
+// memory off): retrying synchronization or the reply cannot succeed before a rebuild.
+export function recoveryActions({ mismatch = false, notice = '', sync = false, retry = false }) {
+    return { rebuild: Boolean(mismatch || notice), sync: Boolean(sync && !mismatch), retry: Boolean(retry && !mismatch) };
+}

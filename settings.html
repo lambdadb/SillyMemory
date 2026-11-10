@@ -91,8 +91,10 @@
       </div>
       <details data-sm="private-memory" class="sm-section">
         <summary>Private memory <span data-sm="private-memory-state">Off</span></summary>
-        <label class="sm-toggle"><input data-sm="privateMemory" type="checkbox"> Use Private memory for new stories</label>
-        <small>Raw text is not sent to or stored in LambdaDB. This browser turns older messages and search queries into vectors through the embedding endpoint below; LambdaDB stores only the vectors and metadata, and recalled passages come from your local chat. Search uses vectors only, without text reranking. Applies to story memory created after the change; a story created in the other mode shows <strong>Rebuild story memory</strong> in its Memory panel.</small>
+        <label class="sm-toggle"><input data-sm="privateMemory" type="checkbox"> Private memory</label>
+        <small data-sm="private-memory-lock" hidden></small>
+        <p>Your chat text is not stored in LambdaDB — only vectors.</p>
+        <small>This browser sends older messages and search queries to the embedding endpoint below, which turns them into vectors. LambdaDB stores only the vectors and metadata, and recalled passages come from your local chat. Search uses vectors only, with no reranking. New stories follow this setting. Turning it on pauses existing standard stories until you rebuild them; private stories keep working if you turn it off. A paused story shows <strong>Rebuild story memory</strong> in its Memory panel.</small>
         <label>Embedding model <select data-sm="embedding-preset" class="text_pole">
           <option value="ollama-qwen3">Ollama qwen3-embedding:0.6b (local)</option>
           <option value="ollama-gemma">Ollama embeddinggemma (local, lighter)</option>
@@ -108,6 +110,7 @@
         </div>
         <label>Embedding API key (optional) <input data-sm="embedding-key" class="text_pole" type="password" autocomplete="off" spellcheck="false"></label>
         <small data-sm="embedding-local" hidden>Text stays on this machine.</small>
+        <p data-sm="embedding-pull-line" class="sm-pull" hidden>Download the model once: <code data-sm="embedding-pull"></code></p>
         <small data-sm="embedding-ollama" hidden>Ollama on the same computer as this browser needs no setup. Opening SillyTavern from another device needs extra Ollama setup; see the SillyMemory setup guide.</small>
         <div class="sm-actions"><button data-sm="embedding-test" class="menu_button">Test endpoint</button><button data-sm="embedding-forget" class="menu_button">Forget embedding key</button></div>
         <p data-sm="embedding-summary"></p>

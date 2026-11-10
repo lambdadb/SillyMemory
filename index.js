@@ -6,7 +6,7 @@ import { activationBinding, chatActivated } from './src/activation.js';
 import { ChatCollections, chatCollection, ensureChatIdentity, hostChats } from './src/chat-collections.js';
 import { runTransportGate } from './src/gate.js';
 import { MemoryEngine, Journal, capture, chatOwner, supportsChat, fingerprint, options, DEFAULTS, memoryBoundary, archiveBoundary } from './src/memory.js';
-import { OperationStatus, failureText, analyzerNotice } from './src/status.js';
+import { OperationStatus, failureText, analyzerNotice, privateMemoryLock, recoveryActions } from './src/status.js';
 import { PromptDelivery, expectedMessages, deliverySummary } from './src/delivery.js';
 import { MEMORY_GUIDANCE, retentionAnchor, quoteMemoryText, quoteMemoryMessages } from './src/context.js';
 import { hostPromptTokens, dialogueSnapshot, compareDialogue, comparisonLabel, tokenLabel } from './src/token-usage.js';
@@ -158,8 +158,14 @@ function renderChatStatus() {
         else if (busy) { label = 'Updating'; kind = 'working'; }
         else { label = deliveryNotice?.label || 'Ready'; kind = deliveryNotice?.kind || 'ready'; }
     }
+    // The open story keeps its created analyzers; a changed setting is information, not a failure.
+    const story = memoryEnabled() && !blocker && state.ready && !state.testCollection;
+    const known = story && storyAnalyzers?.target === requestTarget();
+    const notice = known && storyAnalyzers.analyzers ? analyzerNotice(storyAnalyzers.analyzers, options(state).analyzers) : '';
+    // A memory mode or embedding mismatch stops work; its failure status already explains it.
+    const mismatch = story && storyMismatch === requestTarget();
     chatStatus.dataset.kind = kind;
-    chatElement('label').textContent = `Memory · ${label}`;
+    chatElement('label').textContent = `Memory · ${label}${known && !mismatch && storyAnalyzers.privateMemory ? ' · Private' : ''}`;
     chatElement('status').textContent = sessionUnavailable || blocker?.message || stopped?.message || element('status').textContent;
     chatElement('delivery').textContent = deliveryText;
     chatElement('delivery').hidden = !deliveryText || deliveryText === chatElement('status').textContent;
@@ -173,16 +179,14 @@ function renderChatStatus() {
     chatElement('reconnect').hidden = !canReconnect();
     chatElement('reconnect').disabled = !sessionReady || busy || retrying || hostGenerating();
     chatElement('cleanup').hidden = !connected || !state.testCollection;
-    chatElement('sync').hidden = !retrySync || !memoryEnabled() || Boolean(blocker) || !state.ready || Boolean(state.testCollection);
-    chatElement('retry').hidden = !stopped?.source || !['normal', 'regenerate'].includes(stopped.type) || !context().chat.at(-1)?.is_user || !memoryEnabled() || !state.ready || Boolean(blocker) || Boolean(state.testCollection);
-    // The open story keeps its created analyzers; a changed setting is information, not a failure.
-    const story = memoryEnabled() && !blocker && state.ready && !state.testCollection;
-    const notice = story && storyAnalyzers?.target === requestTarget() && storyAnalyzers.analyzers ? analyzerNotice(storyAnalyzers.analyzers, options(state).analyzers) : '';
-    // A memory mode or embedding mismatch stops work; its failure status already explains it.
-    const mismatch = story && storyMismatch === requestTarget();
+    const shown = recoveryActions({ mismatch, notice,
+        sync: retrySync && memoryEnabled() && !blocker && state.ready && !state.testCollection,
+        retry: stopped?.source && ['normal', 'regenerate'].includes(stopped.type) && context().chat.at(-1)?.is_user && memoryEnabled() && state.ready && !blocker && !state.testCollection });
+    chatElement('sync').hidden = !shown.sync;
+    chatElement('retry').hidden = !shown.retry;
     chatElement('analyzers').textContent = notice;
     chatElement('analyzers').hidden = !notice;
-    chatElement('rebuild').hidden = !notice && !mismatch;
+    chatElement('rebuild').hidden = !shown.rebuild;
     chatElement('toggle').hidden = !connected || !state.ready || Boolean(state.testCollection) || !supportsChat(context());
     chatElement('toggle').textContent = memoryEnabled() ? 'Turn memory off in this chat' : 'Turn memory on in this chat';
     chatElement('toggle').setAttribute('aria-pressed', String(connected && memoryEnabled()));
@@ -331,18 +335,21 @@ function renderSettings() {
     element('recovery-actions').hidden = !cleanup;
     root.querySelectorAll('button, input, select, textarea').forEach(x => { x.disabled = busy || !sessionReady; });
     if (element('app-cancel')) element('app-cancel').disabled = false;
+    const locked = privateMemoryLock(privateMemory(), embeddingTested());
+    if (locked) element('privateMemory').disabled = true;
+    element('private-memory-lock').textContent = locked;
+    element('private-memory-lock').hidden = !locked;
     renderChatStatus();
 }
 const DEFAULT_USAGE = 'Memory sends older messages, their SillyTavern timestamps and search queries to LambdaDB, whose embedding and reranking providers process them to find related memory. This counts toward your LambdaDB usage. Turn off other memory or chat vectorization extensions; they would add overlapping history to the prompt. Use one active SillyMemory tab per browser profile.';
-const PRIVATE_USAGE = 'Private memory: raw text is not sent to or stored in LambdaDB. Older messages and search queries go to your embedding endpoint; LambdaDB stores vectors, timestamps and metadata. This counts toward your LambdaDB usage. Turn off other memory or chat vectorization extensions; they would add overlapping history to the prompt. Use one active SillyMemory tab per browser profile.';
+const PRIVATE_USAGE = 'Private memory: your chat text is not stored in LambdaDB, only vectors. Older messages and search queries go to your embedding endpoint; LambdaDB stores vectors, timestamps and metadata. This counts toward your LambdaDB usage. Turn off other memory or chat vectorization extensions; they would add overlapping history to the prompt. Use one active SillyMemory tab per browser profile.';
 const privateMemory = () => state?.memoryMode === 'private';
-// The current setting for stories: undefined in the default mode, otherwise the
-// tested embedding identity and a client for it.
+const embeddingTested = () => Boolean(state?.embedding?.dimensions);
+// The setting stories are checked against: the global mode for new stories and the
+// saved, tested embedding identity, which an existing private story keeps using.
 async function storyMode() {
-    if (!privateMemory()) return undefined;
-    const settings = state.embedding;
-    const identity = await embeddingIdentity(settings || {});
-    return { identity, embedder: new EmbeddingClient(settings, embeddingKey.read(settings) || '') };
+    const embedding = privateMemory() || embeddingTested() ? await embeddingIdentity(state.embedding || {}) : undefined;
+    return { privateMemory: privateMemory(), embedding };
 }
 function clearInjection() {
     context().setExtensionPrompt('sillymemory', '', 1, 0, false, 0);
@@ -375,15 +382,17 @@ function prepareMemory(valid, progress = () => {}) {
         const mode = await storyMode();
         if (!valid()) return null;
         let entry;
-        try { entry = await collections.ensure(snapshot, valid, { ...options(state), privateMemory: mode?.identity }, progress); }
+        try { entry = await collections.ensure(snapshot, valid, { ...options(state), ...mode }, progress); }
         catch (error) { if (error.code === 'memory-mode' && requestTarget() === target) { storyMismatch = target; renderChatStatus(); } throw error; }
         if (!entry || !valid()) return null;
+        // The story's own mode, not the global setting, decides how it is embedded.
+        const embedder = entry.privateMemory ? new EmbeddingClient(state.embedding, embeddingKey.read(state.embedding) || '') : undefined;
         if (storyMismatch === target) storyMismatch = undefined;
-        storyAnalyzers = { target, analyzers: entry.analyzers };
+        storyAnalyzers = { target, analyzers: entry.analyzers, privateMemory: entry.privateMemory };
         if (!engines.has(entryKey(entry))) engines.set(entryKey(entry), new MemoryEngine({ client, owner, ...entry,
             journal: new Journal(localStorage, `${owner}:${entry.collection}:${entry.branch}`) }));
         engine = engines.get(entryKey(entry));
-        engine.embedder = mode?.embedder;
+        engine.embedder = embedder;
         return { snapshot, instance: engine };
     });
     preparation = task; return task;
@@ -706,7 +715,10 @@ async function initialize() {
         element('embedding-custom').hidden = !custom;
         element('embedding-quality').textContent = custom ? 'Quality not validated.' : 'Validated on English LongMemEval-S.';
         element('embedding-local').hidden = !localEndpoint(element('embedding-url').value.trim());
-        element('embedding-ollama').hidden = !element('embedding-preset').value.startsWith('ollama-');
+        const ollama = element('embedding-preset').value.startsWith('ollama-');
+        element('embedding-ollama').hidden = !ollama;
+        element('embedding-pull-line').hidden = !ollama;
+        element('embedding-pull').textContent = ollama ? `ollama pull ${EMBEDDING_PRESETS[element('embedding-preset').value].model}` : '';
         const saved = state.embedding;
         element('embedding-summary').textContent = saved?.dimensions ? `Tested: ${saved.model} at ${saved.baseUrl}, ${saved.dimensions} dimensions.` : 'No embedding endpoint tested yet.';
     };
