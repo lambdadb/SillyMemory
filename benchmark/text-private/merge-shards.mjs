@@ -3,6 +3,7 @@
 //   node merge-shards.mjs --provider e5 --out DIR --shards 3 --index-from local
 // Without a prefix file (<provider>-progress.json absent), only the shards are merged.
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import { appendFile, readFile, rename, stat, unlink, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { parseArgs } from 'node:util';
@@ -19,7 +20,9 @@ for (let i = 0; i < Number(args.shards); i++) {
     assert(progress.complete, `Shard ${i} incomplete`);
     parts.push({ data: `${args.provider}.s${i}.f32`, rows: progress.rows, progress });
 }
+const keysSha256 = createHash('sha256').update(JSON.stringify(keys)).digest('hex');
 for (const p of parts) assert.equal((await stat(file(p.data))).size, p.rows * rowBytes, `${p.data} size differs`);
+for (const p of parts) if (p.progress.keysSha256) assert.equal(p.progress.keysSha256, keysSha256, `${p.data} row ordering differs`);
 assert.equal(parts.reduce((n, p) => n + p.rows, 0), keys.length, 'Merged row count differs');
 const merged = file(`${args.provider}.merged.f32`);
 await writeFile(merged, Buffer.alloc(0));
@@ -29,6 +32,6 @@ await rename(merged, file(`${args.provider}.f32`));
 // --remove-shards: delete shard vectors only after the size-checked merge.
 if (args['remove-shards']) for (const p of parts.slice(prefix ? 1 : 0)) await unlink(file(p.data));
 await writeFile(file(`${args.provider}-index.json`), JSON.stringify(keys));
-const summary = { rows: keys.length, complete: true, parts: parts.map(p => ({ data: p.data, rows: p.rows, milliseconds: p.progress.milliseconds })) };
+const summary = { rows: keys.length, complete: true, keysSha256, start: 0, end: keys.length, parts: parts.map(p => ({ data: p.data, rows: p.rows, milliseconds: p.progress.milliseconds })) };
 await writeFile(file(`${args.provider}-progress.json`), JSON.stringify(summary));
 console.log(JSON.stringify(summary));

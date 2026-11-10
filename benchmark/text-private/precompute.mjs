@@ -57,8 +57,11 @@ let done = 0;
 try { done = (await stat(data)).size / (4 * dims); } catch {}
 const offset0 = done;
 assert(Number.isInteger(done));
-const progress = done ? JSON.parse(await readFile(progressFile)) : { rows: 0, tokens: 0, milliseconds: 0, requests: 0 };
+// Bind the vector file to its row ordering and range, so a resume never mixes orderings.
+const binding = { keysSha256: sha256(JSON.stringify(keys)), start: first, end: last };
+const progress = done ? JSON.parse(await readFile(progressFile)) : { rows: 0, tokens: 0, milliseconds: 0, requests: 0, ...binding };
 assert.equal(progress.rows, done, 'Progress record differs from vector file');
+for (const [k, v] of Object.entries(binding)) assert.equal(progress[k], v, `Resumed vector file has a different ${k}`);
 console.error(`${name}${suffix}: ${keys.length} unique texts (${queries.size} queries); rows [${first}, ${last}); resuming at +${done}`);
 let embed;
 const started = performance.now();
@@ -72,6 +75,11 @@ const batch = args.batch ? Number(args.batch) : local ? 32 : 256, maxUsd = Numbe
 for (let i = first + offset0; i < last;) {
     const group = [];
     for (let j = 0; j < (local ? 1 : 4) && i < last; j++, i += batch) group.push(keys.slice(i, Math.min(i + batch, last)));
+    // Reserve a spend upper bound before any paid request: tokens <= UTF-8 bytes, times 3 attempts.
+    if (!local) {
+        const reserve = 3 * group.flat().reduce((n, k) => n + Buffer.byteLength(texts.get(k)), 0);
+        assert((progress.tokens + reserve) * 0.02 / 1e6 <= maxUsd, 'Embedding spend cap would be exceeded');
+    }
     const t = performance.now();
     const results = await Promise.all(group.map(async ks => {
         const input = ks.map(k => texts.get(k));

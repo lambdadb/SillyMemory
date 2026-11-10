@@ -40,9 +40,11 @@ const indexConfigs = {
     dense: { type: 'vector', dimensions: 384, similarity: 'cosine' }, sparse: { type: 'sparseVector' },
     message: { type: 'long' }, owner: { type: 'keyword' }, scope: { type: 'keyword' }, revision: { type: 'keyword' }, role: { type: 'keyword' },
 };
-let created = false;
+// Record ownership before creating, and always clean up: a create whose response was
+// lost may still have succeeded (deleteOwned checks tags and accepts 404).
+await writeFile(path.join(args.out, 'smoke-owned.json'), JSON.stringify({ collection: name, tags }));
 try {
-    await db.create(name, indexConfigs, tags); created = true;
+    await db.create(name, indexConfigs, tags);
     await check('collectionSchema', async () => ({ indexConfigs: (await db.get(name)).collection.indexConfigs }));
     await check('emptySparseDocumentRejected', async () => { await db.upsert(name, [{ ...docs[0], id: 'bad-empty', sparse: {} }]); return { accepted: true }; });
     await check('zeroWeightDocumentRejected', async () => { await db.upsert(name, [{ ...docs[0], id: 'bad-zero', sparse: { abc: 0 } }]); return { accepted: true }; });
@@ -92,7 +94,7 @@ try {
         return { top: r.docs[0]?.doc.id, score: r.docs[0]?.score };
     });
 } finally {
-    if (created) results.cleanup = await db.deleteOwned(name, tags);
+    results.cleanup = await db.deleteOwned(name, tags);
     results.operations = db.operations; results.byKind = db.byKind; results.bytesSent = db.bytesSent;
     await writeFile(path.join(args.out, 'smoke.json'), JSON.stringify(results, null, 2));
     console.log(JSON.stringify(results, null, 2));
