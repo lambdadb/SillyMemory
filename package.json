@@ -15,6 +15,7 @@
     "test:live": "node scripts/chat-collections-live.mjs",
     "test:analyzers:live": "node scripts/analyzers-live.mjs",
     "test:generation": "node scripts/generation-smoke.mjs",
+    "test:text-private:live": "node scripts/text-private-live.mjs",
     "test:generation:live": "node scripts/generation-smoke.mjs --live-model",
     "test:recovery": "node scripts/browser-smoke.mjs --recovery",
     "benchmark:upsert-batch": "node scripts/upsert-batch-benchmark.mjs",
