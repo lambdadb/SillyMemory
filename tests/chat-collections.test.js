@@ -1,6 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { ChatCollections, chatCollection, ensureChatIdentity } from '../src/chat-collections.js';
+import { ChatCollections, chatCollection, ensureChatIdentity, checkStoryMode } from '../src/chat-collections.js';
+import { embeddingIdentity } from '../src/embedding.js';
+import { documents, options, withoutText } from '../src/memory.js';
 import { ConnectionError, LambdaClient } from '../src/client.js';
 
 const owner = 'a'.repeat(32), id = 'b'.repeat(32), integrity = 'native-integrity';
@@ -206,4 +208,52 @@ test('a failed group chat read stops identity verification', async () => {
     f.ctx.groups = [];
     await assert.rejects(ensureChatIdentity(f.ctx, f.save, undefined, f.fetcher), /chat inventory/);
     assert.equal(f.saves, 0);
+});
+
+const gemma = { baseUrl: 'http://localhost:11434/v1', model: 'embeddinggemma', queryPrefix: 'task: search result | query: ', documentPrefix: 'title: none | text: ', dimensions: 768 };
+test('a story is blocked before sync or search when its memory mode or embedding identity differs from the setting', async () => {
+    const current = await embeddingIdentity(gemma);
+    const stored = tags => ({ collection: { tags: { application: 'sillymemory', owner, chat: 'c', ...tags } } });
+    checkStoryMode(stored({}), undefined);
+    checkStoryMode(stored(current.tags), current);
+    const blocked = (result, setting, pattern) => assert.throws(() => checkStoryMode(result, setting), e => e instanceof ConnectionError && e.code === 'memory-mode' && pattern.test(e.message) && /Rebuild story memory/.test(e.message));
+    blocked(stored(current.tags), undefined, /text-private memory is now off/);
+    blocked(stored({}), current, /default mode/);
+    blocked(stored({ memory_mode: 'other' }), current, /default mode/);
+    for (const changed of [{ model: 'qwen3-embedding:0.6b' }, { queryPrefix: '' }, { documentPrefix: '' }, { dimensions: 1024 }]) {
+        blocked(stored((await embeddingIdentity({ ...gemma, ...changed })).tags), current, /different embedding model, prefixes or vector dimension/);
+    }
+});
+test('ensure creates text-private stories with their identity and stops on a mismatch before any branch work', async () => {
+    const entry = await chatCollection(snapshot, owner), textPrivate = await embeddingIdentity(gemma);
+    const tags = { application: 'sillymemory', owner, chat: entry.scope };
+    let branchCalls = 0, requested;
+    const existing = extra => ({ assertOwned: async () => ({ collection: { tags: { ...tags, ...extra }, indexConfigs: { embedding: { type: 'vector' } } } }),
+        branches: async () => { branchCalls++; return [{ name: entry.branch }]; } });
+    const config = { ...options(), textPrivate };
+    await assert.rejects(new ChatCollections(existing({}), owner, () => {}, () => {}).ensure(snapshot, undefined, config), e => e.code === 'memory-mode');
+    await assert.rejects(new ChatCollections(existing(textPrivate.tags), owner, () => {}, () => {}).ensure(snapshot, undefined, options()), e => e.code === 'memory-mode');
+    assert.equal(branchCalls, 0);
+    const adopted = await new ChatCollections(existing(textPrivate.tags), owner, () => {}, () => {}).ensure(snapshot, undefined, config);
+    assert.equal(adopted.analyzers, undefined, 'a text-private story has no text analyzers to report');
+    const fresh = { assertOwned: async () => { throw missing(); }, verifyOwned: result => result,
+        create: async (name, o, scope, analyzers, identity) => { requested = identity; return { collection: { collectionName: name, tags: { ...tags, ...identity.tags } } }; },
+        branches: async () => [], createBranch: async (name, branch) => ({ branch: { name: branch } }) };
+    assert.equal((await new ChatCollections(fresh, owner, () => {}, () => {}).ensure(snapshot, undefined, config)).branch, entry.branch);
+    assert.deepEqual(requested, textPrivate);
+});
+test('a text-private fork waits for its parent documents compared without text', async () => {
+    const parent = 'c'.repeat(32);
+    const forked = { ...snapshot, memory: { story: id, source: parent }, messages: [0, 1].map(index => ({ index, text: `Synthetic line ${index}.`, name: index ? 'Mira' : 'User', user: !index, swipe: 0, eligible: true })) };
+    const entry = await chatCollection(forked, owner), textPrivate = await embeddingIdentity(gemma);
+    const config = { ...options(), textPrivate };
+    const stored = (await documents(forked, owner, config)).docs.map(withoutText);
+    const reads = [];
+    const client = { assertOwned: async () => ({ collection: { tags: { application: 'sillymemory', owner, chat: entry.scope, ...textPrivate.tags } } }),
+        branches: async () => [{ name: entry.source }], fetchDocs: async (_c, ids, branch, consistent = true) => { reads.push(consistent); return stored.filter(d => ids.includes(d.id)); },
+        createBranch: async (_c, branch, source) => { assert.equal(source, entry.source); return { branch: { name: branch } }; } };
+    const progress = [];
+    assert.equal((await new ChatCollections(client, owner, () => {}, () => {}).ensure(forked, undefined, config, p => progress.push(p.phase))).branch, entry.branch);
+    assert.deepEqual(progress, ['committing']);
+    assert.deepEqual(reads, [true, false], 'acknowledged text-free documents are polled until committed before the fork');
 });

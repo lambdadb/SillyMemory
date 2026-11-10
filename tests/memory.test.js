@@ -1,7 +1,8 @@
 import { chunkSpans } from '../src/chunking.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { capture, chatOwner, supportsChat, documents, selectPackedMemory, MemoryEngine, Journal, options, literal, retrievalQueries, memoryBoundary, archiveBoundary } from '../src/memory.js';
+import { capture, chatOwner, supportsChat, documents, selectPackedMemory, MemoryEngine, Journal, options, literal, retrievalQueries, memoryBoundary, archiveBoundary, withoutText } from '../src/memory.js';
+import { EmbeddingClient } from '../src/embedding.js';
 const owner = 'a'.repeat(32);
 const config = { recent: 2, budget: 400, chunkChars: 200 };
 const snapshot = (chat = 'chat', character = 'alice.png') => ({ chat, character, memory: { story: chat }, messages: Array.from({ length: 6 }, (_, index) => ({ index, text: `Synthetic message ${index}: the blue compass is under the tree.`, name: index % 2 ? 'Alice' : 'User', user: !(index % 2), swipe: 0, eligible: true })) });
@@ -585,4 +586,82 @@ test('group chats keep one owner key and snapshot between and during member turn
     assert.deepEqual(groupDocs.docs.map(d => d.speaker), ['Alice', 'User', 'Bob']);
     const tool = group(undefined); tool.chat = [...chat, { is_system: true, extra: { tool_invocations: [{}] } }];
     assert.equal(supportsChat(tool), false);
+});
+
+// Text-private engine: a real EmbeddingClient over a fake OpenAI-compatible endpoint.
+function textPrivate(s, { fail = () => false } = {}) {
+    const inputs = [], order = [];
+    const fetcher = async (_url, init) => {
+        const { input } = JSON.parse(init.body);
+        inputs.push(...input); order.push('embed');
+        if (fail(input)) throw new TypeError('Failed to fetch');
+        return Response.json({ data: input.map((text, index) => ({ index, embedding: [text.length, 1, 0] })) });
+    };
+    s.engine.embedder = new EmbeddingClient({ baseUrl: 'http://localhost:11434/v1', model: 'embeddinggemma', queryPrefix: 'Q> ', documentPrefix: 'D> ', dimensions: 3 }, '', { fetcher });
+    const upsert = s.client.upsert;
+    s.client.upsert = async (...args) => { order.push('upsert'); return upsert(...args); };
+    s.client.searchVector = async (_c, o, scope, vector, _signal, branch, before) => { s.searches.push({ vector, branch, before }); return [...s.remote.values()].filter(d => d.owner === o && d.scope === scope && d.message < before); };
+    s.client.search = async () => { throw new Error('Text-private search must not send text.'); };
+    s.searches = [];
+    return { inputs, order };
+}
+const textFree = docs => docs.every(d => !Object.hasOwn(d, 'text') && Array.isArray(d.embedding) && d.embedding.length === 3);
+test('text-private sync embeds document-prefixed chunks before each upsert and uploads no text', async () => {
+    const s = setup(), snap = snapshot(), e = textPrivate(s);
+    await s.engine.sync(snap, config);
+    const local = (await documents(snap, owner, config)).docs;
+    assert.ok(s.writes.length && s.writes.every(textFree));
+    assert.deepEqual(s.writes.flat().map(d => d.id), local.map(d => d.id), 'IDs and revisions are unchanged');
+    assert.deepEqual(s.writes.flat().map(d => ({ ...d, embedding: undefined })), local.map(d => ({ ...withoutText(d), embedding: undefined })));
+    assert.deepEqual(e.inputs, local.map(d => `D> ${d.text}`));
+    assert.deepEqual(e.order, ['embed', 'upsert']);
+    for (const d of s.remote.values()) assert.ok(!JSON.stringify(d).includes('blue compass'));
+    const writes = s.writes.length;
+    const reload = new MemoryEngine({ client: s.client, owner, collection: 'test', branch: 'chat_test', journal: new Journal(s.storage, 'test'), embedder: s.engine.embedder });
+    await reload.sync(snap, config);
+    assert.equal(s.writes.length, writes, 'reload acknowledges matching text-free documents without uploading again');
+    snap.messages[1].text = 'Edited: the compass moved to the stone tower.';
+    await reload.sync(snap, config);
+    assert.equal(s.deletes.flat().length, 1);
+    assert.ok(textFree(s.writes.at(-1)) && s.writes.at(-1).length === 1 && s.writes.at(-1)[0].message === 1);
+});
+test('text-private uploads keep 200-document batches and keep the journal when embedding fails', async () => {
+    const s = setup(), big = snapshot();
+    big.messages = Array.from({ length: 421 }, (_, index) => ({ index, text: `Line ${index}.`, name: index % 2 ? 'Alice' : 'User', user: !(index % 2), swipe: 0, eligible: true }));
+    let broken = true;
+    const e = textPrivate(s, { fail: input => broken && input.some(t => t === 'D> Line 210.') });
+    await assert.rejects(s.engine.sync(big, config), err => err.code === 'embedding');
+    const ids = (await documents(big, owner, config)).docs.map(d => d.id);
+    assert.deepEqual(s.writes.map(b => b.length), [200], 'the failed batch was not uploaded');
+    assert.deepEqual(new Journal(s.storage, 'test').read((await documents(big, owner, config)).scope), ids, 'intent journal survives for retry');
+    broken = false; e.inputs.length = 0;
+    await s.engine.sync(big, config);
+    assert.deepEqual(s.writes.map(b => b.length), [200, 200, 20]);
+    assert.ok(s.writes.every(textFree));
+    assert.equal(e.inputs.length, 220, 'retry embeds only documents not already acknowledged');
+});
+test('text-private retrieval embeds the prefixed query, searches by vector below the boundary and restores local text', async () => {
+    const s = setup(), snap = snapshot(), e = textPrivate(s);
+    const result = await s.engine.retrieve(snap, { ...config, retainedStart: 2 }, text => text.split(/\s+/).length);
+    const query = `User: ${snap.messages[4].text}`;
+    assert.equal(e.inputs.at(-1), `Q> ${query}`);
+    assert.equal(s.searches.length, 1);
+    assert.equal(s.searches[0].before, 2); assert.equal(s.searches[0].branch, 'chat_test');
+    assert.deepEqual(s.searches[0].vector, (await s.engine.embedder.query(query)));
+    assert.deepEqual([...new Set(result.passages.map(p => p.message))], [0, 1]);
+    assert.ok(result.passages.every(p => p.text === snap.messages[p.message].text), 'passages carry local source text');
+    assert.ok(result.text.includes(snap.messages[0].text));
+});
+test('text-private restoration drops stale revisions, foreign scopes and hits beyond the boundary; default mode still compares text', async () => {
+    const a = await documents(snapshot(), owner, config);
+    const stored = a.docs.map(withoutText);
+    const stale = { ...stored[0], revision: 'old' }, foreign = { ...stored[1], scope: 'f'.repeat(64) };
+    const edited = await documents({ ...snapshot(), messages: snapshot().messages.map(m => m.index === 2 ? { ...m, text: 'Edited.' } : m) }, owner, config);
+    const old = stored[2]; // Its ID names the old revision, absent from the edited local source.
+    const result = await selectPackedMemory([stale, foreign, old, stored[3], stored[3]], edited.docs, 2000, t => t.length, { textPrivate: true });
+    assert.deepEqual(result.passages, [edited.docs[3]]);
+    assert.ok(result.text.includes(edited.docs[3].text));
+    const bounded = await selectPackedMemory(stored, a.docs.filter(d => d.message < 2), 2000, t => t.length, { textPrivate: true });
+    assert.ok(bounded.passages.length && bounded.passages.every(p => p.message < 2));
+    assert.equal((await selectPackedMemory(stored, a.docs, 2000, t => t.length)).passages.length, 0, 'the default mode requires matching remote text');
 });

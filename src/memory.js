@@ -99,6 +99,8 @@ export async function documents(snapshot, owner, config) {
     }
     return { scope, docs };
 }
+// A text-private document stores every field except its text.
+export const withoutText = ({ text, ...fields }) => fields;
 // The host expands macros after interceptors. Keep recalled text literal so
 // it cannot execute variable macros or grow after token budgeting.
 export function literal(text) {
@@ -111,7 +113,9 @@ export function memoryMessages(passages) {
         mes: `[Past conversation excerpt: ${d.role} ${JSON.stringify(literal(d.speaker))}, message ${d.message + 1}, passage ${d.chunk + 1}${conversationTimeLabel(d)}]\n${literal(d.text)}`,
     }));
 }
-export async function selectPackedMemory(hits, expected, budget, countTokens) {
+// A text-private hit carries no text: identity rests on its ID, which contains
+// the revision digest of the local source, plus scope, owner and time fields.
+export async function selectPackedMemory(hits, expected, budget, countTokens, { textPrivate = false } = {}) {
     const count = async text => {
         const tokens = await countTokens(text);
         if (!Number.isFinite(tokens) || tokens < 0) throw new Error('Token counting unavailable.');
@@ -133,7 +137,7 @@ export async function selectPackedMemory(hits, expected, budget, countTokens) {
     for (const hit of hits) {
         const doc = valid.get(hit?.id);
         // The remote response is only a ranking signal. Inject current local source text.
-        if (!doc || seen.has(doc.id) || hit.scope !== doc.scope || hit.owner !== doc.owner || hit.revision !== doc.revision || hit.text !== doc.text || hit.conversationTimestamp !== doc.conversationTimestamp || hit.timestampSource !== doc.timestampSource || hit.conversationTimeContext !== doc.conversationTimeContext) continue;
+        if (!doc || seen.has(doc.id) || hit.scope !== doc.scope || hit.owner !== doc.owner || hit.revision !== doc.revision || (!textPrivate && hit.text !== doc.text) || hit.conversationTimestamp !== doc.conversationTimestamp || hit.timestampSource !== doc.timestampSource || hit.conversationTimeContext !== doc.conversationTimeContext) continue;
         seen.add(doc.id);
         // Decide in retrieval order using the layout that would actually be
         // injected. Do not reserve space for lower-ranked unassembled hits.
@@ -234,12 +238,15 @@ export class Journal {
 }
 
 export class MemoryEngine {
-    constructor({ client, owner, collection, scope, branch, journal, lock = job => job() }) {
+    // `embedder` (documents/query) makes this a text-private story: chunks and queries
+    // are embedded in the browser and no text is uploaded.
+    constructor({ client, owner, collection, scope, branch, journal, lock = job => job(), embedder }) {
         if (!branch || branch === 'main') throw new Error('A chat memory branch is required.');
-        Object.assign(this, { client, owner, collection, scope, branch, journal, lock });
+        Object.assign(this, { client, owner, collection, scope, branch, journal, lock, embedder });
         this.queue = Promise.resolve(); this.acknowledged = new Set(); this.generation = 0;
         this.pendingReads = new AbortController();
     }
+    stored(doc) { return this.embedder ? withoutText(doc) : doc; }
     cancelReads() { this.pendingReads.abort(); this.pendingReads = new AbortController(); }
     invalidate() { this.generation++; this.cancelReads(); }
     serial(job) {
@@ -280,7 +287,7 @@ export class MemoryEngine {
                     if (!current()) return null;
                     for (const d of found) {
                         const wanted = expected.get(d.id);
-                        if (wanted && Object.keys(wanted).every(k => wanted[k] === d[k])) this.acknowledged.add(d.id);
+                        if (wanted && sameDocument(this.stored(wanted), d)) this.acknowledged.add(d.id);
                     }
                 }
                 this.remoteLoaded = true;
@@ -292,7 +299,7 @@ export class MemoryEngine {
             let witness;
             if (removed.length || pending.length) {
                 const usable = beginWrites(this.client, this.collection, this.branch, pending);
-                const last = pending.at(-1); // Last actual upsert, not last transcript chunk.
+                const last = pending.length ? this.stored(pending.at(-1)) : undefined; // Last actual upsert, not last transcript chunk.
                 if (usable) {
                     const old = committed ? committed.get(last.id)
                         : (await this.client.fetchDocs(this.collection, [last.id], this.branch, false)).find(d => d.id === last.id);
@@ -315,7 +322,10 @@ export class MemoryEngine {
             for (let i = 0; i < pending.length; i += 200) {
                 if (!current()) return null;
                 const batch = pending.slice(i, i + 200);
-                await this.client.upsert(this.collection, batch, undefined, this.branch);
+                // Embed before upsert; a failed embedding leaves the journal for retry.
+                const upload = this.embedder ? await this.embedded(batch) : batch;
+                if (!current()) return null;
+                await this.client.upsert(this.collection, upload, undefined, this.branch);
                 batch.forEach(d => this.acknowledged.add(d.id));
                 report({ phase: 'uploading', completed: confirmed + i + batch.length, total: docs.length });
             }
@@ -324,6 +334,10 @@ export class MemoryEngine {
             if (witness) recordWrite(this.client, this.collection, this.branch, witness);
             return prepared;
         }).catch(error => { this.remoteLoaded = false; clearCommit(this.client, this.collection, this.branch); throw error; });
+    }
+    async embedded(batch) {
+        const vectors = await this.embedder.documents(batch.map(d => d.text));
+        return batch.map((d, i) => ({ ...withoutText(d), embedding: vectors[i] }));
     }
     async retrieve(snapshot, config, countTokens, valid = () => true, progress = () => {}, type = 'normal') {
         const generation = this.generation;
@@ -346,12 +360,16 @@ export class MemoryEngine {
         let results;
         try {
             progress({ phase: 'searching', completed: 0, total: 1 });
-            results = await this.client.search(this.collection, this.owner, prepared.scope, queries[0], signal, this.branch, searchBefore);
+            if (this.embedder) {
+                const vector = await this.embedder.query(queries[0], signal);
+                if (!current()) return null;
+                results = await this.client.searchVector(this.collection, this.owner, prepared.scope, vector, signal, this.branch, searchBefore);
+            } else results = await this.client.search(this.collection, this.owner, prepared.scope, queries[0], signal, this.branch, searchBefore);
             if (current() && !signal.aborted) progress({ phase: 'searching', completed: 1, total: 1 });
         } finally { reads.abort(); }
         if (!current()) return null;
         progress({ phase: 'budgeting' });
-        const result = await selectPackedMemory(results, expected, config.budget, countTokens);
+        const result = await selectPackedMemory(results, expected, config.budget, countTokens, { textPrivate: Boolean(this.embedder) });
         return current() ? result : null;
     }
     async deleteAll() {
