@@ -106,8 +106,8 @@ Pending cleanup records under `artifacts/` must survive until cleanup succeeds.
 `npm run test:private-memory:live` checks [Private memory](private-memory.md)
 on the same live path with a local Ollama endpoint (`SM_OLLAMA_URL`, default
 `http://localhost:11434/v1`) serving `embeddinggemma` and `qwen3-embedding:0.6b`.
-It creates at most three collections (the connection test and one story, rebuilt
-once) and confirms HTTP 404 for each. `SM_ARTIFACT_DIR` selects the report and
+It creates at most four collections (the connection test and one story, created
+standard and rebuilt twice) and confirms HTTP 404 for each. `SM_ARTIFACT_DIR` selects the report and
 screenshot directory; request bodies are summarized, not stored.
 
 `npm run test:generation:live` additionally requires `LLM_BASE_URL`, `LLM_MODEL`

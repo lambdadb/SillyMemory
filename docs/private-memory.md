@@ -293,35 +293,51 @@ Choices made where the design was silent, and deviations:
 ## Validation
 
 Unit, browser-emulator and live results are separate. All were run on
-2026-11-10 at the implementation commits on `feat/text-private-mode`.
+2026-11-10 on `feat/text-private-mode`; the Private memory rename and the
+asymmetric switching were rechecked the same day.
 
-- `npm test`: the full suite passes, with focused tests for the embedding
-  client (fake fetch: request shape, prefixes, malformed responses, dimension
-  change, CORS/network, timeout and cancellation), the key record, schema and
-  identity tags, the mismatch guard, the write path and journal retention, dense
-  search and text-free restoration. `npm run check`, `npm run check:sdk`, `npm
-  run check:release` and the benchmark protocol tests pass.
+- `npm test` (Node 24 and Node 20.12.0): the full suite passes, with focused
+  tests for the embedding client (fake fetch: request shape, prefixes, malformed
+  responses, dimension change, CORS/network, timeout and cancellation), the key
+  record, schema and identity tags, the asymmetric mode check (Private memory on
+  blocks a standard story; a private story keeps working when it is off unless
+  its identity differs or no tested setting exists; new stories follow the
+  global setting), the switch lock and mismatch recovery actions, the write path
+  and journal retention, dense search and text-free restoration. `npm run
+  check`, `npm run check:sdk`, `npm run check:release` and the benchmark
+  protocol tests pass.
 - Source inspection: default-mode create, branch, list, fetch, upsert and query
   request bodies from the base revision `d5c6ffd` and this branch were compared
-  byte for byte on a synthetic chat; they are identical.
+  byte for byte on a synthetic chat before the rename; they are identical.
 - `npm run test:browser` (pinned SillyTavern, real Chromium, local HTTPS
-  emulator): all default-mode checks pass with the new settings section present.
-  The emulator has no text-private coverage.
-- `npm run test:text-private:live` (pinned SillyTavern 1.19.0, real Chromium,
-  live LambdaDB, local Ollama 0.40.15, deterministic model fixture): 24 checks
-  pass. `embeddinggemma` stories are created, synchronized, edited, deleted and
-  searched; turning the mode off and changing the model to
-  `qwen3-embedding:0.6b` each stop the story with the rebuild offer and stop
-  generation; **Rebuild story memory** recreates a 1,024-dimension story that
-  searches correctly. No LambdaDB request body after enabling the mode
-  contained a `text` field, `queryText`, rerank or any seeded chat phrase, and
-  no LambdaDB or embedding request carried host cookies or CSRF headers. Every
-  created collection answered HTTP 404 after cleanup. Evidence, local and
-  ignored, with SHA256SUMS: `artifacts/text-private-mode-v1/`.
+  emulator): all 243 default-mode checks pass with the settings section present.
+  The emulator has no Private memory coverage.
+- `npm run test:private-memory:live` (pinned SillyTavern 1.19.0, real Chromium,
+  live LambdaDB, local Ollama 0.40.15, deterministic model fixture): 35 checks
+  pass.
+  - The switch is disabled with its reason until **Test endpoint** succeeds and
+    stays unlocked after a draft edit; Ollama presets show their pull command.
+  - Turning Private memory on pauses a standard story, stops generation and shows
+    only **Rebuild story memory** and **Turn memory off in this chat**; the
+    rebuild recreates it as a 768-dimension `embeddinggemma` private story,
+    labelled `Memory · Ready · Private`.
+  - The private story is synchronized, edited, deleted and searched. With
+    Private memory off it keeps syncing and searching by vector. Changing the
+    model to `qwen3-embedding:0.6b` blocks it with the same two actions, and a
+    rebuild with Private memory on recreates a 1,024-dimension private story
+    that searches correctly.
+  - No LambdaDB request body after enabling Private memory (67 requests)
+    contained a `text` field, `queryText`, rerank or any seeded chat phrase, and
+    no LambdaDB or embedding request carried host cookies or CSRF headers.
+  - Every created collection (4) answered HTTP 404 after cleanup.
+  - Evidence, local and ignored, with SHA256SUMS:
+    `artifacts/private-memory-v1/` (earlier run: `artifacts/text-private-mode-v1/`).
 
 Not checked: the OpenAI preset against the live OpenAI API (no paid embedding
 call was made; its CORS preflight was checked as recorded above), LM Studio and
 llama.cpp, opening SillyTavern from another device with `OLLAMA_ORIGINS`,
-browsers other than Chromium, group chats and native branches in this mode
-(only the text-free fork wait is unit-tested), and answer quality beyond the recorded
-English LongMemEval-S retrieval evidence. No multilingual quality claim is made.
+browsers other than Chromium, rebuilding a private story into a standard one
+live (unit-tested only, to keep the live privacy audit text-free), group chats
+and native branches in this mode (only the text-free fork wait is unit-tested),
+and answer quality beyond the recorded English LongMemEval-S retrieval evidence.
+No multilingual quality claim is made.
