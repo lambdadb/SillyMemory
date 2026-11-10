@@ -91,7 +91,13 @@ test('the endpoint check records a stable dimension and later responses must kee
 test('network/CORS failure, timeout and cancellation are explicit and distinct', async () => {
     const blocked = new EmbeddingClient(ollama, '', { fetcher: async () => { throw new TypeError('Failed to fetch http://secret'); } });
     await assert.rejects(blocked.query('x'), e => e.code === 'embedding' && /CORS/.test(e.message) && !e.message.includes('secret'));
-    const hang = (_url, init) => new Promise((_, reject) => init.signal.addEventListener('abort', () => reject(init.signal.reason)));
+    // A pending request holds the event loop open, as a real socket does. Node's
+    // AbortSignal.timeout() timer is unref'd, so without this Node 20's test runner
+    // sees an idle loop and fails the test before the timeout fires.
+    const hang = (_url, init) => new Promise((_, reject) => {
+        const open = setInterval(() => {}, 1000);
+        init.signal.addEventListener('abort', () => { clearInterval(open); reject(init.signal.reason); });
+    });
     await assert.rejects(new EmbeddingClient(ollama, '', { fetcher: hang, timeoutMs: 20 }).query('x'), e => e.code === 'embedding' && /timed out/.test(e.message));
     const controller = new AbortController();
     const pending = new EmbeddingClient(ollama, '', { fetcher: hang }).query('x', controller.signal);
