@@ -16,11 +16,11 @@ boundary; publication is confirmed by the corresponding Git tag and GitHub Relea
   validated on English LongMemEval-S only: Ollama `qwen3-embedding:0.6b`, Ollama
   `embeddinggemma` and OpenAI `text-embedding-3-small`; other models are
   allowed and labelled as not validated. An optional embedding key is saved in
-  its own browser record. The switch is available after **Test endpoint**
+  its own browser record. The switch is available after **Test and save**
   succeeds. Turning it on pauses existing standard stories until they are rebuilt
   with **Rebuild story memory**; private stories keep working if it is turned
   off, while their embedding model, prefixes and dimension match the tested
-  settings.
+  settings, and offer an optional rebuild to standard memory.
   Default-mode memory is unchanged.
 
 - Group chats. Memory can be turned on in a SillyTavern group chat with the same

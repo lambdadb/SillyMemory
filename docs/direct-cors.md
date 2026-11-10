@@ -33,7 +33,7 @@ Ollama setup in [setup and recovery](setup-and-recovery.md#private-memory).
 There is no SillyTavern proxy or server plugin, the same as other UI-only memory
 extensions; only SillyTavern's built-in Vector Storage avoids this, because its
 server calls the provider. A provider that blocks
-browser CORS is unsupported, and **Test endpoint** reports a network error.
+browser CORS is unsupported, and **Test and save** reports a network error.
 In this mode chat text is not sent to or stored in LambdaDB.
 
 ## Verification

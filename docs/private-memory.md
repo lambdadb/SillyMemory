@@ -69,7 +69,7 @@ Out of scope, follow-ups:
 
 ### Endpoint check
 
-**Test endpoint** sends one short embedding request. It verifies:
+**Test and save** sends one short embedding request. It verifies:
 
 - HTTP success.
 - A `data[0].embedding` array of finite numbers.
@@ -112,7 +112,8 @@ Before every sync or search, check these tags. Switching is asymmetric:
 - **Private memory off**: an existing private story keeps working in its own
   mode with the saved, tested embedding settings and key. It still stops with the
   rebuild offer when its `embedding` digest differs from those settings, or when
-  no tested setting is saved.
+  no tested setting is saved. When it is not blocked, its Memory panel shows an
+  optional notice and **Rebuild story memory** to switch it to standard memory.
 - New stories follow the global setting.
 - **Rebuild story memory** deletes the story and recreates it in the current
   global mode. The existing rebuild flow (#141) re-embeds or re-uploads every
@@ -228,7 +229,7 @@ Each step lists its verification.
    - Verify with unit tests for restoration, stale-revision drop and the
      message boundary.
 7. **Settings UI**: mode toggle, endpoint, model preset or custom, prefixes,
-   key, **Test endpoint**, mismatch and rebuild notice, and setup hints.
+   key, **Test and save**, mismatch and rebuild notice, and setup hints.
 8. **Live check**: a real Chromium session against SillyTavern, local Ollama and
    a temporary LambdaDB collection.
    - Steps: create, sync, edit, delete, search, rebuild and cleanup.
@@ -258,11 +259,14 @@ Choices made where the design was silent, and deviations:
 - **Request shape**: `{ model, input, encoding_format: 'float' }`, as in the
   harness, with at most 32 inputs per request inside each 200-document upsert
   batch and a 120-second timeout per request.
-- **Test endpoint is required.** The tested dimension is stored with the
+- **Test and save is required.** The tested dimension is stored with the
   endpoint settings. The **Private memory** switch stays disabled, with a short
   reason, until a test has succeeded; it can always be turned off. Form edits
   are drafts until a test succeeds, so editing the form after a test keeps the
-  saved, tested settings and does not lock the switch. Without tested settings,
+  saved, tested settings and does not lock the switch. The form shows the
+  endpoint in use (`In use: <model> at <URL>`), marks unsaved edits, and shows
+  "Text stays on this machine" only for a saved local endpoint, never for a
+  draft. Without tested settings,
   private sync and generation stop with an explicit error. A keyless
   test for a different base URL or model removes the older key record.
 - **Errors**: embedding failures use status 0 and code `embedding`, so a 401
@@ -315,7 +319,7 @@ asymmetric switching were rechecked the same day.
 - `npm run test:private-memory:live` (pinned SillyTavern 1.19.0, real Chromium,
   live LambdaDB, local Ollama 0.40.15, deterministic model fixture): 35 checks
   pass.
-  - The switch is disabled with its reason until **Test endpoint** succeeds and
+  - The switch is disabled with its reason until **Test and save** succeeds and
     stays unlocked after a draft edit; Ollama presets show their pull command.
   - Turning Private memory on pauses a standard story, stops generation and shows
     only **Rebuild story memory** and **Turn memory off in this chat**; the
@@ -332,6 +336,10 @@ asymmetric switching were rechecked the same day.
   - Every created collection (4) answered HTTP 404 after cleanup.
   - Evidence, local and ignored, with SHA256SUMS:
     `artifacts/private-memory-v1/` (earlier run: `artifacts/text-private-mode-v1/`).
+  - After the review UX fixes, the live check was rerun (35 checks, 4 collections
+    deleted). It also covers the saved-endpoint privacy line, the unsaved-draft
+    marker and the optional rebuild offer for a private story with the setting
+    off: `artifacts/private-memory-v1/run-review-ux/`.
 
 Not checked: the OpenAI preset against the live OpenAI API (no paid embedding
 call was made; its CORS preflight was checked as recorded above), LM Studio and
