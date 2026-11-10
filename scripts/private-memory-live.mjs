@@ -1,7 +1,8 @@
 import { answerMemoryPopup, memoryControl, expandMemorySettings, openChatMemory } from './settings-panel.mjs';
 // Private memory on the real SillyTavern UI path: live LambdaDB, a local
 // Ollama embedding endpoint and a deterministic loopback model fixture. Checks
-// create, sync, edit, delete, search, mismatch and rebuild, and that no
+// the switch lock, Ollama pull hints, asymmetric mode switching, create, sync,
+// edit, delete, search, mismatch recovery and rebuild, and that no
 // request body to LambdaDB carries a text field or raw chat text. Synthetic data only.
 import { chromium } from '@playwright/test';
 import { createServer } from 'node:http';
@@ -138,25 +139,63 @@ try {
     await field('connect').click(); await waitStatus('Chat memory is ready');
     assert(true, 'real settings completed the live LambdaDB connection and setup test');
 
-    stage = 'private setup'; const auditStart = remote.length;
-    await field('privateMemory').check();
-    await field('embedding-preset').selectOption('ollama-gemma');
+    // C1: the switch is locked until Test endpoint succeeds. A standard story first,
+    // to check that turning Private memory on pauses it.
+    stage = 'standard story';
+    assert(await field('privateMemory').isDisabled() && (await field('private-memory-lock').textContent()).includes('Test endpoint first') && await field('private-memory-lock').isVisible(),
+        'Private memory is disabled with a reason before Test endpoint succeeds');
+    await seed(); await memoryControl(page).check(); await waitStatus('synchronized');
+    const standard = remote.filter(r => r.method === 'POST' && r.resource === 'collections' && r.stage === stage).map(r => JSON.parse(r.body)).find(b => b.collectionName.startsWith('smstory_'));
+    assert(standard && standard.indexConfigs.text && standard.tags.memory_mode === undefined && !(await chatButton('label').textContent()).includes('Private'), 'a standard story is created and synchronized while Private memory is off');
+
+    stage = 'private setup';
+    await openSettings();
+    const pull = async preset => { await field('embedding-preset').selectOption(preset); return await field('embedding-pull-line').isVisible() ? await field('embedding-pull').textContent() : ''; };
+    assert(await pull('ollama-qwen3') === 'ollama pull qwen3-embedding:0.6b' && await pull('openai-small') === '' && await pull('ollama-gemma') === 'ollama pull embeddinggemma'
+        && (await field('embedding-pull').evaluate(el => getComputedStyle(el).whiteSpace)) === 'nowrap', 'an Ollama preset shows its pull command on one line; other presets do not');
     assert(await field('embedding-url').inputValue() === 'http://localhost:11434/v1' && (await field('embedding-quality').textContent()).includes('Validated on English LongMemEval-S')
         && await field('embedding-local').isVisible() && await field('embedding-ollama').isVisible(), 'the gemma preset fills the local endpoint with its validation label and setup hints');
     if (ollama !== 'http://localhost:11434/v1') await field('embedding-url').fill(ollama);
-    await field('embedding-test').click(); await waitStatus('Embedding endpoint works: 768-dimension vectors');
+    assert(await field('privateMemory').isDisabled(), 'choosing a preset without testing it keeps Private memory locked');
+    await field('embedding-test').click();
+    // The status can move on to the standard story's synchronization; the saved summary is stable.
+    await page.waitForFunction(() => document.querySelector('[data-sm="embedding-summary"]')?.textContent.includes('768 dimensions'), null, { timeout: 180000 });
     assert(embeddings.length === 1 && embeddings[0].model === 'embeddinggemma' && embeddings[0].inputs === 2, 'Test endpoint sends one short request and records 768 dimensions');
+    assert(await field('privateMemory').isEnabled() && await field('private-memory-lock').isHidden(), 'a successful Test endpoint unlocks Private memory');
+    await field('embedding-preset').selectOption('custom');
+    assert(await field('privateMemory').isEnabled(), 'a draft edit after a test keeps the saved, tested settings and the switch unlocked');
+    await field('embedding-preset').selectOption('ollama-gemma');
+    if (ollama !== 'http://localhost:11434/v1') await field('embedding-url').fill(ollama);
     await shot('endpoint-tested');
 
-    stage = 'create and sync'; await seed(); await memoryControl(page).check(); await waitStatus('synchronized');
+    // B: turning Private memory on pauses the standard story; C3: only Rebuild and Turn memory off.
+    stage = 'turn on pauses standard'; const auditStart = remote.length;
+    await field('privateMemory').check();
+    await waitStatus('created without Private memory');
+    const onlyRebuild = async () => await chatButton('rebuild').isVisible() && await chatButton('toggle').isVisible() && await chatButton('sync').isHidden() && await chatButton('retry').isHidden();
+    await openChatMemory(page);
+    assert(await onlyRebuild(), 'turning Private memory on pauses the standard story and shows only Rebuild story memory and Turn memory off');
+    let failedPrompt = generations.length;
+    await page.evaluate(async question => { document.querySelector('#send_textarea').value = question; await SillyTavern.getContext().generate('normal'); }, QUESTION);
+    assert(generations.length === failedPrompt && await onlyRebuild(), 'generation stops on the paused standard story, and Retry reply stays hidden');
+    await shot('standard-paused');
+    await page.evaluate(async () => { const c = SillyTavern.getContext(); if (c.chat.at(-1)?.is_user) await c.deleteMessage(c.chat.length - 1); });
+
+    stage = 'create and sync';
+    await openChatMemory(page);
+    await answerMemoryPopup(page, () => chatButton('rebuild').click());
+    await waitStatus('synchronized');
     const created = remote.filter(r => r.method === 'POST' && r.resource === 'collections' && r.stage === stage).map(r => JSON.parse(r.body)).find(b => b.collectionName.startsWith('smstory_'));
-    assert(created && !created.indexConfigs.text && JSON.stringify(created.indexConfigs.embedding) === JSON.stringify({ type: 'vector', dimensions: 768, similarity: 'cosine' })
-        && created.tags.memory_mode === 'private' && /^[a-f0-9]{16}$/.test(created.tags.embedding) && Object.keys(created.tags).length === 5, 'the story collection has no text field, a 768-d cosine vector field and identity tags');
+    assert(created && remote.some(r => r.stage === stage && r.method === 'DELETE' && r.resource === 'collection') && !created.indexConfigs.text
+        && JSON.stringify(created.indexConfigs.embedding) === JSON.stringify({ type: 'vector', dimensions: 768, similarity: 'cosine' })
+        && created.tags.memory_mode === 'private' && /^[a-f0-9]{16}$/.test(created.tags.embedding) && Object.keys(created.tags).length === 5, 'Rebuild recreates the standard story as private: no text field, a 768-d cosine vector field and identity tags');
     const upserts = r => r.resource === 'docs/upsert';
     const firstUpload = remote.filter(r => r.stage === stage && upserts(r)).flatMap(r => JSON.parse(r.body).docs);
     assert(firstUpload.length > 0 && firstUpload.every(d => !('text' in d) && d.embedding?.length === 768 && d.embedding.every(x => Math.round(x * 1e4) / 1e4 === x)), 'uploads carry 4-decimal 768-d vectors and no text field');
     assert(embeddings.filter(e => e.stage === stage).length > 0, 'chunks were embedded by the local endpoint before upload');
-    await openChatMemory(page); await shot('synchronized');
+    await openChatMemory(page);
+    assert((await chatButton('label').textContent()) === 'Memory · Ready · Private', 'the Memory panel shows Memory · Ready · Private');
+    await shot('synchronized');
 
     stage = 'search';
     const on = await generate('search');
@@ -186,28 +225,34 @@ try {
     const deleted = await generate('after-delete');
     assert(!deleted.prompt.includes('inside the clock tower') && !deleted.prompt.includes('under the red bridge'), 'a deleted source fact is no longer recalled');
 
-    stage = 'mode off mismatch';
+    // B: turning Private memory off keeps the private story working in its own mode.
+    stage = 'turn off keeps private';
     await seed(); await waitStatus('synchronized');
     await openSettings(); await field('privateMemory').uncheck();
-    await waitStatus('Private memory is now off');
+    const kept = await generate('turn off keeps private');
+    const keptQueries = remote.filter(r => r.stage === 'turn off keeps private' && r.resource === 'query').map(r => JSON.parse(r.body));
+    assert(kept.prompt.includes('under the red bridge') && keptQueries.length === 1 && keptQueries[0].query.knn?.queryVector?.length === 768 && !keptQueries[0].rerank
+        && !remote.some(r => r.stage === 'turn off keeps private' && r.method === 'POST' && r.resource === 'collections'), 'with Private memory off, the private story keeps syncing and searching by vector');
     await openChatMemory(page);
-    assert(await chatButton('rebuild').isVisible(), 'turning private off blocks the private story and offers Rebuild story memory');
-    await shot('mode-mismatch');
-    await openSettings(); await field('privateMemory').check(); await waitStatus('synchronized');
-    assert(true, 'turning private back on resumes the same story');
+    assert((await chatButton('label').textContent()).endsWith(' · Private') && await chatButton('rebuild').isHidden(), 'the private story is not blocked and still shows Private');
+    await shot('private-kept-off');
 
+    // B: with Private memory off, a changed embedding identity still blocks the private story.
     stage = 'model change';
+    await openSettings();
     await field('embedding-preset').selectOption('ollama-qwen3');
     if (ollama !== 'http://localhost:11434/v1') await field('embedding-url').fill(ollama);
     await field('embedding-test').click(); await waitStatus('different embedding model, prefixes or vector dimension');
     assert((await page.evaluate(() => JSON.parse(localStorage.getItem(`sillymemory:state:${SillyTavern.getContext().extensionSettings.sillymemory.owner}`)).embedding.dimensions)) === 1024, 'the qwen3 endpoint test records 1024 dimensions');
     await openChatMemory(page);
-    assert(await chatButton('rebuild').isVisible(), 'an embedding change blocks the story and offers Rebuild story memory');
-    await shot('embedding-mismatch');
-    const failedPrompt = generations.length;
+    assert(await onlyRebuild(), 'an embedding change blocks the private story with Private memory off and shows only Rebuild story memory and Turn memory off');
+    failedPrompt = generations.length;
     await page.evaluate(async question => { document.querySelector('#send_textarea').value = question; await SillyTavern.getContext().generate('normal'); }, QUESTION);
-    assert(generations.length === failedPrompt, 'generation stops explicitly while the story does not match');
+    assert(generations.length === failedPrompt && await onlyRebuild(), 'generation stops explicitly while the story does not match, and Retry reply stays hidden');
+    await shot('embedding-mismatch');
     await page.evaluate(async () => { const c = SillyTavern.getContext(); if (c.chat.at(-1)?.is_user) await c.deleteMessage(c.chat.length - 1); });
+    // Rebuild follows the global mode; turn Private memory on so the rebuilt story stays private.
+    await openSettings(); await field('privateMemory').check(); await waitStatus('different embedding model, prefixes or vector dimension');
 
     stage = 'rebuild';
     await openChatMemory(page);
@@ -218,6 +263,7 @@ try {
         && remote.some(r => r.stage === stage && r.method === 'DELETE' && r.resource === 'collection'), 'Rebuild deletes the story and recreates it with the qwen3 identity');
     const recalled = await generate('after-rebuild');
     assert(recalled.prompt.includes('under the red bridge'), 'search works on the rebuilt story');
+    assert((await chatButton('label').textContent()).endsWith(' · Private'), 'the rebuilt story shows Private');
     await openChatMemory(page); await shot('rebuilt');
 
     stage = 'audit';
@@ -225,7 +271,7 @@ try {
     assert(audit.length > 0 && audit.every(r => !r.collection?.startsWith('smtest_')), 'the audited window has only story requests');
     const leaks = audit.filter(r => PHRASES.some(p => r.body.includes(p)));
     const textFields = audit.filter(r => { try { const b = r.body ? JSON.parse(r.body) : {}; return (b.docs || []).some(d => 'text' in d) || 'queryText' in (b.query?.knn || {}) || b.rerank || b.indexConfigs?.text; } catch { return true; } });
-    assert(leaks.length === 0 && textFields.length === 0, `no LambdaDB request body after enabling private mode carries raw chat text or a text field (${audit.length} requests)`);
+    assert(leaks.length === 0 && textFields.length === 0, `no LambdaDB request body after enabling Private memory carries raw chat text or a text field (${audit.length} requests)`);
     await Promise.all([...remote, ...embeddings].map(r => r.headersRead));
     assert([...remote, ...embeddings].every(r => r.headers && !r.headers.some(h => ['cookie', 'x-csrf-token', 'unreadable'].includes(h))), 'no LambdaDB or embedding request carries host cookies or CSRF headers');
     assert(embeddings.every(e => !e.headers.includes('authorization')), 'the keyless local endpoint receives no Authorization header');
