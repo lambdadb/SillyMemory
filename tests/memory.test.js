@@ -640,6 +640,23 @@ test('private uploads keep 200-document batches and keep the journal when embedd
     assert.ok(s.writes.every(textFree));
     assert.equal(e.inputs.length, 220, 'retry embeds only documents not already acknowledged');
 });
+test('invalidating a private sync stops the remaining embedding requests and uploads nothing', async () => {
+    const s = setup(), big = snapshot();
+    big.messages = Array.from({ length: 150 }, (_, index) => ({ index, text: `Line ${index}.`, name: index % 2 ? 'Alice' : 'User', user: !(index % 2), swipe: 0, eligible: true }));
+    let requests = 0, started;
+    const first = new Promise(resolve => { started = resolve; });
+    // The first request hangs until aborted, as a slow local endpoint would.
+    const fetcher = (_url, init) => { requests++; started(); return new Promise((_, reject) => init.signal.addEventListener('abort', () => reject(init.signal.reason))); };
+    s.engine.embedder = new EmbeddingClient({ baseUrl: 'http://localhost:11434/v1', model: 'embeddinggemma', dimensions: 3 }, '', { fetcher });
+    const sync = s.engine.sync(big, config);
+    await first;
+    s.engine.invalidate();
+    assert.equal(await sync, null, 'an invalidated synchronization ends quietly');
+    assert.equal(requests, 1, 'no further embedding request is sent after invalidation');
+    assert.equal(s.writes.length, 0);
+    s.engine.cancelReads();
+    assert.equal(s.engine.pendingSources.signal.aborted, false, 'read-only cancellation leaves source embedding running');
+});
 test('private retrieval embeds the prefixed query, searches by vector below the boundary and restores local text', async () => {
     const s = setup(), snap = snapshot(), e = privateMemory(s);
     const result = await s.engine.retrieve(snap, { ...config, retainedStart: 2 }, text => text.split(/\s+/).length);

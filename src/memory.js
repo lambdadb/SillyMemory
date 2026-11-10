@@ -245,16 +245,18 @@ export class MemoryEngine {
         Object.assign(this, { client, owner, collection, scope, branch, journal, lock, embedder });
         this.queue = Promise.resolve(); this.acknowledged = new Set(); this.generation = 0;
         this.pendingReads = new AbortController();
+        this.pendingSources = new AbortController();
     }
     stored(doc) { return this.embedder ? withoutText(doc) : doc; }
     cancelReads() { this.pendingReads.abort(); this.pendingReads = new AbortController(); }
-    invalidate() { this.generation++; this.cancelReads(); }
+    // Invalidation also stops in-flight document embedding; read-only cancellation does not.
+    invalidate() { this.generation++; this.cancelReads(); this.pendingSources.abort(); this.pendingSources = new AbortController(); }
     serial(job) {
         const task = this.queue.catch(() => {}).then(() => this.lock(job));
         this.queue = task; return task;
     }
     async sync(snapshot, config, valid = () => true, progress = () => {}) {
-        const generation = this.generation;
+        const generation = this.generation, sources = this.pendingSources.signal;
         const current = () => generation === this.generation && valid();
         const report = value => { if (current()) progress(value); };
         if (!current()) return null;
@@ -323,7 +325,11 @@ export class MemoryEngine {
                 if (!current()) return null;
                 const batch = pending.slice(i, i + 200);
                 // Embed before upsert; a failed embedding leaves the journal for retry.
-                const upload = this.embedder ? await this.embedded(batch) : batch;
+                let upload = batch;
+                if (this.embedder) {
+                    try { upload = await this.embedded(batch, sources); }
+                    catch (error) { if (!current()) return null; throw error; }
+                }
                 if (!current()) return null;
                 await this.client.upsert(this.collection, upload, undefined, this.branch);
                 batch.forEach(d => this.acknowledged.add(d.id));
@@ -335,8 +341,8 @@ export class MemoryEngine {
             return prepared;
         }).catch(error => { this.remoteLoaded = false; clearCommit(this.client, this.collection, this.branch); throw error; });
     }
-    async embedded(batch) {
-        const vectors = await this.embedder.documents(batch.map(d => d.text));
+    async embedded(batch, signal) {
+        const vectors = await this.embedder.documents(batch.map(d => d.text), signal);
         return batch.map((d, i) => ({ ...withoutText(d), embedding: vectors[i] }));
     }
     async retrieve(snapshot, config, countTokens, valid = () => true, progress = () => {}, type = 'normal') {
