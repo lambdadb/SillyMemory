@@ -22,7 +22,14 @@ for (let i = 0; i < Number(args.shards); i++) {
 }
 const keysSha256 = createHash('sha256').update(JSON.stringify(keys)).digest('hex');
 for (const p of parts) assert.equal((await stat(file(p.data))).size, p.rows * rowBytes, `${p.data} size differs`);
-for (const p of parts) if (p.progress.keysSha256) assert.equal(p.progress.keysSha256, keysSha256, `${p.data} row ordering differs`);
+// Parts must share the index ordering and cover [0, keys.length) contiguously, in order.
+let at = 0;
+for (const [n, p] of parts.entries()) {
+    assert.equal(p.progress.keysSha256, keysSha256, `${p.data} row ordering differs`);
+    assert.equal(p.progress.start, at, `${p.data} does not start where the previous part ends`);
+    if (!(prefix && n === 0)) assert.equal(p.rows, p.progress.end - p.progress.start, `${p.data} rows differ from its range`);
+    at += p.rows;
+}
 assert.equal(parts.reduce((n, p) => n + p.rows, 0), keys.length, 'Merged row count differs');
 const merged = file(`${args.provider}.merged.f32`);
 await writeFile(merged, Buffer.alloc(0));
