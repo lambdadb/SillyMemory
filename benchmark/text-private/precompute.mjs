@@ -16,7 +16,7 @@ import { appendFile, readFile, writeFile, stat } from 'node:fs/promises';
 import { parseEnv, parseArgs } from 'node:util';
 import path from 'node:path';
 import { prepareCase, recallQuery, sha256 } from '../longmemeval/protocol.mjs';
-import { LOCAL_MODELS, OLLAMA_MODELS, OPENAI_DIMENSIONS, localEmbedder, ollamaEmbedder, openaiEmbed } from './embed.mjs';
+import { LOCAL_MODELS, OLLAMA_MODELS, OPENAI_DIMENSIONS, OPENAI_MODEL, localEmbedder, ollamaEmbedder, openaiEmbed } from './embed.mjs';
 
 const { values: args } = parseArgs({ options: { provider: { type: 'string' }, dataset: { type: 'string' },
     out: { type: 'string' }, 'env-file': { type: 'string' }, 'max-usd': { type: 'string', default: '3' },
@@ -57,11 +57,15 @@ let done = 0;
 try { done = (await stat(data)).size / (4 * dims); } catch {}
 const offset0 = done;
 assert(Number.isInteger(done));
-// Bind the vector file to its row ordering and range, so a resume never mixes orderings.
-const binding = { keysSha256: sha256(JSON.stringify(keys)), start: first, end: last };
+// Bind the vector file to its row ordering, range and embedding configuration, so a
+// resume never mixes orderings or embedding spaces (use a new --name to change them).
+const ollama = local && args.runtime === 'ollama';
+const embedding = { provider, runtime: local ? args.runtime : 'openai', dtype: local && !ollama ? args.dtype : null,
+    model: !local ? OPENAI_MODEL : ollama ? OLLAMA_MODELS[provider] : LOCAL_MODELS[provider].model };
+const binding = { keysSha256: sha256(JSON.stringify(keys)), start: first, end: last, embedding };
 const progress = done ? JSON.parse(await readFile(progressFile)) : { rows: 0, tokens: 0, milliseconds: 0, requests: 0, ...binding };
 assert.equal(progress.rows, done, 'Progress record differs from vector file');
-for (const [k, v] of Object.entries(binding)) assert.equal(progress[k], v, `Resumed vector file has a different ${k}`);
+for (const [k, v] of Object.entries(binding)) assert.deepEqual(progress[k], v, `Resumed vector file has a different ${k}`);
 console.error(`${name}${suffix}: ${keys.length} unique texts (${queries.size} queries); rows [${first}, ${last}); resuming at +${done}`);
 let embed;
 const started = performance.now();

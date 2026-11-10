@@ -26,6 +26,7 @@ for (const p of parts) assert.equal((await stat(file(p.data))).size, p.rows * ro
 let at = 0;
 for (const [n, p] of parts.entries()) {
     assert.equal(p.progress.keysSha256, keysSha256, `${p.data} row ordering differs`);
+    assert.deepEqual(p.progress.embedding, parts[0].progress.embedding, `${p.data} embedding configuration differs`);
     assert.equal(p.progress.start, at, `${p.data} does not start where the previous part ends`);
     if (!(prefix && n === 0)) assert.equal(p.rows, p.progress.end - p.progress.start, `${p.data} rows differ from its range`);
     at += p.rows;
@@ -39,6 +40,6 @@ await rename(merged, file(`${args.provider}.f32`));
 // --remove-shards: delete shard vectors only after the size-checked merge.
 if (args['remove-shards']) for (const p of parts.slice(prefix ? 1 : 0)) await unlink(file(p.data));
 await writeFile(file(`${args.provider}-index.json`), JSON.stringify(keys));
-const summary = { rows: keys.length, complete: true, keysSha256, start: 0, end: keys.length, parts: parts.map(p => ({ data: p.data, rows: p.rows, milliseconds: p.progress.milliseconds })) };
+const summary = { rows: keys.length, complete: true, keysSha256, start: 0, end: keys.length, embedding: parts[0].progress.embedding, parts: parts.map(p => ({ data: p.data, rows: p.rows, milliseconds: p.progress.milliseconds })) };
 await writeFile(file(`${args.provider}-progress.json`), JSON.stringify(summary));
 console.log(JSON.stringify(summary));
