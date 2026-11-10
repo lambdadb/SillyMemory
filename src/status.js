@@ -29,6 +29,7 @@ export function failureText(error, { sync = true, generation = false } = {}) {
     else if (error.code === 'timeout') next = `Wait, then ${retry}. A timed-out write may still have reached the service.`;
     else if (error.status === 429 || error.status >= 500) next = `Wait, then ${retry}.`;
     else if (error.code === 'network') next = `Check the connection, then ${retry}.`;
+    else if (error.code === 'embedding') next = `Check the embedding endpoint in SillyMemory settings, then ${retry}.`;
     if (generation && (!next || error.status === 401)) next += `${next ? ' ' : ''}After recovery, ${retry}.`;
     return `${error.message}${next ? ` ${next}` : ''} Your local chat is kept.`;
 }
