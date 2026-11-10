@@ -109,11 +109,33 @@ Opening it under the other mode shows the same rebuild offer.
 - Edits, swipes and deletions keep using the existing event-driven sync.
   Revisions change, stale documents are deleted, and new ones are embedded.
 - Upload size is billed by the request body bytes (`requestBodySize` in
-  LambdaDB `DocumentMutationService`). Serialize vectors compactly:
-  - Round each component to 4 decimal places. Accept this only if the local
-    ranking check below passes.
-  - Otherwise fall back to the shortest float32 representation, which is
-    lossless because LambdaDB stores float32.
+  LambdaDB `DocumentMutationService`). Serialize every vector component rounded
+  to 4 decimal places (`Math.round(x * 1e4) / 1e4`).
+  - This takes about 7.4 JSON characters per component, against about 16.7 in
+    the experiment's client JSON.
+  - A 1536-dimension chunk drops from about 25.7 KB to about 11.4 KB, so the
+    upload is about 9× the raw text rather than 19×. A 768-dimension model
+    halves that again.
+  - Accepted by the check below.
+
+#### Rounding check (2026-11-10)
+
+Method: the stored experiment vectors were rounded to 4 decimal places
+(maximum absolute error 5e-5), and local exact KNN was rerun on all 500
+LongMemEval-S questions. Queries were not rounded, as in the product.
+
+| Arm | Top-10 overlap | Top-50 overlap | Delivered-complete, rounded vs original | Questions whose delivered coverage changed |
+|---|---:|---:|---:|---:|
+| K, OpenAI small (vs live LambdaDB results) | 1.000 | 0.9998 | 95.30% vs 95.30% | 0 |
+| Q3, `qwen3-embedding:0.6b` | 1.000 | 0.9995 | 95.64% vs 95.64% | 0 |
+| G, `embeddinggemma` | 0.9998 | 0.9998 | 95.41% vs 95.41% | 0 |
+
+The acceptance bar, set before the run, was top-50 overlap ≥ 0.99 and
+delivered-complete within 0.2 points. All three arms pass. Only near-tied
+neighbours swap order: 333–341 of 500 questions keep an identical top-50 order.
+
+Evidence (local, ignored, with SHA256SUMS):
+`artifacts/text-private-retrieval-v1/rounding-4dp/`.
 
 ### Search and restoration
 
@@ -160,12 +182,7 @@ These preflights were checked on 2026-11-10:
 
 Each step lists its verification.
 
-1. **Vector rounding check** (local, $0):
-   - Method: round the stored K (OpenAI small), Q3 and G vectors from the
-     experiment evidence, then rerun local exact KNN on the 500 questions.
-   - Accept rounding if top-50 overlap is at least 0.99 and delivered-complete
-     coverage is within 0.2 points.
-   - Record the result in this document.
+1. **Vector rounding check**: done; see the rounding check above.
 2. **Embedding client** (`src/embedding.js`): request building, response
    validation, prefixes and compact serialization.
    - Verify with unit tests using a fake fetch for success, malformed responses,
