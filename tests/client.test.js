@@ -1,7 +1,8 @@
 import { collectionResponse, documentResponse, rerankedResponse, accepted } from './helpers/lambdadb-responses.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { LambdaClient, connectionConfig, scopeFilter, ANALYZERS, analyzerList, sameAnalyzers, collectionAnalyzers } from '../src/client.js';
+import { LambdaClient, connectionConfig, scopeFilter, ANALYZERS, analyzerList, sameAnalyzers, collectionAnalyzers, schema, textPrivateSchema } from '../src/client.js';
+import { embeddingIdentity } from '../src/embedding.js';
 import { runTransportGate } from '../src/gate.js';
 import { readFileSync } from 'node:fs';
 const config = { endpoint: 'https://region.example.test', project: 'synthetic' };
@@ -363,4 +364,45 @@ test('connection verification is one bounded read with no mutations or retry on 
     await assert.rejects(denied.checkConnection(), error => error.status === 401); assert.equal(rejected, 1);
     const malformed = new LambdaClient(config, 'synthetic', { fetcher: async () => Response.json({}) });
     await assert.rejects(malformed.checkConnection(), error => error.code === 'validation');
+});
+
+test('a text-private story has no text field and a plain cosine vector field, with identity tags the SDK accepts', async () => {
+    const indexes = textPrivateSchema(768);
+    assert.deepEqual(indexes.embedding, { type: 'vector', dimensions: 768, similarity: 'cosine' });
+    assert.equal(Object.hasOwn(indexes, 'text'), false);
+    const { text, embedding, ...metadata } = schema();
+    assert.deepEqual(Object.fromEntries(Object.entries(indexes).filter(([k]) => k !== 'embedding')), metadata);
+    for (const bad of [0, -1, 1.5, '768', undefined]) assert.throws(() => textPrivateSchema(bad), /dimension/);
+    const identity = await embeddingIdentity({ baseUrl: 'http://localhost:11434/v1', model: 'qwen3-embedding:0.6b', queryPrefix: 'Query:', documentPrefix: '', dimensions: 768 });
+    const bodies = [];
+    // The real SDK validates the create request, including its five-tag and value rules.
+    const client = new LambdaClient(config, 'synthetic', { fetcher: async (_url, init) => {
+        bodies.push(JSON.parse(init.body));
+        return Response.json({ collection: collectionResponse() }, { status: 201 });
+    } });
+    await client.create('synthetic_context', owner, scope, ['korean'], identity);
+    await client.create('synthetic_context', owner, scope, ['korean']);
+    assert.deepEqual(bodies[0].indexConfigs, JSON.parse(JSON.stringify(indexes)), 'text-private ignores text analyzers');
+    assert.deepEqual(bodies[0].tags, { application: 'sillymemory', owner, chat: scope, memory_mode: 'text_private', embedding: identity.tags.embedding });
+    assert.deepEqual(bodies[1].tags, { application: 'sillymemory', owner, chat: scope });
+    assert.equal(bodies[1].indexConfigs.embedding.managedEmbedding, true);
+    assert.equal(JSON.stringify(bodies[1].indexConfigs), JSON.stringify(schema(['korean'])), 'the default create body is unchanged');
+});
+
+test('text-private search is one dense KNN with the same scope, boundary and branch, and no rerank or lexical leg', async () => {
+    const calls = [];
+    const client = new LambdaClient(config, 'synthetic', { fetcher: async (url, init) => { calls.push({ url, init, body: JSON.parse(init.body) }); return Response.json(documentResponse([{ id: 'one' }])); } });
+    assert.deepEqual(await client.searchVector('test', owner, scope, [0.6, 0.8], undefined, 'chat_child', 4), [{ id: 'one' }]);
+    const { url, init, body } = calls[0];
+    assert.equal(url, 'https://region.example.test/projects/synthetic/collections/test/query');
+    assert.deepEqual(Object.keys(init.headers).sort(), ['Content-Type', 'x-api-key']);
+    assert.equal(init.credentials, 'omit');
+    assert.deepEqual(body.query, { knn: { field: 'embedding', queryVector: [0.6, 0.8], k: 200, filter: { queryString: { query: `owner:${owner} AND scope:${scope} AND message:[0 TO 3]` } } } });
+    assert.equal(body.size, 50); assert.equal(body.consistentRead, true); assert.equal(body.includeVectors, false);
+    assert.deepEqual(body.ref, { kind: 'branch', name: 'chat_child' });
+    assert.equal(Object.hasOwn(body, 'rerank'), false);
+    assert.ok(!init.body.includes('queryText') && !init.body.includes('"text"'));
+    for (const vector of [[], [1, NaN], 'x', undefined]) assert.throws(() => client.searchVector('test', owner, scope, vector), /query vector/);
+    for (const boundary of [0, 1.5]) assert.throws(() => client.searchVector('test', owner, scope, [1], undefined, 'chat_child', boundary), /boundary/);
+    assert.equal(calls.length, 1);
 });
