@@ -139,11 +139,11 @@ try {
     await field('connect').click(); await waitStatus('Chat memory is ready');
     assert(true, 'real settings completed the live LambdaDB connection and setup test');
 
-    // C1: the switch is locked until Test endpoint succeeds. A standard story first,
+    // C1: the switch is locked until Test and save succeeds. A standard story first,
     // to check that turning Private memory on pauses it.
     stage = 'standard story';
-    assert(await field('privateMemory').isDisabled() && (await field('private-memory-lock').textContent()).includes('Test endpoint first') && await field('private-memory-lock').isVisible(),
-        'Private memory is disabled with a reason before Test endpoint succeeds');
+    assert(await field('privateMemory').isDisabled() && (await field('private-memory-lock').textContent()).includes('Test and save an embedding endpoint first') && await field('private-memory-lock').isVisible(),
+        'Private memory is disabled with a reason before Test and save succeeds');
     await seed(); await memoryControl(page).check(); await waitStatus('synchronized');
     const standard = remote.filter(r => r.method === 'POST' && r.resource === 'collections' && r.stage === stage).map(r => JSON.parse(r.body)).find(b => b.collectionName.startsWith('smstory_'));
     assert(standard && standard.indexConfigs.text && standard.tags.memory_mode === undefined && !(await chatButton('label').textContent()).includes('Private'), 'a standard story is created and synchronized while Private memory is off');
@@ -154,16 +154,18 @@ try {
     assert(await pull('ollama-qwen3') === 'ollama pull qwen3-embedding:0.6b' && await pull('openai-small') === '' && await pull('ollama-gemma') === 'ollama pull embeddinggemma'
         && (await field('embedding-pull').evaluate(el => getComputedStyle(el).whiteSpace)) === 'nowrap', 'an Ollama preset shows its pull command on one line; other presets do not');
     assert(await field('embedding-url').inputValue() === 'http://localhost:11434/v1' && (await field('embedding-quality').textContent()).includes('Validated on English LongMemEval-S')
-        && await field('embedding-local').isVisible() && await field('embedding-ollama').isVisible(), 'the gemma preset fills the local endpoint with its validation label and setup hints');
+        && await field('embedding-ollama').isVisible() && await field('embedding-local').isHidden(), 'the gemma preset fills the local endpoint with its validation label and setup hints; the privacy line waits for a saved endpoint');
     if (ollama !== 'http://localhost:11434/v1') await field('embedding-url').fill(ollama);
     assert(await field('privateMemory').isDisabled(), 'choosing a preset without testing it keeps Private memory locked');
     await field('embedding-test').click();
     // The status can move on to the standard story's synchronization; the saved summary is stable.
     await page.waitForFunction(() => document.querySelector('[data-sm="embedding-summary"]')?.textContent.includes('768 dimensions'), null, { timeout: 180000 });
-    assert(embeddings.length === 1 && embeddings[0].model === 'embeddinggemma' && embeddings[0].inputs === 2, 'Test endpoint sends one short request and records 768 dimensions');
-    assert(await field('privateMemory').isEnabled() && await field('private-memory-lock').isHidden(), 'a successful Test endpoint unlocks Private memory');
-    await field('embedding-preset').selectOption('custom');
-    assert(await field('privateMemory').isEnabled(), 'a draft edit after a test keeps the saved, tested settings and the switch unlocked');
+    assert(embeddings.length === 1 && embeddings[0].model === 'embeddinggemma' && embeddings[0].inputs === 2, 'Test and save sends one short request and records 768 dimensions');
+    assert(await field('privateMemory').isEnabled() && await field('private-memory-lock').isHidden() && await field('embedding-local').isVisible()
+        && (await field('embedding-summary').textContent()).startsWith('In use: embeddinggemma') && await field('embedding-draft').isHidden(), 'a successful Test and save unlocks Private memory and shows the local endpoint in use');
+    await field('embedding-preset').selectOption('openai-small');
+    assert(await field('privateMemory').isEnabled() && await field('embedding-draft').isVisible() && await field('embedding-local').isVisible()
+        && (await field('embedding-summary').textContent()).startsWith('In use: embeddinggemma'), 'an unsaved remote draft is marked and the privacy line still describes the saved local endpoint');
     await field('embedding-preset').selectOption('ollama-gemma');
     if (ollama !== 'http://localhost:11434/v1') await field('embedding-url').fill(ollama);
     await shot('endpoint-tested');
@@ -234,7 +236,8 @@ try {
     assert(kept.prompt.includes('under the red bridge') && keptQueries.length === 1 && keptQueries[0].query.knn?.queryVector?.length === 768 && !keptQueries[0].rerank
         && !remote.some(r => r.stage === 'turn off keeps private' && r.method === 'POST' && r.resource === 'collections'), 'with Private memory off, the private story keeps syncing and searching by vector');
     await openChatMemory(page);
-    assert((await chatButton('label').textContent()).endsWith(' · Private') && await chatButton('rebuild').isHidden(), 'the private story is not blocked and still shows Private');
+    assert((await chatButton('label').textContent()).endsWith(' · Private') && await chatButton('rebuild').isVisible() && await chatButton('sync').isHidden()
+        && (await chatButton('analyzers').textContent()).includes('Rebuild to switch this story to standard memory'), 'the private story is not blocked, still shows Private, and offers an optional rebuild to standard memory');
     await shot('private-kept-off');
 
     // B: with Private memory off, a changed embedding identity still blocks the private story.

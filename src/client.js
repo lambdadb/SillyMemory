@@ -131,11 +131,11 @@ export class LambdaClient {
         if (!/^[a-zA-Z0-9_-]{3,52}$/.test(collection)) throw new ConnectionError('Invalid collection name.');
         return `/collections/${collection}${suffix}`;
     }
-    // `privateMemory` is an embeddingIdentity(): its dimension and its mode/identity tags.
-    create(collection, owner, scope, analyzers, privateMemory) {
+    // A given embeddingIdentity creates a private story.
+    create(collection, owner, scope, analyzers, embeddingIdentity) {
         this.path(collection);
-        const indexConfigs = privateMemory ? privateSchema(privateMemory.dimensions) : schema(analyzers);
-        return this.call((sdk, opts) => sdk.createCollection({ collectionName: collection, indexConfigs, description: 'SillyMemory owned memory', tags: { application: 'sillymemory', owner, ...(scope ? { chat: scope } : {}), ...privateMemory?.tags }, snapshotRetentionInDays: 1 }, opts));
+        const indexConfigs = embeddingIdentity ? privateSchema(embeddingIdentity.dimensions) : schema(analyzers);
+        return this.call((sdk, opts) => sdk.createCollection({ collectionName: collection, indexConfigs, description: 'SillyMemory owned memory', tags: { application: 'sillymemory', owner, ...(scope ? { chat: scope } : {}), ...embeddingIdentity?.tags }, snapshotRetentionInDays: 1 }, opts));
     }
     get(collection, signal) { this.path(collection); return this.call((sdk, opts) => sdk.collection(collection).get(opts), signal); }
     verifyOwned(result, owner, scope) {

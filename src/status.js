@@ -5,6 +5,12 @@ export function analyzerNotice(actual, configured) {
     return sameAnalyzers(actual, configured) ? '' : `This story's memory is indexed with: ${actual.join(', ')}. Rebuild to apply the current setting: ${configured.join(', ')}.`;
 }
 
+// A private story keeps working when Private memory is off; offer, not require, a
+// rebuild into the current mode. The reverse case is blocked as a mismatch instead.
+export function modeNotice(storyPrivate, settingPrivate) {
+    return storyPrivate && !settingPrivate ? 'This story uses Private memory; new stories use standard memory. Rebuild to switch this story to standard memory.' : '';
+}
+
 export function progressText(value) {
     const count = `${value.completed} / ${value.total}`;
     switch (value.phase) {
@@ -60,10 +66,10 @@ export class OperationStatus {
     }
 }
 
-// Private memory can be turned on only after Test endpoint succeeded for the saved
+// Private memory can be turned on only after Test and save succeeded for the saved
 // settings; turning it off is always allowed. Returns why the switch is unavailable.
 export function privateMemoryLock(enabled, tested) {
-    return enabled || tested ? '' : 'Test endpoint first: Private memory needs a tested embedding endpoint.';
+    return enabled || tested ? '' : 'Test and save an embedding endpoint first: Private memory needs a tested endpoint.';
 }
 
 // A memory mode or embedding mismatch offers only Rebuild story memory (and turning

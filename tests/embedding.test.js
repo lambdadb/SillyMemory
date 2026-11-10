@@ -123,7 +123,7 @@ test('configuration normalizes the base URL, keeps prefixes exact and rejects un
     assert.throws(() => embeddingConfig({ baseUrl: 'http://localhost:11434/v1', model: ' ' }), /model name/);
     assert.equal(localEndpoint('http://127.0.0.1:11434/v1'), true);
     assert.equal(localEndpoint('http://192.168.1.4:11434/v1'), false);
-    await assert.rejects(embeddingIdentity({ ...ollama }), e => e.code === 'embedding' && /Test endpoint/.test(e.message));
+    await assert.rejects(embeddingIdentity({ ...ollama }), e => e.code === 'embedding' && /Test and save/.test(e.message));
 });
 
 test('the embedding identity fits LambdaDB collection tag rules and changes with model, prefixes or dimension', async () => {

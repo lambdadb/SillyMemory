@@ -6,7 +6,7 @@ import { activationBinding, chatActivated } from './src/activation.js';
 import { ChatCollections, chatCollection, ensureChatIdentity, hostChats } from './src/chat-collections.js';
 import { runTransportGate } from './src/gate.js';
 import { MemoryEngine, Journal, capture, chatOwner, supportsChat, fingerprint, options, DEFAULTS, memoryBoundary, archiveBoundary } from './src/memory.js';
-import { OperationStatus, failureText, analyzerNotice, privateMemoryLock, recoveryActions } from './src/status.js';
+import { OperationStatus, failureText, analyzerNotice, modeNotice, privateMemoryLock, recoveryActions } from './src/status.js';
 import { PromptDelivery, expectedMessages, deliverySummary } from './src/delivery.js';
 import { MEMORY_GUIDANCE, retentionAnchor, quoteMemoryText, quoteMemoryMessages } from './src/context.js';
 import { hostPromptTokens, dialogueSnapshot, compareDialogue, comparisonLabel, tokenLabel } from './src/token-usage.js';
@@ -161,7 +161,8 @@ function renderChatStatus() {
     // The open story keeps its created analyzers; a changed setting is information, not a failure.
     const story = memoryEnabled() && !blocker && state.ready && !state.testCollection;
     const known = story && storyAnalyzers?.target === requestTarget();
-    const notice = known && storyAnalyzers.analyzers ? analyzerNotice(storyAnalyzers.analyzers, options(state).analyzers) : '';
+    const notice = !known ? '' : storyAnalyzers.privateMemory ? modeNotice(true, privateMemory())
+        : storyAnalyzers.analyzers ? analyzerNotice(storyAnalyzers.analyzers, options(state).analyzers) : '';
     // A memory mode or embedding mismatch stops work; its failure status already explains it.
     const mismatch = story && storyMismatch === requestTarget();
     chatStatus.dataset.kind = kind;
@@ -704,7 +705,7 @@ async function initialize() {
     };
     element('stopOnLoss').checked = state.stopOnLoss !== false;
     element('stopOnLoss').onchange = () => { state.stopOnLoss = element('stopOnLoss').checked; persist(); };
-    // Private memory settings: form edits stay drafts until Test endpoint succeeds.
+    // Private memory settings: form edits stay drafts until Test and save succeeds.
     const embeddingForm = () => {
         const preset = EMBEDDING_PRESETS[element('embedding-preset').value];
         return { baseUrl: element('embedding-url').value.trim(), ...(preset ? { model: preset.model, queryPrefix: preset.queryPrefix, documentPrefix: preset.documentPrefix }
@@ -714,13 +715,18 @@ async function initialize() {
         const custom = !EMBEDDING_PRESETS[element('embedding-preset').value];
         element('embedding-custom').hidden = !custom;
         element('embedding-quality').textContent = custom ? 'Quality not validated.' : 'Validated on English LongMemEval-S.';
-        element('embedding-local').hidden = !localEndpoint(element('embedding-url').value.trim());
         const ollama = element('embedding-preset').value.startsWith('ollama-');
         element('embedding-ollama').hidden = !ollama;
         element('embedding-pull-line').hidden = !ollama;
         element('embedding-pull').textContent = ollama ? `ollama pull ${EMBEDDING_PRESETS[element('embedding-preset').value].model}` : '';
-        const saved = state.embedding;
-        element('embedding-summary').textContent = saved?.dimensions ? `Tested: ${saved.model} at ${saved.baseUrl}, ${saved.dimensions} dimensions.` : 'No embedding endpoint tested yet.';
+        // The privacy line describes the endpoint actually in use, never an unsaved draft.
+        const saved = state.embedding?.dimensions ? state.embedding : undefined;
+        element('embedding-local').hidden = !saved || !localEndpoint(saved.baseUrl);
+        element('embedding-summary').textContent = saved ? `In use: ${saved.model} at ${saved.baseUrl}, ${saved.dimensions} dimensions.` : 'No embedding endpoint saved yet.';
+        let draft;
+        try { draft = embeddingConfig(embeddingForm()); } catch { draft = undefined; }
+        const changed = Boolean(saved) && ['baseUrl', 'model', 'queryPrefix', 'documentPrefix'].some(k => draft?.[k] !== saved[k]);
+        element('embedding-draft').hidden = !changed;
     };
     const showEmbedding = (config = state.embedding) => {
         const preset = embeddingPreset(config) || (config ? 'custom' : 'ollama-qwen3');
@@ -744,7 +750,7 @@ async function initialize() {
         else for (const name of ['embedding-model', 'embedding-query-prefix', 'embedding-document-prefix']) element(name).value = '';
         renderEmbeddingForm();
     };
-    element('embedding-url').oninput = renderEmbeddingForm;
+    for (const name of ['embedding-url', 'embedding-model', 'embedding-query-prefix', 'embedding-document-prefix']) element(name).oninput = renderEmbeddingForm;
     element('embedding-test').onclick = () => action(async () => {
         const config = embeddingConfig(embeddingForm());
         const typed = element('embedding-key').value.trim(); element('embedding-key').value = '';

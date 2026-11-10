@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { OperationStatus, failureText, analyzerNotice, privateMemoryLock, recoveryActions } from '../src/status.js';
+import { OperationStatus, failureText, analyzerNotice, modeNotice, privateMemoryLock, recoveryActions } from '../src/status.js';
 import { ConnectionError } from '../src/client.js';
 
 test('a changed analyzer setting is reported for a story only when the indexed set differs', () => {
@@ -94,7 +94,7 @@ test('generation recovery targets the pending input across failure categories', 
 });
 
 test('Private memory can be turned on only with a tested endpoint, and can always be turned off', () => {
-    assert.match(privateMemoryLock(false, false), /Test endpoint first/);
+    assert.match(privateMemoryLock(false, false), /Test and save an embedding endpoint first/);
     assert.equal(privateMemoryLock(false, true), '', 'saved, tested settings unlock the switch; a draft edit does not lock it again');
     assert.equal(privateMemoryLock(true, false), '', 'a user who already turned it on is never locked in');
 });
@@ -104,4 +104,12 @@ test('a memory mode or embedding mismatch offers only Rebuild story memory', () 
     assert.deepEqual(recoveryActions({ sync: true, retry: true }), { rebuild: false, sync: true, retry: true });
     assert.deepEqual(recoveryActions({ notice: 'Rebuild to apply', sync: true }), { rebuild: true, sync: true, retry: false }, 'an analyzer notice is information, not a block');
     assert.deepEqual(recoveryActions({}), { rebuild: false, sync: false, retry: false });
+});
+
+test('a private story offers an optional rebuild only when Private memory is off', () => {
+    assert.match(modeNotice(true, false), /Rebuild to switch this story to standard memory/);
+    assert.equal(modeNotice(true, true), '');
+    assert.equal(modeNotice(false, false), '');
+    assert.equal(modeNotice(false, true), '');
+    assert.deepEqual(recoveryActions({ notice: modeNotice(true, false), sync: true }), { rebuild: true, sync: true, retry: false });
 });
