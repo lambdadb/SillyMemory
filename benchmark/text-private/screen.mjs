@@ -7,6 +7,7 @@
 // --provider also reports prefixed token lengths with the model's tokenizer (truncation check).
 // --cosine-against compares this store with another one (same dims) on their shared texts.
 // --compare-arm K checks the ranking against that arm's stored live results (layout private).
+// --requests-out FILE writes the frozen generation request bodies (as analyze.mjs does) for score.py.
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import { open, readFile, writeFile } from 'node:fs/promises';
@@ -19,7 +20,7 @@ import { aggregate, coverage, evidence } from './metrics.mjs';
 const { values: args } = parseArgs({ options: { dataset: { type: 'string' }, vectors: { type: 'string' }, name: { type: 'string' },
     dims: { type: 'string' }, questions: { type: 'string' }, stage3: { type: 'string' }, analysis: { type: 'string' },
     tokenizer: { type: 'string' }, out: { type: 'string' }, arms: { type: 'string', default: 'K,E,M,B' }, provider: { type: 'string' },
-    'cosine-against': { type: 'string' }, 'compare-arm': { type: 'string' } } });
+    'cosine-against': { type: 'string' }, 'compare-arm': { type: 'string' }, 'requests-out': { type: 'string' } } });
 const here = path.dirname(new URL(import.meta.url).pathname);
 const config = JSON.parse(await readFile(path.join(here, '../longmemeval/config.json')));
 const bytes = await readFile(args.dataset);
@@ -50,7 +51,7 @@ const stats = values => { const s = [...values].sort((a, b) => a - b); const at 
 const vectors = await store(args.vectors, args.name);
 const owner = JSON.parse(await readFile(path.join(args.stage3, 'private/state.json'))).owner;
 
-const out = { returned: [], delivered: [] }, perQuestion = [], compare = { overlap10: 0, overlap50: 0, identical50: 0 };
+const out = { returned: [], delivered: [] }, perQuestion = [], requests = {}, compare = { overlap10: 0, overlap50: 0, identical50: 0 };
 let searchMs = 0;
 for (const row of rows) {
     const p = await prepareCase(row, config, owner), ev = evidence(row, p);
@@ -62,8 +63,9 @@ for (const row of rows) {
     const ids = scored.slice(0, config.retrieval.final).map(x => x[0]);
     const packed = requestFor(p, ids.map(i => ev.byId.get(i)), config, countTokens);
     const r = coverage(ev, ids), d = coverage(ev, packed.selectedIds);
+    requests[row.question_id] = packed.body;
     out.returned.push({ id: row.question_id, type: row.question_type, ...r }); out.delivered.push({ id: row.question_id, type: row.question_type, ...d });
-    perQuestion.push({ id: row.question_id, type: row.question_type, returnedComplete: r.complete, deliveredComplete: d.complete,
+    perQuestion.push({ id: row.question_id, type: row.question_type, returnedComplete: r.complete, deliveredComplete: d.complete, deliveredPartial: d.partial, deliveredAllComplete: d.allComplete,
         annotated: r.annotated, firstEvidence: r.firstEvidence, sessionHit: r.sessionHit, ids });
     if (args['compare-arm']) {
         const live = JSON.parse(await readFile(path.join(args.stage3, 'private/recall', `${row.question_id}.json`))).results[args['compare-arm']].ids;
@@ -111,4 +113,5 @@ if (args.provider) {
 encoder.free();
 for (const fd of handles) await fd.close();
 await writeFile(args.out, JSON.stringify({ ...result, perQuestion }, null, 2));
+if (args['requests-out']) await writeFile(args['requests-out'], JSON.stringify(requests));
 console.log(JSON.stringify(result, null, 1));

@@ -25,12 +25,13 @@ which text-private mode cannot use. The only multilingual local model tested (M)
 lost about 6 more points on English, so the first version should not default to
 it.
 
-**Update (November 10, retrieval only):** three larger local multilingual models
+**Update (November 10):** three larger local multilingual models
 served through Ollama reach K's retrieval level on the full English set. Delivered
 complete was 95.64% for Qwen3-Embedding-0.6B, 95.41% for EmbeddingGemma 300M and
 94.97% for BGE-M3, against 95.30% for K. All three pass the pre-registered ≥ 93.30%
-criterion. Answers were not generated or judged, and multilingual quality is not
-measured. See [Local multilingual candidates](#local-multilingual-candidates-retrieval-only).
+criterion. Answers for Qwen3 and Gemma (approved afterwards) were 472/500 and 468/500,
+versus 457/500 for K, at least K-level. These are English-only results, and multilingual
+quality is not measured. See [Local multilingual candidates](#local-multilingual-candidates-retrieval-only).
 
 ## Product question
 
@@ -368,10 +369,8 @@ All three are far above M (84.45%).
 
 **Interpretation and boundaries.**
 
-- This is retrieval and delivery coverage only. No answers were generated or judged
-  for these models. The earlier K/B/D results show that comparable delivered coverage
-  gave comparable answers (455–458/500), but that is not a measurement for these
-  models.
+- The retrieval result alone does not measure answer quality. Answers were generated
+  and judged for Qwen3 and Gemma (below). BGE-M3 was not scored.
 - English LongMemEval-S only. **No multilingual quality claim follows from these
   results**, for these models or for M.
 - The measurement is of model quality as served by Ollama 0.40.15's default tags
@@ -383,6 +382,58 @@ All three are far above M (84.45%).
   floats (Gemma) cost about half of K's 1,536, and 1,024 floats (BGE-M3, Qwen3)
   about two thirds. This is an estimate from dimension count, not a measured
   upload.
+
+### Answers for Qwen3 (Q3) and EmbeddingGemma (G), English only
+
+Steven approved generation and judging for the two strongest arms, both dense-only:
+Q3 is `qwen3-embedding:0.6b` (Q8_0) and G is `embeddinggemma` (BF16). Both used the
+protocol of K, B, D and M. Requests were built from each model's full-500 local
+exact-KNN top 50 by the same packing path (`requestFor`, 4,096-token budget). The
+generator was `gpt-6.1-sol` (reasoning low) with the original task-specific rules,
+and the judge was `jev-1.13.0` at Yes ≥ 0.50 (`score.py`, 3 shards per arm). Raw
+probabilities are retained.
+
+Before any paid call, the request builder (`screen.mjs --requests-out`) reproduced the
+stored K requests byte-for-byte on the 100-question subset. For one question per arm,
+the Q3 and G requests matched K's in every field and message except the recalled-memory
+block.
+
+| Arm | Correct | Accuracy | Only arm correct / only K correct | Wrong, all evidence delivered | Wrong, some evidence missing | Wrong, partial only | Wrong, no indexed annotation | Borderline (0.35–0.65) |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| **Q3: qwen3-embedding:0.6b** | **472** | **94.4%** | 25 / 10 | 14 | 12 | 1 | 1 | 20 |
+| **G: embeddinggemma** | **468** | **93.6%** | 18 / 7 | 18 | 12 | 1 | 1 | 17 |
+| K: OpenAI small (Nov 9) | 457 | 91.4% | – | 19 | 21 | 1 | 2 | 18 |
+| M: multilingual-e5-small (Nov 9) | 427 | 85.4% | 18 / 48 | 11 | 60 | 0 | 2 | 26 |
+
+Correct answers by question type:
+
+| Type (n) | K | Q3 | G | M |
+| --- | ---: | ---: | ---: | ---: |
+| knowledge-update (78) | 75 | 78 | 77 | 73 |
+| multi-session (133) | 114 | 121 | 115 | 104 |
+| single-session-assistant (56) | 55 | 55 | 55 | 55 |
+| single-session-preference (30) | 25 | 27 | 27 | 21 |
+| single-session-user (70) | 68 | 69 | 69 | 65 |
+| temporal-reasoning (133) | 120 | 122 | 125 | 109 |
+
+Q3 versus G is 17 / 13 (only Q3 correct / only G correct).
+
+**Interpretation (inference).** Both local models answered at least as well as K on
+English LongMemEval-S: +15 (Q3) and +11 (G) questions. The paired discordant counts
+favour them (25/10, exact two-sided sign test p ≈ 0.02; 18/7, p ≈ 0.04). However,
+Q3 and G were generated on November 10 and K on November 9. Same-day A versus
+A-historical varied by 5/9 questions, so part of the gap may be generator or judge
+variation. The defensible reading is "not worse than K", not "better than K".
+Fewer wrong answers had evidence missing at delivery (12 versus 21), although
+delivered-complete coverage was nearly equal (95.6% / 95.4% versus 95.3%). The two
+local models therefore appear to miss on different, possibly easier-to-recover
+questions. That is not established. The loss versus rerank arm A (476–480) remains.
+**This is English-only evidence, and it makes no multilingual quality claim** for
+either model.
+
+Spend (modeled from usage at the frozen rate card): Q3 $6.38 and G $6.38, together
+$12.76. The cumulative external total is $45.47 against the $100 cap, within the
+$50 limit set for this step.
 
 ## Answers (Jev 1.13.0 Noul, Yes ≥ 0.50)
 
@@ -453,7 +504,8 @@ Experiment spend (modeled from usage at the frozen rate card in
 | OpenAI client embeddings, 39,937,441 tokens | 0.80 |
 | Generation + Jev judging: B / K / D / A control | 6.37 / 6.39 / 6.37 / 6.40 |
 | Generation + Jev judging: M | 6.38 |
-| **External total (OpenAI + Typesafe; cap $100)** | **32.71** |
+| Generation + Jev judging: Q3 / G (Nov 10) | 6.38 / 6.38 |
+| **External total (OpenAI + Typesafe; cap $100)** | **45.47** |
 | LambdaDB, gross list estimate: writes 13.5 GB ≈ $13.5; managed embedding ≈ $1.09; Jev rerank ≈ $0.5 (estimated tokens); reads < $0.3 | ≈ 15.4 (separate) |
 
 ## Limitations
