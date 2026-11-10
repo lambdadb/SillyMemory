@@ -1,13 +1,40 @@
 # Text-private retrieval evaluation
 
-**Recommended direction, pending Steven's final adoption decision:** build the
-first text-private mode as an **OpenAI-compatible embedding adapter + dense-only
-KNN + local text restoration** (arm K). Defer client-side sparse/BM25: keep its
-evaluation code and results, but do not implement it now. Any recommended local
-embedding model must be multilingual; the English-only bge-small arms (D, E) are
-diagnostics, not product candidates.
+## Decision: adopt
 
-Evaluated November 9, 2026, on LongMemEval-S (500 questions, English).
+**Adopt the text-private mode design.** This is the adoption decision for the
+product question below, not an intermediate diagnosis. Implementation is a
+separate follow-up change.
+
+- **Embedding:** the user connects any OpenAI-compatible `/v1/embeddings`
+  endpoint and picks a provider when enabling the mode. There is no zero-setup
+  default.
+- **Search:** dense KNN only. Raw text is not sent to or stored in LambdaDB; the
+  client restores the text of returned chunks from the local chat.
+- **Known cost:** rerank is not available in this mode. Answers were 476/500 for
+  the rerank default (A, same day) versus 457 for OpenAI small (K), 472 for
+  Qwen3-Embedding-0.6B (Q3) and 468 for EmbeddingGemma (G).
+- **Deferred:** client-side sparse/BM25. It reproduces server BM25 but did not
+  help OpenAI small (C below K). Its evaluation code and results are kept.
+- **Recommended models, each validated on English LongMemEval-S only** (no
+  multilingual quality claim):
+  - Remote: OpenAI `text-embedding-3-small`.
+  - Local server (Ollama default tags): `qwen3-embedding:0.6b`, with
+    `embeddinggemma` as a lighter alternative. Their model-card prompt prefixes
+    must be applied client-side, because Ollama adds none.
+- **Not recommended:** the transformers.js Qwen3 q8 ONNX port (broken, see
+  [parity](#local-multilingual-candidates-retrieval-only)), multilingual-e5-small
+  (weak, arm M) and English-only models such as bge-small-en (references only).
+- **Not performed** (not required for this decision): a same-day K rerun,
+  multilingual quality evaluation, live LambdaDB ANN on large collections and
+  browser WASM embedding speed.
+- **LambdaDB validation gaps** (recorded, handled separately in LambdaDB): a sparse
+  query weight of `0` returns HTTP 500, and 4,095/4,096 query terms return HTTP 500
+  while 3,000 succeed. See [Stage 2](#stage-2-live-contract-smoke-project-stest).
+
+## Results summary
+
+Evaluated November 9–10, 2026, on LongMemEval-S (500 questions, English).
 
 | Arm (no stored text unless noted) | Delivered complete | Answers (Jev ≥0.50) |
 | --- | ---: | ---: |
@@ -16,14 +43,15 @@ Evaluated November 9, 2026, on LongMemEval-S (500 questions, English).
 | **K: client OpenAI small, dense KNN** | **95.30%** | **457** |
 | D: local bge-small-en + client sparse (English-only diagnostic) | 92.39% | 458 |
 | M: local multilingual-e5-small q8, dense KNN | 84.45% | 427 |
+| Q3: local qwen3-embedding:0.6b (Ollama), dense KNN (Nov 10) | 95.64% | 472 |
+| G: local embeddinggemma (Ollama), dense KNN (Nov 10) | 95.41% | 468 |
 
-Evidence for the direction: K, D and B have equal answer quality (457/458/455,
+Evidence: K, D and B have equal answer quality (457/458/455,
 within noise), and K has the best retrieval among the arms without rerank.
 Client sparse hurt OpenAI small (C below K) and helped only the weak bge-small
 (D above E). The ~4–5 point loss versus A is attributed to the missing rerank,
-which text-private mode cannot use. The only multilingual local model tested (M)
-lost about 6 more points on English, so the first version should not default to
-it.
+which text-private mode cannot use. The multilingual local model tested on November 9 (M)
+lost about 6 more points on English.
 
 **Update (November 10):** three larger local multilingual models
 served through Ollama reach K's retrieval level on the full English set. Delivered
@@ -467,8 +495,8 @@ the other text-private arms. That matches its retrieval loss: 60 of its 73 wrong
 answers had evidence missing or partial at delivery. This is English-only
 evidence. **It does not establish multilingual quality for any model, including
 M.** It shows that M (q8; fp32 retrieval was equal on a 100-question subset) costs about 6 points on English
-LongMemEval relative to K. No local multilingual model is validated as a
-product candidate by this run.
+LongMemEval relative to K. No local multilingual model was validated by this
+November 9 run; the November 10 Ollama candidates are evaluated above.
 
 ## Resources
 
@@ -521,9 +549,9 @@ Experiment spend (modeled from usage at the frozen rate card in
   stored representation non-sensitive.
 - The local-KNN substitution for M is validated only for per-chat ranges of
   about 1,000 chunks.
-- Not measured: browser (WASM) embedding speed, mobile devices, and
-  multilingual retrieval quality. The Ollama candidates were measured for
-  retrieval only, with no answers or judge, on one machine's GPU.
+- Not measured: browser (WASM) embedding speed, mobile devices, live ANN on
+  large collections, and multilingual retrieval quality. BGE-M3 was measured for
+  retrieval only; Q3 and G answers were generated on a different day from K.
 
 ## Evidence
 
