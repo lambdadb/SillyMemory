@@ -4,7 +4,7 @@ Versions describe the extension, independently of the SillyTavern host version.
 An `Unreleased` entry is a development candidate. A dated entry records a release
 boundary; publication is confirmed by the corresponding Git tag and GitHub Release.
 
-## [Unreleased]
+## [0.10.0] - 2026-11-11
 
 ### Added
 
@@ -55,6 +55,17 @@ boundary; publication is confirmed by the corresponding Git tag and GitHub Relea
   group round, SillyMemory replaces the host's aborted generation controller,
   so Auto Mode can be turned on again right away.
 
+### Fixed
+
+- Memory saves and searches messages as SillyTavern sends them: regex scripts
+  set to **Alter Outgoing Prompt** now apply before saving, at the message's
+  depth. Text such scripts hide, such as tracker blocks, no longer reaches
+  memory. Messages whose result changes are saved again on the next sync.
+  Scripts that use macros are not applied to memory, a group chat uses global
+  and preset scripts only, and memory uses the depth of an ordinary reply also
+  for **Continue** and **Swipe**. If you already use such scripts, the first
+  sync after updating saves the affected older messages again.
+
 ### Known limits
 
 - Group Auto Mode without user input keeps every reply since the last user
@@ -66,18 +77,19 @@ boundary; publication is confirmed by the corresponding Git tag and GitHub Relea
   until a message is sent (a SillyTavern limitation); each such round still
   prepares memory.
 
+### Compatibility
+
+- Supported host is unchanged: SillyTavern 1.19.0 at
+  `06bde939fb1e9c4c8d8641d810f0a916b5bce127` with Chromium. There is no
+  settings or data migration. Existing standard stories, saved on/off choices,
+  the saved key and saved memory are unaffected unless Private memory is turned
+  on, which pauses them until they are rebuilt. Private memory is opt-in and off
+  by default. Users of **Alter Outgoing Prompt** regex scripts see a one-time
+  re-save of the affected older messages on the first sync after updating.
+
 ## [0.9.1] - 2026-11-06
 
 ### Fixed
-
-- Memory saves and searches messages as SillyTavern sends them: regex scripts
-  set to **Alter Outgoing Prompt** now apply before saving, at the message's
-  depth. Text such scripts hide, such as tracker blocks, no longer reaches
-  memory. Messages whose result changes are saved again on the next sync.
-  Scripts that use macros are not applied to memory, a group chat uses global
-  and preset scripts only, and memory uses the depth of an ordinary reply also
-  for **Continue** and **Swipe**. If you already use such scripts, the first
-  sync after updating saves the affected older messages again.
 
 - A story whose collection was just created showed "This story's memory is
   indexed with: standard" with **Rebuild story memory** until the next
