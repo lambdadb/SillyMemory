@@ -46,8 +46,9 @@ until you rebuild them; private stories keep working if you turn it off. A
 paused story, or a private story whose embedding model, prefixes or dimension
 differ from the tested settings, stops with an explicit error and shows only
 **Rebuild story memory** and **Turn memory off in this chat** in its Memory
-panel. Rebuilding recreates the story in the current mode; changing the setting
-back also resumes it. A private story that keeps working with the setting off
+panel. Rebuilding recreates the story in the current mode. Turning Private
+memory off again resumes a paused standard story, and restoring the earlier
+embedding settings with **Test and save** resumes a private story. A private story that keeps working with the setting off
 also offers **Rebuild story memory** to switch it to standard memory. The Memory
 panel shows **Private** for a private story, for example
 `Memory · Ready · Private`. Settings show the endpoint in use and mark unsaved
