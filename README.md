@@ -87,7 +87,8 @@ memory** for everything that was added to the prompt.
   or the lighter `embeddinggemma`, or OpenAI `text-embedding-3-small`. Other
   models work but their quality is not validated. New stories follow the
   setting. Turning it on pauses existing standard stories until you rebuild them
-  with **Rebuild story memory**; private stories keep working if you turn it off. Search
+  with **Rebuild story memory**; private stories keep working if you turn it off,
+  and **Rebuild story memory** switches one to standard memory. Search
   uses vectors only, without reranking. See
   [Private memory](docs/private-memory.md).
 - Memory is per chat. **Turn memory off in this chat** returns that chat to
@@ -98,8 +99,9 @@ memory** for everything that was added to the prompt.
 - Memory saves each message as SillyTavern would send it: regex scripts set to
   **Alter Outgoing Prompt** apply before saving and searching, at the message's
   current depth. Messages whose result changes after you edit a script are saved
-  again on the next sync. Scripts whose find, replace or trim text uses macros
-  such as `{{char}}` or `<USER>` are not applied to memory. In a group chat,
+  again on the next sync. Scripts that substitute macros in the find regex, or
+  whose replace or trim text uses macros such as `{{char}}` or `<USER>`, are not
+  applied to memory. In a group chat,
   memory uses global and preset scripts, not a member's character scripts.
 - In a group chat, memory belongs to the group chat, not to a member. Each
   member's reply searches memory with your latest message, so one message
@@ -132,8 +134,8 @@ not a guarantee for every model or roleplay.
 | LambdaDB is busy or over its request limit (HTTP 429) | Each LambdaDB project has a request budget of `rate_limit` requests per second (5 by default), refilled at that rate. The extension waits as long as the response's `Retry-After` header says (one second for the default limit) and retries twice, so this status normally clears itself; if it persists, check the project's `rate_limit` in the LambdaDB console project overview and raise it through a support request. |
 | Tracker blocks or other hidden text appear in memory | Memory follows SillyTavern regex scripts, not text another extension removes from the final prompt. Add a regex script with **AI Output** and **Alter Outgoing Prompt** that removes it. For Megumin Suite blocks, find `/<Blocks\b[^>]*>[\s\S]*?<\/Blocks\s*>/gi` and replace with nothing. |
 | Query exceeds 8 KiB | Shorten the latest messages, or turn memory off for that reply. |
-| Embedding request failed (Private memory) | Check that the embedding endpoint is running and the URL and model are right, then **Test and save** in settings. Ollama allows SillyTavern on the same machine by default; for another device, see [setup and recovery](docs/setup-and-recovery.md#private-memory). |
-| Standard story paused after turning Private memory on, or private story created with a different embedding model | Click **Rebuild story memory** in the Memory panel, or change the setting back. |
+| Embedding request failed (Private memory) | Start the embedding endpoint, or fix its URL and model and click **Test and save** in settings. Then click **Retry reply** or **Retry synchronization**. Ollama allows SillyTavern on the same machine by default; for another device, see [setup and recovery](docs/setup-and-recovery.md#private-memory). |
+| Standard story paused after turning Private memory on, or private story created with a different embedding model | Click **Rebuild story memory** in the Memory panel. To keep the existing memory instead, turn Private memory off again for a paused standard story, or restore the earlier embedding settings and click **Test and save** for a private story. |
 
 ## Data, usage and deletion
 
@@ -200,6 +202,8 @@ reload. Updates follow the installed Git branch (`main` by default), not the
 newest release tag. Settings and memory are preserved; do not delete memory
 just to update.
 
+- From 0.9.x: no action is needed. If you use regex scripts set to **Alter
+  Outgoing Prompt**, the first sync saves the affected older messages again.
 - From 0.7.x: chats that had memory on come up off; open each one and choose
   **Turn memory on in this chat** again (saved memory is reused). The optional
   **Frozen memory snapshots** feature was removed; use SillyTavern's native
