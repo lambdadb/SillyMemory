@@ -85,7 +85,9 @@ memory** for everything that was added to the prompt.
   and recalled passages come from your local chat. Recommended models,
   validated on English LongMemEval-S only: local Ollama `qwen3-embedding:0.6b`
   or the lighter `embeddinggemma`, or OpenAI `text-embedding-3-small`. Other
-  models work but their quality is not validated. New stories follow the
+  models work through **Custom model**
+  ([how](docs/setup-and-recovery.md#use-another-embedding-model)), but their
+  quality is not validated. New stories follow the
   setting. Turning it on pauses existing standard stories until you rebuild them
   with **Rebuild story memory**; private stories keep working if you turn it off,
   and **Rebuild story memory** switches one to standard memory. Search
