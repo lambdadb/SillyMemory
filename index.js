@@ -9,15 +9,15 @@ import { MemoryEngine, Journal, capture as captureSource, chatOwner, supportsCha
 import { OperationStatus, failureText, analyzerNotice, modeNotice, privateMemoryLock, recoveryActions } from './src/status.js';
 import { PromptDelivery, expectedMessages, deliverySummary } from './src/delivery.js';
 import { MEMORY_GUIDANCE, retentionAnchor, quoteMemoryText, quoteMemoryMessages } from './src/context.js';
+import { promptRegex } from './src/prompt-regex.js';
 import { hostPromptTokens, dialogueSnapshot, compareDialogue, comparisonLabel, tokenLabel } from './src/token-usage.js';
 
 const context = () => SillyTavern.getContext();
 // Apply the host's prompt-only regex scripts at the depth native history uses, so
 // memory stores and searches the text SillyTavern would send for each message.
 let hostRegex;
-const promptText = (text, isUser, depth) => hostRegex ? hostRegex.getRegexedString(text,
-    isUser ? hostRegex.regex_placement.USER_INPUT : hostRegex.regex_placement.AI_OUTPUT, { isPrompt: true, depth }) : text;
-const capture = ctx => captureSource(ctx, promptText);
+const capture = ctx => captureSource(ctx, hostRegex && !ctx.extensionSettings?.disabledExtensions?.includes('regex')
+    ? promptRegex(hostRegex.getRegexScripts({ allowedOnly: true }), find => hostRegex.RegexProvider.instance.get(find)) : undefined);
 const memoryEnabled = () => connectionVerified && state?.ready && chatActivated(context().chatMetadata, state);
 const uuid = () => crypto.randomUUID().replaceAll('-', '');
 let client, engine, root, state, stateKey, owner, timer, busy = false, pendingAction = Promise.resolve(), gatePassed = false;

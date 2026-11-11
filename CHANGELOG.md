@@ -74,6 +74,8 @@ boundary; publication is confirmed by the corresponding Git tag and GitHub Relea
   set to **Alter Outgoing Prompt** now apply before saving, at the message's
   depth. Text such scripts hide, such as tracker blocks, no longer reaches
   memory. Messages whose result changes are saved again on the next sync.
+  Scripts that use macros are not applied to memory, and memory uses the depth
+  of an ordinary reply also for **Continue** and **Swipe**.
 
 - A story whose collection was just created showed "This story's memory is
   indexed with: standard" with **Rebuild story memory** until the next

@@ -98,7 +98,8 @@ memory** for everything that was added to the prompt.
 - Memory saves each message as SillyTavern would send it: regex scripts set to
   **Alter Outgoing Prompt** apply before saving and searching, at the message's
   current depth. Messages whose result changes after you edit a script are saved
-  again on the next sync.
+  again on the next sync. Scripts whose find, replace or trim text uses macros
+  such as `{{char}}` are not applied to memory.
 - In a group chat, memory belongs to the group chat, not to a member. Each
   member's reply searches memory with your latest message, so one message
   answered by three members makes three searches. Adding or removing members
@@ -180,6 +181,9 @@ rest of the flow is the same.
   only the last rounds stay in the prompt.
 - Live reply and streaming checks cover OpenAI `gpt-6.1-sol` on SillyTavern
   1.19.0 and Chromium; other models, providers and browsers are unverified.
+- Memory applies depth-limited regex scripts at the depth of an ordinary reply.
+  **Continue** and **Swipe** count depth one lower, so a message exactly at a
+  script's depth limit can differ from native history in those modes.
 - Prompt delivery is checked for Chat Completion; other formats may report
   verification unavailable.
 - Use one SillyMemory tab per browser profile. Editing the same memory from two
