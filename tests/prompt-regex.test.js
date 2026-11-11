@@ -31,7 +31,7 @@ test('replaces groups like the host without running macros', () => {
     // Matched chat text keeps its macros literal; native generation runs them, memory capture must not.
     assert.equal(apply({ findRegex: '/<b>(.*?)<\\/b>/g', replaceString: '$1' }, '<b>{{setvar::x::1}}</b>'), '{{setvar::x::1}}');
     // Scripts whose own strings use macros could have side effects or vary per capture.
-    for (const fields of [{ replaceString: '{{incvar::count}}' }, { replaceString: '{{time}}' }, { trimStrings: ['{{char}}'] }, { substituteRegex: 1 }]) {
+    for (const fields of [{ replaceString: '{{incvar::count}}' }, { replaceString: '{{time}}' }, { trimStrings: ['{{char}}'] }, { replaceString: '<USER>' }, { trimStrings: ['<char>'] }, { substituteRegex: 1 }]) {
         assert.equal(apply(fields, reply), reply);
     }
 });

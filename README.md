@@ -99,7 +99,8 @@ memory** for everything that was added to the prompt.
   **Alter Outgoing Prompt** apply before saving and searching, at the message's
   current depth. Messages whose result changes after you edit a script are saved
   again on the next sync. Scripts whose find, replace or trim text uses macros
-  such as `{{char}}` are not applied to memory.
+  such as `{{char}}` or `<USER>` are not applied to memory. In a group chat,
+  memory uses global and preset scripts, not a member's character scripts.
 - In a group chat, memory belongs to the group chat, not to a member. Each
   member's reply searches memory with your latest message, so one message
   answered by three members makes three searches. Adding or removing members

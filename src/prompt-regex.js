@@ -5,10 +5,13 @@
 // Placement values match the host's regex_placement.
 export const USER_INPUT = 1, AI_OUTPUT = 2;
 
+// Curly macros and the host's legacy <USER>/<BOT>/<CHAR>/<CHARIFNOTGROUP>/<GROUP> tokens.
+const macro = /\{\{|<(?:USER|BOT|CHAR|CHARIFNOTGROUP|GROUP)>/i;
 const usesMacros = script => Number(script.substituteRegex || 0) !== 0
-    || String(script.replaceString ?? '').replace(/\{\{match\}\}/gi, '').includes('{{')
-    || (script.trimStrings || []).some(trim => String(trim).includes('{{'));
-const set = value => value !== null && value !== undefined && !Number.isNaN(Number(value));
+    || macro.test(String(script.replaceString ?? '').replace(/\{\{match\}\}/gi, ''))
+    || (script.trimStrings || []).some(trim => macro.test(String(trim)));
+// The host treats null, undefined and NaN as an unset depth limit.
+const hasLimit = value => value !== null && value !== undefined && !Number.isNaN(Number(value));
 
 // compile(findRegex) returns the host's RegExp for a script, or null if invalid.
 export function promptRegex(scripts, compile) {
@@ -18,8 +21,8 @@ export function promptRegex(scripts, compile) {
         let out = text;
         for (const script of active) {
             if (!out || !script.placement?.includes(placement)) continue;
-            if (set(script.minDepth) && script.minDepth >= -1 && depth < script.minDepth) continue;
-            if (set(script.maxDepth) && script.maxDepth >= 0 && depth > script.maxDepth) continue;
+            if (hasLimit(script.minDepth) && script.minDepth >= -1 && depth < script.minDepth) continue;
+            if (hasLimit(script.maxDepth) && script.maxDepth >= 0 && depth > script.maxDepth) continue;
             const find = compile(script.findRegex);
             if (!find) continue;
             out = out.replace(find, (...args) => {

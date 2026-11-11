@@ -13,11 +13,19 @@ import { promptRegex } from './src/prompt-regex.js';
 import { hostPromptTokens, dialogueSnapshot, compareDialogue, comparisonLabel, tokenLabel } from './src/token-usage.js';
 
 const context = () => SillyTavern.getContext();
-// Apply the host's prompt-only regex scripts at the depth native history uses, so
-// memory stores and searches the text SillyTavern would send for each message.
 let hostRegex;
-const capture = ctx => captureSource(ctx, hostRegex && !ctx.extensionSettings?.disabledExtensions?.includes('regex')
-    ? promptRegex(hostRegex.getRegexScripts({ allowedOnly: true }), find => hostRegex.RegexProvider.instance.get(find)) : undefined);
+// Memory stores and searches each message as SillyTavern would send it, after the
+// host's prompt-only regex scripts. Memory keeps one version per message, while in
+// a group chat the host applies a member's scoped scripts only during that
+// member's reply; group memory therefore uses the global and preset scripts.
+function hostPromptText(ctx) {
+    if (!hostRegex || ctx.extensionSettings?.disabledExtensions?.includes('regex')) return undefined;
+    const { SCRIPT_TYPES, getScriptsByType, RegexProvider } = hostRegex;
+    const types = ctx.groupId ? [SCRIPT_TYPES.GLOBAL, SCRIPT_TYPES.PRESET] : Object.values(SCRIPT_TYPES);
+    const scripts = types.flatMap(type => getScriptsByType(type, { allowedOnly: true }));
+    return promptRegex(scripts, find => RegexProvider.instance.get(find));
+}
+const capture = ctx => captureSource(ctx, hostPromptText(ctx));
 const memoryEnabled = () => connectionVerified && state?.ready && chatActivated(context().chatMetadata, state);
 const uuid = () => crypto.randomUUID().replaceAll('-', '');
 let client, engine, root, state, stateKey, owner, timer, busy = false, pendingAction = Promise.resolve(), gatePassed = false;
