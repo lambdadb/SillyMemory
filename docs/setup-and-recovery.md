@@ -54,6 +54,31 @@ panel shows **Private** for a private story, for example
 `Memory · Ready · Private`. Settings show the endpoint in use and mark unsaved
 edits; requests keep using the saved endpoint until **Test and save** succeeds. See [Private memory](private-memory.md).
 
+### Use another embedding model
+
+Choose **Custom model** to use a model without a preset. Its quality is not
+validated; for chats that are not in English, choose a multilingual model.
+
+- **Endpoint URL:** an OpenAI-compatible embeddings API, entered up to its
+  version path, for example `http://localhost:11434/v1` for Ollama. SillyMemory
+  sends `POST <URL>/embeddings` with `model`, `input` (up to 32 texts) and
+  `encoding_format: "float"`, and reads `data[].embedding`.
+- **Model name:** the name the endpoint expects, for example `bge-m3` after
+  `ollama pull bge-m3`.
+- **Query and document prefixes:** some models expect an instruction or label
+  before each query or document, for example `query: ` and `passage: ` for E5
+  models. Copy them from the model card exactly, including trailing spaces, and
+  leave them empty when the card names none.
+- **API key:** needed for most remote providers; a local endpoint usually needs
+  none. It is saved in this browser only for this endpoint and model.
+- **Browser access:** your browser calls the endpoint directly, so it must allow
+  requests from the SillyTavern page's origin (CORS), and an HTTPS page needs an
+  HTTPS endpoint. Otherwise **Test and save** reports that the request failed.
+
+**Test and save** measures the vector dimension. The model name, both prefixes
+and the dimension identify a private story's memory: after changing any of
+them, existing private stories need **Rebuild story memory**.
+
 A local Ollama on the same computer as the browser needs no setup: its default
 origins allow `http://localhost:*` and `http://127.0.0.1:*`. To open SillyTavern
 from another device, such as a phone, the browser calls Ollama on the Ollama
