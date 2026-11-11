@@ -70,6 +70,15 @@ boundary; publication is confirmed by the corresponding Git tag and GitHub Relea
 
 ### Fixed
 
+- Memory saves and searches messages as SillyTavern sends them: regex scripts
+  set to **Alter Outgoing Prompt** now apply before saving, at the message's
+  depth. Text such scripts hide, such as tracker blocks, no longer reaches
+  memory. Messages whose result changes are saved again on the next sync.
+  Scripts that use macros are not applied to memory, a group chat uses global
+  and preset scripts only, and memory uses the depth of an ordinary reply also
+  for **Continue** and **Swipe**. If you already use such scripts, the first
+  sync after updating saves the affected older messages again.
+
 - A story whose collection was just created showed "This story's memory is
   indexed with: standard" with **Rebuild story memory** until the next
   synchronization. LambdaDB's collection-creation response carries no index

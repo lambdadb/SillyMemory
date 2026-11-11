@@ -5,13 +5,27 @@ import { callbackUrl, connectWithLambdaDB } from './src/app-connect.js';
 import { activationBinding, chatActivated } from './src/activation.js';
 import { ChatCollections, chatCollection, ensureChatIdentity, hostChats } from './src/chat-collections.js';
 import { runTransportGate } from './src/gate.js';
-import { MemoryEngine, Journal, capture, chatOwner, supportsChat, fingerprint, options, DEFAULTS, memoryBoundary, archiveBoundary } from './src/memory.js';
+import { MemoryEngine, Journal, capture as captureSource, chatOwner, supportsChat, fingerprint, options, DEFAULTS, memoryBoundary, archiveBoundary } from './src/memory.js';
 import { OperationStatus, failureText, analyzerNotice, modeNotice, privateMemoryLock, recoveryActions } from './src/status.js';
 import { PromptDelivery, expectedMessages, deliverySummary } from './src/delivery.js';
 import { MEMORY_GUIDANCE, retentionAnchor, quoteMemoryText, quoteMemoryMessages } from './src/context.js';
+import { promptRegex } from './src/prompt-regex.js';
 import { hostPromptTokens, dialogueSnapshot, compareDialogue, comparisonLabel, tokenLabel } from './src/token-usage.js';
 
 const context = () => SillyTavern.getContext();
+let hostRegex;
+// Memory stores and searches each message as SillyTavern would send it, after the
+// host's prompt-only regex scripts. Memory keeps one version per message, while in
+// a group chat the host applies a member's scoped scripts only during that
+// member's reply; group memory therefore uses the global and preset scripts.
+function hostPromptText(ctx) {
+    if (!hostRegex || ctx.extensionSettings?.disabledExtensions?.includes('regex')) return undefined;
+    const { SCRIPT_TYPES, getScriptsByType, RegexProvider } = hostRegex;
+    const types = ctx.groupId ? [SCRIPT_TYPES.GLOBAL, SCRIPT_TYPES.PRESET] : Object.values(SCRIPT_TYPES);
+    const scripts = types.flatMap(type => getScriptsByType(type, { allowedOnly: true }));
+    return promptRegex(scripts, find => RegexProvider.instance.get(find));
+}
+const capture = ctx => captureSource(ctx, hostPromptText(ctx));
 const memoryEnabled = () => connectionVerified && state?.ready && chatActivated(context().chatMetadata, state);
 const uuid = () => crypto.randomUUID().replaceAll('-', '');
 let client, engine, root, state, stateKey, owner, timer, busy = false, pendingAction = Promise.resolve(), gatePassed = false;
@@ -657,7 +671,7 @@ async function initialize() {
     const hostScript = await import('/script.js');
     hostGenerating = hostScript.isGenerating;
     renewAbortController = () => hostScript.setExternalAbortController(new AbortController());
-    [hostOpenAI, hostTokenizers, hostGroups] = await Promise.all([import('/scripts/openai.js'), import('/scripts/tokenizers.js'), import('/scripts/group-chats.js')]);
+    [hostOpenAI, hostTokenizers, hostGroups, hostRegex] = await Promise.all([import('/scripts/openai.js'), import('/scripts/tokenizers.js'), import('/scripts/group-chats.js'), import('/scripts/extensions/regex/engine.js')]);
     const composer = document.getElementById('send_form');
     if (composer) {
         composer.before(element('chat-status-template').content.cloneNode(true));
