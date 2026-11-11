@@ -89,12 +89,13 @@ function queriesFor(prepared, extra) {
 
 async function runQuestion(row) {
     const file = path.join(root, 'recall', `${row.question_id}.json`);
-    try { await readFile(file); return; } catch {}
     const prior = state.owned[row.question_id];
     if (prior && !prior.absent404) {
-        // A previous attempt left its collection unresolved: delete it before replacing the ownership record.
+        // A previous attempt left its collection unresolved: delete it before skipping a saved
+        // result or replacing the ownership record.
         Object.assign(prior, await db.deleteOwned(prior.collection, tagsFor(prior.scope))); await saveState();
     }
+    try { await readFile(file); return; } catch {}
     const prepared = await prepareCase(row, config, state.owner);
     const collection = `smtp_${randomBytes(12).toString('hex')}`, tags = tagsFor(prepared.scope);
     const entry = state.owned[row.question_id] = { collection, scope: prepared.scope, absent404: false };
@@ -181,4 +182,6 @@ state.bytesSent = (state.bytesSent || 0) + db.bytesSent; state.retries429 = (sta
 await saveState();
 if (failure) throw failure;
 const done = (await readdir(path.join(root, 'recall'))).filter(f => f.endsWith('.json')).length;
-console.log(JSON.stringify({ layout, questions: done, operations: state.operations, allAbsent: Object.values(state.owned).every(e => e.absent404) }));
+const allAbsent = Object.values(state.owned).every(e => e.absent404);
+console.log(JSON.stringify({ layout, questions: done, operations: state.operations, allAbsent }));
+assert(allAbsent, 'Owned collections remain; rerun to finish cleanup.');
