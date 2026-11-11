@@ -1,0 +1,7 @@
+{
+  "name": "sillymemory-benchmark-text-private",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Development-only local embedding dependency for the text-private retrieval experiment.",
+  "dependencies": { "@huggingface/transformers": "4.3.1" }
+}

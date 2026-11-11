@@ -75,7 +75,13 @@ try {
         if (!await page.locator('#sillymemory .inline-drawer-content').isVisible()) await page.locator('#sillymemory .inline-drawer-toggle').click();
         await expandMemorySettings(page);
     };
-    connect = async () => { await panel(); await field('endpoint').fill(credentials.endpoint); await field('project').fill(credentials.project); await field('key').fill(credentials.key); await field('connect').click(); };
+    // A reload restores the saved connection by itself; a connected project shows
+    // Disconnect instead of the connection form. Wait for that restore first.
+    connect = async () => {
+        await panel();
+        await page.waitForFunction(() => !document.querySelector('#sillymemory [data-sm="connect"]')?.disabled, null, { timeout: 60000 });
+        if (await field('disconnect').isVisible()) return;
+        await field('endpoint').fill(credentials.endpoint); await field('project').fill(credentials.project); await field('key').fill(credentials.key); await field('connect').click(); };
     const identity = () => page.evaluate(async () => {
         const c = SillyTavern.getContext(), { capture } = await import('/scripts/extensions/third-party/sillymemory/src/memory.js');
         const { chatCollection } = await import('/scripts/extensions/third-party/sillymemory/src/chat-collections.js');

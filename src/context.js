@@ -20,14 +20,19 @@ export function queryAnchor(messages, type = 'normal') {
     return anchor;
 }
 
-// Count the active message as part of the recent window. Replacement replies
-// after the anchor are never retained. Incomplete/special source is not dialogue.
+// Count the active message as part of the recent window. A retained answer
+// must not steer its own replacement: Regenerate retains through the latest
+// input, so replies after it are never retained. Swipe replaces only the final
+// reply, which the pinned host also removes from the prompt; earlier replies
+// after the latest input, such as another group member's, stay retained.
+// Query eligibility does not move this window: a blank or attachment input
+// still counts as the latest input.
 export function retentionAnchor(messages, type = 'normal') {
-    if (type !== 'regenerate' && type !== 'swipe') return messages.length - 1;
-    // The active input can be blank or carry an attachment. Query eligibility
-    // must not move the generation window back to a previously answered request.
+    const last = messages.length - 1;
+    if (type === 'swipe') return last > 0 && !messages[last].user ? last - 1 : last;
+    if (type !== 'regenerate') return last;
     const user = messages.findLastIndex(message => message.user);
-    return user < 0 ? messages.length - 1 : user;
+    return user < 0 ? last : user;
 }
 
 export function retentionStart(messages, anchor, count = 5) {

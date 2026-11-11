@@ -3,6 +3,7 @@ import { answerMemoryPopup, chatMemoryAction, chatMemorySync, memoryControl, exp
 import { runPerChatMemoryScenarios } from './per-chat-memory-scenarios.mjs';
 import { runNativeReplyScenarios } from './native-reply-scenarios.mjs';
 import { runNativeChatScenarios } from './native-chat-scenarios.mjs';
+import { runGroupChatScenarios } from './group-chat-scenarios.mjs';
 import { collectionResponse, branchResponse, documentResponse, rerankedResponse } from '../tests/helpers/lambdadb-responses.js';
 // Real pinned SillyTavern + real Chromium + direct browser CORS; LambdaDB is emulated.
 // Never use this harness with personal data or a real API key.
@@ -23,7 +24,7 @@ const artifactTag = process.env.SM_ARTIFACT_TAG || '';
 if (artifactTag && !/^[a-zA-Z0-9][a-zA-Z0-9._-]{0,79}$/.test(artifactTag)) throw new Error('Invalid SM_ARTIFACT_TAG.');
 const artifactName = `${recoveryMode ? 'recovery' : faultMode ? 'fault' : 'browser'}-smoke${artifactTag ? `-${artifactTag}` : ''}.json`;
 const faults = faultController();
-let faultResults, nativeChatResults;
+let faultResults, nativeChatResults, groupChatResults;
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const source = process.env.ST_SOURCE || '/tmp/sillymemory-st-source';
 const revision = '06bde939fb1e9c4c8d8641d810f0a916b5bce127';
@@ -431,6 +432,29 @@ try {
     check('memory preview excludes candidates omitted from the prompt', await chatField('memory-list').locator('li').count() === Number(/Found (\d+) related passages/.exec(macroResult.preparation)[1]));
     await field('budget').fill('400'); await field('budget').dispatchEvent('change');
     check('a completed reply retains six messages without splitting a pair and leaves persisted source unchanged', JSON.stringify(result.chat.filter(m => !m.mes.startsWith('[Recalled conversation excerpts]')).map(m => m.index)) === '[2,3,4,5,6,7]' && result.chat.at(-1).mes.includes('passage 7') && result.before === result.after);
+    // Archived text follows the host's prompt-only regex scripts, as native history does.
+    const archiveText = async () => [...[...collections.values()][0].branches.get(await page.evaluate(() => `chat_${SillyTavern.getContext().chatMetadata.sillymemory.id}`)).values()]
+        .filter(doc => doc.message === 1).map(doc => doc.text).join('');
+    const sourceReply = await page.evaluate(() => SillyTavern.getContext().chat[1].mes);
+    await page.evaluate(async () => {
+        const c = SillyTavern.getContext();
+        c.extensionSettings.regex = [...(c.extensionSettings.regex || []), { id: 'sillymemory-smoke', scriptName: 'Hide tracker blocks', findRegex: '/\\n?<Blocks>[\\s\\S]*?<\\/Blocks>/g', replaceString: '', trimStrings: [], placement: [2], disabled: false, markdownOnly: false, promptOnly: true, runOnEdit: true, substituteRegex: 0, minDepth: null, maxDepth: null },
+            { id: 'sillymemory-smoke-macro', scriptName: 'Count markers', findRegex: '/Synthetic macro marker/g', replaceString: '{{incvar::sillymemory_regex}}', trimStrings: [], placement: [2], disabled: false, markdownOnly: false, promptOnly: true, runOnEdit: true, substituteRegex: 0, minDepth: null, maxDepth: null }];
+        c.chat[1].mes += ' Synthetic macro marker\n<Blocks>Synthetic tracker state</Blocks>';
+        await c.saveChat(); await c.eventSource.emit(c.eventTypes.MESSAGE_UPDATED, 1);
+    });
+    await waitStatus('synchronized');
+    const regexedArchive = await archiveText();
+    check('archived text applies prompt-only regex scripts like native history', regexedArchive.includes(sourceReply.slice(0, 40)) && !regexedArchive.includes('Synthetic tracker state'));
+    check('memory capture skips macro regex scripts without running their macros', regexedArchive.includes('Synthetic macro marker')
+        && await page.evaluate(() => SillyTavern.getContext().chatMetadata.variables?.sillymemory_regex) === undefined);
+    await page.evaluate(async source => {
+        const c = SillyTavern.getContext();
+        c.extensionSettings.regex = c.extensionSettings.regex.filter(script => !script.id.startsWith('sillymemory-smoke'));
+        c.chat[1].mes = source;
+        await c.saveChat(); await c.eventSource.emit(c.eventTypes.MESSAGE_UPDATED, 1);
+    }, sourceReply);
+    await waitStatus('synchronized');
     // Ineligible active inputs still preserve recent dialogue. The actual native
     // hook is exercised with attachment/media/tool metadata, without uploading files.
     const originalSource = await page.evaluate(() => structuredClone(SillyTavern.getContext().chat));
@@ -630,6 +654,8 @@ try {
     let nativeReplyResults;
     if (!faultMode) nativeReplyResults = await runNativeReplyScenarios({ page, field, waitStatus, check, calls,
         screenshot: name => page.screenshot({ path: path.join(artifacts, `${name}.png`) }) });
+    if (!faultMode) groupChatResults = await runGroupChatScenarios({ page, field, waitStatus, check, calls, collections,
+        screenshot: name => page.screenshot({ path: path.join(artifacts, `${name}.png`) }) });
     if (faultMode) { staleHits = []; faultResults = await runFaultScenarios({ page, field, waitStatus, prompt, check, faults, collections, calls, restartHost: recoveryMode ? async () => { const exited = new Promise(resolve => server.once('exit', resolve)); server.kill('SIGKILL'); await exited; await start(false); } : undefined, screenshot: name => page.screenshot({ path: path.join(artifacts, `${name}${artifactTag ? `-${artifactTag}` : ''}.png`) }) }); }
     else { await answerMemoryPopup(page, () => field('delete').click()); await waitStatus('memory was deleted'); }
     check('owned remote deletion leaves no collections', collections.size === 0);
@@ -736,12 +762,12 @@ try {
     }
     if (faultMode) check('fault run has no uncaught browser page errors', errors.length === 0);
     const sourceSha256 = {};
-    for (const file of ['index.js', 'manifest.json', 'settings.html', 'style.css', 'src/chunking.js', 'src/client.js', 'src/credentials.js', 'src/activation.js', 'src/app-connect.js', 'oauth-callback.html', 'oauth-callback.js', 'src/commit.js', 'src/chat-collections.js', 'src/gate.js', 'src/memory.js', 'src/time.js', 'src/context.js', 'scripts/native-chat-scenarios.mjs', 'scripts/per-chat-memory-scenarios.mjs', 'scripts/setup-recovery-scenarios.mjs', 'scripts/native-reply-scenarios.mjs', 'src/delivery.js', 'src/token-usage.js', 'src/status.js', 'scripts/browser-smoke.mjs', 'scripts/settings-panel.mjs', 'scripts/emulator-cors.mjs', 'scripts/fault-scenarios.mjs', 'scripts/recovery-scenarios.mjs']) {
+    for (const file of ['index.js', 'manifest.json', 'settings.html', 'style.css', 'src/chunking.js', 'src/client.js', 'src/credentials.js', 'src/activation.js', 'src/app-connect.js', 'oauth-callback.html', 'oauth-callback.js', 'src/commit.js', 'src/chat-collections.js', 'src/gate.js', 'src/memory.js', 'src/time.js', 'src/context.js', 'scripts/native-chat-scenarios.mjs', 'scripts/per-chat-memory-scenarios.mjs', 'scripts/setup-recovery-scenarios.mjs', 'scripts/native-reply-scenarios.mjs', 'scripts/group-chat-scenarios.mjs', 'src/delivery.js', 'src/token-usage.js', 'src/prompt-regex.js', 'src/status.js', 'scripts/browser-smoke.mjs', 'scripts/settings-panel.mjs', 'scripts/emulator-cors.mjs', 'scripts/fault-scenarios.mjs', 'scripts/recovery-scenarios.mjs']) {
         sourceSha256[file] = createHash('sha256').update(await readFile(path.join(root, file))).digest('hex');
     }
-    await writeFile(path.join(artifacts, artifactName), JSON.stringify({ passed: true, faultResults, nativeChatResults, nativeReplyResults, sourceSha256, time: new Date().toISOString(), sillyTavern: revision, node: process.version, browser: browser.version(), upstream: 'Local HTTPS LambdaDB emulator; no live managed embeddings', checks, pageErrors: errors, requestCount: calls.length, preflights, proxyRequests, remainingCollections: collections.size }, null, 2));
+    await writeFile(path.join(artifacts, artifactName), JSON.stringify({ passed: true, faultResults, nativeChatResults, nativeReplyResults, groupChatResults, sourceSha256, time: new Date().toISOString(), sillyTavern: revision, node: process.version, browser: browser.version(), upstream: 'Local HTTPS LambdaDB emulator; no live managed embeddings', checks, pageErrors: errors, requestCount: calls.length, preflights, proxyRequests, remainingCollections: collections.size }, null, 2));
 } catch (error) {
-    await writeFile(path.join(artifacts, artifactName), JSON.stringify({ passed: false, checks, faultResults, nativeChatResults, faultObservations: faults.observations, failure: error.message, pageErrors: errors, pageErrorDetails, hostFailures, remainingCollections: collections.size }, null, 2));
+    await writeFile(path.join(artifacts, artifactName), JSON.stringify({ passed: false, checks, faultResults, nativeChatResults, groupChatResults, faultObservations: faults.observations, failure: error.message, pageErrors: errors, pageErrorDetails, hostFailures, remainingCollections: collections.size }, null, 2));
     console.error('Browser failure status:', await debugPage?.locator('[data-sm="status"]').innerText().catch(() => 'unavailable'));
     console.error('Upstream request count:', calls.length);
     await debugPage?.screenshot({ path: path.join(artifacts, faultMode ? 'fault-failure.png' : 'failure.png') }).catch(() => {});

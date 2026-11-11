@@ -4,6 +4,89 @@ Versions describe the extension, independently of the SillyTavern host version.
 An `Unreleased` entry is a development candidate. A dated entry records a release
 boundary; publication is confirmed by the corresponding Git tag and GitHub Release.
 
+## [0.10.0] - 2026-11-11
+
+### Added
+
+- Private memory, an opt-in setting for newly created stories: your chat text
+  is not stored in LambdaDB, only vectors. The browser embeds older messages and
+  queries through a user-chosen OpenAI-compatible embedding endpoint, LambdaDB
+  stores only vectors and metadata, and recalled passages come from the local
+  chat. Search is dense vector search without reranking. Recommended models,
+  validated on English LongMemEval-S only: Ollama `qwen3-embedding:0.6b`, Ollama
+  `embeddinggemma` and OpenAI `text-embedding-3-small`; other models are
+  allowed and labelled as not validated. An optional embedding key is saved in
+  its own browser record. The switch is available after **Test and save**
+  succeeds. Turning it on pauses existing standard stories until they are rebuilt
+  with **Rebuild story memory**; private stories keep working if it is turned
+  off, while their embedding model, prefixes and dimension match the tested
+  settings, and offer an optional rebuild to standard memory.
+  Default-mode memory is unchanged.
+
+- Group chats. Memory can be turned on in a SillyTavern group chat with the same
+  storage, retrieval and failure handling as a character chat. Each group chat
+  starts its own story; its checkpoints and branches reuse the shared history,
+  and adding or removing members keeps the story. Each responding member's
+  reply searches memory with the latest user message, so one message answered
+  by three members makes three searches. Group-chat answer quality is not
+  evaluated.
+
+### Changed
+
+- The recent window now keeps the current turn whole, a user message and
+  every reply up to the next user message, instead of one user/assistant pair.
+  Older turns split at group generation rounds, so a long Auto Mode run leaves
+  the window round by round after the next user message. Ordinary alternating
+  chats keep exactly the previous boundary. A character chat with several
+  replies after one message, for example after sending an empty message to get
+  another reply, keeps them while that turn is current and splits them per
+  reply once it is older, as before. Stored memory documents are unchanged; no
+  settings or data migration is needed.
+- Swipe excludes only the reply being swiped. Earlier replies after the latest
+  user message, such as another group member's reply in the same round, stay in
+  the prompt; alternating chats are unaffected. Regenerate is unchanged.
+- In a group chat, a memory preparation failure stops the whole round, so no
+  later member replies without memory. **Retry** stays available. A stopped
+  group reply explains that Regenerate redoes the whole round and points to
+  **Trigger a message from this character** for a missing member reply; when
+  Auto Mode was on it says that Auto Mode was turned off, and after a
+  missing-context stop that a message first moves the earlier Auto Mode
+  replies into memory. After stopping a
+  group round, SillyMemory replaces the host's aborted generation controller,
+  so Auto Mode can be turned on again right away.
+
+### Fixed
+
+- Memory saves and searches messages as SillyTavern sends them: regex scripts
+  set to **Alter Outgoing Prompt** now apply before saving, at the message's
+  depth. Text such scripts hide, such as tracker blocks, no longer reaches
+  memory. Messages whose result changes are saved again on the next sync.
+  Scripts that use macros are not applied to memory, a group chat uses global
+  and preset scripts only, and memory uses the depth of an ordinary reply also
+  for **Continue** and **Swipe**. If you already use such scripts, the first
+  sync after updating saves the affected older messages again.
+
+### Known limits
+
+- Group Auto Mode without user input keeps every reply since the last user
+  message in the prompt. A long run can outgrow the context: with **Stop on
+  missing context** on (default) the reply stops and Auto Mode turns off.
+  Sending a message continues: earlier rounds of the run move into memory and
+  only the last rounds stay in the prompt.
+- After SillyTavern's own **Stop** button, Auto Mode rounds generate nothing
+  until a message is sent (a SillyTavern limitation); each such round still
+  prepares memory.
+
+### Compatibility
+
+- Supported host is unchanged: SillyTavern 1.19.0 at
+  `06bde939fb1e9c4c8d8641d810f0a916b5bce127` with Chromium. There is no
+  settings or data migration. Existing standard stories, saved on/off choices,
+  the saved key and saved memory are unaffected unless Private memory is turned
+  on, which pauses them until they are rebuilt. Private memory is opt-in and off
+  by default. Users of **Alter Outgoing Prompt** regex scripts see a one-time
+  re-save of the affected older messages on the first sync after updating.
+
 ## [0.9.1] - 2026-11-06
 
 ### Fixed

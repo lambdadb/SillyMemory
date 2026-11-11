@@ -51,7 +51,7 @@ chat model provider's charges are separate.
 
 ### 3. Turn memory on in a chat
 
-1. Open a plain-text, single-character chat, new or existing.
+1. Open a plain-text character or group chat, new or existing.
 2. If you use the built-in **Vector Storage** extension, turn off its chat
    vectorization. SillyMemory pauses while it is on.
 3. Expand **Memory** above the message composer and click
@@ -66,7 +66,9 @@ memory** for everything that was added to the prompt.
 
 ## How it works
 
-- The latest five messages always stay in the prompt. Older messages are saved
+- The latest five messages always stay in the prompt, without splitting your
+  latest message from its replies or a group's round of member replies. Older
+  messages are saved
   as memory in your LambdaDB project. Before each reply, SillyMemory searches
   that memory with the current message and adds related passages within a
   **memory token budget** (default 4,096 tokens, at most one quarter of the
@@ -77,11 +79,36 @@ memory** for everything that was added to the prompt.
   with a different setting shows **Rebuild story memory** in its Memory panel,
   which deletes that story's memory for every branch and uploads it again from
   your local chats.
+- **Private memory** (opt-in, in settings): your chat text is not stored in
+  LambdaDB, only vectors. Your browser turns older messages and queries into vectors through
+  an embedding endpoint you choose, LambdaDB stores only vectors and metadata,
+  and recalled passages come from your local chat. Recommended models,
+  validated on English LongMemEval-S only: local Ollama `qwen3-embedding:0.6b`
+  or the lighter `embeddinggemma`, or OpenAI `text-embedding-3-small`. Other
+  models work through **Custom model**
+  ([how](docs/setup-and-recovery.md#use-another-embedding-model)), but their
+  quality is not validated. New stories follow the
+  setting. Turning it on pauses existing standard stories until you rebuild them
+  with **Rebuild story memory**; private stories keep working if you turn it off,
+  and **Rebuild story memory** switches one to standard memory. Search
+  uses vectors only, without reranking. See
+  [Private memory](docs/private-memory.md).
 - Memory is per chat. **Turn memory off in this chat** returns that chat to
   ordinary SillyTavern history handling; the saved memory is kept. New chats
   start with memory off.
-- Edits, swipes and deletions are reconciled on the next sync. Group chats,
-  files, tool messages, Data Bank and World Info are not indexed.
+- Edits, swipes and deletions are reconciled on the next sync. Files, tool
+  messages, Data Bank and World Info are not indexed.
+- Memory saves each message as SillyTavern would send it: regex scripts set to
+  **Alter Outgoing Prompt** apply before saving and searching, at the message's
+  current depth. Messages whose result changes after you edit a script are saved
+  again on the next sync. Scripts that substitute macros in the find regex, or
+  whose replace or trim text uses macros such as `{{char}}` or `<USER>`, are not
+  applied to memory. In a group chat,
+  memory uses global and preset scripts, not a member's character scripts.
+- In a group chat, memory belongs to the group chat, not to a member. Each
+  member's reply searches memory with your latest message, so one message
+  answered by three members makes three searches. Adding or removing members
+  keeps the chat's memory.
 - SillyTavern's **Save checkpoint**, **Create Branch** and **Back to parent
   chat** work as usual. Memory follows whichever chat you open, and linked
   branches reuse the history they share.
@@ -105,15 +132,21 @@ not a guarantee for every model or roleplay.
 | Connection or authentication failure | Click **Reconnect** in the Memory panel. If it keeps failing, open **SillyMemory settings → Connection**, use **Disconnect** or **Forget key**, then connect again. |
 | Setup test failed | Click **Clean up test data**, then **Run setup test** in settings. |
 | Synchronization failure | Follow the status message, then click **Retry synchronization** in the Memory panel. Synchronization also runs again on the next message, edit or chat change. |
-| Reply stopped while adding memory | Read the status, fix the cause, then click **Retry reply** or use SillyTavern's **Regenerate**. Only a request LambdaDB rejected with HTTP 429 is retried automatically, at most twice within the same 15-second request deadline. |
+| Reply stopped while adding memory | Read the status, fix the cause, then click **Retry reply** or use SillyTavern's **Regenerate**. In a group, Regenerate redoes the whole round; to get only a missing member's reply, use **Trigger a message from this character** next to that member in the group panel. If Auto Mode was on, it is turned off; turn it on again after fixing the cause. When the reply stopped because recent messages or memory were left out, send a message first: the earlier Auto Mode replies then move into memory. After SillyTavern's own **Stop** button, send a message before turning Auto Mode on again (a SillyTavern limitation). Only a request LambdaDB rejected with HTTP 429 is retried automatically, at most twice within the same 15-second request deadline. |
 | LambdaDB is busy or over its request limit (HTTP 429) | Each LambdaDB project has a request budget of `rate_limit` requests per second (5 by default), refilled at that rate. The extension waits as long as the response's `Retry-After` header says (one second for the default limit) and retries twice, so this status normally clears itself; if it persists, check the project's `rate_limit` in the LambdaDB console project overview and raise it through a support request. |
+| Tracker blocks or other hidden text appear in memory | Memory follows SillyTavern regex scripts, not text another extension removes from the final prompt. Add a regex script with **AI Output** and **Alter Outgoing Prompt** that removes it. For Megumin Suite blocks, find `/<Blocks\b[^>]*>[\s\S]*?<\/Blocks\s*>/gi` and replace with nothing. |
 | Query exceeds 8 KiB | Shorten the latest messages, or turn memory off for that reply. |
+| Embedding request failed (Private memory) | Start the embedding endpoint, or fix its URL and model and click **Test and save** in settings. Then click **Retry reply** or **Retry synchronization**. Ollama allows SillyTavern on the same machine by default; for another device, see [setup and recovery](docs/setup-and-recovery.md#private-memory). |
+| Standard story paused after turning Private memory on, or private story created with a different embedding model | Click **Rebuild story memory** in the Memory panel. To keep the existing memory instead, turn Private memory off again for a paused standard story, or restore the earlier embedding settings and click **Test and save** for a private story. |
 
 ## Data, usage and deletion
 
 Older chat text, timestamps and search queries go directly from your browser to
 your LambdaDB project, where LambdaDB's embedding and reranking providers process
-them. Storage, writes, searches and inference count toward your
+them. With **Private memory**, your chat text is not stored in LambdaDB, only
+vectors: older messages and queries go to your embedding endpoint (with a local
+endpoint, text stays on this machine), and LambdaDB receives vectors,
+timestamps, speaker names and other metadata. Storage, writes, searches and inference count toward your
 [LambdaDB plan](https://lambdadb.ai/pricing). Turning memory off keeps the saved
 memory, so on Pay as You Go it continues to use storage until deleted.
 
@@ -126,7 +159,7 @@ memory, so on Pay as You Go it continues to use storage until deleted.
   and turns memory off; the memory itself is kept. To switch projects, delete
   all memory first.
 
-The project key is saved in browser storage scoped to your SillyTavern account.
+The project key, and an optional embedding key, are saved in browser storage scoped to your SillyTavern account.
 Other extensions on the same page can read browser storage; it is not an
 isolated vault. See [saved connections](docs/saved-connection.md) and
 [storage and recovery](docs/versioned-memory.md) for details.
@@ -142,10 +175,20 @@ rest of the flow is the same.
 ## Current limits
 
 - Experimental: retrieved memory does not guarantee a correct answer.
-- Plain-text, single-character chats only. Group chats, files and tool
-  conversations are outside the supported path.
+- Plain-text character and group chats only. Files and tool conversations are
+  outside the supported path.
+- Group-chat answer quality is not evaluated; the recorded benchmark results
+  cover single-character dialogue only.
+- Group Auto Mode without your input keeps every reply since your last message
+  in the prompt. A long run can outgrow the context: with **Stop on missing
+  context** on (the default) the reply stops and Auto Mode turns off. Send a
+  message to continue: the earlier rounds of the run then move into memory and
+  only the last rounds stay in the prompt.
 - Live reply and streaming checks cover OpenAI `gpt-6.1-sol` on SillyTavern
   1.19.0 and Chromium; other models, providers and browsers are unverified.
+- Memory applies depth-limited regex scripts at the depth of an ordinary reply.
+  **Continue** and **Swipe** count depth one lower, so a message exactly at a
+  script's depth limit can differ from native history in those modes.
 - Prompt delivery is checked for Chat Completion; other formats may report
   verification unavailable.
 - Use one SillyMemory tab per browser profile. Editing the same memory from two
@@ -161,6 +204,8 @@ reload. Updates follow the installed Git branch (`main` by default), not the
 newest release tag. Settings and memory are preserved; do not delete memory
 just to update.
 
+- From 0.9.x: no action is needed. If you use regex scripts set to **Alter
+  Outgoing Prompt**, the first sync saves the affected older messages again.
 - From 0.7.x: chats that had memory on come up off; open each one and choose
   **Turn memory on in this chat** again (saved memory is reused). The optional
   **Frozen memory snapshots** feature was removed; use SillyTavern's native
