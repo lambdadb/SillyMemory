@@ -432,6 +432,26 @@ try {
     check('memory preview excludes candidates omitted from the prompt', await chatField('memory-list').locator('li').count() === Number(/Found (\d+) related passages/.exec(macroResult.preparation)[1]));
     await field('budget').fill('400'); await field('budget').dispatchEvent('change');
     check('a completed reply retains six messages without splitting a pair and leaves persisted source unchanged', JSON.stringify(result.chat.filter(m => !m.mes.startsWith('[Recalled conversation excerpts]')).map(m => m.index)) === '[2,3,4,5,6,7]' && result.chat.at(-1).mes.includes('passage 7') && result.before === result.after);
+    // Archived text follows the host's prompt-only regex scripts, as native history does.
+    const archiveText = async () => [...[...collections.values()][0].branches.get(await page.evaluate(() => `chat_${SillyTavern.getContext().chatMetadata.sillymemory.id}`)).values()]
+        .filter(doc => doc.message === 1).map(doc => doc.text).join('');
+    const sourceReply = await page.evaluate(() => SillyTavern.getContext().chat[1].mes);
+    await page.evaluate(async () => {
+        const c = SillyTavern.getContext();
+        c.extensionSettings.regex = [...(c.extensionSettings.regex || []), { id: 'sillymemory-smoke', scriptName: 'Hide tracker blocks', findRegex: '/\\n?<Blocks>[\\s\\S]*?<\\/Blocks>/g', replaceString: '', trimStrings: [], placement: [2], disabled: false, markdownOnly: false, promptOnly: true, runOnEdit: true, substituteRegex: 0, minDepth: null, maxDepth: null }];
+        c.chat[1].mes += '\n<Blocks>Synthetic tracker state</Blocks>';
+        await c.saveChat(); await c.eventSource.emit(c.eventTypes.MESSAGE_UPDATED, 1);
+    });
+    await waitStatus('synchronized');
+    const regexedArchive = await archiveText();
+    check('archived text applies prompt-only regex scripts like native history', regexedArchive.includes(sourceReply.slice(0, 40)) && !regexedArchive.includes('Synthetic tracker state'));
+    await page.evaluate(async source => {
+        const c = SillyTavern.getContext();
+        c.extensionSettings.regex = c.extensionSettings.regex.filter(script => script.id !== 'sillymemory-smoke');
+        c.chat[1].mes = source;
+        await c.saveChat(); await c.eventSource.emit(c.eventTypes.MESSAGE_UPDATED, 1);
+    }, sourceReply);
+    await waitStatus('synchronized');
     // Ineligible active inputs still preserve recent dialogue. The actual native
     // hook is exercised with attachment/media/tool metadata, without uploading files.
     const originalSource = await page.evaluate(() => structuredClone(SillyTavern.getContext().chat));

@@ -682,3 +682,25 @@ test('private restoration drops stale revisions, foreign scopes and hits beyond 
     assert.ok(bounded.passages.length && bounded.passages.every(p => p.message < 2));
     assert.equal((await selectPackedMemory(stored, a.docs, 2000, t => t.length)).passages.length, 0, 'the default mode requires matching remote text');
 });
+
+test('capture applies prompt-time transforms with native role and depth', async () => {
+    const chat = [
+        { mes: 'Hello', is_user: true },
+        { mes: 'Narration\n<Blocks>tracker</Blocks>', is_user: false },
+        { mes: 'Hidden note', is_system: true },
+        { mes: 'Next', is_user: true },
+    ];
+    const context = { characterId: 0, characters: [{ avatar: 'test.png' }], getCurrentChatId: () => 'chat', chat };
+    const calls = [];
+    const strip = (text, isUser, depth) => { calls.push([text, isUser, depth]); return text.replace(/\n?<Blocks>[\s\S]*?<\/Blocks>/g, ''); };
+    const snapshot = capture(context, strip);
+    // Depth counts only prompt messages, matching the host's coreChat.
+    assert.deepEqual(calls, [['Hello', true, 2], ['Narration\n<Blocks>tracker</Blocks>', false, 1], ['Next', true, 0]]);
+    assert.deepEqual(snapshot.messages.map(m => m.text), ['Hello', 'Narration', 'Next']);
+    assert.equal(capture(context).messages[1].text, 'Narration\n<Blocks>tracker</Blocks>');
+    // A changed transform result changes the stored revision, so sync replaces it.
+    const identity = { ...snapshot, chat: 'chat', memory: { story: 'chat' } };
+    const [plain, stripped] = await Promise.all([documents({ ...identity, messages: capture(context).messages }, owner, config), documents(identity, owner, config)]);
+    assert.notEqual(plain.docs.find(d => d.message === 1).revision, stripped.docs.find(d => d.message === 1).revision);
+    assert.equal(stripped.docs.find(d => d.message === 1).text, 'Narration');
+});

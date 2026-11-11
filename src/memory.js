@@ -25,12 +25,16 @@ export function supportsChat(context) {
     if (!chatOwner(context) || !context.getCurrentChatId()) return false;
     return !context.chat.some(m => m.is_system && m.extra?.tool_invocations?.length);
 }
-export function capture(context) {
+// promptText(text, isUser, depth) mirrors the host's prompt-time transforms, such
+// as prompt-only regex scripts, so memory holds the text native history would send.
+export function capture(context, promptText = text => text) {
     if (!supportsChat(context)) return null;
-    const messages = context.chat.filter(x => !x.is_system).map((m, index) => {
+    const source = context.chat.filter(x => !x.is_system);
+    const messages = source.map((m, index) => {
         const recordedAt = hostTimestamp(m.send_date);
+        const raw = typeof m.mes === 'string' ? m.mes : '';
         return {
-            index, text: typeof m.mes === 'string' ? m.mes : '', name: String(m.name || (m.is_user ? 'User' : 'Character')),
+            index, text: raw && promptText(raw, Boolean(m.is_user), source.length - index - 1), name: String(m.name || (m.is_user ? 'User' : 'Character')),
             user: Boolean(m.is_user), swipe: m.swipe_id ?? 0,
             eligible: !m.extra?.file && !m.extra?.media?.length && !m.extra?.tool_invocations?.length,
             ...(recordedAt ? { recordedAt } : {}),

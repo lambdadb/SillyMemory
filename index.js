@@ -5,13 +5,19 @@ import { callbackUrl, connectWithLambdaDB } from './src/app-connect.js';
 import { activationBinding, chatActivated } from './src/activation.js';
 import { ChatCollections, chatCollection, ensureChatIdentity, hostChats } from './src/chat-collections.js';
 import { runTransportGate } from './src/gate.js';
-import { MemoryEngine, Journal, capture, chatOwner, supportsChat, fingerprint, options, DEFAULTS, memoryBoundary, archiveBoundary } from './src/memory.js';
+import { MemoryEngine, Journal, capture as captureSource, chatOwner, supportsChat, fingerprint, options, DEFAULTS, memoryBoundary, archiveBoundary } from './src/memory.js';
 import { OperationStatus, failureText, analyzerNotice, modeNotice, privateMemoryLock, recoveryActions } from './src/status.js';
 import { PromptDelivery, expectedMessages, deliverySummary } from './src/delivery.js';
 import { MEMORY_GUIDANCE, retentionAnchor, quoteMemoryText, quoteMemoryMessages } from './src/context.js';
 import { hostPromptTokens, dialogueSnapshot, compareDialogue, comparisonLabel, tokenLabel } from './src/token-usage.js';
 
 const context = () => SillyTavern.getContext();
+// Apply the host's prompt-only regex scripts at the depth native history uses, so
+// memory stores and searches the text SillyTavern would send for each message.
+let hostRegex;
+const promptText = (text, isUser, depth) => hostRegex ? hostRegex.getRegexedString(text,
+    isUser ? hostRegex.regex_placement.USER_INPUT : hostRegex.regex_placement.AI_OUTPUT, { isPrompt: true, depth }) : text;
+const capture = ctx => captureSource(ctx, promptText);
 const memoryEnabled = () => connectionVerified && state?.ready && chatActivated(context().chatMetadata, state);
 const uuid = () => crypto.randomUUID().replaceAll('-', '');
 let client, engine, root, state, stateKey, owner, timer, busy = false, pendingAction = Promise.resolve(), gatePassed = false;
@@ -657,7 +663,7 @@ async function initialize() {
     const hostScript = await import('/script.js');
     hostGenerating = hostScript.isGenerating;
     renewAbortController = () => hostScript.setExternalAbortController(new AbortController());
-    [hostOpenAI, hostTokenizers, hostGroups] = await Promise.all([import('/scripts/openai.js'), import('/scripts/tokenizers.js'), import('/scripts/group-chats.js')]);
+    [hostOpenAI, hostTokenizers, hostGroups, hostRegex] = await Promise.all([import('/scripts/openai.js'), import('/scripts/tokenizers.js'), import('/scripts/group-chats.js'), import('/scripts/extensions/regex/engine.js')]);
     const composer = document.getElementById('send_form');
     if (composer) {
         composer.before(element('chat-status-template').content.cloneNode(true));

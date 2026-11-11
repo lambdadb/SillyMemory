@@ -95,6 +95,10 @@ memory** for everything that was added to the prompt.
   start with memory off.
 - Edits, swipes and deletions are reconciled on the next sync. Files, tool
   messages, Data Bank and World Info are not indexed.
+- Memory saves each message as SillyTavern would send it: regex scripts set to
+  **Alter Outgoing Prompt** apply before saving and searching, at the message's
+  current depth. Messages whose result changes after you edit a script are saved
+  again on the next sync.
 - In a group chat, memory belongs to the group chat, not to a member. Each
   member's reply searches memory with your latest message, so one message
   answered by three members makes three searches. Adding or removing members
@@ -124,6 +128,7 @@ not a guarantee for every model or roleplay.
 | Synchronization failure | Follow the status message, then click **Retry synchronization** in the Memory panel. Synchronization also runs again on the next message, edit or chat change. |
 | Reply stopped while adding memory | Read the status, fix the cause, then click **Retry reply** or use SillyTavern's **Regenerate**. In a group, Regenerate redoes the whole round; to get only a missing member's reply, use **Trigger a message from this character** next to that member in the group panel. If Auto Mode was on, it is turned off; turn it on again after fixing the cause. When the reply stopped because recent messages or memory were left out, send a message first: the earlier Auto Mode replies then move into memory. After SillyTavern's own **Stop** button, send a message before turning Auto Mode on again (a SillyTavern limitation). Only a request LambdaDB rejected with HTTP 429 is retried automatically, at most twice within the same 15-second request deadline. |
 | LambdaDB is busy or over its request limit (HTTP 429) | Each LambdaDB project has a request budget of `rate_limit` requests per second (5 by default), refilled at that rate. The extension waits as long as the response's `Retry-After` header says (one second for the default limit) and retries twice, so this status normally clears itself; if it persists, check the project's `rate_limit` in the LambdaDB console project overview and raise it through a support request. |
+| Tracker blocks or other hidden text appear in memory | Memory follows SillyTavern regex scripts, not text another extension removes from the final prompt. Add a regex script with **AI Output** and **Alter Outgoing Prompt** that removes it. For Megumin Suite blocks, find `/<Blocks\b[^>]*>[\s\S]*?<\/Blocks\s*>/gi` and replace with nothing. |
 | Query exceeds 8 KiB | Shorten the latest messages, or turn memory off for that reply. |
 | Embedding request failed (Private memory) | Check that the embedding endpoint is running and the URL and model are right, then **Test and save** in settings. Ollama allows SillyTavern on the same machine by default; for another device, see [setup and recovery](docs/setup-and-recovery.md#private-memory). |
 | Standard story paused after turning Private memory on, or private story created with a different embedding model | Click **Rebuild story memory** in the Memory panel, or change the setting back. |
