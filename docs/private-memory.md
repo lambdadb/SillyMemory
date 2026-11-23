@@ -285,8 +285,8 @@ Choices made where the design was silent, and deviations:
   Private memory is on; a private story has no text field or analyzers.
 - **Ollama presets** show the model's pull command on one line, for example
   `ollama pull embeddinggemma`.
-- **Setup test**: the LambdaDB connection test is unchanged. It still uses
-  synthetic text with managed embedding and reranking; no chat text is sent.
+- **Setup test**: the LambdaDB connection test does not depend on this mode. It uses
+  synthetic text with managed embedding and no reranking; no chat text is sent.
 - **Revision digest**: `revision` and the document ID contain an unsalted
   SHA-256 digest of the source message, as described under
   [search and restoration](#search-and-restoration). A very short, guessable

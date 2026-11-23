@@ -1,8 +1,23 @@
 # Conversation memory defaults
 
 Current development defaults use stored, fully budgeted conversation-time
-provenance, Bayesian English fusion and managed Jev: vector k=200, up to 200 rerank
-candidates, final size=50, and a 4,096-token initial memory budget. Keep per-message
+provenance and one dense KNN search over the managed embedding: vector k=200,
+final size=50, and a 4,096-token initial memory budget. Reranking is an opt-in
+global setting, off by default and off when no value is saved, so existing
+installations also search without it. With **Reranking** on, search is Bayesian
+English fusion with managed Jev over up to 200 rerank candidates, final size=50,
+exactly as before the setting existed. Reranking is opt-in because each
+reranked search sends up to 200 candidates to the reranking model, which uses much
+more inference on every reply, and managed embedding and reranking share one
+project inference quota. The default is dense KNN, not Bayesian fusion
+without reranking: on English LongMemEval-S, dense KNN k200/top 50 delivered
+complete evidence for 95.30% of annotated messages, fusion without reranking
+93.40% and the reranked search 98.10%
+([measurements](text-private-retrieval.md#results-summary)). The setting applies
+at query time from the next reply; collections keep their text index and
+analyzers, so no rebuild or schema change is needed in either direction.
+
+With Reranking on, keep per-message
 source role and optional host-time explanation in Jev's fields:
 `['role', 'conversationTimeContext', 'text']`. Embeddings and lexical search still
 use only verbatim `text`; generation already includes source-role and `sent`

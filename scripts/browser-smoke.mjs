@@ -82,6 +82,9 @@ const remote = createServer({ key: await readFile(key), cert: await readFile(cer
         if (body.query.bayesian) {
             assert.deepEqual(body.query.bayesian[1].bool[0], { ...filter, occur: 'filter' });
             assert.equal(knn.k, 200); assert.equal(body.size, 50); assert.equal(body.rerank.candidateSize, 200);
+        } else if (knn) {
+            // The default search: dense KNN only, with no rerank and no candidateSize.
+            assert.equal(knn.k, 200); assert.equal(body.size, 50); assert.ok(!('rerank' in body) && !('candidateSize' in body));
         }
         const match = /^owner:([a-f0-9]+) AND scope:([a-f0-9]+)(?: AND message:\[0 TO (\d+)\])?$/.exec(filter.queryString?.query || '');
         assert.ok(match, 'owner and scope query filters required');
@@ -412,16 +415,32 @@ try {
         return result;
     });
     const result = await prompt();
-    const latestSearch = calls.findLast(call => call.body?.query?.bayesian)?.body;
-    check('one current-message request shares the active input with both search legs and reranking',
-        latestSearch?.query.bayesian[0].knn.queryText === 'User: Synthetic passage 6: the blue compass is beneath the cedar tree.'
-        && latestSearch.rerank.queryText === latestSearch.query.bayesian[0].knn.queryText);
+    const latestSearch = calls.findLast(call => call.body?.query?.knn)?.body;
+    check('Reranking is off by default: one current-message request is a dense vector search without a lexical leg or reranking',
+        !await field('rerank').isChecked() && latestSearch?.query.knn.queryText === 'User: Synthetic passage 6: the blue compass is beneath the cedar tree.'
+        && !('rerank' in latestSearch) && !calls.some(call => call.body?.query?.bayesian));
     const archive = [...collections.values()][0].branches.get(await page.evaluate(() => `chat_${SillyTavern.getContext().chatMetadata.sillymemory.id}`));
     check('ordinary native synchronization archives one complete pair outside the retained recent exchanges',
         JSON.stringify([...archive.values()].map(doc => doc.message).sort((a, b) => a - b)) === '[0,1]');
     check('a tight allocation succeeds without partially injecting a dated source', !result.aborted && !result.injection && /Found 0 related passages/.test(result.preparation) && /\d+ \/ 250 tokens/.test(result.inspection));
     check('empty selection explains that no older memory was selected', (await chatField('memory-summary').textContent()).includes('No older memory selected') && await chatField('memory-list').locator('li').count() === 0 && await chatField('inspect').getAttribute('hidden') !== null);
     check('small memory stays inside its budget with sent guidance', result.renderedTokens <= 250);
+    // Reranking is a query-time setting: the next reply uses it, with no collection change.
+    const collectionChanges = () => calls.filter(call => call.method !== 'GET' && /\/collections(\/[^/]+)?$/.test(call.path)).length;
+    const changesBeforeRerank = collectionChanges();
+    await field('rerank').check();
+    const reranked = await prompt(), rerankedSearch = calls.findLast(call => call.body?.query?.knn || call.body?.query?.bayesian)?.body;
+    check('turning Reranking on sends the hybrid search with managed reranking for the next reply, without a rebuild',
+        !reranked.aborted && rerankedSearch?.rerank?.candidateSize === 200 && rerankedSearch.rerank.queryText === latestSearch.query.knn.queryText
+        && rerankedSearch.query.bayesian[0].knn.queryText === latestSearch.query.knn.queryText && collectionChanges() === changesBeforeRerank
+        && (await field('usage-help').textContent()).includes('embedding and reranking providers')
+        && await page.evaluate(() => JSON.parse(localStorage.getItem(`sillymemory:state:${SillyTavern.getContext().extensionSettings.sillymemory.owner}`)).rerank === true));
+    await field('rerank').uncheck();
+    const unranked = await prompt(), unrankedSearch = calls.findLast(call => call.body?.query?.knn || call.body?.query?.bayesian)?.body;
+    check('turning Reranking off returns the next reply to the vector-only search',
+        !unranked.aborted && unrankedSearch?.query.knn?.queryText === latestSearch.query.knn.queryText && !('rerank' in unrankedSearch) && collectionChanges() === changesBeforeRerank
+        && (await field('usage-help').textContent()).includes('embedding provider processes')
+        && await page.evaluate(() => JSON.parse(localStorage.getItem(`sillymemory:state:${SillyTavern.getContext().extensionSettings.sillymemory.owner}`)).rerank === false));
     // The longer macro-bearing source can be skipped at 250 once the shared
     // time explanation is counted. Test literal delivery when that whole source
     // fits, independently of the small-budget admission assertion above.
@@ -564,9 +583,9 @@ try {
         const original = c.chat[index].mes; c.chat[index].mes = 'x'.repeat(8193);
         return { index, original };
     });
-    const searchesBeforeOverflow = calls.filter(c => c.body.query?.bayesian).length;
+    const searchesBeforeOverflow = calls.filter(c => c.body.query?.knn).length;
     const overflow = await prompt(); await waitStatus('8 KiB limit');
-    check('oversized complete query aborts generation without pruning or sending a truncated search', overflow.aborted && !overflow.injection && overflow.before === overflow.after && searchesBeforeOverflow === calls.filter(c => c.body.query?.bayesian).length);
+    check('oversized complete query aborts generation without pruning or sending a truncated search', overflow.aborted && !overflow.injection && overflow.before === overflow.after && searchesBeforeOverflow === calls.filter(c => c.body.query?.knn).length);
     await page.evaluate(({ index, original }) => { SillyTavern.getContext().chat[index].mes = original; }, originalAnchor);
     failQuery = true;
     const failed = await prompt(); failQuery = false;

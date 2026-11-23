@@ -338,9 +338,11 @@ function renderSettings() {
     element('connect').textContent = state.ready || state.testCollection ? 'Save and connect' : 'Connect and test';
     element('prepare-controls').hidden = !connected || state.ready || cleanup;
     element('usage-help').hidden = !connected || !state.ready;
-    element('usage-help').textContent = privateMemory() ? PRIVATE_USAGE : DEFAULT_USAGE;
+    element('usage-help').textContent = privateMemory() ? PRIVATE_USAGE : defaultUsage();
     element('private-memory-state').textContent = privateMemory() ? 'On' : 'Off';
     element('analyzer-settings').hidden = privateMemory();
+    // Private memory never reranks, so its switch has nothing to control there.
+    element('rerank-settings').hidden = privateMemory();
     element('next-step').textContent = !connected ? 'Connect your project above to get started.'
         : cleanup ? 'A connection test needs cleanup. Remove its temporary data before trying again.'
         : !state.ready ? 'Check your connection once before turning memory on.'
@@ -356,7 +358,7 @@ function renderSettings() {
     element('private-memory-lock').hidden = !locked;
     renderChatStatus();
 }
-const DEFAULT_USAGE = 'Memory sends older messages, their SillyTavern timestamps and search queries to LambdaDB, whose embedding and reranking providers process them to find related memory. This counts toward your LambdaDB usage. Turn off other memory or chat vectorization extensions; they would add overlapping history to the prompt. Use one active SillyMemory tab per browser profile.';
+const defaultUsage = () => `Memory sends older messages, their SillyTavern timestamps and search queries to LambdaDB, whose embedding ${options(state).rerank ? 'and reranking providers process' : 'provider processes'} them to find related memory. This counts toward your LambdaDB usage. Turn off other memory or chat vectorization extensions; they would add overlapping history to the prompt. Use one active SillyMemory tab per browser profile.`;
 const PRIVATE_USAGE = 'Private memory: your chat text is not stored in LambdaDB, only vectors. Older messages and search queries go to your embedding endpoint; LambdaDB stores vectors, timestamps and metadata. This counts toward your LambdaDB usage. Turn off other memory or chat vectorization extensions; they would add overlapping history to the prompt. Use one active SillyMemory tab per browser profile.';
 const privateMemory = () => state?.memoryMode === 'private';
 const embeddingTested = () => Boolean(state?.embedding?.dimensions);
@@ -716,6 +718,13 @@ async function initialize() {
         if (!checked.length) { renderAnalyzers('Choose at least one language. '); return; }
         state.analyzers = options({ ...state, analyzers: checked }).analyzers;
         renderAnalyzers(); persist(); renderChatStatus();
+    };
+    // Reranking applies at query time: the next reply uses it, with no rebuild.
+    element('rerank').checked = options(state).rerank;
+    element('rerank').onchange = () => {
+        state.rerank = element('rerank').checked;
+        persist(); renderSettings();
+        if (memoryEnabled()) schedule();
     };
     element('stopOnLoss').checked = state.stopOnLoss !== false;
     element('stopOnLoss').onchange = () => { state.stopOnLoss = element('stopOnLoss').checked; persist(); };

@@ -74,7 +74,8 @@ record; a keyless test of a different connection removes the older record.
   not saved and preserves the previous credential. Replace the key and choose
   the connection action in **Connection** settings; switching back can retry the
   prior saved connection.
-- Network/CORS, timeout, 403 and transient service errors leave saved credentials
+- Network/CORS, timeout, 403 (including a used-up project quota, which is
+  reported as such and not as a key problem) and transient service errors leave saved credentials
   available but do not enable memory. **Reconnect** in the chat panel retries the
   key for the persisted endpoint/project, ignoring unsaved connection form edits
   and preserving every chat's on/off choice. An empty key input in Connection

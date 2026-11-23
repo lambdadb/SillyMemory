@@ -12,6 +12,7 @@ export async function poll(check, { attempts = 30, delayMs = 1000 } = {}) {
 
 // This gate only sends synthetic text. Keep the collection name before creating it,
 // so an ambiguous create timeout can be recovered by the cleanup button after reload.
+// Its search never reranks, whatever the Reranking setting, so connecting spends no reranker tokens.
 export async function runTransportGate(client, owner, collection, report = () => {}) {
     const scope = 'a'.repeat(64);
     const id = `gate_${owner}`;

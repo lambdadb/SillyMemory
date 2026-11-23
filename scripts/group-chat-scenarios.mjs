@@ -97,7 +97,7 @@ export async function runGroupChatScenarios({ page, field, waitStatus, check, ca
             globalThis.__smGroupTurns.push(turn);
         };
     });
-    const searches = () => calls.filter(call => call.body?.query?.bayesian);
+    const searches = () => calls.filter(call => call.body?.query?.knn);
     const upserts = memory => calls.filter(call => call.path.endsWith('/docs/upsert') && call.path.includes(collectionName(memory))
         && (call.body.branch || call.body.ref?.name || new URL(call.path, 'https://localhost').searchParams.get('refName')) === `chat_${memory.id}`);
     const round = async (type, input = '') => {
@@ -122,7 +122,7 @@ export async function runGroupChatScenarios({ page, field, waitStatus, check, ca
     const normal = await round('normal', 'Where is the red key?');
     const query = 'User: Where is the red key?';
     check('each responding member runs its own memory preparation with the same current-input search', normal.turns.map(t => t.member).join() === 'Group Alice,Group Bob'
-        && normal.turns.every(t => t.characterId !== undefined && t.type === 'normal') && normal.searches.length === 2 && normal.searches.every(s => s.body.query.bayesian[0].knn.queryText === query));
+        && normal.turns.every(t => t.characterId !== undefined && t.type === 'normal') && normal.searches.length === 2 && normal.searches.every(s => s.body.query.knn.queryText === query));
     check('each member turn reaches native generation once with delivered memory', normal.completions.length === 2 && normal.completions.map(c => c.member).join() === 'Group Alice,Group Bob'
         && !normal.label.includes('Reply stopped') && normal.state.messages.slice(-2).map(m => m.name).join() === 'Group Alice,Group Bob');
     const aliceMessages = normal.completions[0].messages, bobMessages = normal.completions[1].messages;

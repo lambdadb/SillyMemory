@@ -73,8 +73,19 @@ memory** for everything that was added to the prompt.
   that memory with the current message and adds related passages within a
   **memory token budget** (default 4,096 tokens, at most one quarter of the
   context size; change it under **Advanced**).
+- **Reranking** (opt-in, in settings; off by default): memory search is a vector
+  search over the saved passages. When Reranking is on, each search also matches
+  words in the text and has LambdaDB's reranking model re-order the best 200
+  candidates. This finds related memory more reliably, but uses much more of your
+  LambdaDB inference usage on every reply, so a free project's monthly inference
+  quota can run out quickly. It applies from the next reply, with no rebuild.
+  In the repository's English LongMemEval-S
+  [retrieval comparison](docs/text-private-retrieval.md#results-summary), search
+  with reranking delivered complete evidence for 98.10% of annotated messages and
+  vector-only search for 95.30%.
 - **Text search languages** in settings offers checkboxes for the LambdaDB text analyzers
-  (default `english`) for story memory created after the change. Pick only the
+  (default `english`) for story memory created after the change. The text index is
+  used for word matching only when Reranking is on. Pick only the
   languages you chat in; each analyzer indexes the text again. A story created
   with a different setting shows **Rebuild story memory** in its Memory panel,
   which deletes that story's memory for every branch and uploads it again from
@@ -115,7 +126,8 @@ memory** for everything that was added to the prompt.
 - After a reload SillyMemory reconnects with the saved key and restores each
   chat's on/off choice.
 
-In the recorded 500-question LongMemEval-S evaluation, SillyMemory answered
+In the recorded 500-question LongMemEval-S evaluation, run with reranking (now
+the opt-in **Reranking** setting), SillyMemory answered
 **96.0%** correctly versus **95.2%** for full history, with **95.35% less**
 mean answer input, and our
 [published cost estimate](https://lambdadb.ai/blog/ai-memory-fewer-tokens-without-graphs#the-cost-of-remembering)
@@ -133,6 +145,7 @@ not a guarantee for every model or roleplay.
 | Setup test failed | Click **Clean up test data**, then **Run setup test** in settings. |
 | Synchronization failure | Follow the status message, then click **Retry synchronization** in the Memory panel. Synchronization also runs again on the next message, edit or chat change. |
 | Reply stopped while adding memory | Read the status, fix the cause, then click **Retry reply** or use SillyTavern's **Regenerate**. In a group, Regenerate redoes the whole round; to get only a missing member's reply, use **Trigger a message from this character** next to that member in the group panel. If Auto Mode was on, it is turned off; turn it on again after fixing the cause. When the reply stopped because recent messages or memory were left out, send a message first: the earlier Auto Mode replies then move into memory. After SillyTavern's own **Stop** button, send a message before turning Auto Mode on again (a SillyTavern limitation). Only a request LambdaDB rejected with HTTP 429 is retried automatically, at most twice within the same 15-second request deadline. |
+| Your LambdaDB project has used up its inference, read or write quota, or reached its storage limit | This is not a key or permission problem, so reconnecting does not help. Upgrade the plan in the LambdaDB console or wait for the quota to reset (storage is a standing limit: delete memory you no longer need instead), then retry. To keep chatting meanwhile, click **Turn memory off in this chat**. Managed embedding and reranking share the inference quota, so a used-up inference quota stops both saving and searching standard memory; turning **Reranking** off makes the quota last longer but does not unblock memory until it resets. |
 | LambdaDB is busy or over its request limit (HTTP 429) | Each LambdaDB project has a request budget of `rate_limit` requests per second (5 by default), refilled at that rate. The extension waits as long as the response's `Retry-After` header says (one second for the default limit) and retries twice, so this status normally clears itself; if it persists, check the project's `rate_limit` in the LambdaDB console project overview and raise it through a support request. |
 | Tracker blocks or other hidden text appear in memory | Memory follows SillyTavern regex scripts, not text another extension removes from the final prompt. Add a regex script with **AI Output** and **Alter Outgoing Prompt** that removes it. For Megumin Suite blocks, find `/<Blocks\b[^>]*>[\s\S]*?<\/Blocks\s*>/gi` and replace with nothing. |
 | Query exceeds 8 KiB | Shorten the latest messages, or turn memory off for that reply. |
@@ -142,8 +155,8 @@ not a guarantee for every model or roleplay.
 ## Data, usage and deletion
 
 Older chat text, timestamps and search queries go directly from your browser to
-your LambdaDB project, where LambdaDB's embedding and reranking providers process
-them. With **Private memory**, your chat text is not stored in LambdaDB, only
+your LambdaDB project, where LambdaDB's embedding provider, and its reranking
+provider when **Reranking** is on, process them. With **Private memory**, your chat text is not stored in LambdaDB, only
 vectors: older messages and queries go to your embedding endpoint (with a local
 endpoint, text stays on this machine), and LambdaDB receives vectors,
 timestamps, speaker names and other metadata. Storage, writes, searches and inference count toward your

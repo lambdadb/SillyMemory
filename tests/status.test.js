@@ -55,6 +55,21 @@ test('failure guidance separates reconnect, rate limiting, network and unknown e
     assert(!failureText(new Error('private chat and key')).includes('private'));
 });
 
+test('a used-up quota points to project usage instead of permissions, keys or reconnecting', () => {
+    const quota = kind => Object.assign(new ConnectionError('Quota used up.', 403, 'quota'), { quota: kind });
+    for (const kind of ['read', 'write', 'storage', 'inference']) {
+        for (const [options, retry] of [[{}, 'click Retry synchronization in the Memory panel'], [{ sync: false }, 'retry this action'], [{ generation: true }, 'regenerate to retry this request']]) {
+            const text = failureText(quota(kind), options);
+            assert.equal(text, `Quota used up. Reconnecting will not help. Upgrade the plan in the LambdaDB console or ${kind === 'storage' ? 'delete memory you no longer need' : 'wait for the quota to reset'}, then ${retry}.`
+                // Only a stopped reply needs the way to keep chatting.
+                + `${options.generation ? ' To keep chatting meanwhile, turn memory off in this chat.' : ''} Your local chat is kept.`);
+            assert(!/Check connection settings|Replace your project key|reconnect and|, reconnect|After recovery/.test(text));
+        }
+    }
+    // Any other 403 keeps the connection and permission guidance.
+    assert.match(failureText(new ConnectionError('Access denied.', 403)), /Check connection settings and permissions, reconnect and turn memory on/);
+});
+
 test('commit readiness progress preserves ownership of the synchronization completion', () => {
     const rendered = [], view = new OperationStatus(text => rendered.push(text));
     const operation = view.start(); operation.update({ phase: 'committing' });

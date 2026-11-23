@@ -27,13 +27,16 @@ The current pin is `0.9.0`, supporting 200 rerank candidates.
 | Embeddings | Native `text-embedding-3-small` from verbatim `text`; lexical analyzers from the **Text search languages** setting (default `english`), fixed when the story collection is created |
 | Private memory storage | No `text` field; plain `{ type: 'vector', dimensions, similarity: 'cosine' }` filled by the browser; `memory_mode` and `embedding` identity tags (at most five tags, no `:` in values) |
 | Writes | Explicit selected branch; source documents carry owner, story scope, revision and source coordinates |
-| Search | Bayesian vector/lexical fusion, k200, owner/scope/message-boundary filters, consistent reads |
+| Search (default, Reranking off) | One managed-embedding `knn` `queryText` search, k200, size 50, owner/scope/message-boundary filters, consistent reads; no lexical leg, `rerank` or `candidateSize` |
+| Search (Reranking on) | Bayesian vector/lexical fusion, k200, size 50, the same filters, consistent reads |
 | Private memory search | One `knn` `queryVector` search, k200, size 50, the same filters and branch; no rerank |
-| Reranking | Native Jev 1.13.0, 200 candidates, 50 returned; confirmed provider/model/status required |
+| Reranking (opt-in setting) | Native Jev 1.13.0, 200 candidates, 50 returned; confirmed provider/model/status required |
+| Setup and connection test search | The default `knn` search, whatever the Reranking setting |
+| Used-up project quota | HTTP 403 with JSON `message` exactly `Project <resource> quota exceeded` for `read`, `write`, `storage` or `inference`; classified as code `quota` with its resource, never as a key or permission failure. Any other 403 body stays the generic access error, and no response text is shown |
 | Results | Inline `docs[].doc`; external download responses fail closed without forwarding credentials |
 | Ownership and cleanup | Validate application, owner and story tags before mutation; verify branch deletion or collection HTTP 404 |
 
-Runtime search uses role/date/text reranking fields; the published LongMemEval
+With Reranking on, runtime search uses role/date/text reranking fields; the published LongMemEval
 profile fixes text-only fields. Preserve that disclosed difference. Generic
 transport tests and standalone benchmarks can use `main`; product memory uses
 the selected chat branch. See [current defaults](conversation-memory-defaults.md),
