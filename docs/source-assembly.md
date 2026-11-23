@@ -46,7 +46,7 @@ records. Final delivery verifies the whole block. See [current defaults](convers
 
 Current defaults retain five recent eligible native messages (six after an
 adjacent reply), plus recalled memory, memory budget4096 (maximum4096), chunk ceiling800
-codepoints, vector k200/rerank candidate200/final size50, Bayesian English fusion with managed Jev and one
+codepoints, vector k200/final size50 dense KNN (Bayesian English fusion with managed Jev over 200 rerank candidates when the opt-in Reranking setting is on) and one
 current-question query with independent completed-history indexing; see
 [current policy](conversation-memory-defaults.md). The host's existing one-quarter-context budget cap,
 current-chat validation, cancellation, credential handling and prompt-delivery

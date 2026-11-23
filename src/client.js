@@ -79,7 +79,7 @@ export class LambdaClient {
                     mode: 'cors', credentials: 'omit', redirect: 'error',
                     headers: { 'Content-Type': 'application/json', 'x-api-key': this.#key },
                 });
-                if (!response.ok) throw httpError(response);
+                if (!response.ok) throw await httpError(response);
                 // The SDK can leave a rejected metadata promise if body reading
                 // fails after headers. Finish the JSON transport under the same
                 // deadline here; SDK parsing/validation still owns the payload.
@@ -227,12 +227,15 @@ export class LambdaClient {
         }
         return result.docs.map(x => x.doc);
     }
-    search(collection, owner, scope, text, signal, branch = 'main', before) {
+    // Standard search is dense KNN by default. Reranking is opt-in: it adds lexical
+    // fusion and managed Jev over 200 candidates, which costs far more inference per search.
+    search(collection, owner, scope, text, signal, branch = 'main', before, rerank = false) {
         // Preserve the complete query or fail explicitly before any service call.
         if (new TextEncoder().encode(text).length > 8192) {
             throw new ConnectionError('The current retrieval input exceeds the 8 KiB limit. Shorten the input; no search was sent.', 0, 'query-limit');
         }
         const filter = boundedFilter(owner, scope, before);
+        if (!rerank) return this.query(collection, { knn: { field: 'embedding', queryText: text, k: 200, filter } }, { signal, branch, size: 50 });
         return this.query(collection, { bayesian: [
             { knn: { field: 'embedding', queryText: text, k: 200, filter } },
             { bool: [{ ...filter, occur: 'filter' }, { queryString: { query: text, defaultField: 'text', skipSyntax: true }, occur: 'must' }] },
@@ -265,8 +268,20 @@ function sleep(ms, signal) {
         signal.addEventListener('abort', abort, { once: true });
     });
 }
-function httpError(response) {
+// LambdaDB reports a used-up project quota as HTTP 403 with one of four fixed
+// messages. The body is only classified; every error text is written here.
+const QUOTAS = new Map(['read', 'write', 'storage', 'inference'].map(kind => [`Project ${kind} quota exceeded`, kind]));
+// Read, write and inference are per-period quotas; storage is a standing limit that does not reset.
+const QUOTA_TEXT = { read: 'has used up its read quota, so memory cannot be searched', write: 'has used up its write quota, so memory cannot be saved',
+    storage: 'has reached its storage limit, so memory cannot be saved', inference: 'has used up its inference quota, so memory cannot be saved or searched' };
+async function httpError(response) {
     const status = response.status;
+    if (status === 403) {
+        // The read stays under the request's signal; an unreadable body is a plain 403.
+        let quota;
+        try { quota = QUOTAS.get((await response.json())?.message); } catch { /* not a quota response */ }
+        if (quota) return Object.assign(new ConnectionError(`Your LambdaDB project ${QUOTA_TEXT[quota]}.`, 403, 'quota'), { quota });
+    }
     const messages = {
         400: 'Invalid request or authentication failure. Check configuration and re-enter your project key.',
         401: 'Authentication failed. Re-enter your project API key.',

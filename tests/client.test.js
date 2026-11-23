@@ -43,7 +43,7 @@ test('text analyzers are normalized before a create request and match the pinned
 test('direct CORS preserves auth/body and query scope without host credentials', async () => {
     const calls = [];
     const client = new LambdaClient(config, 'secret-test-only', { headers: () => ({ 'X-CSRF-Token': 'csrf' }), fetcher: async (url, init) => {
-        calls.push({ url, init }); return url.endsWith('/query') ? Response.json(rerankedResponse()) : accepted();
+        calls.push({ url, init }); return url.endsWith('/query') ? Response.json(documentResponse()) : accepted();
     } });
     await client.upsert('test', [{ id: '1', text: 'synthetic' }]);
     await client.search('test', owner, scope, 'compass');
@@ -55,14 +55,23 @@ test('direct CORS preserves auth/body and query scope without host credentials',
         assert.deepEqual(Object.keys(init.headers).sort(), ['Content-Type', 'x-api-key']);
     }
     const body = JSON.parse(calls[1].init.body);
-    assert.equal(body.size, 50); assert.equal(body.query.bayesian[0].knn.k, 200);
-    assert.equal(body.query.bayesian[0].knn.queryText, 'compass'); assert.deepEqual(body.query.bayesian[0].knn.filter, scopeFilter(owner, scope));
-    assert.deepEqual(body.query.bayesian[1].bool[0], { ...scopeFilter(owner, scope), occur: 'filter' });
-    assert.deepEqual(body.query.bayesian[1].bool[1], { queryString: { query: 'compass', defaultField: 'text', skipSyntax: true }, occur: 'must' });
-    assert.deepEqual(body.rerank, { provider: 'typesafe', model: 'jev-1.13.0', queryText: 'compass', fields: ['role', 'conversationTimeContext', 'text'], candidateSize: 200, onFailure: 'error' });
-    assert.equal(body.consistentRead, true); assert.deepEqual(body.ref, { kind: 'branch', name: 'main' });
+    // The default search is dense KNN only: no lexical leg, no rerank and no candidateSize.
+    assert.deepEqual(body, { size: 50, query: { knn: { field: 'embedding', queryText: 'compass', k: 200, filter: scopeFilter(owner, scope) } },
+        consistentRead: true, includeVectors: false, ref: { kind: 'branch', name: 'main' } });
+    assert.ok(!calls[1].init.body.includes('rerank') && !calls[1].init.body.includes('candidateSize') && !calls[1].init.body.includes('bayesian'));
     assert.ok(!JSON.stringify(client).includes('secret-test-only'));
     client.forget(); await assert.rejects(client.get('test'), /Not connected\. Use Connect to LambdaDB/);
+});
+test('Reranking on sends the unchanged hybrid Jev request', async () => {
+    const bodies = [];
+    const client = new LambdaClient(config, 'synthetic', { fetcher: async (_url, init) => { bodies.push(init.body); return Response.json(rerankedResponse()); } });
+    await client.search('test', owner, scope, 'compass', undefined, 'chat_child', 4, true);
+    // The serialized request before Reranking became a setting, byte for byte.
+    const filter = `{"queryString":{"query":"owner:${owner} AND scope:${scope} AND message:[0 TO 3]"}`;
+    assert.equal(bodies[0], `{"size":50,"query":{"bayesian":[{"knn":{"field":"embedding","queryText":"compass","k":200,"filter":${filter}}}},`
+        + `{"bool":[${filter},"occur":"filter"},{"queryString":{"query":"compass","defaultField":"text","skipSyntax":true},"occur":"must"}]}]},`
+        + '"rerank":{"provider":"typesafe","model":"jev-1.13.0","queryText":"compass","fields":["role","conversationTimeContext","text"],"candidateSize":200,"onFailure":"error"},'
+        + '"consistentRead":true,"includeVectors":false,"ref":{"kind":"branch","name":"chat_child"}}');
 });
 test('reject unsafe config and no key; response errors never leak body', async () => {
     for (const endpoint of ['http://bad.test', 'https://key@bad.test', 'https://bad.test/path', 'https://bad.test/?key=secret']) assert.throws(() => connectionConfig({ ...config, endpoint }));
@@ -92,10 +101,62 @@ test('synthetic gate verifies upsert/query/delete and always attempts collection
     client.search = async () => { throw new Error('network'); };
     await assert.rejects(runTransportGate(client, owner, 'smtest')); assert.equal(order.at(-1), 'cleanup');
 });
+test('the connection test searches without reranking', async () => {
+    const queries = []; let docs = [], deleted = false;
+    const client = new LambdaClient(config, 'synthetic', { fetcher: async (url, init) => {
+        const body = init.body ? JSON.parse(init.body) : undefined;
+        if (url.endsWith('/docs/upsert')) { docs = body.docs; return accepted(); }
+        if (url.endsWith('/docs/delete')) { docs = []; return accepted(); }
+        if (url.endsWith('/query')) { queries.push(body); return Response.json(documentResponse(docs)); }
+        if (init.method === 'POST') return Response.json({ collection: collectionResponse() }, { status: 201 });
+        if (init.method === 'DELETE') { deleted = true; return Response.json({ message: 'OK' }); }
+        return deleted ? new Response('{}', { status: 404 }) : Response.json({ collection: collectionResponse({ tags: { application: 'sillymemory', owner } }) });
+    } });
+    assert.equal(await runTransportGate(client, owner, 'smtest_gate'), true);
+    assert.equal(queries.length, 2);
+    assert.deepEqual(queries[0].query, { knn: { field: 'embedding', queryText: 'Where is the blue compass?', k: 200, filter: scopeFilter(owner, 'a'.repeat(64)) } });
+    assert.ok(queries.every(body => !Object.hasOwn(body, 'rerank')));
+});
 
 test('direct 400 remains a bad request, independently of HTTP reason text', async () => {
     const client = new LambdaClient(config, 'test-key', { fetcher: async () => new Response('{}', { status: 400, statusText: 'Unauthorized' }) });
     await assert.rejects(client.get('test'), e => e.status === 400);
+});
+
+test('a used-up project quota is a quota error named by fixed local text, not an access failure', async () => {
+    const prefix = 'Your LambdaDB project has used up its', texts = {
+        read: `${prefix} read quota, so memory cannot be searched.`,
+        write: `${prefix} write quota, so memory cannot be saved.`,
+        storage: 'Your LambdaDB project has reached its storage limit, so memory cannot be saved.',
+        inference: `${prefix} inference quota, so memory cannot be saved or searched.`,
+    };
+    for (const [kind, text] of Object.entries(texts)) {
+        let calls = 0;
+        const client = new LambdaClient(config, 'test-key', { fetcher: async () => { calls++; return Response.json({ message: `Project ${kind} quota exceeded`, detail: 'echoed private text' }, { status: 403 }); } });
+        await assert.rejects(client.upsert('test', [{ id: 'one' }]), e => e.name === 'ConnectionError' && e.status === 403 && e.code === 'quota' && e.quota === kind && e.message === text && !e.cause);
+        assert.equal(calls, 1, 'a quota error is not retried');
+    }
+});
+
+test('a 403 without one of the exact quota messages stays the generic access error', async () => {
+    const broken = () => new ReadableStream({ start(controller) { controller.error(new Error('private')); } });
+    for (const body of ['', 'not json', '{}', 'null', '[]', '"Project inference quota exceeded"', JSON.stringify({ message: 'Forbidden' }),
+        JSON.stringify({ message: 'Project inference quota exceeded.' }), JSON.stringify({ message: 'constructor' }),
+        JSON.stringify({ error: 'Project inference quota exceeded' }), JSON.stringify({ message: ['Project inference quota exceeded'] }), broken]) {
+        const client = new LambdaClient(config, 'test-key', { fetcher: async () => new Response(typeof body === 'function' ? body() : body, { status: 403 }) });
+        await assert.rejects(client.get('test'), e => e.status === 403 && e.code === '' && e.quota === undefined && e.message === 'Access denied. Check your project key and permissions.');
+    }
+    // The same message on another status is not a quota error.
+    const other = new LambdaClient(config, 'test-key', { fetcher: async () => Response.json({ message: 'Project inference quota exceeded' }, { status: 400 }) });
+    await assert.rejects(other.get('test'), e => e.status === 400 && e.code === '');
+});
+
+test('a 403 body that never arrives is reported as timeout under the request deadline', async () => {
+    const keeper = setTimeout(() => {}, 1000);
+    try {
+        const client = new LambdaClient(config, 'test-key', { timeoutMs: 10, fetcher: async (_, { signal }) => new Response(new ReadableStream({ start(controller) { signal.addEventListener('abort', () => controller.error(signal.reason), { once: true }); } }), { status: 403 }) });
+        await assert.rejects(client.get('test'), e => e.code === 'timeout' && e.status === 0);
+    } finally { clearTimeout(keeper); }
 });
 
 test('CORS rejection cannot falsely confirm deletion and exposes no credentials', async () => {
@@ -270,15 +331,18 @@ test('managed rerank metadata must confirm application or an empty candidate poo
         r => { delete r.docs[0].retrievalScore; }]) {
         const response = rerankedResponse([{ id: 'one' }]); change(response);
         const client = new LambdaClient(config, 'test-key', { fetcher: async () => Response.json(response) });
-        await assert.rejects(client.search('test', owner, scope, 'What happened?', undefined, 'chat_child'), e => e.code === 'validation');
+        await assert.rejects(client.search('test', owner, scope, 'What happened?', undefined, 'chat_child', undefined, true), e => e.code === 'validation');
     }
     for (const key of ['provider', 'model']) {
         const response = rerankedResponse(); response.rerank[key] = 'different';
         const client = new LambdaClient(config, 'test-key', { fetcher: async () => Response.json(response) });
-        await assert.rejects(client.search('test', owner, scope, 'What happened?', undefined, 'chat_child'), e => e.code === 'validation');
+        await assert.rejects(client.search('test', owner, scope, 'What happened?', undefined, 'chat_child', undefined, true), e => e.code === 'validation');
     }
     const client = new LambdaClient(config, 'test-key', { fetcher: async () => Response.json(rerankedResponse([{ id: 'one' }])) });
-    assert.deepEqual(await client.search('test', owner, scope, 'What happened?', undefined, 'chat_child'), [{ id: 'one' }]);
+    assert.deepEqual(await client.search('test', owner, scope, 'What happened?', undefined, 'chat_child', undefined, true), [{ id: 'one' }]);
+    // The default search requests no reranking, so it expects no rerank metadata.
+    const plain = new LambdaClient(config, 'test-key', { fetcher: async () => Response.json(documentResponse([{ id: 'one' }])) });
+    assert.deepEqual(await plain.search('test', owner, scope, 'What happened?', undefined, 'chat_child'), [{ id: 'one' }]);
 });
 
 
@@ -295,7 +359,7 @@ test('bundled SDK sends the 200-candidate search and accepts 50 fully reranked r
         assert.equal(body.size, 50);
         return Response.json(response);
     } });
-    assert.deepEqual(await client.search('test', owner, scope, 'Where?'), docs);
+    assert.deepEqual(await client.search('test', owner, scope, 'Where?', undefined, 'main', undefined, true), docs);
     assert.equal(calls, 1);
 });
 
@@ -314,8 +378,10 @@ test('search rejects oversized complete queries without sending a truncated requ
     let calls = 0;
     const client = new LambdaClient(config, 'synthetic', { fetcher: async () => { calls++; return Response.json(rerankedResponse()); } });
     for (const input of ['x'.repeat(8193), '界'.repeat(3000), '🧭'.repeat(3000), 'x'.repeat(8191) + '🧭z']) {
-        assert.throws(() => client.search('test', owner, scope, input), error =>
-            error.name === 'ConnectionError' && error.code === 'query-limit' && error.message.includes('no search was sent'));
+        for (const rerank of [false, true]) {
+            assert.throws(() => client.search('test', owner, scope, input, undefined, 'main', undefined, rerank), error =>
+                error.name === 'ConnectionError' && error.code === 'query-limit' && error.message.includes('no search was sent'));
+        }
     }
     assert.equal(calls, 0);
 });
@@ -326,8 +392,10 @@ test('the exact UTF-8 query limit preserves identical vector, lexical and rerank
         const client = new LambdaClient(config, 'synthetic', { fetcher: async (url, init) => {
             calls.push(JSON.parse(init.body)); return Response.json(rerankedResponse());
         } });
+        await client.search('test', owner, scope, input, undefined, 'chat_child', undefined, true);
         await client.search('test', owner, scope, input, undefined, 'chat_child');
-        assert.equal(calls.length, 1);
+        assert.equal(calls.length, 2);
+        assert.equal(calls[1].query.knn.queryText, input, 'the default search keeps the complete input too');
         const body = calls[0];
         assert.equal(body.query.bayesian[0].knn.queryText, input);
         assert.equal(body.query.bayesian[1].bool[1].queryString.query, input);
@@ -344,12 +412,14 @@ test('message boundary filters both search legs before ranking and rejects inval
     const client = new LambdaClient(config, 'synthetic-key', { fetcher: async (_, init) => {
         calls.push(JSON.parse(init.body)); return Response.json(rerankedResponse());
     } });
+    await client.search('test', owner, scope, 'Where?', undefined, 'chat_test', 4, true);
     await client.search('test', owner, scope, 'Where?', undefined, 'chat_test', 4);
     const filter = { queryString: { query: `owner:${owner} AND scope:${scope} AND message:[0 TO 3]` } };
     assert.deepEqual(calls[0].query.bayesian[0].knn.filter, filter);
     assert.deepEqual(calls[0].query.bayesian[1].bool[0], { ...filter, occur: 'filter' });
+    assert.deepEqual(calls[1].query.knn.filter, filter);
     for (const boundary of [0, -1, 1.5, NaN, '4']) assert.throws(() => client.search('test', owner, scope, 'Where?', undefined, 'chat_test', boundary), /boundary/);
-    assert.equal(calls.length, 1);
+    assert.equal(calls.length, 2);
 });
 
 test('connection verification is one bounded read with no mutations or retry on rejected authentication', async () => {

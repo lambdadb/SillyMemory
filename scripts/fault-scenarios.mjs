@@ -8,10 +8,10 @@ export function faultController() {
     const held = new Set(), observations = [];
     return {
         observations,
-        arm(operation, mode, status) {
+        arm(operation, mode, status, body) {
             assert(!armed, 'A fault is already armed');
             let enter, release;
-            const item = { operation, mode, status, entered: new Promise(r => { enter = r; }), released: new Promise(r => { release = r; }), release };
+            const item = { operation, mode, status, body, entered: new Promise(r => { enter = r; }), released: new Promise(r => { release = r; }), release };
             item.release = release; item.enter = enter; armed = item;
             return item;
         },
@@ -19,7 +19,7 @@ export function faultController() {
             if (!armed || armed.operation !== operation) return send(...normal());
             const item = armed; armed = undefined;
             observations.push({ operation, mode: item.mode, status: item.status });
-            if (item.mode === 'http') { item.enter(); return send(item.status); }
+            if (item.mode === 'http') { item.enter(); return send(item.status, item.body); }
             // Apply writes / capture query results BEFORE withholding the response.
             // This models an uncertain accepted write and genuinely stale query data.
             const response = item.mode === 'hold-before' ? undefined : normal(); held.add(item); item.enter();
@@ -156,6 +156,14 @@ export async function runFaultScenarios({ page, field, waitStatus, prompt, check
     await entered(failedBatch); await waitStatus('HTTP 503');
     check('failed second batch keeps 200 of 420 and offers explicit retry', /200 \/ 420.*HTTP 503.*Retry synchronization/.test(await field('status').innerText()) && await field('progress').isHidden());
     await field('status').scrollIntoViewIfNeeded(); await screenshot?.('sync-failure');
+    // A used-up project quota is HTTP 403 with a fixed message: not a key or permission failure.
+    const quotaBatch = faults.arm('upsert', 'http', 403, { message: 'Project inference quota exceeded' });
+    await field('sync').click(); await entered(quotaBatch); await waitStatus('inference quota');
+    const quotaStatus = await field('status').innerText();
+    check('a used-up inference quota is named, keeps the key and connection, and offers retry instead of reconnecting',
+        /200 \/ 420.*used up its inference quota.*Reconnecting will not help.*Retry synchronization/s.test(quotaStatus) && !/Access denied|Check connection settings/.test(quotaStatus)
+        && await field('disconnect').isVisible() && await field('connect').isHidden());
+    await field('status').scrollIntoViewIfNeeded(); await screenshot?.('sync-quota');
     const uploadsBefore = calls.filter(c => c.path.endsWith('/docs/upsert')).length;
     await sync();
     const retried = calls.filter(c => c.path.endsWith('/docs/upsert')).slice(uploadsBefore);

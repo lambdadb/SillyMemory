@@ -31,6 +31,8 @@ export function failureText(error, { sync = true, generation = false } = {}) {
     if (!(error instanceof ConnectionError)) return `Memory operation failed. Check browser storage${sync ? ' and token counting' : ''}, then ${retry}. Your local chat is kept.`;
     let next = '';
     if (error.status === 401) next = 'Replace your project key in Connection settings, then reconnect. Memory is off; an invalid key is not saved.';
+    // A used-up quota can last for weeks and stops every reply that needs memory, so a stopped reply names the way to keep chatting.
+    else if (error.code === 'quota') next = `Reconnecting will not help. Upgrade the plan in the LambdaDB console or ${error.quota === 'storage' ? 'delete memory you no longer need' : 'wait for the quota to reset'}, then ${retry}.${generation ? ' To keep chatting meanwhile, turn memory off in this chat.' : ''}`;
     else if (error.status === 403 || error.status === 400) next = `Check connection settings and permissions, reconnect${sync ? ' and turn memory on' : ''}, then ${retry}.`;
     else if (error.code === 'timeout') next = `Wait, then ${retry}. A timed-out write may still have reached the service.`;
     else if (error.status === 429 || error.status >= 500) next = `Wait, then ${retry}.`;

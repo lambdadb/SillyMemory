@@ -4,6 +4,39 @@ Versions describe the extension, independently of the SillyTavern host version.
 An `Unreleased` entry is a development candidate. A dated entry records a release
 boundary; publication is confirmed by the corresponding Git tag and GitHub Release.
 
+## [Unreleased]
+
+### Changed
+
+- Reranking is now an opt-in **Reranking** setting, off by default. Existing
+  installations change to no reranking too: no value is saved for them, and an
+  absent value means off. With it off, a standard story's search is one dense
+  vector search (k=200, 50 returned) with no lexical matching and no reranking.
+  With it on, search is unchanged from 0.10.0: vector and text fusion with
+  managed Jev reranking over 200 candidates. Reranking finds related memory more
+  reliably, but uses much more LambdaDB inference usage on every reply, and
+  reranking and managed embedding share one project inference quota, so a
+  free project's monthly quota could run out quickly and then block saving
+  as well. The setting applies from the next reply, with no
+  rebuild or collection change; collections keep their text index and analyzers.
+  Private memory is unchanged. On English LongMemEval-S, vector-only search
+  delivered complete evidence for 95.30% of annotated messages and reranked
+  search 98.10% ([measurements](docs/text-private-retrieval.md#results-summary));
+  other languages and group chats were not evaluated.
+- The setup and connection test searches without reranking, whatever the
+  setting, so connecting spends no reranker tokens.
+
+### Fixed
+
+- A LambdaDB project that had used up its inference, read or write quota or
+  reached its storage limit (HTTP 403) was reported as "Access denied. Check your
+  project key and permissions." with advice to reconnect. It is now reported as
+  a used-up quota, with what it blocks and what to do: upgrade the plan in the
+  LambdaDB console, wait for the quota to reset or, for the storage limit, delete
+  memory you no longer need. A stopped reply also
+  says how to keep chatting: turn memory off in that chat. Reconnecting does not
+  help, and the saved key is kept. Other 403 responses keep the previous message.
+
 ## [0.10.0] - 2026-11-11
 
 ### Added
