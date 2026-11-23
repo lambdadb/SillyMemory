@@ -82,12 +82,16 @@
         <small>Tests with temporary data, then deletes it. Uses a small part of your LambdaDB usage; no chat upload.</small>
       </div>
       <p data-sm="mode-help">When off, SillyTavern uses its usual chat history. Saved memory is kept.</p>
-      <small data-sm="usage-help" hidden>Memory sends older messages, their SillyTavern timestamps and search queries to LambdaDB, whose embedding and reranking providers process them to find related memory. This counts toward your LambdaDB usage. Turn off other memory or chat vectorization extensions; they would add overlapping history to the prompt. Use one active SillyMemory tab per browser profile.</small>
+      <small data-sm="usage-help" hidden>Memory sends older messages, their SillyTavern timestamps and search queries to LambdaDB, whose embedding provider processes them to find related memory. This counts toward your LambdaDB usage. Turn off other memory or chat vectorization extensions; they would add overlapping history to the prompt. Use one active SillyMemory tab per browser profile.</small>
+      <div data-sm="rerank-settings">
+        <label class="sm-toggle"><input data-sm="rerank" type="checkbox"> Reranking</label>
+        <small>Off by default. When on, each memory search also has LambdaDB's reranking model re-order the best 200 candidates. This finds related memory more reliably, but uses much more of your LambdaDB inference usage on every reply, so a free project's monthly inference quota can run out quickly. Applies from the next reply; no rebuild needed.</small>
+      </div>
       <div data-sm="analyzer-settings">
         <p id="sm-analyzers-label" class="sm-group-label">Text search languages</p>
         <p data-sm="analyzers-summary" class="sm-analyzers-summary"></p>
         <div data-sm="analyzers" class="sm-analyzers" role="group" aria-labelledby="sm-analyzers-label"></div>
-        <small>Applies to story memory created after the change. Pick only the languages you actually chat in: each analyzer indexes the text again, which raises index cost and does not guarantee better relevance. A story that was created with a different setting shows <strong>Rebuild story memory</strong> in its Memory panel.</small>
+        <small>Applies to story memory created after the change. The text index is used for word matching only when Reranking is on; with it off, search uses vectors only. Pick only the languages you actually chat in: each analyzer indexes the text again, which raises index cost and does not guarantee better relevance. A story that was created with a different setting shows <strong>Rebuild story memory</strong> in its Memory panel.</small>
       </div>
       <details data-sm="private-memory" class="sm-section">
         <summary>Private memory <span data-sm="private-memory-state">Off</span></summary>

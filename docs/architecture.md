@@ -55,14 +55,22 @@ input and excluded from retrieval.
 See the [current default policy](conversation-memory-defaults.md).
 
 
+By default a standard story's search is one dense `knn` search over the managed
+embedding (`knn.queryText`, k=200, final size=50), with no lexical leg and no
+reranking. The global **Reranking** setting (off by default, and off when no
+value is saved) is read for each retrieval, so a change applies to the next
+reply and needs no rebuild or schema change. With Reranking on,
 Bayesian fusion combines managed embedding `knn.queryText` with analyzed
-`text` using the same query and `skipSyntax: true`; both legs use the owner/scope
+`text` using the same query and `skipSyntax: true`, followed by managed Typesafe
+`jev-1.13.0` with candidateSize=200 and final size=50; unconfirmed applied
+metadata, mismatched provider/model identity or failure rejects injection. In
+both cases every leg uses the owner/scope
 prefilter, extended with the indexed `long` message-position range below the
 earliest retained recent boundary. The same boundary also limits local accepted documents,
-so an out-of-bound response cannot consume budget or duplicate a retained turn. Vector k=200, managed Typesafe `jev-1.13.0` candidateSize=200, final
-size=50. Unconfirmed applied metadata, mismatched provider/model identity or failure
-rejects injection. Queries above 8,192 UTF-8 bytes fail explicitly before any service
-call; they are never silently truncated.
+so an out-of-bound response cannot consume budget or duplicate a retained turn.
+Queries above 8,192 UTF-8 bytes fail explicitly before any service
+call; they are never silently truncated. The setup and connection test always
+uses the default search, so connecting spends no reranker tokens.
 
 The `text` analyzers come from the **Text search languages** setting (default
 `english`) when a story collection is created; LambdaDB does not change an existing

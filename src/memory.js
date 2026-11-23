@@ -8,7 +8,8 @@ export const DEFAULTS = Object.freeze({ budget: 4096, chunkChars: 800, analyzers
 export function options(value = {}) {
     const integer = (x, fallback, min, max) => Number.isInteger(Number(x)) ? Math.min(max, Math.max(min, Number(x))) : fallback;
     let analyzers; try { analyzers = analyzerList(value.analyzers); } catch { analyzers = [...DEFAULTS.analyzers]; }
-    return { budget: integer(value.budget, DEFAULTS.budget, 64, 4096), chunkChars: integer(value.chunkChars, 800, 200, 2000), analyzers };
+    // Reranking is opt-in: only a saved true turns it on.
+    return { budget: integer(value.budget, DEFAULTS.budget, 64, 4096), chunkChars: integer(value.chunkChars, 800, 200, 2000), analyzers, rerank: value.rerank === true };
 }
 export async function digest(value) {
     const bytes = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(value));
@@ -374,7 +375,7 @@ export class MemoryEngine {
                 const vector = await this.embedder.query(queries[0], signal);
                 if (!current()) return null;
                 results = await this.client.searchVector(this.collection, this.owner, prepared.scope, vector, signal, this.branch, searchBefore);
-            } else results = await this.client.search(this.collection, this.owner, prepared.scope, queries[0], signal, this.branch, searchBefore);
+            } else results = await this.client.search(this.collection, this.owner, prepared.scope, queries[0], signal, this.branch, searchBefore, config.rerank === true);
             if (current() && !signal.aborted) progress({ phase: 'searching', completed: 1, total: 1 });
         } finally { reads.abort(); }
         if (!current()) return null;

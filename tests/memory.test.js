@@ -84,6 +84,14 @@ test('recent dialogue is excluded before bounded retrieval and local budgeting',
     assert(result.messages.every(m => m.index < 2));
     assert(s.remote.size > result.passages.length); // This engine-only configuration explicitly syncs full completed source.
 });
+test('Reranking reaches the search only when its setting is on', async () => {
+    const s = setup(), snap = snapshot(), calls = [];
+    s.client.search = async (...args) => { calls.push(args); return [...s.remote.values()]; };
+    for (const setting of [{}, { rerank: true }, { rerank: 'true' }, options({ rerank: true }), options({})]) {
+        await s.engine.retrieve(snap, { ...config, ...setting, budget: 400, retainedStart: 2 }, text => text.split(/\s+/).length);
+    }
+    assert.deepEqual(calls.map(args => args[7]), [false, true, false, true, false]);
+});
 test('a recent window starting at the first message syncs but performs no search', async () => {
     const s = setup(), snap = snapshot();
     s.client.search = async () => { throw new Error('No older source is available to search.'); };
@@ -251,6 +259,8 @@ test('settings are clamped and capture refuses chats without a character, group 
     assert.equal(options({ budget: NaN }).budget, 4096);
     assert.equal(options({ budget: 999999, recent: 0 }).budget, 4096);
     assert.equal(Object.hasOwn(options({ recent: 100 }), 'recent'), false);
+    assert.equal(options().rerank, false, 'an absent Reranking setting means off');
+    assert.deepEqual([true, false, 'true', 1, null].map(rerank => options({ rerank }).rerank), [true, false, false, false, false]);
     assert.deepEqual(options().analyzers, ['english']);
     assert.deepEqual(options({ analyzers: ['Korean', 'english', 'korean'] }).analyzers, ['korean', 'english']);
     for (const analyzers of [[], undefined, 'korean', ['klingon']]) assert.deepEqual(options({ analyzers }).analyzers, ['english']);
