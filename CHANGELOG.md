@@ -4,7 +4,7 @@ Versions describe the extension, independently of the SillyTavern host version.
 An `Unreleased` entry is a development candidate. A dated entry records a release
 boundary; publication is confirmed by the corresponding Git tag and GitHub Release.
 
-## [Unreleased]
+## [0.11.0] - 2026-11-23
 
 ### Changed
 
@@ -36,6 +36,17 @@ boundary; publication is confirmed by the corresponding Git tag and GitHub Relea
   memory you no longer need. A stopped reply also
   says how to keep chatting: turn memory off in that chat. Reconnecting does not
   help, and the saved key is kept. Other 403 responses keep the previous message.
+
+### Compatibility
+
+- Supported host is unchanged: SillyTavern 1.19.0 at
+  `06bde939fb1e9c4c8d8641d810f0a916b5bce127` with Chromium. There is no
+  settings or data migration, and no collection or schema change: existing
+  stories, their text index and analyzers, saved on/off choices, the saved key
+  and saved memory are kept. Search behavior changes on update: Reranking has no
+  saved value in existing installations, so their standard stories search
+  without reranking and without text matching until **Reranking** is turned on
+  in settings. Private memory stories are unaffected.
 
 ## [0.10.0] - 2026-11-11
 
